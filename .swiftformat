@@ -1,0 +1,121 @@
+# =============================================================================
+# Tuji iOS — SwiftFormat
+# 跑：brew install swiftformat && swiftformat .
+# 檢查（不改）：swiftformat . --lint
+# 安裝 git hook：echo 'swiftformat --lint .' > .git/hooks/pre-commit
+# =============================================================================
+
+# Swift 版本
+--swiftversion 6.0
+
+# ---------- 掃描 ----------
+--exclude .build,.swiftpm,DerivedData,Pods,Preview\ Content,Tuji/Resources
+
+# ---------- 通用 ----------
+--indent 4
+--linebreaks lf
+--trimwhitespace always
+--allman false
+--maxwidth 120
+--semicolons never
+--commas inline
+--ranges no-space
+--operatorfunc spaced
+
+# ---------- 引用 ----------
+--self remove                       # 不寫 self.foo，除非必要
+--selfrequired                      # 預留：強制 self 的閉包白名單
+--importgrouping testable-bottom    # @testable import 放最後
+
+# ---------- 屬性 / wrap ----------
+# SwiftUI View body 內 modifier 鏈喜歡多行，let 鏈用 wrap
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--wrapconditions after-first
+--wrapreturntype if-multiline
+--funcattributes prev-line
+--typeattributes prev-line
+--storedvarattrs same-line
+--computedvarattrs prev-line
+
+# ---------- 空行 ----------
+--emptybraces no-space
+--anonymousforeach convert
+--shortoptionals always
+
+# ---------- 控制流 ----------
+--elseposition same-line
+--guardelse next-line
+--ifdef no-indent
+
+# ---------- 字串 / 數字 ----------
+--stripunusedargs closure-only
+--decimalgrouping 3,5
+--binarygrouping none
+--hexgrouping none
+--octalgrouping none
+--exponentgrouping disabled
+
+# ---------- 修飾詞順序（對齊 SwiftLint modifier_order）----------
+--modifierorder public,override,private(set),final,@MainActor
+
+# ---------- 啟用 / 停用個別規則 ----------
+# 不啟用：sortImports（與 SwiftLint sorted_imports 規則由 SwiftLint 管）
+--enable                                                                       \
+    blankLinesAtStartOfScope,                                                  \
+    blankLinesAtEndOfScope,                                                    \
+    blankLinesBetweenScopes,                                                   \
+    consecutiveBlankLines,                                                     \
+    consecutiveSpaces,                                                         \
+    duplicateImports,                                                          \
+    leadingDelimiters,                                                         \
+    linebreakAtEndOfFile,                                                      \
+    redundantBackticks,                                                        \
+    redundantBreak,                                                            \
+    redundantGet,                                                              \
+    redundantInit,                                                             \
+    redundantLet,                                                              \
+    redundantNilInit,                                                          \
+    redundantParens,                                                           \
+    redundantPattern,                                                          \
+    redundantRawValues,                                                        \
+    redundantReturn,                                                           \
+    redundantSelf,                                                             \
+    redundantType,                                                             \
+    redundantVoidReturnType,                                                   \
+    semicolons,                                                                \
+    sortDeclarations,                                                          \
+    spaceAroundBraces,                                                         \
+    spaceAroundBrackets,                                                       \
+    spaceAroundComments,                                                       \
+    spaceAroundGenerics,                                                       \
+    spaceAroundOperators,                                                      \
+    spaceAroundParens,                                                         \
+    spaceInsideBraces,                                                         \
+    spaceInsideBrackets,                                                       \
+    spaceInsideComments,                                                       \
+    spaceInsideGenerics,                                                       \
+    spaceInsideParens,                                                         \
+    todos,                                                                     \
+    trailingClosures,                                                          \
+    trailingCommas,                                                            \
+    trailingSpace,                                                             \
+    typeSugar,                                                                 \
+    unusedArguments,                                                           \
+    void,                                                                      \
+    wrap,                                                                      \
+    wrapArguments,                                                             \
+    wrapMultilineStatementBraces
+
+--disable                                                                      \
+    sortImports,                                                               \
+    isEmpty,                                                                   \
+    wrapEnumCases,                                                             \
+    blockComments
+
+# ---------- 排除整檔的指令（必要時加註解）----------
+# 在檔案頂部寫：
+#   // swiftformat:disable all
+# 或單行：
+#   // swiftformat:disable:next redundantSelf

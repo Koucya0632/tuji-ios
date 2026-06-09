@@ -1,0 +1,145 @@
+# =============================================================================
+# Tuji iOS — .gitignore
+# 基底：github/gitignore/Swift + Objective-C，加上專案特定規則
+# =============================================================================
+
+# ---------- macOS / Finder ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+
+# ---------- Xcode：使用者本地狀態 ----------
+# 每個開發者各自的視窗 / breakpoint / scheme 排序，不該進 repo
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# 共用的 scheme 要進 repo（CI 才能跑），所以不忽略 xcshareddata/
+# 例外清單寫在底下
+
+
+# ---------- Xcode：建置產物 ----------
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+*.app
+*.app.dSYM
+*.xcarchive
+
+
+# ---------- Swift Package Manager ----------
+.swiftpm/
+.build/
+Package.resolved
+# 注意：Package.resolved 要不要進 repo 看團隊偏好
+# 進 repo  → 鎖住依賴版本，CI / 同事拿到一致結果（推薦）
+# 不進    → 每次解析最新 patch
+# 上面的 .swiftpm/ 已含 Package.resolved，若要進 repo 改成：
+#   .swiftpm/*
+#   !.swiftpm/Package.resolved
+# v1 採「不進 repo」策略，等多人協作時再切換
+
+
+# ---------- CocoaPods（若未來真的需要才用，預設不開）----------
+Pods/
+*.xcworkspace
+!default.xcworkspace
+# 例外：如果整個專案結構就是 workspace，下面那行要拿掉
+# 用 SPM 的情況不會有 Podfile
+
+
+# ---------- Carthage（不使用，列出避免誤入）----------
+Carthage/Build/
+Carthage/Checkouts/
+
+
+# ---------- fastlane ----------
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+fastlane/README.md
+
+
+# ---------- 機密 / 設定 ----------
+# 環境變數 / API key / 簽章金鑰一律不進 repo
+Config/Secrets.xcconfig
+Config/*.local.xcconfig
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+*.certSigningRequest
+*.pem
+GoogleService-Info.plist
+.env
+.env.*
+!.env.example
+
+# 例外：範本 / 公開版本要進 repo（讓新人知道有哪些 key 要填）
+!Config/Secrets.xcconfig.example
+!Config/Debug.xcconfig
+!Config/TestFlight.xcconfig
+!Config/Release.xcconfig
+!Config/Version.xcconfig
+
+
+# ---------- 編譯器 / IDE 雜檔 ----------
+# AppCode
+.idea/
+
+# VS Code（若有人用來看 Swift）
+.vscode/
+
+# Cursor / 其他編輯器
+.cursor/
+
+# Vim / Emacs swap files
+*.swp
+*~
+.\#*
+
+
+# ---------- 截圖 / 暫存 / 工具雜物 ----------
+# 開發過程隨手存的 reference / 截圖
+/scratch/
+/tmp/
+*.tmp.png
+*.tmp.mov
+
+# 模擬器錄影
+*.simulator.mov
+
+# Sketch / Figma export 暫存
+*.sketch~
+*.fig~
+
+
+# ---------- Tuji 專案特定 ----------
+# 設計 reference 大檔（要的話放專案外或 LFS）
+ReferenceAssets/
+
+# 本地 backup
+*.bak
+*.orig
+
+
+# ---------- 例外清單（共用 / 必進 repo 的）----------
+# 預設都被上面規則排除，這裡白名單拉回
+!*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+!*.xcodeproj/xcshareddata/
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/
+
+# 共用的 Scheme（CI 要靠這個跑）— 上面 xcuserdata 已排除，明列確保
+!**/xcshareddata/xcschemes/*.xcscheme

@@ -1,0 +1,74 @@
+# =============================================================================
+# CODEOWNERS — Tuji iOS
+# 對應 iOS_DESIGN_BOOK.md §V.14（多人擴增）
+#
+# 規則：誰擁有某路徑，GitHub PR 自動把那個人加進 reviewers。
+# 越下方的規則覆蓋越上方。
+#
+# 單人開發：保留這檔但全指自己；上 ≥ 2 人時填真正的 owner。
+#
+# 語法參考：
+#   https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+# =============================================================================
+
+# ---------- 預設 owner（fallback）----------
+# 沒被下方規則命中的檔案都歸這幾個人
+*                                       @rex
+
+# ---------- 基礎設施（謹慎改）----------
+# 改這些影響全 App，需要架構 owner review
+/Tuji/Core/Networking/                  @rex
+/Tuji/Core/Auth/                        @rex
+/Tuji/Core/Storage/                     @rex
+/Tuji/Core/Theme/                       @rex
+/Tuji/Core/i18n/                        @rex
+
+# ---------- Feature 模組 ----------
+/Tuji/Features/Onboarding/              @rex
+/Tuji/Features/Auth/                    @rex
+/Tuji/Features/Today/                   @rex
+/Tuji/Features/Cards/                   @rex
+/Tuji/Features/Word/                    @rex
+/Tuji/Features/Search/                  @rex
+/Tuji/Features/Favorites/               @rex
+/Tuji/Features/Progress/                @rex
+/Tuji/Features/Study/                   @rex
+/Tuji/Features/Me/                      @rex
+/Tuji/Features/Settings/                @rex
+
+# ---------- Widget / Live Activity（v1.1+ 才有）----------
+/TujiWidget/                            @rex
+
+# ---------- 模型 / API 合約（雙端共識）----------
+# 改 Models / Endpoints 通常需要後端同學同看
+/Tuji/Models/                           @rex
+/Tuji/Core/Networking/Endpoints.swift   @rex
+
+# ---------- 設計資產 ----------
+/Tuji/Resources/Assets.xcassets/        @rex
+/Tuji/Resources/Fonts/                  @rex
+
+# ---------- CI / 簽章 / 版本 ----------
+# 改這些會影響發版流程，需要 release owner
+/.github/                               @rex
+/Config/                                @rex
+/fastlane/                              @rex
+/.swiftlint.yml                         @rex
+/.swiftformat                           @rex
+
+# ---------- 設計書 / 文件 ----------
+# 文件比較寬鬆，誰寫都行（但要審）
+*.md                                    @rex
+/docs/                                  @rex
+
+# =============================================================================
+# 加 owner 範例（≥ 2 人時）：
+#
+#   /Tuji/Features/Study/                  @alice @bob
+#   /Tuji/Core/Networking/                 @bob
+#   /.github/                              @alice
+#
+# 必要 review 設定走 GitHub branch protection：
+#   Settings → Branches → main → Require pull request reviews → 1
+#   Settings → Branches → main → Require review from Code Owners ✓
+# =============================================================================

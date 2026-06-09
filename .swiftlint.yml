@@ -1,0 +1,185 @@
+# =============================================================================
+# Tuji iOS — SwiftLint
+# 跑：brew install swiftlint && swiftlint --strict
+# 安裝：Xcode → Build Phases → Run Script
+#   if which swiftlint >/dev/null; then swiftlint; fi
+# =============================================================================
+
+# ---------- 掃描範圍 ----------
+included:
+  - Tuji
+  - TujiTests
+  - TujiUITests
+  - TujiWidget
+
+excluded:
+  - .build
+  - .swiftpm
+  - DerivedData
+  - Pods
+  - Tuji/Preview Content
+  - Tuji/Resources                  # Asset Catalog 沒程式碼
+  - "**/*.generated.swift"          # SwiftGen / Sourcery 產物（若有）
+
+# ---------- 預設關掉的規則 ----------
+disabled_rules:
+  - line_length                     # SwiftUI 鏈呼叫 / Color(hex:) literal 常超 120，靠 SwiftFormat 處理
+  - identifier_name                 # 允許 `x` `y` `id` `vm` `w` 等短名
+  - trailing_comma                  # SwiftUI 多行 modifier 不加逗號比較順
+  - todo                            # FIXME/TODO 是工作流程的一部分，不報
+
+# ---------- 打開的進階規則 ----------
+opt_in_rules:
+  - array_init
+  - attributes
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - implicit_return
+  - implicitly_unwrapped_optional
+  - last_where
+  - literal_expression_end_indentation
+  - modifier_order
+  - operator_usage_whitespace
+  - prefer_self_type_over_type_of_self
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - sorted_first_last
+  - sorted_imports
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - unused_import
+  - vertical_parameter_alignment_on_call
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - yoda_condition
+
+# ---------- 規則參數 ----------
+function_body_length:
+  warning: 80
+  error: 150
+
+type_body_length:
+  warning: 400
+  error: 700
+
+file_length:
+  warning: 500
+  error: 1000
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
+nesting:
+  type_level:
+    warning: 3
+  function_level:
+    warning: 4
+
+force_cast: error
+force_try: error
+force_unwrapping:
+  severity: error
+
+trailing_whitespace:
+  ignores_empty_lines: true
+  ignores_comments: true
+
+# ---------- Tuji 自家紀律規則 ----------
+# 對應 iOS_DESIGN_BOOK.md §V.11 review checklist 的紀律項
+custom_rules:
+
+  # 1. 顏色：禁止在 Theme 之外用 Color(hex:)
+  no_hex_color_outside_theme:
+    name: "用 Theme tokens"
+    regex: 'Color\(hex:'
+    match_kinds: [identifier]
+    excluded: ".*/Core/Theme/.*\\.swift"
+    message: "請用 .tujiTeal / .tujiCream / ... — Color(hex:) 只能寫在 Core/Theme/ 內。"
+    severity: error
+
+  # 2. 字型：禁止在 Theme 之外用 Font.custom
+  no_font_custom_outside_theme:
+    name: "用 Theme tokens"
+    regex: 'Font\.custom\('
+    match_kinds: [identifier]
+    excluded: ".*/Core/Theme/.*\\.swift"
+    message: "請用 .tujiH1 / .tujiBody / ... — Font.custom 只能寫在 Core/Theme/ 內。"
+    severity: error
+
+  # 3. URL：禁止在 Networking 之外手寫 URLSession
+  no_urlsession_outside_networking:
+    name: "用 APIClient"
+    regex: 'URLSession\.shared'
+    excluded: ".*/Core/Networking/.*\\.swift"
+    message: "請改用 APIClient.shared — URLSession.shared 只能寫在 Core/Networking/ 內。"
+    severity: error
+
+  # 4. URL：禁止寫死 tuji.app / supabase.co
+  no_hardcoded_base_url:
+    name: "URL 從設定讀"
+    regex: '"https://(tuji\.app|[a-z0-9-]+\.supabase\.co)'
+    excluded: ".*/(Core/Networking|Core/Auth)/.*\\.swift"
+    message: "URL 不該寫死，請從 Endpoint / Config 讀。"
+    severity: error
+
+  # 5. SRS 紀律：除了 NewFlowCoordinator.recognizeAnswer，不該有人直接打 .studyAnswer
+  #    NewFlow Step 2/3 寫到 .studyAnswer 會把 mastery 刷飛
+  study_answer_call_site:
+    name: "SRS 紀律"
+    regex: '\.studyAnswer'
+    excluded: ".*/Features/Study/.*\\.swift"
+    message: "/api/study/answer 只能由 Study 模組內呼叫（且不能在 NewFlow Step 2/3）。"
+    severity: warning
+
+  # 6. 印 token 是安全洩漏
+  no_print_token:
+    name: "Token 不能印"
+    regex: 'print\([^)]*(accessToken|refreshToken|idToken)'
+    message: "禁止把 token 印到 log；用 OSLog 並 redact。"
+    severity: error
+
+  # 7. 提醒：使用 print 寫 log 應改 OSLog
+  prefer_oslog_over_print:
+    name: "用 OSLog"
+    regex: '\bprint\('
+    excluded: ".*/(Preview Content|TujiTests|TujiUITests)/.*\\.swift"
+    message: "請改用 Logger / OSLog，print 只在 Preview / Tests 用。"
+    severity: warning
+
+  # 8. SwiftUI: 禁止用 NavigationView（iOS 16+ 用 NavigationStack）
+  no_navigation_view:
+    name: "用 NavigationStack"
+    regex: '\bNavigationView\b'
+    message: "iOS 16+ 請改用 NavigationStack。"
+    severity: error
+
+  # 9. SwiftUI: 禁止用 ObservableObject（iOS 17+ 用 @Observable）
+  prefer_observable_macro:
+    name: "用 @Observable"
+    regex: ':\s*ObservableObject\b'
+    excluded: ".*/Preview Content/.*\\.swift"
+    message: "iOS 17+ 請改用 @Observable macro。"
+    severity: warning
+
+  # 10. i18n: 警告寫死中文（粗略 — 不抓 comment / Preview）
+  no_hardcoded_chinese:
+    name: "用 Localizable"
+    regex: 'Text\("[^"]*[一-鿿][^"]*"\)'
+    excluded: ".*/(Preview Content|TujiTests|TujiUITests)/.*\\.swift"
+    message: "UI 字串請走 String(localized:) — 不要寫死中文。"
+    severity: warning
+
+# ---------- Reporter ----------
+reporter: "xcode"
