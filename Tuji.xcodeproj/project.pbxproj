@@ -17,11 +17,11 @@
 
 /* Begin PBXFileReference section */
 		CD3365C62FD8134A00EF2A26 /* Tuji.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tuji.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CD3365DA2FD8150B00EF2A26 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = "<group>"; };
-		CD3365DB2FD8150B00EF2A26 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Release.xcconfig; sourceTree = "<group>"; };
-		CD3365DC2FD8150B00EF2A26 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Secrets.xcconfig; sourceTree = "<group>"; };
-		CD3365DD2FD8150B00EF2A26 /* TestFlight.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/TestFlight.xcconfig; sourceTree = "<group>"; };
-		CD3365DE2FD8150B00EF2A26 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Version.xcconfig; sourceTree = "<group>"; };
+		CD3365DA2FD8150B00EF2A26 /* Config/Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = "<group>"; };
+		CD3365DB2FD8150B00EF2A26 /* Config/Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Release.xcconfig; sourceTree = "<group>"; };
+		CD3365DC2FD8150B00EF2A26 /* Config/Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Secrets.xcconfig; sourceTree = "<group>"; };
+		CD3365DD2FD8150B00EF2A26 /* Config/TestFlight.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/TestFlight.xcconfig; sourceTree = "<group>"; };
+		CD3365DE2FD8150B00EF2A26 /* Config/Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Version.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,11 +52,11 @@
 		CD3365BD2FD8134A00EF2A26 = {
 			isa = PBXGroup;
 			children = (
-				CD3365DA2FD8150B00EF2A26 /* Debug.xcconfig */,
-				CD3365DB2FD8150B00EF2A26 /* Release.xcconfig */,
-				CD3365DC2FD8150B00EF2A26 /* Secrets.xcconfig */,
-				CD3365DD2FD8150B00EF2A26 /* TestFlight.xcconfig */,
-				CD3365DE2FD8150B00EF2A26 /* Version.xcconfig */,
+				CD3365DA2FD8150B00EF2A26 /* Config/Debug.xcconfig */,
+				CD3365DB2FD8150B00EF2A26 /* Config/Release.xcconfig */,
+				CD3365DC2FD8150B00EF2A26 /* Config/Secrets.xcconfig */,
+				CD3365DD2FD8150B00EF2A26 /* Config/TestFlight.xcconfig */,
+				CD3365DE2FD8150B00EF2A26 /* Config/Version.xcconfig */,
 				CD3365C82FD8134A00EF2A26 /* Tuji */,
 				CD3365C72FD8134A00EF2A26 /* Products */,
 			);
@@ -164,7 +164,7 @@
 /* Begin XCBuildConfiguration section */
 		CD3365CF2FD8134B00EF2A26 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CD3365DA2FD8150B00EF2A26 /* Debug.xcconfig */;
+			baseConfigurationReference = CD3365DA2FD8150B00EF2A26 /* Config/Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -229,7 +229,7 @@
 		};
 		CD3365D02FD8134B00EF2A26 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CD3365DB2FD8150B00EF2A26 /* Release.xcconfig */;
+			baseConfigurationReference = CD3365DB2FD8150B00EF2A26 /* Config/Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -349,7 +349,7 @@
 		};
 		CD3365E42FD8163C00EF2A26 /* TestFlight */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CD3365DD2FD8150B00EF2A26 /* TestFlight.xcconfig */;
+			baseConfigurationReference = CD3365DD2FD8150B00EF2A26 /* Config/TestFlight.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
