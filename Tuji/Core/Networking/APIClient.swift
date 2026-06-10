@@ -28,7 +28,6 @@ final class APIClient {
             baseURL = url
         } else {
             // Last-resort fallback. SmokeTest used the same one.
-            // swiftlint:disable:next force_unwrapping
             baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
             log.error("TUJI_BASE_URL missing from Info.plist; falling back to prod")
         }

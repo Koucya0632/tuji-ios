@@ -27,8 +27,15 @@ disabled_rules:
   - identifier_name                 # 允許 `x` `y` `id` `vm` `w` 等短名
   - trailing_comma                  # SwiftUI 多行 modifier 不加逗號比較順
   - todo                            # FIXME/TODO 是工作流程的一部分，不報
+  - opening_brace                   # SwiftFormat 的 wrapMultilineStatementBraces 對長 generic 簽名要 brace 換行，跟 SwiftLint 互打
 
 # ---------- 打開的進階規則 ----------
+# Rules that only run via `swiftlint analyze`. Listing them here suppresses
+# the "should be listed in analyzer_rules" warning even when we never call
+# analyze (we don't, because it requires xcodebuild output).
+analyzer_rules:
+  - unused_import
+
 opt_in_rules:
   # Formatting rules disabled because SwiftFormat owns the same territory:
   #   - attributes / opening_brace / closure_end_indentation
@@ -58,7 +65,6 @@ opt_in_rules:
   - sorted_first_last
   - toggle_bool
   - unneeded_parentheses_in_closure_argument
-  - unused_import
   - vertical_parameter_alignment_on_call
   - vertical_whitespace_closing_braces
   - vertical_whitespace_opening_braces
@@ -141,11 +147,13 @@ custom_rules:
     severity: error
 
   # 5. SRS 紀律：除了 NewFlowCoordinator.recognizeAnswer，不該有人直接打 .studyAnswer
-  #    NewFlow Step 2/3 寫到 .studyAnswer 會把 mastery 刷飛
+  #    NewFlow Step 2/3 寫到 .studyAnswer 會把 mastery 刷飛.
+  #    Networking (Endpoint.swift) is the enum-of-truth; excluded so its
+  #    `case .studyAnswer:` switch arms don't fire the rule.
   study_answer_call_site:
     name: "SRS 紀律"
     regex: '\.studyAnswer'
-    excluded: ".*/Features/Study/.*\\.swift"
+    excluded: ".*/(Features/Study|Core/Networking)/.*\\.swift"
     message: "/api/study/answer 只能由 Study 模組內呼叫（且不能在 NewFlow Step 2/3）。"
     severity: warning
 
@@ -179,13 +187,12 @@ custom_rules:
     message: "iOS 17+ 請改用 @Observable macro。"
     severity: warning
 
-  # 10. i18n: 警告寫死中文（粗略 — 不抓 comment / Preview）
-  no_hardcoded_chinese:
-    name: "用 Localizable"
-    regex: 'Text\("[^"]*[一-鿿][^"]*"\)'
-    excluded: ".*/(Preview Content|TujiTests|TujiUITests)/.*\\.swift"
-    message: "UI 字串請走 String(localized:) — 不要寫死中文。"
-    severity: warning
+  # i18n note: SwiftUI's Text("中文") implicitly treats the string as a
+  # LocalizedStringKey and looks it up in Localizable.xcstrings — meaning
+  # hard-coded source-language strings ARE the recommended pattern. A
+  # blanket regex against Chinese characters would just create noise, so
+  # the rule is intentionally absent. The discipline is "ship a complete
+  # xcstrings catalog with translations", not "avoid Chinese literals".
 
 # ---------- Reporter ----------
 reporter: "xcode"
