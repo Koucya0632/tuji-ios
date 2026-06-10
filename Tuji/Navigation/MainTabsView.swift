@@ -36,12 +36,11 @@ struct MainTabsView: View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case .cards: CardsListView()
+                case let .wordDetail(id): WordDetailView(id: id)
                 }
             }
         }
     }
-
-    private enum NavRoute: Hashable { case cards }
 
     private var browseButton: some View {
         NavigationLink(value: NavRoute.cards) {

@@ -88,9 +88,7 @@ struct CardsListView: View {
                     spacing: Space.s3
                 ) {
                     ForEach(self.visibleWords) { word in
-                        Button {
-                            // TODO: WordDetailView in W3 part 2
-                        } label: {
+                        NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
                             WordTile(word: word)
                         }
                         .buttonStyle(.plain)
