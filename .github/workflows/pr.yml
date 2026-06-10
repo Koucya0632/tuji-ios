@@ -52,10 +52,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Xcode 16.2
+      - name: Setup Xcode 16.4
+        # 16.4 ships with the iOS 18.4+ Simulator runtime on macos-15;
+        # 16.2 only has iOS 18.2 SDK without the matching simulator
+        # by default, which broke `-destination generic/platform=iOS Simulator`.
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.2'
+          xcode-version: '16.4'
 
       - name: Show versions
         run: |
