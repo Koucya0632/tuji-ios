@@ -52,13 +52,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Xcode 16.4
-        # 16.4 ships with the iOS 18.4+ Simulator runtime on macos-15;
-        # 16.2 only has iOS 18.2 SDK without the matching simulator
-        # by default, which broke `-destination generic/platform=iOS Simulator`.
+      - name: Setup Xcode (latest stable)
+        # Nuke 13.0.6 uses `isolated deinit` (Swift 6.1+) so anything older
+        # than Xcode 16.5 / 26 fails to build it. latest-stable resolves to
+        # whatever the runner image has shipping — currently Xcode 26 on
+        # macos-15.
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.4'
+          xcode-version: latest-stable
 
       - name: Show versions
         run: |
