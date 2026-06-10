@@ -125,8 +125,16 @@ final class AuthService {
     // MARK: - Sign out
 
     func signOut() async {
+        // Drop the device's push token first so the previous account
+        // stops receiving notifications. Best-effort; runs in parallel
+        // with the Supabase sign-out call below.
+        async let unregisterPush: Void = PushNotificationService.shared.unregister()
+
         try? await supabase.auth.signOut()
         GoogleSignInBridge.signOut()       // clears cached Google credentials too
+
+        _ = await unregisterPush
+
         state = .signedOut
         error = nil
         log.info("signed out")

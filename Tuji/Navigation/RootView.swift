@@ -1,10 +1,11 @@
-// Top-level state switcher. Drives Splash → Welcome → MainTabs based on
-// AuthService.state.
+// Top-level state switcher. Drives Splash → Welcome → (Push permission?)
+// → MainTabs based on AuthService.state + PushNotificationService.
 
 import SwiftUI
 
 struct RootView: View {
     @Environment(AuthService.self) private var auth
+    @Environment(PushNotificationService.self) private var push
 
     var body: some View {
         Group {
@@ -14,7 +15,16 @@ struct RootView: View {
             case .signedOut:
                 WelcomeView()
             case .signedIn(let user):
-                MainTabsView(user: user)
+                if push.hasBeenPrompted {
+                    MainTabsView(user: user)
+                } else {
+                    PushPermissionView(onDone: {
+                        // PushNotificationService marks `prompted = true`
+                        // before this fires; the next render lands on
+                        // MainTabsView automatically because of the
+                        // hasBeenPrompted check above.
+                    })
+                }
             }
         }
         .task { await auth.restoreSession() }
@@ -25,11 +35,13 @@ struct RootView: View {
         switch auth.state {
         case .checking: "checking"
         case .signedOut: "signedOut"
-        case .signedIn(let u): "signedIn-\(u.id)"
+        case .signedIn(let u): "signedIn-\(u.id)-\(push.hasBeenPrompted)"
         }
     }
 }
 
 #Preview {
-    RootView().environment(AuthService.shared)
+    RootView()
+        .environment(AuthService.shared)
+        .environment(PushNotificationService.shared)
 }
