@@ -52,8 +52,9 @@ struct FavoriteButton: View {
     }
 }
 
-// nonisolated so Encodable conformance escapes MainActor isolation; needed
-// because APIClient.fireAndForget requires Body: Sendable.
+/// nonisolated so Encodable conformance escapes MainActor isolation;
+/// needed because APIClient.fireAndForget requires Body: Sendable.
+// swiftformat:disable:next redundantSendable
 private nonisolated struct FavoritePayload: Encodable, Sendable {
     let wordId: String
     let op: String
