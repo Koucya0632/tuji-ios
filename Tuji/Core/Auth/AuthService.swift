@@ -87,22 +87,38 @@ final class AuthService {
         }
     }
 
-    // MARK: - OAuth (stubs — W2 follow-up)
+    // MARK: - OAuth
 
+    /// Stub — requires Apple Developer Program (Service ID + Sign-in Key).
+    /// Wired in W2 part 3 once Apple Dev approval lands.
     func signInWithApple(idToken: String, nonce: String) async {
-        // TODO: requires Apple Developer Program (Service ID + Sign in Key).
         error = "Apple 登入待 Apple Developer Program 通過後開啟。"
     }
 
-    func signInWithGoogle(idToken: String, nonce: String) async {
-        // TODO: requires GoogleSignIn SDK + presenting view controller.
+    /// Drives the full Google native flow: GoogleSignInBridge gets the
+    /// ID token, then signInWithIdToken validates it against Supabase.
+    /// Supabase project must have **Skip nonce checks ON** for this to
+    /// succeed — the GoogleSignIn iOS SDK doesn't expose the nonce
+    /// parameter (Supabase iOS guide reflects this).
+    func signInWithGoogle() async {
+        loading = true
+        error = nil
+        defer { loading = false }
         do {
+            let idToken = try await GoogleSignInBridge.signIn()
             let session = try await supabase.auth.signInWithIdToken(
-                credentials: .init(provider: .google, idToken: idToken, nonce: nonce)
+                credentials: OpenIDConnectCredentials(
+                    provider: .google,
+                    idToken: idToken
+                )
             )
             state = .signedIn(SessionUser(from: session.user))
+            log.info("google signin ok uid=\(session.user.id.uuidString, privacy: .public)")
+        } catch GoogleSignInBridge.GoogleSignInError.userCancelled {
+            log.info("google signin cancelled by user")
         } catch {
             self.error = friendly(error)
+            log.error("google signin failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -110,6 +126,7 @@ final class AuthService {
 
     func signOut() async {
         try? await supabase.auth.signOut()
+        GoogleSignInBridge.signOut()       // clears cached Google credentials too
         state = .signedOut
         error = nil
         log.info("signed out")
