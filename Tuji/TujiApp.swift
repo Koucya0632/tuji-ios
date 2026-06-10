@@ -1,17 +1,16 @@
-//
-//  TujiApp.swift
-//  Tuji
-//
-//  Created by Hong Kuok Wai on 09/06/2026.
-//
+// App entry. Wires AuthService into the environment so any view can read
+// auth state via @Environment(AuthService.self).
 
 import SwiftUI
 
 @main
 struct TujiApp: App {
+    @State private var auth = AuthService.shared
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environment(auth)
         }
     }
 }
