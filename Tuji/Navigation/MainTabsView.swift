@@ -211,29 +211,20 @@ struct MainTabsView: View {
         .environment(LocalCache.shared)
 }
 
-extension SessionUser {
-    fileprivate static var preview: SessionUser {
-        let json = """
-        {"id":"00000000-0000-0000-0000-000000000000","email":"preview@tuji.dev"}
-        """.data(using: .utf8)!
-        // swiftlint:disable:next force_try
-        let user = try! JSONDecoder().decode(StubUser.self, from: json)
-        return SessionUser(
-            id: user.id,
-            email: user.email,
+private extension SessionUser {
+    static var preview: SessionUser {
+        SessionUser(
+            id: UUID(),
+            email: "preview@tuji.dev",
             username: "rex",
             avatar: nil
         )
     }
 
-    private init(id: UUID, email: String?, username: String?, avatar: String?) {
+    init(id: UUID, email: String?, username: String?, avatar: String?) {
         self.id = id
         self.email = email
         self.username = username
         self.avatar = avatar
-    }
-
-    private struct StubUser: Codable { let id: UUID
-        let email: String?
     }
 }
