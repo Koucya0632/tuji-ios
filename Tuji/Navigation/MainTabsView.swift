@@ -22,15 +22,41 @@ struct MainTabsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            hero
-            Spacer()
-            smokeSection
-            Spacer()
-            footerButton
+        NavigationStack {
+            VStack(spacing: 0) {
+                hero
+                Spacer()
+                smokeSection
+                browseButton
+                Spacer()
+                footerButton
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.tujiBg)
+            .navigationDestination(for: NavRoute.self) { route in
+                switch route {
+                case .cards: CardsListView()
+                }
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+    }
+
+    private enum NavRoute: Hashable { case cards }
+
+    private var browseButton: some View {
+        NavigationLink(value: NavRoute.cards) {
+            HStack(spacing: Space.s2) {
+                Image(systemName: "books.vertical.fill")
+                Text("瀏覽圖鑑")
+                Image(systemName: "chevron.right")
+            }
+            .font(.system(size: 15, weight: .heavy))
+            .foregroundStyle(.tujiTeal)
+            .padding(.vertical, Space.s3)
+            .padding(.horizontal, Space.s6)
+            .background(.tujiTealSoft, in: .capsule)
+        }
+        .padding(.top, Space.s4)
     }
 
     // MARK: - Bits
