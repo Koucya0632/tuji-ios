@@ -20,6 +20,7 @@ final class AuthService {
     enum State: Equatable {
         case checking
         case signedOut
+        case guest                       // browsing without an account
         case signedIn(SessionUser)
     }
 
@@ -47,6 +48,22 @@ final class AuthService {
         }
     }
 
+    // MARK: - Guest mode
+
+    func enterGuestMode() {
+        guard case .signedOut = state else { return }
+        state = .guest
+        log.info("entered guest mode")
+    }
+
+    /// Called from MainTabsView's "登入 / 註冊" button so guest can land
+    /// on Welcome and pick a flow.
+    func exitGuestMode() {
+        guard case .guest = state else { return }
+        state = .signedOut
+        log.info("exited guest mode")
+    }
+
     // MARK: - Email
 
     func signUp(email: String, password: String, username: String) async {
@@ -61,6 +78,7 @@ final class AuthService {
             )
             if let session = resp.session {
                 state = .signedIn(SessionUser(from: session.user))
+                await syncLocalCacheToServer()
                 log.info("signup ok uid=\(session.user.id.uuidString, privacy: .public)")
             } else {
                 // Supabase dev project has email confirmation enabled by default.
@@ -80,6 +98,7 @@ final class AuthService {
         do {
             let session = try await supabase.auth.signIn(email: email, password: password)
             state = .signedIn(SessionUser(from: session.user))
+            await syncLocalCacheToServer()
             log.info("signin ok uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             self.error = friendly(error)
@@ -113,6 +132,7 @@ final class AuthService {
                 )
             )
             state = .signedIn(SessionUser(from: session.user))
+            await syncLocalCacheToServer()
             log.info("google signin ok uid=\(session.user.id.uuidString, privacy: .public)")
         } catch GoogleSignInBridge.GoogleSignInError.userCancelled {
             log.info("google signin cancelled by user")
@@ -147,6 +167,28 @@ final class AuthService {
         return session.accessToken
     }
 
+    // MARK: - Local cache sync
+
+    /// Uploads the device's anonymous favorites/learned to the server so a
+    /// new account inherits whatever the user touched in guest mode.
+    /// Best-effort — failures are logged and silently swallowed.
+    private func syncLocalCacheToServer() async {
+        let snapshot = LocalCache.shared.syncSnapshot
+        guard !snapshot.favorites.isEmpty || !snapshot.learned.isEmpty else {
+            return
+        }
+        do {
+            try await APIClient.shared.post(
+                .usersSync,
+                body: snapshot,
+                as: SyncAckResponse.self
+            )
+            log.info("synced \(snapshot.favorites.count) favs + \(snapshot.learned.count) learned to server")
+        } catch {
+            log.error("sync failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     // MARK: - Helpers
 
     private func friendly(_ err: Error) -> String {
@@ -169,4 +211,8 @@ final class AuthService {
         }
         return msg
     }
+}
+
+private struct SyncAckResponse: Decodable, Sendable {
+    let ok: Bool?
 }
