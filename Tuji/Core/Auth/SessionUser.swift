@@ -13,10 +13,10 @@ struct SessionUser: Equatable, Hashable {
     let avatar: String?
 
     init(from user: Supabase.User) {
-        id = user.id
-        email = user.email
+        self.id = user.id
+        self.email = user.email
         let meta = user.userMetadata
-        username = meta["username"]?.stringValue
-        avatar = meta["avatar"]?.stringValue
+        self.username = meta["username"]?.stringValue
+        self.avatar = meta["avatar"]?.stringValue
     }
 }

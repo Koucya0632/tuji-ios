@@ -23,7 +23,7 @@ final class OnboardingState {
     private(set) var setupDoneByUser: [String: Bool] = [:]
 
     private init() {
-        introDone = UserDefaults.standard.bool(forKey: introKey)
+        self.introDone = UserDefaults.standard.bool(forKey: introKey)
     }
 
     func setupDone(for userId: UUID) -> Bool {

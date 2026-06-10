@@ -23,7 +23,8 @@
 --operatorfunc spaced
 
 # ---------- 引用 ----------
---self remove                       # 不寫 self.foo，除非必要
+--self init-only                    # Swift 6.1 strict-concurrency 在 closures
+                                    # 需要 explicit self；只在 init 移除 self
 --selfrequired                      # 預留：強制 self 的閉包白名單
 --importgrouping testable-bottom    # @testable import 放最後
 
