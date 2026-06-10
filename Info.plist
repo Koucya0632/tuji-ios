@@ -78,5 +78,25 @@
     <string>$(TUJI_SUPABASE_URL)</string>
     <key>TUJI_SUPABASE_ANON_KEY</key>
     <string>$(TUJI_SUPABASE_ANON_KEY)</string>
+
+    <!-- Google Sign-in.
+         GIDClientID is read by GoogleSignIn SDK at init.
+         CFBundleURLTypes registers the reversed client ID so Google's
+         consent screen can redirect back into the app. -->
+    <key>GIDClientID</key>
+    <string>$(TUJI_GOOGLE_CLIENT_ID)</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>google</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>$(TUJI_GOOGLE_REVERSED_CLIENT_ID)</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
