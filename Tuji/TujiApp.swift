@@ -15,6 +15,7 @@ struct TujiApp: App {
     @State private var auth = AuthService.shared
     @State private var push = PushNotificationService.shared
     @State private var onboarding = OnboardingState.shared
+    @State private var cache = LocalCache.shared
 
     var body: some Scene {
         WindowGroup {
@@ -22,6 +23,7 @@ struct TujiApp: App {
                 .environment(auth)
                 .environment(push)
                 .environment(onboarding)
+                .environment(cache)
                 .task { await push.refreshAuthorization() }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback

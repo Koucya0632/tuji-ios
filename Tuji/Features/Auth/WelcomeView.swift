@@ -94,6 +94,14 @@ struct WelcomeView: View {
                         .foregroundStyle(.tujiInk3)
                 }
                 .padding(.top, Space.s2)
+
+                Button {
+                    auth.enterGuestMode()
+                } label: {
+                    Text("先逛逛 → 訪客模式")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.tujiInk4)
+                }
             }
             .padding(.horizontal, Space.s6)
             .padding(.bottom, Space.s8)
