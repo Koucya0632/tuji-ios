@@ -8,18 +8,22 @@
 #include? "Secrets.xcconfig"   // 用 #include?，沒有也不會 break build
 
 // ---------- App Identity ----------
+// PRODUCT_BUNDLE_IDENTIFIER / PRODUCT_NAME currently overridden by pbxproj
+// target buildSettings (Xcode defaults). To activate the variants below,
+// strip those from pbxproj. Kept here so future polish has the source.
 PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios.debug
 PRODUCT_NAME = Tuji Dev
 APP_DISPLAY_NAME = Tuji 開發
+PRODUCT_BUNDLE_PACKAGE_TYPE = APPL
 
 // ---------- Signing ----------
 CODE_SIGN_STYLE = Automatic
-DEVELOPMENT_TEAM = $(TUJI_DEV_TEAM)        // 來自 Secrets.xcconfig
+DEVELOPMENT_TEAM = $(TUJI_DEV_TEAM)
 CODE_SIGN_IDENTITY = Apple Development
 
 // ---------- Deployment ----------
-IPHONEOS_DEPLOYMENT_TARGET = 17.0
-TARGETED_DEVICE_FAMILY = 1                  // iPhone only；2 = iPad；1,2 = 通用
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
+TARGETED_DEVICE_FAMILY = 1
 SUPPORTS_MACCATALYST = NO
 SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO
 
@@ -36,22 +40,29 @@ GCC_OPTIMIZATION_LEVEL = 0
 ONLY_ACTIVE_ARCH = YES
 ASSETCATALOG_COMPILER_OPTIMIZATION = none
 
-// ---------- Endpoints（公開值，可進 repo）----------
-TUJI_BASE_URL = https:/$()/preview-tuji.vercel.app
-TUJI_SUPABASE_URL = https:/$()/$(TUJI_SUPABASE_PROJECT_DEV).supabase.co
-// ⚠️ 注意 xcconfig 把 // 視為 comment，所以 URL 用 $() 切斷
+// ---------- Info.plist (custom file, no longer synthesized) ----------
+GENERATE_INFOPLIST_FILE = NO
+INFOPLIST_FILE = Info.plist
 
-// 把以上注入到 Info.plist：在 Info.plist 寫
-//   <key>TUJI_BASE_URL</key><string>$(TUJI_BASE_URL)</string>
-// 然後在 Swift 內讀 Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL")
+// ---------- Endpoints ----------
+// W1 polish: iOS Debug hits production deploy too (no stable preview alias
+// for the iOS dev branch yet). Production is wired to dev Supabase project
+// brzllighkxleatqoozji via Vercel preview env, so tokens issued by dev
+// validate. Switch to a dedicated preview alias when iOS dev needs a
+// separate staging tier.
+TUJI_BASE_URL = https:/$()/everyday-english-picture-dictionary.vercel.app
+TUJI_SUPABASE_URL = https:/$()/$(TUJI_SUPABASE_PROJECT_DEV).supabase.co
+TUJI_SUPABASE_ANON_KEY = $(TUJI_SUPABASE_ANON_KEY_DEV)
+// ⚠️ xcconfig 把 // 視為 comment，所以 URL 用 $() 切斷
 
 // ---------- Feature flags ----------
 TUJI_ENABLE_LOG_VERBOSE = YES
-TUJI_ENABLE_DEV_OVERLAY = YES                // 右上角浮動 build/branch 資訊
-TUJI_ENABLE_RESET_BUTTON = YES               // Settings 加「清空本地」debug 按鈕
+TUJI_ENABLE_DEV_OVERLAY = YES
+TUJI_ENABLE_RESET_BUTTON = YES
 
 // ---------- Other Linker / Swift Flags ----------
 OTHER_SWIFT_FLAGS = $(inherited) -DDEBUG -DTUJI_DEV
 
-// ---------- 應用圖示變體（區分 dev / TestFlight / prod 圖示）----------
-ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Dev
+// ---------- AppIcon variant (overridden by pbxproj target until variant
+// art exists; intent preserved here) ----------
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon

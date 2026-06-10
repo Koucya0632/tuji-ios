@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Identity / version (driven by Version.xcconfig + per-config xcconfig) -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleDisplayName</key>
+    <string>$(APP_DISPLAY_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <!-- App icon name pulled from xcconfig per build flavor -->
+    <key>CFBundleIcons</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconName</key>
+            <string>$(ASSETCATALOG_COMPILER_APPICON_NAME)</string>
+        </dict>
+    </dict>
+
+    <!-- Launch + scene management (Xcode 16+ generates these automatically;
+         we replicate explicitly because GENERATE_INFOPLIST_FILE is now NO) -->
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+        <key>UIApplicationSupportsMultipleScenes</key>
+        <false/>
+    </dict>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+
+    <!-- Encryption / privacy -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+    </dict>
+
+    <!-- Bundled fonts (W1 polish — Plus Jakarta Sans + JetBrains Mono) -->
+    <key>UIAppFonts</key>
+    <array>
+        <string>PlusJakartaSans-Regular.ttf</string>
+        <string>PlusJakartaSans-SemiBold.ttf</string>
+        <string>PlusJakartaSans-Bold.ttf</string>
+        <string>PlusJakartaSans-ExtraBold.ttf</string>
+        <string>JetBrainsMono-Regular.ttf</string>
+    </array>
+
+    <!-- Tuji custom keys exposed via Bundle.main.infoDictionary -->
+    <key>TUJI_BASE_URL</key>
+    <string>$(TUJI_BASE_URL)</string>
+    <key>TUJI_SUPABASE_URL</key>
+    <string>$(TUJI_SUPABASE_URL)</string>
+    <key>TUJI_SUPABASE_ANON_KEY</key>
+    <string>$(TUJI_SUPABASE_ANON_KEY)</string>
+</dict>
+</plist>

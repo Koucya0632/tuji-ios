@@ -11,6 +11,7 @@
 PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios.beta
 PRODUCT_NAME = Tuji Beta
 APP_DISPLAY_NAME = Tuji Beta
+PRODUCT_BUNDLE_PACKAGE_TYPE = APPL
 
 // ---------- Signing ----------
 CODE_SIGN_STYLE = Manual
@@ -19,7 +20,7 @@ CODE_SIGN_IDENTITY = Apple Distribution
 PROVISIONING_PROFILE_SPECIFIER = match AppStore app.tuji.ios.beta
 
 // ---------- Deployment ----------
-IPHONEOS_DEPLOYMENT_TARGET = 17.0
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
 TARGETED_DEVICE_FAMILY = 1
 SUPPORTS_MACCATALYST = NO
 SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO
@@ -38,9 +39,14 @@ ONLY_ACTIVE_ARCH = NO
 ASSETCATALOG_COMPILER_OPTIMIZATION = space
 VALIDATE_PRODUCT = YES
 
+// ---------- Info.plist (custom file) ----------
+GENERATE_INFOPLIST_FILE = NO
+INFOPLIST_FILE = Info.plist
+
 // ---------- Endpoints ----------
-TUJI_BASE_URL = https:/$()/tuji.app
+TUJI_BASE_URL = https:/$()/everyday-english-picture-dictionary.vercel.app
 TUJI_SUPABASE_URL = https:/$()/$(TUJI_SUPABASE_PROJECT_PROD).supabase.co
+TUJI_SUPABASE_ANON_KEY = $(TUJI_SUPABASE_ANON_KEY_PROD)
 
 // ---------- Feature flags ----------
 TUJI_ENABLE_LOG_VERBOSE = NO
@@ -50,5 +56,5 @@ TUJI_ENABLE_RESET_BUTTON = NO
 // ---------- Swift Flags ----------
 OTHER_SWIFT_FLAGS = $(inherited) -DTUJI_BETA
 
-// ---------- 圖示 ----------
-ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Beta
+// ---------- 圖示（W1 沒變體，先用 AppIcon。Apple Dev 通過後改 AppIcon-Beta）----------
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon

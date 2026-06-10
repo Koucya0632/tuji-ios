@@ -10,6 +10,7 @@
 PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios
 PRODUCT_NAME = Tuji
 APP_DISPLAY_NAME = Tuji 圖記
+PRODUCT_BUNDLE_PACKAGE_TYPE = APPL
 
 // ---------- Signing ----------
 CODE_SIGN_STYLE = Manual
@@ -18,7 +19,7 @@ CODE_SIGN_IDENTITY = Apple Distribution
 PROVISIONING_PROFILE_SPECIFIER = match AppStore app.tuji.ios
 
 // ---------- Deployment ----------
-IPHONEOS_DEPLOYMENT_TARGET = 17.0
+IPHONEOS_DEPLOYMENT_TARGET = 18.0
 TARGETED_DEVICE_FAMILY = 1
 SUPPORTS_MACCATALYST = NO
 SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO
@@ -40,9 +41,14 @@ DEAD_CODE_STRIPPING = YES
 STRIP_INSTALLED_PRODUCT = YES
 STRIP_SWIFT_SYMBOLS = YES
 
+// ---------- Info.plist (custom file) ----------
+GENERATE_INFOPLIST_FILE = NO
+INFOPLIST_FILE = Info.plist
+
 // ---------- Endpoints ----------
-TUJI_BASE_URL = https:/$()/tuji.app
+TUJI_BASE_URL = https:/$()/everyday-english-picture-dictionary.vercel.app
 TUJI_SUPABASE_URL = https:/$()/$(TUJI_SUPABASE_PROJECT_PROD).supabase.co
+TUJI_SUPABASE_ANON_KEY = $(TUJI_SUPABASE_ANON_KEY_PROD)
 
 // ---------- Feature flags ----------
 TUJI_ENABLE_LOG_VERBOSE = NO
