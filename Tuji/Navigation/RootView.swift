@@ -1,41 +1,58 @@
-// Top-level state switcher. Drives Splash → Welcome → (Push permission?)
-// → MainTabs based on AuthService.state + PushNotificationService.
+// Top-level state switcher.
+//
+//   App launch
+//     ├─ AuthService.checking         → SplashView
+//     ├─ AuthService.signedOut
+//     │    ├─ !introDone              → OnboardingFlow
+//     │    └─  introDone              → WelcomeView
+//     └─ AuthService.signedIn(user)
+//          ├─ !setupDone(user.id)     → SetupView
+//          ├─ !push.hasBeenPrompted   → PushPermissionView
+//          └─ everything ready        → MainTabsView
 
 import SwiftUI
 
 struct RootView: View {
     @Environment(AuthService.self) private var auth
     @Environment(PushNotificationService.self) private var push
+    @Environment(OnboardingState.self) private var onboarding
 
     var body: some View {
-        Group {
-            switch auth.state {
-            case .checking:
-                SplashView()
-            case .signedOut:
+        content
+            .task { await auth.restoreSession() }
+            .animation(.easeInOut(duration: 0.25), value: stateKey)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch auth.state {
+        case .checking:
+            SplashView()
+
+        case .signedOut:
+            if onboarding.introDone {
                 WelcomeView()
-            case .signedIn(let user):
-                if push.hasBeenPrompted {
-                    MainTabsView(user: user)
-                } else {
-                    PushPermissionView(onDone: {
-                        // PushNotificationService marks `prompted = true`
-                        // before this fires; the next render lands on
-                        // MainTabsView automatically because of the
-                        // hasBeenPrompted check above.
-                    })
-                }
+            } else {
+                OnboardingFlow()
+            }
+
+        case .signedIn(let user):
+            if !onboarding.setupDone(for: user.id) {
+                SetupView(userId: user.id, onDone: {})
+            } else if !push.hasBeenPrompted {
+                PushPermissionView(onDone: {})
+            } else {
+                MainTabsView(user: user)
             }
         }
-        .task { await auth.restoreSession() }
-        .animation(.easeInOut(duration: 0.25), value: stateKey)
     }
 
     private var stateKey: String {
         switch auth.state {
         case .checking: "checking"
-        case .signedOut: "signedOut"
-        case .signedIn(let u): "signedIn-\(u.id)-\(push.hasBeenPrompted)"
+        case .signedOut: "signedOut-\(onboarding.introDone)"
+        case .signedIn(let u):
+            "signedIn-\(u.id)-setup\(onboarding.setupDone(for: u.id))-push\(push.hasBeenPrompted)"
         }
     }
 }
@@ -44,4 +61,5 @@ struct RootView: View {
     RootView()
         .environment(AuthService.shared)
         .environment(PushNotificationService.shared)
+        .environment(OnboardingState.shared)
 }

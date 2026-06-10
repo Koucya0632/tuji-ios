@@ -1,5 +1,5 @@
-// App entry. Wires AuthService + PushNotificationService into the
-// environment so any view can read state via @Environment(...).
+// App entry. Wires AuthService + PushNotificationService + OnboardingState
+// into the environment so any view can read state via @Environment(...).
 //
 // PushAppDelegate is bridged in via @UIApplicationDelegateAdaptor — it's
 // the only way to receive APNs registration callbacks from a SwiftUI
@@ -14,12 +14,14 @@ struct TujiApp: App {
 
     @State private var auth = AuthService.shared
     @State private var push = PushNotificationService.shared
+    @State private var onboarding = OnboardingState.shared
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(auth)
                 .environment(push)
+                .environment(onboarding)
                 .task { await push.refreshAuthorization() }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback
