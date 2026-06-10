@@ -30,21 +30,23 @@ final class LocalCache {
 
     private init() {
         let d = UserDefaults.standard
-        self.favoriteIds = Set((d.array(forKey: favsKey) as? [String]) ?? [])
-        self.learnedIds = Set((d.array(forKey: learnedKey) as? [String]) ?? [])
-        self.recentSearches = (d.array(forKey: recentKey) as? [String]) ?? []
+        favoriteIds = Set((d.array(forKey: favsKey) as? [String]) ?? [])
+        learnedIds = Set((d.array(forKey: learnedKey) as? [String]) ?? [])
+        recentSearches = (d.array(forKey: recentKey) as? [String]) ?? []
         if let existing = d.string(forKey: sessionKey) {
-            self.sessionId = existing
+            sessionId = existing
         } else {
             let new = UUID().uuidString
             d.set(new, forKey: sessionKey)
-            self.sessionId = new
+            sessionId = new
         }
     }
 
     // MARK: - Favorites / Learned
 
-    func isFavorite(_ id: String) -> Bool { favoriteIds.contains(id) }
+    func isFavorite(_ id: String) -> Bool {
+        favoriteIds.contains(id)
+    }
 
     func toggleFavorite(_ id: String) {
         if favoriteIds.contains(id) {
@@ -109,7 +111,7 @@ final class LocalCache {
     }
 }
 
-struct SyncPayload: Codable, Sendable {
+struct SyncPayload: Codable {
     let favorites: [String]
     let learned: [String]
 }

@@ -42,7 +42,7 @@ enum GoogleSignInBridge {
                 if let error {
                     let ns = error as NSError
                     // User-cancelled is GIDSignInError.canceled (-5).
-                    if ns.domain == "com.google.GIDSignIn" && ns.code == -5 {
+                    if ns.domain == "com.google.GIDSignIn", ns.code == -5 {
                         cont.resume(throwing: GoogleSignInError.userCancelled)
                     } else {
                         cont.resume(throwing: error)

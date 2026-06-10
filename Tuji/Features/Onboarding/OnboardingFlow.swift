@@ -28,7 +28,7 @@ struct OnboardingFlow: View {
             artwork: .streak,
             title: "看見自己變強",
             lines: ["每天進步一點", "累積成自己的圖鑑"]
-        ),
+        )
     ]
 
     var body: some View {
@@ -64,7 +64,6 @@ struct OnboardingFlow: View {
 
     // MARK: - Bits
 
-    @ViewBuilder
     private var topBar: some View {
         HStack {
             Spacer()
@@ -237,7 +236,7 @@ private struct OptionRow: View {
         .padding(.vertical, Space.s3)
         .padding(.horizontal, Space.s4)
         .background(
-            (state == .selected ? Color.tujiTealSoft : Color.tujiCard),
+            state == .selected ? Color.tujiTealSoft : Color.tujiCard,
             in: .rect(cornerRadius: Radius.md)
         )
         .overlay(

@@ -28,21 +28,25 @@ struct SignupView: View {
                         .font(.tujiH2)
                         .foregroundStyle(.tujiInk)
 
-                    field(label: "Email",
-                          text: $email,
-                          placeholder: "you@example.com",
-                          keyboard: .emailAddress,
-                          contentType: .emailAddress,
-                          capitalize: false)
+                    field(
+                        label: "Email",
+                        text: $email,
+                        placeholder: "you@example.com",
+                        keyboard: .emailAddress,
+                        contentType: .emailAddress,
+                        capitalize: false
+                    )
 
                     passwordField
 
-                    field(label: "暱稱",
-                          text: $username,
-                          placeholder: "Rex",
-                          keyboard: .default,
-                          contentType: .username,
-                          capitalize: true)
+                    field(
+                        label: "暱稱",
+                        text: $username,
+                        placeholder: "Rex",
+                        keyboard: .default,
+                        contentType: .username,
+                        capitalize: true
+                    )
 
                     if let err = auth.error {
                         HStack(alignment: .top, spacing: Space.s2) {
@@ -134,7 +138,9 @@ struct SignupView: View {
         keyboard: UIKeyboardType,
         contentType: UITextContentType,
         capitalize: Bool
-    ) -> some View {
+    )
+        -> some View
+    {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text(label)
                 .font(.system(size: 13, weight: .bold))

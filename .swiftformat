@@ -23,7 +23,10 @@
 --operatorfunc spaced
 
 # ---------- 引用 ----------
---self remove                       # 不寫 self.foo，除非必要
+# redundantSelf disabled below — Swift 6.1 strict-concurrency requires
+# explicit self in any closure that captures instance state (including
+# OSLog Logger's autoclosure for message interpolation). Letting
+# SwiftFormat touch self causes ping-pong with the compiler.
 --selfrequired                      # 預留：強制 self 的閉包白名單
 --importgrouping testable-bottom    # @testable import 放最後
 
@@ -58,7 +61,9 @@
 --exponentgrouping disabled
 
 # ---------- 修飾詞順序（對齊 SwiftLint modifier_order）----------
---modifierorder public,override,private(set),final,@MainActor
+# @MainActor / nonisolated belong in attribute order, not modifier order.
+# SwiftFormat's modifierorder takes Swift access/sharing modifiers only.
+--modifierorder public,override,private(set),final
 
 # ---------- 啟用 / 停用個別規則 ----------
 # 不啟用：sortImports（與 SwiftLint sorted_imports 規則由 SwiftLint 管）
@@ -81,7 +86,6 @@
     redundantPattern,                                                          \
     redundantRawValues,                                                        \
     redundantReturn,                                                           \
-    redundantSelf,                                                             \
     redundantType,                                                             \
     redundantVoidReturnType,                                                   \
     semicolons,                                                                \
@@ -112,7 +116,8 @@
     sortImports,                                                               \
     isEmpty,                                                                   \
     wrapEnumCases,                                                             \
-    blockComments
+    blockComments,                                                             \
+    redundantSelf
 
 # ---------- 排除整檔的指令（必要時加註解）----------
 # 在檔案頂部寫：

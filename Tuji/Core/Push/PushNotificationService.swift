@@ -116,12 +116,12 @@ final class PushNotificationService {
     }
 }
 
-private struct PushTokenPayload: Encodable, Sendable {
+private struct PushTokenPayload: Encodable {
     let token: String
     let deviceId: String
     let platform: String
 }
 
-private struct AckResponse: Decodable, Sendable {
+private struct AckResponse: Decodable {
     let ok: Bool?
 }

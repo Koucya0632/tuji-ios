@@ -7,7 +7,7 @@ struct BBtn: View {
     var bg: Color = .tujiYellow
     var fg: Color = .tujiInk
     var fullWidth: Bool = false
-    var icon: String? = nil
+    var icon: String?
     let action: () -> Void
 
     @State private var pressed = false

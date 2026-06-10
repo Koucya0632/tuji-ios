@@ -4,7 +4,7 @@
 
 import Foundation
 
-struct UserSettings: Codable, Sendable, Equatable {
+struct UserSettings: Codable, Equatable {
     var dailyGoal: Int
     var accent: String
     var showZh: Bool
@@ -26,7 +26,7 @@ struct UserSettings: Codable, Sendable, Equatable {
     )
 }
 
-struct SaveSettingsResponse: Decodable, Sendable {
+struct SaveSettingsResponse: Decodable {
     let ok: Bool?
     let settings: UserSettings?
 }

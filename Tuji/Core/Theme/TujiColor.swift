@@ -4,27 +4,27 @@
 import SwiftUI
 
 extension Color {
-    static let tujiBg       = Color(hex: 0xFFFCF5)
-    static let tujiBgInk    = Color(hex: 0x0F1A1A)
-    static let tujiCard     = Color.white
-    static let tujiInk      = Color(hex: 0x0F1A1A)
-    static let tujiInk2     = Color(hex: 0x3F4F4F)
-    static let tujiInk3     = Color(hex: 0x7C8C8C)
-    static let tujiInk4     = Color(hex: 0xB5C2C2)
-    static let tujiTeal     = Color(hex: 0x006F72)
+    static let tujiBg = Color(hex: 0xFFFCF5)
+    static let tujiBgInk = Color(hex: 0x0F1A1A)
+    static let tujiCard = Color.white
+    static let tujiInk = Color(hex: 0x0F1A1A)
+    static let tujiInk2 = Color(hex: 0x3F4F4F)
+    static let tujiInk3 = Color(hex: 0x7C8C8C)
+    static let tujiInk4 = Color(hex: 0xB5C2C2)
+    static let tujiTeal = Color(hex: 0x006F72)
     static let tujiTealDark = Color(hex: 0x004A4C)
     static let tujiTealSoft = Color(hex: 0xD4ECEC)
-    static let tujiYellow   = Color(hex: 0xFFD24A)
-    static let tujiCoral    = Color(hex: 0xFF6F4D)
-    static let tujiPink     = Color(hex: 0xFFCDD2)
-    static let tujiGreen    = Color(hex: 0x4FAE6F)
+    static let tujiYellow = Color(hex: 0xFFD24A)
+    static let tujiCoral = Color(hex: 0xFF6F4D)
+    static let tujiPink = Color(hex: 0xFFCDD2)
+    static let tujiGreen = Color(hex: 0x4FAE6F)
 
     init(hex: UInt32, alpha: Double = 1.0) {
         self.init(
             .sRGB,
-            red:   Double((hex >> 16) & 0xFF) / 255,
-            green: Double((hex >>  8) & 0xFF) / 255,
-            blue:  Double( hex        & 0xFF) / 255,
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255,
             opacity: alpha
         )
     }
@@ -43,22 +43,63 @@ extension Color {
     }
 }
 
-// ShapeStyle-side aliases so `.background(.tujiBg)`, `.foregroundStyle(.tujiTeal)`
-// etc. work via leading-dot inference (mirrors how SwiftUI exposes `.red`,
-// `.blue` for built-in colors).
+/// ShapeStyle-side aliases so `.background(.tujiBg)`, `.foregroundStyle(.tujiTeal)`
+/// etc. work via leading-dot inference (mirrors how SwiftUI exposes `.red`,
+/// `.blue` for built-in colors).
 extension ShapeStyle where Self == Color {
-    static var tujiBg: Color        { .tujiBg }
-    static var tujiBgInk: Color     { .tujiBgInk }
-    static var tujiCard: Color      { .tujiCard }
-    static var tujiInk: Color       { .tujiInk }
-    static var tujiInk2: Color      { .tujiInk2 }
-    static var tujiInk3: Color      { .tujiInk3 }
-    static var tujiInk4: Color      { .tujiInk4 }
-    static var tujiTeal: Color      { .tujiTeal }
-    static var tujiTealDark: Color  { .tujiTealDark }
-    static var tujiTealSoft: Color  { .tujiTealSoft }
-    static var tujiYellow: Color    { .tujiYellow }
-    static var tujiCoral: Color     { .tujiCoral }
-    static var tujiPink: Color      { .tujiPink }
-    static var tujiGreen: Color     { .tujiGreen }
+    static var tujiBg: Color {
+        .tujiBg
+    }
+
+    static var tujiBgInk: Color {
+        .tujiBgInk
+    }
+
+    static var tujiCard: Color {
+        .tujiCard
+    }
+
+    static var tujiInk: Color {
+        .tujiInk
+    }
+
+    static var tujiInk2: Color {
+        .tujiInk2
+    }
+
+    static var tujiInk3: Color {
+        .tujiInk3
+    }
+
+    static var tujiInk4: Color {
+        .tujiInk4
+    }
+
+    static var tujiTeal: Color {
+        .tujiTeal
+    }
+
+    static var tujiTealDark: Color {
+        .tujiTealDark
+    }
+
+    static var tujiTealSoft: Color {
+        .tujiTealSoft
+    }
+
+    static var tujiYellow: Color {
+        .tujiYellow
+    }
+
+    static var tujiCoral: Color {
+        .tujiCoral
+    }
+
+    static var tujiPink: Color {
+        .tujiPink
+    }
+
+    static var tujiGreen: Color {
+        .tujiGreen
+    }
 }
