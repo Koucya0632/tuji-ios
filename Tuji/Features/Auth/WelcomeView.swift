@@ -6,6 +6,7 @@ import SwiftUI
 struct WelcomeView: View {
     enum Route: Hashable { case signup, signin }
 
+    @Environment(AuthService.self) private var auth
     @State private var path: [Route] = []
 
     var body: some View {
@@ -45,13 +46,34 @@ struct WelcomeView: View {
                     fg: .white,
                     note: "（待 Apple Developer Program 通過）"
                 )
-                disabledOAuthBtn(
-                    title: "繼續使用 Google",
-                    icon: "g.circle",
-                    bg: .tujiCard,
-                    fg: .tujiInk,
-                    note: "（W2 跟進中）"
-                )
+
+                Button {
+                    Task { await auth.signInWithGoogle() }
+                } label: {
+                    HStack(spacing: Space.s2) {
+                        Image(systemName: "g.circle.fill")
+                            .foregroundStyle(.tujiInk)
+                        Text(auth.loading ? "Google 登入中..." : "繼續使用 Google")
+                            .foregroundStyle(.tujiInk)
+                    }
+                    .font(.system(size: 15, weight: .heavy))
+                    .padding(.vertical, Space.s4)
+                    .frame(maxWidth: .infinity)
+                    .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.lg)
+                            .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                    )
+                }
+                .disabled(auth.loading)
+
+                if let err = auth.error {
+                    Text(err)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiCoral)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Space.s4)
+                }
 
                 Button {
                     path.append(.signup)

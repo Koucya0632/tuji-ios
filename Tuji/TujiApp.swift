@@ -2,6 +2,7 @@
 // auth state via @Environment(AuthService.self).
 
 import SwiftUI
+import GoogleSignIn
 
 @main
 struct TujiApp: App {
@@ -11,6 +12,12 @@ struct TujiApp: App {
         WindowGroup {
             RootView()
                 .environment(auth)
+                .onOpenURL { url in
+                    // ASWebAuthenticationSession captures the OAuth callback
+                    // internally, but forward here as a safety net for any
+                    // out-of-band URL the system delivers.
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }
