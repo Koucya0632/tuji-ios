@@ -16,6 +16,8 @@ enum Endpoint: Sendable {
     case usersSync
     case usersProgress
     case usersDeleteAccount
+    case usersPushToken
+    case usersPushTokenDelete(deviceId: String)
 
     // MARK: - Study (auth-protected)
 
@@ -45,6 +47,8 @@ enum Endpoint: Sendable {
         case .usersSync:             "/api/users/sync"
         case .usersProgress:         "/api/users/progress"
         case .usersDeleteAccount:    "/api/users/delete-account"
+        case .usersPushToken,
+             .usersPushTokenDelete:  "/api/users/push-token"
         case .studyQueue:            "/api/study/queue"
         case .studyAnswer:           "/api/study/answer"
         case .studyStats:            "/api/study/stats"
@@ -64,6 +68,8 @@ enum Endpoint: Sendable {
             ]
         case .search(let q):
             return [URLQueryItem(name: "q", value: q)]
+        case .usersPushTokenDelete(let deviceId):
+            return [URLQueryItem(name: "deviceId", value: deviceId)]
         default:
             return []
         }
