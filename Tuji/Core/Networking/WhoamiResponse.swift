@@ -9,12 +9,12 @@
 
 import Foundation
 
-struct WhoamiResponse: Decodable, Sendable {
+struct WhoamiResponse: Decodable {
     let userId: String?
     let source: Source
     let headerWasSet: Bool
 
-    enum Source: String, Decodable, Sendable {
+    enum Source: String, Decodable {
         case none, bearer, cookie
     }
 }

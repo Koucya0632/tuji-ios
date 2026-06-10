@@ -17,7 +17,9 @@ struct MainTabsView: View {
     @State private var pinging = false
     @State private var ping: Result<WhoamiResponse, Error>?
 
-    private var isGuest: Bool { user == nil }
+    private var isGuest: Bool {
+        user == nil
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -88,7 +90,6 @@ struct MainTabsView: View {
         }
     }
 
-    @ViewBuilder
     private var footerButton: some View {
         Button {
             if isGuest {
@@ -103,7 +104,7 @@ struct MainTabsView: View {
                 .padding(.vertical, Space.s3)
                 .padding(.horizontal, Space.s5)
                 .background(
-                    (isGuest ? Color.tujiTealSoft : .tujiCoral.opacity(0.08)),
+                    isGuest ? Color.tujiTealSoft : .tujiCoral.opacity(0.08),
                     in: .rect(cornerRadius: Radius.pill)
                 )
         }
@@ -113,7 +114,7 @@ struct MainTabsView: View {
     @ViewBuilder
     private func resultCard(_ result: Result<WhoamiResponse, Error>) -> some View {
         switch result {
-        case .success(let r):
+        case let .success(r):
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiGreen)
@@ -136,7 +137,7 @@ struct MainTabsView: View {
             )
             .padding(.horizontal, Space.s6)
 
-        case .failure(let e):
+        case let .failure(e):
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.tujiCoral)
@@ -226,8 +227,13 @@ extension SessionUser {
     }
 
     private init(id: UUID, email: String?, username: String?, avatar: String?) {
-        self.id = id; self.email = email; self.username = username; self.avatar = avatar
+        self.id = id
+        self.email = email
+        self.username = username
+        self.avatar = avatar
     }
 
-    private struct StubUser: Codable { let id: UUID; let email: String? }
+    private struct StubUser: Codable { let id: UUID
+        let email: String?
+    }
 }

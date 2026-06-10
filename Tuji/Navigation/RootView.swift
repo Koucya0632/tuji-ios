@@ -41,7 +41,7 @@ struct RootView: View {
         case .guest:
             MainTabsView(user: nil)
 
-        case .signedIn(let user):
+        case let .signedIn(user):
             if !onboarding.setupDone(for: user.id) {
                 SetupView(userId: user.id, onDone: {})
             } else if !push.hasBeenPrompted {
@@ -57,7 +57,7 @@ struct RootView: View {
         case .checking: "checking"
         case .signedOut: "signedOut-\(onboarding.introDone)"
         case .guest: "guest"
-        case .signedIn(let u):
+        case let .signedIn(u):
             "signedIn-\(u.id)-setup\(onboarding.setupDone(for: u.id))-push\(push.hasBeenPrompted)"
         }
     }

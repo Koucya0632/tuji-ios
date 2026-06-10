@@ -110,7 +110,6 @@ struct WelcomeView: View {
         .background(.tujiBg)
     }
 
-    @ViewBuilder
     private func disabledOAuthBtn(title: String, icon: String, bg: Color, fg: Color, note: String) -> some View {
         VStack(spacing: 4) {
             HStack(spacing: Space.s2) {

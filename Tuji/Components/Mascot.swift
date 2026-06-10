@@ -28,12 +28,12 @@ struct Mascot: View {
 
     private var symbolName: String {
         switch pose {
-        case .face:  "cat.fill"
-        case .wave:  "hand.wave.fill"
+        case .face: "cat.fill"
+        case .wave: "hand.wave.fill"
         case .think: "questionmark.bubble.fill"
         case .cheer: "star.fill"
         case .sleep: "moon.zzz.fill"
-        case .peek:  "eyes"
+        case .peek: "eyes"
         }
     }
 }

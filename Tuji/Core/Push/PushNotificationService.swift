@@ -58,7 +58,7 @@ final class PushNotificationService {
     func refreshAuthorization() async {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         authorization = mapStatus(settings.authorizationStatus)
-        log.info("authorization status=\(self.authorization.rawValue, privacy: .public)")
+        log.info("authorization status=\(authorization.rawValue, privacy: .public)")
     }
 
     /// Requests notification permission. If granted, also triggers APNs
@@ -72,7 +72,7 @@ final class PushNotificationService {
             if granted {
                 UIApplication.shared.registerForRemoteNotifications()
             }
-            log.info("requestAuthorization → \(self.authorization.rawValue, privacy: .public)")
+            log.info("requestAuthorization → \(authorization.rawValue, privacy: .public)")
         } catch {
             authorization = .denied
             log.error("requestAuthorization failed: \(error.localizedDescription, privacy: .public)")
@@ -89,7 +89,7 @@ final class PushNotificationService {
                 body: PushTokenPayload(token: token, deviceId: deviceId, platform: "ios"),
                 as: AckResponse.self
             )
-            log.info("APNs token uploaded for device=\(self.deviceId, privacy: .public)")
+            log.info("APNs token uploaded for device=\(deviceId, privacy: .public)")
         } catch {
             log.error("APNs token upload failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -100,7 +100,7 @@ final class PushNotificationService {
     func unregister() async {
         do {
             try await APIClient.shared.delete(.usersPushTokenDelete(deviceId: deviceId))
-            log.info("APNs token unregistered for device=\(self.deviceId, privacy: .public)")
+            log.info("APNs token unregistered for device=\(deviceId, privacy: .public)")
         } catch {
             log.info("unregister dropped: \(error.localizedDescription, privacy: .public)")
         }
@@ -116,12 +116,12 @@ final class PushNotificationService {
     }
 }
 
-private struct PushTokenPayload: Encodable, Sendable {
+private struct PushTokenPayload: Encodable {
     let token: String
     let deviceId: String
     let platform: String
 }
 
-private struct AckResponse: Decodable, Sendable {
+private struct AckResponse: Decodable {
     let ok: Bool?
 }

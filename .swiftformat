@@ -58,7 +58,9 @@
 --exponentgrouping disabled
 
 # ---------- 修飾詞順序（對齊 SwiftLint modifier_order）----------
---modifierorder public,override,private(set),final,@MainActor
+# @MainActor / nonisolated belong in attribute order, not modifier order.
+# SwiftFormat's modifierorder takes Swift access/sharing modifiers only.
+--modifierorder public,override,private(set),final
 
 # ---------- 啟用 / 停用個別規則 ----------
 # 不啟用：sortImports（與 SwiftLint sorted_imports 規則由 SwiftLint 管）

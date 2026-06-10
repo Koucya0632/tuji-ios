@@ -9,5 +9,7 @@ struct TujiCardShadow: ViewModifier {
 }
 
 extension View {
-    func tujiCardShadow() -> some View { modifier(TujiCardShadow()) }
+    func tujiCardShadow() -> some View {
+        modifier(TujiCardShadow())
+    }
 }

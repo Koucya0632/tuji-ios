@@ -5,7 +5,7 @@
 
 import Foundation
 
-enum Endpoint: Sendable {
+enum Endpoint {
     // MARK: - Auth-protected user endpoints
 
     case usersMe
@@ -39,39 +39,39 @@ enum Endpoint: Sendable {
 
     var path: String {
         switch self {
-        case .usersMe:               "/api/users/me"
-        case .usersProfile:          "/api/users/profile"
-        case .usersSettings:         "/api/users/settings"
-        case .usersFavorites:        "/api/users/favorites"
-        case .usersLearned:          "/api/users/learned"
-        case .usersSync:             "/api/users/sync"
-        case .usersProgress:         "/api/users/progress"
-        case .usersDeleteAccount:    "/api/users/delete-account"
+        case .usersMe: "/api/users/me"
+        case .usersProfile: "/api/users/profile"
+        case .usersSettings: "/api/users/settings"
+        case .usersFavorites: "/api/users/favorites"
+        case .usersLearned: "/api/users/learned"
+        case .usersSync: "/api/users/sync"
+        case .usersProgress: "/api/users/progress"
+        case .usersDeleteAccount: "/api/users/delete-account"
         case .usersPushToken,
-             .usersPushTokenDelete:  "/api/users/push-token"
-        case .studyQueue:            "/api/study/queue"
-        case .studyAnswer:           "/api/study/answer"
-        case .studyStats:            "/api/study/stats"
-        case .search:                "/api/search"
-        case .events:                "/api/events"
-        case .word(let id):          "/api/words/\(id)"
-        case .smokeWhoami:           "/api/test_smoke/whoami"
+             .usersPushTokenDelete: "/api/users/push-token"
+        case .studyQueue: "/api/study/queue"
+        case .studyAnswer: "/api/study/answer"
+        case .studyStats: "/api/study/stats"
+        case .search: "/api/search"
+        case .events: "/api/events"
+        case let .word(id): "/api/words/\(id)"
+        case .smokeWhoami: "/api/test_smoke/whoami"
         }
     }
 
     var queryItems: [URLQueryItem] {
         switch self {
-        case .studyQueue(let mode, let limit):
-            return [
+        case let .studyQueue(mode, limit):
+            [
                 URLQueryItem(name: "mode", value: mode),
-                URLQueryItem(name: "limit", value: String(limit)),
+                URLQueryItem(name: "limit", value: String(limit))
             ]
-        case .search(let q):
-            return [URLQueryItem(name: "q", value: q)]
-        case .usersPushTokenDelete(let deviceId):
-            return [URLQueryItem(name: "deviceId", value: deviceId)]
+        case let .search(q):
+            [URLQueryItem(name: "q", value: q)]
+        case let .usersPushTokenDelete(deviceId):
+            [URLQueryItem(name: "deviceId", value: deviceId)]
         default:
-            return []
+            []
         }
     }
 

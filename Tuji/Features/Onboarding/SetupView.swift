@@ -22,7 +22,9 @@ struct SetupView: View {
         case beginner = "初學"
         case basic = "基礎"
         case advanced = "進階"
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
     }
 
     private let allTopics = ["廚房", "生活", "辦公", "旅行", "學校"]
@@ -103,8 +105,7 @@ struct SetupView: View {
 
     // MARK: - Bits
 
-    @ViewBuilder
-    private func section<C: View>(title: String, @ViewBuilder content: () -> C) -> some View {
+    private func section(title: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text(title)
                 .font(.tujiOverline)

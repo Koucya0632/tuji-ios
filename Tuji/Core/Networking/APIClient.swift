@@ -23,12 +23,13 @@ final class APIClient {
         self.urlSession = urlSession
 
         if let str = Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL") as? String,
-           let url = URL(string: str) {
-            self.baseURL = url
+           let url = URL(string: str)
+        {
+            baseURL = url
         } else {
             // Last-resort fallback. SmokeTest used the same one.
             // swiftlint:disable:next force_unwrapping
-            self.baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
+            baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
             log.error("TUJI_BASE_URL missing from Info.plist; falling back to prod")
         }
     }
@@ -41,23 +42,29 @@ final class APIClient {
     }
 
     @discardableResult
-    func post<B: Encodable, T: Decodable>(
-        _ ep: Endpoint, body: B, as: T.Type = T.self
-    ) async throws -> T {
+    func post<T: Decodable>(
+        _ ep: Endpoint, body: some Encodable, as: T.Type = T.self
+    ) async throws
+        -> T
+    {
         try await request(ep, method: "POST", body: body, decodeAs: T.self)
     }
 
     @discardableResult
-    func put<B: Encodable, T: Decodable>(
-        _ ep: Endpoint, body: B, as: T.Type = T.self
-    ) async throws -> T {
+    func put<T: Decodable>(
+        _ ep: Endpoint, body: some Encodable, as: T.Type = T.self
+    ) async throws
+        -> T
+    {
         try await request(ep, method: "PUT", body: body, decodeAs: T.self)
     }
 
     @discardableResult
-    func patch<B: Encodable, T: Decodable>(
-        _ ep: Endpoint, body: B, as: T.Type = T.self
-    ) async throws -> T {
+    func patch<T: Decodable>(
+        _ ep: Endpoint, body: some Encodable, as: T.Type = T.self
+    ) async throws
+        -> T
+    {
         try await request(ep, method: "PATCH", body: body, decodeAs: T.self)
     }
 
@@ -67,32 +74,39 @@ final class APIClient {
 
     /// Best-effort POST. Used for analytics where dropping events is
     /// preferable to UI lag or surfacing errors.
-    func fireAndForget<B: Encodable & Sendable>(_ ep: Endpoint, body: B) async {
+    func fireAndForget(_ ep: Endpoint, body: some Encodable & Sendable) async {
         do {
             _ = try await request(ep, method: "POST", body: body, decodeAs: Empty.self)
         } catch {
-            log.info("fireAndForget \(ep.path, privacy: .public) dropped: \(error.localizedDescription, privacy: .public)")
+            log
+                .info(
+                    "fireAndForget \(ep.path, privacy: .public) dropped: \(error.localizedDescription, privacy: .public)"
+                )
         }
     }
 
     // MARK: - Core
 
-    private func request<B: Encodable, T: Decodable>(
+    private func request<T: Decodable>(
         _ ep: Endpoint,
         method: String,
-        body: B?,
+        body: (some Encodable)?,
         decodeAs: T.Type
-    ) async throws -> T {
+    ) async throws
+        -> T
+    {
         let req = try await buildRequest(ep, method: method, body: body, retryingAfter401: false)
         return try await execute(req, ep: ep, method: method, body: body, decodeAs: T.self)
     }
 
-    private func buildRequest<B: Encodable>(
+    private func buildRequest(
         _ ep: Endpoint,
         method: String,
-        body: B?,
+        body: (some Encodable)?,
         retryingAfter401: Bool
-    ) async throws -> URLRequest {
+    ) async throws
+        -> URLRequest
+    {
         var components = URLComponents(
             url: baseURL.appendingPathComponent(ep.path),
             resolvingAgainstBaseURL: false
@@ -120,13 +134,15 @@ final class APIClient {
         return req
     }
 
-    private func execute<B: Encodable, T: Decodable>(
+    private func execute<T: Decodable>(
         _ req: URLRequest,
         ep: Endpoint,
         method: String,
-        body: B?,
+        body: (some Encodable)?,
         decodeAs: T.Type
-    ) async throws -> T {
+    ) async throws
+        -> T
+    {
         log.info("\(method, privacy: .public) \(ep.path, privacy: .public)")
         let data: Data
         let resp: URLResponse
@@ -171,4 +187,4 @@ final class APIClient {
 }
 
 /// Stand-in for endpoints that take no body or return no body.
-struct Empty: Codable, Sendable {}
+struct Empty: Codable {}

@@ -12,7 +12,9 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, Sendable {
     func application(
         _: UIApplication,
         didFinishLaunchingWithOptions _: [UIApplication.LaunchOptionsKey: Any]? = nil
-    ) -> Bool {
+    )
+        -> Bool
+    {
         true
     }
 

@@ -20,7 +20,7 @@ final class AuthService {
     enum State: Equatable {
         case checking
         case signedOut
-        case guest                       // browsing without an account
+        case guest // browsing without an account
         case signedIn(SessionUser)
     }
 
@@ -151,7 +151,7 @@ final class AuthService {
         async let unregisterPush: Void = PushNotificationService.shared.unregister()
 
         try? await supabase.auth.signOut()
-        GoogleSignInBridge.signOut()       // clears cached Google credentials too
+        GoogleSignInBridge.signOut() // clears cached Google credentials too
 
         _ = await unregisterPush
 
@@ -205,14 +205,15 @@ final class AuthService {
         if msg.localizedCaseInsensitiveContains("password should be") {
             return "密碼太短（至少 8 字）"
         }
-        if msg.localizedCaseInsensitiveContains("email address") &&
-           msg.localizedCaseInsensitiveContains("invalid") {
+        if msg.localizedCaseInsensitiveContains("email address"),
+           msg.localizedCaseInsensitiveContains("invalid")
+        {
             return "Email 格式或網域不被接受"
         }
         return msg
     }
 }
 
-private struct SyncAckResponse: Decodable, Sendable {
+private struct SyncAckResponse: Decodable {
     let ok: Bool?
 }
