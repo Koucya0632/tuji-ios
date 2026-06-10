@@ -25,11 +25,11 @@ final class APIClient {
         if let str = Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL") as? String,
            let url = URL(string: str)
         {
-            self.baseURL = url
+            baseURL = url
         } else {
             // Last-resort fallback. SmokeTest used the same one.
             // swiftlint:disable:next force_unwrapping
-            self.baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
+            baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
             log.error("TUJI_BASE_URL missing from Info.plist; falling back to prod")
         }
     }

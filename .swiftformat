@@ -23,8 +23,10 @@
 --operatorfunc spaced
 
 # ---------- 引用 ----------
---self init-only                    # Swift 6.1 strict-concurrency 在 closures
-                                    # 需要 explicit self；只在 init 移除 self
+# redundantSelf disabled below — Swift 6.1 strict-concurrency requires
+# explicit self in any closure that captures instance state (including
+# OSLog Logger's autoclosure for message interpolation). Letting
+# SwiftFormat touch self causes ping-pong with the compiler.
 --selfrequired                      # 預留：強制 self 的閉包白名單
 --importgrouping testable-bottom    # @testable import 放最後
 
@@ -84,7 +86,6 @@
     redundantPattern,                                                          \
     redundantRawValues,                                                        \
     redundantReturn,                                                           \
-    redundantSelf,                                                             \
     redundantType,                                                             \
     redundantVoidReturnType,                                                   \
     semicolons,                                                                \
@@ -115,7 +116,8 @@
     sortImports,                                                               \
     isEmpty,                                                                   \
     wrapEnumCases,                                                             \
-    blockComments
+    blockComments,                                                             \
+    redundantSelf
 
 # ---------- 排除整檔的指令（必要時加註解）----------
 # 在檔案頂部寫：
