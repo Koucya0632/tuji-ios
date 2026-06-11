@@ -18,28 +18,33 @@ struct WordDetailView: View {
     @State private var error: Error?
 
     var body: some View {
-        ScrollView {
-            if let word {
-                content(word)
-            } else if let error {
-                errorState(error)
-            } else {
-                ProgressView()
-                    .tint(.tujiTeal)
-                    .padding(.top, Space.s16)
+        GeometryReader { geo in
+            ScrollView {
+                if let word {
+                    self.content(word, width: geo.size.width)
+                } else if let error {
+                    self.errorState(error)
+                        .frame(width: geo.size.width)
+                } else {
+                    ProgressView()
+                        .tint(.tujiTeal)
+                        .padding(.top, Space.s16)
+                        .frame(width: geo.size.width)
+                }
             }
         }
         .background(.tujiBg)
-        .ignoresSafeArea(edges: .top)
         .toolbar(.hidden, for: .navigationBar)
         .task { await self.load() }
     }
 
     // MARK: - States
 
-    private func content(_ w: Word) -> some View {
+    private func content(_ w: Word, width: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             self.hero(w)
+                .frame(width: width)
+
             VStack(alignment: .leading, spacing: Space.s5) {
                 self.titleRow(w)
                 if let chineseDef = w.chineseDefinition, !chineseDef.isEmpty {
@@ -63,10 +68,12 @@ struct WordDetailView: View {
                     self.collocationsRow(collocations)
                 }
             }
+            .frame(width: width - Space.s6 * 2, alignment: .leading)
             .padding(.horizontal, Space.s6)
             .padding(.top, Space.s5)
             .padding(.bottom, Space.s12)
         }
+        .frame(width: width, alignment: .leading)
     }
 
     private func errorState(_ err: Error) -> some View {
@@ -97,6 +104,7 @@ struct WordDetailView: View {
                 }
             }
             .pipeline(.shared)
+            .frame(maxWidth: .infinity)
             .frame(height: 320)
             .clipped()
 
@@ -108,14 +116,17 @@ struct WordDetailView: View {
             .padding(.horizontal, Space.s4)
             .padding(.top, Space.s12)
         }
+        .ignoresSafeArea(edges: .top)
     }
 
     private func titleRow(_ w: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s4) {
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text(w.word)
-                    .font(.tujiDisplay)
+                    .font(.tujiH1)
                     .foregroundStyle(.tujiInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 HStack(spacing: Space.s2) {
                     if let pron = w.pronunciation {
                         Text(pron)
