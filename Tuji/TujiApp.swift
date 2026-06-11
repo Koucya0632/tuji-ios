@@ -17,6 +17,7 @@ struct TujiApp: App {
     @State private var onboarding = OnboardingState.shared
     @State private var cache = LocalCache.shared
     @State private var words = WordsStore.shared
+    @State private var categories = CategoriesStore.shared
 
     var body: some Scene {
         WindowGroup {
@@ -26,7 +27,11 @@ struct TujiApp: App {
                 .environment(onboarding)
                 .environment(cache)
                 .environment(words)
-                .task { await words.loadIfNeeded() }
+                .environment(categories)
+                .task {
+                    await words.loadIfNeeded()
+                    await categories.loadIfNeeded()
+                }
                 .task { await push.refreshAuthorization() }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback

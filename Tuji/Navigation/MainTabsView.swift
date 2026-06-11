@@ -37,6 +37,7 @@ struct MainTabsView: View {
                 switch route {
                 case .cards: CardsListView()
                 case let .wordDetail(id): WordDetailView(id: id)
+                case let .categoryDetail(id): CategoryView(id: id)
                 }
             }
         }
