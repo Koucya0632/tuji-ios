@@ -1,13 +1,15 @@
-// 2-column grid of every word, filterable by category chip. The store
-// fetches once at app launch; this view subscribes via @Environment and
-// re-renders when the store updates.
+// 2-column grid of every word, filterable by category chip.
 //
-// Tapping a tile: stub for now — wired to WordDetailView in W3 part 2.
+// Chips show the localized zh name from CategoriesStore. When a specific
+// chip is selected (not 全部) we also surface a "前往主題詳細頁 →" CTA so
+// the user can jump to the dedicated CategoryView landing page from the
+// list view.
 
 import SwiftUI
 
 struct CardsListView: View {
     @Environment(WordsStore.self) private var store
+    @Environment(CategoriesStore.self) private var categories
 
     @State private var selectedCategory: String?
     @State private var visibleCount: Int = 60
@@ -16,12 +18,18 @@ struct CardsListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            chipRow
-            content
+            self.header
+            self.chipRow
+            if self.selectedCategory != nil {
+                self.categoryDetailCTA
+            }
+            self.content
         }
         .background(.tujiBg)
-        .task { await self.store.loadIfNeeded() }
+        .task {
+            await self.store.loadIfNeeded()
+            await self.categories.loadIfNeeded()
+        }
     }
 
     // MARK: - Bits
@@ -44,14 +52,40 @@ struct CardsListView: View {
     private var chipRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Space.s2) {
-                chip(label: "全部", value: nil)
-                ForEach(self.store.categories, id: \.self) { cat in
-                    chip(label: cat, value: cat)
+                self.chip(label: "全部", value: nil)
+                ForEach(self.chipCategories, id: \.id) { c in
+                    self.chip(label: c.nameZh, value: c.id)
                 }
             }
             .padding(.horizontal, Space.s6)
         }
         .padding(.bottom, Space.s3)
+    }
+
+    @ViewBuilder
+    private var categoryDetailCTA: some View {
+        if let selectedId = selectedCategory,
+           let c = categories.find(id: selectedId)
+        {
+            NavigationLink(value: NavRoute.categoryDetail(id: selectedId)) {
+                HStack(spacing: Space.s2) {
+                    Text(c.emoji)
+                    Text("前往「\(c.nameZh)」主題頁")
+                        .foregroundStyle(.tujiTeal)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(.tujiTeal)
+                }
+                .font(.system(size: 14, weight: .heavy))
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s3)
+                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, Space.s6)
+            .padding(.bottom, Space.s3)
+        }
     }
 
     @ViewBuilder
@@ -84,7 +118,10 @@ struct CardsListView: View {
         } else {
             ScrollView {
                 LazyVGrid(
-                    columns: [GridItem(.flexible(), spacing: Space.s3), GridItem(.flexible(), spacing: Space.s3)],
+                    columns: [
+                        GridItem(.flexible(), spacing: Space.s3),
+                        GridItem(.flexible(), spacing: Space.s3)
+                    ],
                     spacing: Space.s3
                 ) {
                     ForEach(self.visibleWords) { word in
@@ -137,6 +174,20 @@ struct CardsListView: View {
         }
     }
 
+    /// Categories that have at least one word in the dataset. Falls back to
+    /// WordsStore-derived ids if CategoriesStore is still loading.
+    private var chipCategories: [TujiCategory] {
+        let presentIds = Set(self.store.categories)
+        let known = self.categories.categories.filter { presentIds.contains($0.id) }
+        if known.isEmpty {
+            // Fallback: synthesize bare metadata from word-derived ids
+            return self.store.categories.map {
+                TujiCategory(id: $0, name: $0, nameZh: $0, emoji: "📚", description: nil, color: nil, imageUrl: nil)
+            }
+        }
+        return known
+    }
+
     private var filtered: [CardWord] {
         self.store.byCategory(self.selectedCategory)
     }
@@ -151,6 +202,9 @@ struct CardsListView: View {
 }
 
 #Preview {
-    CardsListView()
-        .environment(WordsStore.shared)
+    NavigationStack {
+        CardsListView()
+            .environment(WordsStore.shared)
+            .environment(CategoriesStore.shared)
+    }
 }

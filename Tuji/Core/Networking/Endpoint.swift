@@ -31,6 +31,7 @@ enum Endpoint {
     case events
     case words // GET — public list of all CardWords
     case word(id: String)
+    case categories // GET — public list of categories with display metadata
 
     // MARK: - Smoke (temporary; delete with the backend endpoint)
 
@@ -57,6 +58,7 @@ enum Endpoint {
         case .events: "/api/events"
         case .words: "/api/words"
         case let .word(id): "/api/words/\(id)"
+        case .categories: "/api/categories"
         case .smokeWhoami: "/api/test_smoke/whoami"
         }
     }
@@ -85,7 +87,7 @@ enum Endpoint {
     /// the Bearer path. The backend tolerates either.
     var isPublic: Bool {
         switch self {
-        case .events, .search, .word, .words: true
+        case .events, .search, .word, .words, .categories: true
         default: false
         }
     }
