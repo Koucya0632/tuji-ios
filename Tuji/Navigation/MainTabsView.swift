@@ -27,6 +27,7 @@ struct MainTabsView: View {
                 hero
                 Spacer()
                 smokeSection
+                todayButton
                 browseButton
                 Spacer()
                 footerButton
@@ -36,11 +37,28 @@ struct MainTabsView: View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case .cards: CardsListView()
+                case .today: TodayView(user: user)
                 case let .wordDetail(id): WordDetailView(id: id)
                 case let .categoryDetail(id): CategoryView(id: id)
                 }
             }
         }
+    }
+
+    private var todayButton: some View {
+        NavigationLink(value: NavRoute.today) {
+            HStack(spacing: Space.s2) {
+                Image(systemName: "sun.max.fill")
+                Text("前往今日學習")
+                Image(systemName: "chevron.right")
+            }
+            .font(.system(size: 15, weight: .heavy))
+            .foregroundStyle(.white)
+            .padding(.vertical, Space.s3)
+            .padding(.horizontal, Space.s6)
+            .background(.tujiTeal, in: .capsule)
+        }
+        .padding(.top, Space.s4)
     }
 
     private var browseButton: some View {
