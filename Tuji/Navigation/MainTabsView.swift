@@ -1,269 +1,171 @@
-// W2 placeholder for the post-login surface. Real 5-tab layout (Today /
-// Cards / Tuji / Progress / Me) comes online in W4.
+// 5-tab post-login shell (§I.9.2).
 //
-// Accepts an optional SessionUser — nil means the user is in guest mode
-// (entered from Welcome's "先逛逛" link). Guest sees the favorites /
-// learned counters from LocalCache and a "登入 / 註冊" button instead of
-// "登出"; the smoke test button only works for signed-in users since it
-// needs a Bearer token.
+// Each tab owns its own NavigationStack so cross-tab pushes don't
+// interfere. Tab bar is custom (not SwiftUI TabView) so we can render
+// the elevated center "Tuji" button per design book.
+//
+// Tabs:
+//   today    → TodayView (user-aware)
+//   cards    → CardsListView
+//   tuji     → TujiCenterView (study landing placeholder)
+//   progress → ProgressTabView
+//   me       → MeView (account, smoke test, sign-out)
 
 import SwiftUI
 
 struct MainTabsView: View {
     let user: SessionUser?
-    @Environment(AuthService.self) private var auth
-    @Environment(LocalCache.self) private var cache
 
-    @State private var pinging = false
-    @State private var ping: Result<WhoamiResponse, Error>?
-
-    private var isGuest: Bool {
-        user == nil
-    }
+    @State private var selected: MainTab = .today
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                hero
-                Spacer()
-                smokeSection
-                todayButton
-                browseButton
-                Spacer()
-                footerButton
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.tujiBg)
-            .navigationDestination(for: NavRoute.self) { route in
-                switch route {
-                case .cards: CardsListView()
-                case .today: TodayView(user: user)
-                case .search: SearchView()
-                case let .wordDetail(id): WordDetailView(id: id)
-                case let .categoryDetail(id): CategoryView(id: id)
+        ZStack(alignment: .bottom) {
+            self.activeTab
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    Color.clear.frame(height: 78)
                 }
-            }
+
+            TujiTabBar(selected: self.$selected)
+                .padding(.horizontal, Space.s4)
+                .padding(.bottom, Space.s2)
         }
-    }
-
-    private var todayButton: some View {
-        NavigationLink(value: NavRoute.today) {
-            HStack(spacing: Space.s2) {
-                Image(systemName: "sun.max.fill")
-                Text("前往今日學習")
-                Image(systemName: "chevron.right")
-            }
-            .font(.system(size: 15, weight: .heavy))
-            .foregroundStyle(.white)
-            .padding(.vertical, Space.s3)
-            .padding(.horizontal, Space.s6)
-            .background(.tujiTeal, in: .capsule)
-        }
-        .padding(.top, Space.s4)
-    }
-
-    private var browseButton: some View {
-        NavigationLink(value: NavRoute.cards) {
-            HStack(spacing: Space.s2) {
-                Image(systemName: "books.vertical.fill")
-                Text("瀏覽圖鑑")
-                Image(systemName: "chevron.right")
-            }
-            .font(.system(size: 15, weight: .heavy))
-            .foregroundStyle(.tujiTeal)
-            .padding(.vertical, Space.s3)
-            .padding(.horizontal, Space.s6)
-            .background(.tujiTealSoft, in: .capsule)
-        }
-        .padding(.top, Space.s4)
-    }
-
-    // MARK: - Bits
-
-    private var hero: some View {
-        VStack(spacing: Space.s4) {
-            Mascot(pose: isGuest ? .think : .cheer, size: 88)
-
-            VStack(spacing: Space.s1) {
-                HStack(spacing: 0) {
-                    Text(isGuest ? "嗨，" : "早安，")
-                    Text(displayName).foregroundStyle(.tujiTeal)
-                }
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-
-                if let user {
-                    Text(user.email ?? "—")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
-                    Text("uid \(user.id.uuidString.prefix(8))")
-                        .font(.tujiMono)
-                        .foregroundStyle(.tujiInk4)
-                } else {
-                    Text("訪客模式 · 資料只存在這台裝置")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
-                    HStack(spacing: Space.s3) {
-                        countChip(icon: "heart.fill", value: cache.favoriteIds.count, label: "收藏")
-                        countChip(icon: "checkmark.seal.fill", value: cache.learnedIds.count, label: "已學")
-                    }
-                    .padding(.top, Space.s1)
-                }
-            }
-        }
-        .padding(.top, Space.s12)
-    }
-
-    private var smokeSection: some View {
-        VStack(spacing: Space.s4) {
-            BBtn(
-                title: smokeButtonTitle,
-                fullWidth: false,
-                icon: "antenna.radiowaves.left.and.right",
-                action: runPing
-            )
-            .frame(maxWidth: 280)
-            .disabled(pinging || isGuest)
-
-            if let ping {
-                resultCard(ping)
-            } else if isGuest {
-                Text("登入後可驗證 Bearer 鏈")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
-            }
-        }
-    }
-
-    private var footerButton: some View {
-        Button {
-            if isGuest {
-                auth.exitGuestMode()
-            } else {
-                Task { await auth.signOut() }
-            }
-        } label: {
-            Text(isGuest ? "登入 / 註冊" : "登出")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(isGuest ? .tujiTeal : .tujiCoral)
-                .padding(.vertical, Space.s3)
-                .padding(.horizontal, Space.s5)
-                .background(
-                    isGuest ? Color.tujiTealSoft : .tujiCoral.opacity(0.08),
-                    in: .rect(cornerRadius: Radius.pill)
-                )
-        }
-        .padding(.bottom, Space.s8)
+        .background(.tujiBg)
     }
 
     @ViewBuilder
-    private func resultCard(_ result: Result<WhoamiResponse, Error>) -> some View {
-        switch result {
-        case let .success(r):
-            VStack(alignment: .leading, spacing: Space.s2) {
-                HStack(spacing: Space.s2) {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiGreen)
-                    Text("HTTP 200 · source: \(r.source.rawValue)")
-                        .font(.tujiOverline)
-                        .foregroundStyle(.tujiInk2)
-                }
-                if let uid = r.userId {
-                    Text("userId: \(uid)").font(.tujiMono).foregroundStyle(.tujiInk2)
-                } else {
-                    Text("userId: nil").font(.tujiMono).foregroundStyle(.tujiInk3)
-                }
+    private var activeTab: some View {
+        switch self.selected {
+        case .today:
+            NavigationStack {
+                TodayView(user: self.user)
+                    .tujiNavDestinations(user: self.user)
             }
-            .padding(Space.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
-            )
-            .padding(.horizontal, Space.s6)
-
-        case let .failure(e):
-            VStack(alignment: .leading, spacing: Space.s2) {
-                HStack(spacing: Space.s2) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.tujiCoral)
-                    Text("FAILED").font(.tujiOverline).foregroundStyle(.tujiCoral)
-                }
-                Text(e.localizedDescription)
-                    .font(.tujiMono)
-                    .foregroundStyle(.tujiInk2)
-                    .multilineTextAlignment(.leading)
+        case .cards:
+            NavigationStack {
+                CardsListView()
+                    .tujiNavDestinations(user: self.user)
             }
-            .padding(Space.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCoral.opacity(0.08), in: .rect(cornerRadius: Radius.lg))
-            .padding(.horizontal, Space.s6)
-        }
-    }
-
-    private func countChip(icon: String, value: Int, label: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).foregroundStyle(.tujiTeal)
-            Text("\(value)")
-                .font(.system(size: 14, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-            Text(label)
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
-        }
-        .padding(.horizontal, Space.s3)
-        .padding(.vertical, 6)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.pill))
-    }
-
-    private var displayName: String {
-        if let user {
-            if let u = user.username, !u.isEmpty { return u }
-            if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
-        }
-        return "Tuji 探險者"
-    }
-
-    private var smokeButtonTitle: String {
-        if pinging { return "驗證中..." }
-        if isGuest { return "需要登入" }
-        return "Bearer smoke test"
-    }
-
-    private func runPing() {
-        guard !isGuest else { return }
-        Task {
-            pinging = true
-            defer { pinging = false }
-            do {
-                let r: WhoamiResponse = try await APIClient.shared.get(.smokeWhoami)
-                ping = .success(r)
-            } catch {
-                ping = .failure(error)
+        case .tuji:
+            NavigationStack {
+                TujiCenterView()
+                    .tujiNavDestinations(user: self.user)
+            }
+        case .progress:
+            NavigationStack {
+                ProgressTabView()
+                    .tujiNavDestinations(user: self.user)
+            }
+        case .me:
+            NavigationStack {
+                MeView(user: self.user)
+                    .tujiNavDestinations(user: self.user)
             }
         }
     }
 }
 
+private struct TujiTabBar: View {
+    @Binding var selected: MainTab
+
+    private let sideTabs: [MainTab] = [.today, .cards]
+    private let endTabs: [MainTab] = [.progress, .me]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(self.sideTabs, id: \.self) { tab in
+                TabBarButton(tab: tab, isSelected: self.selected == tab) {
+                    self.select(tab)
+                }
+            }
+            CenterButton(isSelected: self.selected == .tuji) {
+                self.select(.tuji)
+            }
+            ForEach(self.endTabs, id: \.self) { tab in
+                TabBarButton(tab: tab, isSelected: self.selected == tab) {
+                    self.select(tab)
+                }
+            }
+        }
+        .padding(.horizontal, Space.s2)
+        .padding(.vertical, Space.s2)
+        .background(.tujiCard, in: .rect(cornerRadius: Radius.pill))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.pill)
+                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+    }
+
+    private func select(_ tab: MainTab) {
+        guard self.selected != tab else { return }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        self.selected = tab
+    }
+}
+
+private struct TabBarButton: View {
+    let tab: MainTab
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: self.action) {
+            VStack(spacing: 2) {
+                Image(systemName: self.tab.iconName)
+                    .font(.system(size: 18, weight: .heavy))
+                Text(self.tab.titleZh)
+                    .font(.system(size: 10, weight: .heavy))
+            }
+            .foregroundStyle(self.isSelected ? .tujiTeal : .tujiInk4)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Space.s2)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct CenterButton: View {
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: self.action) {
+            ZStack {
+                Circle()
+                    .fill(self.isSelected ? .tujiInk : .tujiTeal)
+                    .frame(width: 56, height: 56)
+                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 22, weight: .heavy))
+                    .foregroundStyle(.white)
+            }
+        }
+        .buttonStyle(.plain)
+        .offset(y: -10)
+        .frame(width: 64)
+    }
+}
+
 #Preview("Signed in") {
-    MainTabsView(user: SessionUser.preview)
+    MainTabsView(user: SessionUser.tabPreview)
         .environment(AuthService.shared)
         .environment(LocalCache.shared)
+        .environment(WordsStore.shared)
+        .environment(CategoriesStore.shared)
 }
 
 #Preview("Guest") {
     MainTabsView(user: nil)
         .environment(AuthService.shared)
         .environment(LocalCache.shared)
+        .environment(WordsStore.shared)
+        .environment(CategoriesStore.shared)
 }
 
 private extension SessionUser {
-    static var preview: SessionUser {
-        SessionUser(
-            id: UUID(),
-            email: "preview@tuji.dev",
-            username: "rex",
-            avatar: nil
-        )
+    static var tabPreview: SessionUser {
+        SessionUser(id: UUID(), email: "preview@tuji.dev", username: "rex", avatar: nil)
     }
 
     init(id: UUID, email: String?, username: String?, avatar: String?) {
