@@ -13,6 +13,8 @@ struct CardsListView: View {
 
     @State private var selectedCategory: String?
     @State private var visibleCount: Int = 60
+    @State private var peekWord: CardWord?
+    @State private var pushAfterDismiss: String?
 
     private let pageSize: Int = 60
 
@@ -29,6 +31,15 @@ struct CardsListView: View {
         .task {
             await self.store.loadIfNeeded()
             await self.categories.loadIfNeeded()
+        }
+        .sheet(item: self.$peekWord) { word in
+            WordPeekSheet(word: word) {
+                self.pushAfterDismiss = word.id
+                self.peekWord = nil
+            }
+        }
+        .navigationDestination(item: self.$pushAfterDismiss) { id in
+            WordDetailView(id: id)
         }
     }
 
@@ -132,6 +143,10 @@ struct CardsListView: View {
                             WordTile(word: word)
                         }
                         .buttonStyle(.plain)
+                        .onLongPressGesture(minimumDuration: 0.35) {
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                            self.peekWord = word
+                        }
                     }
                 }
                 .padding(.horizontal, Space.s6)
