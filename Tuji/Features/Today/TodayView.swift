@@ -83,11 +83,20 @@ struct TodayView: View {
     // MARK: - Top bar
 
     private var topBar: some View {
-        HStack {
+        HStack(spacing: Space.s3) {
             Text("Tuji")
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             Spacer()
+            NavigationLink(value: NavRoute.search) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .heavy))
+                    .foregroundStyle(.tujiInk2)
+                    .padding(Space.s2)
+                    .background(.tujiCard, in: .circle)
+                    .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
             self.streakChip
         }
     }

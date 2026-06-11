@@ -40,9 +40,12 @@ struct CardsListView: View {
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             Spacer()
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(.tujiInk2)
+            NavigationLink(value: NavRoute.search) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.tujiInk2)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s4)

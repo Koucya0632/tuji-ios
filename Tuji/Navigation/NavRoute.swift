@@ -7,6 +7,7 @@ import Foundation
 enum NavRoute: Hashable {
     case cards
     case today
+    case search
     case wordDetail(id: String)
     case categoryDetail(id: String)
 }
