@@ -198,14 +198,14 @@ struct TodayView: View {
             }
             self.heroProgress
             HStack(spacing: Space.s3) {
-                NavigationLink(value: NavRoute.cards) {
+                NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
                     Text("復習")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(HeroPillStyle(fg: .tujiInk, bg: .tujiYellow))
                 .disabled(self.reviewDisabled)
 
-                NavigationLink(value: NavRoute.cards) {
+                NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
                     Text("學新字")
                         .frame(maxWidth: .infinity)
                 }

@@ -24,6 +24,7 @@ struct StudyStats: Decodable, Hashable {
     let seen: Int
     let due: Int
     let new: Int
+    let todayNew: Int?
 }
 
 struct StudyStatsResponse: Decodable {

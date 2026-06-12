@@ -53,22 +53,16 @@ struct TujiCenterView: View {
                 action: self.pickRandom
             )
             .disabled(self.words.words.isEmpty)
-            BBtn(
-                title: "開始學新字（即將推出）",
-                bg: .tujiTealSoft,
-                fg: .tujiInk3,
-                fullWidth: true,
-                action: {}
-            )
-            .disabled(true)
-            BBtn(
-                title: "今日復習（即將推出）",
-                bg: .tujiTealSoft,
-                fg: .tujiInk3,
-                fullWidth: true,
-                action: {}
-            )
-            .disabled(true)
+            NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
+                Text("開始學新字")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(StudyPillStyle(fg: .tujiInk, bg: .tujiTealSoft))
+            NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
+                Text("今日復習")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(StudyPillStyle(fg: .white, bg: .tujiTeal))
         }
     }
 
@@ -95,6 +89,21 @@ struct TujiCenterView: View {
         guard let pick = self.words.words.randomElement() else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         self.randomPick = pick.id
+    }
+}
+
+private struct StudyPillStyle: ButtonStyle {
+    let fg: Color
+    let bg: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 16, weight: .heavy))
+            .foregroundStyle(self.fg)
+            .padding(.vertical, Space.s4)
+            .padding(.horizontal, Space.s6)
+            .background(self.bg, in: .rect(cornerRadius: Radius.lg))
+            .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
 
