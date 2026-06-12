@@ -48,3 +48,23 @@ struct ProgressResponse: Decodable {
     let streak: StudyStreak
     let heatmap: [HeatmapCell]?
 }
+
+struct TopWord: Decodable, Hashable, Identifiable {
+    let id: String
+    let word: String
+    let chinese: String
+    let imageUrl: String
+    let pronunciation: String?
+    let category: String
+    let mastery: Int
+    let reviewCount: Int
+
+    var imageURL: URL? {
+        URL(string: self.imageUrl)
+    }
+}
+
+struct TopWordsResponse: Decodable {
+    let words: [TopWord]
+    let type: String?
+}

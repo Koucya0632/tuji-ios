@@ -15,6 +15,7 @@ enum Endpoint {
     case usersLearned
     case usersSync
     case usersProgress
+    case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
     case usersPushToken
     case usersPushTokenDelete(deviceId: String)
@@ -48,6 +49,7 @@ enum Endpoint {
         case .usersLearned: "/api/users/learned"
         case .usersSync: "/api/users/sync"
         case .usersProgress: "/api/users/progress"
+        case .usersTopWords: "/api/users/top-words"
         case .usersDeleteAccount: "/api/users/delete-account"
         case .usersPushToken,
              .usersPushTokenDelete: "/api/users/push-token"
@@ -75,6 +77,11 @@ enum Endpoint {
             [URLQueryItem(name: "q", value: q)]
         case let .usersPushTokenDelete(deviceId):
             [URLQueryItem(name: "deviceId", value: deviceId)]
+        case let .usersTopWords(type, limit):
+            [
+                URLQueryItem(name: "type", value: type),
+                URLQueryItem(name: "limit", value: String(limit))
+            ]
         default:
             []
         }
