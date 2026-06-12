@@ -28,6 +28,7 @@ disabled_rules:
   - trailing_comma                  # SwiftUI 多行 modifier 不加逗號比較順
   - todo                            # FIXME/TODO 是工作流程的一部分，不報
   - opening_brace                   # SwiftFormat 的 wrapMultilineStatementBraces 對長 generic 簽名要 brace 換行，跟 SwiftLint 互打
+  - inclusive_language              # "mastery" 是 SRS 領域詞（對應後端 mastery column），不是 master/slave 那層意涵
 
 # ---------- 打開的進階規則 ----------
 # Rules that only run via `swiftlint analyze`. Listing them here suppresses

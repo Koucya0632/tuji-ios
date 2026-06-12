@@ -21,7 +21,7 @@ enum Endpoint {
 
     // MARK: - Study (auth-protected)
 
-    case studyQueue(mode: String, limit: Int)
+    case studyQueue(mode: String, limit: Int, new: Int)
     case studyAnswer
     case studyStats
 
@@ -65,10 +65,11 @@ enum Endpoint {
 
     var queryItems: [URLQueryItem] {
         switch self {
-        case let .studyQueue(mode, limit):
+        case let .studyQueue(mode, limit, new):
             [
                 URLQueryItem(name: "mode", value: mode),
-                URLQueryItem(name: "limit", value: String(limit))
+                URLQueryItem(name: "limit", value: String(limit)),
+                URLQueryItem(name: "new", value: String(new))
             ]
         case let .search(q):
             [URLQueryItem(name: "q", value: q)]
