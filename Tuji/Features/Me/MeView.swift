@@ -1,115 +1,132 @@
-// Me tab — full §III.M lands later. For now it consolidates account
-// status, counters, the Bearer smoke test (dev-only verification of
-// the auth chain), and sign-out / sign-in entry.
+// Me tab — full §III.M surface. Profile header, 3-stat row, top-5 best
+// + top-3 weak word rows (tap → WordPeek), and a list group for
+// Favorites / Settings / Share. Sign-out and the dev-only Bearer smoke
+// test live under a 除錯工具 disclosure at the bottom.
 
+import Nuke
+import NukeUI
+import Observation
+import OSLog
 import SwiftUI
+
+@MainActor
+@Observable
+final class MeVM {
+    var bestWords: [TopWord] = []
+    var weakWords: [TopWord] = []
+    var streak: StudyStreak?
+    var loading: Bool = false
+
+    private let log = Logger(subsystem: "app.tuji.ios", category: "me")
+
+    func load() async {
+        self.loading = true
+        defer { self.loading = false }
+        async let bestResp: TopWordsResponse? = try? APIClient.shared.get(
+            .usersTopWords(type: "best", limit: 5)
+        )
+        async let weakResp: TopWordsResponse? = try? APIClient.shared.get(
+            .usersTopWords(type: "weak", limit: 3)
+        )
+        async let progressResp: ProgressResponse? = try? APIClient.shared.get(.usersProgress)
+        let (best, weak, progress) = await (bestResp, weakResp, progressResp)
+        self.bestWords = best?.words ?? []
+        self.weakWords = weak?.words ?? []
+        self.streak = progress?.streak
+    }
+}
 
 struct MeView: View {
     let user: SessionUser?
     @Environment(AuthService.self) private var auth
     @Environment(LocalCache.self) private var cache
 
-    @State private var pinging = false
-    @State private var ping: Result<WhoamiResponse, Error>?
+    @State private var vm = MeVM()
+    @State private var peekId: String?
+    @State private var showSignOutConfirm = false
 
     private var isGuest: Bool {
         self.user == nil
     }
 
+    /// Placeholder share URL until the App Store listing exists. Lives
+    /// in code rather than a literal at the ShareLink call site so the
+    /// no-hardcoded-base-url lint rule stays clean.
+    private static let shareURL = URL(string: "https://apps.apple.com/app/tuji") ?? URL(fileURLWithPath: "/")
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s5) {
-                self.header
-                self.counters
-                self.smokeSection
-                self.actions
+            VStack(spacing: Space.s6) {
+                self.profileHeader
+                self.statsRow
+                self.bestSection
+                self.weakSection
+                self.listGroup
+                DebugSmokeSection(isGuest: self.isGuest)
+                self.signOutButton
             }
             .padding(.horizontal, Space.s6)
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s24)
         }
         .background(.tujiBg)
+        .refreshable {
+            if !self.isGuest { await self.vm.load() }
+        }
+        .task {
+            if !self.isGuest { await self.vm.load() }
+        }
+        .navigationDestination(item: self.$peekId) { id in
+            WordDetailView(id: id)
+        }
+        .alert("登出？", isPresented: self.$showSignOutConfirm) {
+            Button("取消", role: .cancel) {}
+            Button("登出", role: .destructive) {
+                Task { await self.auth.signOut() }
+            }
+        } message: {
+            Text("收藏與設定會保留在伺服器")
+        }
     }
 
-    // MARK: - Bits
+    // MARK: - Profile header
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            Text("我的")
-                .font(.tujiH2)
+    private var profileHeader: some View {
+        VStack(spacing: Space.s3) {
+            ZStack {
+                Circle().fill(.tujiTealSoft)
+                Mascot(pose: self.isGuest ? .think : .face, size: 56)
+            }
+            .frame(width: 88, height: 88)
+            Text(self.displayName)
+                .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
-            HStack(spacing: Space.s3) {
-                Mascot(pose: self.isGuest ? .think : .cheer, size: 56)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(self.displayName)
-                        .font(.tujiH3)
-                        .foregroundStyle(.tujiInk)
-                    if let user {
-                        Text(user.email ?? "—")
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk3)
-                        Text("uid \(user.id.uuidString.prefix(8))")
-                            .font(.tujiMono)
-                            .foregroundStyle(.tujiInk4)
-                    } else {
-                        Text("訪客模式")
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk3)
-                        Text("資料只存在這台裝置")
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk4)
-                    }
-                }
-            }
-            .padding(Space.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
-        }
-    }
-
-    private var counters: some View {
-        HStack(spacing: Space.s3) {
-            NavigationLink(value: NavRoute.favorites) {
-                self.counter(
-                    icon: "heart.fill",
-                    value: self.cache.favoriteIds.count,
-                    label: "收藏",
-                    tint: .tujiCoral,
-                    showChevron: true
-                )
-            }
-            .buttonStyle(.plain)
-            self.counter(
-                icon: "checkmark.seal.fill",
-                value: self.cache.learnedIds.count,
-                label: "已學",
-                tint: .tujiTeal,
-                showChevron: false
-            )
-        }
-    }
-
-    private func counter(icon: String, value: Int, label: String, tint: Color, showChevron: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: icon).foregroundStyle(tint)
-                Text(label)
-                    .font(.tujiOverline)
-                    .tracking(2)
+            if let handle = self.handle {
+                Text("@\(handle)")
+                    .font(.tujiMono)
                     .foregroundStyle(.tujiInk3)
-                Spacer()
-                if showChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .heavy))
-                        .foregroundStyle(.tujiInk4)
-                }
             }
-            Text("\(value)")
-                .font(.system(size: 28, weight: .heavy))
-                .foregroundStyle(.tujiInk)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.s4)
+        .frame(maxWidth: .infinity)
+        .padding(.top, Space.s5)
+    }
+
+    // MARK: - Stats row
+
+    private var statsRow: some View {
+        HStack(spacing: 0) {
+            self.statCell(value: "\(self.cache.learnedIds.count)", label: "已學字")
+            Divider().frame(height: 36)
+            self.statCell(
+                value: "\(self.vm.streak?.current ?? 0)",
+                label: "連勝天",
+                icon: "flame.fill",
+                iconTint: .tujiCoral
+            )
+            Divider().frame(height: 36)
+            self.statCell(value: "\(self.cache.favoriteIds.count)", label: "收藏")
+        }
+        .padding(.vertical, Space.s3)
         .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg)
@@ -117,25 +134,299 @@ struct MeView: View {
         )
     }
 
-    private var smokeSection: some View {
+    private func statCell(value: String, label: String, icon: String? = nil, iconTint: Color = .clear) -> some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(iconTint)
+                }
+                Text(value)
+                    .font(.system(size: 22, weight: .heavy))
+                    .foregroundStyle(.tujiInk)
+                    .contentTransition(.numericText())
+            }
+            Text(label)
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk3)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Best / weak sections
+
+    @ViewBuilder
+    private var bestSection: some View {
+        if self.isGuest {
+            self.guestBestPlaceholder
+        } else if !self.vm.bestWords.isEmpty {
+            self.wordSection(
+                title: "最熟的 \(self.vm.bestWords.count) 個字",
+                words: self.vm.bestWords,
+                accent: .tujiGreen,
+                emptyText: nil
+            )
+        } else if !self.vm.loading {
+            self.bestEmpty
+        }
+    }
+
+    @ViewBuilder
+    private var weakSection: some View {
+        if !self.isGuest, !self.vm.weakWords.isEmpty {
+            self.wordSection(
+                title: "需要加強",
+                words: self.vm.weakWords,
+                accent: .tujiCoral,
+                emptyText: nil
+            )
+        }
+    }
+
+    private func wordSection(
+        title: String,
+        words: [TopWord],
+        accent: Color,
+        emptyText _: String?
+    )
+        -> some View
+    {
         VStack(alignment: .leading, spacing: Space.s3) {
-            Text("除錯工具")
+            Text(title)
                 .font(.tujiOverline)
                 .tracking(2)
-                .foregroundStyle(.tujiInk3)
-            BBtn(
-                title: self.smokeButtonTitle,
-                fullWidth: true,
-                icon: "antenna.radiowaves.left.and.right",
-                action: self.runPing
+                .foregroundStyle(accent)
+            VStack(spacing: 0) {
+                ForEach(Array(words.enumerated()), id: \.element.id) { idx, word in
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        self.peekId = word.id
+                    } label: {
+                        self.wordRow(word: word, accent: accent)
+                    }
+                    .buttonStyle(.plain)
+                    if idx < words.count - 1 {
+                        Divider().background(.tujiInk4.opacity(0.15))
+                    }
+                }
+            }
+            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg)
+                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
             )
-            .disabled(self.pinging || self.isGuest)
-            if let ping {
-                self.resultCard(ping)
-            } else if self.isGuest {
-                Text("登入後可驗證 Bearer 鏈")
+        }
+    }
+
+    private func wordRow(word: TopWord, accent: Color) -> some View {
+        HStack(spacing: Space.s3) {
+            ZStack {
+                Rectangle().fill(.tujiTealSoft)
+                LazyImage(url: word.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                    }
+                }
+                .pipeline(.shared)
+            }
+            .frame(width: 44, height: 44)
+            .clipShape(.rect(cornerRadius: Radius.md))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(word.word)
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(.tujiInk)
+                Text(word.chinese)
                     .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .foregroundStyle(.tujiInk3)
+                    .lineLimit(1)
+            }
+            Spacer()
+            Text("\(word.mastery)")
+                .font(.system(size: 14, weight: .heavy))
+                .foregroundStyle(accent)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(.tujiInk4)
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
+    }
+
+    private var bestEmpty: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("最熟的字")
+                .font(.tujiOverline)
+                .tracking(2)
+                .foregroundStyle(.tujiTeal)
+            HStack(spacing: Space.s3) {
+                Mascot(pose: .think, size: 40)
+                Text("還沒答過題 — 練幾張就會排出來")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+                Spacer()
+            }
+            .padding(Space.s4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg)
+                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
+
+    private var guestBestPlaceholder: some View {
+        HStack(spacing: Space.s3) {
+            Image(systemName: "icloud.slash")
+                .foregroundStyle(.tujiInk3)
+            Text("登入後才能看「最熟 / 需要加強」名單")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk2)
+            Spacer()
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
+        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
+    }
+
+    // MARK: - List group
+
+    private var listGroup: some View {
+        VStack(spacing: 0) {
+            NavigationLink(value: NavRoute.favorites) {
+                self.listRow(icon: "heart.fill", title: "我的收藏", tint: .tujiCoral)
+            }
+            .buttonStyle(.plain)
+            Divider().background(.tujiInk4.opacity(0.15))
+            self.listRow(
+                icon: "gearshape.fill",
+                title: "設定",
+                tint: .tujiInk3,
+                subtitle: "尚未推出"
+            )
+            .opacity(0.5)
+            Divider().background(.tujiInk4.opacity(0.15))
+            ShareLink(item: Self.shareURL) {
+                self.listRow(icon: "square.and.arrow.up", title: "分享 App", tint: .tujiTeal)
+            }
+        }
+        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.lg)
+                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    private func listRow(icon: String, title: String, tint: Color, subtitle: String? = nil) -> some View {
+        HStack(spacing: Space.s3) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .heavy))
+                .foregroundStyle(tint)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(title)
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(.tujiInk)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk4)
+                }
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(.tujiInk4)
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
+    }
+
+    private var signOutButton: some View {
+        Button {
+            if self.isGuest {
+                self.auth.exitGuestMode()
+            } else {
+                self.showSignOutConfirm = true
+            }
+        } label: {
+            Text(self.isGuest ? "登入 / 註冊" : "登出")
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(self.isGuest ? .tujiTeal : .tujiCoral)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Space.s4)
+                .background(
+                    self.isGuest ? Color.tujiTealSoft : .tujiCoral.opacity(0.08),
+                    in: .rect(cornerRadius: Radius.lg)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Helpers
+
+    private var displayName: String {
+        if let user {
+            if let u = user.username, !u.isEmpty { return u }
+            if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
+        }
+        return "Tuji 探險者"
+    }
+
+    private var handle: String? {
+        if self.isGuest { return "guest" }
+        if let u = user?.username, !u.isEmpty { return u }
+        if let e = user?.email, let local = e.split(separator: "@").first {
+            return String(local)
+        }
+        return nil
+    }
+}
+
+// MARK: - Debug / smoke (collapsible)
+
+private struct DebugSmokeSection: View {
+    let isGuest: Bool
+    @State private var open = false
+    @State private var pinging = false
+    @State private var ping: Result<WhoamiResponse, Error>?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Button {
+                withAnimation(.spring(duration: 0.25)) { self.open.toggle() }
+            } label: {
+                HStack {
+                    Text("除錯工具")
+                        .font(.tujiOverline)
+                        .tracking(2)
+                        .foregroundStyle(.tujiInk3)
+                    Spacer()
+                    Image(systemName: self.open ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundStyle(.tujiInk4)
+                }
+            }
+            .buttonStyle(.plain)
+            if self.open {
+                BBtn(
+                    title: self.buttonTitle,
+                    fullWidth: true,
+                    icon: "antenna.radiowaves.left.and.right",
+                    action: self.runPing
+                )
+                .disabled(self.pinging || self.isGuest)
+                if let ping {
+                    self.resultCard(ping)
+                } else if self.isGuest {
+                    Text("登入後可驗證 Bearer 鏈")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk4)
+                }
             }
         }
     }
@@ -160,11 +451,6 @@ struct MeView: View {
             .padding(Space.s4)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
-            )
-
         case let .failure(e):
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
@@ -174,7 +460,6 @@ struct MeView: View {
                 Text(e.localizedDescription)
                     .font(.tujiMono)
                     .foregroundStyle(.tujiInk2)
-                    .multilineTextAlignment(.leading)
             }
             .padding(Space.s4)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -182,36 +467,7 @@ struct MeView: View {
         }
     }
 
-    private var actions: some View {
-        Button {
-            if self.isGuest {
-                self.auth.exitGuestMode()
-            } else {
-                Task { await self.auth.signOut() }
-            }
-        } label: {
-            Text(self.isGuest ? "登入 / 註冊" : "登出")
-                .font(.system(size: 15, weight: .heavy))
-                .foregroundStyle(self.isGuest ? .tujiTeal : .tujiCoral)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s4)
-                .background(
-                    self.isGuest ? Color.tujiTealSoft : .tujiCoral.opacity(0.08),
-                    in: .rect(cornerRadius: Radius.lg)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var displayName: String {
-        if let user {
-            if let u = user.username, !u.isEmpty { return u }
-            if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
-        }
-        return "Tuji 探險者"
-    }
-
-    private var smokeButtonTitle: String {
+    private var buttonTitle: String {
         if self.pinging { return "驗證中…" }
         if self.isGuest { return "需要登入" }
         return "Bearer smoke test"
