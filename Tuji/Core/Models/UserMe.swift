@@ -39,6 +39,12 @@ struct StudyStreak: Decodable, Hashable {
     let lastStudyDate: String?
 }
 
+struct HeatmapCell: Decodable, Hashable {
+    let count: Int
+    let future: Bool
+}
+
 struct ProgressResponse: Decodable {
     let streak: StudyStreak
+    let heatmap: [HeatmapCell]?
 }
