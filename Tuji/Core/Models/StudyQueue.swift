@@ -84,4 +84,13 @@ struct StudyAnswerResponse: Decodable {
     let ok: Bool?
     let mastery: Int?
     let nextReview: String?
+    let milestone: Milestone?
+}
+
+/// Server-attached signal that this answer triggered a streak milestone
+/// (30 / 100 / 365 days). Currently decoded but not emitted by the
+/// backend — wiring it iOS-side now means W5 server work can flip the
+/// switch without a client release.
+struct Milestone: Decodable, Hashable {
+    let streak: Int
 }

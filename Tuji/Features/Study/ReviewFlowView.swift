@@ -20,6 +20,46 @@ struct ReviewFlowView: View {
     }
 
     var body: some View {
+        Group {
+            if self.coord.finished {
+                if let m = coord.milestone {
+                    MilestoneView(milestone: m, onFinish: { self.dismiss() })
+                } else {
+                    CompleteView(
+                        answered: self.coord.answered,
+                        dailyGoal: self.coord.dailyGoal,
+                        onFinish: { self.dismiss() }
+                    )
+                }
+            } else {
+                self.flowSurface
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationBarBackButtonHidden(true)
+        .toolbar(self.coord.finished ? .hidden : .visible, for: .navigationBar)
+        .toolbar {
+            if !self.coord.finished {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        self.showExitConfirm = true
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .heavy))
+                            .foregroundStyle(.tujiInk2)
+                    }
+                }
+            }
+        }
+        .alert("離開練習？", isPresented: self.$showExitConfirm) {
+            Button("繼續練習", role: .cancel) {}
+            Button("離開", role: .destructive) { self.dismiss() }
+        } message: {
+            Text("已答的進度已存，未完成的字下次還會出現")
+        }
+    }
+
+    private var flowSurface: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
                 self.header
@@ -35,33 +75,7 @@ struct ReviewFlowView: View {
             }
         }
         .animation(.spring(duration: 0.35), value: self.coord.phase)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    if self.coord.finished {
-                        self.dismiss()
-                    } else {
-                        self.showExitConfirm = true
-                    }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .heavy))
-                        .foregroundStyle(.tujiInk2)
-                }
-            }
-        }
-        .alert("離開練習？", isPresented: self.$showExitConfirm) {
-            Button("繼續練習", role: .cancel) {}
-            Button("離開", role: .destructive) { self.dismiss() }
-        } message: {
-            Text("已答的進度已存，未完成的字下次還會出現")
-        }
-        .onChange(of: self.coord.finished) { _, done in
-            if done { self.dismiss() }
-        }
     }
 
     private var header: some View {

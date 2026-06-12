@@ -20,6 +20,7 @@ enum ReviewPhase: Hashable {
 @Observable
 final class ReviewFlowCoordinator {
     let queue: [StudyQueueItem]
+    let dailyGoal: Int
     var index: Int = 0
     var phase: ReviewPhase = .answer
     var picked: String?
@@ -29,11 +30,18 @@ final class ReviewFlowCoordinator {
     var startedAt: Date = .now
     var rateError: Error?
     var finished: Bool = false
+    /// Items the user actually rated (one per cleared item). Drives the
+    /// "今天複習" tile row on CompleteView.
+    var answered: [StudyQueueItem] = []
+    /// Highest streak milestone the server flagged during this session.
+    /// CompleteView promotes to MilestoneView when non-nil.
+    var milestone: Milestone?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
 
-    init(queue: [StudyQueueItem]) {
+    init(queue: [StudyQueueItem], dailyGoal: Int = 10) {
         self.queue = queue
+        self.dailyGoal = dailyGoal
     }
 
     var current: StudyQueueItem? {
@@ -95,10 +103,17 @@ final class ReviewFlowCoordinator {
             activity: "mcq"
         )
         do {
-            let _: StudyAnswerResponse = try await APIClient.shared.post(
+            let resp: StudyAnswerResponse = try await APIClient.shared.post(
                 .studyAnswer,
                 body: payload
             )
+            self.answered.append(curr)
+            if let m = resp.milestone {
+                // Server only emits the milestone payload on the answer
+                // that actually crosses the threshold, so always overwrite
+                // when present rather than guarding for "first wins".
+                self.milestone = m
+            }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             try? await Task.sleep(for: .milliseconds(450))
             self.advance()
