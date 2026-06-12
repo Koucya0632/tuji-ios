@@ -18,6 +18,7 @@ struct TujiApp: App {
     @State private var cache = LocalCache.shared
     @State private var words = WordsStore.shared
     @State private var categories = CategoriesStore.shared
+    @State private var settings = SettingsStore.shared
 
     var body: some Scene {
         WindowGroup {
@@ -28,6 +29,7 @@ struct TujiApp: App {
                 .environment(cache)
                 .environment(words)
                 .environment(categories)
+                .environment(settings)
                 .task {
                     await words.loadIfNeeded()
                     await categories.loadIfNeeded()
