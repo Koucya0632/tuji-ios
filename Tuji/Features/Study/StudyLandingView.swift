@@ -91,6 +91,9 @@ struct StudyLandingView: View {
     let initialMode: StudyMode
     @State private var vm = StudyLandingVM()
     @State private var showBlockedAlert = false
+    @State private var loadingQueue = false
+    @State private var queueError: Error?
+    @State private var pushQueue: QueuePush?
     @Environment(LocalCache.self) private var cache
     @Environment(WordsStore.self) private var words
 
@@ -117,6 +120,47 @@ struct StudyLandingView: View {
             Button("知道了", role: .cancel) {}
         } message: {
             Text("先把到期的字消化一些，新字就會再開放。")
+        }
+        .alert("載入失敗", isPresented: Binding(
+            get: { self.queueError != nil },
+            set: { if !$0 { self.queueError = nil } }
+        )) {
+            Button("知道了", role: .cancel) { self.queueError = nil }
+        } message: {
+            Text(self.queueError?.localizedDescription ?? "")
+        }
+        .navigationDestination(item: self.$pushQueue) { wrap in
+            switch wrap.mode {
+            case .new:
+                NewFlowView(queue: wrap.queue)
+            case .review:
+                // ReviewFlow lands in W4 part 3; until then surface a
+                // friendly stub so the route doesn't dead-end mid-flow.
+                ReviewFlowPlaceholder(count: wrap.queue.count)
+            }
+        }
+        .overlay {
+            if self.loadingQueue {
+                ZStack {
+                    Color.black.opacity(0.25).ignoresSafeArea()
+                    VStack(spacing: Space.s3) {
+                        ProgressView().tint(.tujiTeal)
+                        Text("載入練習中…")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk)
+                    }
+                    .padding(Space.s5)
+                    .background(.tujiBg, in: .rect(cornerRadius: Radius.lg))
+                }
+            }
+        }
+    }
+
+    private struct QueuePush: Hashable, Identifiable {
+        let mode: StudyMode
+        let queue: [StudyQueueItem]
+        var id: String {
+            "\(self.mode.asPath)-\(self.queue.map(\.id).joined())"
         }
     }
 
@@ -266,7 +310,7 @@ struct StudyLandingView: View {
     private func startReview() {
         guard !self.vm.reviewDisabled else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        // W4 Part 3: push ReviewFlowView(queue: ...)
+        Task { await self.loadQueue(mode: .review) }
     }
 
     private func startNew() {
@@ -276,7 +320,61 @@ struct StudyLandingView: View {
         }
         guard !self.vm.newDisabled else { return }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-        // W4 Part 2: push NewFlowView(queue: ...)
+        Task { await self.loadQueue(mode: .new) }
+    }
+
+    private func loadQueue(mode: StudyMode) async {
+        self.loadingQueue = true
+        defer { self.loadingQueue = false }
+        let limit: Int
+        let newCount: Int
+        switch mode {
+        case .new:
+            limit = self.vm.newLimitToday
+            newCount = self.vm.newLimitToday
+        case .review:
+            limit = min(self.vm.stats?.due ?? 0, 30)
+            newCount = 0
+        }
+        do {
+            let resp: StudyQueueResponse = try await APIClient.shared.get(
+                .studyQueue(mode: mode.asPath, limit: max(1, limit), new: newCount)
+            )
+            if resp.queue.isEmpty {
+                self.queueError = NSError(
+                    domain: "tuji.study",
+                    code: 0,
+                    userInfo: [NSLocalizedDescriptionKey: "目前沒有可以練習的字"]
+                )
+                return
+            }
+            self.pushQueue = QueuePush(mode: mode, queue: resp.queue)
+        } catch {
+            self.queueError = error
+        }
+    }
+}
+
+/// Placeholder destination for review mode until W4 part 3 ships the
+/// real ReviewFlow. Keeps the navigation chain alive without faking
+/// content.
+private struct ReviewFlowPlaceholder: View {
+    let count: Int
+
+    var body: some View {
+        VStack(spacing: Space.s4) {
+            Mascot(pose: .think, size: 96)
+            Text("ReviewFlow 即將推出")
+                .font(.tujiH2)
+                .foregroundStyle(.tujiInk)
+            Text("已抓到 \(self.count) 張到期卡，W4 Part 3 上線後會在這裡跑 SRS 復習")
+                .font(.tujiBody)
+                .foregroundStyle(.tujiInk3)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Space.s6)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.tujiBg)
     }
 }
 

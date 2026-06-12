@@ -1,0 +1,102 @@
+// Completion celebration shown after Step 3 wraps. Lists the words
+// learned this session and a 完成 CTA back to the previous screen.
+
+import Nuke
+import NukeUI
+import SwiftUI
+
+struct NewDoneView: View {
+    let queue: [StudyQueueItem]
+    let onFinish: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: Space.s5) {
+                self.hero
+                self.grid
+            }
+            .padding(.horizontal, Space.s6)
+            .padding(.top, Space.s4)
+            .padding(.bottom, Space.s8)
+        }
+        .safeAreaInset(edge: .bottom) {
+            BBtn(
+                title: "完成",
+                bg: .tujiTeal,
+                fg: .white,
+                fullWidth: true,
+                icon: "checkmark",
+                action: self.onFinish
+            )
+            .padding(.horizontal, Space.s6)
+            .padding(.bottom, Space.s4)
+        }
+    }
+
+    private var hero: some View {
+        VStack(spacing: Space.s3) {
+            Mascot(pose: .cheer, size: 92)
+            Text("這節學了 \(self.queue.count) 個新字")
+                .font(.tujiH2)
+                .foregroundStyle(.tujiInk)
+                .multilineTextAlignment(.center)
+            Text("它們已加入你的圖鑑")
+                .font(.tujiBody)
+                .foregroundStyle(.tujiInk3)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, Space.s8)
+    }
+
+    private var grid: some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: Space.s3),
+                GridItem(.flexible(), spacing: Space.s3)
+            ],
+            spacing: Space.s3
+        ) {
+            ForEach(self.queue) { item in
+                self.tile(for: item)
+            }
+        }
+    }
+
+    private func tile(for item: StudyQueueItem) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack {
+                Rectangle().fill(.tujiTealSoft)
+                LazyImage(url: item.word.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } else if state.error != nil {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.tujiInk4)
+                    } else {
+                        ProgressView().tint(.tujiTeal)
+                    }
+                }
+                .pipeline(.shared)
+            }
+            .frame(height: 100)
+            .clipped()
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.word.word)
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundStyle(.tujiInk)
+                Text(item.word.chinese)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+                    .lineLimit(1)
+            }
+            .padding(Space.s3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiCard)
+        }
+        .clipShape(.rect(cornerRadius: Radius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.lg)
+                .stroke(.tujiInk4.opacity(0.15), lineWidth: 1)
+        )
+    }
+}
