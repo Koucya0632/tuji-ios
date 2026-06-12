@@ -302,13 +302,10 @@ struct MeView: View {
             }
             .buttonStyle(.plain)
             Divider().background(.tujiInk4.opacity(0.15))
-            self.listRow(
-                icon: "gearshape.fill",
-                title: "設定",
-                tint: .tujiInk3,
-                subtitle: "尚未推出"
-            )
-            .opacity(0.5)
+            NavigationLink(value: NavRoute.settings) {
+                self.listRow(icon: "gearshape.fill", title: "設定", tint: .tujiInk3)
+            }
+            .buttonStyle(.plain)
             Divider().background(.tujiInk4.opacity(0.15))
             ShareLink(item: Self.shareURL) {
                 self.listRow(icon: "square.and.arrow.up", title: "分享 App", tint: .tujiTeal)

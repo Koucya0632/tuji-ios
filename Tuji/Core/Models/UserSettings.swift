@@ -30,3 +30,21 @@ struct SaveSettingsResponse: Decodable {
     let ok: Bool?
     let settings: UserSettings?
 }
+
+/// Wraps the GET /api/users/settings response — backend always returns
+/// the settings object under a top-level "settings" key.
+struct UserSettingsResponse: Decodable {
+    let settings: UserSettings
+}
+
+/// Body for POST /api/users/profile.
+struct ProfileUpdatePayload: Encodable {
+    let nickname: String?
+    let avatar: String?
+}
+
+struct ProfileUpdateResponse: Decodable {
+    let ok: Bool?
+    let nickname: String?
+    let avatar: String?
+}
