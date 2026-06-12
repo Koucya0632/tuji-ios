@@ -8,6 +8,7 @@ enum NavRoute: Hashable {
     case cards
     case today
     case search
+    case favorites
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)
     case categoryDetail(id: String)

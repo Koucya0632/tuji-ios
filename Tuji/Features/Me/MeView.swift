@@ -69,12 +69,27 @@ struct MeView: View {
 
     private var counters: some View {
         HStack(spacing: Space.s3) {
-            self.counter(icon: "heart.fill", value: self.cache.favoriteIds.count, label: "收藏", tint: .tujiCoral)
-            self.counter(icon: "checkmark.seal.fill", value: self.cache.learnedIds.count, label: "已學", tint: .tujiTeal)
+            NavigationLink(value: NavRoute.favorites) {
+                self.counter(
+                    icon: "heart.fill",
+                    value: self.cache.favoriteIds.count,
+                    label: "收藏",
+                    tint: .tujiCoral,
+                    showChevron: true
+                )
+            }
+            .buttonStyle(.plain)
+            self.counter(
+                icon: "checkmark.seal.fill",
+                value: self.cache.learnedIds.count,
+                label: "已學",
+                tint: .tujiTeal,
+                showChevron: false
+            )
         }
     }
 
-    private func counter(icon: String, value: Int, label: String, tint: Color) -> some View {
+    private func counter(icon: String, value: Int, label: String, tint: Color, showChevron: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Image(systemName: icon).foregroundStyle(tint)
@@ -82,6 +97,12 @@ struct MeView: View {
                     .font(.tujiOverline)
                     .tracking(2)
                     .foregroundStyle(.tujiInk3)
+                Spacer()
+                if showChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundStyle(.tujiInk4)
+                }
             }
             Text("\(value)")
                 .font(.system(size: 28, weight: .heavy))
