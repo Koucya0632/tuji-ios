@@ -134,9 +134,7 @@ struct StudyLandingView: View {
             case .new:
                 NewFlowView(queue: wrap.queue)
             case .review:
-                // ReviewFlow lands in W4 part 3; until then surface a
-                // friendly stub so the route doesn't dead-end mid-flow.
-                ReviewFlowPlaceholder(count: wrap.queue.count)
+                ReviewFlowView(queue: wrap.queue)
             }
         }
         .overlay {
@@ -352,29 +350,6 @@ struct StudyLandingView: View {
         } catch {
             self.queueError = error
         }
-    }
-}
-
-/// Placeholder destination for review mode until W4 part 3 ships the
-/// real ReviewFlow. Keeps the navigation chain alive without faking
-/// content.
-private struct ReviewFlowPlaceholder: View {
-    let count: Int
-
-    var body: some View {
-        VStack(spacing: Space.s4) {
-            Mascot(pose: .think, size: 96)
-            Text("ReviewFlow 即將推出")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-            Text("已抓到 \(self.count) 張到期卡，W4 Part 3 上線後會在這裡跑 SRS 復習")
-                .font(.tujiBody)
-                .foregroundStyle(.tujiInk3)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Space.s6)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
     }
 }
 
