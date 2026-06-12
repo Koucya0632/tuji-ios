@@ -85,11 +85,14 @@ struct SearchView: View {
     @FocusState private var fieldFocused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            self.searchBar
-            self.content
+        ZStack(alignment: .top) {
+            Color.tujiBg.ignoresSafeArea()
+            VStack(spacing: 0) {
+                self.searchBar
+                self.content
+                Spacer(minLength: 0)
+            }
         }
-        .background(.tujiBg)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { self.fieldFocused = true }
     }
