@@ -3,6 +3,12 @@
 // Saves to /api/users/settings via APIClient and marks the per-user
 // setupDone flag in OnboardingState; RootView then advances to
 // PushPermissionView (or MainTabs if push has already been prompted).
+//
+// The picker reads the real category list from CategoriesStore so the
+// values written into UserSettings.studyCategories are canonical IDs
+// (kitchen / bathroom / office / …) — the backend's
+// normalizeStudyCategories filter is lowercase-kebab only, so writing
+// display names like "廚房" used to be silently dropped.
 
 import SwiftUI
 
@@ -11,23 +17,15 @@ struct SetupView: View {
     let onDone: () -> Void
 
     @Environment(OnboardingState.self) private var onboarding
+    @Environment(CategoriesStore.self) private var categories
 
-    @State private var level: Level = .basic
-    @State private var topics: Set<String> = ["廚房", "生活"]
+    @State private var topicIds: Set<String> = []
     @State private var dailyGoal: Int = 10
     @State private var saving = false
     @State private var error: String?
+    @State private var initializedDefaults = false
 
-    enum Level: String, CaseIterable, Identifiable {
-        case beginner = "初學"
-        case basic = "基礎"
-        case advanced = "進階"
-        var id: String {
-            rawValue
-        }
-    }
-
-    private let allTopics = ["廚房", "生活", "辦公", "旅行", "學校"]
+    private static let defaultTopicIds: [String] = ["kitchen", "bathroom", "living-room"]
     private let goals = [5, 10, 20]
 
     var body: some View {
@@ -40,27 +38,28 @@ struct SetupView: View {
                         .padding(.top, Space.s5)
                         .padding(.horizontal, Space.s6)
 
-                    section(title: "你的英文程度") {
-                        HStack(spacing: Space.s2) {
-                            ForEach(Level.allCases) { l in
-                                tile(label: l.rawValue, selected: level == l) {
-                                    level = l
-                                }
+                    section(title: "你對學習什麼主題有興趣？") {
+                        if categories.categories.isEmpty {
+                            HStack {
+                                ProgressView().tint(.tujiTeal)
+                                Text("載入主題中…")
+                                    .font(.tujiCaption)
+                                    .foregroundStyle(.tujiInk3)
                             }
-                        }
-                    }
-
-                    section(title: "想先學哪些主題？") {
-                        LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2), count: 3),
-                            spacing: Space.s2
-                        ) {
-                            ForEach(allTopics, id: \.self) { t in
-                                tile(label: t, selected: topics.contains(t)) {
-                                    if topics.contains(t) {
-                                        topics.remove(t)
-                                    } else {
-                                        topics.insert(t)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, Space.s5)
+                        } else {
+                            LazyVGrid(
+                                columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2), count: 3),
+                                spacing: Space.s2
+                            ) {
+                                ForEach(categories.categories) { c in
+                                    categoryTile(category: c, selected: topicIds.contains(c.id)) {
+                                        if topicIds.contains(c.id) {
+                                            topicIds.remove(c.id)
+                                        } else {
+                                            topicIds.insert(c.id)
+                                        }
                                     }
                                 }
                             }
@@ -96,11 +95,18 @@ struct SetupView: View {
                 fullWidth: true,
                 action: save
             )
-            .disabled(saving)
+            .disabled(saving || topicIds.isEmpty)
             .padding(.horizontal, Space.s6)
             .padding(.vertical, Space.s5)
         }
         .background(.tujiBg)
+        .task {
+            await categories.loadIfNeeded()
+            seedDefaults()
+        }
+        .onChange(of: categories.categories) { _, _ in
+            seedDefaults()
+        }
     }
 
     // MARK: - Bits
@@ -137,6 +143,48 @@ struct SetupView: View {
         }
     }
 
+    private func categoryTile(category: TujiCategory, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Text(category.emoji)
+                    .font(.system(size: 22))
+                Text(category.nameZh)
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.vertical, Space.s3)
+            .frame(maxWidth: .infinity)
+            .background(
+                selected ? Color.tujiTealSoft : .tujiCard,
+                in: .rect(cornerRadius: Radius.md)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .stroke(
+                        selected ? Color.tujiTeal : .tujiInk4.opacity(0.25),
+                        lineWidth: selected ? 1.5 : 1
+                    )
+            )
+        }
+    }
+
+    /// Sets the initial selection once categories have loaded. Prefer the
+    /// hand-picked beginner trio; fall back to the first three categories
+    /// if any of those IDs don't exist in the dataset.
+    private func seedDefaults() {
+        guard !initializedDefaults, !categories.categories.isEmpty else { return }
+        let allIds = Set(categories.categories.map(\.id))
+        let preferred = Self.defaultTopicIds.filter { allIds.contains($0) }
+        if preferred.count == Self.defaultTopicIds.count {
+            topicIds = Set(preferred)
+        } else {
+            topicIds = Set(categories.categories.prefix(3).map(\.id))
+        }
+        initializedDefaults = true
+    }
+
     private func save() {
         Task {
             saving = true
@@ -148,7 +196,7 @@ struct SetupView: View {
                 accent: "us",
                 showZh: true,
                 studyCategory: "all",
-                studyCategories: topics.sorted().joined(separator: ","),
+                studyCategories: topicIds.sorted().joined(separator: ","),
                 studyDecks: "",
                 uiLang: "zh-Hant",
                 fontSize: "md"
@@ -174,4 +222,5 @@ struct SetupView: View {
 #Preview {
     SetupView(userId: UUID(), onDone: {})
         .environment(OnboardingState.shared)
+        .environment(CategoriesStore.shared)
 }
