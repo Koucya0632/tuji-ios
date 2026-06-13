@@ -8,9 +8,11 @@
 #include? "Secrets.xcconfig"   // 用 #include?，沒有也不會 break build
 
 // ---------- App Identity ----------
-// PRODUCT_BUNDLE_IDENTIFIER / PRODUCT_NAME currently overridden by pbxproj
-// target buildSettings (Xcode defaults). To activate the variants below,
-// strip those from pbxproj. Kept here so future polish has the source.
+// PRODUCT_BUNDLE_IDENTIFIER now takes effect (W6 Part 3 stripped the
+// pbxproj target override). PRODUCT_NAME is still pinned at the
+// target level to "$(TARGET_NAME)" so the bundle stays Tuji.app
+// across variants — install dialog + Springboard label use
+// APP_DISPLAY_NAME below.
 PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios.debug
 PRODUCT_NAME = Tuji Dev
 APP_DISPLAY_NAME = Tuji 開發
