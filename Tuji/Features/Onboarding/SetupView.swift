@@ -18,11 +18,13 @@ struct SetupView: View {
 
     @Environment(OnboardingState.self) private var onboarding
     @Environment(CategoriesStore.self) private var categories
+    @Environment(AuthService.self) private var auth
 
     @State private var topicIds: Set<String> = []
     @State private var dailyGoal: Int = 10
     @State private var saving = false
     @State private var error: String?
+    @State private var showReSignIn: Bool = false
     @State private var initializedDefaults = false
 
     private static let defaultTopicIds: [String] = ["kitchen", "bathroom", "living-room"]
@@ -77,10 +79,25 @@ struct SetupView: View {
                     }
 
                     if let error {
-                        Text(error)
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiCoral)
-                            .padding(.horizontal, Space.s6)
+                        VStack(alignment: .leading, spacing: Space.s2) {
+                            Text(error)
+                                .font(.tujiCaption)
+                                .foregroundStyle(.tujiCoral)
+                            if showReSignIn {
+                                Button {
+                                    Task { await auth.signOut() }
+                                } label: {
+                                    Text("重新登入")
+                                        .font(.system(size: 14, weight: .heavy))
+                                        .foregroundStyle(.tujiTeal)
+                                        .padding(.vertical, Space.s2)
+                                        .padding(.horizontal, Space.s4)
+                                        .background(.tujiTealSoft, in: .capsule)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, Space.s6)
                     }
                 }
                 .padding(.bottom, Space.s5)
@@ -210,10 +227,15 @@ struct SetupView: View {
                 )
                 onboarding.markSetupDone(for: userId)
                 onDone()
+            } catch APIError.unauthorized {
+                error = "後端不認這次登入。可能要重新登入一次。"
+                showReSignIn = true
             } catch let APIError.server(status: status, body: body) {
                 error = "儲存失敗（\(status)）：\(body ?? "")"
+                showReSignIn = false
             } catch {
                 self.error = error.localizedDescription
+                showReSignIn = false
             }
         }
     }
