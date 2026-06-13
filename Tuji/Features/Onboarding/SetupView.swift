@@ -212,9 +212,8 @@ struct SetupView: View {
                 dailyGoal: dailyGoal,
                 accent: "us",
                 showZh: true,
-                studyCategory: "all",
-                studyCategories: topicIds.sorted().joined(separator: ","),
-                studyDecks: "",
+                studyCategories: topicIds.sorted(),
+                studyDecks: [],
                 uiLang: "zh-Hant",
                 fontSize: "md"
             )
