@@ -75,7 +75,9 @@ enum TujiDeepLink: Hashable {
         _ head: String,
         segments: [String],
         queryItems: [URLQueryItem]
-    ) -> TujiDeepLink? {
+    )
+        -> TujiDeepLink?
+    {
         let q = { (name: String) in queryItems.first { $0.name == name }?.value }
         switch head {
         case "today": return .today
