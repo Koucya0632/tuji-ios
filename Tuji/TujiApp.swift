@@ -30,10 +30,12 @@ struct TujiApp: App {
                 .environment(words)
                 .environment(categories)
                 .environment(settings)
+                .environment(\.locale, Self.locale(for: settings.current.uiLang))
                 .task {
                     await words.loadIfNeeded()
                     await categories.loadIfNeeded()
                 }
+                .task { await settings.loadIfNeeded() }
                 .task { await push.refreshAuthorization() }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback
@@ -41,6 +43,17 @@ struct TujiApp: App {
                     // out-of-band URL the system delivers.
                     GIDSignIn.sharedInstance.handle(url)
                 }
+        }
+    }
+
+    /// Resolves the server-supplied uiLang code (zh-Hant / zh-Hans / ja)
+    /// into a `Locale` so the SwiftUI environment knows which localized
+    /// strings to fetch. Unknown codes fall back to zh-Hant.
+    private static func locale(for code: String) -> Locale {
+        switch code {
+        case "zh-Hans": Locale(identifier: "zh-Hans")
+        case "ja": Locale(identifier: "ja")
+        default: Locale(identifier: "zh-Hant")
         }
     }
 }

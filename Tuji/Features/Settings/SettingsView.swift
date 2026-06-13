@@ -98,6 +98,11 @@ struct SettingsView: View {
             }
             Section("顯示") {
                 NavigationLink {
+                    LangPickerView()
+                } label: {
+                    self.row(label: "語言", value: self.langLabel)
+                }
+                NavigationLink {
                     AccentPickerView()
                 } label: {
                     self.row(label: "發音口音", value: self.accentLabel)
@@ -159,6 +164,15 @@ struct SettingsView: View {
         case "uk": "英式"
         case "us": "美式"
         default: self.store.draft.accent.uppercased()
+        }
+    }
+
+    private var langLabel: String {
+        switch self.store.draft.uiLang {
+        case "zh-Hant": "繁體中文"
+        case "zh-Hans": "简体中文"
+        case "ja": "日本語"
+        default: self.store.draft.uiLang
         }
     }
 
