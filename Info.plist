@@ -35,7 +35,14 @@
     <!-- Launch + scene management (Xcode 16+ generates these automatically;
          we replicate explicitly because GENERATE_INFOPLIST_FILE is now NO) -->
     <key>UILaunchScreen</key>
-    <dict/>
+    <dict>
+        <key>UIColorName</key>
+        <string>LaunchBg</string>
+        <key>UIImageName</key>
+        <string>LaunchMark</string>
+        <key>UIImageRespectsSafeAreaInsets</key>
+        <true/>
+    </dict>
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>
