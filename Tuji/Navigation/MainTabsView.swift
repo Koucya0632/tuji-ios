@@ -16,7 +16,14 @@ import SwiftUI
 struct MainTabsView: View {
     let user: SessionUser?
 
+    @Environment(DeepLinkCoordinator.self) private var deepLinks
+
     @State private var selected: MainTab = .today
+    @State private var todayPath = NavigationPath()
+    @State private var cardsPath = NavigationPath()
+    @State private var tujiPath = NavigationPath()
+    @State private var progressPath = NavigationPath()
+    @State private var mePath = NavigationPath()
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -31,35 +38,56 @@ struct MainTabsView: View {
                 .padding(.bottom, Space.s2)
         }
         .background(.tujiBg)
+        .onAppear { self.consumePendingLink() }
+        .onChange(of: self.deepLinks.pending) { _, _ in
+            self.consumePendingLink()
+        }
     }
 
     @ViewBuilder
     private var activeTab: some View {
         switch self.selected {
         case .today:
-            NavigationStack {
+            NavigationStack(path: self.$todayPath) {
                 TodayView(user: self.user)
                     .tujiNavDestinations(user: self.user)
             }
         case .cards:
-            NavigationStack {
+            NavigationStack(path: self.$cardsPath) {
                 CardsListView()
                     .tujiNavDestinations(user: self.user)
             }
         case .tuji:
-            NavigationStack {
+            NavigationStack(path: self.$tujiPath) {
                 TujiCenterView()
                     .tujiNavDestinations(user: self.user)
             }
         case .progress:
-            NavigationStack {
+            NavigationStack(path: self.$progressPath) {
                 ProgressTabView()
                     .tujiNavDestinations(user: self.user)
             }
         case .me:
-            NavigationStack {
+            NavigationStack(path: self.$mePath) {
                 MeView(user: self.user)
                     .tujiNavDestinations(user: self.user)
+            }
+        }
+    }
+
+    private func consumePendingLink() {
+        guard let link = deepLinks.consume() else { return }
+        self.selected = link.tab
+        guard let route = link.route else { return }
+        // Append on the next runloop turn so the NavigationStack for the
+        // newly-selected tab has time to mount.
+        DispatchQueue.main.async {
+            switch link.tab {
+            case .today: self.todayPath.append(route)
+            case .cards: self.cardsPath.append(route)
+            case .tuji: self.tujiPath.append(route)
+            case .progress: self.progressPath.append(route)
+            case .me: self.mePath.append(route)
             }
         }
     }

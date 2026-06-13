@@ -19,6 +19,7 @@ struct TujiApp: App {
     @State private var words = WordsStore.shared
     @State private var categories = CategoriesStore.shared
     @State private var settings = SettingsStore.shared
+    @State private var deepLinks = DeepLinkCoordinator.shared
 
     var body: some Scene {
         WindowGroup {
@@ -30,6 +31,7 @@ struct TujiApp: App {
                 .environment(words)
                 .environment(categories)
                 .environment(settings)
+                .environment(deepLinks)
                 .environment(\.locale, Self.locale(for: settings.current.uiLang))
                 .task {
                     await words.loadIfNeeded()
@@ -42,6 +44,10 @@ struct TujiApp: App {
                     // internally, but forward here as a safety net for any
                     // out-of-band URL the system delivers.
                     GIDSignIn.sharedInstance.handle(url)
+                    // Then try our own tuji:// + universal-link handler.
+                    if let link = TujiDeepLink.from(url) {
+                        deepLinks.receive(link)
+                    }
                 }
         }
     }
