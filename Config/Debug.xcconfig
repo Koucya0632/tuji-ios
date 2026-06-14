@@ -48,10 +48,9 @@ INFOPLIST_FILE = Info.plist
 
 // ---------- Endpoints ----------
 // W1 polish: iOS Debug hits production deploy too (no stable preview alias
-// for the iOS dev branch yet). Production is wired to dev Supabase project
-// brzllighkxleatqoozji via Vercel preview env, so tokens issued by dev
-// validate. Switch to a dedicated preview alias when iOS dev needs a
-// separate staging tier.
+// for the iOS dev branch yet). iOS and Vercel both point at the same
+// Supabase project (pobmxnxdftnvdmnbkmvi) so JWTs validate. Switch to a
+// dedicated preview alias when iOS dev needs a separate staging tier.
 TUJI_BASE_URL = https:/$()/everyday-english-picture-dictionary.vercel.app
 TUJI_SUPABASE_URL = https:/$()/$(TUJI_SUPABASE_PROJECT_DEV).supabase.co
 TUJI_SUPABASE_ANON_KEY = $(TUJI_SUPABASE_ANON_KEY_DEV)
