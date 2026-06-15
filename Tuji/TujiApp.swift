@@ -12,6 +12,13 @@ import GoogleSignIn
 struct TujiApp: App {
     @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
 
+    // Install the custom Nuke pipeline before any LazyImage renders —
+    // ImagePipeline.shared is read at first use, so it must be set
+    // before SwiftUI mounts the view tree.
+    init() {
+        TujiImagePipeline.install()
+    }
+
     @State private var auth = AuthService.shared
     @State private var push = PushNotificationService.shared
     @State private var onboarding = OnboardingState.shared
