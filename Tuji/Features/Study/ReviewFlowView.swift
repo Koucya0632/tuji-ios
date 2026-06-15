@@ -76,6 +76,14 @@ struct ReviewFlowView: View {
         }
         .animation(.spring(duration: 0.35), value: self.coord.phase)
         .background(.tujiBg)
+        // MainTabsView reserves 78pt for the custom TujiTabBar via
+        // safeAreaInset, but that inset doesn't propagate into views
+        // pushed onto its NavigationStack — so the ZStack(.bottom)
+        // above would otherwise place the rating row behind the bar.
+        // Mirror the reservation locally.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: 78)
+        }
     }
 
     private var header: some View {
@@ -147,7 +155,9 @@ private struct ReviewQuestionView: View {
                 Rectangle().fill(.tujiTealSoft)
                 LazyImage(url: self.item.word.imageURL) { state in
                     if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
+                        // .fit (not .fill) so portrait sources letterbox
+                        // instead of cropping the bottom of the subject.
+                        image.resizable().aspectRatio(contentMode: .fit)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .foregroundStyle(.tujiInk4)
