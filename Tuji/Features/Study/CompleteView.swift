@@ -17,6 +17,7 @@ struct CompleteView: View {
     let onFinish: () -> Void
 
     @Environment(ProgressStore.self) private var progress
+    @Environment(StudyStatsStore.self) private var studyStats
 
     private var done: Int {
         self.answered.count
@@ -142,14 +143,19 @@ struct CompleteView: View {
     }
 
     private func loadStreak() async {
-        // Force a round trip — the streak just incremented on the answer
-        // POST and we want the new value, not the cached pre-session one.
+        // Force round trips — both streak and due/seen counts just changed
+        // on the answer POST, and we want the new values shown here.
         self.progress.invalidate()
-        await self.progress.reload()
+        self.studyStats.invalidate()
+        async let p: Void = self.progress.reload()
+        async let s: Void = self.studyStats.reload()
+        await p
+        await s
     }
 }
 
 #Preview {
     CompleteView(answered: [], dailyGoal: 10, onFinish: {})
         .environment(ProgressStore.shared)
+        .environment(StudyStatsStore.shared)
 }

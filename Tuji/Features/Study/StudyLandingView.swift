@@ -29,26 +29,30 @@ enum StudyMode: Hashable {
 @MainActor
 @Observable
 final class StudyLandingVM {
-    var stats: StudyStats?
     var settings: UserSettings = .default
     var loading: Bool = true
     var error: Error?
 
+    /// Last-known StudyStats — driven by `StudyStatsStore.shared`, never
+    /// mutated directly. Held as a property so the computed getters
+    /// (`newLimitToday`, `reviewDisabled`, etc.) can stay sync.
+    var stats: StudyStats?
+
     private let log = Logger(subsystem: "app.tuji.ios", category: "study-landing")
 
-    func load() async {
+    /// Pulls /api/users/me directly (cheap, view-local) and delegates the
+    /// stats fetch to `StudyStatsStore` so Today shares the same window.
+    func load(studyStats: StudyStatsStore) async {
         self.loading = true
         self.error = nil
         defer { self.loading = false }
+        async let statsLoad: Void = studyStats.loadIfStale()
         do {
-            async let stats: StudyStatsResponse = APIClient.shared.get(.studyStats)
-            async let me: UserMeResponse = APIClient.shared.get(.usersMe)
-            let (s, m) = try await (stats, me)
-            self.stats = s.stats
-            // /api/users/me returns the full bundle including settings; for
-            // v1 fall back to defaults if backend bundle doesn't carry them.
-            _ = m
-            self.log.info("loaded due=\(s.stats.due, privacy: .public) new=\(s.stats.new, privacy: .public)")
+            let me: UserMeResponse = try await APIClient.shared.get(.usersMe)
+            await statsLoad
+            self.stats = studyStats.stats
+            _ = me
+            self.log.info("loaded due=\(self.stats?.due ?? 0, privacy: .public) new=\(self.stats?.new ?? 0, privacy: .public)")
         } catch {
             self.error = error
             self.log.error("study landing load failed: \(error.localizedDescription, privacy: .public)")
@@ -96,6 +100,7 @@ struct StudyLandingView: View {
     @State private var pushQueue: QueuePush?
     @Environment(LocalCache.self) private var cache
     @Environment(WordsStore.self) private var words
+    @Environment(StudyStatsStore.self) private var studyStats
 
     var body: some View {
         ScrollView {
@@ -114,8 +119,11 @@ struct StudyLandingView: View {
         .background(.tujiBg)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .refreshable { await self.vm.load() }
-        .task { await self.vm.load() }
+        .refreshable {
+            self.studyStats.invalidate()
+            await self.vm.load(studyStats: self.studyStats)
+        }
+        .task { await self.vm.load(studyStats: self.studyStats) }
         .alert("複習太多了", isPresented: self.$showBlockedAlert) {
             Button("知道了", role: .cancel) {}
         } message: {
@@ -358,5 +366,6 @@ struct StudyLandingView: View {
         StudyLandingView(initialMode: .new)
             .environment(LocalCache.shared)
             .environment(WordsStore.shared)
+            .environment(StudyStatsStore.shared)
     }
 }

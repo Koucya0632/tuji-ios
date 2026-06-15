@@ -27,6 +27,7 @@ struct TujiApp: App {
     @State private var categories = CategoriesStore.shared
     @State private var settings = SettingsStore.shared
     @State private var progress = ProgressStore.shared
+    @State private var studyStats = StudyStatsStore.shared
     @State private var deepLinks = DeepLinkCoordinator.shared
 
     var body: some Scene {
@@ -40,6 +41,7 @@ struct TujiApp: App {
                 .environment(categories)
                 .environment(settings)
                 .environment(progress)
+                .environment(studyStats)
                 .environment(deepLinks)
                 .environment(\.locale, Self.locale(for: settings.current.uiLang))
                 .task {
