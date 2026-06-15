@@ -1,6 +1,11 @@
 // Server-side user_settings row + the response shape POST /api/users/settings
-// returns. Field names match what `lib/settings.normalizeSettings` produces
-// on the backend (snake_case via JSONEncoder.tuji's keyEncodingStrategy).
+// returns. Wire format is camelCase both ways; see lib/settings.ts.
+//
+//   studyCategories / studyDecks  →  arrays of strings (kebab-case ids)
+//
+// The legacy `studyCategory` single-string field that lived on this struct
+// during W1 was dropped from the server payload; keeping it here caused
+// /api/users/settings POST responses to fail Decodable's missing-key check.
 
 import Foundation
 
@@ -8,9 +13,8 @@ struct UserSettings: Codable, Equatable {
     var dailyGoal: Int
     var accent: String
     var showZh: Bool
-    var studyCategory: String
-    var studyCategories: String
-    var studyDecks: String
+    var studyCategories: [String]
+    var studyDecks: [String]
     var uiLang: String
     var fontSize: String
 
@@ -18,9 +22,8 @@ struct UserSettings: Codable, Equatable {
         dailyGoal: 10,
         accent: "us",
         showZh: true,
-        studyCategory: "all",
-        studyCategories: "",
-        studyDecks: "",
+        studyCategories: [],
+        studyDecks: [],
         uiLang: "zh-Hant",
         fontSize: "md"
     )
