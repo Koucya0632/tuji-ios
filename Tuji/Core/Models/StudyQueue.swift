@@ -80,10 +80,16 @@ nonisolated struct StudyAnswerPayload: Encodable, Sendable {
     }
 }
 
+// Server emits `mastery: { before, after, delta, level }` and
+// `next: { status, intervalDays, nextReviewAt, humanized, penaltyApplied }`
+// — both nested objects, neither matched the old `Int?` / `String?`
+// shape and caused every answer POST to throw APIError.decoding even
+// though the write itself succeeded. iOS only consumes `milestone`
+// for the streak celebration, so we only model that. Codable skips
+// undeclared keys, so the richer server payload still round-trips
+// cleanly.
 struct StudyAnswerResponse: Decodable {
     let ok: Bool?
-    let mastery: Int?
-    let nextReview: String?
     let milestone: Milestone?
 }
 
