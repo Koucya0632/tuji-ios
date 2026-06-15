@@ -152,12 +152,26 @@ private struct ReviewQuestionView: View {
     private var hero: some View {
         ZStack(alignment: .bottomTrailing) {
             ZStack {
-                Rectangle().fill(.tujiTealSoft)
+                // Blurred copy of the subject as a tinted backdrop —
+                // portrait images read as "framed in their own tone"
+                // instead of a tiny picture letterboxed in a solid
+                // green tile. Nuke memory-caches the second fetch.
                 LazyImage(url: self.item.word.imageURL) { state in
                     if let image = state.image {
-                        // .fit (not .fill) so portrait sources letterbox
-                        // instead of cropping the bottom of the subject.
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        Rectangle().fill(.tujiTealSoft)
+                    }
+                }
+                .pipeline(.shared)
+                .blur(radius: 28)
+                .opacity(0.55)
+                .overlay(Color.tujiBg.opacity(0.18))
+
+                LazyImage(url: self.item.word.imageURL) { state in
+                    if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fit)
+                            .padding(Space.s3)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .foregroundStyle(.tujiInk4)
@@ -167,7 +181,7 @@ private struct ReviewQuestionView: View {
                 }
                 .pipeline(.shared)
             }
-            .frame(height: 150)
+            .frame(height: 240)
             .clipped()
             .clipShape(.rect(cornerRadius: Radius.lg))
 
