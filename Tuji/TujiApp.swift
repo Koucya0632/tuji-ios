@@ -19,6 +19,7 @@ struct TujiApp: App {
     @State private var words = WordsStore.shared
     @State private var categories = CategoriesStore.shared
     @State private var settings = SettingsStore.shared
+    @State private var progress = ProgressStore.shared
     @State private var deepLinks = DeepLinkCoordinator.shared
 
     var body: some Scene {
@@ -31,6 +32,7 @@ struct TujiApp: App {
                 .environment(words)
                 .environment(categories)
                 .environment(settings)
+                .environment(progress)
                 .environment(deepLinks)
                 .environment(\.locale, Self.locale(for: settings.current.uiLang))
                 .task {

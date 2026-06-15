@@ -12,36 +12,22 @@ import SwiftUI
 @MainActor
 @Observable
 final class ProgressVM {
-    var streak: StudyStreak?
-    var heatmap: [HeatmapCell] = []
-    var loading: Bool = false
-    var error: Error?
     var clearing: Bool = false
     var clearError: Error?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "progress")
 
-    func load() async {
-        self.loading = true
-        self.error = nil
-        defer { self.loading = false }
-        do {
-            let resp: ProgressResponse = try await APIClient.shared.get(.usersProgress)
-            self.streak = resp.streak
-            self.heatmap = resp.heatmap ?? []
-        } catch {
-            self.error = error
-            self.log.error("progress load failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    func clearProgress() async {
+    /// Streak + heatmap reads now live on ProgressStore.shared so Today /
+    /// Me / CompleteView share the same fetched copy. This VM just owns
+    /// the "clear progress" action.
+    func clearProgress(store: ProgressStore) async {
         self.clearing = true
         self.clearError = nil
         defer { self.clearing = false }
         do {
             try await APIClient.shared.delete(.usersProgress)
-            await self.load()
+            store.invalidate()
+            await store.reload()
         } catch {
             self.clearError = error
             self.log.error("clear failed: \(error.localizedDescription, privacy: .public)")
@@ -53,6 +39,7 @@ struct ProgressTabView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
     @Environment(WordsStore.self) private var words
+    @Environment(ProgressStore.self) private var progress
 
     @State private var vm = ProgressVM()
     @State private var showClearConfirm = false
@@ -82,17 +69,20 @@ struct ProgressTabView: View {
         }
         .background(.tujiBg)
         .refreshable {
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest {
+                self.progress.invalidate()
+                await self.progress.reload()
+            }
             await self.words.loadIfNeeded()
         }
         .task {
             await self.words.loadIfNeeded()
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest { await self.progress.loadIfStale() }
         }
         .alert("清除學習進度", isPresented: self.$showClearConfirm) {
             Button("取消", role: .cancel) {}
             Button("確定清除", role: .destructive) {
-                Task { await self.vm.clearProgress() }
+                Task { await self.vm.clearProgress(store: self.progress) }
             }
         } message: {
             Text("掌握度、SRS 排程、學習紀錄會被清空。\n收藏與設定不受影響。")
@@ -151,14 +141,14 @@ struct ProgressTabView: View {
         HStack(spacing: Space.s3) {
             self.statTile(
                 label: "目前連勝",
-                value: self.vm.streak?.current ?? 0,
+                value: self.progress.streak?.current ?? 0,
                 unit: "天",
                 icon: "flame.fill",
                 tint: .tujiCoral
             )
             self.statTile(
                 label: "最長連勝",
-                value: self.vm.streak?.longest ?? 0,
+                value: self.progress.streak?.longest ?? 0,
                 unit: "天",
                 icon: "trophy.fill",
                 tint: .tujiInk
@@ -208,10 +198,10 @@ struct ProgressTabView: View {
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
             }
-            if self.vm.heatmap.isEmpty {
+            if self.progress.heatmap.isEmpty {
                 self.heatmapEmpty
             } else {
-                HeatmapGrid(cells: self.vm.heatmap)
+                HeatmapGrid(cells: self.progress.heatmap)
             }
         }
         .padding(Space.s5)
@@ -225,7 +215,7 @@ struct ProgressTabView: View {
 
     private var activeDayCount: Int {
         // swiftlint:disable:next empty_count
-        self.vm.heatmap.count { $0.count > 0 }
+        self.progress.heatmap.count { $0.count > 0 }
     }
 
     private var heatmapEmpty: some View {
@@ -242,7 +232,7 @@ struct ProgressTabView: View {
     // MARK: - Suggestion card
 
     private var suggestionCard: some View {
-        let hasStreak = (self.vm.streak?.current ?? 0) > 0
+        let hasStreak = (self.progress.streak?.current ?? 0) > 0
         return VStack(alignment: .leading, spacing: Space.s3) {
             HStack(spacing: Space.s2) {
                 Image(systemName: "sparkles").foregroundStyle(.tujiTeal)
@@ -377,5 +367,6 @@ struct HeatmapGrid: View {
             .environment(LocalCache.shared)
             .environment(AuthService.shared)
             .environment(WordsStore.shared)
+            .environment(ProgressStore.shared)
     }
 }

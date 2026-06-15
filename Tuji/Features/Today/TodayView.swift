@@ -14,26 +14,27 @@ import SwiftUI
 final class TodayVM {
     var me: UserMeResponse?
     var stats: StudyStats?
-    var streak: StudyStreak?
     var loading = true
     var error: Error?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "today")
 
-    func load() async {
+    // Streak comes from ProgressStore.shared — kept off the VM so Today,
+    // Progress tab, Me, and CompleteView don't each round-trip on tab swap.
+    func load(progress: ProgressStore) async {
         self.loading = true
         self.error = nil
         defer { self.loading = false }
+        async let progressLoad: Void = progress.loadIfStale()
         do {
             async let me: UserMeResponse = APIClient.shared.get(.usersMe)
             async let st: StudyStatsResponse = APIClient.shared.get(.studyStats)
-            async let pr: ProgressResponse = APIClient.shared.get(.usersProgress)
-            let (m, s, p) = try await (me, st, pr)
+            let (m, s) = try await (me, st)
+            await progressLoad
             self.me = m
             self.stats = s.stats
-            self.streak = p.streak
             self.log.info(
-                "today loaded streak=\(p.streak.current, privacy: .public) due=\(s.stats.due, privacy: .public)"
+                "today loaded streak=\(progress.streak?.current ?? 0, privacy: .public) due=\(s.stats.due, privacy: .public)"
             )
         } catch {
             self.error = error
@@ -48,6 +49,7 @@ struct TodayView: View {
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
     @Environment(LocalCache.self) private var cache
+    @Environment(ProgressStore.self) private var progress
 
     @State private var vm = TodayVM()
 
@@ -69,14 +71,17 @@ struct TodayView: View {
         }
         .background(.tujiBg)
         .refreshable {
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest {
+                self.progress.invalidate()
+                await self.vm.load(progress: self.progress)
+            }
             await self.words.reload()
             await self.categories.reload()
         }
         .task {
             await self.words.loadIfNeeded()
             await self.categories.loadIfNeeded()
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest { await self.vm.load(progress: self.progress) }
         }
     }
 
@@ -103,7 +108,7 @@ struct TodayView: View {
 
     @ViewBuilder
     private var streakChip: some View {
-        let n = self.vm.streak?.current ?? 0
+        let n = self.progress.streak?.current ?? 0
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .heavy))
@@ -373,6 +378,7 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(LocalCache.shared)
+            .environment(ProgressStore.shared)
     }
 }
 
@@ -382,6 +388,7 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(LocalCache.shared)
+            .environment(ProgressStore.shared)
     }
 }
 

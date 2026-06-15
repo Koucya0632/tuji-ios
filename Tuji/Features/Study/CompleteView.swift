@@ -2,8 +2,10 @@
 // finishes — Mascot cheer, done / goal display, streak +1 capsule,
 // answered tiles row, 回首頁 CTA.
 //
-// Streak comes from a fresh /api/users/progress fetch on appear so the
-// number matches what the backend already incremented for this session.
+// Streak comes from ProgressStore.shared. We invalidate first so the
+// new entry from the just-answered session (which the server already
+// busted on /api/study/answer) is round-tripped fresh instead of read
+// from the 30s in-memory window.
 
 import Nuke
 import NukeUI
@@ -14,7 +16,7 @@ struct CompleteView: View {
     let dailyGoal: Int
     let onFinish: () -> Void
 
-    @State private var streak: Int?
+    @Environment(ProgressStore.self) private var progress
 
     private var done: Int {
         self.answered.count
@@ -64,7 +66,7 @@ struct CompleteView: View {
         HStack(spacing: Space.s2) {
             Image(systemName: "flame.fill")
                 .foregroundStyle(.tujiCoral)
-            if let streak {
+            if let streak = self.progress.streak?.current {
                 Text("連勝 \(streak) 天")
                     .font(.system(size: 15, weight: .heavy))
                     .foregroundStyle(.tujiInk)
@@ -140,16 +142,14 @@ struct CompleteView: View {
     }
 
     private func loadStreak() async {
-        do {
-            let resp: ProgressResponse = try await APIClient.shared.get(.usersProgress)
-            self.streak = resp.streak.current
-        } catch {
-            // Quiet fail — the celebration still works without the number.
-            self.streak = 0
-        }
+        // Force a round trip — the streak just incremented on the answer
+        // POST and we want the new value, not the cached pre-session one.
+        self.progress.invalidate()
+        await self.progress.reload()
     }
 }
 
 #Preview {
     CompleteView(answered: [], dailyGoal: 10, onFinish: {})
+        .environment(ProgressStore.shared)
 }

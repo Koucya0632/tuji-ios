@@ -82,8 +82,27 @@ enum Endpoint {
                 URLQueryItem(name: "type", value: type),
                 URLQueryItem(name: "limit", value: String(limit))
             ]
+        case .words, .word, .categories:
+            // Server localizes by ?lang=. v1 UI is fixed to zh-Hant; when the
+            // app grows multi-locale, source this from UserSettings.uiLang.
+            [URLQueryItem(name: "lang", value: "zh-Hant")]
         default:
             []
+        }
+    }
+
+    /// URLCache behavior for this endpoint. Public endpoints honor the
+    /// server's Cache-Control headers; user / mutating endpoints bypass
+    /// the cache so writes immediately reflect.
+    var cachePolicy: URLRequest.CachePolicy {
+        switch self {
+        case .words, .word, .categories, .search:
+            .useProtocolCachePolicy
+        case .studyAnswer, .events, .usersSync,
+             .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete:
+            .reloadIgnoringLocalCacheData
+        default:
+            .useProtocolCachePolicy
         }
     }
 

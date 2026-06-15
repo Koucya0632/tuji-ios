@@ -14,12 +14,14 @@ import SwiftUI
 final class MeVM {
     var bestWords: [TopWord] = []
     var weakWords: [TopWord] = []
-    var streak: StudyStreak?
     var loading: Bool = false
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "me")
 
-    func load() async {
+    // Streak is read from ProgressStore.shared so Today / Progress / Me share
+    // a single fetched copy. Best / weak words live here because they're a
+    // Me-only payload.
+    func load(progress: ProgressStore) async {
         self.loading = true
         defer { self.loading = false }
         async let bestResp: TopWordsResponse? = try? APIClient.shared.get(
@@ -28,11 +30,10 @@ final class MeVM {
         async let weakResp: TopWordsResponse? = try? APIClient.shared.get(
             .usersTopWords(type: "weak", limit: 3)
         )
-        async let progressResp: ProgressResponse? = try? APIClient.shared.get(.usersProgress)
-        let (best, weak, progress) = await (bestResp, weakResp, progressResp)
+        async let progressLoad: Void = progress.loadIfStale()
+        let (best, weak, _) = await (bestResp, weakResp, progressLoad)
         self.bestWords = best?.words ?? []
         self.weakWords = weak?.words ?? []
-        self.streak = progress?.streak
     }
 }
 
@@ -40,6 +41,7 @@ struct MeView: View {
     let user: SessionUser?
     @Environment(AuthService.self) private var auth
     @Environment(LocalCache.self) private var cache
+    @Environment(ProgressStore.self) private var progress
 
     @State private var vm = MeVM()
     @State private var peekId: String?
@@ -71,10 +73,13 @@ struct MeView: View {
         }
         .background(.tujiBg)
         .refreshable {
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest {
+                self.progress.invalidate()
+                await self.vm.load(progress: self.progress)
+            }
         }
         .task {
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest { await self.vm.load(progress: self.progress) }
         }
         .navigationDestination(item: self.$peekId) { id in
             WordDetailView(id: id)
@@ -118,7 +123,7 @@ struct MeView: View {
             self.statCell(value: "\(self.cache.learnedIds.count)", label: "已學字")
             Divider().frame(height: 36)
             self.statCell(
-                value: "\(self.vm.streak?.current ?? 0)",
+                value: "\(self.progress.streak?.current ?? 0)",
                 label: "連勝天",
                 icon: "flame.fill",
                 iconTint: .tujiCoral
