@@ -13,6 +13,13 @@ struct ReviewFlowView: View {
     @State private var coord: ReviewFlowCoordinator
     @Environment(\.dismiss) private var dismiss
     @State private var showExitConfirm = false
+    // ReviewFlowView is pushed via .navigationDestination(item:) from
+    // StudyLauncherView, which doesn't carry the ancestor's
+    // .tujiNavDestinations(for: NavRoute) registry into this scope —
+    // so NavigationLink(value: NavRoute.wordDetail) in the footer
+    // resolved to nothing. Drive the push from a local item-based
+    // destination instead, mirroring StudyLauncherView's pattern.
+    @State private var pushWordId: String?
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -57,6 +64,9 @@ struct ReviewFlowView: View {
         } message: {
             Text("已答的進度已存，未完成的字下次還會出現")
         }
+        .navigationDestination(item: self.$pushWordId) { id in
+            WordDetailView(id: id)
+        }
     }
 
     private var flowSurface: some View {
@@ -70,8 +80,12 @@ struct ReviewFlowView: View {
                 }
             }
             if self.coord.phase == .review, let item = coord.current {
-                ReviewFooter(coord: self.coord, item: item)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                ReviewFooter(
+                    coord: self.coord,
+                    item: item,
+                    onSeeDetail: { self.pushWordId = item.word.id }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.spring(duration: 0.35), value: self.coord.phase)
@@ -291,11 +305,12 @@ private struct ReviewQuestionView: View {
 private struct ReviewFooter: View {
     let coord: ReviewFlowCoordinator
     let item: StudyQueueItem
+    let onSeeDetail: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             self.summary
-            NavigationLink(value: NavRoute.wordDetail(id: item.word.id)) {
+            Button(action: self.onSeeDetail) {
                 HStack(spacing: 4) {
                     Text("字卡詳情")
                     Image(systemName: "arrow.right")
