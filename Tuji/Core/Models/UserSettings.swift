@@ -1,9 +1,8 @@
 // Server-side user_settings row + the response shape POST /api/users/settings
-// returns. Field names match what `lib/settings.normalizeSettings` produces
-// on the backend (snake_case via JSONEncoder.tuji's keyEncodingStrategy).
+// returns. Wire format is camelCase both ways; see lib/settings.ts.
 //
-// Wire contract per backend (lib/settings.ts):
 //   studyCategories / studyDecks  →  arrays of strings (kebab-case ids)
+//
 // The legacy `studyCategory` single-string field that lived on this struct
 // during W1 was dropped from the server payload; keeping it here caused
 // /api/users/settings POST responses to fail Decodable's missing-key check.
