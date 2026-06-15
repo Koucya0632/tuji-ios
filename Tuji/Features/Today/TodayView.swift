@@ -13,27 +13,27 @@ import SwiftUI
 @Observable
 final class TodayVM {
     var me: UserMeResponse?
-    var stats: StudyStats?
-    var streak: StudyStreak?
     var loading = true
     var error: Error?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "today")
 
-    func load() async {
+    /// Streak + study stats come from shared stores (ProgressStore,
+    /// StudyStatsStore) so Today, Progress, Me, StudyLanding, and
+    /// CompleteView don't each round-trip on tab swap.
+    func load(progress: ProgressStore, studyStats: StudyStatsStore) async {
         self.loading = true
         self.error = nil
         defer { self.loading = false }
+        async let progressLoad: Void = progress.loadIfStale()
+        async let statsLoad: Void = studyStats.loadIfStale()
         do {
-            async let me: UserMeResponse = APIClient.shared.get(.usersMe)
-            async let st: StudyStatsResponse = APIClient.shared.get(.studyStats)
-            async let pr: ProgressResponse = APIClient.shared.get(.usersProgress)
-            let (m, s, p) = try await (me, st, pr)
-            self.me = m
-            self.stats = s.stats
-            self.streak = p.streak
+            let me: UserMeResponse = try await APIClient.shared.get(.usersMe)
+            await progressLoad
+            await statsLoad
+            self.me = me
             self.log.info(
-                "today loaded streak=\(p.streak.current, privacy: .public) due=\(s.stats.due, privacy: .public)"
+                "today loaded streak=\(progress.streak?.current ?? 0, privacy: .public) due=\(studyStats.stats?.due ?? 0, privacy: .public)"
             )
         } catch {
             self.error = error
@@ -48,6 +48,8 @@ struct TodayView: View {
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
     @Environment(LocalCache.self) private var cache
+    @Environment(ProgressStore.self) private var progress
+    @Environment(StudyStatsStore.self) private var studyStats
 
     @State private var vm = TodayVM()
 
@@ -69,14 +71,20 @@ struct TodayView: View {
         }
         .background(.tujiBg)
         .refreshable {
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest {
+                self.progress.invalidate()
+                self.studyStats.invalidate()
+                await self.vm.load(progress: self.progress, studyStats: self.studyStats)
+            }
             await self.words.reload()
             await self.categories.reload()
         }
         .task {
             await self.words.loadIfNeeded()
             await self.categories.loadIfNeeded()
-            if !self.isGuest { await self.vm.load() }
+            if !self.isGuest {
+                await self.vm.load(progress: self.progress, studyStats: self.studyStats)
+            }
         }
     }
 
@@ -103,7 +111,7 @@ struct TodayView: View {
 
     @ViewBuilder
     private var streakChip: some View {
-        let n = self.vm.streak?.current ?? 0
+        let n = self.progress.streak?.current ?? 0
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .heavy))
@@ -171,10 +179,10 @@ struct TodayView: View {
                 ? "訪客模式 · 已認得 \(learned) 個字"
                 : "訪客模式 · 先逛逛圖鑑，喜歡的字按愛心收藏"
         }
-        if let due = self.vm.stats?.due, due > 0 {
+        if let due = self.studyStats.stats?.due, due > 0 {
             return "今天有 \(due) 個字要復習"
         }
-        if let new = self.vm.stats?.new, new > 0 {
+        if let new = self.studyStats.stats?.new, new > 0 {
             return "今天還沒學新字，挑一個來試試"
         }
         return "今天目標達成，明天再來"
@@ -187,12 +195,12 @@ struct TodayView: View {
             HStack(spacing: Space.s3) {
                 self.heroTile(
                     label: "今日復習",
-                    value: self.vm.stats?.due ?? 0,
+                    value: self.studyStats.stats?.due ?? 0,
                     tint: .tujiCoral
                 )
                 self.heroTile(
                     label: "可學新字",
-                    value: self.vm.stats?.new ?? 0,
+                    value: self.studyStats.stats?.new ?? 0,
                     tint: .tujiYellow
                 )
             }
@@ -273,11 +281,11 @@ struct TodayView: View {
     }
 
     private var reviewDisabled: Bool {
-        self.isGuest || (self.vm.stats?.due ?? 0) == 0
+        self.isGuest || (self.studyStats.stats?.due ?? 0) == 0
     }
 
     private var newDisabled: Bool {
-        self.isGuest || (self.vm.stats?.new ?? 0) == 0
+        self.isGuest || (self.studyStats.stats?.new ?? 0) == 0
     }
 
     // MARK: - Themes grid
@@ -373,6 +381,8 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(LocalCache.shared)
+            .environment(ProgressStore.shared)
+            .environment(StudyStatsStore.shared)
     }
 }
 
@@ -382,6 +392,8 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(LocalCache.shared)
+            .environment(ProgressStore.shared)
+            .environment(StudyStatsStore.shared)
     }
 }
 

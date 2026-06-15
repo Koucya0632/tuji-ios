@@ -18,7 +18,7 @@ final class APIClient {
     private let encoder: JSONEncoder = .tuji
     private let log = Logger(subsystem: "app.tuji.ios", category: "api")
 
-    init(auth: AuthService = .shared, urlSession: URLSession = .shared) {
+    init(auth: AuthService = .shared, urlSession: URLSession = APIClient.makeCachingSession()) {
         self.auth = auth
         self.urlSession = urlSession
 
@@ -119,6 +119,7 @@ final class APIClient {
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         req.timeoutInterval = 15
+        req.cachePolicy = ep.cachePolicy
 
         if !ep.isPublic {
             let token = try await auth.validAccessToken()
@@ -187,3 +188,20 @@ final class APIClient {
 
 /// Stand-in for endpoints that take no body or return no body.
 struct Empty: Codable {}
+
+extension APIClient {
+    /// URLSession with a disk-backed URLCache so public GETs survive an
+    /// app relaunch. Server-set Cache-Control / ETag headers drive
+    /// freshness; per-endpoint cachePolicy decides whether to consult it.
+    static func makeCachingSession() -> URLSession {
+        let cfg = URLSessionConfiguration.default
+        cfg.requestCachePolicy = .useProtocolCachePolicy
+        cfg.urlCache = URLCache(
+            memoryCapacity: 16 * 1024 * 1024,
+            diskCapacity: 128 * 1024 * 1024,
+            directory: nil
+        )
+        cfg.timeoutIntervalForRequest = 15
+        return URLSession(configuration: cfg)
+    }
+}
