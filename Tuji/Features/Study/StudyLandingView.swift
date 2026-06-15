@@ -52,7 +52,10 @@ final class StudyLandingVM {
             await statsLoad
             self.stats = studyStats.stats
             _ = me
-            self.log.info("loaded due=\(self.stats?.due ?? 0, privacy: .public) new=\(self.stats?.new ?? 0, privacy: .public)")
+            self.log
+                .info(
+                    "loaded due=\(self.stats?.due ?? 0, privacy: .public) new=\(self.stats?.new ?? 0, privacy: .public)"
+                )
         } catch {
             self.error = error
             self.log.error("study landing load failed: \(error.localizedDescription, privacy: .public)")

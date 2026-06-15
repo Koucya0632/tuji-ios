@@ -18,9 +18,9 @@ final class MeVM {
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "me")
 
-    // Streak is read from ProgressStore.shared so Today / Progress / Me share
-    // a single fetched copy. Best / weak words live here because they're a
-    // Me-only payload.
+    /// Streak is read from ProgressStore.shared so Today / Progress / Me share
+    /// a single fetched copy. Best / weak words live here because they're a
+    /// Me-only payload.
     func load(progress: ProgressStore) async {
         self.loading = true
         defer { self.loading = false }

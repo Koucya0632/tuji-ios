@@ -18,9 +18,9 @@ final class TodayVM {
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "today")
 
-    // Streak + study stats come from shared stores (ProgressStore,
-    // StudyStatsStore) so Today, Progress, Me, StudyLanding, and
-    // CompleteView don't each round-trip on tab swap.
+    /// Streak + study stats come from shared stores (ProgressStore,
+    /// StudyStatsStore) so Today, Progress, Me, StudyLanding, and
+    /// CompleteView don't each round-trip on tab swap.
     func load(progress: ProgressStore, studyStats: StudyStatsStore) async {
         self.loading = true
         self.error = nil
