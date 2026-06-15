@@ -18,7 +18,12 @@ extension JSONDecoder {
 extension JSONEncoder {
     static let tuji: JSONEncoder = {
         let e = JSONEncoder()
-        e.keyEncodingStrategy = .convertToSnakeCase
+        // Server routes read camelCase body keys directly (`body.cardId`,
+        // `body.studyCategories`, etc.) — they were written for the web
+        // client where JS naturally serializes camelCase. Converting to
+        // snake_case here silently dropped every multi-word field
+        // (settings save returning 200 + defaults; study/answer hard
+        // 400) so we leave keys as-declared.
         e.dateEncodingStrategy = .iso8601
         return e
     }()
