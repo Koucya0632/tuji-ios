@@ -20,14 +20,22 @@ final class ProgressVM {
     /// Streak + heatmap reads now live on ProgressStore.shared so Today /
     /// Me / CompleteView share the same fetched copy. This VM just owns
     /// the "clear progress" action.
-    func clearProgress(store: ProgressStore) async {
+    ///
+    /// Server-side `clearLearningProgress` wipes user_cards too, so the
+    /// stats store has to be invalidated alongside progress — otherwise
+    /// the Study tab shows the pre-wipe due/seen counts for up to 30s.
+    func clearProgress(progress: ProgressStore, studyStats: StudyStatsStore) async {
         self.clearing = true
         self.clearError = nil
         defer { self.clearing = false }
         do {
             try await APIClient.shared.delete(.usersProgress)
-            store.invalidate()
-            await store.reload()
+            progress.invalidate()
+            studyStats.invalidate()
+            async let p: Void = progress.reload()
+            async let s: Void = studyStats.reload()
+            await p
+            await s
         } catch {
             self.clearError = error
             self.log.error("clear failed: \(error.localizedDescription, privacy: .public)")
@@ -40,6 +48,7 @@ struct ProgressTabView: View {
     @Environment(AuthService.self) private var auth
     @Environment(WordsStore.self) private var words
     @Environment(ProgressStore.self) private var progress
+    @Environment(StudyStatsStore.self) private var studyStats
 
     @State private var vm = ProgressVM()
     @State private var showClearConfirm = false
@@ -82,7 +91,12 @@ struct ProgressTabView: View {
         .alert("清除學習進度", isPresented: self.$showClearConfirm) {
             Button("取消", role: .cancel) {}
             Button("確定清除", role: .destructive) {
-                Task { await self.vm.clearProgress(store: self.progress) }
+                Task {
+                    await self.vm.clearProgress(
+                        progress: self.progress,
+                        studyStats: self.studyStats
+                    )
+                }
             }
         } message: {
             Text("掌握度、SRS 排程、學習紀錄會被清空。\n收藏與設定不受影響。")
@@ -368,5 +382,6 @@ struct HeatmapGrid: View {
             .environment(AuthService.shared)
             .environment(WordsStore.shared)
             .environment(ProgressStore.shared)
+            .environment(StudyStatsStore.shared)
     }
 }
