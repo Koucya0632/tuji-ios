@@ -192,18 +192,6 @@ struct TodayView: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: Space.s4) {
-            HStack(spacing: Space.s3) {
-                self.heroTile(
-                    label: "今日復習",
-                    value: self.studyStats.stats?.due ?? 0,
-                    tint: .tujiCoral
-                )
-                self.heroTile(
-                    label: "可學新字",
-                    value: self.studyStats.stats?.new ?? 0,
-                    tint: .tujiYellow
-                )
-            }
             self.heroProgress
             HStack(spacing: Space.s3) {
                 NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
@@ -223,27 +211,6 @@ struct TodayView: View {
         }
         .padding(Space.s5)
         .background(.tujiBgInk, in: .rect(cornerRadius: Radius.xl))
-    }
-
-    private func heroTile(label: String, value: Int, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: Space.s1) {
-            Text(label)
-                .font(.tujiOverline)
-                .tracking(2)
-                .foregroundStyle(.white.opacity(0.6))
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(value)")
-                    .font(.tujiDisplay)
-                    .foregroundStyle(tint)
-                    .contentTransition(.numericText())
-                Text("字")
-                    .font(.system(size: 12, weight: .heavy))
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.s4)
-        .background(.white.opacity(0.06), in: .rect(cornerRadius: Radius.lg))
     }
 
     @ViewBuilder
