@@ -50,6 +50,7 @@ struct TodayView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
+    @Environment(SettingsStore.self) private var settings
 
     @State private var vm = TodayVM()
 
@@ -252,7 +253,15 @@ struct TodayView: View {
     }
 
     private var newDisabled: Bool {
-        self.isGuest || (self.studyStats.stats?.new ?? 0) == 0
+        if self.isGuest { return true }
+        if (self.studyStats.stats?.new ?? 0) == 0 { return true }
+        // When the review backlog crowds out the new-card quota
+        // (computeNewLimit hits 0 once due > 100), grey out the button
+        // instead of letting the user enter the launcher only to bounce
+        // back on an empty queue.
+        let due = self.studyStats.stats?.due ?? 0
+        let goal = self.settings.current.dailyGoal
+        return StudyQuotas.computeNewLimit(goal: goal, due: due) == 0
     }
 
     // MARK: - Themes grid
@@ -350,6 +359,7 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(LocalCache.shared)
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
+            .environment(SettingsStore.shared)
     }
 }
 
@@ -361,6 +371,7 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(LocalCache.shared)
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
+            .environment(SettingsStore.shared)
     }
 }
 
