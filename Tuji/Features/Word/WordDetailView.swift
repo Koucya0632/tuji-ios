@@ -16,6 +16,7 @@ struct WordDetailView: View {
     @State private var word: Word?
     @State private var loading = false
     @State private var error: Error?
+    @State private var selectedDetailTab: WordDetailTab = .definition
 
     var body: some View {
         GeometryReader { geo in
@@ -35,7 +36,21 @@ struct WordDetailView: View {
         }
         .background(.tujiBg)
         .toolbar(.hidden, for: .navigationBar)
+        // MainTabsView reserves 78pt for the custom TujiTabBar via
+        // safeAreaInset on activeTab, but that inset doesn't propagate
+        // into pushed detail views — without this local mirror the bottom
+        // sections (collocations chips, etc.) sit behind the bar.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: 78)
+        }
         .task { await self.load() }
+        .onChange(of: self.word?.id) { _, _ in
+            guard let new = self.word else { return }
+            let tabs = Self.availableTabs(for: new)
+            if !tabs.contains(self.selectedDetailTab), let first = tabs.first {
+                self.selectedDetailTab = first
+            }
+        }
     }
 
     // MARK: - States
@@ -47,25 +62,36 @@ struct WordDetailView: View {
 
             VStack(alignment: .leading, spacing: Space.s5) {
                 self.titleRow(w)
-                if let chineseDef = w.chineseDefinition, !chineseDef.isEmpty {
-                    self.sectionTitle("譯義 · DEFINITION")
-                    self.definitionCard(w, chineseDef: chineseDef)
-                }
-                if let forms = w.forms, !forms.isEmpty {
-                    self.sectionTitle("詞形變化 · FORMS")
-                    self.formsCard(forms)
-                }
-                if let etymology = w.etymology, !etymology.isEmpty {
-                    self.sectionTitle("來源故事 · ORIGIN")
-                    self.etymologyCard(etymology)
+                let tabs = Self.availableTabs(for: w)
+                if !tabs.isEmpty {
+                    self.sectionTitle("字詞資料 · DETAILS")
+                    if tabs.count > 1 {
+                        self.tabPills(tabs)
+                    }
+                    Group {
+                        switch self.selectedDetailTab {
+                        case .definition:
+                            if let chineseDef = w.chineseDefinition, !chineseDef.isEmpty {
+                                self.definitionCard(w, chineseDef: chineseDef)
+                            }
+                        case .forms:
+                            if let forms = w.forms, !forms.isEmpty {
+                                self.formsCard(forms)
+                            }
+                        case .origin:
+                            if let etymology = w.etymology, !etymology.isEmpty {
+                                self.etymologyCard(etymology)
+                            }
+                        case .collocations:
+                            if let collocations = w.collocations, !collocations.isEmpty {
+                                self.collocationsRow(collocations)
+                            }
+                        }
+                    }
                 }
                 if let examples = w.examples, !examples.isEmpty {
                     self.sectionTitle("例句 · EXAMPLE")
                     self.examplesCard(examples)
-                }
-                if let collocations = w.collocations, !collocations.isEmpty {
-                    self.sectionTitle("常見搭配 · COLLOCATIONS")
-                    self.collocationsRow(collocations)
                 }
             }
             .frame(width: width - Space.s6 * 2, alignment: .leading)
@@ -76,6 +102,55 @@ struct WordDetailView: View {
         .frame(width: width, alignment: .leading)
     }
 
+    private func tabPills(_ tabs: [WordDetailTab]) -> some View {
+        HStack(spacing: Space.s2) {
+            ForEach(tabs, id: \.self) { tab in
+                let active = tab == self.selectedDetailTab
+                Button {
+                    withAnimation(.spring(duration: 0.25)) {
+                        self.selectedDetailTab = tab
+                    }
+                } label: {
+                    Text(tab.label)
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(active ? .white : .tujiTeal)
+                        .padding(.horizontal, Space.s3)
+                        .padding(.vertical, Space.s2)
+                        .background(active ? Color.tujiTeal : Color.tujiTealSoft)
+                        .clipShape(.capsule)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private static func availableTabs(for w: Word) -> [WordDetailTab] {
+        var tabs: [WordDetailTab] = []
+        if let zh = w.chineseDefinition, !zh.isEmpty { tabs.append(.definition) }
+        if let forms = w.forms, !forms.isEmpty { tabs.append(.forms) }
+        if let ety = w.etymology, !ety.isEmpty { tabs.append(.origin) }
+        if let cols = w.collocations, !cols.isEmpty { tabs.append(.collocations) }
+        return tabs
+    }
+}
+
+private enum WordDetailTab: Hashable, CaseIterable {
+    case definition
+    case forms
+    case origin
+    case collocations
+
+    var label: String {
+        switch self {
+        case .definition: "譯義"
+        case .forms: "詞形"
+        case .origin: "來源"
+        case .collocations: "搭配"
+        }
+    }
+}
+
+extension WordDetailView {
     private func errorState(_ err: Error) -> some View {
         VStack(spacing: Space.s4) {
             Spacer().frame(height: Space.s16)
