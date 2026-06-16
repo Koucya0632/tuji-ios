@@ -244,10 +244,6 @@ extension WordDetailView {
                             .background(.tujiTealSoft, in: .capsule)
                     }
                 }
-                Text(w.chinese)
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-                    .padding(.top, Space.s1)
             }
             Spacer()
             PronunciationButton(text: w.word, size: 48)
