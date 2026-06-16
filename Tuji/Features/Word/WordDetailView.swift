@@ -96,16 +96,37 @@ struct WordDetailView: View {
 
     private func hero(_ w: Word) -> some View {
         ZStack(alignment: .topLeading) {
-            LazyImage(url: w.imageURL) { state in
-                if let image = state.image {
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } else {
-                    Color.tujiTealSoft
+            ZStack {
+                // Blurred .fill copy as a tinted backdrop matching the
+                // subject — saves the hero from looking like a tiny
+                // product photo lost in a white card when the source
+                // image has a baked-in white background (bed, banana,
+                // most stock product shots). Nuke shares the fetch via
+                // pipeline(.shared).
+                LazyImage(url: w.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        Color.tujiTealSoft
+                    }
                 }
+                .pipeline(.shared)
+                .blur(radius: 30)
+                .opacity(0.5)
+                .overlay(Color.tujiBg.opacity(0.18))
+
+                LazyImage(url: w.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable().aspectRatio(contentMode: .fit)
+                            .padding(Space.s4)
+                    } else {
+                        Color.clear
+                    }
+                }
+                .pipeline(.shared)
             }
-            .pipeline(.shared)
             .frame(maxWidth: .infinity)
-            .frame(height: 320)
+            .frame(height: 280)
             .clipped()
 
             HStack {
