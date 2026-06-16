@@ -70,34 +70,53 @@ struct ReviewFlowView: View {
     }
 
     private var flowSurface: some View {
-        ZStack(alignment: .bottom) {
-            VStack(spacing: 0) {
-                self.header
-                if let item = coord.current {
-                    ReviewQuestionView(coord: self.coord, item: item)
-                } else {
-                    Spacer()
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                VStack(spacing: 0) {
+                    self.header
+                    if let item = coord.current {
+                        ReviewQuestionView(
+                            coord: self.coord,
+                            item: item,
+                            heroHeight: Self.heroHeight(in: geo)
+                        )
+                    } else {
+                        Spacer()
+                    }
+                }
+                if self.coord.phase == .review, let item = coord.current {
+                    ReviewFooter(
+                        coord: self.coord,
+                        item: item,
+                        onSeeDetail: { self.pushWordId = item.word.id }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            if self.coord.phase == .review, let item = coord.current {
-                ReviewFooter(
-                    coord: self.coord,
-                    item: item,
-                    onSeeDetail: { self.pushWordId = item.word.id }
-                )
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.spring(duration: 0.35), value: self.coord.phase)
+            .background(.tujiBg)
+            // MainTabsView reserves 78pt for the custom TujiTabBar via
+            // safeAreaInset, but that inset doesn't propagate into views
+            // pushed onto its NavigationStack — so the ZStack(.bottom)
+            // above would otherwise place the rating row behind the bar.
+            // Mirror the reservation locally.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Color.clear.frame(height: 78)
             }
         }
-        .animation(.spring(duration: 0.35), value: self.coord.phase)
-        .background(.tujiBg)
-        // MainTabsView reserves 78pt for the custom TujiTabBar via
-        // safeAreaInset, but that inset doesn't propagate into views
-        // pushed onto its NavigationStack — so the ZStack(.bottom)
-        // above would otherwise place the rating row behind the bar.
-        // Mirror the reservation locally.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear.frame(height: 78)
-        }
+    }
+
+    /// Hero height adapts to the device — fills the available vertical
+    /// space after all fixed elements (toolbar, header, bubble, choices,
+    /// scroll padding, bottom tab inset, slack) but caps at 280 so on
+    /// iPhone Pro Max the subject doesn't dominate. Falls back to a 200
+    /// floor on small iPhones (SE) where the ScrollView absorbs the rest.
+    private static func heroHeight(in geo: GeometryProxy) -> CGFloat {
+        // toolbar 44 + header 62 + bubble 56 + 2× s4 spacing 32
+        // + 4 choices 216 + scroll bottom 96 + bottom inset 78 + slack 20
+        let reserved: CGFloat = 604
+        let available = geo.size.height - reserved
+        return min(280, max(200, available))
     }
 
     private var header: some View {
@@ -135,6 +154,7 @@ struct ReviewFlowView: View {
 private struct ReviewQuestionView: View {
     let coord: ReviewFlowCoordinator
     let item: StudyQueueItem
+    let heroHeight: CGFloat
 
     private static let abc = ["A", "B", "C", "D", "E"]
 
@@ -195,7 +215,7 @@ private struct ReviewQuestionView: View {
                 }
                 .pipeline(.shared)
             }
-            .frame(height: 300)
+            .frame(height: self.heroHeight)
             .clipped()
             .clipShape(.rect(cornerRadius: Radius.lg))
 
