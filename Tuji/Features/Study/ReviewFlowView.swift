@@ -12,6 +12,7 @@ struct ReviewFlowView: View {
     let queue: [StudyQueueItem]
     @State private var coord: ReviewFlowCoordinator
     @Environment(\.dismiss) private var dismiss
+    @Environment(StudyFocus.self) private var studyFocus
     @State private var showExitConfirm = false
     // ReviewFlowView is pushed via .navigationDestination(item:) from
     // StudyLauncherView, which doesn't carry the ancestor's
@@ -67,6 +68,8 @@ struct ReviewFlowView: View {
         .navigationDestination(item: self.$pushWordId) { id in
             WordDetailView(id: id)
         }
+        .onAppear { self.studyFocus.enter() }
+        .onDisappear { self.studyFocus.exit() }
     }
 
     private var flowSurface: some View {
@@ -78,7 +81,7 @@ struct ReviewFlowView: View {
                         ReviewQuestionView(
                             coord: self.coord,
                             item: item,
-                            heroHeight: Self.heroHeight(in: geo)
+                            heroHeight: self.heroHeight(in: geo)
                         )
                     } else {
                         Spacer()
@@ -95,28 +98,33 @@ struct ReviewFlowView: View {
             }
             .animation(.spring(duration: 0.35), value: self.coord.phase)
             .background(.tujiBg)
-            // MainTabsView reserves 78pt for the custom TujiTabBar via
-            // safeAreaInset, but that inset doesn't propagate into views
-            // pushed onto its NavigationStack — so the ZStack(.bottom)
-            // above would otherwise place the rating row behind the bar.
-            // Mirror the reservation locally.
+            // MainTabsView normally reserves 78pt for the custom TujiTabBar;
+            // that ancestor inset doesn't propagate into pushed views, so we
+            // mirror it. In study mode (StudyFocus.active) both the bar and
+            // its reservation go away — drop the local mirror too.
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                Color.clear.frame(height: 78)
+                Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
             }
         }
     }
 
-    /// Hero height adapts to the device — fills the available vertical
-    /// space after all fixed elements (toolbar, header, bubble, choices,
-    /// scroll padding, bottom tab inset, slack) but caps at 280 so on
-    /// iPhone Pro Max the subject doesn't dominate. Falls back to a 200
-    /// floor on small iPhones (SE) where the ScrollView absorbs the rest.
-    private static func heroHeight(in geo: GeometryProxy) -> CGFloat {
-        // toolbar 44 + header 62 + bubble 56 + 2× s4 spacing 32
-        // + 4 choices 216 + scroll bottom 96 + bottom inset 78 + slack 20
-        let reserved: CGFloat = 604
+    /// Hero height adapts to the device. In study mode the tab bar is
+    /// hidden (PR #46) so we have ~78pt more headroom and the cap pushes
+    /// up to 360pt — image details (rice grains, bottle profiles) become
+    /// legible. Normal mode keeps PR #45's 280 cap.
+    private func heroHeight(in geo: GeometryProxy) -> CGFloat {
+        // Fixed costs other than the hero, sized to the smaller of
+        //   - study mode: tab inset 0, scroll-bottom s4 (16)
+        //   - normal mode: tab inset 78, scroll-bottom s24 (96)
+        let active = self.studyFocus.active
+        let tabInset: CGFloat = active ? 0 : 78
+        let scrollBottom: CGFloat = active ? 16 : 96
+        // toolbar 44 + header 50 + bubble 56 + 2× s4 spacing 32
+        // + 4 choices 216 + slack 20
+        let baseReserved: CGFloat = 418
+        let reserved = baseReserved + tabInset + scrollBottom
         let available = geo.size.height - reserved
-        return min(280, max(200, available))
+        return min(active ? 360 : 280, max(200, available))
     }
 
     private var header: some View {
@@ -144,8 +152,8 @@ struct ReviewFlowView: View {
             .frame(height: 6)
         }
         .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s2)
-        .padding(.bottom, Space.s4)
+        .padding(.top, Space.s1)
+        .padding(.bottom, Space.s3)
     }
 }
 
@@ -155,6 +163,8 @@ private struct ReviewQuestionView: View {
     let coord: ReviewFlowCoordinator
     let item: StudyQueueItem
     let heroHeight: CGFloat
+
+    @Environment(StudyFocus.self) private var studyFocus
 
     private static let abc = ["A", "B", "C", "D", "E"]
 
@@ -166,7 +176,9 @@ private struct ReviewQuestionView: View {
                 self.choicesList
             }
             .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s24)
+            // PR #46: in study mode the tab bar is gone so we can trim the
+            // big s24 scroll buffer that previously kept the footer clear.
+            .padding(.bottom, self.studyFocus.active ? Space.s4 : Space.s24)
         }
     }
 
