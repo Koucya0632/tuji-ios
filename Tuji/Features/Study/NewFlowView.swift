@@ -12,6 +12,7 @@ struct NewFlowView: View {
     @State private var coord: NewFlowCoordinator
     @Environment(\.dismiss) private var dismiss
     @Environment(WordsStore.self) private var words
+    @Environment(StudyFocus.self) private var studyFocus
     @State private var showExitConfirm = false
 
     init(queue: [StudyQueueItem]) {
@@ -56,6 +57,8 @@ struct NewFlowView: View {
                 WordPeekSheet(word: card, onSeeMore: { self.coord.peek = nil })
             }
         }
+        .onAppear { self.studyFocus.enter() }
+        .onDisappear { self.studyFocus.exit() }
     }
 
     private func cardWord(for id: String) -> CardWord? {

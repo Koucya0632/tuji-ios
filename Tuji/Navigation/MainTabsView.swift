@@ -17,6 +17,7 @@ struct MainTabsView: View {
     let user: SessionUser?
 
     @Environment(DeepLinkCoordinator.self) private var deepLinks
+    @Environment(StudyFocus.self) private var studyFocus
 
     @State private var selected: MainTab = .today
     @State private var todayPath = NavigationPath()
@@ -30,13 +31,19 @@ struct MainTabsView: View {
             self.activeTab
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    Color.clear.frame(height: 78)
+                    // Reservation disappears in study mode so the pushed
+                    // study views can claim the extra 78pt for the hero.
+                    Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
                 }
 
-            TujiTabBar(selected: self.$selected)
-                .padding(.horizontal, Space.s4)
-                .padding(.bottom, Space.s2)
+            if !self.studyFocus.active {
+                TujiTabBar(selected: self.$selected)
+                    .padding(.horizontal, Space.s4)
+                    .padding(.bottom, Space.s2)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
+        .animation(.easeInOut(duration: 0.2), value: self.studyFocus.active)
         .background(.tujiBg)
         .onAppear { self.consumePendingLink() }
         .onChange(of: self.deepLinks.pending) { _, _ in
@@ -181,6 +188,8 @@ private struct CenterButton: View {
         .environment(LocalCache.shared)
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)
+        .environment(DeepLinkCoordinator.shared)
+        .environment(StudyFocus.shared)
 }
 
 #Preview("Guest") {
@@ -189,6 +198,8 @@ private struct CenterButton: View {
         .environment(LocalCache.shared)
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)
+        .environment(DeepLinkCoordinator.shared)
+        .environment(StudyFocus.shared)
 }
 
 private extension SessionUser {

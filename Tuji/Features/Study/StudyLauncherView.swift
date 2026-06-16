@@ -14,6 +14,7 @@ struct StudyLauncherView: View {
 
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
+    @Environment(StudyFocus.self) private var studyFocus
     @Environment(\.dismiss) private var dismiss
 
     @State private var pushQueue: QueuePush?
@@ -32,6 +33,8 @@ struct StudyLauncherView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { self.studyFocus.enter() }
+        .onDisappear { self.studyFocus.exit() }
         .task {
             // Both stores are cheap if already warm (store-level TTLs handle
             // it). settings.loadIfNeeded fixes the silent-default-10 bug the
@@ -109,5 +112,6 @@ struct StudyLauncherView: View {
         StudyLauncherView(mode: .new)
             .environment(StudyStatsStore.shared)
             .environment(SettingsStore.shared)
+            .environment(StudyFocus.shared)
     }
 }
