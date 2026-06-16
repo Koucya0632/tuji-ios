@@ -53,10 +53,19 @@ struct Word: Codable, Identifiable, Hashable {
     let examples: [WordExample]?
     let relations: [WordRelation]?
     let collocations: [String]?
+    /// zh-Hant translations parallel to `collocations`. Server overlays
+    /// these from word_localized_texts(field='collocations',
+    /// language='zh-Hant'); ja currently has none so this may be nil for
+    /// ja users. iOS treats it as optional and falls back to en-only.
+    let collocationsZh: [String]?
     let note: String?
     let etymology: String?
     let forms: [WordForm]?
     let chineseDefinition: String?
+    /// Convenience: first en-language definition prefilled by the server
+    /// (the `definitions` array itself is lang-filtered so the en row
+    /// gets dropped when UI lang is zh-Hant — see lib/word-localize.ts).
+    let englishDefinition: String?
     let tags: [String]?
 
     var imageURL: URL? {

@@ -84,7 +84,7 @@ struct WordDetailView: View {
                             }
                         case .collocations:
                             if let collocations = w.collocations, !collocations.isEmpty {
-                                self.collocationsRow(collocations)
+                                self.collocationsRow(collocations, zh: w.collocationsZh)
                             }
                         }
                     }
@@ -275,8 +275,11 @@ extension WordDetailView {
                         .foregroundStyle(.tujiInk3)
                 }
             }
-            if let firstEn = w.definitions?.first(where: { $0.language == "en" }) {
-                Text(firstEn.definition)
+            // `englishDefinition` is the convenience field the server pre-fills
+            // from the en row; `definitions` itself is lang-filtered server-side
+            // so we can't pull it from there on a zh-Hant request.
+            if let en = w.englishDefinition, !en.isEmpty {
+                Text(en)
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk)
             }
@@ -359,15 +362,23 @@ extension WordDetailView {
         }
     }
 
-    private func collocationsRow(_ collocations: [String]) -> some View {
+    private func collocationsRow(_ collocations: [String], zh: [String]?) -> some View {
         FlowLayout(spacing: Space.s2) {
-            ForEach(collocations, id: \.self) { c in
-                Text(c)
-                    .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(.tujiTeal)
-                    .padding(.horizontal, Space.s3)
-                    .padding(.vertical, Space.s2)
-                    .background(.tujiTealSoft, in: .capsule)
+            ForEach(Array(collocations.enumerated()), id: \.element) { idx, c in
+                let zhText = (zh != nil && idx < (zh?.count ?? 0)) ? zh?[idx] : nil
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(c)
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(.tujiTeal)
+                    if let zhText, !zhText.isEmpty {
+                        Text(zhText)
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundStyle(.tujiTealDark)
+                    }
+                }
+                .padding(.horizontal, Space.s3)
+                .padding(.vertical, Space.s2)
+                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
             }
         }
     }
