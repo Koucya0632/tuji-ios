@@ -185,7 +185,7 @@ private struct ReviewQuestionView: View {
                 LazyImage(url: self.item.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fit)
-                            .padding(Space.s3)
+                            .padding(Space.s2)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .foregroundStyle(.tujiInk4)
@@ -195,7 +195,7 @@ private struct ReviewQuestionView: View {
                 }
                 .pipeline(.shared)
             }
-            .frame(height: 240)
+            .frame(height: 300)
             .clipped()
             .clipShape(.rect(cornerRadius: Radius.lg))
 
