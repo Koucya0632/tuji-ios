@@ -20,6 +20,7 @@ final class ProgressStore {
 
     private(set) var streak: StudyStreak?
     private(set) var heatmap: [HeatmapCell] = []
+    private(set) var categoryProgress: [CategoryProgress] = []
     private(set) var loading: Bool = false
     private(set) var lastError: Error?
 
@@ -45,6 +46,7 @@ final class ProgressStore {
             let resp: ProgressResponse = try await APIClient.shared.get(.usersProgress)
             streak = resp.streak
             heatmap = resp.heatmap ?? []
+            categoryProgress = resp.categories ?? []
             lastFetch = Date()
         } catch {
             lastError = error
