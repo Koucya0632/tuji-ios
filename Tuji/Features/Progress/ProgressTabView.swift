@@ -287,7 +287,9 @@ struct ProgressTabView: View {
         let nameZh: String
         let learned: Int
         let total: Int
-        var ratio: Double { self.total > 0 ? Double(self.learned) / Double(self.total) : 0 }
+        var ratio: Double {
+            self.total > 0 ? Double(self.learned) / Double(self.total) : 0
+        }
     }
 
     /// Per-category seen/total from the server, named + ordered via

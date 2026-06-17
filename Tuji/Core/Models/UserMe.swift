@@ -52,8 +52,13 @@ struct CategoryProgress: Decodable, Hashable, Identifiable {
     let total: Int
     let seen: Int
 
-    var id: String { self.category }
-    var ratio: Double { self.total > 0 ? Double(self.seen) / Double(self.total) : 0 }
+    var id: String {
+        self.category
+    }
+
+    var ratio: Double {
+        self.total > 0 ? Double(self.seen) / Double(self.total) : 0
+    }
 }
 
 struct ProgressResponse: Decodable {
