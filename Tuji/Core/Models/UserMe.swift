@@ -44,9 +44,27 @@ struct HeatmapCell: Decodable, Hashable {
     let future: Bool
 }
 
+/// Per-category dictionary completion from /api/users/progress.
+/// `total` = published cards in the category; `seen` = those the user has
+/// studied at least once (has a user_cards row).
+struct CategoryProgress: Decodable, Hashable, Identifiable {
+    let category: String
+    let total: Int
+    let seen: Int
+
+    var id: String {
+        self.category
+    }
+
+    var ratio: Double {
+        self.total > 0 ? Double(self.seen) / Double(self.total) : 0
+    }
+}
+
 struct ProgressResponse: Decodable {
     let streak: StudyStreak
     let heatmap: [HeatmapCell]?
+    let categories: [CategoryProgress]?
 }
 
 struct TopWord: Decodable, Hashable, Identifiable {

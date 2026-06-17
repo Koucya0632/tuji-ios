@@ -24,12 +24,17 @@ final class ProgressVM {
     /// Server-side `clearLearningProgress` wipes user_cards too, so the
     /// stats store has to be invalidated alongside progress — otherwise
     /// the Study tab shows the pre-wipe due/seen counts for up to 30s.
-    func clearProgress(progress: ProgressStore, studyStats: StudyStatsStore) async {
+    func clearProgress(cache: LocalCache, progress: ProgressStore, studyStats: StudyStatsStore) async {
         self.clearing = true
         self.clearError = nil
         defer { self.clearing = false }
         do {
             try await APIClient.shared.delete(.usersProgress)
+            // Reset the local learned cache too — the completion % and
+            // category breakdown read it, and sync is union-only so a
+            // stale local set would resurrect the cleared ids at next
+            // sign-in.
+            cache.clearLearned()
             progress.invalidate()
             studyStats.invalidate()
             async let p: Void = progress.reload()
@@ -47,6 +52,7 @@ struct ProgressTabView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
     @Environment(WordsStore.self) private var words
+    @Environment(CategoriesStore.self) private var categories
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
 
@@ -64,10 +70,15 @@ struct ProgressTabView: View {
                 Text("進度")
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
+
+                self.sectionHeader("總覽")
                 self.completionCard
                 self.streakRow
                 self.heatmapCard
-                self.suggestionCard
+
+                self.sectionHeader("明細")
+                self.categoryBreakdownCard
+
                 if !self.isGuest {
                     self.clearButton
                 }
@@ -86,6 +97,7 @@ struct ProgressTabView: View {
         }
         .task {
             await self.words.loadIfNeeded()
+            await self.categories.loadIfNeeded()
             if !self.isGuest { await self.progress.loadIfStale() }
         }
         .alert("清除學習進度", isPresented: self.$showClearConfirm) {
@@ -93,6 +105,7 @@ struct ProgressTabView: View {
             Button("確定清除", role: .destructive) {
                 Task {
                     await self.vm.clearProgress(
+                        cache: self.cache,
                         progress: self.progress,
                         studyStats: self.studyStats
                     )
@@ -105,10 +118,23 @@ struct ProgressTabView: View {
 
     // MARK: - Completion card
 
+    /// Words studied at least once (server "seen"), summed across categories.
+    private var seenTotal: Int {
+        self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
+    }
+
+    /// Total published words. Server count when available, else the locally
+    /// known dictionary size (guests / before progress loads).
+    private var dictTotal: Int {
+        let serverTotal = self.progress.categoryProgress.reduce(0) { $0 + $1.total }
+        return serverTotal > 0 ? serverTotal : self.words.words.count
+    }
+
     private var completionCard: some View {
-        let learned = self.cache.learnedIds.count
-        let total = self.words.words.count
-        let pct = total > 0 ? Int((Double(learned) / Double(total)) * 100) : 0
+        let learned = self.seenTotal
+        let total = self.dictTotal
+        let ratio = total > 0 ? Double(learned) / Double(total) : 0
+        let pct = Int((ratio * 100).rounded())
         return VStack(alignment: .leading, spacing: Space.s3) {
             Text("圖鑑完成度")
                 .font(.tujiOverline)
@@ -121,7 +147,7 @@ struct ProgressTabView: View {
                     .contentTransition(.numericText())
                 Spacer()
             }
-            self.progressBar(ratio: Double(learned) / Double(max(total, 1)))
+            self.progressBar(ratio: ratio)
             Text("已學 \(learned) / 共 \(total) 字")
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiInk3)
@@ -243,35 +269,102 @@ struct ProgressTabView: View {
         .padding(.vertical, Space.s5)
     }
 
-    // MARK: - Suggestion card
+    // MARK: - Section header
 
-    private var suggestionCard: some View {
-        let hasStreak = (self.progress.streak?.current ?? 0) > 0
-        return VStack(alignment: .leading, spacing: Space.s3) {
-            HStack(spacing: Space.s2) {
-                Image(systemName: "sparkles").foregroundStyle(.tujiTeal)
-                Text(hasStreak ? "保持連勝" : "從今天開始")
-                    .font(.system(size: 15, weight: .heavy))
-                    .foregroundStyle(.tujiInk)
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.tujiOverline)
+            .tracking(2)
+            .foregroundStyle(.tujiInk3)
+            .padding(.top, Space.s2)
+    }
+
+    // MARK: - Category breakdown (明細)
+
+    private struct CategoryStat: Identifiable {
+        let id: String
+        let emoji: String
+        let nameZh: String
+        let learned: Int
+        let total: Int
+        var ratio: Double {
+            self.total > 0 ? Double(self.learned) / Double(self.total) : 0
+        }
+    }
+
+    /// Per-category seen/total from the server, named + ordered via
+    /// CategoriesStore. Categories with no published cards are dropped.
+    /// Falls back to raw progress rows if the category list hasn't loaded.
+    private var categoryStats: [CategoryStat] {
+        let prog = self.progress.categoryProgress.filter { $0.total > 0 }
+        guard !prog.isEmpty else { return [] }
+        let byId = Dictionary(prog.map { ($0.category, $0) }, uniquingKeysWith: { a, _ in a })
+        if !self.categories.categories.isEmpty {
+            return self.categories.categories.compactMap { c in
+                guard let p = byId[c.id] else { return nil }
+                return CategoryStat(
+                    id: c.id,
+                    emoji: c.emoji,
+                    nameZh: c.nameZh,
+                    learned: p.seen,
+                    total: p.total
+                )
             }
-            Text(hasStreak
-                ? "今天還沒答題的話，去 Today 抽幾張快速復習"
-                : "去 Today 學第一張字，建立連勝")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk2)
-            NavigationLink(value: NavRoute.today) {
-                Text("回今日")
+        }
+        return prog.map { p in
+            CategoryStat(
+                id: p.category,
+                emoji: "📚",
+                nameZh: p.category,
+                learned: p.seen,
+                total: p.total
+            )
+        }
+    }
+
+    private var emptyBreakdownMessage: String {
+        if self.isGuest { return "登入後顯示分類進度" }
+        return "還沒有學習紀錄"
+    }
+
+    private var categoryBreakdownCard: some View {
+        VStack(alignment: .leading, spacing: Space.s4) {
+            if self.categoryStats.isEmpty {
+                Text(self.emptyBreakdownMessage)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Space.s4)
+            } else {
+                ForEach(self.categoryStats) { stat in
+                    self.categoryRow(stat)
+                }
+            }
+        }
+        .padding(Space.s5)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.lg)
+                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    private func categoryRow(_ stat: CategoryStat) -> some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            HStack(spacing: Space.s2) {
+                Text(stat.emoji).font(.system(size: 18))
+                Text(stat.nameZh)
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(.tujiInk)
-                    .padding(.vertical, Space.s2)
-                    .padding(.horizontal, Space.s4)
-                    .background(.tujiYellow, in: .capsule)
+                Spacer()
+                Text("\(stat.learned) / \(stat.total)")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+                    .contentTransition(.numericText())
             }
-            .buttonStyle(.plain)
+            self.progressBar(ratio: stat.ratio)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.s5)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
     }
 
     private var clearButton: some View {
@@ -284,7 +377,7 @@ struct ProgressTabView: View {
                 } else {
                     Image(systemName: "trash")
                 }
-                Text(self.vm.clearing ? "清除中…" : "清除進度（保留收藏）")
+                Text(self.vm.clearing ? "清除中…" : "清除進度")
             }
             .font(.system(size: 14, weight: .heavy))
             .foregroundStyle(.tujiCoral)
@@ -381,6 +474,7 @@ struct HeatmapGrid: View {
             .environment(LocalCache.shared)
             .environment(AuthService.shared)
             .environment(WordsStore.shared)
+            .environment(CategoriesStore.shared)
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
     }

@@ -63,6 +63,17 @@ final class LocalCache {
         persistLearned()
     }
 
+    /// Drops the locally-cached learned set. Called after the server wipes
+    /// learning progress (DELETE /api/users/progress) so completion % /
+    /// category breakdown reset immediately and the next sign-in sync
+    /// doesn't re-upload the cleared ids (sync is union-only). Favorites
+    /// and settings are intentionally left untouched.
+    func clearLearned() {
+        guard !learnedIds.isEmpty else { return }
+        learnedIds = []
+        persistLearned()
+    }
+
     // MARK: - Recent searches
 
     func pushRecentSearch(_ q: String) {

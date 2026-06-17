@@ -1,9 +1,15 @@
 // Search (§III.J).
 //
-// Debounced (250ms) text field → GET /api/search?q=. While the field is
-// empty, surface LocalCache.recentSearches. Tapping a result pushes
-// WordDetailView. Tapping a recent search re-runs the query.
+// Local-first: the full dictionary already lives in WordsStore, so every
+// keystroke filters in-memory and shows results instantly (works offline,
+// no debounce wait). In parallel a debounced GET /api/search runs to
+// supplement with matches the local list can't see (synonyms / also-known-
+// as / fuzzy); its results are merged in + deduped when they arrive.
+// While the field is empty, surface LocalCache.recentSearches. Tapping a
+// result pushes WordDetailView. Tapping a recent search re-runs the query.
 
+import Nuke
+import NukeUI
 import OSLog
 import Observation
 import SwiftUI
@@ -28,8 +34,14 @@ final class SearchVM {
             self.results = []
             self.lastError = nil
             self.lastQuery = ""
+            self.loading = false
             return
         }
+        // Instant local results — no waiting on the network.
+        self.results = Self.localMatches(trimmed)
+        self.lastQuery = trimmed
+        self.lastError = nil
+        // Debounced server search to supplement the local hits.
         self.task = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
@@ -37,37 +49,85 @@ final class SearchVM {
         }
     }
 
-    /// Re-run the search immediately (no debounce) for a known query —
-    /// used when the user taps a "recent searches" row.
+    /// Re-run a known query immediately (no debounce) — used when the user
+    /// taps a "recent searches" row.
     func runImmediately(_ q: String) {
         self.task?.cancel()
+        let trimmed = q.trimmingCharacters(in: .whitespaces)
         self.query = q
-        Task { await self.runSearch(q) }
+        self.results = Self.localMatches(trimmed)
+        self.lastQuery = trimmed
+        self.lastError = nil
+        Task { await self.runSearch(trimmed) }
     }
 
     private func runSearch(_ q: String) async {
         self.loading = true
-        self.lastError = nil
         defer { self.loading = false }
         do {
             let resp: SearchResponse = try await APIClient.shared.get(.search(q: q))
-            // Guard against a race where the user typed a new query
-            // mid-flight — drop the stale response.
+            // Drop a stale response if the user kept typing mid-flight.
             guard q == self.query.trimmingCharacters(in: .whitespaces) else { return }
-            self.results = resp.results
+            self.results = Self.merge(local: Self.localMatches(q), remote: resp.results)
             self.lastQuery = q
+            self.lastError = nil
             self.log.info(
-                "search '\(q, privacy: .public)' → \(resp.results.count, privacy: .public) results"
+                "search '\(q, privacy: .public)' → \(self.results.count, privacy: .public) results"
             )
-            if !resp.results.isEmpty {
+            if !self.results.isEmpty {
                 LocalCache.shared.pushRecentSearch(q)
             }
         } catch {
-            self.lastError = error
+            guard q == self.query.trimmingCharacters(in: .whitespaces) else { return }
+            // Keep the instant local results on screen; only surface the
+            // error when there's nothing to show.
+            if self.results.isEmpty {
+                self.lastError = error
+            }
             self.log.error(
                 "search '\(q, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)"
             )
         }
+    }
+
+    // MARK: - Matching
+
+    /// Case-insensitive ranked match over the in-memory dictionary. Looks
+    /// at English word, Chinese gloss, and pronunciation. Closer matches
+    /// (exact → prefix → contains) and shorter words sort first.
+    static func localMatches(_ q: String) -> [CardWord] {
+        let needle = q.lowercased()
+        guard !needle.isEmpty else { return [] }
+        return WordsStore.shared.words
+            .compactMap { w -> (word: CardWord, rank: Int)? in
+                let word = w.word.lowercased()
+                let zh = w.chinese.lowercased()
+                let pron = w.pronunciation.lowercased()
+                let rank: Int
+                if word == needle { rank = 0 }
+                else if word.hasPrefix(needle) { rank = 1 }
+                else if zh.hasPrefix(needle) { rank = 2 }
+                else if word.contains(needle) { rank = 3 }
+                else if zh.contains(needle) { rank = 4 }
+                else if pron.contains(needle) { rank = 5 }
+                else { return nil }
+                return (w, rank)
+            }
+            .sorted { a, b in
+                a.rank != b.rank ? a.rank < b.rank : a.word.word.count < b.word.word.count
+            }
+            .map(\.word)
+    }
+
+    /// Local hits first (already ranked), then any remote-only matches,
+    /// deduped by id.
+    static func merge(local: [CardWord], remote: [CardWord]) -> [CardWord] {
+        var seen = Set<String>()
+        var out: [CardWord] = []
+        for w in local + remote where seen.insert(w.id).inserted {
+            out.append(w)
+        }
+        return out
     }
 }
 
@@ -79,6 +139,7 @@ struct SearchResponse: Decodable {
 
 struct SearchView: View {
     @Environment(LocalCache.self) private var cache
+    @Environment(StudyFocus.self) private var studyFocus
     @Environment(\.dismiss) private var dismiss
 
     @State private var vm = SearchVM()
@@ -94,7 +155,13 @@ struct SearchView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { self.fieldFocused = true }
+        // Reuse the study-focus flag so MainTabsView hides its custom tab
+        // bar (and frees the 78pt reservation) while searching.
+        .onAppear {
+            self.studyFocus.enter()
+            self.fieldFocused = true
+        }
+        .onDisappear { self.studyFocus.exit() }
     }
 
     // MARK: - Bits
@@ -154,7 +221,7 @@ struct SearchView: View {
             self.recentSection
         } else if self.vm.loading, self.vm.results.isEmpty {
             self.loadingState
-        } else if let error = self.vm.lastError {
+        } else if let error = self.vm.lastError, self.vm.results.isEmpty {
             self.errorState(error)
         } else if self.vm.results.isEmpty, !self.vm.lastQuery.isEmpty {
             self.emptyState(query: trimmed)
@@ -172,7 +239,7 @@ struct SearchView: View {
                 Text("找個單字試試")
                     .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
-                Text("輸入英文或中文，按空白鍵自動搜尋")
+                Text("輸入英文或中文，即時顯示結果")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
                 Spacer()
@@ -181,7 +248,7 @@ struct SearchView: View {
             .padding(.horizontal, Space.s6)
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s3) {
+                VStack(alignment: .leading, spacing: Space.s2) {
                     HStack {
                         Text("最近搜尋")
                             .font(.tujiOverline)
@@ -197,6 +264,7 @@ struct SearchView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    .padding(.bottom, Space.s2)
                     ForEach(self.cache.recentSearches, id: \.self) { q in
                         Button {
                             self.vm.runImmediately(q)
@@ -213,7 +281,8 @@ struct SearchView: View {
                                     .font(.system(size: 12, weight: .heavy))
                                     .foregroundStyle(.tujiInk4)
                             }
-                            .padding(.vertical, Space.s3)
+                            .frame(minHeight: 48)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         Divider().background(.tujiInk4.opacity(0.15))
@@ -272,15 +341,22 @@ struct SearchView: View {
 
     private var resultsList: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s2) {
-                Text("\(self.vm.results.count) 個結果")
-                    .font(.tujiOverline)
-                    .tracking(2)
-                    .foregroundStyle(.tujiInk3)
-                    .padding(.top, Space.s2)
+            LazyVStack(alignment: .leading, spacing: Space.s2) {
+                HStack(spacing: Space.s2) {
+                    Text("\(self.vm.results.count) 個結果")
+                        .font(.tujiOverline)
+                        .tracking(2)
+                        .foregroundStyle(.tujiInk3)
+                    if self.vm.loading {
+                        ProgressView()
+                            .controlSize(.mini)
+                            .tint(.tujiTeal)
+                    }
+                }
+                .padding(.top, Space.s2)
                 ForEach(self.vm.results) { word in
                     NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                        SearchResultRow(word: word)
+                        SearchResultRow(word: word, query: self.vm.lastQuery)
                     }
                     .buttonStyle(.plain)
                     Divider().background(.tujiInk4.opacity(0.15))
@@ -294,22 +370,43 @@ struct SearchView: View {
 
 private struct SearchResultRow: View {
     let word: CardWord
+    var query: String = ""
 
     var body: some View {
         HStack(spacing: Space.s3) {
             ZStack {
-                RoundedRectangle(cornerRadius: Radius.md).fill(.tujiTealSoft)
-                Image(systemName: "textformat.abc")
-                    .font(.system(size: 18, weight: .heavy))
-                    .foregroundStyle(.tujiTeal)
+                RoundedRectangle(cornerRadius: Radius.md).fill(.tujiCard)
+                LazyImage(url: self.word.imageURL) { state in
+                    if let image = state.image {
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(Space.s1)
+                    } else if state.error != nil {
+                        Image(systemName: "photo")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.tujiInk4)
+                    } else {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(.tujiTeal)
+                    }
+                }
+                .pipeline(.shared)
             }
-            .frame(width: 44, height: 44)
+            .frame(width: 48, height: 48)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            )
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(self.word.word)
+                Text(self.highlighted(self.word.word))
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(.tujiInk)
-                Text(self.word.chinese)
+                    .lineLimit(1)
+                Text(self.highlighted(self.word.chinese))
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
                     .lineLimit(1)
@@ -321,7 +418,21 @@ private struct SearchResultRow: View {
                 .font(.system(size: 12, weight: .heavy))
                 .foregroundStyle(.tujiInk4)
         }
-        .padding(.vertical, Space.s3)
+        .padding(.vertical, Space.s2)
+        .frame(minHeight: 60)
+        .contentShape(Rectangle())
+    }
+
+    /// Tints the matched substring teal so the user can see why a result
+    /// surfaced. Case-insensitive; no-op when nothing matches.
+    private func highlighted(_ text: String) -> AttributedString {
+        var attr = AttributedString(text)
+        let needle = self.query.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty,
+              let range = attr.range(of: needle, options: .caseInsensitive)
+        else { return attr }
+        attr[range].foregroundColor = .tujiTeal
+        return attr
     }
 }
 
@@ -329,5 +440,6 @@ private struct SearchResultRow: View {
     NavigationStack {
         SearchView()
             .environment(LocalCache.shared)
+            .environment(StudyFocus.shared)
     }
 }

@@ -216,9 +216,9 @@ struct TodayView: View {
 
     @ViewBuilder
     private var heroProgress: some View {
-        let total = self.totalLearnedAcrossSources
-        let dataset = max(self.words.words.count, 1)
-        let ratio = min(1.0, Double(total) / Double(dataset))
+        let learned = self.dexSeen
+        let total = self.dexTotal
+        let ratio = total > 0 ? min(1.0, Double(learned) / Double(total)) : 0
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
                 Text("圖鑑進度")
@@ -226,7 +226,7 @@ struct TodayView: View {
                     .tracking(2)
                     .foregroundStyle(.white.opacity(0.6))
                 Spacer()
-                Text("\(total) / \(self.words.words.count)")
+                Text("\(learned) / \(total)")
                     .font(.system(size: 12, weight: .heavy))
                     .foregroundStyle(.white.opacity(0.7))
             }
@@ -243,9 +243,19 @@ struct TodayView: View {
         }
     }
 
-    private var totalLearnedAcrossSources: Int {
+    /// Words studied at least once (server "seen"), matching the Progress
+    /// tab's completion source. Guests have no SRS state, so fall back to
+    /// the local learned set.
+    private var dexSeen: Int {
         if self.isGuest { return self.cache.learnedIds.count }
-        return self.vm.me?.learned?.count ?? self.cache.learnedIds.count
+        return self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
+    }
+
+    /// Total published words. Server count when available, else the locally
+    /// known dictionary size.
+    private var dexTotal: Int {
+        let serverTotal = self.progress.categoryProgress.reduce(0) { $0 + $1.total }
+        return serverTotal > 0 ? serverTotal : self.words.words.count
     }
 
     private var reviewDisabled: Bool {

@@ -197,35 +197,26 @@ private struct ReviewQuestionView: View {
 
     private var hero: some View {
         ZStack(alignment: .bottomTrailing) {
-            ZStack {
-                // Blurred copy of the subject as a tinted backdrop —
-                // portrait images read as "framed in their own tone"
-                // instead of a tiny picture letterboxed in a solid
-                // green tile. Nuke memory-caches the second fetch.
-                LazyImage(url: self.item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Rectangle().fill(.tujiTealSoft)
+            GeometryReader { proxy in
+                ZStack {
+                    Rectangle().fill(.tujiCard)
+                    LazyImage(url: self.item.word.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable()
+                                .scaledToFit()
+                                .frame(
+                                    width: max(0, proxy.size.width - Space.s4),
+                                    height: max(0, proxy.size.height - Space.s4)
+                                )
+                        } else if state.error != nil {
+                            Image(systemName: "photo")
+                                .foregroundStyle(.tujiInk4)
+                        } else {
+                            ProgressView().tint(.tujiTeal)
+                        }
                     }
+                    .pipeline(.shared)
                 }
-                .pipeline(.shared)
-                .blur(radius: 28)
-                .opacity(0.55)
-                .overlay(Color.tujiBg.opacity(0.18))
-
-                LazyImage(url: self.item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fit)
-                            .padding(Space.s2)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .foregroundStyle(.tujiInk4)
-                    } else {
-                        ProgressView().tint(.tujiTeal)
-                    }
-                }
-                .pipeline(.shared)
             }
             .frame(height: self.heroHeight)
             .clipped()

@@ -22,6 +22,10 @@ final class WordsStore {
     private(set) var loading: Bool = false
     private(set) var lastError: Error?
 
+    /// True once the first load attempt has finished (success *or* failure).
+    /// Used by the splash gate so a failed load doesn't trap us on Splash.
+    private(set) var loaded: Bool = false
+
     private let log = Logger(subsystem: "app.tuji.ios", category: "words")
 
     private init() {}
@@ -36,7 +40,10 @@ final class WordsStore {
     func reload() async {
         self.loading = true
         self.lastError = nil
-        defer { self.loading = false }
+        defer {
+            self.loading = false
+            self.loaded = true
+        }
         do {
             let resp: WordsListResponse = try await APIClient.shared.get(.words)
             self.words = resp.words

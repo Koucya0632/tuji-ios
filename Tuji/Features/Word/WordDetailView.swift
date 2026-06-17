@@ -12,6 +12,7 @@ struct WordDetailView: View {
     let id: String
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(StudyFocus.self) private var studyFocus
 
     @State private var word: Word?
     @State private var loading = false
@@ -36,13 +37,16 @@ struct WordDetailView: View {
         }
         .background(.tujiBg)
         .toolbar(.hidden, for: .navigationBar)
-        // MainTabsView reserves 78pt for the custom TujiTabBar via
-        // safeAreaInset on activeTab, but that inset doesn't propagate
-        // into pushed detail views — without this local mirror the bottom
-        // sections (collocations chips, etc.) sit behind the bar.
+        // Hide the custom TujiTabBar on this full-screen detail page by
+        // entering study-focus (MainTabsView watches this flag). While the
+        // bar is hidden there's nothing to reserve space for, so the local
+        // bottom inset collapses to 0; the 78pt fallback only applies if
+        // the bar were ever visible here.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear.frame(height: 78)
+            Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
         }
+        .onAppear { self.studyFocus.enter() }
+        .onDisappear { self.studyFocus.exit() }
         .task { await self.load() }
         .onChange(of: self.word?.id) { _, _ in
             guard let new = self.word else { return }
@@ -56,49 +60,44 @@ struct WordDetailView: View {
     // MARK: - States
 
     private func content(_ w: Word, width: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: Space.s5) {
             self.hero(w)
-                .frame(width: width)
-
-            VStack(alignment: .leading, spacing: Space.s5) {
-                self.titleRow(w)
-                let tabs = Self.availableTabs(for: w)
-                if !tabs.isEmpty {
-                    self.sectionTitle("字詞資料 · DETAILS")
-                    if tabs.count > 1 {
-                        self.tabPills(tabs)
-                    }
-                    Group {
-                        switch self.selectedDetailTab {
-                        case .definition:
-                            if let chineseDef = w.chineseDefinition, !chineseDef.isEmpty {
-                                self.definitionCard(w, chineseDef: chineseDef)
-                            }
-                        case .forms:
-                            if let forms = w.forms, !forms.isEmpty {
-                                self.formsCard(forms)
-                            }
-                        case .origin:
-                            if let etymology = w.etymology, !etymology.isEmpty {
-                                self.etymologyCard(etymology)
-                            }
-                        case .collocations:
-                            if let collocations = w.collocations, !collocations.isEmpty {
-                                self.collocationsRow(collocations, zh: w.collocationsZh)
-                            }
+            self.titleRow(w)
+            let tabs = Self.availableTabs(for: w)
+            if !tabs.isEmpty {
+                self.sectionTitle("字詞資料 · DETAILS")
+                if tabs.count > 1 {
+                    self.tabPills(tabs)
+                }
+                Group {
+                    switch self.selectedDetailTab {
+                    case .definition:
+                        if let chineseDef = w.chineseDefinition, !chineseDef.isEmpty {
+                            self.definitionCard(w, chineseDef: chineseDef)
+                        }
+                    case .forms:
+                        if let forms = w.forms, !forms.isEmpty {
+                            self.formsCard(forms)
+                        }
+                    case .origin:
+                        if let etymology = w.etymology, !etymology.isEmpty {
+                            self.etymologyCard(etymology)
+                        }
+                    case .collocations:
+                        if let collocations = w.collocations, !collocations.isEmpty {
+                            self.collocationsRow(collocations, zh: w.collocationsZh)
                         }
                     }
                 }
-                if let examples = w.examples, !examples.isEmpty {
-                    self.sectionTitle("例句 · EXAMPLE")
-                    self.examplesCard(examples)
-                }
             }
-            .frame(width: width - Space.s6 * 2, alignment: .leading)
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s5)
-            .padding(.bottom, Space.s12)
+            if let examples = w.examples, !examples.isEmpty {
+                self.sectionTitle("例句 · EXAMPLE")
+                self.examplesCard(examples)
+            }
         }
+        .padding(.horizontal, Space.s6)
+        .padding(.top, Space.s2)
+        .padding(.bottom, Space.s8)
         .frame(width: width, alignment: .leading)
     }
 
@@ -169,50 +168,50 @@ extension WordDetailView {
 
     // MARK: - Sections
 
+    /// Fixed image-card height so every word — wide, tall, square — gets an
+    /// identically sized hero. The image always fits inside (never cropped),
+    /// so layout stays neat and consistent across the dictionary.
+    private static let imageCardHeight: CGFloat = 220
+
     private func hero(_ w: Word) -> some View {
-        ZStack(alignment: .topLeading) {
-            ZStack {
-                // Blurred .fill copy as a tinted backdrop matching the
-                // subject — saves the hero from looking like a tiny
-                // product photo lost in a white card when the source
-                // image has a baked-in white background (bed, banana,
-                // most stock product shots). Nuke shares the fetch via
-                // pipeline(.shared).
-                LazyImage(url: w.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Color.tujiTealSoft
-                    }
-                }
-                .pipeline(.shared)
-                .blur(radius: 30)
-                .opacity(0.5)
-                .overlay(Color.tujiBg.opacity(0.18))
-
-                LazyImage(url: w.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fit)
-                            .padding(Space.s4)
-                    } else {
-                        Color.clear
-                    }
-                }
-                .pipeline(.shared)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 280)
-            .clipped()
-
+        VStack(spacing: Space.s4) {
+            // Controls live in their own row above the image so the back
+            // button and favourite toggle are always fully visible, never
+            // clipped by the notch or overlapping the artwork.
             HStack {
                 self.circleControl(systemImage: "chevron.left") { self.dismiss() }
                 Spacer()
                 FavoriteButton(wordId: w.id)
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.top, Space.s12)
+
+            // Consistent white image card. The picture is shown .fit with
+            // padding, so the whole subject is visible regardless of its
+            // aspect ratio or baked-in background.
+            ZStack {
+                RoundedRectangle(cornerRadius: Radius.xl)
+                    .fill(.tujiCard)
+                LazyImage(url: w.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable().aspectRatio(contentMode: .fit)
+                            .padding(Space.s4)
+                    } else if state.error != nil {
+                        Image(systemName: "photo")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.tujiInk4)
+                    } else {
+                        ProgressView().tint(.tujiTeal)
+                    }
+                }
+                .pipeline(.shared)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: Self.imageCardHeight)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.xl)
+                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            )
         }
-        .ignoresSafeArea(edges: .top)
     }
 
     private func titleRow(_ w: Word) -> some View {
@@ -382,12 +381,14 @@ extension WordDetailView {
     private func circleControl(systemImage: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             ZStack {
-                Circle().fill(.tujiCard.opacity(0.92))
+                Circle()
+                    .fill(.tujiCard)
+                    .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1.5))
                 Image(systemName: systemImage)
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(.tujiInk)
             }
-            .frame(width: 38, height: 38)
+            .frame(width: 40, height: 40)
         }
         .buttonStyle(.plain)
     }
@@ -458,5 +459,6 @@ private struct FlowLayout: Layout {
         WordDetailView(id: "tomato")
             .environment(LocalCache.shared)
             .environment(AuthService.shared)
+            .environment(StudyFocus.shared)
     }
 }
