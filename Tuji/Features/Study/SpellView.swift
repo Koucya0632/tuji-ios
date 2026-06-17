@@ -77,10 +77,12 @@ struct SpellView: View {
 
     private var hero: some View {
         ZStack {
-            Rectangle().fill(.tujiTealSoft)
+            Rectangle().fill(.tujiCard)
             LazyImage(url: self.item.word.imageURL) { state in
                 if let image = state.image {
-                    image.resizable().aspectRatio(contentMode: .fill)
+                    image.resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .padding(Space.s2)
                 } else if state.error != nil {
                     Image(systemName: "photo")
                         .font(.system(size: 28))

@@ -14,13 +14,14 @@ struct WordTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiTealSoft)
+                Rectangle().fill(.tujiCard)
 
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fit)
+                            .padding(Space.s2)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 24))
