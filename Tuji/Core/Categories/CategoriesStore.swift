@@ -16,6 +16,10 @@ final class CategoriesStore {
     private(set) var loading: Bool = false
     private(set) var lastError: Error?
 
+    /// True once the first load attempt has finished (success *or* failure).
+    /// Used by the splash gate so a failed load doesn't trap us on Splash.
+    private(set) var loaded: Bool = false
+
     private let log = Logger(subsystem: "app.tuji.ios", category: "categories")
 
     private init() {}
@@ -28,7 +32,10 @@ final class CategoriesStore {
     func reload() async {
         self.loading = true
         self.lastError = nil
-        defer { self.loading = false }
+        defer {
+            self.loading = false
+            self.loaded = true
+        }
         do {
             let resp: CategoriesResponse = try await APIClient.shared.get(.categories)
             self.categories = resp.categories
