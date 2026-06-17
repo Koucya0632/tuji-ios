@@ -62,6 +62,14 @@ struct StudyLauncherView: View {
                 ReviewFlowView(queue: wrap.queue)
             }
         }
+        // The launcher exists only to fetch a queue and forward to the
+        // flow. When the user dismisses the flow (X → 離開練習), SwiftUI
+        // resets pushQueue to nil — but the launcher would otherwise sit
+        // on its loading spinner forever. Pop it too so the user lands
+        // back on Today.
+        .onChange(of: self.pushQueue) { old, new in
+            if old != nil, new == nil { self.dismiss() }
+        }
     }
 
     private func loadQueue() async {
