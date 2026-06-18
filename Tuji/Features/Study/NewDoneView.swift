@@ -9,6 +9,8 @@ struct NewDoneView: View {
     let queue: [StudyQueueItem]
     let onFinish: () -> Void
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s5) {
@@ -84,10 +86,12 @@ struct NewDoneView: View {
                 Text(item.word.word)
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(.tujiInk)
-                Text(item.word.chinese)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                    .lineLimit(1)
+                if self.settings.current.showZh {
+                    Text(item.word.chinese)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                }
             }
             .padding(Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)

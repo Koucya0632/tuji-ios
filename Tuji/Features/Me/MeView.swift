@@ -1,7 +1,7 @@
-// Me tab — full §III.M surface. Profile header, 3-stat row, top-5 best
-// + top-3 weak word rows (tap → WordPeek), and a list group for
-// Favorites / Settings / Share. Sign-out and the dev-only Bearer smoke
-// test live under a 除錯工具 disclosure at the bottom.
+// Me tab — full §III.M surface. Profile header, 3-stat row, top-3 weak
+// word rows (tap → WordPeek), and a list group for Favorites / Settings /
+// Share. Sign-out and the dev-only Bearer smoke test live under a 除錯工具
+// disclosure at the bottom.
 
 import Nuke
 import NukeUI
@@ -12,27 +12,22 @@ import SwiftUI
 @MainActor
 @Observable
 final class MeVM {
-    var bestWords: [TopWord] = []
     var weakWords: [TopWord] = []
     var loading: Bool = false
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "me")
 
-    /// Streak is read from ProgressStore.shared so Today / Progress / Me share
-    /// a single fetched copy. Best / weak words live here because they're a
-    /// Me-only payload.
+    /// Streak + 已學字 (studied-word count) are read from ProgressStore.shared
+    /// so Today / Progress / Me share a single fetched copy. Weak words live
+    /// here because they're a Me-only payload.
     func load(progress: ProgressStore) async {
         self.loading = true
         defer { self.loading = false }
-        async let bestResp: TopWordsResponse? = try? APIClient.shared.get(
-            .usersTopWords(type: "best", limit: 5)
-        )
         async let weakResp: TopWordsResponse? = try? APIClient.shared.get(
             .usersTopWords(type: "weak", limit: 3)
         )
         async let progressLoad: Void = progress.loadIfStale()
-        let (best, weak, _) = await (bestResp, weakResp, progressLoad)
-        self.bestWords = best?.words ?? []
+        let (weak, _) = await (weakResp, progressLoad)
         self.weakWords = weak?.words ?? []
     }
 }
@@ -42,6 +37,7 @@ struct MeView: View {
     @Environment(AuthService.self) private var auth
     @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
+    @Environment(SettingsStore.self) private var settings
 
     @State private var vm = MeVM()
     @State private var peekId: String?
@@ -49,6 +45,15 @@ struct MeView: View {
 
     private var isGuest: Bool {
         self.user == nil
+    }
+
+    /// 已學字 = distinct words the account has studied at least once. The real
+    /// value is server-derived: it's the sum of per-category `seen` counts from
+    /// /api/users/progress (one user_cards row per studied word). Guests have no
+    /// server record, so they fall back to the on-device learned set.
+    private var learnedCount: Int {
+        if self.isGuest { return self.cache.learnedIds.count }
+        return self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
     }
 
     /// Placeholder share URL until the App Store listing exists. Lives
@@ -61,10 +66,13 @@ struct MeView: View {
             VStack(spacing: Space.s6) {
                 self.profileHeader
                 self.statsRow
-                self.bestSection
                 self.weakSection
                 self.listGroup
+                #if DEBUG
+                // Dev-only Bearer smoke test. Compiled out of release /
+                // App Store builds so end users never see it.
                 DebugSmokeSection(isGuest: self.isGuest)
+                #endif
                 self.signOutButton
             }
             .padding(.horizontal, Space.s6)
@@ -120,7 +128,7 @@ struct MeView: View {
 
     private var statsRow: some View {
         HStack(spacing: 0) {
-            self.statCell(value: "\(self.cache.learnedIds.count)", label: "已學字")
+            self.statCell(value: "\(self.learnedCount)", label: "已學字")
             Divider().frame(height: 36)
             self.statCell(
                 value: "\(self.progress.streak?.current ?? 0)",
@@ -159,23 +167,7 @@ struct MeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Best / weak sections
-
-    @ViewBuilder
-    private var bestSection: some View {
-        if self.isGuest {
-            self.guestBestPlaceholder
-        } else if !self.vm.bestWords.isEmpty {
-            self.wordSection(
-                title: "最熟的 \(self.vm.bestWords.count) 個字",
-                words: self.vm.bestWords,
-                accent: .tujiGreen,
-                emptyText: nil
-            )
-        } else if !self.vm.loading {
-            self.bestEmpty
-        }
-    }
+    // MARK: - Weak section
 
     @ViewBuilder
     private var weakSection: some View {
@@ -244,10 +236,12 @@ struct MeView: View {
                 Text(word.word)
                     .font(.system(size: 15, weight: .heavy))
                     .foregroundStyle(.tujiInk)
-                Text(word.chinese)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                    .lineLimit(1)
+                if self.settings.current.showZh {
+                    Text(word.chinese)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                }
             }
             Spacer()
             Text("\(word.mastery)")
@@ -259,43 +253,6 @@ struct MeView: View {
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-    }
-
-    private var bestEmpty: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            Text("最熟的字")
-                .font(.tujiOverline)
-                .tracking(2)
-                .foregroundStyle(.tujiTeal)
-            HStack(spacing: Space.s3) {
-                Mascot(pose: .think, size: 40)
-                Text("還沒答過題 — 練幾張就會排出來")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                Spacer()
-            }
-            .padding(Space.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
-            )
-        }
-    }
-
-    private var guestBestPlaceholder: some View {
-        HStack(spacing: Space.s3) {
-            Image(systemName: "icloud.slash")
-                .foregroundStyle(.tujiInk3)
-            Text("登入後才能看「最熟 / 需要加強」名單")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk2)
-            Spacer()
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s3)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
     }
 
     // MARK: - List group
@@ -345,7 +302,11 @@ struct MeView: View {
                 .foregroundStyle(.tujiInk4)
         }
         .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s3)
+        .padding(.vertical, Space.s4)
+        .frame(minHeight: 52)
+        // Make the whole row (incl. the Spacer gap) tappable, not just the
+        // text/icon glyphs.
+        .contentShape(Rectangle())
     }
 
     private var signOutButton: some View {
@@ -373,6 +334,7 @@ struct MeView: View {
 
     private var displayName: String {
         if let user {
+            if let n = user.nickname, !n.isEmpty { return n }
             if let u = user.username, !u.isEmpty { return u }
             if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
         }
@@ -389,8 +351,9 @@ struct MeView: View {
     }
 }
 
-// MARK: - Debug / smoke (collapsible)
+// MARK: - Debug / smoke (collapsible, DEBUG builds only)
 
+#if DEBUG
 private struct DebugSmokeSection: View {
     let isGuest: Bool
     @State private var open = false
@@ -489,3 +452,4 @@ private struct DebugSmokeSection: View {
         }
     }
 }
+#endif

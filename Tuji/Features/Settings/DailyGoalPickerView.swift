@@ -1,5 +1,5 @@
-// Picks the daily new-word goal. Writes straight into SettingsStore's
-// draft — the parent SettingsView's save bar picks up dirty state.
+// Picks the daily new-word goal. Writes straight into SettingsStore via
+// update(_:), which applies the change immediately and auto-persists.
 
 import SwiftUI
 
@@ -14,14 +14,14 @@ struct DailyGoalPickerView: View {
             Section {
                 ForEach(Self.options, id: \.self) { n in
                     Button {
-                        self.store.draft.dailyGoal = n
+                        self.store.update { $0.dailyGoal = n }
                         self.dismiss()
                     } label: {
                         HStack {
                             Text("\(n) 題")
                                 .foregroundStyle(.tujiInk)
                             Spacer()
-                            if self.store.draft.dailyGoal == n {
+                            if self.store.current.dailyGoal == n {
                                 Image(systemName: "checkmark")
                                     .foregroundStyle(.tujiTeal)
                             }

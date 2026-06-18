@@ -211,6 +211,7 @@ private extension SessionUser {
         self.id = id
         self.email = email
         self.username = username
+        self.nickname = nil
         self.avatar = avatar
     }
 }

@@ -160,6 +160,7 @@ struct TodayView: View {
 
     private var displayName: String {
         if let user {
+            if let n = user.nickname, !n.isEmpty { return n }
             if let u = user.username, !u.isEmpty { return u }
             if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
         }
@@ -193,6 +194,9 @@ struct TodayView: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: Space.s4) {
+            if !self.isGuest {
+                self.dailyGoalProgress
+            }
             self.heroProgress
             HStack(spacing: Space.s3) {
                 NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
@@ -212,6 +216,49 @@ struct TodayView: View {
         }
         .padding(Space.s5)
         .background(.tujiBgInk, in: .rect(cornerRadius: Radius.xl))
+    }
+
+    /// Today's new-word goal progress. `todayNew` = new cards introduced today;
+    /// dailyGoal is the per-day new-word target. Surfaces the goal on the home
+    /// screen so there's a daily feedback loop. Signed-in only.
+    @ViewBuilder
+    private var dailyGoalProgress: some View {
+        let done = self.studyStats.stats?.todayNew ?? 0
+        let goal = max(1, self.settings.current.dailyGoal)
+        let reached = done >= goal
+        let ratio = min(1.0, Double(done) / Double(goal))
+        VStack(alignment: .leading, spacing: Space.s1) {
+            HStack {
+                Text("今日目標")
+                    .font(.tujiOverline)
+                    .tracking(2)
+                    .foregroundStyle(.white.opacity(0.6))
+                Spacer()
+                if reached {
+                    HStack(spacing: 3) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 11, weight: .heavy))
+                        Text("達成")
+                            .font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundStyle(.tujiYellow)
+                } else {
+                    Text("\(done) / \(goal)")
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(.white.opacity(0.08))
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(reached ? Color.tujiYellow : .tujiCoral)
+                        .frame(width: geo.size.width * ratio)
+                }
+            }
+            .frame(height: 8)
+        }
     }
 
     @ViewBuilder
@@ -394,6 +441,7 @@ private extension SessionUser {
         self.id = id
         self.email = email
         self.username = username
+        self.nickname = nil
         self.avatar = avatar
     }
 }

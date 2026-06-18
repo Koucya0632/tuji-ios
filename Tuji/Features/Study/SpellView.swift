@@ -10,6 +10,8 @@ struct SpellView: View {
     let coord: NewFlowCoordinator
     let item: StudyQueueItem
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         VStack(spacing: Space.s4) {
             self.bubble
@@ -56,9 +58,11 @@ struct SpellView: View {
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiInk3)
                 }
-                Text(self.item.word.chinese)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
+                if self.settings.current.showZh {
+                    Text(self.item.word.chinese)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                }
             }
             .padding(.horizontal, Space.s4)
             .padding(.bottom, Space.s4)

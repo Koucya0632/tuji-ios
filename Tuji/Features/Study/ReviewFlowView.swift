@@ -330,6 +330,8 @@ private struct ReviewFooter: View {
     let item: StudyQueueItem
     let onSeeDetail: () -> Void
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             self.summary
@@ -387,10 +389,12 @@ private struct ReviewFooter: View {
                         .font(.tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
-                Text(self.item.word.chinese)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk2)
-                    .lineLimit(2)
+                if self.settings.current.showZh {
+                    Text(self.item.word.chinese)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk2)
+                        .lineLimit(2)
+                }
             }
             Spacer()
             PronunciationButton(text: self.item.word.word, size: 36)

@@ -1,6 +1,8 @@
-// EditProfile (§III.N). Username text field + Mascot pose picker grid.
-// Saves via POST /api/users/profile. Dirty-state is local to this view
-// (independent of SettingsStore) because the profile endpoint is
+// EditProfile (§III.N). Editable nickname over the read-only handle.
+// Avatar editing is currently disabled — the hero shows the saved pose but
+// the picker is hidden. Saves the nickname via POST /api/users/profile and
+// optimistically updates the in-memory session. Dirty-state is local to this
+// view (independent of SettingsStore) because the profile endpoint is
 // separate from /api/users/settings.
 
 import OSLog
@@ -22,7 +24,6 @@ struct EditProfileView: View {
         ScrollView {
             VStack(spacing: Space.s6) {
                 self.heroAvatar
-                self.poseGrid
                 self.nicknameField
                 self.handleField
                 if let error {
@@ -61,34 +62,6 @@ struct EditProfileView: View {
         }
         .frame(width: 96, height: 96)
         .frame(maxWidth: .infinity)
-    }
-
-    private var poseGrid: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            Text("選一個姿勢")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
-                .frame(maxWidth: .infinity, alignment: .center)
-            HStack(spacing: Space.s2) {
-                ForEach(MascotPose.allCases, id: \.self) { p in
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        self.pose = p
-                    } label: {
-                        Mascot(pose: p, size: 36)
-                            .frame(width: 56, height: 56)
-                            .background(.tujiCard, in: .circle)
-                            .overlay(
-                                Circle().stroke(
-                                    self.pose == p ? Color.tujiTeal : .tujiInk4.opacity(0.25),
-                                    lineWidth: self.pose == p ? 3 : 1
-                                )
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
     }
 
     private var nicknameField: some View {
@@ -148,7 +121,8 @@ struct EditProfileView: View {
     private func initialize() {
         guard !self.initialized else { return }
         if case let .signedIn(user) = auth.state {
-            self.nickname = user.username ?? ""
+            self.nickname = user.nickname ?? ""
+            // Pose is shown read-only (editing disabled for now).
             self.pose = MascotPose(rawValue: user.avatar ?? "") ?? .face
         }
         self.initialized = true
@@ -156,9 +130,8 @@ struct EditProfileView: View {
 
     private var dirty: Bool {
         if case let .signedIn(user) = auth.state {
-            let oldNick = user.username ?? ""
-            let oldPose = MascotPose(rawValue: user.avatar ?? "") ?? .face
-            return self.nickname != oldNick || self.pose != oldPose
+            let oldNick = user.nickname ?? ""
+            return self.nickname != oldNick
         }
         return false
     }
@@ -176,18 +149,18 @@ struct EditProfileView: View {
         self.saving = true
         self.error = nil
         defer { self.saving = false }
-        let payload = ProfileUpdatePayload(
-            nickname: trimmed.isEmpty ? nil : trimmed,
-            avatar: self.pose.rawValue
-        )
+        let newNickname = trimmed.isEmpty ? nil : trimmed
+        // Avatar omitted (editing disabled) so the backend leaves the saved
+        // pose untouched.
+        let payload = ProfileUpdatePayload(nickname: newNickname, avatar: nil)
         do {
             let _: ProfileUpdateResponse = try await APIClient.shared.post(
                 .usersProfile,
                 body: payload
             )
             self.log.info("profile saved")
-            // Refresh session so SessionUser picks up the new values
-            await self.auth.restoreSession()
+            // Reflect the new nickname in the session immediately.
+            self.auth.applyNickname(newNickname)
             self.dismiss()
         } catch {
             self.error = error

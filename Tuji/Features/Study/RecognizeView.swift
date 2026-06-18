@@ -10,6 +10,8 @@ struct RecognizeView: View {
     let coord: NewFlowCoordinator
     let item: StudyQueueItem
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         VStack(spacing: Space.s4) {
             self.card
@@ -38,9 +40,11 @@ struct RecognizeView: View {
                         .font(.tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
-                Text(self.item.word.chinese)
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk2)
+                if self.settings.current.showZh {
+                    Text(self.item.word.chinese)
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk2)
+                }
             }
             .padding(.horizontal, Space.s4)
             .padding(.bottom, Space.s4)

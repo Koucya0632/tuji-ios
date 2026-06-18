@@ -1,7 +1,11 @@
 // Single source of truth for the signed-in user's settings. Lazy-loaded
 // on the first SettingsView appearance; subsequent reads return the
-// in-memory `current` snapshot. SettingsView edits the `draft` copy
-// and calls `save()` to persist via POST /api/users/settings.
+// in-memory `current` snapshot.
+//
+// Edits apply immediately: SettingsView / pickers mutate `current` through
+// `update(_:)` (or a `binding(_:)`), which updates the in-memory value right
+// away and debounces a POST /api/users/settings in the background. There's
+// no draft / save-button / discard step — what you tap is what's applied.
 
 import Observation
 import OSLog
@@ -13,13 +17,16 @@ final class SettingsStore {
     static let shared = SettingsStore()
 
     private(set) var current: UserSettings = .default
-    var draft: UserSettings = .default
     private(set) var loading: Bool = false
     private(set) var saving: Bool = false
     private(set) var lastError: Error?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "settings")
     private var hasLoaded: Bool = false
+    private var saveTask: Task<Void, Never>?
+
+    /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
+    private let saveDebounce: Duration = .milliseconds(400)
 
     private init() {}
 
@@ -37,7 +44,6 @@ final class SettingsStore {
         do {
             let resp: UserSettingsResponse = try await APIClient.shared.get(.usersSettings)
             self.current = resp.settings
-            self.draft = resp.settings
             self.hasLoaded = true
             self.log.info("settings loaded")
         } catch {
@@ -46,31 +52,53 @@ final class SettingsStore {
         }
     }
 
-    var dirty: Bool {
-        self.current != self.draft
+    // MARK: - Immediate edits
+
+    /// Mutate the live settings and persist automatically. The change is
+    /// applied to `current` synchronously so the UI reflects it at once; the
+    /// network write is debounced so quick successive edits collapse into a
+    /// single POST.
+    func update(_ mutate: (inout UserSettings) -> Void) {
+        var next = self.current
+        mutate(&next)
+        guard next != self.current else { return }
+        self.current = next
+        self.scheduleSave()
     }
 
-    func save() async {
-        guard self.dirty else { return }
+    /// Two-way binding for SwiftUI controls (e.g. Toggle). Reading returns the
+    /// live value; writing routes through `update(_:)` so it auto-saves.
+    func binding<Value>(_ keyPath: WritableKeyPath<UserSettings, Value>) -> Binding<Value> {
+        Binding(
+            get: { self.current[keyPath: keyPath] },
+            set: { newValue in self.update { $0[keyPath: keyPath] = newValue } }
+        )
+    }
+
+    private func scheduleSave() {
+        self.saveTask?.cancel()
+        let snapshot = self.current
+        let debounce = self.saveDebounce
+        self.saveTask = Task { [weak self] in
+            try? await Task.sleep(for: debounce)
+            if Task.isCancelled { return }
+            await self?.persist(snapshot)
+        }
+    }
+
+    private func persist(_ snapshot: UserSettings) async {
         self.saving = true
         self.lastError = nil
         defer { self.saving = false }
         do {
-            let resp: SaveSettingsResponse = try await APIClient.shared.post(
+            let _: SaveSettingsResponse = try await APIClient.shared.post(
                 .usersSettings,
-                body: self.draft
+                body: snapshot
             )
-            self.current = resp.settings ?? self.draft
-            self.draft = self.current
             self.log.info("settings saved")
         } catch {
             self.lastError = error
             self.log.error("settings save failed: \(error.localizedDescription, privacy: .public)")
         }
-    }
-
-    /// Discards any in-flight edits.
-    func revertDraft() {
-        self.draft = self.current
     }
 }
