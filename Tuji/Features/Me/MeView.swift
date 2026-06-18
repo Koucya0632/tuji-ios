@@ -69,9 +69,9 @@ struct MeView: View {
                 self.weakSection
                 self.listGroup
                 #if DEBUG
-                    // Dev-only Bearer smoke test. Compiled out of release /
-                    // App Store builds so end users never see it.
-                    DebugSmokeSection(isGuest: self.isGuest)
+                // Dev-only Bearer smoke test. Compiled out of release /
+                // App Store builds so end users never see it.
+                DebugSmokeSection(isGuest: self.isGuest)
                 #endif
                 self.signOutButton
             }

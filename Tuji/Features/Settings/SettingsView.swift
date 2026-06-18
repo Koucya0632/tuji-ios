@@ -18,42 +18,42 @@ struct SettingsView: View {
 
     var body: some View {
         self.list
-        .background(.tujiBg)
-        .navigationTitle("設定")
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await self.store.loadIfNeeded() }
-        .alert("登出？", isPresented: self.$showSignOutConfirm) {
-            Button("取消", role: .cancel) {}
-            Button("登出", role: .destructive) {
-                Task { await self.auth.signOut() }
+            .background(.tujiBg)
+            .navigationTitle("設定")
+            .navigationBarTitleDisplayMode(.inline)
+            .task { await self.store.loadIfNeeded() }
+            .alert("登出？", isPresented: self.$showSignOutConfirm) {
+                Button("取消", role: .cancel) {}
+                Button("登出", role: .destructive) {
+                    Task { await self.auth.signOut() }
+                }
+            } message: {
+                Text("收藏與設定會保留在伺服器")
             }
-        } message: {
-            Text("收藏與設定會保留在伺服器")
-        }
-        .alert("確定要刪除帳號？", isPresented: self.$showDeleteFirst) {
-            Button("取消", role: .cancel) {}
-            Button("繼續", role: .destructive) {
-                self.showDeleteSecond = true
+            .alert("確定要刪除帳號？", isPresented: self.$showDeleteFirst) {
+                Button("取消", role: .cancel) {}
+                Button("繼續", role: .destructive) {
+                    self.showDeleteSecond = true
+                }
+            } message: {
+                Text("這個動作無法復原：收藏、學習紀錄、所有資料都會刪除")
             }
-        } message: {
-            Text("這個動作無法復原：收藏、學習紀錄、所有資料都會刪除")
-        }
-        .alert("最後一次確認", isPresented: self.$showDeleteSecond) {
-            Button("取消", role: .cancel) {}
-            Button("永久刪除", role: .destructive) {
-                Task { await self.deleteAccount() }
+            .alert("最後一次確認", isPresented: self.$showDeleteSecond) {
+                Button("取消", role: .cancel) {}
+                Button("永久刪除", role: .destructive) {
+                    Task { await self.deleteAccount() }
+                }
+            } message: {
+                Text("確定要永久刪除帳號嗎？")
             }
-        } message: {
-            Text("確定要永久刪除帳號嗎？")
-        }
-        .alert("刪除失敗", isPresented: Binding(
-            get: { self.deleteError != nil },
-            set: { if !$0 { self.deleteError = nil } }
-        )) {
-            Button("知道了", role: .cancel) { self.deleteError = nil }
-        } message: {
-            Text(self.deleteError?.localizedDescription ?? "")
-        }
+            .alert("刪除失敗", isPresented: Binding(
+                get: { self.deleteError != nil },
+                set: { if !$0 { self.deleteError = nil } }
+            )) {
+                Button("知道了", role: .cancel) { self.deleteError = nil }
+            } message: {
+                Text(self.deleteError?.localizedDescription ?? "")
+            }
     }
 
     // MARK: - List

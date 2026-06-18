@@ -6,7 +6,7 @@ import SwiftUI
 struct PronunciationButton: View {
     let text: String
     /// Explicit override; `nil` means follow the user's 發音口音 setting.
-    var accent: SpeechService.Accent? = nil
+    var accent: SpeechService.Accent?
     var size: CGFloat = 40
 
     @Environment(SettingsStore.self) private var settings
