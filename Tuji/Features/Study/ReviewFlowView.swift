@@ -364,18 +364,42 @@ private struct ReviewFooter: View {
         .shadow(color: .black.opacity(0.08), radius: 12, y: -2)
     }
 
+    /// Synchronous lookup into the shared pipeline's memory cache. Returns a
+    /// ready-to-draw `Image` if the hero already cached this word's picture,
+    /// so the footer thumbnail can appear in the same frame the sheet slides
+    /// up instead of resolving asynchronously a frame later.
+    private var cachedThumb: Image? {
+        guard let url = self.item.word.imageURL,
+              let container = ImagePipeline.shared.cache[ImageRequest(url: url)]
+        else { return nil }
+        return Image(uiImage: container.image)
+    }
+
     private var summary: some View {
         HStack(alignment: .top, spacing: Space.s3) {
             ZStack {
                 Rectangle().fill(.tujiTealSoft)
-                LazyImage(url: self.item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                // The hero already loaded this image during the question
+                // phase, so it lives in the shared memory cache by the time
+                // the footer slides up. Render it synchronously from cache so
+                // the thumbnail is present from frame 0 and rides up *with*
+                // the sheet — LazyImage would resolve one frame late and the
+                // picture would pop in after the slide finished.
+                if let cached = self.cachedThumb {
+                    cached.resizable().aspectRatio(contentMode: .fill)
+                } else {
+                    LazyImage(url: self.item.word.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        } else if state.error != nil {
+                            Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                        } else {
+                            ProgressView().tint(.tujiTeal)
+                        }
                     }
+                    .pipeline(.shared)
+                    .id(self.item.word.imageURL)
                 }
-                .pipeline(.shared)
             }
             .frame(width: 46, height: 46)
             .clipShape(.rect(cornerRadius: Radius.md))
