@@ -167,6 +167,16 @@ final class AuthService {
         return session.accessToken
     }
 
+    // MARK: - Profile
+
+    /// Optimistically reflect a profile edit in the in-memory session so the
+    /// UI updates immediately, without waiting for the auth token's metadata
+    /// to refresh. The backend has already persisted the change.
+    func applyNickname(_ nickname: String?) {
+        guard case let .signedIn(user) = state else { return }
+        state = .signedIn(user.withNickname(nickname))
+    }
+
     // MARK: - Local cache sync
 
     /// Uploads the device's anonymous favorites/learned to the server so a

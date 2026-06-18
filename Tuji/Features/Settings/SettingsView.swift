@@ -1,29 +1,23 @@
-// Settings (§III.N). Edits a draft copy of UserSettings — bottom save
-// bar persists via POST /api/users/settings when dirty. v1 ships the
-// 學習 / 顯示 / 帳號 sections; 提醒 / 字體大小 / 深色模式 / 語言
-// come online when the matching backend or i18n infra is ready.
+// Settings (§III.N). Every change applies immediately — controls write
+// straight to SettingsStore.current, which auto-persists via POST
+// /api/users/settings (debounced). No save button, no discard step.
+// v1 ships the 學習 / 顯示 / 帳號 sections; 提醒 / 字體大小 / 深色模式
+// come online when the matching backend infra is ready.
 
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(AuthService.self) private var auth
-    @Environment(\.dismiss) private var dismiss
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteFirst = false
     @State private var showDeleteSecond = false
     @State private var deleting = false
     @State private var deleteError: Error?
-    @State private var showDiscardConfirm = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            self.list
-            if self.store.dirty {
-                self.saveBar
-            }
-        }
+        self.list
         .background(.tujiBg)
         .navigationTitle("設定")
         .navigationBarTitleDisplayMode(.inline)
@@ -60,40 +54,23 @@ struct SettingsView: View {
         } message: {
             Text(self.deleteError?.localizedDescription ?? "")
         }
-        .toolbar {
-            if self.store.dirty {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        self.showDiscardConfirm = true
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .heavy))
-                            .foregroundStyle(.tujiInk2)
-                    }
-                }
-            }
-        }
-        .alert("放棄未儲存的變更？", isPresented: self.$showDiscardConfirm) {
-            Button("繼續編輯", role: .cancel) {}
-            Button("放棄", role: .destructive) {
-                self.store.revertDraft()
-                self.dismiss()
-            }
-        }
     }
 
     // MARK: - List
 
     private var list: some View {
-        @Bindable var store = store
-        return List {
+        List {
             Section("學習") {
                 NavigationLink {
                     DailyGoalPickerView()
                 } label: {
-                    self.row(label: "每日目標題數", value: "\(self.store.draft.dailyGoal) 題")
+                    self.row(
+                        label: "每日目標題數",
+                        value: "\(self.store.current.dailyGoal) 題",
+                        subtitle: "每天想新學的題數，複習多時會自動調降"
+                    )
                 }
-                Toggle("中文釋義", isOn: $store.draft.showZh)
+                Toggle("中文釋義", isOn: self.store.binding(\.showZh))
                     .tint(.tujiTeal)
             }
             Section("顯示") {
@@ -147,10 +124,17 @@ struct SettingsView: View {
         .background(.tujiBg)
     }
 
-    private func row(label: String, value: String?) -> some View {
+    private func row(label: String, value: String?, subtitle: String? = nil) -> some View {
         HStack {
-            Text(label)
-                .foregroundStyle(.tujiInk)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .foregroundStyle(.tujiInk)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk4)
+                }
+            }
             Spacer()
             if let value {
                 Text(value)
@@ -160,37 +144,20 @@ struct SettingsView: View {
     }
 
     private var accentLabel: String {
-        switch self.store.draft.accent {
+        switch self.store.current.accent {
         case "uk": "英式"
         case "us": "美式"
-        default: self.store.draft.accent.uppercased()
+        default: self.store.current.accent.uppercased()
         }
     }
 
     private var langLabel: String {
-        switch self.store.draft.uiLang {
+        switch self.store.current.uiLang {
         case "zh-Hant": "繁體中文"
         case "zh-Hans": "简体中文"
         case "ja": "日本語"
-        default: self.store.draft.uiLang
+        default: self.store.current.uiLang
         }
-    }
-
-    // MARK: - Save bar
-
-    private var saveBar: some View {
-        BBtn(
-            title: self.store.saving ? "儲存中…" : "儲存設定",
-            bg: .tujiTeal,
-            fg: .white,
-            fullWidth: true,
-            icon: "checkmark",
-            action: { Task { await self.store.save() } }
-        )
-        .disabled(self.store.saving)
-        .padding(.horizontal, Space.s6)
-        .padding(.vertical, Space.s4)
-        .background(.tujiBg.opacity(0.92))
     }
 
     // MARK: - Account actions

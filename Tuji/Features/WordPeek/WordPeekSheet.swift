@@ -14,6 +14,8 @@ struct WordPeekSheet: View {
     let word: CardWord
     let onSeeMore: () -> Void
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s4) {
             self.heroImage
@@ -78,10 +80,12 @@ struct WordPeekSheet: View {
                         .font(.tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
-                Text(self.word.chinese)
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk2)
-                    .padding(.top, 2)
+                if self.settings.current.showZh {
+                    Text(self.word.chinese)
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk2)
+                        .padding(.top, 2)
+                }
             }
             Spacer()
             VStack(spacing: Space.s2) {
@@ -109,4 +113,5 @@ struct WordPeekSheet: View {
         }
         .environment(LocalCache.shared)
         .environment(AuthService.shared)
+        .environment(SettingsStore.shared)
 }

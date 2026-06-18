@@ -11,6 +11,8 @@ struct WordTile: View {
     var height: CGFloat = 120
     var showLabel: Bool = true
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
@@ -42,10 +44,12 @@ struct WordTile: View {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.tujiInk)
 
-                    Text(self.word.chinese)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
-                        .lineLimit(1)
+                    if self.settings.current.showZh {
+                        Text(self.word.chinese)
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk3)
+                            .lineLimit(1)
+                    }
                 }
                 .padding(Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -78,4 +82,5 @@ struct WordTile: View {
         .padding()
     }
     .background(.tujiBg)
+    .environment(SettingsStore.shared)
 }

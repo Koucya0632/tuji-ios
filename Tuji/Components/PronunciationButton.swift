@@ -5,13 +5,23 @@ import SwiftUI
 
 struct PronunciationButton: View {
     let text: String
-    var accent: SpeechService.Accent = .us
+    /// Explicit override; `nil` means follow the user's 發音口音 setting.
+    var accent: SpeechService.Accent? = nil
     var size: CGFloat = 40
+
+    @Environment(SettingsStore.self) private var settings
+
+    /// Resolve the accent: explicit param wins, otherwise map the saved
+    /// setting code ("us"/"uk") to a SpeechService voice.
+    private var effectiveAccent: SpeechService.Accent {
+        if let accent { return accent }
+        return self.settings.current.accent == "uk" ? .uk : .us
+    }
 
     var body: some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            SpeechService.shared.speak(self.text, accent: self.accent)
+            SpeechService.shared.speak(self.text, accent: self.effectiveAccent)
         } label: {
             ZStack {
                 Circle().fill(.tujiTealSoft)
@@ -27,4 +37,5 @@ struct PronunciationButton: View {
 
 #Preview {
     PronunciationButton(text: "tomato")
+        .environment(SettingsStore.shared)
 }

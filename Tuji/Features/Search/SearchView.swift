@@ -372,6 +372,8 @@ private struct SearchResultRow: View {
     let word: CardWord
     var query: String = ""
 
+    @Environment(SettingsStore.self) private var settings
+
     var body: some View {
         HStack(spacing: Space.s3) {
             ZStack {
@@ -406,10 +408,12 @@ private struct SearchResultRow: View {
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
-                Text(self.highlighted(self.word.chinese))
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                    .lineLimit(1)
+                if self.settings.current.showZh {
+                    Text(self.highlighted(self.word.chinese))
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                }
             }
 
             Spacer()

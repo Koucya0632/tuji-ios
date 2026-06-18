@@ -13,6 +13,7 @@ struct WordDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(SettingsStore.self) private var settings
 
     @State private var word: Word?
     @State private var loading = false
@@ -260,9 +261,11 @@ extension WordDetailView {
     private func definitionCard(_ w: Word, chineseDef: String) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
-                Text(w.chinese)
-                    .font(.system(size: 17, weight: .heavy))
-                    .foregroundStyle(.tujiInk)
+                if self.settings.current.showZh {
+                    Text(w.chinese)
+                        .font(.system(size: 17, weight: .heavy))
+                        .foregroundStyle(.tujiInk)
+                }
                 if let pos = w.partOfSpeech {
                     Text(pos)
                         .font(.tujiCaption)
@@ -278,9 +281,11 @@ extension WordDetailView {
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk)
             }
-            Text(chineseDef)
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
+            if self.settings.current.showZh {
+                Text(chineseDef)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+            }
         }
         .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)

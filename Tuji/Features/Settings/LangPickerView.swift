@@ -1,7 +1,7 @@
-// UI language picker. Writes the chosen code into SettingsStore.draft.uiLang
-// so the parent Settings save bar persists it via POST /api/users/settings.
-// RootView reads SettingsStore.current.uiLang at render time to apply the
-// matching locale to the whole app.
+// UI language picker. Writes the chosen code into SettingsStore via
+// update(_:), applying it immediately and auto-persisting via
+// POST /api/users/settings. RootView reads SettingsStore.current.uiLang at
+// render time to apply the matching locale to the whole app.
 
 import SwiftUI
 
@@ -26,14 +26,14 @@ struct LangPickerView: View {
             Section {
                 ForEach(Self.options, id: \.code) { opt in
                     Button {
-                        self.store.draft.uiLang = opt.code
+                        self.store.update { $0.uiLang = opt.code }
                         self.dismiss()
                     } label: {
                         HStack(spacing: Space.s3) {
                             Text(opt.native)
                                 .foregroundStyle(.tujiInk)
                             Spacer()
-                            if self.store.draft.uiLang == opt.code {
+                            if self.store.current.uiLang == opt.code {
                                 Image(systemName: "checkmark")
                                     .foregroundStyle(.tujiTeal)
                             }

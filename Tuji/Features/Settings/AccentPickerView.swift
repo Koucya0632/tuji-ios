@@ -1,5 +1,6 @@
-// 發音口音 picker. Updates SettingsStore.draft.accent; the AVSpeech
-// SpeechService reads from current settings at speak time.
+// 發音口音 picker. Updates SettingsStore via update(_:), applying the choice
+// immediately and auto-persisting; SpeechService reads current settings at
+// speak time.
 
 import SwiftUI
 
@@ -23,7 +24,7 @@ struct AccentPickerView: View {
             Section {
                 ForEach(Self.options, id: \.code) { opt in
                     Button {
-                        self.store.draft.accent = opt.code
+                        self.store.update { $0.accent = opt.code }
                         self.dismiss()
                     } label: {
                         HStack(spacing: Space.s3) {
@@ -34,7 +35,7 @@ struct AccentPickerView: View {
                                     .foregroundStyle(.tujiInk3)
                             }
                             Spacer()
-                            if self.store.draft.accent == opt.code {
+                            if self.store.current.accent == opt.code {
                                 Image(systemName: "checkmark")
                                     .foregroundStyle(.tujiTeal)
                             }
