@@ -17,6 +17,11 @@ struct UserSettings: Codable, Equatable {
     var studyDecks: [String]
     var uiLang: String
     var fontSize: String
+    /// Daily study reminder. `reminderMinute` is one of 0/15/30/45 — the
+    /// backend cron buckets to 15 min, so other values never fire.
+    var reminderEnabled: Bool
+    var reminderHour: Int
+    var reminderMinute: Int
 
     static let `default` = UserSettings(
         dailyGoal: 10,
@@ -25,7 +30,10 @@ struct UserSettings: Codable, Equatable {
         studyCategories: [],
         studyDecks: [],
         uiLang: "zh-Hant",
-        fontSize: "md"
+        fontSize: "md",
+        reminderEnabled: true,
+        reminderHour: 20,
+        reminderMinute: 0
     )
 }
 

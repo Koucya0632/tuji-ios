@@ -215,7 +215,10 @@ struct SetupView: View {
                 studyCategories: topicIds.sorted(),
                 studyDecks: [],
                 uiLang: "zh-Hant",
-                fontSize: "md"
+                fontSize: "md",
+                reminderEnabled: true,
+                reminderHour: 20,
+                reminderMinute: 0
             )
 
             do {

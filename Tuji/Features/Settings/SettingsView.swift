@@ -73,6 +73,22 @@ struct SettingsView: View {
                 Toggle("中文釋義", isOn: self.store.binding(\.showZh))
                     .tint(.tujiTeal)
             }
+            Section {
+                Toggle("每日提醒", isOn: self.store.binding(\.reminderEnabled))
+                    .tint(.tujiTeal)
+                NavigationLink {
+                    ReminderTimePickerView()
+                } label: {
+                    self.row(label: "提醒時間", value: self.reminderLabel)
+                }
+                .disabled(!self.store.current.reminderEnabled)
+                .opacity(self.store.current.reminderEnabled ? 1 : 0.4)
+            } header: {
+                Text("提醒")
+            } footer: {
+                Text("當天還沒學習時，會在這個時間推播提醒你（需開啟通知權限）")
+                    .foregroundStyle(.tujiInk3)
+            }
             Section("顯示") {
                 NavigationLink {
                     LangPickerView()
@@ -149,6 +165,12 @@ struct SettingsView: View {
         case "us": "美式"
         default: self.store.current.accent.uppercased()
         }
+    }
+
+    private var reminderLabel: String {
+        let h = self.store.current.reminderHour
+        let m = self.store.current.reminderMinute
+        return String(format: "%02d:%02d", h, m)
     }
 
     private var langLabel: String {

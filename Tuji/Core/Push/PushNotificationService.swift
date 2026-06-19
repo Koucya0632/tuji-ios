@@ -86,7 +86,12 @@ final class PushNotificationService {
         do {
             try await APIClient.shared.post(
                 .usersPushToken,
-                body: PushTokenPayload(token: token, deviceId: deviceId, platform: "ios"),
+                body: PushTokenPayload(
+                    token: token,
+                    deviceId: deviceId,
+                    platform: "ios",
+                    timezone: TimeZone.current.identifier
+                ),
                 as: AckResponse.self
             )
             log.info("APNs token uploaded for device=\(self.deviceId, privacy: .public)")
@@ -120,6 +125,9 @@ private struct PushTokenPayload: Encodable {
     let token: String
     let deviceId: String
     let platform: String
+    /// IANA identifier (e.g. "Asia/Taipei") so the backend can fire the daily
+    /// reminder at 20:00 in the device's local time.
+    let timezone: String
 }
 
 private struct AckResponse: Decodable {
