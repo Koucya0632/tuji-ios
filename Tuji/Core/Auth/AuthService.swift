@@ -108,10 +108,37 @@ final class AuthService {
 
     // MARK: - OAuth
 
-    /// Stub — requires Apple Developer Program (Service ID + Sign-in Key).
-    /// Wired in W2 part 3 once Apple Dev approval lands.
-    func signInWithApple(idToken: String, nonce: String) async {
-        error = "Apple 登入待 Apple Developer Program 通過後開啟。"
+    /// Validates an Apple ID token against Supabase via signInWithIdToken. The
+    /// raw `nonce` must match the SHA256 the button put on the Apple request.
+    /// `fullName` is non-nil only on the user's FIRST authorization (Apple
+    /// policy), so we capture it then — see captureAppleNameIfNeeded.
+    func signInWithApple(idToken: String, nonce: String, fullName: String?) async {
+        loading = true
+        error = nil
+        defer { loading = false }
+        do {
+            let session = try await supabase.auth.signInWithIdToken(
+                credentials: OpenIDConnectCredentials(
+                    provider: .apple,
+                    idToken: idToken,
+                    nonce: nonce
+                )
+            )
+            state = .signedIn(SessionUser(from: session.user))
+            await syncLocalCacheToServer()
+            await captureAppleNameIfNeeded(fullName)
+            log.info("apple signin ok uid=\(session.user.id.uuidString, privacy: .public)")
+        } catch {
+            self.error = friendly(error)
+            log.error("apple signin failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Surfaces a non-cancellation Apple sign-in failure. AppleSignInButton
+    /// filters out user cancellation before calling this.
+    func appleSignInDidFail(_ error: Error) {
+        self.error = friendly(error)
+        log.error("apple signin failed: \(error.localizedDescription, privacy: .public)")
     }
 
     /// Drives the full Google native flow: GoogleSignInBridge gets the
@@ -196,6 +223,25 @@ final class AuthService {
             log.info("synced \(snapshot.favorites.count) favs + \(snapshot.learned.count) learned to server")
         } catch {
             log.error("sync failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Apple hands over the user's name only on the FIRST authorization, so a
+    /// present name means a fresh account — persist it as the nickname while we
+    /// have the one chance (design book §Auth). Skips if a nickname already
+    /// exists. Best-effort: failures are logged and swallowed.
+    private func captureAppleNameIfNeeded(_ fullName: String?) async {
+        guard let fullName, !fullName.isEmpty else { return }
+        guard case let .signedIn(user) = state, (user.nickname ?? "").isEmpty else { return }
+        do {
+            let _: ProfileUpdateResponse = try await APIClient.shared.post(
+                .usersProfile,
+                body: ProfileUpdatePayload(nickname: fullName, avatar: nil)
+            )
+            applyNickname(fullName)
+            log.info("captured apple full name into profile")
+        } catch {
+            log.error("apple name capture failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 

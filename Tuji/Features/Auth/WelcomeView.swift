@@ -1,5 +1,5 @@
-// First screen when not signed in. Apple/Google are W2 follow-ups
-// (Apple requires Apple Dev; Google needs UIKit presenting VC bridge).
+// First screen when not signed in. Offers Apple / Google / Email sign-in
+// plus a guest entry point.
 
 import SwiftUI
 
@@ -39,13 +39,7 @@ struct WelcomeView: View {
             Spacer()
 
             VStack(spacing: Space.s3) {
-                disabledOAuthBtn(
-                    title: "繼續使用 Apple",
-                    icon: "applelogo",
-                    bg: .tujiInk,
-                    fg: .white,
-                    note: "（待 Apple Developer Program 通過）"
-                )
+                AppleSignInButton()
 
                 Button {
                     Task { await auth.signInWithGoogle() }
@@ -108,26 +102,6 @@ struct WelcomeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
-    }
-
-    private func disabledOAuthBtn(title: String, icon: String, bg: Color, fg: Color, note: String) -> some View {
-        VStack(spacing: 4) {
-            HStack(spacing: Space.s2) {
-                Image(systemName: icon)
-                Text(title)
-            }
-            .font(.system(size: 15, weight: .heavy))
-            .foregroundStyle(fg)
-            .padding(.vertical, Space.s4)
-            .frame(maxWidth: .infinity)
-            .background(bg, in: .rect(cornerRadius: Radius.lg))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
-            )
-            .opacity(0.4)
-            Text(note).font(.tujiCaption).foregroundStyle(.tujiInk4)
-        }
     }
 }
 
