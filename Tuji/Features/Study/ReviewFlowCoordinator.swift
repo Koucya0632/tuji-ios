@@ -20,7 +20,6 @@ enum ReviewPhase: Hashable {
 @Observable
 final class ReviewFlowCoordinator {
     let queue: [StudyQueueItem]
-    let dailyGoal: Int
     var index: Int = 0
     var phase: ReviewPhase = .answer
     var picked: String?
@@ -39,9 +38,8 @@ final class ReviewFlowCoordinator {
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
 
-    init(queue: [StudyQueueItem], dailyGoal: Int = 10) {
+    init(queue: [StudyQueueItem]) {
         self.queue = queue
-        self.dailyGoal = dailyGoal
     }
 
     var current: StudyQueueItem? {

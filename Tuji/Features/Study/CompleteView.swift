@@ -1,6 +1,9 @@
-// Daily-goal celebration (§III.R Complete). Shown after ReviewFlow
-// finishes — Mascot cheer, done / goal display, streak +1 capsule,
-// answered tiles row, 回首頁 CTA.
+// Review-complete celebration (§III.R Complete). Shown after ReviewFlow
+// finishes — Mascot cheer, reviewed-count display, streak +1 capsule,
+// answered tiles row, 回首頁 CTA. Reviews are deliberately NOT counted
+// against the daily goal (that target tracks new words only — see
+// TodayView.dailyGoalProgress / studyStats.todayNew), so this screen
+// frames itself as "復習完成" rather than the daily-goal milestone.
 //
 // Streak comes from ProgressStore.shared. We invalidate first so the
 // new entry from the just-answered session (which the server already
@@ -13,7 +16,6 @@ import SwiftUI
 
 struct CompleteView: View {
     let answered: [StudyQueueItem]
-    let dailyGoal: Int
     let onFinish: () -> Void
 
     @Environment(ProgressStore.self) private var progress
@@ -47,7 +49,7 @@ struct CompleteView: View {
     private var hero: some View {
         VStack(spacing: Space.s3) {
             Mascot(pose: .cheer, size: 104)
-            Text("今日目標達成！")
+            Text("複習完成！")
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -55,7 +57,7 @@ struct CompleteView: View {
                     .font(.tujiDisplay)
                     .foregroundStyle(.tujiTeal)
                     .contentTransition(.numericText())
-                Text("/ \(self.dailyGoal)")
+                Text("個字")
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk3)
             }
@@ -155,7 +157,7 @@ struct CompleteView: View {
 }
 
 #Preview {
-    CompleteView(answered: [], dailyGoal: 10, onFinish: {})
+    CompleteView(answered: [], onFinish: {})
         .environment(ProgressStore.shared)
         .environment(StudyStatsStore.shared)
 }

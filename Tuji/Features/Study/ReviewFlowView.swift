@@ -35,7 +35,6 @@ struct ReviewFlowView: View {
                 } else {
                     CompleteView(
                         answered: self.coord.answered,
-                        dailyGoal: self.coord.dailyGoal,
                         onFinish: { self.dismiss() }
                     )
                 }
