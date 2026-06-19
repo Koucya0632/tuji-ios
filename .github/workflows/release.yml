@@ -21,6 +21,10 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+# GITHUB_TOKEN 需要 contents:write 才能建 GitHub Release + 讀 release notes
+permissions:
+  contents: write
+
 jobs:
   testflight:
     name: TestFlight
@@ -126,6 +130,7 @@ jobs:
 
       - name: Create GitHub Release
         if: success()
+        continue-on-error: true   # TestFlight 上傳才是目的；Release 失敗不該蓋掉成功
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
