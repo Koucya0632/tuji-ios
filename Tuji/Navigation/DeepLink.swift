@@ -11,7 +11,7 @@
 //                                          opens the empty search)
 //   tuji://word/{id}                    →  Cards tab → WordDetail
 //   tuji://category/{id}                →  Cards tab → CategoryDetail
-//   tuji://study?mode=new|review        →  Tuji center tab → StudyLanding
+//   tuji://study?mode=new|review        →  Today tab → StudyLanding
 //
 // Universal Links (`https://tuji.app/...`) hit the same matcher — see
 // TujiApp.handleIncoming(_:).
@@ -31,9 +31,8 @@ enum TujiDeepLink: Hashable {
     /// Which tab should be foregrounded before pushing the route.
     var tab: MainTab {
         switch self {
-        case .today: .today
+        case .today, .study: .today
         case .cards, .search, .word, .category: .cards
-        case .study: .tuji
         case .favorites, .settings: .me
         }
     }

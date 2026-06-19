@@ -10,7 +10,6 @@
 //     │                                 (LocalCache is the source of truth)
 //     └─ AuthService.signedIn(user)
 //          ├─ !setupDone(user.id)     → SetupView
-//          ├─ !push.hasBeenPrompted   → PushPermissionView
 //          ├─ !contentReady           → SplashView
 //          └─ everything ready        → MainTabsView(user: user)
 //
@@ -23,7 +22,6 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(AuthService.self) private var auth
-    @Environment(PushNotificationService.self) private var push
     @Environment(OnboardingState.self) private var onboarding
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
@@ -65,8 +63,6 @@ struct RootView: View {
         case let .signedIn(user):
             if !onboarding.setupDone(for: user.id) {
                 SetupView(userId: user.id, onDone: {})
-            } else if !push.hasBeenPrompted {
-                PushPermissionView(onDone: {})
             } else if contentReady {
                 MainTabsView(user: user)
             } else {
@@ -81,7 +77,7 @@ struct RootView: View {
         case .signedOut: "signedOut-\(onboarding.introDone)"
         case .guest: "guest-ready\(contentReady)"
         case let .signedIn(u):
-            "signedIn-\(u.id)-setup\(onboarding.setupDone(for: u.id))-push\(push.hasBeenPrompted)-ready\(contentReady)"
+            "signedIn-\(u.id)-setup\(onboarding.setupDone(for: u.id))-ready\(contentReady)"
         }
     }
 }
@@ -89,7 +85,6 @@ struct RootView: View {
 #Preview {
     RootView()
         .environment(AuthService.shared)
-        .environment(PushNotificationService.shared)
         .environment(OnboardingState.shared)
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)

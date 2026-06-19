@@ -1,8 +1,7 @@
 // Per-user Setup picker shown once after the user's first sign-in.
 //
 // Saves to /api/users/settings via APIClient and marks the per-user
-// setupDone flag in OnboardingState; RootView then advances to
-// PushPermissionView (or MainTabs if push has already been prompted).
+// setupDone flag in OnboardingState; RootView then advances to MainTabs.
 //
 // The picker reads the real category list from CategoriesStore so the
 // values written into UserSettings.studyCategories are canonical IDs

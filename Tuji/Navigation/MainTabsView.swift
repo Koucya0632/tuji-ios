@@ -1,13 +1,12 @@
-// 5-tab post-login shell (§I.9.2).
+// 4-tab post-login shell (§I.9.2).
 //
 // Each tab owns its own NavigationStack so cross-tab pushes don't
-// interfere. Tab bar is custom (not SwiftUI TabView) so we can render
-// the elevated center "Tuji" button per design book.
+// interfere. Tab bar is custom (not SwiftUI TabView) to preserve the
+// floating pill treatment from the design system.
 //
 // Tabs:
 //   today    → TodayView (user-aware)
 //   cards    → CardsListView
-//   tuji     → TujiCenterView (study landing placeholder)
 //   progress → ProgressTabView
 //   me       → MeView (account, smoke test, sign-out)
 
@@ -22,7 +21,6 @@ struct MainTabsView: View {
     @State private var selected: MainTab = .today
     @State private var todayPath = NavigationPath()
     @State private var cardsPath = NavigationPath()
-    @State private var tujiPath = NavigationPath()
     @State private var progressPath = NavigationPath()
     @State private var mePath = NavigationPath()
 
@@ -64,11 +62,6 @@ struct MainTabsView: View {
                 CardsListView()
                     .tujiNavDestinations(user: self.user)
             }
-        case .tuji:
-            NavigationStack(path: self.$tujiPath) {
-                TujiCenterView()
-                    .tujiNavDestinations(user: self.user)
-            }
         case .progress:
             NavigationStack(path: self.$progressPath) {
                 ProgressTabView()
@@ -92,7 +85,6 @@ struct MainTabsView: View {
             switch link.tab {
             case .today: self.todayPath.append(route)
             case .cards: self.cardsPath.append(route)
-            case .tuji: self.tujiPath.append(route)
             case .progress: self.progressPath.append(route)
             case .me: self.mePath.append(route)
             }
@@ -103,20 +95,11 @@ struct MainTabsView: View {
 private struct TujiTabBar: View {
     @Binding var selected: MainTab
 
-    private let sideTabs: [MainTab] = [.today, .cards]
-    private let endTabs: [MainTab] = [.progress, .me]
+    private let tabs: [MainTab] = [.today, .cards, .progress, .me]
 
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(self.sideTabs, id: \.self) { tab in
-                TabBarButton(tab: tab, isSelected: self.selected == tab) {
-                    self.select(tab)
-                }
-            }
-            CenterButton(isSelected: self.selected == .tuji) {
-                self.select(.tuji)
-            }
-            ForEach(self.endTabs, id: \.self) { tab in
+            ForEach(self.tabs, id: \.self) { tab in
                 TabBarButton(tab: tab, isSelected: self.selected == tab) {
                     self.select(tab)
                 }
@@ -157,28 +140,6 @@ private struct TabBarButton: View {
             .padding(.vertical, Space.s2)
         }
         .buttonStyle(.plain)
-    }
-}
-
-private struct CenterButton: View {
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: self.action) {
-            ZStack {
-                Circle()
-                    .fill(self.isSelected ? .tujiInk : .tujiTeal)
-                    .frame(width: 56, height: 56)
-                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
-                Image(systemName: "sparkles")
-                    .font(.system(size: 22, weight: .heavy))
-                    .foregroundStyle(.white)
-            }
-        }
-        .buttonStyle(.plain)
-        .offset(y: -10)
-        .frame(width: 64)
     }
 }
 

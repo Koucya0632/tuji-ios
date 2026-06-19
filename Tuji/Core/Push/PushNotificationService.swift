@@ -1,14 +1,13 @@
 // Push notification permission + APNs token lifecycle.
 //
-// Flow:
-//   1. PushPermissionView calls `requestAuthorization()`
+// Reserved flow for a future reminder settings UI:
+//   1. The UI calls `requestAuthorization()`
 //   2. On grant → calls `UIApplication.registerForRemoteNotifications`
 //   3. PushAppDelegate captures the APNs token → invokes
 //      `handleAPNsToken` which POSTs it to the backend
 //   4. Sign-out calls `unregister()` to drop the device's row
 //
-// "Already prompted" is tracked in UserDefaults so RootView can decide
-// whether to show PushPermissionView again.
+// "Already prompted" remains available for a future opt-in flow.
 
 import Foundation
 import OSLog
@@ -30,8 +29,7 @@ final class PushNotificationService {
 
     private init() {}
 
-    /// Has the user been through the in-app permission prompt yet?
-    /// RootView reads this to decide whether to show PushPermissionView.
+    /// Has the user been through an in-app permission prompt yet?
     var hasBeenPrompted: Bool {
         UserDefaults.standard.bool(forKey: promptedKey)
     }
