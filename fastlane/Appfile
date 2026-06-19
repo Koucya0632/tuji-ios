@@ -1,0 +1,9 @@
+# Appfile — default app + team identifiers for fastlane.
+#
+# team_id is the Apple Developer Team ID (same value as TUJI_DEV_TEAM in
+# Config/Secrets.xcconfig). It's read from the environment so the literal
+# never lands in a tracked file: CI sets it from a secret, local bootstrap
+# runs export it (see RELEASE.md).
+
+app_identifier "app.tuji.ios"
+team_id ENV["TUJI_DEV_TEAM"]
