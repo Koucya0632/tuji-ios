@@ -9,4 +9,4 @@ storage_mode("git")
 
 type("appstore")
 
-app_identifier(["app.tuji.ios", "app.tuji.ios.beta"])
+app_identifier(["app.tuji.ios"])

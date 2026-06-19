@@ -19,7 +19,6 @@ default_platform(:ios)
 # App IDs that need signing assets. Keep in sync with the xcconfig bundle IDs.
 APP_IDENTIFIERS = %w[
   app.tuji.ios
-  app.tuji.ios.beta
 ].freeze
 
 platform :ios do
@@ -69,7 +68,7 @@ platform :ios do
   lane :beta do |options|
     scheme = options.fetch(:scheme, "Tuji-TestFlight")
     configuration = options.fetch(:configuration, "TestFlight")
-    app_id = options.fetch(:app_identifier, "app.tuji.ios.beta")
+    app_id = options.fetch(:app_identifier, "app.tuji.ios")
 
     setup_ci
     api_key = asc_api_key
