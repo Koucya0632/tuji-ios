@@ -8,11 +8,67 @@ import Nuke
 import NukeUI
 import SwiftUI
 
+// Pushed entry point. Hosts a horizontally-paged TabView so the user can
+// swipe left/right between adjacent words in the 圖鑑, without popping back
+// to the grid. The page sequence is the full word list in store order
+// (same order as the 全部 grid); we open centred on the tapped word.
+//
+// All full-screen chrome (hide the tab bar via study-focus, hidden nav
+// bar, bottom inset) lives here once, so swiping between pages doesn't
+// churn the StudyFocus counter or re-evaluate the inset per word.
 struct WordDetailView: View {
     let id: String
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(WordsStore.self) private var wordsStore
+
+    @State private var currentId: String?
+
+    init(id: String) {
+        self.id = id
+        _currentId = State(initialValue: id)
+    }
+
+    // Ordered ids to page through. Falls back to just this word if the
+    // store hasn't loaded yet or the id isn't in it, so the page always
+    // renders something.
+    private var ids: [String] {
+        let all = self.wordsStore.words.map(\.id)
+        return all.contains(self.id) ? all : [self.id]
+    }
+
+    var body: some View {
+        TabView(selection: self.$currentId) {
+            ForEach(self.ids, id: \.self) { wid in
+                WordDetailPage(id: wid)
+                    .tag(wid as String?)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .background(.tujiBg)
+        .toolbar(.hidden, for: .navigationBar)
+        // Hide the custom TujiTabBar on this full-screen detail page by
+        // entering study-focus (MainTabsView watches this flag). While the
+        // bar is hidden there's nothing to reserve space for, so the local
+        // bottom inset collapses to 0; the 78pt fallback only applies if
+        // the bar were ever visible here.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
+        }
+        .onAppear { self.studyFocus.enter() }
+        .onDisappear { self.studyFocus.exit() }
+        // Ensure the dictionary is loaded so neighbours exist to swipe to;
+        // returns immediately when 圖鑑 already populated the store.
+        .task { await self.wordsStore.loadIfNeeded() }
+    }
+}
+
+// A single word's detail screen. Owns its own load + section-tab state so
+// each page in the pager fetches and renders independently.
+struct WordDetailPage: View {
+    let id: String
+
+    @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settings
 
     @State private var word: Word?
@@ -36,18 +92,6 @@ struct WordDetailView: View {
                 }
             }
         }
-        .background(.tujiBg)
-        .toolbar(.hidden, for: .navigationBar)
-        // Hide the custom TujiTabBar on this full-screen detail page by
-        // entering study-focus (MainTabsView watches this flag). While the
-        // bar is hidden there's nothing to reserve space for, so the local
-        // bottom inset collapses to 0; the 78pt fallback only applies if
-        // the bar were ever visible here.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
-        }
-        .onAppear { self.studyFocus.enter() }
-        .onDisappear { self.studyFocus.exit() }
         .task { await self.load() }
         .onChange(of: self.word?.id) { _, _ in
             guard let new = self.word else { return }
@@ -150,7 +194,7 @@ private enum WordDetailTab: Hashable, CaseIterable {
     }
 }
 
-extension WordDetailView {
+extension WordDetailPage {
     private func errorState(_ err: Error) -> some View {
         VStack(spacing: Space.s4) {
             Spacer().frame(height: Space.s16)
@@ -465,5 +509,7 @@ private struct FlowLayout: Layout {
             .environment(LocalCache.shared)
             .environment(AuthService.shared)
             .environment(StudyFocus.shared)
+            .environment(WordsStore.shared)
+            .environment(SettingsStore.shared)
     }
 }
