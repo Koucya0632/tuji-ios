@@ -1,0 +1,105 @@
+# Fastfile — Tuji iOS signing + TestFlight delivery.
+#
+# Signing uses fastlane match: certificates + provisioning profiles live
+# encrypted in a separate private git repo (MATCH_GIT_URL) and are installed
+# read-only in CI. A human runs `bootstrap_certificates` ONCE locally to create
+# and push them; CI never gets write access to the signing portal.
+#
+# Required environment (see RELEASE.md for where each comes from):
+#   MATCH_GIT_URL                  private repo holding the encrypted assets
+#   MATCH_PASSWORD                 passphrase that decrypts them
+#   MATCH_GIT_BASIC_AUTHORIZATION  base64("user:PAT") for HTTPS clone in CI
+#   APP_STORE_CONNECT_KEY_ID       App Store Connect API key id
+#   APP_STORE_CONNECT_ISSUER_ID    App Store Connect issuer id
+#   APP_STORE_CONNECT_API_KEY_P8   base64 of the .p8 key file
+#   TUJI_DEV_TEAM                  Apple Developer Team ID
+
+default_platform(:ios)
+
+# App IDs that need signing assets. Keep in sync with the xcconfig bundle IDs.
+APP_IDENTIFIERS = %w[
+  app.tuji.ios
+  app.tuji.ios.beta
+].freeze
+
+platform :ios do
+  # App Store Connect API key for match (portal access) and pilot (upload).
+  # Reads a base64-encoded .p8 so it travels through a single GitHub secret.
+  def asc_api_key
+    app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+      key_content: ENV.fetch("APP_STORE_CONNECT_API_KEY_P8"),
+      is_key_content_base64: true
+    )
+  end
+
+  # ---------------------------------------------------------------------------
+  # Signing
+  # ---------------------------------------------------------------------------
+
+  desc "Create & push signing assets to the match repo. Run ONCE, locally."
+  lane :bootstrap_certificates do
+    APP_IDENTIFIERS.each do |app_id|
+      sync_code_signing(
+        type: "appstore",
+        app_identifier: app_id,
+        readonly: false,
+        api_key: asc_api_key
+      )
+    end
+  end
+
+  desc "Install existing signing assets read-only (used by CI)."
+  lane :certificates do
+    setup_ci
+    sync_code_signing(
+      type: "appstore",
+      app_identifier: APP_IDENTIFIERS,
+      readonly: true
+    )
+  end
+
+  # ---------------------------------------------------------------------------
+  # Delivery
+  # ---------------------------------------------------------------------------
+
+  desc "Build a variant and upload it to TestFlight."
+  desc "Params: scheme, configuration, app_identifier (passed from release.yml)."
+  lane :beta do |options|
+    scheme = options.fetch(:scheme, "Tuji-TestFlight")
+    configuration = options.fetch(:configuration, "TestFlight")
+    app_id = options.fetch(:app_identifier, "app.tuji.ios.beta")
+
+    setup_ci
+    api_key = asc_api_key
+
+    sync_code_signing(
+      type: "appstore",
+      app_identifier: app_id,
+      readonly: true
+    )
+
+    build_app(
+      project: "Tuji.xcodeproj",
+      scheme: scheme,
+      configuration: configuration,
+      export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          app_id => "match AppStore #{app_id}"
+        }
+      },
+      output_directory: "build",
+      output_name: "Tuji.ipa",
+      clean: true
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: app_id,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+  end
+end
