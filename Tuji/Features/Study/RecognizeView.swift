@@ -94,7 +94,6 @@ struct RecognizeView: View {
                 bg: .tujiInk,
                 fg: .white,
                 fullWidth: true,
-                icon: "checkmark",
                 action: { self.rate(.good) }
             )
             .disabled(self.coord.recLocked)
