@@ -1,6 +1,6 @@
 // Step 1 of NewFlow: present the word + image + audio and ask whether
 // the user already knows it. Both buttons write SRS (the only step that
-// does); "不認識" = .hard, "認識了" = .good.
+// does); "知道" = .hard, "熟悉" = .good.
 
 import Nuke
 import NukeUI
@@ -82,7 +82,7 @@ struct RecognizeView: View {
     private var buttons: some View {
         HStack(spacing: Space.s3) {
             BBtn(
-                title: "不認識",
+                title: "知道",
                 bg: .tujiTealSoft,
                 fg: .tujiTeal,
                 fullWidth: true,
@@ -90,7 +90,7 @@ struct RecognizeView: View {
             )
             .disabled(self.coord.recLocked)
             BBtn(
-                title: "認識了",
+                title: "熟悉",
                 bg: .tujiInk,
                 fg: .white,
                 fullWidth: true,
