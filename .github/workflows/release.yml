@@ -44,7 +44,7 @@ jobs:
       TUJI_DEV_TEAM: ${{ secrets.TUJI_DEV_TEAM }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0      # tag 描述 / version 需要全 history
 
@@ -114,7 +114,7 @@ jobs:
 
       - name: Upload dSYM artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dSYM-${{ steps.meta.outputs.tag }}
           path: build/*.dSYM.zip
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload IPA artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ipa-${{ steps.meta.outputs.tag }}
           path: build/Tuji.ipa
@@ -131,7 +131,7 @@ jobs:
       - name: Create GitHub Release
         if: success()
         continue-on-error: true   # TestFlight 上傳才是目的；Release 失敗不該蓋掉成功
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: ${{ steps.meta.outputs.tag }}
