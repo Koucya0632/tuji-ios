@@ -24,18 +24,7 @@ struct WelcomeView: View {
     private var content: some View {
         VStack(spacing: 0) {
             Spacer()
-            Mascot(pose: .wave, size: 96)
-                .padding(.bottom, Space.s4)
-            HStack(spacing: 0) {
-                Text("Tuji")
-                Text(".").foregroundStyle(.tujiCoral)
-            }
-            .font(.tujiH1)
-            .foregroundStyle(.tujiInk)
-            Text("用圖學英文")
-                .font(.tujiBodyLg)
-                .foregroundStyle(.tujiInk3)
-                .padding(.top, Space.s2)
+            TujiBrandLockup(scale: 0.88)
             Spacer()
 
             VStack(spacing: Space.s3) {

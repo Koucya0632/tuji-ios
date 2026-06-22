@@ -59,4 +59,24 @@ final class ProgressStore {
     func invalidate() {
         lastFetch = nil
     }
+
+    // MARK: - Category-scoped totals
+
+    /// Words seen at least once across the given categories. An empty filter
+    /// means "all categories" — matches the backend's `category` param, where
+    /// empty = no filter. Used by Today's hero + the Progress completion card.
+    func seenCount(filter categories: [String]) -> Int {
+        self.rows(filter: categories).reduce(0) { $0 + $1.seen }
+    }
+
+    /// Published-card total across the given categories. Empty filter = all.
+    func totalCount(filter categories: [String]) -> Int {
+        self.rows(filter: categories).reduce(0) { $0 + $1.total }
+    }
+
+    private func rows(filter categories: [String]) -> [CategoryProgress] {
+        guard !categories.isEmpty else { return self.categoryProgress }
+        let wanted = Set(categories)
+        return self.categoryProgress.filter { wanted.contains($0.category) }
+    }
 }

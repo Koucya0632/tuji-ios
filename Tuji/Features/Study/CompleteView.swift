@@ -10,8 +10,6 @@
 // busted on /api/study/answer) is round-tripped fresh instead of read
 // from the 30s in-memory window.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct CompleteView: View {
@@ -47,11 +45,7 @@ struct CompleteView: View {
     // MARK: - Bits
 
     private var hero: some View {
-        VStack(spacing: Space.s3) {
-            Mascot(pose: .cheer, size: 104)
-            Text("複習完成！")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
+        MascotCelebrationCard(title: "複習完成！", accent: .tujiYellow) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(self.done)")
                     .font(.tujiDisplay)
@@ -62,7 +56,6 @@ struct CompleteView: View {
                     .foregroundStyle(.tujiInk3)
             }
         }
-        .frame(maxWidth: .infinity)
     }
 
     private var streakCapsule: some View {
@@ -94,40 +87,10 @@ struct CompleteView: View {
                     .font(.tujiOverline)
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Space.s3) {
-                        ForEach(self.answered) { item in
-                            self.tile(for: item)
-                        }
-                    }
-                }
+                StudyWordGrid(items: self.answered)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-
-    private func tile(for item: StudyQueueItem) -> some View {
-        VStack(spacing: 4) {
-            ZStack {
-                Rectangle().fill(.tujiTealSoft)
-                LazyImage(url: item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Image(systemName: "photo")
-                            .foregroundStyle(.tujiInk4)
-                    }
-                }
-                .pipeline(.shared)
-            }
-            .frame(width: 64, height: 64)
-            .clipShape(.rect(cornerRadius: Radius.md))
-            Text(item.word.word)
-                .font(.system(size: 11, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-                .lineLimit(1)
-        }
-        .frame(width: 64)
     }
 
     private var footer: some View {

@@ -92,25 +92,23 @@ struct MeView: View {
         .navigationDestination(item: self.$peekId) { id in
             WordDetailView(id: id)
         }
-        .alert("登出？", isPresented: self.$showSignOutConfirm) {
-            Button("取消", role: .cancel) {}
-            Button("登出", role: .destructive) {
+        .tujiPrompt(
+            isPresented: self.$showSignOutConfirm,
+            style: .confirmation,
+            title: "要登出 Tuji 嗎？",
+            message: "收藏與設定會保留在伺服器。",
+            primary: TujiPromptAction("登出") {
                 Task { await self.auth.signOut() }
-            }
-        } message: {
-            Text("收藏與設定會保留在伺服器")
-        }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
     }
 
     // MARK: - Profile header
 
     private var profileHeader: some View {
         VStack(spacing: Space.s3) {
-            ZStack {
-                Circle().fill(.tujiTealSoft)
-                Mascot(pose: self.isGuest ? .think : .face, size: 56)
-            }
-            .frame(width: 88, height: 88)
+            MascotAvatar(pose: self.avatarPose, size: 92)
             Text(self.displayName)
                 .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
@@ -122,6 +120,11 @@ struct MeView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, Space.s5)
+    }
+
+    private var avatarPose: MascotPose {
+        if self.isGuest { return .think }
+        return MascotPose(rawValue: self.user?.avatar ?? "") ?? .face
     }
 
     // MARK: - Stats row

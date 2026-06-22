@@ -31,16 +31,35 @@ struct SpellView: View {
         self.shown == self.item.word.word
     }
 
+    /// True once the user has judged (locked). spJudge and spLocked are always
+    /// set/cleared together by the coordinator, so this is the "show result" gate.
+    private var judged: Bool {
+        self.coord.spLocked && self.coord.spJudge != nil
+    }
+
+    /// Whether the user's 對/錯 judgment matched reality. Only meaningful when
+    /// `judged`.
+    private var judgedRight: Bool {
+        (self.coord.spJudge == .yes) == self.shownIsCorrect
+    }
+
+    /// The judgment the user *should* have tapped (對 if the shown spelling is
+    /// correct, otherwise 錯). Used to highlight the right answer.
+    private var correctSay: JudgeAnswer {
+        self.shownIsCorrect ? .yes : .no
+    }
+
+    @ViewBuilder
     private var bubble: some View {
-        HStack(spacing: Space.s2) {
-            Mascot(pose: .think, size: 40)
-            Text("這個字拼對了嗎？")
-                .font(.system(size: 14, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, Space.s2)
-                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
-            Spacer()
+        if self.judged {
+            MascotSpeechBubble(
+                pose: self.judgedRight ? .cheer : .think,
+                text: self.judgedRight ? "答對了！" : "答錯了",
+                tone: self.judgedRight ? .success : .error,
+                systemImage: self.judgedRight ? "checkmark.circle.fill" : "xmark.circle.fill"
+            )
+        } else {
+            MascotSpeechBubble(pose: .think, text: "這個字拼對了嗎？")
         }
     }
 
@@ -49,7 +68,7 @@ struct SpellView: View {
             self.hero
             VStack(spacing: Space.s2) {
                 Text(self.shown)
-                    .font(.tujiMono)
+                    .font(.system(size: 30, weight: .bold, design: .monospaced))
                     .foregroundStyle(self.shownColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -107,28 +126,78 @@ struct SpellView: View {
             self.judge(say: .no, label: "錯", icon: "xmark", color: .tujiCoral)
             self.judge(say: .yes, label: "對", icon: "checkmark", color: .tujiGreen)
         }
+        .animation(.easeOut(duration: 0.2), value: self.coord.spLocked)
     }
 
     private func judge(say: JudgeAnswer, label: String, icon: String, color: Color) -> some View {
-        let selected = self.coord.spJudge == say
+        let style = self.judgeStyle(say: say, baseColor: color, baseIcon: icon)
         return Button {
             self.coord.spellJudge(shown: self.shown, says: say)
         } label: {
             HStack(spacing: Space.s2) {
-                Image(systemName: icon)
+                Image(systemName: style.icon)
                 Text(label)
             }
             .font(.system(size: 18, weight: .heavy))
-            .foregroundStyle(selected ? .white : color)
+            .foregroundStyle(style.fg)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Space.s4)
-            .background(selected ? color : color.opacity(0.12), in: .rect(cornerRadius: Radius.lg))
+            .background(style.bg, in: .rect(cornerRadius: Radius.lg))
             .overlay(
                 RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(color, lineWidth: 2)
+                    .stroke(style.border, lineWidth: 2)
             )
+            .opacity(style.opacity)
         }
         .buttonStyle(.plain)
         .disabled(self.coord.spLocked)
+    }
+
+    private struct JudgeStyle {
+        var bg: Color
+        var border: Color
+        var fg: Color
+        var icon: String
+        var opacity: Double
+    }
+
+    /// After judging, colour each button by *whether the judgment was right*
+    /// (not by the button's own identity), mirroring IdentifyView so Part 3 is
+    /// as legible as Part 2:
+    ///   • picked + correct → solid green ✓   • picked + wrong → solid coral ✗
+    ///   • the right answer (when missed) → green outline   • else → dimmed
+    private func judgeStyle(say: JudgeAnswer, baseColor: Color, baseIcon: String) -> JudgeStyle {
+        guard self.judged else {
+            // Resting affordance: each button in its own identity colour.
+            return JudgeStyle(
+                bg: baseColor.opacity(0.12), border: baseColor,
+                fg: baseColor, icon: baseIcon, opacity: 1
+            )
+        }
+        let picked = self.coord.spJudge == say
+        let isCorrectChoice = say == self.correctSay
+        if picked, isCorrectChoice {
+            return JudgeStyle(
+                bg: .tujiGreen, border: .tujiGreen,
+                fg: .white, icon: "checkmark.circle.fill", opacity: 1
+            )
+        }
+        if picked, !isCorrectChoice {
+            return JudgeStyle(
+                bg: .tujiCoral, border: .tujiCoral,
+                fg: .white, icon: "xmark.circle.fill", opacity: 1
+            )
+        }
+        if isCorrectChoice {
+            // The answer the user should have tapped — highlight so they learn it.
+            return JudgeStyle(
+                bg: .tujiGreen.opacity(0.12), border: .tujiGreen,
+                fg: .tujiGreen, icon: baseIcon, opacity: 1
+            )
+        }
+        return JudgeStyle(
+            bg: .tujiCard, border: .tujiInk4.opacity(0.15),
+            fg: .tujiInk3, icon: baseIcon, opacity: 0.5
+        )
     }
 }

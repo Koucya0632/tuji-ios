@@ -104,14 +104,13 @@ struct CategoryView: View {
     private func grid(width: CGFloat) -> some View {
         let words = self.filteredWords
         if words.isEmpty {
-            VStack(spacing: Space.s2) {
-                Mascot(pose: .sleep, size: 64)
-                Text("這個主題還沒有字")
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk3)
-            }
+            MascotEmptyState(
+                pose: .sleep,
+                title: "這個主題還沒有字",
+                compact: true
+            )
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Space.s12)
+            .padding(.vertical, Space.s8)
         } else {
             LazyVGrid(
                 columns: [

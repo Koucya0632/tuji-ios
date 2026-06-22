@@ -51,6 +51,7 @@ struct TodayView: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var vm = TodayVM()
 
@@ -83,6 +84,7 @@ struct TodayView: View {
         .task {
             await self.words.loadIfNeeded()
             await self.categories.loadIfNeeded()
+            await self.settings.loadIfNeeded()
             if !self.isGuest {
                 await self.vm.load(progress: self.progress, studyStats: self.studyStats)
             }
@@ -184,7 +186,10 @@ struct TodayView: View {
         if let due = self.studyStats.stats?.due, due > 0 {
             return "今天有 \(due) 個字要復習"
         }
-        if let new = self.studyStats.stats?.new, new > 0 {
+        if self.showThemePrompt {
+            return "先選學習主題，開始學新字"
+        }
+        if self.newAvailable > 0 {
             return "今天還沒學新字，挑一個來試試"
         }
         return "今天目標達成，明天再來"
@@ -193,29 +198,55 @@ struct TodayView: View {
     // MARK: - Hero card (deep ink)
 
     private var hero: some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
-            if !self.isGuest {
-                self.dailyGoalProgress
-            }
-            self.heroProgress
-            HStack(spacing: Space.s3) {
-                NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
-                    Text("復習")
-                        .frame(maxWidth: .infinity)
+        ZStack(alignment: .topTrailing) {
+            VStack(alignment: .leading, spacing: Space.s4) {
+                VStack(alignment: .leading, spacing: Space.s4) {
+                    if !self.isGuest {
+                        self.dailyGoalProgress
+                    }
+                    self.heroProgress
                 }
-                .buttonStyle(HeroPillStyle(fg: .tujiInk, bg: .tujiYellow))
-                .disabled(self.reviewDisabled)
+                .padding(.trailing, 96)
 
-                NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
-                    Text("學新字")
-                        .frame(maxWidth: .infinity)
+                HStack(spacing: Space.s3) {
+                    NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
+                        Text("復習")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(HeroPillStyle(fg: .tujiInk, bg: .tujiYellow))
+                    .disabled(self.reviewDisabled)
+
+                    NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
+                        Text("學新字")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
+                    .disabled(self.newDisabled)
                 }
-                .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
-                .disabled(self.newDisabled)
             }
+
+            MascotFigure(
+                pose: self.dailyGoalReached ? .cheer : .wave,
+                size: 104,
+                grounding: .glow
+            )
+            .id(self.dailyGoalReached)
+            .transition(.scale(scale: 0.92).combined(with: .opacity))
+            .offset(x: 12, y: -22)
         }
         .padding(Space.s5)
+        .padding(.top, Space.s2)
         .background(.tujiBgInk, in: .rect(cornerRadius: Radius.xl))
+        .animation(
+            self.reduceMotion ? nil : .spring(duration: 0.32, bounce: 0.18),
+            value: self.dailyGoalReached
+        )
+    }
+
+    private var dailyGoalReached: Bool {
+        guard !self.isGuest else { return false }
+        let goal = max(1, self.settings.current.dailyGoal)
+        return (self.studyStats.stats?.todayNew ?? 0) >= goal
     }
 
     /// Today's new-word goal progress. `todayNew` = new cards introduced today;
@@ -268,7 +299,7 @@ struct TodayView: View {
         let ratio = total > 0 ? min(1.0, Double(learned) / Double(total)) : 0
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
-                Text("圖鑑進度")
+                Text("主題進度")
                     .font(.tujiOverline)
                     .tracking(2)
                     .foregroundStyle(.white.opacity(0.6))
@@ -292,16 +323,19 @@ struct TodayView: View {
 
     /// Words studied at least once (server "seen"), matching the Progress
     /// tab's completion source. Guests have no SRS state, so fall back to
-    /// the local learned set.
+    /// the local learned set. With no themes selected, the progress reads 0/0
+    /// to match the "pick themes first" empty state.
     private var dexSeen: Int {
         if self.isGuest { return self.cache.learnedIds.count }
-        return self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
+        if self.showThemePrompt { return 0 }
+        return self.progress.seenCount(filter: self.settings.current.studyCategories)
     }
 
-    /// Total published words. Server count when available, else the locally
-    /// known dictionary size.
+    /// Total published words in the selected categories. Server count when
+    /// available, else the locally known dictionary size.
     private var dexTotal: Int {
-        let serverTotal = self.progress.categoryProgress.reduce(0) { $0 + $1.total }
+        if self.showThemePrompt { return 0 }
+        let serverTotal = self.progress.totalCount(filter: self.settings.current.studyCategories)
         return serverTotal > 0 ? serverTotal : self.words.words.count
     }
 
@@ -309,9 +343,24 @@ struct TodayView: View {
         self.isGuest || (self.studyStats.stats?.due ?? 0) == 0
     }
 
+    /// New words still to learn within the selected themes. New cards = those
+    /// with no SRS row yet, i.e. (total − seen) scoped to studyCategories —
+    /// derived from ProgressStore so it tracks the selection without a stats
+    /// refetch. Falls back to the global `new` count before progress loads.
+    private var newAvailable: Int {
+        let cats = self.settings.current.studyCategories
+        if self.progress.categoryProgress.isEmpty {
+            return self.studyStats.stats?.new ?? 0
+        }
+        return max(0, self.progress.totalCount(filter: cats) - self.progress.seenCount(filter: cats))
+    }
+
     private var newDisabled: Bool {
         if self.isGuest { return true }
-        if (self.studyStats.stats?.new ?? 0) == 0 { return true }
+        // No themes selected → nothing to draw new words from; the user must
+        // pick themes first (review stays available — it spans all studied words).
+        if self.settings.current.studyCategories.isEmpty { return true }
+        if self.newAvailable == 0 { return true }
         // When the review backlog crowds out the new-card quota
         // (computeNewLimit hits 0 once due > 100), grey out the button
         // instead of letting the user enter the launcher only to bounce
@@ -325,44 +374,96 @@ struct TodayView: View {
 
     @ViewBuilder
     private var themesSection: some View {
-        let tiles = self.themeTiles
-        if !tiles.isEmpty {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("主題")
-                        .font(.tujiOverline)
-                        .tracking(2)
-                        .foregroundStyle(.tujiTeal)
-                    Spacer()
-                    NavigationLink(value: NavRoute.cards) {
-                        Text("全部 →")
-                            .font(.system(size: 13, weight: .heavy))
-                            .foregroundStyle(.tujiInk3)
-                    }
-                    .buttonStyle(.plain)
-                }
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: Space.s3),
-                        GridItem(.flexible(), spacing: Space.s3)
-                    ],
-                    spacing: Space.s3
-                ) {
-                    ForEach(tiles, id: \.id) { c in
-                        NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
-                            CategoryTile(category: c, wordCount: self.words.byCategory(c.id).count)
+        if self.showThemePrompt {
+            self.themePrompt
+        } else {
+            let tiles = self.themeTiles
+            if !tiles.isEmpty {
+                VStack(alignment: .leading, spacing: Space.s3) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("主題")
+                            .font(.tujiOverline)
+                            .tracking(2)
+                            .foregroundStyle(.tujiTeal)
+                        Spacer()
+                        NavigationLink(value: NavRoute.cards) {
+                            Text("全部 →")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(.tujiInk3)
                         }
                         .buttonStyle(.plain)
+                    }
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: Space.s3),
+                            GridItem(.flexible(), spacing: Space.s3)
+                        ],
+                        spacing: Space.s3
+                    ) {
+                        ForEach(tiles, id: \.id) { c in
+                            NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
+                                CategoryTile(category: c, wordCount: self.words.byCategory(c.id).count)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
             }
         }
     }
 
+    /// Signed-in user has loaded settings but picked no study themes — nudge
+    /// them to choose so the grid + new-word flow have something to show.
+    private var showThemePrompt: Bool {
+        !self.isGuest
+            && self.settings.hasLoaded
+            && self.settings.current.studyCategories.isEmpty
+    }
+
+    private var themePrompt: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("主題")
+                .font(.tujiOverline)
+                .tracking(2)
+                .foregroundStyle(.tujiTeal)
+            VStack(alignment: .leading, spacing: Space.s3) {
+                Text("還沒選學習主題")
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(.tujiInk)
+                Text("選幾個你想學的主題，這裡會顯示它們，學新字也會從中出題。")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+                NavigationLink(value: NavRoute.studyCategories) {
+                    Text("選擇主題")
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .padding(.vertical, Space.s3)
+                        .padding(.horizontal, Space.s5)
+                        .background(.tujiTeal, in: .capsule)
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Space.s5)
+            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg)
+                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
+
+    /// Guests get a discovery preview (first 4 categories that have words).
+    /// Signed-in users see exactly their selected themes (that have words).
     private var themeTiles: [TujiCategory] {
         let presentIds = Set(self.words.categories)
         let known = self.categories.categories.filter { presentIds.contains($0.id) }
-        return Array(known.prefix(4))
+        if self.isGuest {
+            return Array(known.prefix(4))
+        }
+        let selected = Set(self.settings.current.studyCategories)
+        guard !selected.isEmpty else { return [] }
+        return known.filter { selected.contains($0.id) }
     }
 }
 

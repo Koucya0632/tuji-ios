@@ -55,9 +55,11 @@ struct ProgressTabView: View {
     @Environment(CategoriesStore.self) private var categories
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
+    @Environment(SettingsStore.self) private var settings
 
     @State private var vm = ProgressVM()
     @State private var showClearConfirm = false
+    @State private var showClearSuccess = false
 
     private var isGuest: Bool {
         if case .signedIn = auth.state { return false }
@@ -98,35 +100,63 @@ struct ProgressTabView: View {
         .task {
             await self.words.loadIfNeeded()
             await self.categories.loadIfNeeded()
+            await self.settings.loadIfNeeded()
             if !self.isGuest { await self.progress.loadIfStale() }
         }
-        .alert("清除學習進度", isPresented: self.$showClearConfirm) {
-            Button("取消", role: .cancel) {}
-            Button("確定清除", role: .destructive) {
+        .tujiPrompt(
+            isPresented: self.$showClearConfirm,
+            style: .destructive,
+            title: "清除所有學習進度？",
+            message: "此操作無法復原。",
+            detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
+            primary: TujiPromptAction("確認清除", role: .destructive) {
                 Task {
                     await self.vm.clearProgress(
                         cache: self.cache,
                         progress: self.progress,
                         studyStats: self.studyStats
                     )
+                    if self.vm.clearError == nil {
+                        self.showClearSuccess = true
+                    }
                 }
-            }
-        } message: {
-            Text("掌握度、SRS 排程、學習紀錄會被清空。\n收藏與設定不受影響。")
-        }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: Binding(
+                get: { self.vm.clearError != nil },
+                set: { if !$0 { self.vm.clearError = nil } }
+            ),
+            style: .error,
+            title: "清除失敗",
+            message: self.vm.clearError?.localizedDescription ?? "請稍後再試一次。",
+            primary: TujiPromptAction("再試一次") {
+                self.showClearConfirm = true
+            },
+            secondary: TujiPromptAction("稍後再說", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showClearSuccess,
+            style: .success,
+            title: "學習進度已清除",
+            message: "可以重新開始建立你的圖鑑。",
+            primary: TujiPromptAction("知道了") {}
+        )
     }
 
     // MARK: - Completion card
 
-    /// Words studied at least once (server "seen"), summed across categories.
+    /// Words studied at least once (server "seen") in the selected categories.
     private var seenTotal: Int {
-        self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
+        self.progress.seenCount(filter: self.settings.current.studyCategories)
     }
 
-    /// Total published words. Server count when available, else the locally
-    /// known dictionary size (guests / before progress loads).
+    /// Total published words in the selected categories. Server count when
+    /// available, else the locally known dictionary size (guests / before
+    /// progress loads).
     private var dictTotal: Int {
-        let serverTotal = self.progress.categoryProgress.reduce(0) { $0 + $1.total }
+        let serverTotal = self.progress.totalCount(filter: self.settings.current.studyCategories)
         return serverTotal > 0 ? serverTotal : self.words.words.count
     }
 
@@ -259,14 +289,11 @@ struct ProgressTabView: View {
     }
 
     private var heatmapEmpty: some View {
-        VStack(spacing: Space.s2) {
-            Mascot(pose: .sleep, size: 56)
-            Text(self.isGuest ? "登入後才能看活躍熱力圖" : "還沒有學習紀錄")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Space.s5)
+        MascotEmptyState(
+            pose: .sleep,
+            title: self.isGuest ? "登入後才能看活躍熱力圖" : "還沒有學習紀錄",
+            compact: true
+        )
     }
 
     // MARK: - Section header
@@ -294,9 +321,15 @@ struct ProgressTabView: View {
 
     /// Per-category seen/total from the server, named + ordered via
     /// CategoriesStore. Categories with no published cards are dropped.
-    /// Falls back to raw progress rows if the category list hasn't loaded.
+    /// Scoped to the user's selected study categories (empty = all) so the
+    /// breakdown matches the completion card above. Falls back to raw
+    /// progress rows if the category list hasn't loaded.
     private var categoryStats: [CategoryStat] {
-        let prog = self.progress.categoryProgress.filter { $0.total > 0 }
+        let selected = self.settings.current.studyCategories
+        let scoped = selected.isEmpty
+            ? self.progress.categoryProgress
+            : self.progress.categoryProgress.filter { selected.contains($0.category) }
+        let prog = scoped.filter { $0.total > 0 }
         guard !prog.isEmpty else { return [] }
         let byId = Dictionary(prog.map { ($0.category, $0) }, uniquingKeysWith: { a, _ in a })
         if !self.categories.categories.isEmpty {
@@ -477,5 +510,6 @@ struct HeatmapGrid: View {
             .environment(CategoriesStore.shared)
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
+            .environment(SettingsStore.shared)
     }
 }

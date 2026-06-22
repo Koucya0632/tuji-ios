@@ -159,29 +159,27 @@ struct FavoritesView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Space.s4) {
-            Spacer()
-            Mascot(pose: .sleep, size: 88)
-            Text("還沒有收藏的單字")
-                .font(.tujiH3)
-                .foregroundStyle(.tujiInk)
-            Text("在圖鑑或字卡頁按愛心，把喜歡的字存進來")
-                .font(.tujiBody)
-                .foregroundStyle(.tujiInk3)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Space.s8)
-            NavigationLink(value: NavRoute.cards) {
-                Text("去單字庫逛逛")
-                    .font(.system(size: 15, weight: .heavy))
-                    .foregroundStyle(.tujiInk)
-                    .padding(.vertical, Space.s3)
-                    .padding(.horizontal, Space.s6)
-                    .background(.tujiYellow, in: .capsule)
+        VStack {
+            Spacer(minLength: Space.s8)
+            MascotEmptyState(
+                pose: .sleep,
+                title: "還沒有收藏的單字",
+                message: "在圖鑑或字卡頁按愛心，把喜歡的字存進來"
+            ) {
+                NavigationLink(value: NavRoute.cards) {
+                    Text("去單字庫逛逛")
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundStyle(.tujiInk)
+                        .padding(.vertical, Space.s3)
+                        .padding(.horizontal, Space.s6)
+                        .background(.tujiYellow, in: .capsule)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-            Spacer()
+            Spacer(minLength: Space.s8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, Space.s6)
     }
 
     private var grid: some View {

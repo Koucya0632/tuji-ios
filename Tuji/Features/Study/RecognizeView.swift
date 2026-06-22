@@ -30,7 +30,7 @@ struct RecognizeView: View {
                     Text(self.item.word.word)
                         .font(.tujiH1)
                         .foregroundStyle(.tujiInk)
-                        .lineLimit(1)
+                        .lineLimit(2)
                         .minimumScaleFactor(0.6)
                     Spacer()
                     PronunciationButton(text: self.item.word.word, size: 44)

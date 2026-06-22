@@ -26,7 +26,7 @@ struct SigninView: View {
                         Text("Email")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(.tujiInk2)
-                        TextField("you@example.com", text: $email)
+                        TextField("", text: $email)
                             .keyboardType(.emailAddress)
                             .textContentType(.emailAddress)
                             .textInputAutocapitalization(.never)

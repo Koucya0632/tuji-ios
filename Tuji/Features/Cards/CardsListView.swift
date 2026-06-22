@@ -116,19 +116,17 @@ struct CardsListView: View {
             }
             .frame(maxWidth: .infinity)
         } else if let error = store.lastError, self.store.words.isEmpty {
-            VStack(spacing: Space.s3) {
-                Mascot(pose: .think, size: 80)
-                Text("載不到單字")
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-                Text(error.localizedDescription)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Space.s6)
-                BBtn(title: "重試", fullWidth: false, action: { Task { await self.store.reload() } })
+            MascotEmptyState(
+                pose: .think,
+                title: "載不到單字",
+                message: error.localizedDescription
+            ) {
+                BBtn(title: "重試", fullWidth: false, action: {
+                    Task { await self.store.reload() }
+                })
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, Space.s6)
         } else {
             ScrollView {
                 LazyVGrid(

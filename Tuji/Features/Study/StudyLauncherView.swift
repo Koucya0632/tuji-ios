@@ -43,17 +43,23 @@ struct StudyLauncherView: View {
             await self.studyStats.loadIfStale()
             await self.loadQueue()
         }
-        .alert("載入失敗", isPresented: Binding(
-            get: { self.queueError != nil },
-            set: { if !$0 { self.queueError = nil } }
-        )) {
-            Button("知道了", role: .cancel) {
+        .tujiPrompt(
+            isPresented: Binding(
+                get: { self.queueError != nil },
+                set: { if !$0 { self.queueError = nil } }
+            ),
+            style: .error,
+            title: "載入失敗",
+            message: self.queueError?.localizedDescription ?? "",
+            primary: TujiPromptAction("再試一次") {
+                self.queueError = nil
+                Task { await self.loadQueue() }
+            },
+            secondary: TujiPromptAction("稍後再說", role: .cancel) {
                 self.queueError = nil
                 self.dismiss()
             }
-        } message: {
-            Text(self.queueError?.localizedDescription ?? "")
-        }
+        )
         .navigationDestination(item: self.$pushQueue) { wrap in
             switch wrap.mode {
             case .new:
@@ -77,18 +83,28 @@ struct StudyLauncherView: View {
         let goal = self.settings.current.dailyGoal
         let limit: Int
         let newCount: Int
+        // New cards are drawn from the user's selected themes; review spans
+        // every studied word regardless of theme, so it sends no filter.
+        let categories: [String]
         switch self.mode {
         case .new:
             let n = StudyQuotas.computeNewLimit(goal: goal, due: due)
             limit = n
             newCount = n
+            categories = self.settings.current.studyCategories
         case .review:
             limit = min(due, 30)
             newCount = 0
+            categories = []
         }
         do {
             let resp: StudyQueueResponse = try await APIClient.shared.get(
-                .studyQueue(mode: self.mode.asPath, limit: max(1, limit), new: newCount)
+                .studyQueue(
+                    mode: self.mode.asPath,
+                    limit: max(1, limit),
+                    new: newCount,
+                    categories: categories
+                )
             )
             if resp.queue.isEmpty {
                 self.queueError = NSError(

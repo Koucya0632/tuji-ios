@@ -14,13 +14,6 @@ struct ReviewFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
     @State private var showExitConfirm = false
-    // ReviewFlowView is pushed via .navigationDestination(item:) from
-    // StudyLauncherView, which doesn't carry the ancestor's
-    // .tujiNavDestinations(for: NavRoute) registry into this scope —
-    // so NavigationLink(value: NavRoute.wordDetail) in the footer
-    // resolved to nothing. Drive the push from a local item-based
-    // destination instead, mirroring StudyLauncherView's pattern.
-    @State private var pushWordId: String?
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -58,43 +51,35 @@ struct ReviewFlowView: View {
                 }
             }
         }
-        .alert("離開練習？", isPresented: self.$showExitConfirm) {
-            Button("繼續練習", role: .cancel) {}
-            Button("離開", role: .destructive) { self.dismiss() }
-        } message: {
-            Text("已答的進度已存，未完成的字下次還會出現")
-        }
-        .navigationDestination(item: self.$pushWordId) { id in
-            WordDetailView(id: id)
-        }
+        .tujiPrompt(
+            isPresented: self.$showExitConfirm,
+            style: .confirmation,
+            title: "要離開這次複習嗎？",
+            message: "已答的進度會保留，未完成的字下次還會出現。",
+            primary: TujiPromptAction("先離開") { self.dismiss() },
+            secondary: TujiPromptAction("繼續複習", role: .cancel) {}
+        )
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
     }
 
     private var flowSurface: some View {
         GeometryReader { geo in
-            ZStack(alignment: .bottom) {
-                VStack(spacing: 0) {
-                    self.header
-                    if let item = coord.current {
-                        ReviewQuestionView(
-                            coord: self.coord,
-                            item: item,
-                            heroHeight: self.heroHeight(in: geo)
-                        )
-                    } else {
-                        Spacer()
-                    }
-                }
-                if self.coord.phase == .review, let item = coord.current {
-                    ReviewFooter(
+            VStack(spacing: 0) {
+                self.header
+                if let item = coord.current {
+                    ReviewQuestionView(
                         coord: self.coord,
                         item: item,
-                        onSeeDetail: { self.pushWordId = item.word.id }
+                        heroHeight: self.heroHeight(in: geo)
                     )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else {
+                    Spacer()
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Keep the MCQ option recolour on pick smooth (previously carried
+            // by the footer's ZStack animation).
             .animation(.spring(duration: 0.35), value: self.coord.phase)
             .background(.tujiBg)
             // MainTabsView normally reserves 78pt for the custom TujiTabBar;
@@ -103,6 +88,18 @@ struct ReviewFlowView: View {
             // its reservation go away — drop the local mirror too.
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
+            }
+            // The reveal (summary + full-detail pull-up + SRS rating) rides up
+            // as a detent sheet, mirroring the new-word peek sheet. Driven by
+            // phase: rating advances the queue → phase flips to .answer → the
+            // sheet dismisses on its own. Not swipe-dismissable — you must rate.
+            .sheet(isPresented: Binding(
+                get: { self.coord.phase == .review && !self.coord.finished },
+                set: { _ in }
+            )) {
+                if let item = self.coord.current {
+                    ReviewRevealSheet(coord: self.coord, item: item)
+                }
             }
         }
     }
@@ -182,16 +179,7 @@ private struct ReviewQuestionView: View {
     }
 
     private var bubble: some View {
-        HStack(spacing: Space.s2) {
-            Mascot(pose: .think, size: 40)
-            Text("這個是什麼？")
-                .font(.system(size: 14, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, Space.s2)
-                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
-            Spacer()
-        }
+        MascotSpeechBubble(pose: .think, text: "這個是什麼？")
     }
 
     private var hero: some View {
@@ -322,27 +310,51 @@ private struct ReviewQuestionView: View {
     }
 }
 
-// MARK: - Footer (reveal + rating)
+// MARK: - Reveal sheet (summary + pull-up details + rating)
 
-private struct ReviewFooter: View {
+private struct ReviewRevealSheet: View {
     let coord: ReviewFlowCoordinator
     let item: StudyQueueItem
-    let onSeeDetail: () -> Void
 
     @Environment(SettingsStore.self) private var settings
 
+    /// Resting detent — just tall enough for the header + hint + pinned rating
+    /// row, so there's little dead space. Drag up to `.large` to reveal the
+    /// full word details inline.
+    private static let restDetent: PresentationDetent = .fraction(0.4)
+
+    @State private var detent: PresentationDetent = ReviewRevealSheet.restDetent
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            self.summary
-            Button(action: self.onSeeDetail) {
-                HStack(spacing: 4) {
-                    Text("字卡詳情")
-                    Image(systemName: "arrow.right")
-                }
-                .font(.system(size: 13, weight: .heavy))
-                .foregroundStyle(.tujiTeal)
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.s4) {
+                self.summary
+                ExpandableWordDetail(wordId: self.item.word.id, expanded: self.detent == .large)
+                    .padding(.top, self.detent == .large ? 0 : Space.s4)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, Space.s6)
+            .padding(.top, Space.s5)
+            .padding(.bottom, Space.s4)
+        }
+        .safeAreaInset(edge: .bottom) {
+            self.ratingSection
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiBg)
+        .presentationDetents([Self.restDetent, .large], selection: self.$detent)
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(24)
+        .presentationBackground(.tujiBg)
+        .presentationBackgroundInteraction(.enabled(upThrough: Self.restDetent))
+        // Must rate to proceed — never swipe the sheet away (dragging between
+        // detents to peek at details is still allowed).
+        .interactiveDismissDisabled(true)
+    }
+
+    /// Pinned "CTA" for review: the SRS rating buttons (plus the prompt and
+    /// the sync-failed retry hint), always reachable at either detent.
+    private var ratingSection: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
             Divider().background(.tujiInk4.opacity(0.15))
             Text(self.coord.wasCorrect ? "記得多牢？" : "沒關係，標記一下")
                 .font(.system(size: 14, weight: .heavy))
@@ -355,58 +367,23 @@ private struct ReviewFooter: View {
             }
         }
         .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
-        .padding(.bottom, Space.s8)
+        .padding(.top, Space.s3)
+        .padding(.bottom, Space.s5)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard)
-        .clipShape(.rect(topLeadingRadius: Radius.xl, topTrailingRadius: Radius.xl))
-        .shadow(color: .black.opacity(0.08), radius: 12, y: -2)
+        .background(.tujiBg)
     }
 
-    /// Synchronous lookup into the shared pipeline's memory cache. Returns a
-    /// ready-to-draw `Image` if the hero already cached this word's picture,
-    /// so the footer thumbnail can appear in the same frame the sheet slides
-    /// up instead of resolving asynchronously a frame later.
-    private var cachedThumb: Image? {
-        guard let url = self.item.word.imageURL,
-              let container = ImagePipeline.shared.cache[ImageRequest(url: url)]
-        else { return nil }
-        return Image(uiImage: container.image)
-    }
-
+    /// Header laid out like the new-word peek sheet: no image (it's already on
+    /// screen in the question above), word + pronunciation + 中文 on the left,
+    /// favourite + audio buttons stacked on the right.
     private var summary: some View {
         HStack(alignment: .top, spacing: Space.s3) {
-            ZStack {
-                Rectangle().fill(.tujiTealSoft)
-                // The hero already loaded this image during the question
-                // phase, so it lives in the shared memory cache by the time
-                // the footer slides up. Render it synchronously from cache so
-                // the thumbnail is present from frame 0 and rides up *with*
-                // the sheet — LazyImage would resolve one frame late and the
-                // picture would pop in after the slide finished.
-                if let cached = self.cachedThumb {
-                    cached.resizable().aspectRatio(contentMode: .fill)
-                } else {
-                    LazyImage(url: self.item.word.imageURL) { state in
-                        if let image = state.image {
-                            image.resizable().aspectRatio(contentMode: .fill)
-                        } else if state.error != nil {
-                            Image(systemName: "photo").foregroundStyle(.tujiInk4)
-                        } else {
-                            ProgressView().tint(.tujiTeal)
-                        }
-                    }
-                    .pipeline(.shared)
-                    .id(self.item.word.imageURL)
-                }
-            }
-            .frame(width: 46, height: 46)
-            .clipShape(.rect(cornerRadius: Radius.md))
-
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Space.s1) {
                 Text(self.item.word.word)
-                    .font(.system(size: 18, weight: .heavy))
+                    .font(.tujiH1)
                     .foregroundStyle(.tujiInk)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.6)
                 if !self.item.word.pronunciation.isEmpty {
                     Text(self.item.word.pronunciation)
                         .font(.tujiMono)
@@ -414,13 +391,16 @@ private struct ReviewFooter: View {
                 }
                 if self.settings.current.showZh {
                     Text(self.item.word.chinese)
-                        .font(.tujiCaption)
+                        .font(.tujiBody)
                         .foregroundStyle(.tujiInk2)
-                        .lineLimit(2)
+                        .padding(.top, 2)
                 }
             }
             Spacer()
-            PronunciationButton(text: self.item.word.word, size: 36)
+            VStack(spacing: Space.s2) {
+                FavoriteButton(wordId: self.item.word.id, size: 44)
+                PronunciationButton(text: self.item.word.word, size: 44)
+            }
         }
     }
 

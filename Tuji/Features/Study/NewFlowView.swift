@@ -43,18 +43,31 @@ struct NewFlowView: View {
                 }
             }
         }
-        .alert("離開練習？", isPresented: self.$showExitConfirm) {
-            Button("繼續練習", role: .cancel) {}
-            Button("離開", role: .destructive) { self.dismiss() }
-        } message: {
-            Text("目前進度會丟失")
-        }
-        .sheet(item: Binding(
-            get: { self.coord.peek.map { PeekIdent(word: $0) } },
-            set: { self.coord.peek = $0?.word }
-        )) { wrap in
+        .tujiPrompt(
+            isPresented: self.$showExitConfirm,
+            style: .confirmation,
+            title: "要離開這次學習嗎？",
+            message: "目前進度會丟失，下次會重新開始。",
+            primary: TujiPromptAction("先離開") { self.dismiss() },
+            secondary: TujiPromptAction("繼續學習", role: .cancel) {}
+        )
+        .sheet(
+            item: Binding(
+                get: { self.coord.peek.map { PeekIdent(word: $0) } },
+                set: { self.coord.peek = $0?.word }
+            ),
+            // onDismiss is the single advance entry point: tapping 下一題 sets
+            // peek = nil (dismiss) and swipe-down dismisses too — both land
+            // here, so the queue advances exactly once either way.
+            onDismiss: { self.coord.advanceFromPeek() }
+        ) { wrap in
             if let card = self.cardWord(for: wrap.word.id) {
-                WordPeekSheet(word: card, onSeeMore: { self.coord.peek = nil })
+                WordPeekSheet(
+                    word: card,
+                    ctaTitle: "下一題",
+                    showDetailOnExpand: true,
+                    onSeeMore: { self.coord.peek = nil }
+                )
             }
         }
         .onAppear { self.studyFocus.enter() }

@@ -3,23 +3,33 @@
 import SwiftUI
 
 struct SplashView: View {
-    var body: some View {
-        VStack(spacing: Space.s5) {
-            Mascot(pose: .face, size: 88)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var loaderVisible = false
 
-            HStack(spacing: 0) {
-                Text("Tuji")
-                Text(".").foregroundStyle(.tujiCoral)
-            }
-            .font(.tujiH1)
-            .foregroundStyle(.tujiInk)
+    var body: some View {
+        VStack(spacing: Space.s6) {
+            TujiBrandLockup(animateEntrance: true)
 
             ProgressView()
                 .tint(.tujiTeal)
-                .padding(.top, Space.s4)
+                .controlSize(.small)
+                .opacity(self.loaderVisible ? 1 : 0)
+                .offset(y: self.loaderVisible ? 0 : 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
+        .task {
+            if self.reduceMotion {
+                self.loaderVisible = true
+                return
+            }
+
+            try? await Task.sleep(for: .milliseconds(680))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.18)) {
+                self.loaderVisible = true
+            }
+        }
     }
 }
 

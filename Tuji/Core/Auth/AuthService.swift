@@ -204,6 +204,11 @@ final class AuthService {
         state = .signedIn(user.withNickname(nickname))
     }
 
+    func applyProfile(nickname: String?, avatar: String?) {
+        guard case let .signedIn(user) = state else { return }
+        state = .signedIn(user.withProfile(nickname: nickname, avatar: avatar))
+    }
+
     // MARK: - Local cache sync
 
     /// Uploads the device's anonymous favorites/learned to the server so a
@@ -257,6 +262,11 @@ final class AuthService {
         }
         if msg.localizedCaseInsensitiveContains("rate limit") {
             return "嘗試太頻繁，請稍後再試"
+        }
+        if msg.localizedCaseInsensitiveContains("provider"),
+           msg.localizedCaseInsensitiveContains("not enabled")
+        {
+            return "Apple 登入尚未啟用，請稍後再試"
         }
         if msg.localizedCaseInsensitiveContains("password should be") {
             return "密碼太短（至少 8 字）"

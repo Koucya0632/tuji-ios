@@ -16,16 +16,19 @@ struct OnboardingFlow: View {
     private let pages: [Page] = [
         Page(
             artwork: .grid,
+            mascot: .face,
             title: "用圖學英文",
             lines: ["看一張圖，記住一個字", "生活中看到 → 立刻想起來"]
         ),
         Page(
             artwork: .srs,
+            mascot: nil,
             title: "每天 3 分鐘",
             lines: ["SRS 智能複習", "快忘了才出現 → 一次記牢"]
         ),
         Page(
             artwork: .streak,
+            mascot: .wave,
             title: "看見自己變強",
             lines: ["每天進步一點", "累積成自己的圖鑑"]
         )
@@ -109,6 +112,7 @@ struct OnboardingFlow: View {
 struct Page: Identifiable {
     let id = UUID()
     let artwork: Artwork
+    let mascot: MascotPose?
     let title: String
     let lines: [String]
 
@@ -120,17 +124,24 @@ private struct PageView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            artwork
-                .frame(maxWidth: .infinity)
-                .padding(Space.s6)
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.xl)
-                        .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
-                )
-                .tujiCardShadow()
-                .padding(.horizontal, Space.s6)
-                .padding(.top, Space.s6)
+            ZStack(alignment: .topTrailing) {
+                artwork
+                    .frame(maxWidth: .infinity)
+                    .padding(Space.s6)
+                    .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.xl)
+                            .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                    )
+                    .tujiCardShadow()
+
+                if let mascot = page.mascot {
+                    MascotFigure(pose: mascot, size: 96)
+                        .offset(x: 14, y: -20)
+                }
+            }
+            .padding(.horizontal, Space.s6)
+            .padding(.top, Space.s8)
 
             VStack(spacing: Space.s2) {
                 Text(page.title)

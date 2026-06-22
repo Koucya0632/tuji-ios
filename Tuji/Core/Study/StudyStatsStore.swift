@@ -9,9 +9,11 @@
 // store mirrors that 30s window on the client, with `invalidate()`
 // called after a session ends so the next read sees fresh counts.
 //
-// iOS currently calls stats with no category filter (global counts),
-// so a single key is enough. If a category-filtered call ever lands,
-// switch to a dict keyed by sorted-category-csv.
+// Stats are fetched GLOBAL (no category filter): review spans every word
+// the user has studied, so the `due` count that drives the review button +
+// batch size must be global too. The category-scoped "new words still to
+// learn" count is derived separately in TodayView from ProgressStore
+// (totalCount - seenCount), so this store doesn't need the selection.
 
 import Foundation
 import Observation

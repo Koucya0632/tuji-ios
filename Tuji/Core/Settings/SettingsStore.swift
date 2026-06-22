@@ -22,7 +22,9 @@ final class SettingsStore {
     private(set) var lastError: Error?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "settings")
-    private var hasLoaded: Bool = false
+    /// True once the first server load has completed. TodayView reads this to
+    /// avoid flashing the "pick themes" empty state before settings arrive.
+    private(set) var hasLoaded: Bool = false
     private var saveTask: Task<Void, Never>?
 
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.

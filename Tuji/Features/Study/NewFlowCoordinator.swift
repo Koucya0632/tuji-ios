@@ -109,9 +109,9 @@ final class NewFlowCoordinator {
         let ok = choice == curr.word.word
         Task {
             try? await Task.sleep(for: .milliseconds(800))
-            self.idLocked = false
-            self.idPicked = nil
             if ok {
+                self.idLocked = false
+                self.idPicked = nil
                 self.idDone += 1
                 if !self.idQueue.isEmpty {
                     self.idQueue.removeFirst()
@@ -119,13 +119,27 @@ final class NewFlowCoordinator {
                 if self.idQueue.isEmpty { self.step = .spell }
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             } else {
-                let head = self.idQueue.removeFirst()
-                self.idQueue.append(head)
+                // Wrong: stay frozen on this item (keep idLocked / idPicked so
+                // the wrong + answer highlight stays) and surface the peek
+                // sheet. Advancing — requeue to the tail — is deferred to
+                // identifyAdvance(), fired when the user taps 下一題 / dismisses
+                // the sheet. Step 2/3: no /api/study/answer write — practice only.
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
                 self.peek = curr.word
-                // Step 2/3: no /api/study/answer write — practice only.
             }
         }
+    }
+
+    /// Advance after a wrong Identify answer: requeue the missed word to the
+    /// tail and unlock for the next item. Fired when the peek sheet is
+    /// dismissed (下一題 button or swipe-down).
+    func identifyAdvance() {
+        self.peek = nil
+        self.idPicked = nil
+        self.idLocked = false
+        guard !self.idQueue.isEmpty else { return }
+        let head = self.idQueue.removeFirst()
+        self.idQueue.append(head)
     }
 
     // MARK: - Step 3 — Spell
@@ -170,10 +184,10 @@ final class NewFlowCoordinator {
         let judgedRight = (says == .yes) == shownIsCorrect
         Task {
             try? await Task.sleep(for: .milliseconds(800))
-            self.spLocked = false
-            self.spJudge = nil
-            self.spAttempt += 1
             if judgedRight {
+                self.spLocked = false
+                self.spJudge = nil
+                self.spAttempt += 1
                 self.spDone += 1
                 if !self.spQueue.isEmpty {
                     self.spQueue.removeFirst()
@@ -181,11 +195,36 @@ final class NewFlowCoordinator {
                 if self.spQueue.isEmpty { self.step = .done }
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
             } else {
-                let head = self.spQueue.removeFirst()
-                self.spQueue.append(head)
+                // Wrong: stay frozen (keep spLocked / spJudge so the 正解 line
+                // and colour stay) and surface the peek. Requeue + spAttempt
+                // bump are deferred to spellAdvance().
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
                 self.peek = curr.word
             }
+        }
+    }
+
+    /// Advance after a wrong Spell judgment: requeue to the tail, bump the
+    /// attempt parity (so the word reappears with the opposite spelling shown),
+    /// and unlock. Fired when the peek sheet is dismissed.
+    func spellAdvance() {
+        self.peek = nil
+        self.spJudge = nil
+        self.spLocked = false
+        self.spAttempt += 1
+        guard !self.spQueue.isEmpty else { return }
+        let head = self.spQueue.removeFirst()
+        self.spQueue.append(head)
+    }
+
+    /// Dispatch the right advance for whichever step the wrong answer came
+    /// from. Wired to the peek sheet's onDismiss so the 下一題 button and a
+    /// swipe-down behave identically and never double-advance.
+    func advanceFromPeek() {
+        switch self.step {
+        case .identify: self.identifyAdvance()
+        case .spell: self.spellAdvance()
+        default: self.peek = nil
         }
     }
 

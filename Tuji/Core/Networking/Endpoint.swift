@@ -22,7 +22,7 @@ enum Endpoint {
 
     // MARK: - Study (auth-protected)
 
-    case studyQueue(mode: String, limit: Int, new: Int)
+    case studyQueue(mode: String, limit: Int, new: Int, categories: [String])
     case studyAnswer
     case studyStats
 
@@ -67,11 +67,14 @@ enum Endpoint {
 
     var queryItems: [URLQueryItem] {
         switch self {
-        case let .studyQueue(mode, limit, new):
+        case let .studyQueue(mode, limit, new, categories):
             [
                 URLQueryItem(name: "mode", value: mode),
                 URLQueryItem(name: "limit", value: String(limit)),
-                URLQueryItem(name: "new", value: String(new))
+                URLQueryItem(name: "new", value: String(new)),
+                // Comma-separated category ids; empty = no filter (study all).
+                // Backend strips empty / "all" sentinels for us.
+                URLQueryItem(name: "category", value: categories.joined(separator: ","))
             ]
         case let .search(q):
             [URLQueryItem(name: "q", value: q)]

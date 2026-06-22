@@ -25,6 +25,9 @@ struct RootView: View {
     @Environment(OnboardingState.self) private var onboarding
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var minimumSplashElapsed = false
 
     /// The main page's data is ready once both the dictionary and the
     /// category list have completed a load attempt (success or failure —
@@ -35,9 +38,37 @@ struct RootView: View {
     }
 
     var body: some View {
-        content
-            .task { await auth.restoreSession() }
+        ZStack {
+            content
+
+            if !self.minimumSplashElapsed {
+                SplashView()
+                    .transition(.opacity)
+                    .zIndex(10)
+            }
+        }
+            .task { await self.runLaunchSequence() }
             .animation(.easeInOut(duration: 0.25), value: stateKey)
+    }
+
+    @MainActor
+    private func runLaunchSequence() async {
+        async let sessionRestore: Void = self.auth.restoreSession()
+
+        if !self.reduceMotion {
+            try? await Task.sleep(for: .milliseconds(850))
+        }
+
+        guard !Task.isCancelled else { return }
+        if self.reduceMotion {
+            self.minimumSplashElapsed = true
+        } else {
+            withAnimation(.easeOut(duration: 0.18)) {
+                self.minimumSplashElapsed = true
+            }
+        }
+
+        await sessionRestore
     }
 
     @ViewBuilder

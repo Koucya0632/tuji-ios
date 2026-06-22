@@ -20,19 +20,20 @@ struct MilestoneView: View {
             Color.tujiBgInk.ignoresSafeArea()
             VStack(spacing: Space.s5) {
                 Spacer()
-                Mascot(pose: .cheer, size: 108)
-                VStack(spacing: Space.s2) {
-                    Text("連勝 \(self.milestone.streak) 天！")
-                        .font(.tujiH2)
-                        .foregroundStyle(.white)
-                        .contentTransition(.numericText())
+                MascotCelebrationCard(
+                    title: "連勝 \(self.milestone.streak) 天！",
+                    accent: .tujiYellow,
+                    dark: true
+                ) {
+                    VStack(spacing: Space.s3) {
                     Text(self.subtitle)
                         .font(.tujiBody)
                         .foregroundStyle(.white.opacity(0.7))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Space.s6)
+                        self.streakCapsule
+                    }
                 }
-                self.streakCapsule
                 Spacer()
                 self.actions
             }

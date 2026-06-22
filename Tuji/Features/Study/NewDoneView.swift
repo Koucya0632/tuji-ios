@@ -9,13 +9,11 @@ struct NewDoneView: View {
     let queue: [StudyQueueItem]
     let onFinish: () -> Void
 
-    @Environment(SettingsStore.self) private var settings
-
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s5) {
                 self.hero
-                self.grid
+                StudyWordGrid(items: self.queue)
             }
             .padding(.horizontal, Space.s6)
             .padding(.top, Space.s4)
@@ -36,21 +34,27 @@ struct NewDoneView: View {
     }
 
     private var hero: some View {
-        VStack(spacing: Space.s3) {
-            Mascot(pose: .cheer, size: 92)
-            Text("這節學了 \(self.queue.count) 個新字")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-                .multilineTextAlignment(.center)
+        MascotCelebrationCard(
+            title: "這節學了 \(self.queue.count) 個新字",
+            accent: .tujiTeal
+        ) {
             Text("它們已加入你的圖鑑")
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
         }
-        .frame(maxWidth: .infinity)
         .padding(.top, Space.s8)
     }
 
-    private var grid: some View {
+}
+
+/// Two-column word grid shown on the study-complete screens (new-word and
+/// review), so both celebrate the session's words with the same tile style.
+struct StudyWordGrid: View {
+    let items: [StudyQueueItem]
+
+    @Environment(SettingsStore.self) private var settings
+
+    var body: some View {
         LazyVGrid(
             columns: [
                 GridItem(.flexible(), spacing: Space.s3),
@@ -58,7 +62,7 @@ struct NewDoneView: View {
             ],
             spacing: Space.s3
         ) {
-            ForEach(self.queue) { item in
+            ForEach(self.items) { item in
                 self.tile(for: item)
             }
         }
@@ -67,10 +71,12 @@ struct NewDoneView: View {
     private func tile(for item: StudyQueueItem) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiTealSoft)
+                Rectangle().fill(.tujiCard)
                 LazyImage(url: item.word.imageURL) { state in
                     if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
+                        image.resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(Space.s2)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .foregroundStyle(.tujiInk4)

@@ -23,16 +23,7 @@ struct IdentifyView: View {
     }
 
     private var bubble: some View {
-        HStack(spacing: Space.s2) {
-            Mascot(pose: .think, size: 40)
-            Text("對應的英文是哪個？")
-                .font(.system(size: 14, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, Space.s2)
-                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
-            Spacer()
-        }
+        MascotSpeechBubble(pose: .think, text: "對應的英文是哪個？")
     }
 
     private var hero: some View {

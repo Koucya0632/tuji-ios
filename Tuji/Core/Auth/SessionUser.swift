@@ -37,4 +37,8 @@ struct SessionUser: Equatable, Hashable {
     func withNickname(_ nickname: String?) -> SessionUser {
         SessionUser(id: id, email: email, username: username, nickname: nickname, avatar: avatar)
     }
+
+    func withProfile(nickname: String?, avatar: String?) -> SessionUser {
+        SessionUser(id: id, email: email, username: username, nickname: nickname, avatar: avatar)
+    }
 }

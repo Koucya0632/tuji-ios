@@ -233,16 +233,14 @@ struct SearchView: View {
     @ViewBuilder
     private var recentSection: some View {
         if self.cache.recentSearches.isEmpty {
-            VStack(spacing: Space.s3) {
-                Spacer().frame(height: Space.s12)
-                Mascot(pose: .think, size: 80)
-                Text("找個單字試試")
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-                Text("輸入英文或中文，即時顯示結果")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                Spacer()
+            VStack {
+                Spacer(minLength: Space.s8)
+                MascotEmptyState(
+                    pose: .think,
+                    title: "找個單字試試",
+                    message: "輸入英文或中文，即時顯示結果"
+                )
+                Spacer(minLength: Space.s8)
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, Space.s6)
@@ -306,37 +304,35 @@ struct SearchView: View {
     }
 
     private func emptyState(query: String) -> some View {
-        VStack(spacing: Space.s3) {
-            Spacer().frame(height: Space.s12)
-            Mascot(pose: .think, size: 80)
-            Text("找不到「\(query)」")
-                .font(.tujiH3)
-                .foregroundStyle(.tujiInk)
-            Text("換個關鍵字試試，或瀏覽圖鑑")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
+        VStack {
+            Spacer(minLength: Space.s8)
+            MascotEmptyState(
+                pose: .think,
+                title: "找不到「\(query)」",
+                message: "換個關鍵字試試，或瀏覽圖鑑"
+            )
+            Spacer(minLength: Space.s8)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, Space.s6)
     }
 
     private func errorState(_ error: Error) -> some View {
-        VStack(spacing: Space.s3) {
-            Spacer().frame(height: Space.s12)
-            Mascot(pose: .think, size: 80)
-            Text("搜尋失敗")
-                .font(.tujiH3)
-                .foregroundStyle(.tujiInk)
-            Text(error.localizedDescription)
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Space.s6)
-            BBtn(title: "重試", fullWidth: false, action: {
-                self.vm.runImmediately(self.vm.query)
-            })
+        VStack {
+            Spacer(minLength: Space.s8)
+            MascotEmptyState(
+                pose: .think,
+                title: "搜尋失敗",
+                message: error.localizedDescription
+            ) {
+                BBtn(title: "重試", fullWidth: false, action: {
+                    self.vm.runImmediately(self.vm.query)
+                })
+            }
+            Spacer(minLength: Space.s8)
         }
         .frame(maxWidth: .infinity)
+        .padding(.horizontal, Space.s6)
     }
 
     private var resultsList: some View {

@@ -22,38 +22,50 @@ struct SettingsView: View {
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
             .task { await self.store.loadIfNeeded() }
-            .alert("登出？", isPresented: self.$showSignOutConfirm) {
-                Button("取消", role: .cancel) {}
-                Button("登出", role: .destructive) {
+            .tujiPrompt(
+                isPresented: self.$showSignOutConfirm,
+                style: .confirmation,
+                title: "要登出 Tuji 嗎？",
+                message: "收藏與設定會保留在伺服器。",
+                primary: TujiPromptAction("登出") {
                     Task { await self.auth.signOut() }
-                }
-            } message: {
-                Text("收藏與設定會保留在伺服器")
-            }
-            .alert("確定要刪除帳號？", isPresented: self.$showDeleteFirst) {
-                Button("取消", role: .cancel) {}
-                Button("繼續", role: .destructive) {
+                },
+                secondary: TujiPromptAction("取消", role: .cancel) {}
+            )
+            .tujiPrompt(
+                isPresented: self.$showDeleteFirst,
+                style: .destructive,
+                title: "刪除你的帳號？",
+                message: "此操作無法復原。",
+                detail: "收藏、學習紀錄、設定與個人資料都會永久刪除。",
+                primary: TujiPromptAction("繼續", role: .destructive) {
                     self.showDeleteSecond = true
-                }
-            } message: {
-                Text("這個動作無法復原：收藏、學習紀錄、所有資料都會刪除")
-            }
-            .alert("最後一次確認", isPresented: self.$showDeleteSecond) {
-                Button("取消", role: .cancel) {}
-                Button("永久刪除", role: .destructive) {
+                },
+                secondary: TujiPromptAction("取消", role: .cancel) {}
+            )
+            .tujiPrompt(
+                isPresented: self.$showDeleteSecond,
+                style: .destructive,
+                title: "最後一次確認",
+                message: "確定要永久刪除帳號嗎？",
+                detail: "刪除後將立即登出，所有資料都無法恢復。",
+                primary: TujiPromptAction("永久刪除", role: .destructive) {
                     Task { await self.deleteAccount() }
+                },
+                secondary: TujiPromptAction("取消", role: .cancel) {}
+            )
+            .tujiPrompt(
+                isPresented: Binding(
+                    get: { self.deleteError != nil },
+                    set: { if !$0 { self.deleteError = nil } }
+                ),
+                style: .error,
+                title: "刪除失敗",
+                message: self.deleteError?.localizedDescription ?? "",
+                primary: TujiPromptAction("知道了") {
+                    self.deleteError = nil
                 }
-            } message: {
-                Text("確定要永久刪除帳號嗎？")
-            }
-            .alert("刪除失敗", isPresented: Binding(
-                get: { self.deleteError != nil },
-                set: { if !$0 { self.deleteError = nil } }
-            )) {
-                Button("知道了", role: .cancel) { self.deleteError = nil }
-            } message: {
-                Text(self.deleteError?.localizedDescription ?? "")
-            }
+            )
     }
 
     // MARK: - List
@@ -68,6 +80,15 @@ struct SettingsView: View {
                         label: "每日目標題數",
                         value: "\(self.store.current.dailyGoal) 題",
                         subtitle: "每天想新學的題數，複習多時會自動調降"
+                    )
+                }
+                NavigationLink {
+                    StudyCategoriesPickerView()
+                } label: {
+                    self.row(
+                        label: "學習主題",
+                        value: self.studyCategoriesLabel,
+                        subtitle: "學新字與主題進度只涵蓋你選的主題"
                     )
                 }
                 Toggle("中文釋義", isOn: self.store.binding(\.showZh))
@@ -149,6 +170,11 @@ struct SettingsView: View {
         case "us": "美式"
         default: self.store.current.accent.uppercased()
         }
+    }
+
+    private var studyCategoriesLabel: String {
+        let n = self.store.current.studyCategories.count
+        return n == 0 ? "全部" : "\(n) 個主題"
     }
 
     private var langLabel: String {
