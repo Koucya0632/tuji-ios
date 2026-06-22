@@ -208,6 +208,7 @@ private struct TabBarButton: View {
         .environment(LocalCache.shared)
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)
+        .environment(MasteryStore.shared)
         .environment(DeepLinkCoordinator.shared)
         .environment(StudyFocus.shared)
 }
@@ -218,6 +219,7 @@ private struct TabBarButton: View {
         .environment(LocalCache.shared)
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)
+        .environment(MasteryStore.shared)
         .environment(DeepLinkCoordinator.shared)
         .environment(StudyFocus.shared)
 }

@@ -10,6 +10,7 @@ import SwiftUI
 struct CardsListView: View {
     @Environment(WordsStore.self) private var store
     @Environment(CategoriesStore.self) private var categories
+    @Environment(MasteryStore.self) private var mastery
 
     @State private var selectedCategory: String?
     @State private var visibleCount: Int = 60
@@ -31,6 +32,7 @@ struct CardsListView: View {
         .task {
             await self.store.loadIfNeeded()
             await self.categories.loadIfNeeded()
+            await self.mastery.loadIfNeeded()
         }
         .sheet(item: self.$peekWord) { word in
             WordPeekSheet(word: word) {
@@ -138,7 +140,11 @@ struct CardsListView: View {
                 ) {
                     ForEach(self.visibleWords) { word in
                         NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                            WordTile(word: word)
+                            WordTile(
+                                word: word,
+                                showMastery: true,
+                                masteryScore: self.mastery.score(for: word.id)
+                            )
                         }
                         .buttonStyle(.plain)
                         .onLongPressGesture(minimumDuration: 0.35) {
@@ -222,5 +228,6 @@ struct CardsListView: View {
         CardsListView()
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
+            .environment(MasteryStore.shared)
     }
 }

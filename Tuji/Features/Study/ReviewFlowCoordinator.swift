@@ -32,6 +32,9 @@ final class ReviewFlowCoordinator {
     /// Items the user actually rated (one per cleared item). Drives the
     /// "今天複習" tile row on CompleteView.
     var answered: [StudyQueueItem] = []
+    /// Per-word mastery before/after for the words rated this session, keyed by
+    /// word id. Drives CompleteView's 熟練度變化 list.
+    var masteryByWord: [String: MasteryDelta] = [:]
     /// Highest streak milestone the server flagged during this session.
     /// CompleteView promotes to MilestoneView when non-nil.
     var milestone: Milestone?
@@ -106,6 +109,20 @@ final class ReviewFlowCoordinator {
                 body: payload
             )
             self.answered.append(curr)
+            if let m = resp.mastery {
+                // Keep the first `before` but the latest `after` if a word is
+                // somehow rated twice in one session (wrong-answer requeue):
+                // merge so the row shows the full session swing.
+                if let existing = self.masteryByWord[curr.word.id] {
+                    self.masteryByWord[curr.word.id] = MasteryDelta(
+                        before: existing.before,
+                        after: m.after,
+                        delta: m.after - existing.before
+                    )
+                } else {
+                    self.masteryByWord[curr.word.id] = m
+                }
+            }
             if let m = resp.milestone {
                 // Server only emits the milestone payload on the answer
                 // that actually crosses the threshold, so always overwrite

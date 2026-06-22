@@ -82,15 +82,23 @@ nonisolated struct StudyAnswerPayload: Encodable, Sendable {
 
 // Server emits `mastery: { before, after, delta, level }` and
 // `next: { status, intervalDays, nextReviewAt, humanized, penaltyApplied }`
-// — both nested objects, neither matched the old `Int?` / `String?`
-// shape and caused every answer POST to throw APIError.decoding even
-// though the write itself succeeded. iOS only consumes `milestone`
-// for the streak celebration, so we only model that. Codable skips
-// undeclared keys, so the richer server payload still round-trips
-// cleanly.
+// — both nested objects. We model `milestone` (streak celebration) and the
+// numeric `mastery` change (CompleteView's per-word 變化 list). The server's
+// `mastery.level` object is intentionally *not* decoded: iOS derives its own
+// 5-level MasteryLevel from the numbers. Codable skips undeclared keys, so the
+// richer server payload still round-trips cleanly.
 struct StudyAnswerResponse: Decodable {
     let ok: Bool?
     let milestone: Milestone?
+    let mastery: MasteryDelta?
+}
+
+/// Word-level mastery before/after one answer (decayed `before`, blended
+/// `after`). Drives the completion summary's per-word change rows.
+struct MasteryDelta: Decodable, Hashable {
+    let before: Int
+    let after: Int
+    let delta: Int
 }
 
 /// Server-attached signal that this answer triggered a streak milestone

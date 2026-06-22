@@ -119,4 +119,5 @@ struct RootView: View {
         .environment(OnboardingState.shared)
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)
+        .environment(MasteryStore.shared)
 }

@@ -70,6 +70,7 @@ struct WordDetailPage: View {
     let id: String
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(MasteryStore.self) private var mastery
 
     @State private var word: Word?
     @State private var loading = false
@@ -91,7 +92,10 @@ struct WordDetailPage: View {
                 }
             }
         }
-        .task { await self.load() }
+        .task {
+            await self.load()
+            await self.mastery.loadIfNeeded()
+        }
     }
 
     // MARK: - States
@@ -100,6 +104,7 @@ struct WordDetailPage: View {
         VStack(alignment: .leading, spacing: Space.s5) {
             self.hero(w)
             self.titleRow(w)
+            MasteryBar(score: self.mastery.score(for: w.id))
             WordDetailSections(word: w)
         }
         .padding(.horizontal, Space.s6)
@@ -245,5 +250,6 @@ extension WordDetailPage {
             .environment(StudyFocus.shared)
             .environment(WordsStore.shared)
             .environment(SettingsStore.shared)
+            .environment(MasteryStore.shared)
     }
 }
