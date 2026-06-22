@@ -12,18 +12,19 @@ struct MasteryBadge: View {
     let level: MasteryLevel
 
     var body: some View {
-        HStack(spacing: 3) {
+        let tint = self.level.tileBadgeColor
+        return HStack(spacing: 3) {
             Circle()
-                .fill(self.level.color)
+                .fill(tint)
                 .frame(width: 6, height: 6)
             Text(self.level.name)
                 .font(.system(size: 10, weight: .heavy))
-                .foregroundStyle(self.level.color)
+                .foregroundStyle(tint)
         }
         .padding(.horizontal, Space.s2)
         .padding(.vertical, 3)
         .background(.tujiCard.opacity(0.95), in: .capsule)
-        .overlay(Capsule().stroke(self.level.color.opacity(0.35), lineWidth: 1))
+        .overlay(Capsule().stroke(tint.opacity(0.35), lineWidth: 1))
         .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
     }
 }

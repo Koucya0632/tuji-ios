@@ -104,7 +104,6 @@ struct WordDetailPage: View {
         VStack(alignment: .leading, spacing: Space.s5) {
             self.hero(w)
             self.titleRow(w)
-            MasteryBar(score: self.mastery.score(for: w.id))
             WordDetailSections(word: w)
         }
         .padding(.horizontal, Space.s6)
@@ -147,6 +146,10 @@ extension WordDetailPage {
                 Spacer()
                 FavoriteButton(wordId: w.id)
             }
+
+            // Mastery + level badge sit above the artwork here, in full colour
+            // (unlike the de-emphasized grey 圖鑑 tile badge).
+            MasteryBar(score: self.mastery.score(for: w.id))
 
             // Consistent white image card. The picture is shown .fit with
             // padding, so the whole subject is visible regardless of its
