@@ -18,6 +18,9 @@ final class MasteryStore {
     static let shared = MasteryStore()
 
     private(set) var byId: [String: Int] = [:]
+    /// wordId → soonest next-review date, for the 圖鑑 countdown. Only words
+    /// with a scheduled card appear here.
+    private(set) var nextReviewById: [String: Date] = [:]
     private(set) var loading: Bool = false
     private(set) var lastError: Error?
 
@@ -32,6 +35,11 @@ final class MasteryStore {
     /// Score for a word, or nil if the user has never studied it (→ 未學).
     func score(for wordId: String) -> Int? {
         self.byId[wordId]
+    }
+
+    /// Next-due review date for a word, or nil if it has no scheduled card.
+    func nextReviewDate(for wordId: String) -> Date? {
+        self.nextReviewById[wordId]
     }
 
     /// Fetch once. Returns immediately after the first attempt; use reload()
@@ -54,6 +62,13 @@ final class MasteryStore {
                 resp.items.map { ($0.wordId, $0.mastery) },
                 uniquingKeysWith: { _, last in last }
             )
+            var schedule: [String: Date] = [:]
+            for item in resp.items {
+                if let iso = item.nextReviewAt, let date = ReviewSchedule.parseISO(iso) {
+                    schedule[item.wordId] = date
+                }
+            }
+            self.nextReviewById = schedule
             self.log.info("loaded \(resp.items.count, privacy: .public) mastery rows")
         } catch {
             self.lastError = error
@@ -71,6 +86,9 @@ final class MasteryStore {
 struct MasteryEntry: Decodable, Hashable {
     let wordId: String
     let mastery: Int
+    // ISO8601 string (not Date): the global .iso8601 decoder rejects the
+    // fractional seconds the server emits. Parsed via ReviewSchedule.parseISO.
+    let nextReviewAt: String?
 }
 
 struct MasteryListResponse: Decodable {

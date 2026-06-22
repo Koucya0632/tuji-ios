@@ -16,6 +16,9 @@ struct WordTile: View {
     /// The word's 0–100 mastery score, or nil if never studied (→ 未學). Only
     /// consulted when `showMastery` is true.
     var masteryScore: Int?
+    /// The word's soonest next-review date, or nil if unscheduled. Only shown
+    /// when `showMastery` is true.
+    var nextReviewDate: Date?
 
     @Environment(SettingsStore.self) private var settings
 
@@ -67,6 +70,18 @@ struct WordTile: View {
                             .font(.tujiCaption)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
+                    }
+
+                    // Next SRS review countdown — studied words only. Overdue
+                    // words are flagged in coral.
+                    if self.showMastery, let due = self.nextReviewDate {
+                        HStack(spacing: 3) {
+                            Image(systemName: "clock")
+                            Text(ReviewSchedule.countdownLabel(until: due))
+                        }
+                        .font(.tujiCaption)
+                        .foregroundStyle(ReviewSchedule.isOverdue(due) ? .tujiCoral : .tujiInk3)
+                        .lineLimit(1)
                     }
                 }
                 .padding(Space.s3)

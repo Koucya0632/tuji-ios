@@ -143,7 +143,8 @@ struct CardsListView: View {
                             WordTile(
                                 word: word,
                                 showMastery: true,
-                                masteryScore: self.mastery.score(for: word.id)
+                                masteryScore: self.mastery.score(for: word.id),
+                                nextReviewDate: self.mastery.nextReviewDate(for: word.id)
                             )
                         }
                         .buttonStyle(.plain)
