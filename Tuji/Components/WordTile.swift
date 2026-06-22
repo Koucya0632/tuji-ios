@@ -56,17 +56,11 @@ struct WordTile: View {
 
             if self.showLabel {
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
-                        Text(self.word.word)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.tujiInk)
-                        if self.showMastery, let score = self.masteryScore {
-                            Spacer(minLength: 0)
-                            Text("\(score)")
-                                .font(.system(size: 13, weight: .heavy))
-                                .foregroundStyle(self.masteryLevel.color)
-                        }
-                    }
+                    // 圖鑑 surfaces the mastery *level* via the badge overlay on
+                    // the image; the numeric score stays on the detail page only.
+                    Text(self.word.word)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.tujiInk)
 
                     if self.settings.current.showZh {
                         Text(self.word.chinese)
