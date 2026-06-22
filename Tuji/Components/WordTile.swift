@@ -15,7 +15,7 @@ struct WordTile: View {
     var showMastery: Bool = false
     /// The word's 0–100 mastery score, or nil if never studied (→ 未學). Only
     /// consulted when `showMastery` is true.
-    var masteryScore: Int? = nil
+    var masteryScore: Int?
 
     @Environment(SettingsStore.self) private var settings
 
