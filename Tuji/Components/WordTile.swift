@@ -10,8 +10,18 @@ struct WordTile: View {
     let word: CardWord
     var height: CGFloat = 120
     var showLabel: Bool = true
+    /// When true, overlays a mastery level badge + score (used by 圖鑑). Other
+    /// reuse sites (Today / Search / Favorites) leave this off.
+    var showMastery: Bool = false
+    /// The word's 0–100 mastery score, or nil if never studied (→ 未學). Only
+    /// consulted when `showMastery` is true.
+    var masteryScore: Int? = nil
 
     @Environment(SettingsStore.self) private var settings
+
+    private var masteryLevel: MasteryLevel {
+        MasteryLevel.from(score: self.masteryScore)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -37,12 +47,26 @@ struct WordTile: View {
             }
             .frame(height: self.height)
             .clipped()
+            .overlay(alignment: .topTrailing) {
+                if self.showMastery {
+                    MasteryBadge(level: self.masteryLevel)
+                        .padding(Space.s2)
+                }
+            }
 
             if self.showLabel {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(self.word.word)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.tujiInk)
+                    HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
+                        Text(self.word.word)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.tujiInk)
+                        if self.showMastery, let score = self.masteryScore {
+                            Spacer(minLength: 0)
+                            Text("\(score)")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(self.masteryLevel.color)
+                        }
+                    }
 
                     if self.settings.current.showZh {
                         Text(self.word.chinese)

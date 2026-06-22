@@ -9,6 +9,8 @@ struct NewDoneView: View {
     let queue: [StudyQueueItem]
     let onFinish: () -> Void
 
+    @Environment(MasteryStore.self) private var mastery
+
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s5) {
@@ -18,6 +20,13 @@ struct NewDoneView: View {
             .padding(.horizontal, Space.s6)
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s8)
+        }
+        // Learning new words writes mastery (RecognizeView's fire-and-forget
+        // POST). Bust the cache + refetch so the just-learned words leave 未學
+        // on the 圖鑑/詳情 the user returns to, instead of waiting for relaunch.
+        .task {
+            self.mastery.invalidate()
+            await self.mastery.reload()
         }
         .safeAreaInset(edge: .bottom) {
             BBtn(

@@ -27,6 +27,7 @@ struct TujiApp: App {
     @State private var categories = CategoriesStore.shared
     @State private var settings = SettingsStore.shared
     @State private var progress = ProgressStore.shared
+    @State private var mastery = MasteryStore.shared
     @State private var studyStats = StudyStatsStore.shared
     @State private var studyFocus = StudyFocus.shared
     @State private var deepLinks = DeepLinkCoordinator.shared
@@ -42,6 +43,7 @@ struct TujiApp: App {
                 .environment(categories)
                 .environment(settings)
                 .environment(progress)
+                .environment(mastery)
                 .environment(studyStats)
                 .environment(studyFocus)
                 .environment(deepLinks)

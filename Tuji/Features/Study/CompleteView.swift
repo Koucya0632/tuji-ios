@@ -1,23 +1,30 @@
 // Review-complete celebration (§III.R Complete). Shown after ReviewFlow
-// finishes — Mascot cheer, reviewed-count display, streak +1 capsule,
-// answered tiles row, 回首頁 CTA. Reviews are deliberately NOT counted
-// against the daily goal (that target tracks new words only — see
-// TodayView.dailyGoalProgress / studyStats.todayNew), so this screen
-// frames itself as "復習完成" rather than the daily-goal milestone.
+// finishes — Mascot cheer, reviewed-count display, streak +1 capsule, and a
+// per-word 熟練度變化 list (before → after, with ↑ when the word crossed into a
+// higher MasteryLevel). Reviews are deliberately NOT counted against the daily
+// goal (that target tracks new words only — see TodayView.dailyGoalProgress /
+// studyStats.todayNew), so this screen frames itself as "復習完成" rather than
+// the daily-goal milestone.
 //
-// Streak comes from ProgressStore.shared. We invalidate first so the
-// new entry from the just-answered session (which the server already
-// busted on /api/study/answer) is round-tripped fresh instead of read
-// from the 30s in-memory window.
+// Streak comes from ProgressStore.shared; mastery scores from MasteryStore.
+// We invalidate both first so the just-answered session (which the server
+// already busted on /api/study/answer) is round-tripped fresh — the streak
+// shows the new value here, and the 圖鑑/詳情 reflect the new scores when the
+// user navigates back.
 
+import Nuke
+import NukeUI
 import SwiftUI
 
 struct CompleteView: View {
     let answered: [StudyQueueItem]
+    let masteryByWord: [String: MasteryDelta]
     let onFinish: () -> Void
 
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
+    @Environment(MasteryStore.self) private var mastery
+    @Environment(SettingsStore.self) private var settings
 
     private var done: Int {
         self.answered.count
@@ -29,7 +36,7 @@ struct CompleteView: View {
                 VStack(spacing: Space.s5) {
                     self.hero
                     self.streakCapsule
-                    self.answeredSection
+                    self.changeSection
                 }
                 .padding(.horizontal, Space.s6)
                 .padding(.top, Space.s12)
@@ -39,7 +46,7 @@ struct CompleteView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
-        .task { await self.loadStreak() }
+        .task { await self.refresh() }
     }
 
     // MARK: - Bits
@@ -80,17 +87,114 @@ struct CompleteView: View {
     }
 
     @ViewBuilder
-    private var answeredSection: some View {
+    private var changeSection: some View {
         if !self.answered.isEmpty {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("今天複習")
                     .font(.tujiOverline)
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
-                StudyWordGrid(items: self.answered)
+                VStack(spacing: Space.s2) {
+                    ForEach(self.answered) { item in
+                        self.changeRow(item)
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    private func changeRow(_ item: StudyQueueItem) -> some View {
+        let change = self.masteryByWord[item.word.id]
+        let afterLevel = MasteryLevel.from(score: change?.after)
+        let leveledUp = change.map {
+            afterLevel.rawValue > MasteryLevel.from(score: $0.before).rawValue
+        } ?? false
+
+        return HStack(spacing: Space.s3) {
+            self.thumb(item.word)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.word.word)
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(.tujiInk)
+                    .lineLimit(1)
+                if self.settings.current.showZh {
+                    Text(item.word.chinese)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: Space.s2)
+            if let change {
+                VStack(alignment: .trailing, spacing: 3) {
+                    HStack(spacing: 4) {
+                        if leveledUp {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundStyle(.tujiGreen)
+                        }
+                        self.levelPill(afterLevel)
+                    }
+                    HStack(spacing: 4) {
+                        Text("\(change.before)→\(change.after)")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk3)
+                            .contentTransition(.numericText())
+                        Text(self.deltaText(change.delta))
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(self.deltaColor(change.delta))
+                    }
+                }
+            }
+        }
+        .padding(Space.s2)
+        .frame(maxWidth: .infinity)
+        .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.md)
+                .stroke(.tujiInk4.opacity(0.15), lineWidth: 1)
+        )
+    }
+
+    private func thumb(_ word: StudyQueueWord) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: Radius.sm).fill(.tujiCard)
+            LazyImage(url: word.imageURL) { state in
+                if let image = state.image {
+                    image.resizable().aspectRatio(contentMode: .fit).padding(4)
+                } else if state.error != nil {
+                    Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk4)
+                } else {
+                    ProgressView().tint(.tujiTeal)
+                }
+            }
+            .pipeline(.shared)
+        }
+        .frame(width: 44, height: 44)
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.sm)
+                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    private func levelPill(_ level: MasteryLevel) -> some View {
+        Text(level.name)
+            .font(.system(size: 11, weight: .heavy))
+            .foregroundStyle(level.color)
+            .padding(.horizontal, Space.s2)
+            .padding(.vertical, 2)
+            .background(level.color.opacity(0.14), in: .capsule)
+    }
+
+    private func deltaText(_ d: Int) -> String {
+        d > 0 ? "+\(d)" : "\(d)"
+    }
+
+    private func deltaColor(_ d: Int) -> Color {
+        if d > 0 { return .tujiGreen }
+        if d < 0 { return .tujiCoral }
+        return .tujiInk3
     }
 
     private var footer: some View {
@@ -107,20 +211,26 @@ struct CompleteView: View {
         .background(.tujiBg)
     }
 
-    private func loadStreak() async {
-        // Force round trips — both streak and due/seen counts just changed
-        // on the answer POST, and we want the new values shown here.
+    private func refresh() async {
+        // Force round trips — streak, due/seen counts, and per-word mastery
+        // all just changed on the answer POST, and we want fresh values here
+        // and on the 圖鑑/詳情 the user returns to.
         self.progress.invalidate()
         self.studyStats.invalidate()
+        self.mastery.invalidate()
         async let p: Void = self.progress.reload()
         async let s: Void = self.studyStats.reload()
+        async let m: Void = self.mastery.reload()
         await p
         await s
+        await m
     }
 }
 
 #Preview {
-    CompleteView(answered: [], onFinish: {})
+    CompleteView(answered: [], masteryByWord: [:], onFinish: {})
         .environment(ProgressStore.shared)
         .environment(StudyStatsStore.shared)
+        .environment(MasteryStore.shared)
+        .environment(SettingsStore.shared)
 }

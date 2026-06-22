@@ -15,6 +15,7 @@ enum Endpoint {
     case usersLearned
     case usersSync
     case usersProgress
+    case usersMastery
     case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
     case usersPushToken
@@ -49,6 +50,7 @@ enum Endpoint {
         case .usersLearned: "/api/users/learned"
         case .usersSync: "/api/users/sync"
         case .usersProgress: "/api/users/progress"
+        case .usersMastery: "/api/users/mastery"
         case .usersTopWords: "/api/users/top-words"
         case .usersDeleteAccount: "/api/users/delete-account"
         case .usersPushToken,
@@ -101,7 +103,7 @@ enum Endpoint {
         switch self {
         case .words, .word, .categories, .search:
             .useProtocolCachePolicy
-        case .studyAnswer, .events, .usersSync,
+        case .studyAnswer, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete:
             .reloadIgnoringLocalCacheData
         default:

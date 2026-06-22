@@ -28,6 +28,7 @@ struct ReviewFlowView: View {
                 } else {
                     CompleteView(
                         answered: self.coord.answered,
+                        masteryByWord: self.coord.masteryByWord,
                         onFinish: { self.dismiss() }
                     )
                 }
