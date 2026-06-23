@@ -19,9 +19,9 @@ enum ReviewSchedule {
         date <= now
     }
 
-    /// "已到期" when due, else a relative countdown ("3 天後", "約 2 週後", …).
+    /// "復習期" when due, else a relative countdown ("3 天後", "約 2 週後", …).
     static func countdownLabel(until date: Date, now: Date = .now) -> String {
-        if self.isOverdue(date, now: now) { return "已到期" }
+        if self.isOverdue(date, now: now) { return "復習期" }
         return self.humanizeInterval(days: date.timeIntervalSince(now) / 86_400)
     }
 

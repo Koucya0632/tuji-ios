@@ -1,9 +1,12 @@
 // Category landing page (§III.G).
 //
-// Hero card with emoji glyph + Chinese / English names, then the 2-col
-// grid of every word in that category. Tap a tile to push WordDetailView
-// (handled at MainTabsView's NavigationStack level via NavRoute).
+// Illustrated hero card with Chinese / English names + a category
+// explanation, then the 2-col grid of every word in that category. Tap a
+// tile to push WordDetailView (handled at MainTabsView's NavigationStack
+// level via NavRoute).
 
+import Nuke
+import NukeUI
 import SwiftUI
 
 struct CategoryView: View {
@@ -11,6 +14,7 @@ struct CategoryView: View {
 
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
+    @Environment(MasteryStore.self) private var mastery
 
     var body: some View {
         GeometryReader { geo in
@@ -22,6 +26,7 @@ struct CategoryView: View {
         .task {
             await self.categories.loadIfNeeded()
             await self.words.loadIfNeeded()
+            await self.mastery.loadIfNeeded()
         }
     }
 
@@ -54,36 +59,101 @@ struct CategoryView: View {
     @ViewBuilder
     private var hero: some View {
         if let c = category {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                Text(c.emoji).font(.system(size: 56))
-                Text(c.nameZh)
-                    .font(.tujiH2)
-                    .foregroundStyle(.tujiInk)
-                Text(c.name)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                    .tracking(2)
-                if let desc = c.description, !desc.isEmpty {
-                    Text(desc)
-                        .font(.tujiBody)
-                        .foregroundStyle(.tujiInk2)
-                        .padding(.top, Space.s1)
+            ZStack(alignment: .leading) {
+                self.categoryArtwork(c)
+
+                LinearGradient(
+                    colors: [
+                        Color.tujiTealSoft.opacity(0.98),
+                        Color.tujiTealSoft.opacity(0.82),
+                        Color.tujiTealSoft.opacity(0.08)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+
+                VStack(alignment: .leading, spacing: Space.s3) {
+                    Text("主題分類")
+                        .font(.tujiOverline)
+                        .tracking(2)
+                        .foregroundStyle(.tujiTeal)
+
+                    Text(c.nameZh)
+                        .font(.tujiH2)
+                        .foregroundStyle(.tujiInk)
+
+                    Text(c.name)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .tracking(2)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("分類說明")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundStyle(.tujiInk3)
+
+                        Text(self.categoryDescription(c))
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk2)
+                            .lineLimit(3)
+                    }
+                    .padding(.top, Space.s2)
                 }
+                .padding(Space.s5)
+                .frame(maxWidth: 220, alignment: .leading)
             }
-            .padding(Space.s5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.xl))
+            .frame(maxWidth: .infinity)
+            .frame(height: 260)
+            .background(.tujiTealSoft)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
         } else {
             VStack(alignment: .leading, spacing: Space.s3) {
-                Text("📚").font(.system(size: 56))
+                Image(systemName: "square.grid.2x2.fill")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(.tujiTeal)
                 Text(self.id)
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
+                Text("分類說明")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(.tujiInk3)
+                Text("探索這個主題的常用單字")
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiInk2)
             }
             .padding(Space.s5)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.xl))
         }
+    }
+
+    @ViewBuilder
+    private func categoryArtwork(_ category: TujiCategory) -> some View {
+        if category.id == "kitchen" {
+            Image("category-kitchen-hero")
+                .resizable()
+                .scaledToFill()
+        } else if let url = category.imageURL {
+            LazyImage(url: url) { state in
+                if let image = state.image {
+                    image.resizable().scaledToFill()
+                } else {
+                    Color.tujiTealSoft
+                }
+            }
+            .pipeline(.shared)
+        } else {
+            Color.tujiTealSoft
+        }
+    }
+
+    private func categoryDescription(_ category: TujiCategory) -> String {
+        guard let description = category.description,
+              !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            return "探索與\(category.nameZh)相關的常用單字"
+        }
+        return description
     }
 
     private var gridHeader: some View {
@@ -121,7 +191,12 @@ struct CategoryView: View {
             ) {
                 ForEach(words) { word in
                     NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                        WordTile(word: word)
+                        WordTile(
+                            word: word,
+                            showMastery: true,
+                            masteryScore: self.mastery.score(for: word.id),
+                            nextReviewDate: self.mastery.nextReviewDate(for: word.id)
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -135,5 +210,6 @@ struct CategoryView: View {
         CategoryView(id: "kitchen")
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
+            .environment(MasteryStore.shared)
     }
 }

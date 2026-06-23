@@ -55,4 +55,11 @@ enum MasteryLevel: Int, CaseIterable {
         case .expert: .tujiGreen
         }
     }
+
+    /// De-emphasized colour for the 圖鑑 tile badge: only 精通 stands out in
+    /// green, every other tier is neutral grey. (The detail page keeps the
+    /// full-colour `color`.)
+    var tileBadgeColor: Color {
+        self == .expert ? .tujiGreen : .tujiInk3
+    }
 }

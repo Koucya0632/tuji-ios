@@ -71,18 +71,6 @@ struct WordTile: View {
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                     }
-
-                    // Next SRS review countdown — studied words only. Overdue
-                    // words are flagged in coral.
-                    if self.showMastery, let due = self.nextReviewDate {
-                        HStack(spacing: 3) {
-                            Image(systemName: "clock")
-                            Text(ReviewSchedule.countdownLabel(until: due))
-                        }
-                        .font(.tujiCaption)
-                        .foregroundStyle(ReviewSchedule.isOverdue(due) ? .tujiCoral : .tujiInk3)
-                        .lineLimit(1)
-                    }
                 }
                 .padding(Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -94,6 +82,31 @@ struct WordTile: View {
             RoundedRectangle(cornerRadius: Radius.lg)
                 .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
         )
+        // Bottom-right corner of the whole card (below the label).
+        .overlay(alignment: .bottomTrailing) {
+            if self.showMastery, let due = self.nextReviewDate {
+                self.countdownPill(due)
+                    .padding(Space.s2)
+            }
+        }
+    }
+
+    /// Next-review countdown pill for the tile's bottom-right corner. Neutral
+    /// grey on a white capsule (matches the de-emphasized badge palette and
+    /// stays legible over artwork).
+    private func countdownPill(_ date: Date) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: "clock")
+            Text(ReviewSchedule.countdownLabel(until: date))
+        }
+        .font(.system(size: 10, weight: .heavy))
+        .foregroundStyle(.tujiInk3)
+        .lineLimit(1)
+        .padding(.horizontal, Space.s2)
+        .padding(.vertical, 3)
+        .background(.tujiCard.opacity(0.95), in: .capsule)
+        .overlay(Capsule().stroke(.tujiInk4.opacity(0.4), lineWidth: 1))
+        .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
     }
 }
 

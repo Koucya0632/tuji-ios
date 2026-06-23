@@ -310,7 +310,6 @@ struct ProgressTabView: View {
 
     private struct CategoryStat: Identifiable {
         let id: String
-        let emoji: String
         let nameZh: String
         let learned: Int
         let total: Int
@@ -337,7 +336,6 @@ struct ProgressTabView: View {
                 guard let p = byId[c.id] else { return nil }
                 return CategoryStat(
                     id: c.id,
-                    emoji: c.emoji,
                     nameZh: c.nameZh,
                     learned: p.seen,
                     total: p.total
@@ -347,7 +345,6 @@ struct ProgressTabView: View {
         return prog.map { p in
             CategoryStat(
                 id: p.category,
-                emoji: "📚",
                 nameZh: p.category,
                 learned: p.seen,
                 total: p.total
@@ -386,7 +383,6 @@ struct ProgressTabView: View {
     private func categoryRow(_ stat: CategoryStat) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(spacing: Space.s2) {
-                Text(stat.emoji).font(.system(size: 18))
                 Text(stat.nameZh)
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(.tujiInk)
