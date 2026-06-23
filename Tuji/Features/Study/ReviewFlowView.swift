@@ -13,7 +13,12 @@ struct ReviewFlowView: View {
     @State private var coord: ReviewFlowCoordinator
     @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(SettingsStore.self) private var settings
     @State private var showExitConfirm = false
+    /// Latched when the user confirms leaving, so the reveal sheet stays down
+    /// through the pop instead of flashing back up when the confirm closes.
+    @State private var leaving = false
+    @State private var reportDraft: StudyReportDraft?
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -50,6 +55,18 @@ struct ReviewFlowView: View {
                             .foregroundStyle(.tujiInk2)
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button("報錯", systemImage: "exclamationmark.bubble") {
+                            self.captureReport()
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 17, weight: .heavy))
+                            .foregroundStyle(.tujiInk2)
+                            .frame(width: 36, height: 36)
+                    }
+                }
             }
         }
         .tujiPrompt(
@@ -57,11 +74,29 @@ struct ReviewFlowView: View {
             style: .confirmation,
             title: "要離開這次複習嗎？",
             message: "已答的進度會保留，未完成的字下次還會出現。",
-            primary: TujiPromptAction("先離開") { self.dismiss() },
+            primary: TujiPromptAction("先離開") {
+                // Drop the reveal sheet first (and keep it down), then leave.
+                self.leaving = true
+                self.dismiss()
+            },
             secondary: TujiPromptAction("繼續複習", role: .cancel) {}
         )
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
+        .fullScreenCover(item: self.$reportDraft) { draft in
+            StudyReportSheet(draft: draft)
+        }
+    }
+
+    private func captureReport() {
+        guard let item = self.coord.current else { return }
+        self.reportDraft = StudyReportDraft(
+            item: item,
+            mode: "review",
+            phase: self.coord.phase == .answer ? "answer" : "reveal",
+            selectedAnswer: self.coord.picked,
+            uiLang: self.settings.current.uiLang
+        )
     }
 
     private var flowSurface: some View {
@@ -103,7 +138,7 @@ struct ReviewFlowView: View {
             .sheet(isPresented: Binding(
                 get: {
                     self.coord.phase == .review && !self.coord.finished
-                        && !self.showExitConfirm
+                        && !self.showExitConfirm && !self.leaving
                 },
                 set: { _ in }
             )) {

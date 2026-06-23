@@ -26,6 +26,7 @@ enum Endpoint {
     case studyQueue(mode: String, limit: Int, new: Int, categories: [String])
     case studyAnswer
     case studyStats
+    case studyReports
 
     // MARK: - Public
 
@@ -58,6 +59,7 @@ enum Endpoint {
         case .studyQueue: "/api/study/queue"
         case .studyAnswer: "/api/study/answer"
         case .studyStats: "/api/study/stats"
+        case .studyReports: "/api/study/reports"
         case .search: "/api/search"
         case .events: "/api/events"
         case .words: "/api/words"
@@ -103,7 +105,7 @@ enum Endpoint {
         switch self {
         case .words, .word, .categories, .search:
             .useProtocolCachePolicy
-        case .studyAnswer, .events, .usersSync, .usersMastery,
+        case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete:
             .reloadIgnoringLocalCacheData
         default:
