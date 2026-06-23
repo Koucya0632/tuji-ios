@@ -97,6 +97,12 @@ jobs:
           # 一次性：base64 -i Config/Secrets.xcconfig | pbcopy → GitHub Secrets
           echo "${{ secrets.SECRETS_XCCONFIG_B64 }}" | base64 -d > Config/Secrets.xcconfig
 
+      - name: Verify Crashlytics configuration
+        run: |
+          test -f Tuji/GoogleService-Info.plist
+          test "$(plutil -extract BUNDLE_ID raw Tuji/GoogleService-Info.plist)" = "app.tuji.ios"
+          test "$(plutil -extract IS_ANALYTICS_ENABLED raw Tuji/GoogleService-Info.plist)" = "false"
+
       - name: Bump version + build number
         run: |
           sed -i '' "s/^CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = ${{ steps.meta.outputs.build }}/" \

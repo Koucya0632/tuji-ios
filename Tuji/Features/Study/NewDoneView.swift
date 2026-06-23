@@ -10,6 +10,7 @@ struct NewDoneView: View {
     let onFinish: () -> Void
 
     @Environment(MasteryStore.self) private var mastery
+    @Environment(StudyStatsStore.self) private var studyStats
 
     var body: some View {
         ScrollView {
@@ -21,11 +22,13 @@ struct NewDoneView: View {
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s8)
         }
-        // Learning new words writes mastery (RecognizeView's fire-and-forget
-        // POST). Bust the cache + refetch so the just-learned words leave 未學
-        // on the 圖鑑/詳情 the user returns to, instead of waiting for relaunch.
+        // Learning new words writes mastery + creates user_cards (the deferred
+        // recognize POSTs fired as each word cleared Spell). Bust both caches so
+        // the just-learned words leave 未學 on the 圖鑑/詳情, and 今日目標 on Today
+        // reflects this session's completions instead of waiting out the 30s TTL.
         .task {
             self.mastery.invalidate()
+            self.studyStats.invalidate()
             await self.mastery.reload()
         }
         .safeAreaInset(edge: .bottom) {

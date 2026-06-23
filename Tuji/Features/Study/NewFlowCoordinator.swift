@@ -1,7 +1,10 @@
 // State machine for the "learn new words" three-step micro lesson
-// (§III.P). Step 1 Recognize is the *only* step that writes SRS via
-// POST /api/study/answer; Step 2 Identify (MCQ) and Step 3 Spell are
-// pure practice — wrong answers re-queue, no backend write.
+// (§III.P). Step 1 Recognize captures the SRS rating but defers the write;
+// the POST /api/study/answer fires per word when it clears Step 3 Spell, so
+// `今日目標` (todayNew = user_cards created today) counts only words that
+// completed all 3 parts. Step 2 Identify (MCQ) and Step 3 Spell are pure
+// practice — wrong answers re-queue, no extra backend write. A word abandoned
+// before clearing Spell is never written (no SRS row, no goal credit).
 
 import OSLog
 import Observation
@@ -45,6 +48,10 @@ final class NewFlowCoordinator {
     /// Surface to NewFlowView so it can present WordPeek for wrong answers.
     var peek: StudyQueueWord?
 
+    /// Recognize-step ratings held back until the word clears Step 3 Spell —
+    /// keyed by card id. See commitLearned(_:).
+    private var pendingRatings: [Int: SRSRating] = [:]
+
     private let log = Logger(subsystem: "app.tuji.ios", category: "new-flow")
 
     init(queue: [StudyQueueItem]) {
@@ -71,16 +78,10 @@ final class NewFlowCoordinator {
         guard !self.recLocked, let item = self.recognizeItem else { return }
         self.recLocked = true
         self.recRating = rating
-        // Fire and forget the SRS write — UI should not block on it. The
-        // backend tolerates duplicate writes if the user retries.
-        let payload = StudyAnswerPayload(
-            cardId: item.card.id,
-            rating: rating,
-            activity: "new_recognize"
-        )
-        Task.detached {
-            await APIClient.shared.fireAndForget(.studyAnswer, body: payload)
-        }
+        // Hold the rating back; the SRS write fires only once this word clears
+        // Step 3 Spell (see commitLearned). This keeps `今日目標` counting full
+        // 3-part completions instead of bare recognize taps.
+        self.pendingRatings[item.card.id] = rating
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         try? await Task.sleep(for: .milliseconds(450))
         self.recRating = nil
@@ -89,6 +90,22 @@ final class NewFlowCoordinator {
             self.recIdx += 1
         } else {
             self.step = .identify
+        }
+    }
+
+    /// Flush the deferred recognize SRS write for a word that has now cleared
+    /// all 3 parts (called when it leaves the Spell queue). Fire-and-forget —
+    /// UI shouldn't block on it. Pops the rating so each word writes exactly
+    /// once even if it was re-queued earlier; the backend tolerates duplicates.
+    private func commitLearned(_ item: StudyQueueItem) {
+        guard let rating = self.pendingRatings.removeValue(forKey: item.card.id) else { return }
+        let payload = StudyAnswerPayload(
+            cardId: item.card.id,
+            rating: rating,
+            activity: "new_recognize"
+        )
+        Task.detached {
+            await APIClient.shared.fireAndForget(.studyAnswer, body: payload)
         }
     }
 
@@ -189,6 +206,9 @@ final class NewFlowCoordinator {
                 self.spJudge = nil
                 self.spAttempt += 1
                 self.spDone += 1
+                // This word just cleared all 3 parts — flush its held-back
+                // recognize SRS write now (and only now).
+                self.commitLearned(curr)
                 if !self.spQueue.isEmpty {
                     self.spQueue.removeFirst()
                 }

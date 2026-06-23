@@ -15,7 +15,8 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, Sendable {
     )
         -> Bool
     {
-        true
+        CrashReporting.configure()
+        return true
     }
 
     func application(

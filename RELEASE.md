@@ -108,3 +108,16 @@ bundle exec fastlane beta
 - **沒先建 App 紀錄**（步驟 3）→ pilot 上傳 404。
 - **改了 Bundle ID** → 要重跑 bootstrap 產新 profile，並更新 `fastlane/Matchfile`、`Fastfile` 的 `APP_IDENTIFIERS`。
 - **`SECRETS_XCCONFIG_B64` 還是舊的 stub Team ID** → 簽章 team 對不上；更新成含 `TH28V27744` 的版本。
+- **缺少 `Tuji/GoogleService-Info.plist`** → archive 會刻意失敗；依 `CRASH_REPORTING.md` 從 Firebase Console 下載 production plist。
+
+## Crashlytics 發版檢查
+
+首次接入以及每次更新 Firebase SDK 後：
+
+1. 用 `Tuji-TestFlight` configuration 執行 `-CrashlyticsTestNonFatal`。
+2. 斷開 debugger 後執行 `-CrashlyticsTestCrash`，再正常開啟一次 App。
+3. Firebase Console 確認 TestFlight build、匿名事件與可讀 Swift 行號。
+4. 確認沒有 Missing dSYM；CI 的 `dSYM-<tag>` artifact 保留作人工補傳。
+5. 移除測試 launch argument，再發正式 tag。
+
+完整資料邊界、補傳與事故處理見 [`CRASH_REPORTING.md`](CRASH_REPORTING.md)。

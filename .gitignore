@@ -92,6 +92,9 @@ GoogleService-Info.plist
 !Config/TestFlight.xcconfig
 !Config/Release.xcconfig
 !Config/Version.xcconfig
+# Firebase's Apple configuration contains client identifiers, not a server
+# secret. The production file is reviewed and committed for reproducible builds.
+!Tuji/GoogleService-Info.plist
 
 
 # ---------- 編譯器 / IDE 雜檔 ----------
