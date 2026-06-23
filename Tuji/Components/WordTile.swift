@@ -56,12 +56,6 @@ struct WordTile: View {
                         .padding(Space.s2)
                 }
             }
-            .overlay(alignment: .bottomTrailing) {
-                if self.showMastery, let due = self.nextReviewDate {
-                    self.countdownPill(due)
-                        .padding(Space.s2)
-                }
-            }
 
             if self.showLabel {
                 VStack(alignment: .leading, spacing: 2) {
@@ -88,6 +82,13 @@ struct WordTile: View {
             RoundedRectangle(cornerRadius: Radius.lg)
                 .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
         )
+        // Bottom-right corner of the whole card (below the label).
+        .overlay(alignment: .bottomTrailing) {
+            if self.showMastery, let due = self.nextReviewDate {
+                self.countdownPill(due)
+                    .padding(Space.s2)
+            }
+        }
     }
 
     /// Next-review countdown pill for the tile's bottom-right corner. Neutral
