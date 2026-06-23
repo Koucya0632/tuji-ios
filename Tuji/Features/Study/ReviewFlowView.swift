@@ -13,7 +13,12 @@ struct ReviewFlowView: View {
     @State private var coord: ReviewFlowCoordinator
     @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(SettingsStore.self) private var settings
     @State private var showExitConfirm = false
+    /// Latched when the user confirms leaving, so the reveal sheet stays down
+    /// through the pop instead of flashing back up when the confirm closes.
+    @State private var leaving = false
+    @State private var reportDraft: StudyReportDraft?
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -50,6 +55,18 @@ struct ReviewFlowView: View {
                             .foregroundStyle(.tujiInk2)
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button("報錯", systemImage: "exclamationmark.bubble") {
+                            self.captureReport()
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 17, weight: .heavy))
+                            .foregroundStyle(.tujiInk2)
+                            .frame(width: 36, height: 36)
+                    }
+                }
             }
         }
         .tujiPrompt(
@@ -57,11 +74,29 @@ struct ReviewFlowView: View {
             style: .confirmation,
             title: "要離開這次複習嗎？",
             message: "已答的進度會保留，未完成的字下次還會出現。",
-            primary: TujiPromptAction("先離開") { self.dismiss() },
+            primary: TujiPromptAction("先離開") {
+                // Drop the reveal sheet first (and keep it down), then leave.
+                self.leaving = true
+                self.dismiss()
+            },
             secondary: TujiPromptAction("繼續複習", role: .cancel) {}
         )
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
+        .fullScreenCover(item: self.$reportDraft) { draft in
+            StudyReportSheet(draft: draft)
+        }
+    }
+
+    private func captureReport() {
+        guard let item = self.coord.current else { return }
+        self.reportDraft = StudyReportDraft(
+            item: item,
+            mode: "review",
+            phase: self.coord.phase == .answer ? "answer" : "reveal",
+            selectedAnswer: self.coord.picked,
+            uiLang: self.settings.current.uiLang
+        )
     }
 
     private var flowSurface: some View {
@@ -94,8 +129,17 @@ struct ReviewFlowView: View {
             // as a detent sheet, mirroring the new-word peek sheet. Driven by
             // phase: rating advances the queue → phase flips to .answer → the
             // sheet dismisses on its own. Not swipe-dismissable — you must rate.
+            //
+            // Hide it while the exit-confirm prompt is up: the rest detent
+            // leaves the toolbar ✕ tappable (presentationBackgroundInteraction),
+            // so tapping it during reveal would otherwise stack the confirm
+            // behind this sheet and bury both sets of buttons. The sheet
+            // returns if the user taps 繼續複習.
             .sheet(isPresented: Binding(
-                get: { self.coord.phase == .review && !self.coord.finished },
+                get: {
+                    self.coord.phase == .review && !self.coord.finished
+                        && !self.showExitConfirm && !self.leaving
+                },
                 set: { _ in }
             )) {
                 if let item = self.coord.current {
@@ -132,7 +176,7 @@ struct ReviewFlowView: View {
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 Spacer()
-                Text("\(self.coord.index + 1) / \(self.coord.queue.count)")
+                Text("\(self.coord.passedCount) / \(self.coord.originalCount)")
                     .font(.system(size: 13, weight: .heavy))
                     .foregroundStyle(.tujiInk3)
             }

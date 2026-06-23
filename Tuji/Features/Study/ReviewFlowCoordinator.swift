@@ -19,7 +19,12 @@ enum ReviewPhase: Hashable {
 @MainActor
 @Observable
 final class ReviewFlowCoordinator {
-    let queue: [StudyQueueItem]
+    // Mutable so a wrong first answer can requeue the word once (appended to
+    // the tail for an in-session re-test, mirroring NewFlow).
+    var queue: [StudyQueueItem]
+    /// Distinct word count at start — the stable progress denominator so
+    /// requeued re-tests don't inflate it.
+    let originalCount: Int
     var index: Int = 0
     var phase: ReviewPhase = .answer
     var picked: String?
@@ -38,11 +43,16 @@ final class ReviewFlowCoordinator {
     /// Highest streak milestone the server flagged during this session.
     /// CompleteView promotes to MilestoneView when non-nil.
     var milestone: Milestone?
+    /// Words already requeued once — enforces "one extra re-test per word".
+    var retriedIds: Set<String> = []
+    /// Distinct words fully done (won't reappear). Drives the progress bar.
+    var passedCount: Int = 0
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
+        self.originalCount = queue.count
     }
 
     var current: StudyQueueItem? {
@@ -51,13 +61,12 @@ final class ReviewFlowCoordinator {
     }
 
     var progress: Double {
-        guard !self.queue.isEmpty else { return 0 }
-        // Each item contributes 1/N when answered + 1/N when rated. We
-        // weight phase contribution to 0.5 so the bar moves visibly
-        // after pick and again after rate.
-        let perItem = 1.0 / Double(self.queue.count)
-        let phaseBoost = self.phase == .review ? perItem * 0.5 : 0
-        return Double(self.index) * perItem + phaseBoost
+        guard self.originalCount > 0 else { return 0 }
+        // Based on distinct words completed (passedCount) so requeued re-tests
+        // never push the bar backward. A half-step while revealing keeps it
+        // feeling responsive.
+        let boost = self.phase == .review ? 0.5 : 0
+        return min(1, (Double(self.passedCount) + boost) / Double(self.originalCount))
     }
 
     /// Computed once per item enter. Used to highlight the "建議" rating.
@@ -108,11 +117,14 @@ final class ReviewFlowCoordinator {
                 .studyAnswer,
                 body: payload
             )
-            self.answered.append(curr)
+            // One row per word on CompleteView, even when re-tested twice.
+            if !self.answered.contains(where: { $0.word.id == curr.word.id }) {
+                self.answered.append(curr)
+            }
             if let m = resp.mastery {
-                // Keep the first `before` but the latest `after` if a word is
-                // somehow rated twice in one session (wrong-answer requeue):
-                // merge so the row shows the full session swing.
+                // Keep the first `before` but the latest `after` when a word is
+                // rated twice in one session (wrong-answer re-test): merge so
+                // the row shows the full session swing.
                 if let existing = self.masteryByWord[curr.word.id] {
                     self.masteryByWord[curr.word.id] = MasteryDelta(
                         before: existing.before,
@@ -130,6 +142,16 @@ final class ReviewFlowCoordinator {
                 self.milestone = m
             }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            // Wrong first attempt → requeue the word once for an in-session
+            // re-test (appended to the tail). The re-test itself never requeues
+            // again, and a correct first answer passes straight through.
+            let isRetest = self.retriedIds.contains(curr.word.id)
+            if !self.wasCorrect, !isRetest {
+                self.retriedIds.insert(curr.word.id)
+                self.queue.append(curr)
+            } else {
+                self.passedCount += 1
+            }
             try? await Task.sleep(for: .milliseconds(450))
             self.advance()
         } catch {

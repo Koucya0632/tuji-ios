@@ -13,7 +13,9 @@ struct NewFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(WordsStore.self) private var words
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(SettingsStore.self) private var settings
     @State private var showExitConfirm = false
+    @State private var reportDraft: StudyReportDraft?
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -40,6 +42,20 @@ struct NewFlowView: View {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .heavy))
                         .foregroundStyle(.tujiInk2)
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if self.coord.step != .done {
+                    Menu {
+                        Button("報錯", systemImage: "exclamationmark.bubble") {
+                            self.captureReport()
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 17, weight: .heavy))
+                            .foregroundStyle(.tujiInk2)
+                            .frame(width: 36, height: 36)
+                    }
                 }
             }
         }
@@ -72,10 +88,48 @@ struct NewFlowView: View {
         }
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
+        .fullScreenCover(item: self.$reportDraft) { draft in
+            StudyReportSheet(draft: draft)
+        }
     }
 
     private func cardWord(for id: String) -> CardWord? {
         self.words.find(id: id)
+    }
+
+    private func captureReport() {
+        let item: StudyQueueItem?
+        let phase: String
+        let answer: String?
+        let shown: String?
+        switch self.coord.step {
+        case .recognize:
+            item = self.coord.recognizeItem
+            phase = "recognize"
+            answer = self.coord.recRating?.rawValue
+            shown = nil
+        case .identify:
+            item = self.coord.identifyItem
+            phase = "identify"
+            answer = self.coord.idPicked
+            shown = nil
+        case .spell:
+            item = self.coord.spellItem
+            phase = "spell"
+            answer = self.coord.spJudge == .yes ? "yes" : self.coord.spJudge == .no ? "no" : nil
+            shown = item.map { self.coord.spellShown(for: $0) }
+        case .done:
+            return
+        }
+        guard let item else { return }
+        self.reportDraft = StudyReportDraft(
+            item: item,
+            mode: "new",
+            phase: phase,
+            selectedAnswer: answer,
+            uiLang: self.settings.current.uiLang,
+            displayedSpelling: shown
+        )
     }
 
     private var header: some View {
