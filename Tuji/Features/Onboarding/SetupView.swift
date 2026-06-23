@@ -161,16 +161,12 @@ struct SetupView: View {
 
     private func categoryTile(category: TujiCategory, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                Text(category.emoji)
-                    .font(.system(size: 22))
-                Text(category.nameZh)
-                    .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .padding(.vertical, Space.s3)
+            Text(category.nameZh)
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.vertical, Space.s5)
             .frame(maxWidth: .infinity)
             .background(
                 selected ? Color.tujiTealSoft : .tujiCard,

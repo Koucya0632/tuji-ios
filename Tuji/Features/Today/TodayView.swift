@@ -394,11 +394,11 @@ struct TodayView: View {
                         .buttonStyle(.plain)
                     }
                     LazyVGrid(
-                        columns: [
-                            GridItem(.flexible(), spacing: Space.s3),
-                            GridItem(.flexible(), spacing: Space.s3)
-                        ],
-                        spacing: Space.s3
+                        columns: Array(
+                            repeating: GridItem(.flexible(), spacing: Space.s2),
+                            count: 3
+                        ),
+                        spacing: Space.s2
                     ) {
                         ForEach(tiles, id: \.id) { c in
                             NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
@@ -474,17 +474,19 @@ private struct CategoryTile: View {
     let wordCount: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            Text(self.category.emoji).font(.system(size: 36))
+        VStack(spacing: 3) {
             Text(self.category.nameZh)
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: 14, weight: .heavy))
                 .foregroundStyle(.tujiInk)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text("\(self.wordCount) 字")
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiInk3)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.s4)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Space.s2)
+        .padding(.vertical, Space.s3)
         .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg)

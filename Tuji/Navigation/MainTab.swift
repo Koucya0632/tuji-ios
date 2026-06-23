@@ -7,7 +7,7 @@ enum MainTab: Hashable, CaseIterable {
 
     var titleZh: String {
         switch self {
-        case .today: "今日"
+        case .today: "主頁"
         case .cards: "圖鑑"
         case .progress: "進度"
         case .me: "我的"

@@ -1,9 +1,7 @@
 // 2-column grid of every word, filterable by category chip.
 //
-// Chips show the localized zh name from CategoriesStore. When a specific
-// chip is selected (not 全部) we also surface a "前往主題詳細頁 →" CTA so
-// the user can jump to the dedicated CategoryView landing page from the
-// list view.
+// Chips show the localized zh name from CategoriesStore. Selecting a chip
+// filters the grid in place without adding a separate category-page CTA.
 
 import SwiftUI
 
@@ -23,9 +21,6 @@ struct CardsListView: View {
         VStack(spacing: 0) {
             self.header
             self.chipRow
-            if self.selectedCategory != nil {
-                self.categoryDetailCTA
-            }
             self.content
         }
         .background(.tujiBg)
@@ -76,32 +71,6 @@ struct CardsListView: View {
             .padding(.horizontal, Space.s6)
         }
         .padding(.bottom, Space.s3)
-    }
-
-    @ViewBuilder
-    private var categoryDetailCTA: some View {
-        if let selectedId = selectedCategory,
-           let c = categories.find(id: selectedId)
-        {
-            NavigationLink(value: NavRoute.categoryDetail(id: selectedId)) {
-                HStack(spacing: Space.s2) {
-                    Text(c.emoji)
-                    Text("前往「\(c.nameZh)」主題頁")
-                        .foregroundStyle(.tujiTeal)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(.tujiTeal)
-                }
-                .font(.system(size: 14, weight: .heavy))
-                .padding(.horizontal, Space.s4)
-                .padding(.vertical, Space.s3)
-                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s3)
-        }
     }
 
     @ViewBuilder
@@ -205,7 +174,7 @@ struct CardsListView: View {
         if known.isEmpty {
             // Fallback: synthesize bare metadata from word-derived ids
             return self.store.categories.map {
-                TujiCategory(id: $0, name: $0, nameZh: $0, emoji: "📚", description: nil, color: nil, imageUrl: nil)
+                TujiCategory(id: $0, name: $0, nameZh: $0, emoji: "", description: nil, color: nil, imageUrl: nil)
             }
         }
         return known
