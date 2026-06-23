@@ -78,21 +78,27 @@ struct RootView: View {
             SplashView()
 
         case .signedOut:
-            if onboarding.introDone {
+            if onboarding.learningDirection == nil {
+                LearningDirectionOnboardingView()
+            } else if onboarding.introDone {
                 WelcomeView()
             } else {
                 OnboardingFlow()
             }
 
         case .guest:
-            if contentReady {
+            if onboarding.learningDirection == nil {
+                LearningDirectionOnboardingView()
+            } else if contentReady {
                 MainTabsView(user: nil)
             } else {
                 SplashView()
             }
 
         case let .signedIn(user):
-            if !onboarding.setupDone(for: user.id) {
+            if onboarding.learningDirection == nil {
+                LearningDirectionOnboardingView()
+            } else if !onboarding.setupDone(for: user.id) {
                 SetupView(userId: user.id, onDone: {})
             } else if contentReady {
                 MainTabsView(user: user)
@@ -105,10 +111,12 @@ struct RootView: View {
     private var stateKey: String {
         switch auth.state {
         case .checking: "checking"
-        case .signedOut: "signedOut-\(onboarding.introDone)"
-        case .guest: "guest-ready\(contentReady)"
+        case .signedOut:
+            "signedOut-\(onboarding.learningDirection?.rawValue ?? "unselected")-\(onboarding.introDone)"
+        case .guest:
+            "guest-\(onboarding.learningDirection?.rawValue ?? "unselected")-ready\(contentReady)"
         case let .signedIn(u):
-            "signedIn-\(u.id)-setup\(onboarding.setupDone(for: u.id))-ready\(contentReady)"
+            "signedIn-\(u.id)-\(onboarding.learningDirection?.rawValue ?? "unselected")-setup\(onboarding.setupDone(for: u.id))-ready\(contentReady)"
         }
     }
 }

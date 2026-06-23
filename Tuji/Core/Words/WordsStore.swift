@@ -45,13 +45,24 @@ final class WordsStore {
             self.loaded = true
         }
         do {
-            let resp: WordsListResponse = try await APIClient.shared.get(.words)
+            let settings = SettingsStore.shared.current
+            let resp: WordsListResponse = try await APIClient.shared.get(
+                .words(
+                    lang: settings.uiLang,
+                    learning: settings.learningDirection.rawValue
+                )
+            )
             self.words = resp.words
             self.log.info("loaded \(resp.total, privacy: .public) words")
         } catch {
             self.lastError = error
             self.log.error("words load failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    func invalidate() {
+        self.words = []
+        self.loaded = false
     }
 
     // MARK: - Filters

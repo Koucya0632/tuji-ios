@@ -12,6 +12,8 @@ struct StudyQueueWord: Decodable, Hashable, Identifiable {
     let chinese: String
     let imageUrl: String
     let pronunciation: String
+    let reading: String?
+    let targetLanguage: String?
     let category: String
 
     var imageURL: URL? {

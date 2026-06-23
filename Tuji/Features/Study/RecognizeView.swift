@@ -40,6 +40,14 @@ struct RecognizeView: View {
                         .font(.tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
+                if let reading = self.item.word.reading,
+                   !reading.isEmpty,
+                   reading != self.item.word.pronunciation
+                {
+                    Text(reading)
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk3)
+                }
                 if self.settings.current.showZh {
                     Text(self.item.word.chinese)
                         .font(.tujiBody)

@@ -13,9 +13,23 @@ final class OnboardingState {
     static let shared = OnboardingState()
 
     private let introKey = "tuji.onboarding.introDone"
+    private let learningDirectionKey = "tuji.learning.direction"
 
     var introDone: Bool {
         didSet { UserDefaults.standard.set(introDone, forKey: introKey) }
+    }
+
+    var learningDirection: LearningDirection? {
+        didSet {
+            if let learningDirection {
+                UserDefaults.standard.set(
+                    learningDirection.rawValue,
+                    forKey: self.learningDirectionKey
+                )
+            } else {
+                UserDefaults.standard.removeObject(forKey: self.learningDirectionKey)
+            }
+        }
     }
 
     /// Per-user: ".setupDone.<uuid>". Reading via setupDone(for:) avoids
@@ -24,6 +38,8 @@ final class OnboardingState {
 
     private init() {
         introDone = UserDefaults.standard.bool(forKey: introKey)
+        learningDirection = UserDefaults.standard.string(forKey: learningDirectionKey)
+            .flatMap(LearningDirection.init(rawValue:))
     }
 
     func setupDone(for userId: UUID) -> Bool {

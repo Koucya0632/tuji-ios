@@ -8,6 +8,86 @@
 
 import SwiftUI
 
+struct LearningDirectionOnboardingView: View {
+    @Environment(OnboardingState.self) private var onboarding
+    @Environment(SettingsStore.self) private var settings
+    @Environment(AuthService.self) private var auth
+    @Environment(WordsStore.self) private var words
+    @Environment(CategoriesStore.self) private var categories
+
+    var body: some View {
+        ZStack {
+            Color.tujiBg.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: Space.s6) {
+                Spacer()
+                MascotFigure(pose: .wave, size: 112)
+                    .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: Space.s2) {
+                    Text("想學哪一種語言？")
+                        .font(.tujiH2)
+                        .foregroundStyle(.tujiInk)
+                    Text("之後可以隨時在設定中切換，兩種語言的學習進度會分開保留。")
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk3)
+                }
+                VStack(spacing: Space.s3) {
+                    self.option(.zhEn, subtitle: "圖片、中文提示與英文發音")
+                    self.option(.zhJa, subtitle: "圖片、中文提示與日文發音")
+                }
+                Spacer()
+            }
+            .padding(.horizontal, Space.s6)
+            .padding(.vertical, Space.s8)
+        }
+    }
+
+    private func option(_ direction: LearningDirection, subtitle: String) -> some View {
+        Button {
+            self.onboarding.learningDirection = direction
+            let shouldPersist: Bool
+            if case .signedIn = self.auth.state {
+                shouldPersist = true
+            } else {
+                shouldPersist = false
+            }
+            self.settings.setLearningDirection(direction, persist: shouldPersist)
+            self.words.invalidate()
+            self.categories.invalidate()
+            Task {
+                async let wordsLoad: Void = self.words.reload()
+                async let categoriesLoad: Void = self.categories.reload()
+                _ = await (wordsLoad, categoriesLoad)
+            }
+        } label: {
+            HStack(spacing: Space.s4) {
+                Text(direction == .zhJa ? "日" : "EN")
+                    .font(.system(size: 18, weight: .heavy))
+                    .foregroundStyle(.tujiTeal)
+                    .frame(width: 48, height: 48)
+                    .background(.tujiTealSoft, in: .circle)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(direction.title)
+                        .font(.tujiH4)
+                        .foregroundStyle(.tujiInk)
+                    Text(subtitle)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tujiInk4)
+            }
+            .padding(Space.s4)
+            .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.xl)
+                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct OnboardingFlow: View {
     @Environment(OnboardingState.self) private var state
 
@@ -17,7 +97,7 @@ struct OnboardingFlow: View {
         Page(
             artwork: .grid,
             mascot: .face,
-            title: "用圖學英文",
+            title: "用圖學語言",
             lines: ["看一張圖，記住一個字", "生活中看到 → 立刻想起來"]
         ),
         Page(

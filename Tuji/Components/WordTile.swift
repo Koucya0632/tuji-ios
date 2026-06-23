@@ -65,6 +65,13 @@ struct WordTile: View {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.tujiInk)
 
+                    if let reading = self.word.reading, !reading.isEmpty {
+                        Text(reading)
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk3)
+                            .lineLimit(1)
+                    }
+
                     if self.settings.current.showZh {
                         Text(self.word.chinese)
                             .font(.tujiCaption)
@@ -119,7 +126,7 @@ struct WordTile: View {
         category: "kitchen",
         pronunciation: "/təˈmeɪtoʊ/"
     )
-    return ScrollView {
+    ScrollView {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
             ForEach(0..<4, id: \.self) { _ in
                 WordTile(word: sample)

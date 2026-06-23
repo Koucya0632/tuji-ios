@@ -18,6 +18,7 @@ struct SetupView: View {
     @Environment(OnboardingState.self) private var onboarding
     @Environment(CategoriesStore.self) private var categories
     @Environment(AuthService.self) private var auth
+    @Environment(SettingsStore.self) private var settingsStore
 
     @State private var topicIds: Set<String> = []
     @State private var dailyGoal: Int = 10
@@ -209,6 +210,7 @@ struct SetupView: View {
                 showZh: true,
                 studyCategories: topicIds.sorted(),
                 studyDecks: [],
+                learningDirection: onboarding.learningDirection ?? settingsStore.current.learningDirection,
                 uiLang: "zh-Hant",
                 fontSize: "md"
             )

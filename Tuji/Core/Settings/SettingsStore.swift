@@ -45,8 +45,22 @@ final class SettingsStore {
         defer { self.loading = false }
         do {
             let resp: UserSettingsResponse = try await APIClient.shared.get(.usersSettings)
+            let directionChanged =
+                self.current.learningDirection != resp.settings.learningDirection
             self.current = resp.settings
+            OnboardingState.shared.learningDirection = resp.settings.learningDirection
             self.hasLoaded = true
+            if directionChanged {
+                WordsStore.shared.invalidate()
+                MasteryStore.shared.invalidate()
+                ProgressStore.shared.invalidate()
+                StudyStatsStore.shared.invalidate()
+                async let wordsLoad: Void = WordsStore.shared.reload()
+                async let masteryLoad: Void = MasteryStore.shared.reload()
+                async let progressLoad: Void = ProgressStore.shared.reload()
+                async let statsLoad: Void = StudyStatsStore.shared.reload()
+                _ = await (wordsLoad, masteryLoad, progressLoad, statsLoad)
+            }
             self.log.info("settings loaded")
         } catch {
             self.lastError = error
@@ -66,6 +80,17 @@ final class SettingsStore {
         guard next != self.current else { return }
         self.current = next
         self.scheduleSave()
+    }
+
+    /// Applies the learning target immediately. First-launch and guest flows
+    /// use `persist: false`; signed-in settings changes sync to the server.
+    func setLearningDirection(_ direction: LearningDirection, persist: Bool) {
+        guard self.current.learningDirection != direction else { return }
+        self.current.learningDirection = direction
+        UserDefaults.standard.set(direction.rawValue, forKey: "tuji.learning.direction")
+        if persist {
+            self.scheduleSave()
+        }
     }
 
     /// Two-way binding for SwiftUI controls (e.g. Toggle). Reading returns the

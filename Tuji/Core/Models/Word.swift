@@ -16,6 +16,28 @@ struct CardWord: Codable, Identifiable, Hashable {
     let imageUrl: String
     let category: String
     let pronunciation: String
+    let reading: String?
+    let targetLanguage: String?
+
+    init(
+        id: String,
+        word: String,
+        chinese: String,
+        imageUrl: String,
+        category: String,
+        pronunciation: String,
+        reading: String? = nil,
+        targetLanguage: String? = nil
+    ) {
+        self.id = id
+        self.word = word
+        self.chinese = chinese
+        self.imageUrl = imageUrl
+        self.category = category
+        self.pronunciation = pronunciation
+        self.reading = reading
+        self.targetLanguage = targetLanguage
+    }
 
     var imageURL: URL? {
         URL(string: imageUrl)
@@ -39,6 +61,8 @@ struct Word: Codable, Identifiable, Hashable {
     let category: String
     let partOfSpeech: String?
     let pronunciation: String?
+    let reading: String?
+    let targetLanguage: String?
     let audioUrl: String?
     let imageUrl: String
     let cefrLevel: String?

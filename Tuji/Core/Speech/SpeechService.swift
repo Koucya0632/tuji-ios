@@ -14,9 +14,10 @@ import OSLog
 
 @MainActor
 final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
-    enum Accent: String, CaseIterable {
+    enum Voice: String, CaseIterable {
         case us = "en-US"
         case uk = "en-GB"
+        case japanese = "ja-JP"
     }
 
     static let shared = SpeechService()
@@ -31,15 +32,15 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
         return synth
     }()
 
-    func speak(_ text: String, accent: Accent = .us) {
+    func speak(_ text: String, voice: Voice = .us) {
         self.synth.stopSpeaking(at: .immediate)
         self.activateSession()
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: accent.rawValue)
+        utterance.voice = AVSpeechSynthesisVoice(language: voice.rawValue)
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.pitchMultiplier = 1.0
         self.synth.speak(utterance)
-        self.log.info("speak \(text, privacy: .public) accent=\(accent.rawValue, privacy: .public)")
+        self.log.info("speak \(text, privacy: .public) voice=\(voice.rawValue, privacy: .public)")
     }
 
     func stop() {

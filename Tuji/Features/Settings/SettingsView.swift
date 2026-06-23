@@ -74,6 +74,15 @@ struct SettingsView: View {
         List {
             Section("學習") {
                 NavigationLink {
+                    LearningDirectionPickerView()
+                } label: {
+                    self.row(
+                        label: "學習語言",
+                        value: self.store.current.learningDirection.shortTitle,
+                        subtitle: "英文與日文的學習進度會分開保留"
+                    )
+                }
+                NavigationLink {
                     DailyGoalPickerView()
                 } label: {
                     self.row(
@@ -100,10 +109,12 @@ struct SettingsView: View {
                 } label: {
                     self.row(label: "語言", value: self.langLabel)
                 }
-                NavigationLink {
-                    AccentPickerView()
-                } label: {
-                    self.row(label: "發音口音", value: self.accentLabel)
+                if self.store.current.learningDirection == .zhEn {
+                    NavigationLink {
+                        AccentPickerView()
+                    } label: {
+                        self.row(label: "發音口音", value: self.accentLabel)
+                    }
                 }
             }
             Section("帳號") {
@@ -201,6 +212,80 @@ struct SettingsView: View {
             await self.auth.signOut()
         } catch {
             self.deleteError = error
+        }
+    }
+}
+
+private struct LearningDirectionPickerView: View {
+    @Environment(SettingsStore.self) private var settings
+    @Environment(OnboardingState.self) private var onboarding
+    @Environment(WordsStore.self) private var words
+    @Environment(CategoriesStore.self) private var categories
+    @Environment(ProgressStore.self) private var progress
+    @Environment(MasteryStore.self) private var mastery
+    @Environment(StudyStatsStore.self) private var studyStats
+    @Environment(AuthService.self) private var auth
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(LearningDirection.allCases, id: \.rawValue) { direction in
+                    Button {
+                        self.select(direction)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(direction.title)
+                                    .foregroundStyle(.tujiInk)
+                                Text(direction == .zhJa ? "日文詞條、假名與日文發音" : "英文詞條與美式／英式發音")
+                                    .font(.tujiCaption)
+                                    .foregroundStyle(.tujiInk3)
+                            }
+                            Spacer()
+                            if self.settings.current.learningDirection == direction {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.tujiTeal)
+                            }
+                        }
+                    }
+                }
+            } footer: {
+                Text("切換後會重新載入詞庫與進度，不會刪除另一種語言的學習紀錄。")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(.tujiBg)
+        .navigationTitle("學習語言")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func select(_ direction: LearningDirection) {
+        guard direction != self.settings.current.learningDirection else {
+            self.dismiss()
+            return
+        }
+        self.onboarding.learningDirection = direction
+        let shouldPersist: Bool
+        if case .signedIn = self.auth.state {
+            shouldPersist = true
+        } else {
+            shouldPersist = false
+        }
+        self.settings.setLearningDirection(direction, persist: shouldPersist)
+        self.words.invalidate()
+        self.categories.invalidate()
+        self.progress.invalidate()
+        self.mastery.invalidate()
+        self.studyStats.invalidate()
+        self.dismiss()
+        Task {
+            async let wordsLoad: Void = self.words.reload()
+            async let categoriesLoad: Void = self.categories.reload()
+            async let progressLoad: Void = self.progress.reload()
+            async let masteryLoad: Void = self.mastery.reload()
+            async let statsLoad: Void = self.studyStats.reload()
+            _ = await (wordsLoad, categoriesLoad, progressLoad, masteryLoad, statsLoad)
         }
     }
 }

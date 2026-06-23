@@ -59,7 +59,12 @@ struct SpellView: View {
                 systemImage: self.judgedRight ? "checkmark.circle.fill" : "xmark.circle.fill"
             )
         } else {
-            MascotSpeechBubble(pose: .think, text: "這個字拼對了嗎？")
+            MascotSpeechBubble(
+                pose: .think,
+                text: self.settings.current.learningDirection == .zhJa
+                    ? "這個日文詞形正確嗎？"
+                    : "這個字拼對了嗎？"
+            )
         }
     }
 
@@ -72,6 +77,14 @@ struct SpellView: View {
                     .foregroundStyle(self.shownColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
+                if let reading = self.item.word.reading,
+                   !reading.isEmpty,
+                   reading != self.shown
+                {
+                    Text(reading)
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk3)
+                }
                 if self.coord.spLocked, !self.shownIsCorrect {
                     Text("正解 \(self.item.word.word)")
                         .font(.tujiCaption)
