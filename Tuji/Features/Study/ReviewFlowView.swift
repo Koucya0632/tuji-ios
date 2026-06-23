@@ -94,8 +94,17 @@ struct ReviewFlowView: View {
             // as a detent sheet, mirroring the new-word peek sheet. Driven by
             // phase: rating advances the queue → phase flips to .answer → the
             // sheet dismisses on its own. Not swipe-dismissable — you must rate.
+            //
+            // Hide it while the exit-confirm prompt is up: the rest detent
+            // leaves the toolbar ✕ tappable (presentationBackgroundInteraction),
+            // so tapping it during reveal would otherwise stack the confirm
+            // behind this sheet and bury both sets of buttons. The sheet
+            // returns if the user taps 繼續複習.
             .sheet(isPresented: Binding(
-                get: { self.coord.phase == .review && !self.coord.finished },
+                get: {
+                    self.coord.phase == .review && !self.coord.finished
+                        && !self.showExitConfirm
+                },
                 set: { _ in }
             )) {
                 if let item = self.coord.current {
