@@ -132,7 +132,7 @@ struct ReviewFlowView: View {
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 Spacer()
-                Text("\(self.coord.index + 1) / \(self.coord.queue.count)")
+                Text("\(self.coord.passedCount) / \(self.coord.originalCount)")
                     .font(.system(size: 13, weight: .heavy))
                     .foregroundStyle(.tujiInk3)
             }
