@@ -2531,22 +2531,22 @@
         }
       }
     },
-    "用中文學日文" : {
+    "日文圖鑑" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "用中文学日文"
+            "value" : "日文图鉴"
           }
         }
       }
     },
-    "用中文學英文" : {
+    "英文圖鑑" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "用中文学英文"
+            "value" : "英文图鉴"
           }
         }
       }
@@ -3670,6 +3670,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这个字拼对了吗？"
+          }
+        }
+      }
+    },
+    "這個讀音正確嗎？" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个读音正确吗？"
           }
         }
       }

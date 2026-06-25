@@ -11,6 +11,7 @@ struct IdentifyView: View {
 
     private static let abc = ["A", "B", "C", "D", "E"]
     @Environment(SettingsStore.self) private var settings
+    @Environment(WordsStore.self) private var words
 
     var body: some View {
         VStack(spacing: Space.s4) {
@@ -63,7 +64,11 @@ struct IdentifyView: View {
                     .padding(.vertical, 6)
                     .background(.tujiBg, in: .capsule)
                 Spacer()
-                PronunciationButton(text: self.item.word.word, size: 36)
+                PronunciationButton(
+                    text: self.item.word.word,
+                    audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
+                    size: 36
+                )
             }
             .padding(Space.s3)
         }

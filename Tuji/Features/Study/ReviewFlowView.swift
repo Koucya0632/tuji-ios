@@ -206,6 +206,7 @@ private struct ReviewQuestionView: View {
     let heroHeight: CGFloat
 
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(WordsStore.self) private var words
 
     private static let abc = ["A", "B", "C", "D", "E"]
 
@@ -254,8 +255,12 @@ private struct ReviewQuestionView: View {
             .clipped()
             .clipShape(.rect(cornerRadius: Radius.lg))
 
-            PronunciationButton(text: self.item.word.word, size: 36)
-                .padding(Space.s3)
+            PronunciationButton(
+                text: self.item.word.word,
+                audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
+                size: 36
+            )
+            .padding(Space.s3)
         }
     }
 
@@ -362,6 +367,7 @@ private struct ReviewRevealSheet: View {
     let item: StudyQueueItem
 
     @Environment(SettingsStore.self) private var settings
+    @Environment(WordsStore.self) private var words
 
     /// Resting detent — just tall enough for the header + hint + pinned rating
     /// row, so there's little dead space. Drag up to `.large` to reveal the
@@ -444,7 +450,11 @@ private struct ReviewRevealSheet: View {
             Spacer()
             VStack(spacing: Space.s2) {
                 FavoriteButton(wordId: self.item.word.id, size: 44)
-                PronunciationButton(text: self.item.word.word, size: 44)
+                PronunciationButton(
+                    text: self.item.word.word,
+                    audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
+                    size: 44
+                )
             }
         }
     }

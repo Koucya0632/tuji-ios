@@ -31,8 +31,12 @@ struct WordDetailSections: View {
                 Group {
                     switch self.selectedDetailTab {
                     case .definition:
-                        if let chineseDef = word.chineseDefinition, !chineseDef.isEmpty {
-                            self.definitionCard(word, chineseDef: chineseDef)
+                        if let targetDef = word.targetDefinition, !targetDef.isEmpty {
+                            self.definitionCard(
+                                word,
+                                targetDef: targetDef,
+                                chineseDef: word.chineseDefinition
+                            )
                         }
                     case .forms:
                         if let forms = word.forms, !forms.isEmpty {
@@ -80,7 +84,7 @@ struct WordDetailSections: View {
 
     static func availableTabs(for w: Word) -> [WordDetailTab] {
         var tabs: [WordDetailTab] = []
-        if let zh = w.chineseDefinition, !zh.isEmpty { tabs.append(.definition) }
+        if let target = w.targetDefinition, !target.isEmpty { tabs.append(.definition) }
         if let forms = w.forms, !forms.isEmpty { tabs.append(.forms) }
         if let ety = w.etymology, !ety.isEmpty { tabs.append(.origin) }
         if let cols = w.collocations, !cols.isEmpty { tabs.append(.collocations) }
@@ -97,7 +101,7 @@ struct WordDetailSections: View {
             .padding(.top, Space.s2)
     }
 
-    private func definitionCard(_ w: Word, chineseDef: String) -> some View {
+    private func definitionCard(_ w: Word, targetDef: String, chineseDef: String?) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
                 if self.settings.current.showZh {
@@ -112,15 +116,13 @@ struct WordDetailSections: View {
                         .foregroundStyle(.tujiInk3)
                 }
             }
-            // `englishDefinition` is the convenience field the server pre-fills
-            // from the en row; `definitions` itself is lang-filtered server-side
-            // so we can't pull it from there on a zh-Hant request.
-            if let en = w.englishDefinition, !en.isEmpty {
-                Text(en)
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk)
-            }
-            if self.settings.current.showZh {
+            Text(targetDef)
+                .font(.tujiBody)
+                .foregroundStyle(.tujiInk)
+            if self.settings.current.showZh,
+               let chineseDef,
+               !chineseDef.isEmpty
+            {
                 Text(chineseDef)
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
@@ -180,10 +182,19 @@ struct WordDetailSections: View {
     private func examplesCard(_ examples: [WordExample]) -> some View {
         VStack(spacing: Space.s3) {
             ForEach(Array(examples.prefix(3).enumerated()), id: \.offset) { _, ex in
+                let sentence = ex.target ?? (word.targetLanguage == "ja" ? "" : ex.en)
                 VStack(alignment: .leading, spacing: Space.s1) {
-                    Text(ex.en)
-                        .font(.tujiBodyLg)
-                        .foregroundStyle(.tujiInk)
+                    HStack(alignment: .top, spacing: Space.s2) {
+                        Text(sentence)
+                            .font(.tujiBodyLg)
+                            .foregroundStyle(.tujiInk)
+                        Spacer(minLength: Space.s2)
+                        PronunciationButton(
+                            text: sentence,
+                            voice: word.targetLanguage == "ja" ? .japanese : nil,
+                            size: 32
+                        )
+                    }
                     if let zh = ex.zh, !zh.isEmpty {
                         Text(zh)
                             .font(.tujiCaption)
