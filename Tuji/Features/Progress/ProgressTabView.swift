@@ -130,7 +130,7 @@ struct ProgressTabView: View {
             ),
             style: .error,
             title: "清除失敗",
-            message: self.vm.clearError?.localizedDescription ?? "請稍後再試一次。",
+            message: "\(self.vm.clearError?.localizedDescription ?? tujiLocalized("請稍後再試一次。"))",
             primary: TujiPromptAction("再試一次") {
                 self.showClearConfirm = true
             },
@@ -226,7 +226,7 @@ struct ProgressTabView: View {
         }
     }
 
-    private func statTile(label: String, value: Int, unit: String, icon: String, tint: Color) -> some View {
+    private func statTile(label: LocalizedStringKey, value: Int, unit: String, icon: String, tint: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Image(systemName: icon).foregroundStyle(tint)
@@ -298,7 +298,7 @@ struct ProgressTabView: View {
 
     // MARK: - Section header
 
-    private func sectionHeader(_ title: String) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.tujiOverline)
             .tracking(2)
@@ -352,7 +352,7 @@ struct ProgressTabView: View {
         }
     }
 
-    private var emptyBreakdownMessage: String {
+    private var emptyBreakdownMessage: LocalizedStringKey {
         if self.isGuest { return "登入後顯示分類進度" }
         return "還沒有學習紀錄"
     }

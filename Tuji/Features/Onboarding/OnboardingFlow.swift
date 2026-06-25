@@ -41,7 +41,7 @@ struct LearningDirectionOnboardingView: View {
         }
     }
 
-    private func option(_ direction: LearningDirection, subtitle: String) -> some View {
+    private func option(_ direction: LearningDirection, subtitle: LocalizedStringKey) -> some View {
         Button {
             self.onboarding.learningDirection = direction
             let shouldPersist: Bool
@@ -193,8 +193,8 @@ struct Page: Identifiable {
     let id = UUID()
     let artwork: Artwork
     let mascot: MascotPose?
-    let title: String
-    let lines: [String]
+    let title: LocalizedStringKey
+    let lines: [LocalizedStringKey]
 
     enum Artwork { case grid, srs, streak }
 }
@@ -230,7 +230,7 @@ private struct PageView: View {
                     .padding(.top, Space.s6)
 
                 VStack(spacing: 2) {
-                    ForEach(page.lines, id: \.self) { line in
+                    ForEach(Array(page.lines.enumerated()), id: \.offset) { _, line in
                         Text(line)
                             .font(.tujiBodyLg)
                             .foregroundStyle(.tujiInk2)

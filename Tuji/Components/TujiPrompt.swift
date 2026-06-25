@@ -37,12 +37,12 @@ enum TujiPromptButtonRole {
 }
 
 struct TujiPromptAction {
-    let title: String
+    let title: LocalizedStringKey
     var role: TujiPromptButtonRole = .primary
     let action: () -> Void
 
     init(
-        _ title: String,
+        _ title: LocalizedStringKey,
         role: TujiPromptButtonRole = .primary,
         action: @escaping () -> Void
     ) {
@@ -55,9 +55,9 @@ struct TujiPromptAction {
 private struct TujiPromptModifier: ViewModifier {
     @Binding var isPresented: Bool
     let style: TujiPromptStyle
-    let title: String
-    let message: String?
-    let detail: String?
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey?
+    let detail: LocalizedStringKey?
     let primary: TujiPromptAction
     let secondary: TujiPromptAction?
 
@@ -135,7 +135,7 @@ private struct TujiPromptModifier: ViewModifier {
         VStack(spacing: Space.s4) {
             header
 
-            if let message, !message.isEmpty {
+            if let message {
                 Text(message)
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk2)
@@ -143,7 +143,7 @@ private struct TujiPromptModifier: ViewModifier {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if let detail, !detail.isEmpty {
+            if let detail {
                 detailRow(detail)
             }
 
@@ -204,7 +204,7 @@ private struct TujiPromptModifier: ViewModifier {
         }
     }
 
-    private func detailRow(_ text: String) -> some View {
+    private func detailRow(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             Image(systemName: "info.circle.fill")
                 .foregroundStyle(.tujiTeal)
@@ -291,9 +291,9 @@ extension View {
     func tujiPrompt(
         isPresented: Binding<Bool>,
         style: TujiPromptStyle,
-        title: String,
-        message: String? = nil,
-        detail: String? = nil,
+        title: LocalizedStringKey,
+        message: LocalizedStringKey? = nil,
+        detail: LocalizedStringKey? = nil,
         primary: TujiPromptAction,
         secondary: TujiPromptAction? = nil
     ) -> some View {

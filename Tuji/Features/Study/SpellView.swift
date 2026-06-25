@@ -142,7 +142,7 @@ struct SpellView: View {
         .animation(.easeOut(duration: 0.2), value: self.coord.spLocked)
     }
 
-    private func judge(say: JudgeAnswer, label: String, icon: String, color: Color) -> some View {
+    private func judge(say: JudgeAnswer, label: LocalizedStringKey, icon: String, color: Color) -> some View {
         let style = self.judgeStyle(say: say, baseColor: color, baseIcon: icon)
         return Button {
             self.coord.spellJudge(shown: self.shown, says: say)

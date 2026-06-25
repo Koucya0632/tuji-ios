@@ -2,7 +2,7 @@
 // Maps directly to `DueCard` on the backend (lib/cards-db.ts) and the
 // /api/study/answer body.
 
-import Foundation
+import SwiftUI
 
 /// Lightweight word payload embedded in the queue item. Fields match the
 /// snake_case backend → camelCase decoder rewrite.
@@ -54,6 +54,18 @@ enum SRSRating: String, Codable {
     case hard = "困難"
     case good = "穩定"
     case easy = "熟練"
+
+    /// User-facing label. The `rawValue` doubles as the wire value, so UI renders
+    /// this `LocalizedStringKey` accessor instead of `rawValue` — it resolves
+    /// against the SwiftUI environment locale and follows the uiLang toggle.
+    var label: LocalizedStringKey {
+        switch self {
+        case .again: "重來"
+        case .hard: "困難"
+        case .good: "穩定"
+        case .easy: "熟練"
+        }
+    }
 }
 
 // Marked `nonisolated` so the synthesized `Encodable` conformance is

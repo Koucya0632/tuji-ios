@@ -151,7 +151,7 @@ struct CategoryView: View {
         guard let description = category.description,
               !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {
-            return "探索與\(category.nameZh)相關的常用單字"
+            return tujiLocalized("探索與\(category.nameZh)相關的常用單字")
         }
         return description
     }

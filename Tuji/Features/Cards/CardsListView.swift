@@ -90,7 +90,7 @@ struct CardsListView: View {
             MascotEmptyState(
                 pose: .think,
                 title: "載不到單字",
-                message: error.localizedDescription
+                message: "\(error.localizedDescription)"
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     Task { await self.store.reload() }

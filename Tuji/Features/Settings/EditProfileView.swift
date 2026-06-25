@@ -175,7 +175,7 @@ struct EditProfileView: View {
             self.error = NSError(
                 domain: "tuji.profile",
                 code: 0,
-                userInfo: [NSLocalizedDescriptionKey: "暱稱不能超過 20 字"]
+                userInfo: [NSLocalizedDescriptionKey: tujiLocalized("暱稱不能超過 20 字")]
             )
             return
         }

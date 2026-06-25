@@ -17,8 +17,7 @@ struct LangPickerView: View {
 
     private static let options: [Option] = [
         Option(code: "zh-Hant", label: "繁體中文", native: "繁體中文"),
-        Option(code: "zh-Hans", label: "简体中文", native: "简体中文"),
-        Option(code: "ja", label: "日本語", native: "日本語")
+        Option(code: "zh-Hans", label: "简体中文", native: "简体中文")
     ]
 
     var body: some View {

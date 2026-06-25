@@ -150,7 +150,7 @@ struct MeView: View {
         )
     }
 
-    private func statCell(value: String, label: String, icon: String? = nil, iconTint: Color = .clear) -> some View {
+    private func statCell(value: String, label: LocalizedStringKey, icon: String? = nil, iconTint: Color = .clear) -> some View {
         VStack(spacing: 4) {
             HStack(spacing: 4) {
                 if let icon {
@@ -185,7 +185,7 @@ struct MeView: View {
     }
 
     private func wordSection(
-        title: String,
+        title: LocalizedStringKey,
         words: [TopWord],
         accent: Color,
         emptyText _: String?
@@ -283,7 +283,7 @@ struct MeView: View {
         )
     }
 
-    private func listRow(icon: String, title: String, tint: Color, subtitle: String? = nil) -> some View {
+    private func listRow(icon: String, title: LocalizedStringKey, tint: Color, subtitle: LocalizedStringKey? = nil) -> some View {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .heavy))
@@ -341,7 +341,7 @@ struct MeView: View {
             if let u = user.username, !u.isEmpty { return u }
             if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
         }
-        return "Tuji 探險者"
+        return tujiLocalized("Tuji 探險者")
     }
 
     private var handle: String? {
@@ -435,7 +435,7 @@ private struct DebugSmokeSection: View {
         }
     }
 
-    private var buttonTitle: String {
+    private var buttonTitle: LocalizedStringKey {
         if self.pinging { return "驗證中…" }
         if self.isGuest { return "需要登入" }
         return "Bearer smoke test"

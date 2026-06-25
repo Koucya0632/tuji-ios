@@ -32,15 +32,16 @@ enum MasteryLevel: Int, CaseIterable {
         }
     }
 
-    /// Localized tier name. `熟練` already exists in the catalog (shared with
-    /// the SRS rating label of the same meaning); the rest are added.
-    var name: String {
+    /// Localized tier name as a `LocalizedStringKey` so `Text(level.name)`
+    /// resolves it against the SwiftUI environment locale (driven by uiLang) and
+    /// live-updates when the user switches interface language.
+    var name: LocalizedStringKey {
         switch self {
-        case .notLearned: String(localized: "未學")
-        case .know: String(localized: "知道")
-        case .familiar: String(localized: "熟悉")
-        case .proficient: String(localized: "熟練")
-        case .expert: String(localized: "精通")
+        case .notLearned: "未學"
+        case .know: "知道"
+        case .familiar: "熟悉"
+        case .proficient: "熟練"
+        case .expert: "精通"
         }
     }
 

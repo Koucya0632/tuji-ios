@@ -61,7 +61,7 @@ struct SettingsView: View {
                 ),
                 style: .error,
                 title: "刪除失敗",
-                message: self.deleteError?.localizedDescription ?? "",
+                message: "\(self.deleteError?.localizedDescription ?? "")",
                 primary: TujiPromptAction("知道了") {
                     self.deleteError = nil
                 }
@@ -156,7 +156,7 @@ struct SettingsView: View {
         .background(.tujiBg)
     }
 
-    private func row(label: String, value: String?, subtitle: String? = nil) -> some View {
+    private func row(label: LocalizedStringKey, value: String?, subtitle: LocalizedStringKey? = nil) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
@@ -185,15 +185,14 @@ struct SettingsView: View {
 
     private var studyCategoriesLabel: String {
         let n = self.store.current.studyCategories.count
-        return n == 0 ? "全部" : "\(n) 個主題"
+        return n == 0 ? tujiLocalized("全部") : tujiLocalized("\(n) 個主題")
     }
 
     private var langLabel: String {
         switch self.store.current.uiLang {
-        case "zh-Hant": "繁體中文"
         case "zh-Hans": "简体中文"
-        case "ja": "日本語"
-        default: self.store.current.uiLang
+        // zh-Hant and any retired/unknown code (e.g. legacy "ja") show as 繁中.
+        default: "繁體中文"
         }
     }
 

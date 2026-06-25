@@ -82,7 +82,7 @@ final class AuthService {
                 log.info("signup ok uid=\(session.user.id.uuidString, privacy: .public)")
             } else {
                 // Supabase dev project has email confirmation enabled by default.
-                error = "已寄出確認信，請開信箱點連結後再登入。"
+                error = tujiLocalized("已寄出確認信，請開信箱點連結後再登入。")
                 log.info("signup pending email confirmation")
             }
         } catch {
@@ -255,26 +255,26 @@ final class AuthService {
     private func friendly(_ err: Error) -> String {
         let msg = err.localizedDescription
         if msg.localizedCaseInsensitiveContains("invalid login credentials") {
-            return "Email 或密碼錯誤"
+            return tujiLocalized("Email 或密碼錯誤")
         }
         if msg.localizedCaseInsensitiveContains("user already registered") {
-            return "此 Email 已註冊，請改用登入"
+            return tujiLocalized("此 Email 已註冊，請改用登入")
         }
         if msg.localizedCaseInsensitiveContains("rate limit") {
-            return "嘗試太頻繁，請稍後再試"
+            return tujiLocalized("嘗試太頻繁，請稍後再試")
         }
         if msg.localizedCaseInsensitiveContains("provider"),
            msg.localizedCaseInsensitiveContains("not enabled")
         {
-            return "Apple 登入尚未啟用，請稍後再試"
+            return tujiLocalized("Apple 登入尚未啟用，請稍後再試")
         }
         if msg.localizedCaseInsensitiveContains("password should be") {
-            return "密碼太短（至少 8 字）"
+            return tujiLocalized("密碼太短（至少 8 字）")
         }
         if msg.localizedCaseInsensitiveContains("email address"),
            msg.localizedCaseInsensitiveContains("invalid")
         {
-            return "Email 格式或網域不被接受"
+            return tujiLocalized("Email 格式或網域不被接受")
         }
         return msg
     }

@@ -51,6 +51,7 @@ struct TodayView: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
+    @Environment(MasteryStore.self) private var mastery
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var vm = TodayVM()
@@ -76,7 +77,9 @@ struct TodayView: View {
             if !self.isGuest {
                 self.progress.invalidate()
                 self.studyStats.invalidate()
+                self.mastery.invalidate()
                 await self.vm.load(progress: self.progress, studyStats: self.studyStats)
+                await self.mastery.reload()
             }
             await self.words.reload()
             await self.categories.reload()
@@ -87,6 +90,8 @@ struct TodayView: View {
             await self.settings.loadIfNeeded()
             if !self.isGuest {
                 await self.vm.load(progress: self.progress, studyStats: self.studyStats)
+                // Powers the 完成 / 全精通 badges on the theme tiles.
+                await self.mastery.loadIfNeeded()
             }
         }
     }
@@ -166,7 +171,7 @@ struct TodayView: View {
             if let u = user.username, !u.isEmpty { return u }
             if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
         }
-        return "探險者"
+        return tujiLocalized("探險者")
     }
 
     private var dateLabel: String {
@@ -176,7 +181,7 @@ struct TodayView: View {
         return f.string(from: Date()).uppercased()
     }
 
-    private var subtitle: String {
+    private var subtitle: LocalizedStringKey {
         if self.isGuest {
             let learned = self.cache.learnedIds.count
             return learned > 0
@@ -192,7 +197,12 @@ struct TodayView: View {
         if self.newAvailable > 0 {
             return "今天還沒學新字，挑一個來試試"
         }
-        return "今天目標達成，明天再來"
+        // No new words left in the selected themes. Only call it a "goal
+        // reached" when they actually hit the daily target — otherwise the
+        // theme is just emptied out and the honest nudge is to add more.
+        return self.dailyGoalReached
+            ? "今天目標達成，明天再來"
+            : "這些主題的字都學過了，多選幾個主題吧"
     }
 
     // MARK: - Hero card (deep ink)
@@ -222,6 +232,13 @@ struct TodayView: View {
                     }
                     .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
                     .disabled(self.newDisabled)
+                }
+
+                if let hint = self.newBlockHint {
+                    Text(hint)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -355,19 +372,57 @@ struct TodayView: View {
         return max(0, self.progress.totalCount(filter: cats) - self.progress.seenCount(filter: cats))
     }
 
-    private var newDisabled: Bool {
-        if self.isGuest { return true }
+    /// Why 學新字 is unavailable, so the hero can explain the dead-end instead
+    /// of leaving a silently greyed button. The common one is `.allLearned`:
+    /// an early/small theme (e.g. 廚房 — seeded first, so its cards carry the
+    /// lowest ids and get drawn first) empties before the rest.
+    private enum NewBlockReason {
+        case none
+        case noThemes
+        case noCards
+        case allLearned
+        case reviewBacklog
+    }
+
+    private var newBlockReason: NewBlockReason {
+        // Guests can't study new words; the prompt to sign in lives elsewhere.
+        if self.isGuest { return .none }
         // No themes selected → nothing to draw new words from; the user must
         // pick themes first (review stays available — it spans all studied words).
-        if self.settings.current.studyCategories.isEmpty { return true }
-        if self.newAvailable == 0 { return true }
+        if self.settings.current.studyCategories.isEmpty { return .noThemes }
+        let cats = self.settings.current.studyCategories
+        // total == 0 with progress loaded means the selected themes have no
+        // cards in the current deck — e.g. a theme with no 日文 cards yet —
+        // which is a different dead-end from "you've learned them all".
+        if !self.progress.categoryProgress.isEmpty,
+           self.progress.totalCount(filter: cats) == 0 {
+            return .noCards
+        }
+        if self.newAvailable == 0 { return .allLearned }
         // When the review backlog crowds out the new-card quota
         // (computeNewLimit hits 0 once due > 100), grey out the button
         // instead of letting the user enter the launcher only to bounce
         // back on an empty queue.
         let due = self.studyStats.stats?.due ?? 0
         let goal = self.settings.current.dailyGoal
-        return StudyQuotas.computeNewLimit(goal: goal, due: due) == 0
+        if StudyQuotas.computeNewLimit(goal: goal, due: due) == 0 {
+            return .reviewBacklog
+        }
+        return .none
+    }
+
+    private var newDisabled: Bool {
+        self.isGuest || self.newBlockReason != .none
+    }
+
+    /// Caption shown under the hero CTAs explaining why 學新字 is greyed.
+    private var newBlockHint: LocalizedStringKey? {
+        switch self.newBlockReason {
+        case .allLearned: "這些主題的新字都學完了，去複習或多選幾個主題"
+        case .noCards: "這個主題目前還沒有可學的字"
+        case .reviewBacklog: "要複習的字有點多，先清一些再學新字"
+        case .noThemes, .none: nil
+        }
     }
 
     // MARK: - Themes grid
@@ -402,7 +457,11 @@ struct TodayView: View {
                     ) {
                         ForEach(tiles, id: \.id) { c in
                             NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
-                                CategoryTile(category: c, wordCount: self.words.byCategory(c.id).count)
+                                CategoryTile(
+                                    category: c,
+                                    wordCount: self.words.byCategory(c.id).count,
+                                    status: self.themeStatus(for: c.id)
+                                )
                             }
                             .buttonStyle(.plain)
                         }
@@ -465,6 +524,35 @@ struct TodayView: View {
         guard !selected.isEmpty else { return [] }
         return known.filter { selected.contains($0.id) }
     }
+
+    /// Completion state for a theme tile. `.mastered` (全精通) wins over
+    /// `.completed` (完成) since all-精通 already implies every word was seen.
+    /// Guests have no mastery / progress data, so this stays `.none`.
+    private func themeStatus(for id: String) -> ThemeStatus {
+        let wordsInCat = self.words.byCategory(id)
+        guard !wordsInCat.isEmpty else { return .none }
+        // 全精通: every word in the theme sits at the top tier (精通, score ≥ 80).
+        // An unstudied word reads as 未學, so all-精通 also means all-seen.
+        let allMastered = wordsInCat.allSatisfy {
+            MasteryLevel.from(score: self.mastery.score(for: $0.id)) == .expert
+        }
+        if allMastered { return .mastered }
+        // 完成: the server says every published card in the theme has been
+        // studied at least once (seen == total), even if some later decayed
+        // below 精通.
+        if let row = self.progress.categoryProgress.first(where: { $0.category == id }),
+           row.total > 0, row.seen == row.total {
+            return .completed
+        }
+        return .none
+    }
+}
+
+/// Theme-tile completion marker shown on the Today grid.
+enum ThemeStatus {
+    case none
+    case completed
+    case mastered
 }
 
 // MARK: - Subviews
@@ -472,6 +560,15 @@ struct TodayView: View {
 private struct CategoryTile: View {
     let category: TujiCategory
     let wordCount: Int
+    var status: ThemeStatus = .none
+
+    private var accent: Color {
+        switch self.status {
+        case .mastered: .tujiPurple
+        case .completed: .tujiTeal
+        case .none: .tujiInk4.opacity(0.2)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 3) {
@@ -490,8 +587,44 @@ private struct CategoryTile: View {
         .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                .stroke(self.accent, lineWidth: self.status == .none ? 1 : 1.5)
         )
+        .overlay(alignment: .topTrailing) {
+            ThemeStatusBadge(status: self.status)
+                .padding(5)
+        }
+    }
+}
+
+/// Corner marker on a Today theme tile: 完成 once every word has been seen,
+/// 全精通 once every word reaches 精通. Renders nothing for `.none`.
+private struct ThemeStatusBadge: View {
+    let status: ThemeStatus
+
+    var body: some View {
+        switch self.status {
+        case .none:
+            EmptyView()
+        case .completed:
+            self.pill(text: "完成", icon: "checkmark.seal.fill", tint: .tujiTeal)
+        case .mastered:
+            self.pill(text: "全精通", icon: "crown.fill", tint: .tujiPurple)
+        }
+    }
+
+    private func pill(text: String, icon: String, tint: Color) -> some View {
+        HStack(spacing: 2) {
+            Image(systemName: icon)
+                .font(.system(size: 8, weight: .heavy))
+            Text(text)
+                .font(.system(size: 9, weight: .heavy))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 5)
+        .padding(.vertical, 2)
+        .background(.tujiCard, in: .capsule)
+        .overlay(Capsule().stroke(tint.opacity(0.4), lineWidth: 1))
+        .shadow(color: .black.opacity(0.1), radius: 1.5, y: 1)
     }
 }
 

@@ -22,7 +22,7 @@ enum MascotBubbleTone {
 /// A compact study prompt where the mascot visibly leans out of the bubble.
 struct MascotSpeechBubble: View {
     let pose: MascotPose
-    let text: String
+    let text: LocalizedStringKey
     var tone: MascotBubbleTone = .neutral
     var systemImage: String?
 
@@ -64,15 +64,15 @@ struct MascotSpeechBubble: View {
 /// than floating independently in the page.
 struct MascotEmptyState<Actions: View>: View {
     let pose: MascotPose
-    let title: String
-    let message: String?
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey?
     var compact: Bool
     let actions: Actions
 
     init(
         pose: MascotPose,
-        title: String,
-        message: String? = nil,
+        title: LocalizedStringKey,
+        message: LocalizedStringKey? = nil,
         compact: Bool = false,
         @ViewBuilder actions: () -> Actions
     ) {
@@ -122,7 +122,7 @@ struct MascotEmptyState<Actions: View>: View {
 }
 
 extension MascotEmptyState where Actions == EmptyView {
-    init(pose: MascotPose, title: String, message: String? = nil, compact: Bool = false) {
+    init(pose: MascotPose, title: LocalizedStringKey, message: LocalizedStringKey? = nil, compact: Bool = false) {
         self.init(pose: pose, title: title, message: message, compact: compact) {
             EmptyView()
         }
@@ -132,14 +132,14 @@ extension MascotEmptyState where Actions == EmptyView {
 /// Celebration hero used by study completion and milestones.
 struct MascotCelebrationCard<Detail: View>: View {
     let pose: MascotPose
-    let title: String
+    let title: LocalizedStringKey
     var accent: Color = .tujiYellow
     var dark = false
     let detail: Detail
 
     init(
         pose: MascotPose = .cheer,
-        title: String,
+        title: LocalizedStringKey,
         accent: Color = .tujiYellow,
         dark: Bool = false,
         @ViewBuilder detail: () -> Detail

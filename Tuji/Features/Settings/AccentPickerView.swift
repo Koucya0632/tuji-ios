@@ -10,8 +10,8 @@ struct AccentPickerView: View {
 
     private struct Option {
         let code: String
-        let label: String
-        let detail: String
+        let label: LocalizedStringKey
+        let detail: LocalizedStringKey
     }
 
     private static let options: [Option] = [

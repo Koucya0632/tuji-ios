@@ -13,7 +13,7 @@ enum AppleSignInBridge {
     /// identity token we need to hand to Supabase.
     struct MissingTokenError: LocalizedError {
         var errorDescription: String? {
-            "Apple 沒回傳登入憑證，請重試"
+            tujiLocalized("Apple 沒回傳登入憑證，請重試")
         }
     }
 

@@ -50,7 +50,7 @@ struct StudyLauncherView: View {
             ),
             style: .error,
             title: "載入失敗",
-            message: self.queueError?.localizedDescription ?? "",
+            message: "\(self.queueError?.localizedDescription ?? "")",
             primary: TujiPromptAction("再試一次") {
                 self.queueError = nil
                 Task { await self.loadQueue() }

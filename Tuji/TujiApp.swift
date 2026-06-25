@@ -67,13 +67,13 @@ struct TujiApp: App {
         }
     }
 
-    /// Resolves the server-supplied uiLang code (zh-Hant / zh-Hans / ja)
-    /// into a `Locale` so the SwiftUI environment knows which localized
-    /// strings to fetch. Unknown codes fall back to zh-Hant.
+    /// Resolves the server-supplied uiLang code (zh-Hant / zh-Hans) into a
+    /// `Locale` so the SwiftUI environment knows which localized strings to
+    /// fetch. Unknown codes — including the retired `ja` UI language — fall
+    /// back to zh-Hant.
     private static func locale(for code: String) -> Locale {
         switch code {
         case "zh-Hans": Locale(identifier: "zh-Hans")
-        case "ja": Locale(identifier: "ja")
         default: Locale(identifier: "zh-Hant")
         }
     }

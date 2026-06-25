@@ -331,7 +331,7 @@ struct SearchView: View {
             MascotEmptyState(
                 pose: .think,
                 title: "搜尋失敗",
-                message: error.localizedDescription
+                message: "\(error.localizedDescription)"
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     self.vm.runImmediately(self.vm.query)

@@ -18,6 +18,7 @@ extension Color {
     static let tujiCoral = Color(hex: 0xFF6F4D)
     static let tujiPink = Color(hex: 0xFFCDD2)
     static let tujiGreen = Color(hex: 0x4FAE6F)
+    static let tujiPurple = Color(hex: 0x8B5CF6)
 
     init(hex: UInt32, alpha: Double = 1.0) {
         self.init(
@@ -101,5 +102,9 @@ extension ShapeStyle where Self == Color {
 
     static var tujiGreen: Color {
         .tujiGreen
+    }
+
+    static var tujiPurple: Color {
+        .tujiPurple
     }
 }

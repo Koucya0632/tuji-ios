@@ -128,7 +128,7 @@ struct SetupView: View {
 
     // MARK: - Bits
 
-    private func section(title: String, @ViewBuilder content: () -> some View) -> some View {
+    private func section(title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text(title)
                 .font(.tujiOverline)
@@ -139,7 +139,7 @@ struct SetupView: View {
         }
     }
 
-    private func tile(label: String, selected: Bool, action: @escaping () -> Void) -> some View {
+    private func tile(label: LocalizedStringKey, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 14, weight: .heavy))
@@ -224,10 +224,10 @@ struct SetupView: View {
                 onboarding.markSetupDone(for: userId)
                 onDone()
             } catch APIError.unauthorized {
-                error = "後端不認這次登入。可能要重新登入一次。"
+                error = tujiLocalized("後端不認這次登入。可能要重新登入一次。")
                 showReSignIn = true
             } catch let APIError.server(status: status, body: body) {
-                error = "儲存失敗（\(status)）：\(body ?? "")"
+                error = tujiLocalized("儲存失敗（\(status)）：\(body ?? "")")
                 showReSignIn = false
             } catch {
                 self.error = error.localizedDescription
