@@ -18,7 +18,7 @@ enum LearningDirection: String, Codable, CaseIterable {
     }
 
     var title: String {
-        self == .zhJa ? tujiLocalized("用中文學日文") : tujiLocalized("用中文學英文")
+        self == .zhJa ? tujiLocalized("日文圖鑑") : tujiLocalized("英文圖鑑")
     }
 
     var shortTitle: String {

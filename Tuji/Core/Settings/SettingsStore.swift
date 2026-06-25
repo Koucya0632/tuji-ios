@@ -135,9 +135,23 @@ final class SettingsStore {
         var next = self.current
         mutate(&next)
         guard next != self.current else { return }
+        let uiLangChanged = next.uiLang != self.current.uiLang
         self.current = next
         UserDefaults.standard.set(next.uiLang, forKey: tujiUILangDefaultsKey)
         self.scheduleSave()
+        // Static UI chrome switches live via the environment locale, but the
+        // category names (`nameZh`) and word Chinese (`chinese`) are localized
+        // server-side and cached per uiLang. Refetch them so 圖鑑 themes and
+        // word cards follow the interface language too. No `invalidate()`: the
+        // dataset is identical (only Traditional vs Simplified differs), so the
+        // old text stays on screen until the new payload lands — no empty flash.
+        if uiLangChanged {
+            Task {
+                async let categories: Void = CategoriesStore.shared.reload()
+                async let words: Void = WordsStore.shared.reload()
+                _ = await (categories, words)
+            }
+        }
     }
 
     /// Applies the learning target immediately. First-launch and guest flows

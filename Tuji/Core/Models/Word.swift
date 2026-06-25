@@ -18,6 +18,10 @@ struct CardWord: Codable, Identifiable, Hashable {
     let pronunciation: String
     let reading: String?
     let targetLanguage: String?
+    /// Pre-generated pronunciation clips keyed by locale ("en-US" / "en-GB" /
+    /// "ja-JP"). The server only sends the locales relevant to the active
+    /// learning direction; nil when no audio has been generated.
+    let audioUrls: [String: String]?
 
     init(
         id: String,
@@ -27,7 +31,8 @@ struct CardWord: Codable, Identifiable, Hashable {
         category: String,
         pronunciation: String,
         reading: String? = nil,
-        targetLanguage: String? = nil
+        targetLanguage: String? = nil,
+        audioUrls: [String: String]? = nil
     ) {
         self.id = id
         self.word = word
@@ -37,6 +42,7 @@ struct CardWord: Codable, Identifiable, Hashable {
         self.pronunciation = pronunciation
         self.reading = reading
         self.targetLanguage = targetLanguage
+        self.audioUrls = audioUrls
     }
 
     var imageURL: URL? {
@@ -64,6 +70,9 @@ struct Word: Codable, Identifiable, Hashable {
     let reading: String?
     let targetLanguage: String?
     let audioUrl: String?
+    /// Per-locale pronunciation clips ("en-US" / "en-GB" / "ja-JP"); superset
+    /// of `audioUrl`, which mirrors the en-US clip.
+    let audioUrls: [String: String]?
     let imageUrl: String
     let cefrLevel: String?
     let status: String?
@@ -86,6 +95,8 @@ struct Word: Codable, Identifiable, Hashable {
     let etymology: String?
     let forms: [WordForm]?
     let chineseDefinition: String?
+    /// Definition in the active learning target language (`en` or `ja`).
+    let targetDefinition: String?
     /// Convenience: first en-language definition prefilled by the server
     /// (the `definitions` array itself is lang-filtered so the en row
     /// gets dropped when UI lang is zh-Hant — see lib/word-localize.ts).
@@ -106,6 +117,9 @@ struct WordDefinition: Codable, Hashable {
 
 struct WordExample: Codable, Hashable {
     let en: String
+    /// Sentence in the active learning target language. Japanese detail
+    /// payloads omit examples that do not have this value.
+    let target: String?
     let zh: String?
     let translations: [String: String]?
     let cefrLevel: String?

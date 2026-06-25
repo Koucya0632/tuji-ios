@@ -27,8 +27,20 @@ struct SpellView: View {
         self.coord.spellShown(for: self.item)
     }
 
+    /// The canonical correct answer being quizzed — the hiragana reading for
+    /// JA words, else the term form.
+    private var subject: String {
+        self.coord.spellSubject(for: self.item)
+    }
+
+    /// True when Part 3 is judging a kana reading (JA): hide the kanji until
+    /// the user answers and ask about the reading.
+    private var isReadingMode: Bool {
+        self.coord.spellUsesReading(for: self.item)
+    }
+
     private var shownIsCorrect: Bool {
-        self.shown == self.item.word.word
+        self.shown == self.subject
     }
 
     /// True once the user has judged (locked). spJudge and spLocked are always
@@ -61,9 +73,11 @@ struct SpellView: View {
         } else {
             MascotSpeechBubble(
                 pose: .think,
-                text: self.settings.current.learningDirection == .zhJa
-                    ? "這個日文詞形正確嗎？"
-                    : "這個字拼對了嗎？"
+                text: self.isReadingMode
+                    ? "這個讀音正確嗎？"
+                    : (self.settings.current.learningDirection == .zhJa
+                        ? "這個日文詞形正確嗎？"
+                        : "這個字拼對了嗎？")
             )
         }
     }
@@ -77,18 +91,34 @@ struct SpellView: View {
                     .foregroundStyle(self.shownColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                if let reading = self.item.word.reading,
-                   !reading.isEmpty,
-                   reading != self.shown
-                {
-                    Text(reading)
-                        .font(.tujiBody)
-                        .foregroundStyle(.tujiInk3)
-                }
-                if self.coord.spLocked, !self.shownIsCorrect {
-                    Text("正解 \(self.item.word.word)")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
+                if self.isReadingMode {
+                    // The hiragana is the subject; revealing the reading here
+                    // would leak the answer, so keep the kanji hidden until the
+                    // user judges, then reveal it as context.
+                    if self.coord.spLocked, self.item.word.word != self.subject {
+                        Text(self.item.word.word)
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk3)
+                    }
+                    if self.coord.spLocked, !self.shownIsCorrect {
+                        Text("正解 \(self.subject)")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk3)
+                    }
+                } else {
+                    if let reading = self.item.word.reading,
+                       !reading.isEmpty,
+                       reading != self.shown
+                    {
+                        Text(reading)
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk3)
+                    }
+                    if self.coord.spLocked, !self.shownIsCorrect {
+                        Text("正解 \(self.item.word.word)")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk3)
+                    }
                 }
                 if self.settings.current.showZh {
                     Text(self.item.word.chinese)

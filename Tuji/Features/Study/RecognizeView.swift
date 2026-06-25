@@ -11,6 +11,7 @@ struct RecognizeView: View {
     let item: StudyQueueItem
 
     @Environment(SettingsStore.self) private var settings
+    @Environment(WordsStore.self) private var words
 
     var body: some View {
         VStack(spacing: Space.s4) {
@@ -33,7 +34,11 @@ struct RecognizeView: View {
                         .lineLimit(2)
                         .minimumScaleFactor(0.6)
                     Spacer()
-                    PronunciationButton(text: self.item.word.word, size: 44)
+                    PronunciationButton(
+                        text: self.item.word.word,
+                        audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
+                        size: 44
+                    )
                 }
                 if !self.item.word.pronunciation.isEmpty {
                     Text(self.item.word.pronunciation)

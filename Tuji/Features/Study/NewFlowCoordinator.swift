@@ -169,19 +169,41 @@ final class NewFlowCoordinator {
         self.spQueue.count
     }
 
+    /// The string Part 3 quizzes: the hiragana reading for JA words (so the
+    /// learner judges the kana), else the term form.
+    func spellSubject(for item: StudyQueueItem) -> String {
+        if let r = item.word.reading, !r.isEmpty { return r }
+        return item.word.word
+    }
+
+    /// True when we're quizzing a kana reading distinct from the written term
+    /// (JA). Drives the on-device wrong-variant generation and the view's
+    /// kanji-reveal + prompt wording. `reading` is a JA-only backend field, so
+    /// its presence reliably distinguishes JA-with-kana from EN.
+    func spellUsesReading(for item: StudyQueueItem) -> Bool {
+        guard let r = item.word.reading, !r.isEmpty else { return false }
+        return r != item.word.word
+    }
+
     /// Deterministic per-attempt: even attempts show the correct spelling,
-    /// odd attempts show a wrong spelling pulled from spellingChoices.
+    /// odd attempts show a wrong spelling pulled from spellingChoices. In
+    /// reading mode the backend's term-based spellingChoices don't apply, so
+    /// the wrong variant is scrambled from the reading on-device.
     func spellShown(for item: StudyQueueItem) -> String {
+        let subject = self.spellSubject(for: item)
         let parity = self.spAttempt % 2
         if parity == 0 {
-            return item.word.word
+            return subject
+        }
+        if self.spellUsesReading(for: item) {
+            return Self.fallbackMisspelling(subject)
         }
         // Pick first non-correct spelling option; fall back to a tweaked
         // version if nothing's attached.
-        if let alt = item.spellingChoices?.first(where: { $0 != item.word.word }) {
+        if let alt = item.spellingChoices?.first(where: { $0 != subject }) {
             return alt
         }
-        return Self.fallbackMisspelling(item.word.word)
+        return Self.fallbackMisspelling(subject)
     }
 
     private static func fallbackMisspelling(_ word: String) -> String {
@@ -197,7 +219,7 @@ final class NewFlowCoordinator {
         guard !self.spLocked, let curr = self.spellItem else { return }
         self.spJudge = says
         self.spLocked = true
-        let shownIsCorrect = shown == curr.word.word
+        let shownIsCorrect = shown == self.spellSubject(for: curr)
         let judgedRight = (says == .yes) == shownIsCorrect
         Task {
             try? await Task.sleep(for: .milliseconds(800))
@@ -250,6 +272,6 @@ final class NewFlowCoordinator {
 
     var spellShownIsCorrect: Bool {
         guard let curr = self.spellItem else { return false }
-        return self.spellShown(for: curr) == curr.word.word
+        return self.spellShown(for: curr) == self.spellSubject(for: curr)
     }
 }

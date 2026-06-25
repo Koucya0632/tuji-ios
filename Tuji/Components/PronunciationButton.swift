@@ -7,6 +7,10 @@ struct PronunciationButton: View {
     let text: String
     /// Explicit override; `nil` means follow the user's 發音口音 setting.
     var voice: SpeechService.Voice?
+    /// Pre-generated clips keyed by locale ("en-US"/"en-GB"/"ja-JP"). When the
+    /// resolved voice has a clip it plays that; otherwise SpeechService falls
+    /// back to on-device synthesis of `text`.
+    var audioUrls: [String: String]?
     var size: CGFloat = 40
 
     @Environment(SettingsStore.self) private var settings
@@ -24,7 +28,11 @@ struct PronunciationButton: View {
     var body: some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            SpeechService.shared.speak(self.text, voice: self.effectiveVoice)
+            SpeechService.shared.play(
+                urlString: self.audioUrls?[self.effectiveVoice.rawValue],
+                fallbackText: self.text,
+                voice: self.effectiveVoice
+            )
         } label: {
             ZStack {
                 Circle().fill(.tujiTealSoft)
