@@ -120,7 +120,7 @@ extension WordDetailPage {
             MascotEmptyState(
                 pose: .think,
                 title: "找不到這個字",
-                message: err.localizedDescription
+                message: "\(err.localizedDescription)"
             ) {
                 BBtn(title: "返回", fullWidth: false, action: { self.dismiss() })
             }
@@ -238,7 +238,14 @@ extension WordDetailPage {
         self.loading = true
         defer { self.loading = false }
         do {
-            self.word = try await APIClient.shared.get(.word(id: self.id))
+            let settings = SettingsStore.shared.current
+            self.word = try await APIClient.shared.get(
+                .word(
+                    id: self.id,
+                    lang: settings.uiLang,
+                    learning: settings.learningDirection.rawValue
+                )
+            )
         } catch {
             self.error = error
         }

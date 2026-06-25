@@ -88,7 +88,6 @@ jobs:
           TUJI_SUPABASE_ANON_KEY_PROD = stub
           TUJI_GOOGLE_CLIENT_ID = stub
           TUJI_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.stub
-          TUJI_SENTRY_DSN = https:/\$()/stub@stub.ingest.sentry.io/0
           EOF
 
       - name: Resolve dependencies

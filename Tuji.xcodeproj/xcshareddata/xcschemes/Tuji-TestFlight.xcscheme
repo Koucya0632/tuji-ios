@@ -51,6 +51,16 @@
             ReferencedContainer = "container:Tuji.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-CrashlyticsTestNonFatal"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "-CrashlyticsTestCrash"
+            isEnabled = "NO">
+         </CommandLineArgument>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "TestFlight"

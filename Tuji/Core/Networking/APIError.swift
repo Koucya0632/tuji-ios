@@ -16,15 +16,15 @@ enum APIError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .unauthorized: "未授權，請重新登入"
-        case .forbidden: "沒有權限"
-        case .notFound: "找不到資源"
-        case .rateLimited: "請求太頻繁，請稍後再試"
+        case .unauthorized: tujiLocalized("未授權，請重新登入")
+        case .forbidden: tujiLocalized("沒有權限")
+        case .notFound: tujiLocalized("找不到資源")
+        case .rateLimited: tujiLocalized("請求太頻繁，請稍後再試")
         case let .server(s, b):
             if let b, !b.isEmpty { "Server \(s): \(b)" } else { "Server error \(s)" }
-        case let .decoding(e): "資料解析失敗：\(e.localizedDescription)"
-        case let .transport(e): "網路錯誤：\(e.localizedDescription)"
-        case .missingBaseURL: "TUJI_BASE_URL 未設定"
+        case let .decoding(e): tujiLocalized("資料解析失敗：\(e.localizedDescription)")
+        case let .transport(e): tujiLocalized("網路錯誤：\(e.localizedDescription)")
+        case .missingBaseURL: tujiLocalized("TUJI_BASE_URL 未設定")
         }
     }
 

@@ -89,7 +89,7 @@ struct WordDetailSections: View {
 
     // MARK: - Sections
 
-    private func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.tujiOverline)
             .tracking(2)
@@ -229,7 +229,7 @@ enum WordDetailTab: Hashable, CaseIterable {
     case origin
     case collocations
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
         case .definition: "譯義"
         case .forms: "詞形"

@@ -21,9 +21,9 @@ enum GoogleSignInBridge {
 
         var errorDescription: String? {
             switch self {
-            case .noPresentingViewController: "找不到可呈現的視窗（請重試）"
-            case .missingIdToken: "Google 沒回傳 ID token"
-            case .userCancelled: "已取消"
+            case .noPresentingViewController: tujiLocalized("找不到可呈現的視窗（請重試）")
+            case .missingIdToken: tujiLocalized("Google 沒回傳 ID token")
+            case .userCancelled: tujiLocalized("已取消")
             }
         }
     }

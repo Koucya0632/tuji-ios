@@ -16,7 +16,7 @@ import SwiftUI
 
 struct WordPeekSheet: View {
     let word: CardWord
-    let ctaTitle: String
+    let ctaTitle: LocalizedStringKey
     let showDetailOnExpand: Bool
     let onSeeMore: () -> Void
 
@@ -31,7 +31,7 @@ struct WordPeekSheet: View {
 
     init(
         word: CardWord,
-        ctaTitle: String = "看完整詳情",
+        ctaTitle: LocalizedStringKey = "看完整詳情",
         showDetailOnExpand: Bool = false,
         onSeeMore: @escaping () -> Void
     ) {

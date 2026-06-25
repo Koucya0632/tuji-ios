@@ -129,7 +129,7 @@ struct StudyReportSheet: View {
                     .foregroundStyle(.tujiCoral)
             }
 
-            BBtn(title: self.submitTitle, fullWidth: true) {
+            BBtn(title: "\(self.submitTitle)", fullWidth: true) {
                 Task { await self.submit() }
             }
             .disabled(!self.canSubmit)
@@ -147,7 +147,7 @@ struct StudyReportSheet: View {
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.tujiInk)
-            BBtn(title: self.localized("完成"), fullWidth: true) { self.dismiss() }
+            BBtn(title: "\(self.localized("完成"))", fullWidth: true) { self.dismiss() }
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, Space.s6)
@@ -197,6 +197,6 @@ struct StudyReportSheet: View {
     }
 
     private func localized(_ key: String.LocalizationValue) -> String {
-        String(localized: key, locale: Locale(identifier: self.draft.uiLang))
+        tujiLocalized(key, lang: self.draft.uiLang)
     }
 }

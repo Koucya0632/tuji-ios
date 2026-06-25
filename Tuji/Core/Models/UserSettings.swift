@@ -9,12 +9,30 @@
 
 import Foundation
 
+enum LearningDirection: String, Codable, CaseIterable {
+    case zhEn = "zh-en"
+    case zhJa = "zh-ja"
+
+    var targetLanguage: String {
+        self == .zhJa ? "ja" : "en"
+    }
+
+    var title: String {
+        self == .zhJa ? tujiLocalized("用中文學日文") : tujiLocalized("用中文學英文")
+    }
+
+    var shortTitle: String {
+        self == .zhJa ? "日文" : "英文"
+    }
+}
+
 struct UserSettings: Codable, Equatable {
     var dailyGoal: Int
     var accent: String
     var showZh: Bool
     var studyCategories: [String]
     var studyDecks: [String]
+    var learningDirection: LearningDirection
     var uiLang: String
     var fontSize: String
 
@@ -24,6 +42,7 @@ struct UserSettings: Codable, Equatable {
         showZh: true,
         studyCategories: [],
         studyDecks: [],
+        learningDirection: .zhEn,
         uiLang: "zh-Hant",
         fontSize: "md"
     )

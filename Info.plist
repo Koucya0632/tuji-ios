@@ -67,7 +67,6 @@
         <key>NSAllowsArbitraryLoads</key>
         <false/>
     </dict>
-
     <!-- Bundled fonts (W1 polish — Plus Jakarta Sans + JetBrains Mono) -->
     <key>UIAppFonts</key>
     <array>

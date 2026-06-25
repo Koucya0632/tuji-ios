@@ -13,6 +13,8 @@
 		CD3366022FD81B6200EF2A26 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = CD3366012FD81B6200EF2A26 /* Nuke */; };
 		CD3366042FD81B6200EF2A26 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = CD3366032FD81B6200EF2A26 /* NukeUI */; };
 		CD3366072FD81B8C00EF2A26 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = CD3366062FD81B8C00EF2A26 /* KeychainAccess */; };
+		CD3366092FE9000100EF2A26 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = CD33660B2FE9000100EF2A26 /* FirebaseCore */; };
+		CD33660A2FE9000100EF2A26 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = CD33660C2FE9000100EF2A26 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +45,8 @@
 				CD3365FA2FD81B1200EF2A26 /* Supabase in Frameworks */,
 				CD3365FD2FD81B3500EF2A26 /* GoogleSignIn in Frameworks */,
 				CD3366022FD81B6200EF2A26 /* Nuke in Frameworks */,
+				CD3366092FE9000100EF2A26 /* FirebaseCore in Frameworks */,
+				CD33660A2FE9000100EF2A26 /* FirebaseCrashlytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +84,7 @@
 				CD3365C22FD8134A00EF2A26 /* Sources */,
 				CD3365C32FD8134A00EF2A26 /* Frameworks */,
 				CD3365C42FD8134A00EF2A26 /* Resources */,
+				CD33660D2FE9000100EF2A26 /* Upload Crashlytics dSYMs */,
 			);
 			buildRules = (
 			);
@@ -96,6 +101,8 @@
 				CD3366012FD81B6200EF2A26 /* Nuke */,
 				CD3366032FD81B6200EF2A26 /* NukeUI */,
 				CD3366062FD81B8C00EF2A26 /* KeychainAccess */,
+				CD33660B2FE9000100EF2A26 /* FirebaseCore */,
+				CD33660C2FE9000100EF2A26 /* FirebaseCrashlytics */,
 			);
 			productName = Tuji;
 			productReference = CD3365C62FD8134A00EF2A26 /* Tuji.app */;
@@ -130,6 +137,7 @@
 				CD3365FB2FD81B3500EF2A26 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				CD3366002FD81B6200EF2A26 /* XCRemoteSwiftPackageReference "Nuke" */,
 				CD3366052FD81B8C00EF2A26 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+				CD3366082FE9000100EF2A26 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CD3365C72FD8134A00EF2A26 /* Products */;
@@ -150,6 +158,35 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		CD33660D2FE9000100EF2A26 /* Upload Crashlytics dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"$(BUILD_DIR)/../../SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run",
+			);
+			name = "Upload Crashlytics dSYMs";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${CONFIGURATION}\" = \"Debug\" ]; then\n  echo \"Crashlytics: Debug build; skipping dSYM upload\"\n  exit 0\nfi\n\nGOOGLE_PLIST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"\nif [ ! -f \"${GOOGLE_PLIST}\" ]; then\n  echo \"error: Missing Tuji/GoogleService-Info.plist. See CRASH_REPORTING.md.\"\n  exit 1\nfi\n\nCRASHLYTICS_RUN=\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\nif [ ! -x \"${CRASHLYTICS_RUN}\" ]; then\n  echo \"error: Crashlytics upload tool not found at ${CRASHLYTICS_RUN}\"\n  exit 1\nfi\n\n\"${CRASHLYTICS_RUN}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		CD3365C22FD8134A00EF2A26 /* Sources */ = {
@@ -459,6 +496,14 @@
 				kind = branch;
 			};
 		};
+		CD3366082FE9000100EF2A26 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.15.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -491,6 +536,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CD3366052FD81B8C00EF2A26 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
 			productName = KeychainAccess;
+		};
+		CD33660B2FE9000100EF2A26 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CD3366082FE9000100EF2A26 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		CD33660C2FE9000100EF2A26 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CD3366082FE9000100EF2A26 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

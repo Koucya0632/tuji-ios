@@ -103,13 +103,15 @@ final class SearchVM {
                 let word = w.word.lowercased()
                 let zh = w.chinese.lowercased()
                 let pron = w.pronunciation.lowercased()
+                let reading = w.reading?.lowercased() ?? ""
                 let rank: Int
                 if word == needle { rank = 0 }
                 else if word.hasPrefix(needle) { rank = 1 }
                 else if zh.hasPrefix(needle) { rank = 2 }
                 else if word.contains(needle) { rank = 3 }
                 else if zh.contains(needle) { rank = 4 }
-                else if pron.contains(needle) { rank = 5 }
+                else if reading.contains(needle) { rank = 5 }
+                else if pron.contains(needle) { rank = 6 }
                 else { return nil }
                 return (w, rank)
             }
@@ -140,6 +142,7 @@ struct SearchResponse: Decodable {
 struct SearchView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(StudyFocus.self) private var studyFocus
+    @Environment(SettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
 
     @State private var vm = SearchVM()
@@ -172,10 +175,15 @@ struct SearchView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(.tujiInk3)
-                TextField("搜尋單字 / 中文", text: Binding(
+                TextField(
+                    self.settings.current.learningDirection == .zhJa
+                        ? "搜尋日文 / 假名 / 中文"
+                        : "搜尋英文 / 中文",
+                    text: Binding(
                     get: { self.vm.query },
                     set: { self.vm.updateQuery($0) }
-                ))
+                    )
+                )
                 .focused(self.$fieldFocused)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -323,7 +331,7 @@ struct SearchView: View {
             MascotEmptyState(
                 pose: .think,
                 title: "搜尋失敗",
-                message: error.localizedDescription
+                message: "\(error.localizedDescription)"
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     self.vm.runImmediately(self.vm.query)

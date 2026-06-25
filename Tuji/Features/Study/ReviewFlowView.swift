@@ -471,7 +471,7 @@ private struct ReviewRevealSheet: View {
                 } else {
                     Color.clear.frame(height: 11)
                 }
-                Text(r.rawValue)
+                Text(r.label)
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundStyle(self.fg(for: r, rated: isRated))
                     .padding(.vertical, Space.s3)

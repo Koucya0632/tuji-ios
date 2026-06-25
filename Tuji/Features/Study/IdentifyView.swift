@@ -10,6 +10,7 @@ struct IdentifyView: View {
     let item: StudyQueueItem
 
     private static let abc = ["A", "B", "C", "D", "E"]
+    @Environment(SettingsStore.self) private var settings
 
     var body: some View {
         VStack(spacing: Space.s4) {
@@ -23,7 +24,12 @@ struct IdentifyView: View {
     }
 
     private var bubble: some View {
-        MascotSpeechBubble(pose: .think, text: "對應的英文是哪個？")
+        MascotSpeechBubble(
+            pose: .think,
+            text: self.settings.current.learningDirection == .zhJa
+                ? "對應的日文是哪個？"
+                : "對應的英文是哪個？"
+        )
     }
 
     private var hero: some View {

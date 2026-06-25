@@ -11,6 +11,49 @@ import Observation
 import OSLog
 import SwiftUI
 
+/// UserDefaults key mirroring `SettingsStore.current.uiLang` for nonisolated reads.
+nonisolated let tujiUILangDefaultsKey = "tuji.ui.lang"
+
+private nonisolated let tujiLProjLock = NSLock()
+private nonisolated(unsafe) var tujiLProjCache: [String: Bundle] = [:]
+
+/// The compiled `.lproj` bundle for a uiLang code, cached. Falls back to the
+/// main bundle (whose lookups yield the zh-Hant source strings) for unknown or
+/// missing codes.
+private nonisolated func tujiLProjBundle(_ code: String) -> Bundle {
+    tujiLProjLock.lock()
+    defer { tujiLProjLock.unlock() }
+    if let cached = tujiLProjCache[code] { return cached }
+    let bundle: Bundle =
+        if let path = Bundle.main.path(forResource: code, ofType: "lproj"),
+           let lproj = Bundle(path: path) {
+            lproj
+        } else {
+            .main
+        }
+    tujiLProjCache[code] = bundle
+    return bundle
+}
+
+/// Localize a zh-Hant source string into the user's chosen in-app UI language.
+///
+/// The app overrides only the SwiftUI *environment* locale (see `TujiApp`), not
+/// the process locale. Crucially, `String(localized:locale:)`'s `locale` param
+/// only affects interpolation formatting — it does NOT choose which strings
+/// table is loaded, which still follows the process language. So we resolve the
+/// explicit `.lproj` bundle for the uiLang and look the key up there. Reads the
+/// mirrored uiLang from UserDefaults (thread-safe, usable off the main actor).
+nonisolated func tujiLocalized(_ key: String.LocalizationValue) -> String {
+    let code = UserDefaults.standard.string(forKey: tujiUILangDefaultsKey) ?? "zh-Hant"
+    return tujiLocalized(key, lang: code)
+}
+
+/// As `tujiLocalized`, but for an explicitly supplied uiLang code (e.g. a draft
+/// that carries its own language rather than the live app setting).
+nonisolated func tujiLocalized(_ key: String.LocalizationValue, lang code: String) -> String {
+    String(localized: key, bundle: tujiLProjBundle(code), locale: Locale(identifier: code))
+}
+
 @MainActor
 @Observable
 final class SettingsStore {
@@ -30,7 +73,20 @@ final class SettingsStore {
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
     private let saveDebounce: Duration = .milliseconds(400)
 
-    private init() {}
+    private let learningDirectionKey = "tuji.learning.direction"
+
+    private init() {
+        // Seed the learning target from the persisted choice so the launch-time
+        // word preload (gated behind the splash) fetches the right language
+        // before the server `load()` completes. Without this, `current` stays
+        // at `.default` (.zhEn) on every cold start, so a zh-ja learner who
+        // skipped the picker briefly preloads English words behind the splash
+        // and only swaps once settings arrive.
+        if let stored = UserDefaults.standard.string(forKey: self.learningDirectionKey),
+           let direction = LearningDirection(rawValue: stored) {
+            self.current.learningDirection = direction
+        }
+    }
 
     /// Returns immediately on subsequent calls; only the first call hits
     /// the network.
@@ -45,8 +101,23 @@ final class SettingsStore {
         defer { self.loading = false }
         do {
             let resp: UserSettingsResponse = try await APIClient.shared.get(.usersSettings)
+            let directionChanged =
+                self.current.learningDirection != resp.settings.learningDirection
             self.current = resp.settings
+            UserDefaults.standard.set(resp.settings.uiLang, forKey: tujiUILangDefaultsKey)
+            OnboardingState.shared.learningDirection = resp.settings.learningDirection
             self.hasLoaded = true
+            if directionChanged {
+                WordsStore.shared.invalidate()
+                MasteryStore.shared.invalidate()
+                ProgressStore.shared.invalidate()
+                StudyStatsStore.shared.invalidate()
+                async let wordsLoad: Void = WordsStore.shared.reload()
+                async let masteryLoad: Void = MasteryStore.shared.reload()
+                async let progressLoad: Void = ProgressStore.shared.reload()
+                async let statsLoad: Void = StudyStatsStore.shared.reload()
+                _ = await (wordsLoad, masteryLoad, progressLoad, statsLoad)
+            }
             self.log.info("settings loaded")
         } catch {
             self.lastError = error
@@ -65,7 +136,19 @@ final class SettingsStore {
         mutate(&next)
         guard next != self.current else { return }
         self.current = next
+        UserDefaults.standard.set(next.uiLang, forKey: tujiUILangDefaultsKey)
         self.scheduleSave()
+    }
+
+    /// Applies the learning target immediately. First-launch and guest flows
+    /// use `persist: false`; signed-in settings changes sync to the server.
+    func setLearningDirection(_ direction: LearningDirection, persist: Bool) {
+        guard self.current.learningDirection != direction else { return }
+        self.current.learningDirection = direction
+        UserDefaults.standard.set(direction.rawValue, forKey: self.learningDirectionKey)
+        if persist {
+            self.scheduleSave()
+        }
     }
 
     /// Two-way binding for SwiftUI controls (e.g. Toggle). Reading returns the

@@ -12,7 +12,7 @@ struct MilestoneView: View {
     let onFinish: () -> Void
 
     private var shareText: String {
-        "我在 Tuji 連勝 \(self.milestone.streak) 天了！\nhttps://tuji.app/share/milestone?n=\(self.milestone.streak)"
+        tujiLocalized("我在 Tuji 連勝 \(self.milestone.streak) 天了！\nhttps://tuji.app/share/milestone?n=\(self.milestone.streak)")
     }
 
     var body: some View {
@@ -42,7 +42,7 @@ struct MilestoneView: View {
         }
     }
 
-    private var subtitle: String {
+    private var subtitle: LocalizedStringKey {
         switch self.milestone.streak {
         case 30: "這個月你沒有缺席"
         case 100: "百日連勝，已經是習慣了"

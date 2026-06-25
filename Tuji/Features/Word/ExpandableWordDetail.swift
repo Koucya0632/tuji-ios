@@ -65,7 +65,14 @@ struct ExpandableWordDetail: View {
         self.loading = true
         defer { self.loading = false }
         do {
-            self.fullWord = try await APIClient.shared.get(.word(id: self.wordId))
+            let settings = SettingsStore.shared.current
+            self.fullWord = try await APIClient.shared.get(
+                .word(
+                    id: self.wordId,
+                    lang: settings.uiLang,
+                    learning: settings.learningDirection.rawValue
+                )
+            )
         } catch {
             self.error = error
         }

@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct BBtn: View {
-    let title: String
+    let title: LocalizedStringKey
     var bg: Color = .tujiYellow
     var fg: Color = .tujiInk
     var fullWidth: Bool = false

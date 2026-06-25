@@ -1,11 +1,11 @@
 // The four primary tabs surfaced in MainTabsView.
 
-import Foundation
+import SwiftUI
 
 enum MainTab: Hashable, CaseIterable {
     case today, cards, progress, me
 
-    var titleZh: String {
+    var titleZh: LocalizedStringKey {
         switch self {
         case .today: "主頁"
         case .cards: "圖鑑"

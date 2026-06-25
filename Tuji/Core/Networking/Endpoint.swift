@@ -32,9 +32,9 @@ enum Endpoint {
 
     case search(q: String)
     case events
-    case words // GET — public list of all CardWords
-    case word(id: String)
-    case categories // GET — public list of categories with display metadata
+    case words(lang: String, learning: String)
+    case word(id: String, lang: String, learning: String)
+    case categories(lang: String)
 
     // MARK: - Smoke (temporary; delete with the backend endpoint)
 
@@ -63,7 +63,7 @@ enum Endpoint {
         case .search: "/api/search"
         case .events: "/api/events"
         case .words: "/api/words"
-        case let .word(id): "/api/words/\(id)"
+        case let .word(id, _, _): "/api/words/\(id)"
         case .categories: "/api/categories"
         case .smokeWhoami: "/api/test_smoke/whoami"
         }
@@ -89,10 +89,14 @@ enum Endpoint {
                 URLQueryItem(name: "type", value: type),
                 URLQueryItem(name: "limit", value: String(limit))
             ]
-        case .words, .word, .categories:
-            // Server localizes by ?lang=. v1 UI is fixed to zh-Hant; when the
-            // app grows multi-locale, source this from UserSettings.uiLang.
-            [URLQueryItem(name: "lang", value: "zh-Hant")]
+        case let .words(lang, learning),
+             let .word(_, lang, learning):
+            [
+                URLQueryItem(name: "lang", value: lang),
+                URLQueryItem(name: "learning", value: learning)
+            ]
+        case let .categories(lang):
+            [URLQueryItem(name: "lang", value: lang)]
         default:
             []
         }

@@ -341,7 +341,8 @@ Xcode → File → Add Package Dependencies → 依序加：
   Version: 4.2.2
   ```
 
-> **不裝**：Lottie / Sentry / SwiftyOpenCC（v1 不需要；v1.1 再加）
+> **不裝**：Lottie / Sentry / SwiftyOpenCC。Crash reporting 僅使用免費
+> Firebase Crashlytics；不接 Analytics、Performance 或其他 Firebase 產品。
 
 **驗收**：
 

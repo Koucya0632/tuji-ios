@@ -18,12 +18,14 @@ final class LocalCache {
     static let shared = LocalCache()
 
     private(set) var favoriteIds: Set<String>
-    private(set) var learnedIds: Set<String>
+    private var learnedByLanguage: [String: Set<String>]
     private(set) var recentSearches: [String]
     let sessionId: String
 
     private let favsKey = "tuji.cache.favorites"
     private let learnedKey = "tuji.cache.learned"
+    private let learnedEnKey = "tuji.cache.learned.en"
+    private let learnedJaKey = "tuji.cache.learned.ja"
     private let recentKey = "tuji.cache.recentSearches"
     private let sessionKey = "tuji.cache.sessionId"
     private let maxRecent = 10
@@ -31,7 +33,11 @@ final class LocalCache {
     private init() {
         let d = UserDefaults.standard
         favoriteIds = Set((d.array(forKey: favsKey) as? [String]) ?? [])
-        learnedIds = Set((d.array(forKey: learnedKey) as? [String]) ?? [])
+        let legacyEnglish = Set((d.array(forKey: learnedKey) as? [String]) ?? [])
+        let english = Set((d.array(forKey: learnedEnKey) as? [String]) ?? [])
+            .union(legacyEnglish)
+        let japanese = Set((d.array(forKey: learnedJaKey) as? [String]) ?? [])
+        learnedByLanguage = ["en": english, "ja": japanese]
         recentSearches = (d.array(forKey: recentKey) as? [String]) ?? []
         if let existing = d.string(forKey: sessionKey) {
             sessionId = existing
@@ -43,6 +49,10 @@ final class LocalCache {
     }
 
     // MARK: - Favorites / Learned
+
+    var learnedIds: Set<String> {
+        self.learnedByLanguage[self.currentTargetLanguage] ?? []
+    }
 
     func isFavorite(_ id: String) -> Bool {
         favoriteIds.contains(id)
@@ -58,8 +68,10 @@ final class LocalCache {
     }
 
     func markLearned(_ id: String) {
-        guard !learnedIds.contains(id) else { return }
-        learnedIds.insert(id)
+        var current = self.learnedIds
+        guard !current.contains(id) else { return }
+        current.insert(id)
+        self.learnedByLanguage[self.currentTargetLanguage] = current
         persistLearned()
     }
 
@@ -69,8 +81,8 @@ final class LocalCache {
     /// doesn't re-upload the cleared ids (sync is union-only). Favorites
     /// and settings are intentionally left untouched.
     func clearLearned() {
-        guard !learnedIds.isEmpty else { return }
-        learnedIds = []
+        guard self.learnedByLanguage.values.contains(where: { !$0.isEmpty }) else { return }
+        self.learnedByLanguage = ["en": [], "ja": []]
         persistLearned()
     }
 
@@ -98,7 +110,9 @@ final class LocalCache {
     /// never loses anything from the device.
     func mergeFromServer(favorites: [String], learned: [String]) {
         favoriteIds.formUnion(favorites)
-        learnedIds.formUnion(learned)
+        var current = self.learnedIds
+        current.formUnion(learned)
+        self.learnedByLanguage[self.currentTargetLanguage] = current
         persistFavorites()
         persistLearned()
     }
@@ -107,7 +121,8 @@ final class LocalCache {
     var syncSnapshot: SyncPayload {
         SyncPayload(
             favorites: Array(favoriteIds).sorted(),
-            learned: Array(learnedIds).sorted()
+            learned: Array(self.learnedIds).sorted(),
+            learningDirection: SettingsStore.shared.current.learningDirection
         )
     }
 
@@ -118,11 +133,24 @@ final class LocalCache {
     }
 
     private func persistLearned() {
-        UserDefaults.standard.set(Array(learnedIds), forKey: learnedKey)
+        UserDefaults.standard.set(
+            Array(self.learnedByLanguage["en"] ?? []),
+            forKey: self.learnedEnKey
+        )
+        UserDefaults.standard.set(
+            Array(self.learnedByLanguage["ja"] ?? []),
+            forKey: self.learnedJaKey
+        )
+        UserDefaults.standard.removeObject(forKey: self.learnedKey)
+    }
+
+    private var currentTargetLanguage: String {
+        SettingsStore.shared.current.learningDirection.targetLanguage
     }
 }
 
 struct SyncPayload: Codable {
     let favorites: [String]
     let learned: [String]
+    let learningDirection: LearningDirection
 }

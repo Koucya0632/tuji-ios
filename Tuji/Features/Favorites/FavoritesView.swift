@@ -15,7 +15,7 @@ struct FavoritesView: View {
     enum Sort: String, CaseIterable, Hashable {
         case az, za, byCategory
 
-        var label: String {
+        var label: LocalizedStringKey {
             switch self {
             case .az: "A → Z"
             case .za: "Z → A"

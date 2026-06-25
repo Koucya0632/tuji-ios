@@ -57,8 +57,9 @@ TUJI_ENABLE_LOG_VERBOSE = NO
 TUJI_ENABLE_DEV_OVERLAY = YES               // 內測仍顯示 build 資訊方便回報
 TUJI_ENABLE_RESET_BUTTON = NO
 
-// ---------- Swift Flags ----------
+// ---------- Linker / Swift Flags ----------
 OTHER_SWIFT_FLAGS = $(inherited) -DTUJI_BETA
+OTHER_LDFLAGS = $(inherited) -ObjC
 
 // ---------- 圖示（W1 沒變體，先用 AppIcon。Apple Dev 通過後改 AppIcon-Beta）----------
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon

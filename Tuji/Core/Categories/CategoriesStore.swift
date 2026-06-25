@@ -37,13 +37,20 @@ final class CategoriesStore {
             self.loaded = true
         }
         do {
-            let resp: CategoriesResponse = try await APIClient.shared.get(.categories)
+            let resp: CategoriesResponse = try await APIClient.shared.get(
+                .categories(lang: SettingsStore.shared.current.uiLang)
+            )
             self.categories = resp.categories
             self.log.info("loaded \(resp.categories.count, privacy: .public) categories")
         } catch {
             self.lastError = error
             self.log.error("categories load failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    func invalidate() {
+        self.categories = []
+        self.loaded = false
     }
 
     func find(id: String) -> TujiCategory? {

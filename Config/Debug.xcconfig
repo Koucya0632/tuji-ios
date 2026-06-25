@@ -64,6 +64,7 @@ TUJI_ENABLE_RESET_BUTTON = YES
 
 // ---------- Other Linker / Swift Flags ----------
 OTHER_SWIFT_FLAGS = $(inherited) -DDEBUG -DTUJI_DEV
+OTHER_LDFLAGS = $(inherited) -ObjC
 
 // ---------- AppIcon variant (overridden by pbxproj target until variant
 // art exists; intent preserved here) ----------
