@@ -69,7 +69,7 @@ struct StudyReportDraft: Identifiable {
 nonisolated struct StudyReportPayload: Encodable, Sendable {
     let requestId: String
     let wordId: String
-    let cardId: Int
+    let cardId: String
     let issueType: String
     let description: String
     let mode: String

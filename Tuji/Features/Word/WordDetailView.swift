@@ -71,6 +71,7 @@ struct WordDetailPage: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(MasteryStore.self) private var mastery
+    @Environment(WordsStore.self) private var wordsStore
 
     @State private var word: Word?
     @State private var loading = false
@@ -144,7 +145,9 @@ extension WordDetailPage {
             HStack {
                 self.circleControl(systemImage: "chevron.left") { self.dismiss() }
                 Spacer()
-                FavoriteButton(wordId: w.id)
+                if !w.id.hasPrefix("atlas:") {
+                    FavoriteButton(wordId: w.id)
+                }
             }
 
             // Mastery + level badge sit above the artwork here, in full colour
@@ -237,6 +240,50 @@ extension WordDetailPage {
         guard self.word == nil, !self.loading else { return }
         self.loading = true
         defer { self.loading = false }
+        if self.id.hasPrefix("atlas:") {
+            // Show the lite custom-word card instantly, then upgrade to the full
+            // server detail (definition / synonyms / forms / etymology). The
+            // detail endpoint lazily enriches the item on first open.
+            if let lite = self.wordsStore.find(id: self.id) {
+                self.word = Word(
+                    id: lite.id,
+                    word: lite.word,
+                    alsoKnownAs: nil,
+                    category: lite.category,
+                    partOfSpeech: nil,
+                    pronunciation: lite.pronunciation,
+                    reading: lite.reading,
+                    targetLanguage: lite.targetLanguage,
+                    audioUrl: nil,
+                    audioUrls: lite.audioUrls,
+                    imageUrl: lite.imageUrl,
+                    cefrLevel: nil,
+                    status: "published",
+                    chinese: lite.chinese,
+                    definitions: [
+                        WordDefinition(language: "zh", definition: lite.chinese, cefrLevel: nil, sortOrder: 0)
+                    ],
+                    examples: nil,
+                    relations: nil,
+                    collocations: nil,
+                    collocationsZh: nil,
+                    note: nil,
+                    etymology: nil,
+                    forms: nil,
+                    chineseDefinition: lite.chinese,
+                    targetDefinition: nil,
+                    englishDefinition: nil,
+                    tags: ["custom"]
+                )
+            }
+            do {
+                let uuid = String(self.id.dropFirst("atlas:".count))
+                self.word = try await AtlasStore.shared.detail(itemId: uuid)
+            } catch {
+                if self.word == nil { self.error = error }
+            }
+            return
+        }
         do {
             let settings = SettingsStore.shared.current
             self.word = try await APIClient.shared.get(

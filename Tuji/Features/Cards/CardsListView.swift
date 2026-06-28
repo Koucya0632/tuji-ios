@@ -14,12 +14,14 @@ struct CardsListView: View {
     @State private var visibleCount: Int = 60
     @State private var peekWord: CardWord?
     @State private var pushAfterDismiss: String?
+    @State private var showCapture = false
 
     private let pageSize: Int = 60
 
     var body: some View {
         VStack(spacing: 0) {
             self.header
+            AtlasCaptureProgressStrip()
             self.chipRow
             self.content
         }
@@ -38,6 +40,9 @@ struct CardsListView: View {
         .navigationDestination(item: self.$pushAfterDismiss) { id in
             WordDetailView(id: id)
         }
+        .fullScreenCover(isPresented: self.$showCapture) {
+            AtlasCaptureView()
+        }
     }
 
     // MARK: - Bits
@@ -48,6 +53,14 @@ struct CardsListView: View {
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             Spacer()
+            Button {
+                self.showCapture = true
+            } label: {
+                Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.tujiInk2)
+            }
+            .buttonStyle(.plain)
             NavigationLink(value: NavRoute.search) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18, weight: .bold))
@@ -170,7 +183,7 @@ struct CardsListView: View {
     /// WordsStore-derived ids if CategoriesStore is still loading.
     private var chipCategories: [TujiCategory] {
         let presentIds = Set(self.store.categories)
-        let known = self.categories.categories.filter { presentIds.contains($0.id) }
+        let known = self.categories.categories.filter { presentIds.contains($0.id) || $0.id == "custom" }
         if known.isEmpty {
             // Fallback: synthesize bare metadata from word-derived ids
             return self.store.categories.map {

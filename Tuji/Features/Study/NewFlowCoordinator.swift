@@ -50,7 +50,7 @@ final class NewFlowCoordinator {
 
     /// Recognize-step ratings held back until the word clears Step 3 Spell —
     /// keyed by card id. See commitLearned(_:).
-    private var pendingRatings: [Int: SRSRating] = [:]
+    private var pendingRatings: [String: SRSRating] = [:]
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "new-flow")
 

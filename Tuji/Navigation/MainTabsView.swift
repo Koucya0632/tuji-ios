@@ -25,22 +25,17 @@ struct MainTabsView: View {
     @State private var mePath = NavigationPath()
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            self.pager
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    // Reservation disappears in study mode so the pushed
-                    // study views can claim the extra 78pt for the hero.
-                    Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
+        self.pager
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if !self.studyFocus.active {
+                    TujiTabBar(selected: self.$selected)
+                        .padding(.horizontal, Space.s4)
+                        .padding(.top, Space.s2)
+                        .padding(.bottom, Space.s2)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-
-            if !self.studyFocus.active {
-                TujiTabBar(selected: self.$selected)
-                    .padding(.horizontal, Space.s4)
-                    .padding(.bottom, Space.s2)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-        }
         .animation(.easeInOut(duration: 0.2), value: self.studyFocus.active)
         .background(.tujiBg)
         .onAppear { self.consumePendingLink() }

@@ -89,7 +89,7 @@ struct ReviewFlowView: View {
     }
 
     private func captureReport() {
-        guard let item = self.coord.current else { return }
+        guard let item = self.coord.current, !item.card.id.hasPrefix("atlas:") else { return }
         self.reportDraft = StudyReportDraft(
             item: item,
             mode: "review",
@@ -411,11 +411,6 @@ private struct ReviewRevealSheet: View {
                 .font(.system(size: 14, weight: .heavy))
                 .foregroundStyle(.tujiInk2)
             self.ratingRow
-            if self.coord.rateError != nil {
-                Text("同步失敗，請再點一次評分")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
-            }
         }
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s3)
@@ -471,7 +466,7 @@ private struct ReviewRevealSheet: View {
         let isSuggested = r == self.coord.suggested
         let isRated = self.coord.rated == r
         return Button {
-            Task { await self.coord.rate(r) }
+            self.coord.rate(r)
         } label: {
             VStack(spacing: 4) {
                 if isSuggested {

@@ -121,7 +121,7 @@ struct NewFlowView: View {
         case .done:
             return
         }
-        guard let item else { return }
+        guard let item, !item.card.id.hasPrefix("atlas:") else { return }
         self.reportDraft = StudyReportDraft(
             item: item,
             mode: "new",

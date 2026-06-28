@@ -71,6 +71,32 @@ final class APIClient {
         _ = try await request(ep, method: "DELETE", body: Empty?.none, decodeAs: Empty.self)
     }
 
+    @discardableResult
+    func upload<T: Decodable>(
+        _ ep: Endpoint,
+        fileField: String,
+        filename: String,
+        mimeType: String,
+        data: Data,
+        fields: [String: String] = [:],
+        as: T.Type = T.self
+    ) async throws
+        -> T
+    {
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var req = try await buildRequest(ep, method: "POST", body: Empty?.none, retryingAfter401: false)
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        req.httpBody = Self.multipartBody(
+            boundary: boundary,
+            fields: fields,
+            fileField: fileField,
+            filename: filename,
+            mimeType: mimeType,
+            data: data
+        )
+        return try await execute(req, ep: ep, method: "POST", body: Empty?.none, decodeAs: T.self)
+    }
+
     /// Best-effort POST. Used for analytics where dropping events is
     /// preferable to UI lag or surfacing errors.
     func fireAndForget(_ ep: Endpoint, body: some Encodable & Sendable) async {
@@ -118,7 +144,7 @@ final class APIClient {
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        req.timeoutInterval = 15
+        req.timeoutInterval = ep.timeout
         req.cachePolicy = ep.cachePolicy
 
         if !ep.isPublic {
@@ -184,10 +210,44 @@ final class APIClient {
             throw APIError.decoding(error)
         }
     }
+
+    private static func multipartBody(
+        boundary: String,
+        fields: [String: String],
+        fileField: String,
+        filename: String,
+        mimeType: String,
+        data: Data
+    ) -> Data {
+        var body = Data()
+        let lineBreak = "\r\n"
+        for (name, value) in fields {
+            body.appendString("--\(boundary)\(lineBreak)")
+            body.appendString("Content-Disposition: form-data; name=\"\(name)\"\(lineBreak)\(lineBreak)")
+            body.appendString("\(value)\(lineBreak)")
+        }
+        body.appendString("--\(boundary)\(lineBreak)")
+        body.appendString(
+            "Content-Disposition: form-data; name=\"\(fileField)\"; filename=\"\(filename)\"\(lineBreak)"
+        )
+        body.appendString("Content-Type: \(mimeType)\(lineBreak)\(lineBreak)")
+        body.append(data)
+        body.appendString(lineBreak)
+        body.appendString("--\(boundary)--\(lineBreak)")
+        return body
+    }
 }
 
 /// Stand-in for endpoints that take no body or return no body.
 struct Empty: Codable {}
+
+private extension Data {
+    mutating func appendString(_ string: String) {
+        if let data = string.data(using: .utf8) {
+            self.append(data)
+        }
+    }
+}
 
 extension APIClient {
     /// URLSession with a disk-backed URLCache so public GETs survive an
@@ -201,7 +261,10 @@ extension APIClient {
             diskCapacity: 128 * 1024 * 1024,
             directory: nil
         )
-        cfg.timeoutIntervalForRequest = 15
+        // Upper bound for the session; per-request `timeoutInterval` (Endpoint.timeout)
+        // still caps each call, so normal requests keep their short deadline while
+        // the slow AI endpoints (vision / enrich) are allowed to run longer.
+        cfg.timeoutIntervalForRequest = 60
         return URLSession(configuration: cfg)
     }
 }
