@@ -4,8 +4,9 @@
 //              based on response time + correctness)
 //
 // Every .rate call writes /api/study/answer (this is the only place SRS
-// gets persisted during review). A failed POST keeps us in .review so
-// the user can retry.
+// gets persisted during review). The write is optimistic: the UI advances
+// immediately while persist() retries in the background, and answers that
+// exhaust all retries bump `unsyncedCount` for CompleteView to surface.
 
 import OSLog
 import Observation
@@ -49,6 +50,10 @@ final class ReviewFlowCoordinator {
     /// In-flight SRS writes (POST /api/study/answer). The UI advances
     /// optimistically without awaiting these; the finish boundary drains them.
     private var pendingWrites: [Task<Void, Never>] = []
+    /// Ratings whose write exhausted all retries (e.g. offline). The optimistic
+    /// UI already advanced, so CompleteView surfaces this as a "未同步" notice
+    /// instead of dropping the answer silently.
+    var unsyncedCount: Int = 0
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
 
@@ -172,6 +177,9 @@ final class ReviewFlowCoordinator {
                 }
             }
         }
+        // All retries exhausted — the optimistic UI already moved on, so flag it
+        // for CompleteView rather than losing the answer without a trace.
+        self.unsyncedCount += 1
     }
 
     /// Keep the first `before` but the latest `after` when a word is rated
@@ -209,14 +217,33 @@ final class ReviewFlowCoordinator {
 
     /// Await every in-flight write, or `timeout`, whichever comes first. Writes
     /// that miss the window keep running and still merge via @Observable.
+    ///
+    /// A task group can't express this: it awaits all its children at scope
+    /// exit, and `await Task<Void, Never>.value` isn't cancellation-aware, so
+    /// the drain loop would block past `timeout` until the slowest write
+    /// settled — defeating the cap. Instead race the two on a continuation and
+    /// resume on whichever lands first; the drain task is unstructured, so if
+    /// the timeout wins it just keeps running in the background.
     private func drainPendingWrites(within timeout: Duration) async {
         let writes = self.pendingWrites
         guard !writes.isEmpty else { return }
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { for w in writes { await w.value } }
-            group.addTask { try? await Task.sleep(for: timeout) }
-            await group.next()
-            group.cancelAll()
+        var resumed = false
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            // Both closures inherit this @MainActor isolation, so `resumed`
+            // is touched serially — the guard makes resume exactly-once.
+            func finishOnce() {
+                guard !resumed else { return }
+                resumed = true
+                cont.resume()
+            }
+            Task {
+                for w in writes { await w.value }
+                finishOnce()
+            }
+            Task {
+                try? await Task.sleep(for: timeout)
+                finishOnce()
+            }
         }
     }
 }

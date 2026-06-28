@@ -93,7 +93,13 @@ final class WordsStore {
     }
 
     private static func merge(publicWords: [CardWord], customWords: [CardWord]) -> [CardWord] {
-        var byId = Dictionary(uniqueKeysWithValues: publicWords.map { ($0.id, $0) })
+        // Last-wins by id. Built with a loop rather than
+        // Dictionary(uniqueKeysWithValues:), which traps fatally if the server
+        // ever returns a duplicate id in the public list.
+        var byId: [String: CardWord] = [:]
+        for word in publicWords {
+            byId[word.id] = word
+        }
         for word in customWords {
             byId[word.id] = word
         }

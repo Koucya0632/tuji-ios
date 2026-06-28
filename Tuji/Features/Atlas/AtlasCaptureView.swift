@@ -453,7 +453,10 @@ struct AtlasCaptureView: View {
         self.selectedCandidateId = candidate.id
         if candidate.level == "fine" {
             self.fineLabel = candidate.label
-            self.lemma = candidate.label
+            // Same rule as the primary branch: auto-apply only fills an empty
+            // lemma so re-running recognition never clobbers a name the user
+            // already typed; an explicit chip tap (overwrite) always wins.
+            if overwrite || self.lemma.isEmpty { self.lemma = candidate.label }
         } else {
             self.primaryLabel = candidate.label
             if overwrite || self.lemma.isEmpty { self.lemma = candidate.label }

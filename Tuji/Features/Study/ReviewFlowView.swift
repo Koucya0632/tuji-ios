@@ -34,6 +34,7 @@ struct ReviewFlowView: View {
                     CompleteView(
                         answered: self.coord.answered,
                         masteryByWord: self.coord.masteryByWord,
+                        unsyncedCount: self.coord.unsyncedCount,
                         onFinish: { self.dismiss() }
                     )
                 }
