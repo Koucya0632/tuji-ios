@@ -106,7 +106,15 @@ struct StudyLauncherView: View {
                     categories: categories
                 )
             )
-            if resp.queue.isEmpty {
+            // A custom 自制圖鑑 item can carry more than one card (image_recall +
+            // flashcard), but the unified flow studies a word once and the queue
+            // is keyed by word.id (StudyQueueItem.id). Collapse to one item per
+            // word so the same word can't surface twice in a session — keep the
+            // first, since the server orders in-progress reviews ahead of new
+            // cards.
+            var seenWordIds = Set<String>()
+            let queue = resp.queue.filter { seenWordIds.insert($0.word.id).inserted }
+            if queue.isEmpty {
                 self.queueError = NSError(
                     domain: "tuji.study",
                     code: 0,
@@ -114,7 +122,7 @@ struct StudyLauncherView: View {
                 )
                 return
             }
-            self.pushQueue = QueuePush(mode: self.mode, queue: resp.queue)
+            self.pushQueue = QueuePush(mode: self.mode, queue: queue)
         } catch {
             self.log
                 .error("queue load failed: \(error.localizedDescription, privacy: .public)")
