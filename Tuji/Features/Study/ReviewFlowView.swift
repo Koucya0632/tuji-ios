@@ -276,7 +276,9 @@ private struct ReviewQuestionView: View {
 
     private var computedChoices: [String] {
         if let c = item.choices, !c.isEmpty { return c }
-        return [self.item.word.word]
+        // Custom (自制圖鑑) cards arrive without server distractors — build a
+        // stable on-device MCQ from the user's other words.
+        return mcqFallbackChoices(for: self.item, pool: self.words.words)
     }
 
     private func optionRow(label: String, letter: String) -> some View {
