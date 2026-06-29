@@ -34,6 +34,7 @@ struct ReviewFlowView: View {
                     CompleteView(
                         answered: self.coord.answered,
                         masteryByWord: self.coord.masteryByWord,
+                        unsyncedCount: self.coord.unsyncedCount,
                         onFinish: { self.dismiss() }
                     )
                 }
@@ -89,7 +90,7 @@ struct ReviewFlowView: View {
     }
 
     private func captureReport() {
-        guard let item = self.coord.current else { return }
+        guard let item = self.coord.current, !item.card.id.hasPrefix("atlas:") else { return }
         self.reportDraft = StudyReportDraft(
             item: item,
             mode: "review",
@@ -275,7 +276,9 @@ private struct ReviewQuestionView: View {
 
     private var computedChoices: [String] {
         if let c = item.choices, !c.isEmpty { return c }
-        return [self.item.word.word]
+        // Custom (自制圖鑑) cards arrive without server distractors — build a
+        // stable on-device MCQ from the user's other words.
+        return mcqFallbackChoices(for: self.item, pool: self.words.words)
     }
 
     private func optionRow(label: String, letter: String) -> some View {
@@ -411,11 +414,6 @@ private struct ReviewRevealSheet: View {
                 .font(.system(size: 14, weight: .heavy))
                 .foregroundStyle(.tujiInk2)
             self.ratingRow
-            if self.coord.rateError != nil {
-                Text("同步失敗，請再點一次評分")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
-            }
         }
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s3)
@@ -471,7 +469,7 @@ private struct ReviewRevealSheet: View {
         let isSuggested = r == self.coord.suggested
         let isRated = self.coord.rated == r
         return Button {
-            Task { await self.coord.rate(r) }
+            self.coord.rate(r)
         } label: {
             VStack(spacing: 4) {
                 if isSuggested {

@@ -19,6 +19,9 @@ import SwiftUI
 struct CompleteView: View {
     let answered: [StudyQueueItem]
     let masteryByWord: [String: MasteryDelta]
+    /// Ratings whose SRS write never reached the server (e.g. offline). Shown as
+    /// a gentle notice so a silently dropped answer doesn't look fully saved.
+    var unsyncedCount: Int = 0
     let onFinish: () -> Void
 
     @Environment(ProgressStore.self) private var progress
@@ -36,6 +39,7 @@ struct CompleteView: View {
                 VStack(spacing: Space.s5) {
                     self.hero
                     self.streakCapsule
+                    self.unsyncedNotice
                     self.changeSection
                 }
                 .padding(.horizontal, Space.s6)
@@ -84,6 +88,22 @@ struct CompleteView: View {
         .padding(.vertical, Space.s3)
         .background(.tujiCoral.opacity(0.12), in: .capsule)
         .overlay(Capsule().stroke(.tujiCoral.opacity(0.5), lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private var unsyncedNotice: some View {
+        if self.unsyncedCount > 0 {
+            HStack(spacing: Space.s2) {
+                Image(systemName: "icloud.slash")
+                    .foregroundStyle(.tujiCoral)
+                Text("有 \(self.unsyncedCount) 筆評分未能同步，連上網路後請再複習一次。")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(Space.s3)
+            .background(.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+        }
     }
 
     @ViewBuilder

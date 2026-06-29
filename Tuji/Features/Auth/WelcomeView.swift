@@ -86,6 +86,11 @@ struct WelcomeView: View {
                         .foregroundStyle(.tujiInk4)
                 }
             }
+            // Cap the auth button column so all buttons share one width and
+            // stay under ASAuthorizationAppleIDButton's built-in 375pt max —
+            // otherwise on large phones (e.g. 16 Pro Max: 440 − 48 padding =
+            // 392 > 375) the Apple button logs an Auto Layout conflict.
+            .frame(maxWidth: 360)
             .padding(.horizontal, Space.s6)
             .padding(.bottom, Space.s8)
         }

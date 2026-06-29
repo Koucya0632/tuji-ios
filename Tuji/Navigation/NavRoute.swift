@@ -10,6 +10,7 @@ enum NavRoute: Hashable {
     case search
     case favorites
     case settings
+    case atlasManage
     case studyCategories
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)

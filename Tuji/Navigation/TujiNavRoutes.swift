@@ -12,6 +12,7 @@ extension View {
             case .search: SearchView()
             case .favorites: FavoritesView()
             case .settings: SettingsView()
+            case .atlasManage: AtlasManageView()
             case .studyCategories: StudyCategoriesPickerView()
             case let .studyLanding(mode): StudyLauncherView(mode: mode)
             case let .wordDetail(id): WordDetailView(id: id)

@@ -28,7 +28,9 @@ struct BBtn: View {
                 ZStack(alignment: .bottom) {
                     RoundedRectangle(cornerRadius: Radius.lg)
                         .fill(bg.darker())
-                        .offset(y: pressed ? 0 : 4)
+                        // Flatten the 4px drop when disabled — at 0.5 opacity the
+                        // offset back-layer otherwise shows as a misaligned ghost.
+                        .offset(y: (pressed || !isEnabled) ? 0 : 4)
                     RoundedRectangle(cornerRadius: Radius.lg)
                         .fill(bg)
                         .offset(y: pressed ? 4 : 0)

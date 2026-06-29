@@ -52,8 +52,15 @@ final class WordsStore {
                     learning: settings.learningDirection.rawValue
                 )
             )
-            self.words = resp.words
-            self.log.info("loaded \(resp.total, privacy: .public) words")
+            var merged = resp.words
+            do {
+                let custom: WordsListResponse = try await APIClient.shared.get(.usersCustomWords)
+                merged = Self.merge(publicWords: resp.words, customWords: custom.words)
+            } catch {
+                self.log.info("custom words skipped: \(error.localizedDescription, privacy: .public)")
+            }
+            self.words = merged
+            self.log.info("loaded \(merged.count, privacy: .public) words")
         } catch {
             self.lastError = error
             self.log.error("words load failed: \(error.localizedDescription, privacy: .public)")
@@ -83,5 +90,22 @@ final class WordsStore {
     /// All unique category ids represented in the current dataset.
     var categories: [String] {
         Array(Set(self.words.map(\.category))).sorted()
+    }
+
+    private static func merge(publicWords: [CardWord], customWords: [CardWord]) -> [CardWord] {
+        // Last-wins by id. Built with a loop rather than
+        // Dictionary(uniqueKeysWithValues:), which traps fatally if the server
+        // ever returns a duplicate id in the public list.
+        var byId: [String: CardWord] = [:]
+        for word in publicWords {
+            byId[word.id] = word
+        }
+        for word in customWords {
+            byId[word.id] = word
+        }
+        return Array(byId.values).sorted {
+            if $0.category != $1.category { return $0.category < $1.category }
+            return $0.word.localizedCaseInsensitiveCompare($1.word) == .orderedAscending
+        }
     }
 }

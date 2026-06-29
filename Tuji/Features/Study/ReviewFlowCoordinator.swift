@@ -4,8 +4,9 @@
 //              based on response time + correctness)
 //
 // Every .rate call writes /api/study/answer (this is the only place SRS
-// gets persisted during review). A failed POST keeps us in .review so
-// the user can retry.
+// gets persisted during review). The write is optimistic: the UI advances
+// immediately while persist() retries in the background, and answers that
+// exhaust all retries bump `unsyncedCount` for CompleteView to surface.
 
 import OSLog
 import Observation
@@ -32,7 +33,6 @@ final class ReviewFlowCoordinator {
     var suggested: SRSRating = .good
     var rated: SRSRating?
     var startedAt: Date = .now
-    var rateError: Error?
     var finished: Bool = false
     /// Items the user actually rated (one per cleared item). Drives the
     /// "今天複習" tile row on CompleteView.
@@ -47,6 +47,13 @@ final class ReviewFlowCoordinator {
     var retriedIds: Set<String> = []
     /// Distinct words fully done (won't reappear). Drives the progress bar.
     var passedCount: Int = 0
+    /// In-flight SRS writes (POST /api/study/answer). The UI advances
+    /// optimistically without awaiting these; the finish boundary drains them.
+    private var pendingWrites: [Task<Void, Never>] = []
+    /// Ratings whose write exhausted all retries (e.g. offline). The optimistic
+    /// UI already advanced, so CompleteView surfaces this as a "未同步" notice
+    /// instead of dropping the answer silently.
+    var unsyncedCount: Int = 0
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
 
@@ -101,75 +108,142 @@ final class ReviewFlowCoordinator {
         return [.again, .hard, .good, .easy]
     }
 
-    func rate(_ r: SRSRating) async {
+    /// Optimistic: record the rating, run all the local bookkeeping, and
+    /// advance on a fixed beat. The SRS write (POST /api/study/answer) is fired
+    /// into `pendingWrites` and never blocks the UI — perceived latency becomes
+    /// a constant ~300ms instead of network-RTT + 450ms.
+    func rate(_ r: SRSRating) {
         guard self.phase == .review, let curr = current else { return }
         self.rated = r
-        self.rateError = nil
-        let elapsedMs = Int(Date.now.timeIntervalSince(self.startedAt) * 1000)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+        // Local bookkeeping — none of this needs the server, so do it now.
+        // One row per word on CompleteView, even when re-tested twice.
+        if !self.answered.contains(where: { $0.word.id == curr.word.id }) {
+            self.answered.append(curr)
+        }
+        // Wrong first attempt → requeue the word once for an in-session
+        // re-test (appended to the tail). The re-test itself never requeues
+        // again, and a correct first answer passes straight through.
+        let isRetest = self.retriedIds.contains(curr.word.id)
+        if !self.wasCorrect, !isRetest {
+            self.retriedIds.insert(curr.word.id)
+            self.queue.append(curr)
+        } else {
+            self.passedCount += 1
+        }
+
+        // Persist in the background; mastery/milestone merge in when it lands.
         let payload = StudyAnswerPayload(
             cardId: curr.card.id,
             rating: r,
-            responseMs: elapsedMs,
+            responseMs: Int(Date.now.timeIntervalSince(self.startedAt) * 1000),
             activity: "mcq"
         )
-        do {
-            let resp: StudyAnswerResponse = try await APIClient.shared.post(
-                .studyAnswer,
-                body: payload
-            )
-            // One row per word on CompleteView, even when re-tested twice.
-            if !self.answered.contains(where: { $0.word.id == curr.word.id }) {
-                self.answered.append(curr)
-            }
-            if let m = resp.mastery {
-                // Keep the first `before` but the latest `after` when a word is
-                // rated twice in one session (wrong-answer re-test): merge so
-                // the row shows the full session swing.
-                if let existing = self.masteryByWord[curr.word.id] {
-                    self.masteryByWord[curr.word.id] = MasteryDelta(
-                        before: existing.before,
-                        after: m.after,
-                        delta: m.after - existing.before
-                    )
-                } else {
-                    self.masteryByWord[curr.word.id] = m
+        let wordId = curr.word.id
+        self.pendingWrites.append(Task { await self.persist(payload, wordId: wordId) })
+
+        // Fixed, network-independent beat so the button fill + check/✕ register,
+        // then move on.
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            self.advance()
+        }
+    }
+
+    /// Writes one SRS answer with a few retries and folds the returned
+    /// mastery/milestone back into session state. Runs detached from the UI.
+    private func persist(_ payload: StudyAnswerPayload, wordId: String) async {
+        for attempt in 0 ..< 3 {
+            if Task.isCancelled { return }
+            do {
+                let resp: StudyAnswerResponse = try await APIClient.shared.post(
+                    .studyAnswer,
+                    body: payload
+                )
+                if let m = resp.mastery { self.mergeMastery(m, wordId: wordId) }
+                if let ms = resp.milestone {
+                    // Server only emits the milestone on the answer that crosses
+                    // the threshold, so always overwrite when present.
+                    self.milestone = ms
+                }
+                return
+            } catch {
+                self.log.error(
+                    "rate persist failed (attempt \(attempt + 1)): \(error.localizedDescription, privacy: .public)"
+                )
+                if attempt < 2 {
+                    try? await Task.sleep(for: .milliseconds(400 * (attempt + 1)))
                 }
             }
-            if let m = resp.milestone {
-                // Server only emits the milestone payload on the answer
-                // that actually crosses the threshold, so always overwrite
-                // when present rather than guarding for "first wins".
-                self.milestone = m
-            }
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            // Wrong first attempt → requeue the word once for an in-session
-            // re-test (appended to the tail). The re-test itself never requeues
-            // again, and a correct first answer passes straight through.
-            let isRetest = self.retriedIds.contains(curr.word.id)
-            if !self.wasCorrect, !isRetest {
-                self.retriedIds.insert(curr.word.id)
-                self.queue.append(curr)
-            } else {
-                self.passedCount += 1
-            }
-            try? await Task.sleep(for: .milliseconds(450))
-            self.advance()
-        } catch {
-            self.rateError = error
-            self.rated = nil
-            self.log.error("rate failed: \(error.localizedDescription, privacy: .public)")
+        }
+        // All retries exhausted — the optimistic UI already moved on, so flag it
+        // for CompleteView rather than losing the answer without a trace.
+        self.unsyncedCount += 1
+    }
+
+    /// Keep the first `before` but the latest `after` when a word is rated
+    /// twice in one session (wrong-answer re-test) so the row shows the full
+    /// session swing.
+    private func mergeMastery(_ m: MasteryDelta, wordId: String) {
+        if let existing = self.masteryByWord[wordId] {
+            self.masteryByWord[wordId] = MasteryDelta(
+                before: existing.before,
+                after: m.after,
+                delta: m.after - existing.before
+            )
+        } else {
+            self.masteryByWord[wordId] = m
         }
     }
 
     private func advance() {
         if self.index + 1 >= self.queue.count {
-            self.finished = true
+            // Last item: give outstanding SRS writes a brief window to land so
+            // CompleteView's mastery deltas are populated, but cap it so a slow
+            // or dead network can't hang the summary.
+            Task {
+                await self.drainPendingWrites(within: .milliseconds(800))
+                self.finished = true
+            }
         } else {
             self.index += 1
             self.phase = .answer
             self.picked = nil
             self.rated = nil
             self.startedAt = .now
+        }
+    }
+
+    /// Await every in-flight write, or `timeout`, whichever comes first. Writes
+    /// that miss the window keep running and still merge via @Observable.
+    ///
+    /// A task group can't express this: it awaits all its children at scope
+    /// exit, and `await Task<Void, Never>.value` isn't cancellation-aware, so
+    /// the drain loop would block past `timeout` until the slowest write
+    /// settled — defeating the cap. Instead race the two on a continuation and
+    /// resume on whichever lands first; the drain task is unstructured, so if
+    /// the timeout wins it just keeps running in the background.
+    private func drainPendingWrites(within timeout: Duration) async {
+        let writes = self.pendingWrites
+        guard !writes.isEmpty else { return }
+        var resumed = false
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            // Both closures inherit this @MainActor isolation, so `resumed`
+            // is touched serially — the guard makes resume exactly-once.
+            func finishOnce() {
+                guard !resumed else { return }
+                resumed = true
+                cont.resume()
+            }
+            Task {
+                for w in writes { await w.value }
+                finishOnce()
+            }
+            Task {
+                try? await Task.sleep(for: timeout)
+                finishOnce()
+            }
         }
     }
 }

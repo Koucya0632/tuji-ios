@@ -16,6 +16,7 @@ enum Endpoint {
     case usersSync
     case usersProgress
     case usersMastery
+    case usersCustomWords
     case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
     case usersPushToken
@@ -27,6 +28,20 @@ enum Endpoint {
     case studyAnswer
     case studyStats
     case studyReports
+
+    // MARK: - Custom Atlas (auth-protected)
+
+    case atlasImages(limit: Int)
+    case atlasImage(id: String)
+    case atlasImageRecognize(id: String)
+    case atlasImageConfirm(id: String)
+    case atlasItem(id: String)
+    case atlasItemCards(id: String)
+    case atlasItemEnrich(id: String)
+    case atlasItemDetail(id: String)
+    case atlasItemPublish(id: String)
+    case atlasSync(since: String?, limit: Int)
+    case atlasFriends(limit: Int)
 
     // MARK: - Public
 
@@ -52,6 +67,7 @@ enum Endpoint {
         case .usersSync: "/api/users/sync"
         case .usersProgress: "/api/users/progress"
         case .usersMastery: "/api/users/mastery"
+        case .usersCustomWords: "/api/users/custom-words"
         case .usersTopWords: "/api/users/top-words"
         case .usersDeleteAccount: "/api/users/delete-account"
         case .usersPushToken,
@@ -60,6 +76,17 @@ enum Endpoint {
         case .studyAnswer: "/api/study/answer"
         case .studyStats: "/api/study/stats"
         case .studyReports: "/api/study/reports"
+        case .atlasImages: "/api/atlas/images"
+        case let .atlasImage(id): "/api/atlas/images/\(id)"
+        case let .atlasImageRecognize(id): "/api/atlas/images/\(id)/recognize"
+        case let .atlasImageConfirm(id): "/api/atlas/images/\(id)/confirm"
+        case let .atlasItem(id): "/api/atlas/items/\(id)"
+        case let .atlasItemCards(id): "/api/atlas/items/\(id)/cards"
+        case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
+        case let .atlasItemDetail(id): "/api/atlas/items/\(id)/detail"
+        case let .atlasItemPublish(id): "/api/atlas/items/\(id)/publish"
+        case .atlasSync: "/api/atlas/sync"
+        case .atlasFriends: "/api/atlas/friends"
         case .search: "/api/search"
         case .events: "/api/events"
         case .words: "/api/words"
@@ -89,6 +116,14 @@ enum Endpoint {
                 URLQueryItem(name: "type", value: type),
                 URLQueryItem(name: "limit", value: String(limit))
             ]
+        case let .atlasImages(limit),
+             let .atlasFriends(limit):
+            [URLQueryItem(name: "limit", value: String(limit))]
+        case let .atlasSync(since, limit):
+            [
+                since.map { URLQueryItem(name: "since", value: $0) },
+                URLQueryItem(name: "limit", value: String(limit))
+            ].compactMap { $0 }
         case let .words(lang, learning),
              let .word(_, lang, learning):
             [
@@ -110,7 +145,11 @@ enum Endpoint {
         case .words, .word, .categories, .search:
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
-             .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete:
+             .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
+             .usersCustomWords,
+             .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
+             .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
+             .atlasItemPublish, .atlasSync, .atlasFriends:
             .reloadIgnoringLocalCacheData
         default:
             .useProtocolCachePolicy
@@ -127,6 +166,19 @@ enum Endpoint {
         switch self {
         case .events, .search, .word, .words, .categories: true
         default: false
+        }
+    }
+
+    /// Per-request timeout (seconds). AI endpoints — image recognition (Google
+    /// Vision primary / OpenAI gpt-4o "高精度" escalate) and enrichment / detail
+    /// (gpt-4o-mini, incl. lazy enrich on first open) — can take far longer than
+    /// a normal call, so they override the short default upward.
+    var timeout: TimeInterval {
+        switch self {
+        case .atlasImages, .atlasImageRecognize, .atlasItemEnrich, .atlasItemDetail:
+            60
+        default:
+            15
         }
     }
 }

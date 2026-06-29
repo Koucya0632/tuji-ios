@@ -25,9 +25,26 @@ struct StudyQueueWord: Decodable, Hashable, Identifiable {
 /// (for POST /api/study/answer) — keep the struct lean so decoding is
 /// cheap even with hundreds of items.
 struct StudyCard: Decodable, Hashable {
-    let id: Int
+    let id: String
     let cardType: String?
     let deckKey: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case cardType
+        case deckKey
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        if let intId = try? c.decode(Int.self, forKey: .id) {
+            self.id = String(intId)
+        } else {
+            self.id = try c.decode(String.self, forKey: .id)
+        }
+        self.cardType = try c.decodeIfPresent(String.self, forKey: .cardType)
+        self.deckKey = try c.decodeIfPresent(String.self, forKey: .deckKey)
+    }
 }
 
 struct StudyQueueItem: Decodable, Hashable, Identifiable {
@@ -73,14 +90,14 @@ enum SRSRating: String, Codable {
 // requires non-isolated conformance.
 // swiftformat:disable:next redundantSendable
 nonisolated struct StudyAnswerPayload: Encodable, Sendable {
-    let cardId: Int
+    let cardId: String
     let rating: String
     let responseMs: Int?
     let sessionId: String?
     let activity: String?
 
     init(
-        cardId: Int,
+        cardId: String,
         rating: SRSRating,
         responseMs: Int? = nil,
         sessionId: String? = nil,

@@ -48,6 +48,12 @@
         <key>UIApplicationSupportsMultipleScenes</key>
         <false/>
     </dict>
+    <!-- Lock the whole app to light appearance so it never follows the
+         system's dark mode (the UI is designed light-first). This also
+         covers UIKit-presented system surfaces — alerts, action sheets,
+         the share sheet — which SwiftUI's .preferredColorScheme won't. -->
+    <key>UIUserInterfaceStyle</key>
+    <string>Light</string>
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
     <key>UIRequiredDeviceCapabilities</key>
@@ -62,6 +68,10 @@
     <!-- Encryption / privacy -->
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
+    <!-- Camera: used by the 自制圖鑑 capture flow to photograph an object and
+         turn it into a study card. -->
+    <key>NSCameraUsageDescription</key>
+    <string>用相機拍照，把身邊的東西做成自制圖鑑學習卡片。</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
