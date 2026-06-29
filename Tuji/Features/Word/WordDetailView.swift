@@ -241,10 +241,17 @@ extension WordDetailPage {
         self.loading = true
         defer { self.loading = false }
         if self.id.hasPrefix("atlas:") {
-            // Show the lite custom-word card instantly, then upgrade to the full
-            // server detail (definition / synonyms / forms / etymology). The
-            // detail endpoint lazily enriches the item on first open.
+            // /api/users/custom-words now embeds the full detail (definition /
+            // synonyms / forms / etymology) enriched at capture time, so the
+            // common path renders with zero extra round-trips.
             if let lite = self.wordsStore.find(id: self.id) {
+                if let full = lite.detail {
+                    self.word = full
+                    return
+                }
+                // No embedded detail (cold store, or an item that missed
+                // enrichment): show the lite card instantly, then upgrade via
+                // the detail endpoint, which lazily enriches on first open.
                 self.word = Word(
                     id: lite.id,
                     word: lite.word,

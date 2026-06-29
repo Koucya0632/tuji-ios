@@ -22,6 +22,10 @@ struct CardWord: Codable, Identifiable, Hashable {
     /// "ja-JP"). The server only sends the locales relevant to the active
     /// learning direction; nil when no audio has been generated.
     let audioUrls: [String: String]?
+    /// Full per-word detail, present only for 自制圖鑑 (custom) words —
+    /// /api/users/custom-words embeds it so WordDetailView can render without a
+    /// second /api/atlas/items/{id}/detail round-trip. nil for public words.
+    let detail: Word?
 
     init(
         id: String,
@@ -32,7 +36,8 @@ struct CardWord: Codable, Identifiable, Hashable {
         pronunciation: String,
         reading: String? = nil,
         targetLanguage: String? = nil,
-        audioUrls: [String: String]? = nil
+        audioUrls: [String: String]? = nil,
+        detail: Word? = nil
     ) {
         self.id = id
         self.word = word
@@ -43,6 +48,7 @@ struct CardWord: Codable, Identifiable, Hashable {
         self.reading = reading
         self.targetLanguage = targetLanguage
         self.audioUrls = audioUrls
+        self.detail = detail
     }
 
     var imageURL: URL? {
