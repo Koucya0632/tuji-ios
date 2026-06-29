@@ -13,28 +13,18 @@ import SwiftUI
 struct AtlasManageView: View {
     @State private var store = AtlasStore.shared
     @State private var pendingDelete: AtlasImageSummary?
+    @State private var isSelecting = false
+    @State private var selectedIds: Set<String> = []
+    @State private var showBatchDeleteConfirm = false
     @State private var errorMessage: String?
 
     var body: some View {
-        // Capture the pending row before the prompt runs its action: tujiPrompt
-        // sets isPresented = false first (which nils pendingDelete), so reading
-        // self.pendingDelete inside the action is always nil — the "刪除沒反應" bug.
+        // Capture the pending rows before the prompt runs its action: tujiPrompt
+        // sets isPresented = false first (which nils the backing state), so
+        // reading it inside the action is always empty — the "刪除沒反應" bug.
         let target = self.pendingDelete
+        let batch = Array(self.selectedIds)
         return List {
-            Section {
-                NavigationLink {
-                    AtlasStudyView()
-                } label: {
-                    HStack(spacing: Space.s3) {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 22, weight: .heavy))
-                            .foregroundStyle(.tujiTeal)
-                        Text("開始自制圖鑑複習")
-                            .foregroundStyle(.tujiInk)
-                    }
-                }
-            }
-
             Section("我的圖鑑卡片") {
                 if let errorMessage {
                     Text(errorMessage)
@@ -45,18 +35,7 @@ struct AtlasManageView: View {
                     self.emptyRow
                 } else {
                     ForEach(self.store.images) { image in
-                        NavigationLink {
-                            AtlasManageDetailView(image: image, onDelete: { self.pendingDelete = image })
-                        } label: {
-                            self.row(image)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                self.pendingDelete = image
-                            } label: {
-                                Label("刪除", systemImage: "trash")
-                            }
-                        }
+                        self.imageRow(image)
                     }
                 }
             }
@@ -65,6 +44,23 @@ struct AtlasManageView: View {
         .background(.tujiBg)
         .navigationTitle("自制圖鑑")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if !self.store.images.isEmpty {
+                    Button(self.isSelecting ? "完成" : "選取") {
+                        self.isSelecting.toggle()
+                        if !self.isSelecting { self.selectedIds.removeAll() }
+                    }
+                    .font(.system(size: 15, weight: .heavy))
+                    .tint(.tujiTeal)
+                }
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            if self.isSelecting, !self.selectedIds.isEmpty {
+                self.deleteBar
+            }
+        }
         .task { await self.store.sync(since: nil) }
         .tujiPrompt(
             isPresented: Binding(
@@ -75,13 +71,78 @@ struct AtlasManageView: View {
             title: "刪除這張卡片？",
             message: "圖片與它生成的卡片都會一起刪除，無法復原。",
             primary: TujiPromptAction("刪除", role: .destructive) {
-                if let target { Task { await self.delete(target) } }
+                if let target { Task { await self.delete([target.id]) } }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showBatchDeleteConfirm,
+            style: .destructive,
+            title: "刪除所選卡片？",
+            message: "圖片與它們生成的卡片都會一起刪除，無法復原。",
+            primary: TujiPromptAction("刪除", role: .destructive) {
+                Task { await self.delete(batch) }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
     }
 
+    /// One card row. In selection mode it's a tappable checkbox row; otherwise
+    /// it keeps the push-to-detail + swipe-to-delete behaviour.
     @ViewBuilder
+    private func imageRow(_ image: AtlasImageSummary) -> some View {
+        if self.isSelecting {
+            let selected = self.selectedIds.contains(image.id)
+            Button {
+                self.toggleSelection(image.id)
+            } label: {
+                HStack(spacing: Space.s3) {
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(selected ? .tujiTeal : .tujiInk4)
+                    self.row(image)
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
+            NavigationLink {
+                AtlasManageDetailView(image: image, onDelete: { self.pendingDelete = image })
+            } label: {
+                self.row(image)
+            }
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    self.pendingDelete = image
+                } label: {
+                    Label("刪除", systemImage: "trash")
+                }
+            }
+        }
+    }
+
+    private var deleteBar: some View {
+        BBtn(
+            title: "刪除 \(self.selectedIds.count) 張卡片",
+            bg: .tujiCoral,
+            fg: .white,
+            fullWidth: true,
+            icon: "trash"
+        ) {
+            self.showBatchDeleteConfirm = true
+        }
+        .padding(.horizontal, Space.s6)
+        .padding(.vertical, Space.s3)
+        .background(.tujiBg)
+    }
+
+    private func toggleSelection(_ id: String) {
+        if self.selectedIds.contains(id) {
+            self.selectedIds.remove(id)
+        } else {
+            self.selectedIds.insert(id)
+        }
+    }
+
     private var emptyRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("還沒有自制圖鑑卡片")
@@ -136,16 +197,19 @@ struct AtlasManageView: View {
         self.store.items.first { $0.imageId == image.id }
     }
 
-    private func delete(_ image: AtlasImageSummary) async {
+    private func delete(_ ids: [String]) async {
+        guard !ids.isEmpty else { return }
         self.errorMessage = nil
         do {
             // AtlasStore.deleteImage already updates the atlas list state.
             // Don't invalidate() the main stores here — clearing
             // WordsStore.loaded trips RootView's splash gate and bounces the
             // app back to Splash. Refresh the home counters in place instead.
-            try await self.store.deleteImage(id: image.id)
+            for id in ids {
+                try await self.store.deleteImage(id: id)
+            }
             // Atlas cards show in the 圖鑑 grid as custom words — reload so the
-            // deleted one disappears there too. reload() not invalidate().
+            // deleted ones disappear there too. reload() not invalidate().
             async let words: Void = WordsStore.shared.reload()
             async let progress: Void = ProgressStore.shared.reload()
             async let stats: Void = StudyStatsStore.shared.reload()
@@ -154,6 +218,8 @@ struct AtlasManageView: View {
             self.errorMessage = error.localizedDescription
         }
         self.pendingDelete = nil
+        self.selectedIds.removeAll()
+        self.isSelecting = false
     }
 }
 

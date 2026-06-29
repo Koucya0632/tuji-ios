@@ -112,32 +112,6 @@ final class AtlasStore {
         try await APIClient.shared.get(.atlasItemDetail(id: itemId))
     }
 
-    func loadStudyQueue(mode: String = "both", limit: Int = 20) async throws -> [AtlasStudyQueueItem] {
-        let response: AtlasStudyQueueResponse = try await APIClient.shared.get(
-            .atlasStudyQueue(mode: mode, limit: limit)
-        )
-        return response.queue
-    }
-
-    func answerStudyCard(
-        cardId: String,
-        rating: SRSRating,
-        responseMs: Int?,
-        sessionId: String,
-        activity: String = "image_recall"
-    ) async throws -> StudyAnswerResponse {
-        try await APIClient.shared.post(
-            .atlasStudyAnswer,
-            body: AtlasStudyAnswerPayload(
-                cardId: cardId,
-                rating: rating,
-                responseMs: responseMs,
-                sessionId: sessionId,
-                activity: activity
-            )
-        )
-    }
-
     private func merge(_ response: AtlasSyncResponse) {
         self.images = Self.merged(self.images, response.images)
             .filter { $0.deletedAt == nil }

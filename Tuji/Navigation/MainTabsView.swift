@@ -25,17 +25,18 @@ struct MainTabsView: View {
     @State private var mePath = NavigationPath()
 
     var body: some View {
-        self.pager
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !self.studyFocus.active {
-                    TujiTabBar(selected: self.$selected)
-                        .padding(.horizontal, Space.s4)
-                        .padding(.top, Space.s2)
-                        .padding(.bottom, Space.s2)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+        VStack(spacing: 0) {
+            self.pager
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if !self.studyFocus.active {
+                TujiTabBar(selected: self.$selected)
+                    .padding(.horizontal, Space.s4)
+                    .padding(.top, Space.s2)
+                    .padding(.bottom, Space.s2)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
+        }
         .animation(.easeInOut(duration: 0.2), value: self.studyFocus.active)
         .background(.tujiBg)
         .onAppear { self.consumePendingLink() }

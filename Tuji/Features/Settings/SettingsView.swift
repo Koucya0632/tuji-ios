@@ -117,17 +117,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            Section("圖鑑") {
-                NavigationLink {
-                    AtlasManageView()
-                } label: {
-                    self.row(
-                        label: "自制圖鑑",
-                        value: nil,
-                        subtitle: "管理你拍照建立的圖鑑卡片"
-                    )
-                }
-            }
             Section("帳號") {
                 NavigationLink {
                     EditProfileView()

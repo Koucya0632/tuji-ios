@@ -40,8 +40,6 @@ enum Endpoint {
     case atlasItemEnrich(id: String)
     case atlasItemDetail(id: String)
     case atlasItemPublish(id: String)
-    case atlasStudyQueue(mode: String, limit: Int)
-    case atlasStudyAnswer
     case atlasSync(since: String?, limit: Int)
     case atlasFriends(limit: Int)
 
@@ -87,8 +85,6 @@ enum Endpoint {
         case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
         case let .atlasItemDetail(id): "/api/atlas/items/\(id)/detail"
         case let .atlasItemPublish(id): "/api/atlas/items/\(id)/publish"
-        case .atlasStudyQueue: "/api/atlas/study/queue"
-        case .atlasStudyAnswer: "/api/atlas/study/answer"
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
         case .search: "/api/search"
@@ -123,11 +119,6 @@ enum Endpoint {
         case let .atlasImages(limit),
              let .atlasFriends(limit):
             [URLQueryItem(name: "limit", value: String(limit))]
-        case let .atlasStudyQueue(mode, limit):
-            [
-                URLQueryItem(name: "mode", value: mode),
-                URLQueryItem(name: "limit", value: String(limit))
-            ]
         case let .atlasSync(since, limit):
             [
                 since.map { URLQueryItem(name: "since", value: $0) },
@@ -158,8 +149,7 @@ enum Endpoint {
              .usersCustomWords,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
-             .atlasItemPublish, .atlasStudyQueue,
-             .atlasStudyAnswer, .atlasSync, .atlasFriends:
+             .atlasItemPublish, .atlasSync, .atlasFriends:
             .reloadIgnoringLocalCacheData
         default:
             .useProtocolCachePolicy

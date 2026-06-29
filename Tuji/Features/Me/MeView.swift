@@ -267,6 +267,15 @@ struct MeView: View {
             }
             .buttonStyle(.plain)
             Divider().background(.tujiInk4.opacity(0.15))
+            // 自制圖鑑 is account-scoped (uploads + cards live on the server),
+            // so it's hidden for guests — they'd hit an empty, unusable page.
+            if !self.isGuest {
+                NavigationLink(value: NavRoute.atlasManage) {
+                    self.listRow(icon: "camera.fill", title: "自制圖鑑", tint: .tujiTeal)
+                }
+                .buttonStyle(.plain)
+                Divider().background(.tujiInk4.opacity(0.15))
+            }
             NavigationLink(value: NavRoute.settings) {
                 self.listRow(icon: "gearshape.fill", title: "設定", tint: .tujiInk3)
             }
