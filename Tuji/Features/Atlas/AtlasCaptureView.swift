@@ -32,6 +32,10 @@ struct AtlasCaptureView: View {
 
     @State private var showCamera = false
     @State private var pickerItem: PhotosPickerItem?
+    /// A freshly picked frame awaiting the crop/preview step before upload. Wrapping
+    /// the bytes in an Identifiable drives `.fullScreenCover(item:)` and re-creates
+    /// the crop view per pick.
+    @State private var pendingCrop: PendingCrop?
     @State private var busy: Busy?
     @State private var errorMessage: String?
     @State private var successMessage: String?
@@ -45,6 +49,11 @@ struct AtlasCaptureView: View {
 
     private enum Busy: String {
         case upload, recognize
+    }
+
+    private struct PendingCrop: Identifiable {
+        let id = UUID()
+        let data: Data
     }
 
     var body: some View {
@@ -87,9 +96,27 @@ struct AtlasCaptureView: View {
             CameraPicker(
                 onCapture: { data in
                     self.showCamera = false
-                    Task { await self.handlePicked(data: data) }
+                    // Hand off to the crop cover only after the camera cover has
+                    // dismissed — presenting a second fullScreenCover in the same
+                    // runloop tick gets dropped by SwiftUI. (The 相簿 path has no
+                    // such race; it isn't coming from another cover.)
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(350))
+                        self.pendingCrop = PendingCrop(data: data)
+                    }
                 },
                 onCancel: { self.showCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .fullScreenCover(item: self.$pendingCrop) { pending in
+            ImageCropView(
+                imageData: pending.data,
+                onConfirm: { cropped in
+                    self.pendingCrop = nil
+                    Task { await self.handlePicked(data: cropped) }
+                },
+                onCancel: { self.pendingCrop = nil }
             )
             .ignoresSafeArea()
         }
@@ -119,6 +146,10 @@ struct AtlasCaptureView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .tujiStatusToast(
+            isPresented: self.busy == .upload || self.busy == .recognize,
+            style: .recognizing
+        )
     }
 
     // MARK: - Source chooser
@@ -140,7 +171,7 @@ struct AtlasCaptureView: View {
                 } label: {
                     HStack {
                         Image(systemName: "camera.fill")
-                        Text(self.busy == .upload ? "上傳中…" : "拍照")
+                        Text("拍照")
                     }
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(.white)
@@ -157,16 +188,6 @@ struct AtlasCaptureView: View {
             }
             .disabled(self.busy != nil)
 
-            if self.busy == .upload {
-                HStack(spacing: Space.s2) {
-                    ProgressView().tint(.tujiTeal)
-                    Text("上傳並辨識中…")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, Space.s2)
-            }
         }
     }
 
@@ -231,7 +252,7 @@ struct AtlasCaptureView: View {
             Button {
                 self.requestRecognize(imageId: image.id, mode: "primary")
             } label: {
-                self.smallActionLabel(self.busy == .recognize ? "識別中…" : "AI 識別", icon: "sparkles")
+                self.smallActionLabel("AI 識別", icon: "sparkles")
             }
             .buttonStyle(.plain)
             .disabled(self.busy != nil)
@@ -374,7 +395,7 @@ struct AtlasCaptureView: View {
             guard let data = try await item.loadTransferable(type: Data.self) else {
                 throw AtlasCaptureError.missingPhotoData
             }
-            await self.handlePicked(data: data)
+            self.pendingCrop = PendingCrop(data: data)
         } catch {
             self.errorMessage = error.localizedDescription
         }

@@ -87,7 +87,14 @@ struct MeView: View {
             }
         }
         .task {
-            if !self.isGuest { await self.vm.load(progress: self.progress) }
+            if !self.isGuest {
+                // Warm the 自制圖鑑 store from here (its parent screen) so tapping
+                // into AtlasManageView renders from the cached singleton instead
+                // of waiting on /api/atlas/sync. Fire-and-forget so it doesn't
+                // block Me's own load; sync() is incremental after the first run.
+                Task { await AtlasStore.shared.sync() }
+                await self.vm.load(progress: self.progress)
+            }
         }
         .navigationDestination(item: self.$peekId) { id in
             WordDetailView(id: id)

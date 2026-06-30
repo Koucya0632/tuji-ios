@@ -238,6 +238,9 @@ struct CompleteView: View {
         self.progress.invalidate()
         self.studyStats.invalidate()
         self.mastery.invalidate()
+        // Drop any prefetched queue — this session changed due/seen counts, so
+        // the next 復習 / 學新字 must re-fetch rather than reuse a stale queue.
+        StudyQueueStore.shared.invalidate()
         async let p: Void = self.progress.reload()
         async let s: Void = self.studyStats.reload()
         async let m: Void = self.mastery.reload()

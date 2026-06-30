@@ -92,7 +92,23 @@ struct TodayView: View {
                 await self.vm.load(progress: self.progress, studyStats: self.studyStats)
                 // Powers the 完成 / 全精通 badges on the theme tiles.
                 await self.mastery.loadIfNeeded()
+                self.prefetchStudyQueues()
             }
+        }
+    }
+
+    /// Warm the study queue in the background (JSON only — card images stay
+    /// lazy) so tapping 復習 / 學新字 skips the "載入練習中…" spinner. Only the
+    /// enabled CTAs are prefetched, so a disabled button costs nothing, and the
+    /// fetch replaces — not duplicates — the launcher's request for users who do
+    /// study. Runs after vm.load so settings + stats (which drive the params)
+    /// are warm. StudyQueueStore's TTL + signature avoid re-fetching on tab swaps.
+    private func prefetchStudyQueues() {
+        if !self.reviewDisabled {
+            Task { await StudyQueueStore.shared.prefetch(mode: .review) }
+        }
+        if !self.newDisabled {
+            Task { await StudyQueueStore.shared.prefetch(mode: .new) }
         }
     }
 

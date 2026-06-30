@@ -51,6 +51,11 @@ final class NewFlowCoordinator {
     /// Recognize-step ratings held back until the word clears Step 3 Spell —
     /// keyed by card id. See commitLearned(_:).
     private var pendingRatings: [String: SRSRating] = [:]
+    /// In-flight SRS writes (POST /api/study/answer) fired by commitLearned.
+    /// NewDoneView drains these before reloading mastery so the just-learned
+    /// words don't show stale on the 圖鑑/詳情 (the write would otherwise race
+    /// the reload, since it's fired optimistically without awaiting).
+    private var pendingWrites: [Task<Void, Never>] = []
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "new-flow")
 
@@ -104,9 +109,17 @@ final class NewFlowCoordinator {
             rating: rating,
             activity: "new_recognize"
         )
-        Task.detached {
-            await APIClient.shared.fireAndForget(.studyAnswer, body: payload)
-        }
+        // Tracked (not detached) so NewDoneView can drain it before reloading
+        // mastery — see pendingWrites / drainPendingWrites.
+        self.pendingWrites.append(Task { await APIClient.shared.fireAndForget(.studyAnswer, body: payload) })
+    }
+
+    /// Give the optimistic recognize writes a bounded window to land before the
+    /// completion screen reloads mastery/stats. Mirrors ReviewFlowCoordinator.
+    func drainPendingWrites(within timeout: Duration) async {
+        // Module-qualified: unqualified would resolve to this instance method
+        // (member lookup wins over the global), recursing forever.
+        await Tuji.drainPendingWrites(self.pendingWrites, within: timeout)
     }
 
     // MARK: - Step 2 — Identify

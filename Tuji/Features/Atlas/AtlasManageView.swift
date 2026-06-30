@@ -17,6 +17,7 @@ struct AtlasManageView: View {
     @State private var selectedIds: Set<String> = []
     @State private var showBatchDeleteConfirm = false
     @State private var errorMessage: String?
+    @State private var deleting = false
 
     var body: some View {
         // Capture the pending rows before the prompt runs its action: tujiPrompt
@@ -32,7 +33,14 @@ struct AtlasManageView: View {
                         .foregroundStyle(.tujiCoral)
                 }
                 if self.store.images.isEmpty {
-                    self.emptyRow
+                    // Distinguish "still syncing" from "genuinely empty" so the
+                    // first cold open doesn't flash 「還沒有卡片」 over a user who
+                    // actually has cards still loading from /api/atlas/sync.
+                    if self.store.loading {
+                        self.loadingRow
+                    } else {
+                        self.emptyRow
+                    }
                 } else {
                     ForEach(self.store.images) { image in
                         self.imageRow(image)
@@ -85,6 +93,7 @@ struct AtlasManageView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .tujiStatusToast(isPresented: self.deleting, style: .deleting)
     }
 
     /// One card row. In selection mode it's a tappable checkbox row; otherwise
@@ -141,6 +150,17 @@ struct AtlasManageView: View {
         } else {
             self.selectedIds.insert(id)
         }
+    }
+
+    private var loadingRow: some View {
+        HStack(spacing: Space.s3) {
+            ProgressView().tint(.tujiTeal)
+            Text("載入中…")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk3)
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.vertical, Space.s4)
     }
 
     private var emptyRow: some View {
@@ -200,6 +220,8 @@ struct AtlasManageView: View {
     private func delete(_ ids: [String]) async {
         guard !ids.isEmpty else { return }
         self.errorMessage = nil
+        self.deleting = true
+        defer { self.deleting = false }
         do {
             // AtlasStore.deleteImage already updates the atlas list state.
             // Don't invalidate() the main stores here — clearing

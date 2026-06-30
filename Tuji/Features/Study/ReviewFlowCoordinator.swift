@@ -203,7 +203,7 @@ final class ReviewFlowCoordinator {
             // CompleteView's mastery deltas are populated, but cap it so a slow
             // or dead network can't hang the summary.
             Task {
-                await self.drainPendingWrites(within: .milliseconds(800))
+                await drainPendingWrites(self.pendingWrites, within: .milliseconds(800))
                 self.finished = true
             }
         } else {
@@ -215,35 +215,4 @@ final class ReviewFlowCoordinator {
         }
     }
 
-    /// Await every in-flight write, or `timeout`, whichever comes first. Writes
-    /// that miss the window keep running and still merge via @Observable.
-    ///
-    /// A task group can't express this: it awaits all its children at scope
-    /// exit, and `await Task<Void, Never>.value` isn't cancellation-aware, so
-    /// the drain loop would block past `timeout` until the slowest write
-    /// settled — defeating the cap. Instead race the two on a continuation and
-    /// resume on whichever lands first; the drain task is unstructured, so if
-    /// the timeout wins it just keeps running in the background.
-    private func drainPendingWrites(within timeout: Duration) async {
-        let writes = self.pendingWrites
-        guard !writes.isEmpty else { return }
-        var resumed = false
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            // Both closures inherit this @MainActor isolation, so `resumed`
-            // is touched serially — the guard makes resume exactly-once.
-            func finishOnce() {
-                guard !resumed else { return }
-                resumed = true
-                cont.resume()
-            }
-            Task {
-                for w in writes { await w.value }
-                finishOnce()
-            }
-            Task {
-                try? await Task.sleep(for: timeout)
-                finishOnce()
-            }
-        }
-    }
 }
