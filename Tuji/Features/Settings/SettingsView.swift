@@ -9,6 +9,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(AuthService.self) private var auth
+    private let users: UserRepository = LiveUserRepository.shared
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteFirst = false
@@ -202,12 +203,8 @@ struct SettingsView: View {
         self.deleting = true
         self.deleteError = nil
         defer { self.deleting = false }
-        struct EmptyBody: Encodable {}
         do {
-            let _: SaveSettingsResponse = try await APIClient.shared.post(
-                .usersDeleteAccount,
-                body: EmptyBody()
-            )
+            try await self.users.deleteAccount()
             await self.auth.signOut()
         } catch {
             self.deleteError = error

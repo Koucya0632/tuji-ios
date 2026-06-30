@@ -16,9 +16,12 @@ final class AtlasStore {
     private(set) var loading = false
     private(set) var lastError: Error?
 
+    private let repository: AtlasRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-store")
 
-    private init() {}
+    private init(repository: AtlasRepository = LiveAtlasRepository.shared) {
+        self.repository = repository
+    }
 
     func sync(since: String? = nil, limit: Int = 500) async {
         self.loading = true
@@ -26,9 +29,7 @@ final class AtlasStore {
         defer { self.loading = false }
 
         do {
-            let response: AtlasSyncResponse = try await APIClient.shared.get(
-                .atlasSync(since: since ?? self.lastSyncAt, limit: limit)
-            )
+            let response = try await self.repository.sync(since: since ?? self.lastSyncAt, limit: limit)
             self.merge(response)
             self.lastSyncAt = response.serverTime
             self.log.info("atlas sync images=\(response.images.count, privacy: .public) items=\(response.items.count, privacy: .public)")
@@ -44,17 +45,11 @@ final class AtlasStore {
         mimeType: String = "image/webp",
         targetLanguage: String? = nil
     ) async throws -> AtlasUploadResponse {
-        var fields: [String: String] = [:]
-        if let targetLanguage {
-            fields["targetLanguage"] = targetLanguage
-        }
-        let response: AtlasUploadResponse = try await APIClient.shared.upload(
-            .atlasImages(limit: 30),
-            fileField: "file",
+        let response = try await self.repository.uploadImage(
+            data: data,
             filename: filename,
             mimeType: mimeType,
-            data: data,
-            fields: fields
+            targetLanguage: targetLanguage
         )
         // Foreground updates local state only; the full reconciling sync is
         // deferred to AtlasCaptureQueue's background job.
@@ -64,35 +59,25 @@ final class AtlasStore {
     }
 
     func recognize(imageId: String, mode: String = "primary") async throws -> AtlasRecognitionResponse {
-        struct Payload: Encodable { let mode: String }
-        return try await APIClient.shared.post(
-            .atlasImageRecognize(id: imageId),
-            body: Payload(mode: mode)
-        )
+        try await self.repository.recognize(imageId: imageId, mode: mode)
     }
 
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
-        let response: AtlasItemResponse = try await APIClient.shared.post(
-            .atlasImageConfirm(id: imageId),
-            body: payload
-        )
-        self.items = Self.merged(self.items, [response.item])
+        let item = try await self.repository.confirm(imageId: imageId, payload: payload)
+        self.items = Self.merged(self.items, [item])
             .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        return response.item
+        return item
     }
 
     func createCards(itemId: String, cardTypes: [String] = ["image_recall", "flashcard"]) async throws -> [AtlasCard] {
-        let response: AtlasCardsResponse = try await APIClient.shared.post(
-            .atlasItemCards(id: itemId),
-            body: AtlasCardsPayload(cardTypes: cardTypes)
-        )
-        self.cards = Self.merged(self.cards, response.cards)
+        let cards = try await self.repository.createCards(itemId: itemId, cardTypes: cardTypes)
+        self.cards = Self.merged(self.cards, cards)
             .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        return response.cards
+        return cards
     }
 
     func deleteImage(id: String) async throws {
-        try await APIClient.shared.delete(.atlasImage(id: id))
+        try await self.repository.deleteImage(id: id)
         self.images.removeAll { $0.id == id }
         self.items.removeAll { $0.imageId == id }
         self.cards.removeAll { $0.imageId == id }
@@ -102,14 +87,13 @@ final class AtlasStore {
     /// definition / synonyms / forms / etymology so its detail page matches a
     /// dictionary word. itemId is the bare UUID (no "atlas:" prefix).
     func enrich(itemId: String) async throws {
-        struct Ack: Decodable { let ok: Bool? }
-        let _: Ack = try await APIClient.shared.post(.atlasItemEnrich(id: itemId), body: Empty())
+        try await self.repository.enrich(itemId: itemId)
     }
 
     /// Full per-word detail for a custom item (same `Word` shape as the
     /// dictionary), lazily enriched server-side on first fetch.
     func detail(itemId: String) async throws -> Word {
-        try await APIClient.shared.get(.atlasItemDetail(id: itemId))
+        try await self.repository.detail(itemId: itemId)
     }
 
     private func merge(_ response: AtlasSyncResponse) {

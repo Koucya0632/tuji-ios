@@ -10,6 +10,7 @@ struct FavoriteButton: View {
 
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
+    private let progress: ProgressRepository = LiveProgressRepository.shared
 
     private var isFavorite: Bool {
         self.cache.isFavorite(self.wordId)
@@ -45,19 +46,10 @@ struct FavoriteButton: View {
         // that catch-up).
         guard case .signedIn = auth.state else { return }
         let nowFav = self.cache.isFavorite(self.wordId)
-        let payload = FavoritePayload(wordId: self.wordId, op: nowFav ? "add" : "remove")
         Task {
-            await APIClient.shared.fireAndForget(.usersFavorites, body: payload)
+            await self.progress.toggleFavorite(wordId: self.wordId, isFavorite: nowFav)
         }
     }
-}
-
-/// nonisolated so Encodable conformance escapes MainActor isolation;
-/// needed because APIClient.fireAndForget requires Body: Sendable.
-// swiftformat:disable:next redundantSendable
-private nonisolated struct FavoritePayload: Encodable, Sendable {
-    let wordId: String
-    let op: String
 }
 
 #Preview {

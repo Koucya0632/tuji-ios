@@ -56,10 +56,12 @@ final class ReviewFlowCoordinator {
     var unsyncedCount: Int = 0
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
+    private let repository: StudyRepository
 
-    init(queue: [StudyQueueItem]) {
+    init(queue: [StudyQueueItem], repository: StudyRepository = LiveStudyRepository.shared) {
         self.queue = queue
         self.originalCount = queue.count
+        self.repository = repository
     }
 
     var current: StudyQueueItem? {
@@ -157,10 +159,7 @@ final class ReviewFlowCoordinator {
         for attempt in 0 ..< 3 {
             if Task.isCancelled { return }
             do {
-                let resp: StudyAnswerResponse = try await APIClient.shared.post(
-                    .studyAnswer,
-                    body: payload
-                )
+                let resp = try await self.repository.submitAnswer(payload)
                 if let m = resp.mastery { self.mergeMastery(m, wordId: wordId) }
                 if let ms = resp.milestone {
                     // Server only emits the milestone on the answer that crosses

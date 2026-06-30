@@ -58,11 +58,13 @@ final class NewFlowCoordinator {
     private var pendingWrites: [Task<Void, Never>] = []
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "new-flow")
+    private let repository: StudyRepository
 
-    init(queue: [StudyQueueItem]) {
+    init(queue: [StudyQueueItem], repository: StudyRepository = LiveStudyRepository.shared) {
         self.queue = queue
         self.idQueue = queue
         self.spQueue = queue
+        self.repository = repository
     }
 
     var progress: Double {
@@ -111,7 +113,7 @@ final class NewFlowCoordinator {
         )
         // Tracked (not detached) so NewDoneView can drain it before reloading
         // mastery — see pendingWrites / drainPendingWrites.
-        self.pendingWrites.append(Task { await APIClient.shared.fireAndForget(.studyAnswer, body: payload) })
+        self.pendingWrites.append(Task { await self.repository.submitAnswerBestEffort(payload) })
     }
 
     /// Give the optimistic recognize writes a bounded window to land before the

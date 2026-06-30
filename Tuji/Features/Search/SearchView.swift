@@ -24,7 +24,12 @@ final class SearchVM {
     var lastQuery: String = ""
 
     private var task: Task<Void, Never>?
+    private let repository: CatalogRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "search")
+
+    init(repository: CatalogRepository = LiveCatalogRepository.shared) {
+        self.repository = repository
+    }
 
     func updateQuery(_ q: String) {
         self.query = q
@@ -65,7 +70,7 @@ final class SearchVM {
         self.loading = true
         defer { self.loading = false }
         do {
-            let resp: SearchResponse = try await APIClient.shared.get(.search(q: q))
+            let resp = try await self.repository.search(q)
             // Drop a stale response if the user kept typing mid-flight.
             guard q == self.query.trimmingCharacters(in: .whitespaces) else { return }
             self.results = Self.merge(local: Self.localMatches(q), remote: resp.results)
@@ -131,12 +136,6 @@ final class SearchVM {
         }
         return out
     }
-}
-
-struct SearchResponse: Decodable {
-    let results: [CardWord]
-    let query: String?
-    let limit: Int?
 }
 
 struct SearchView: View {

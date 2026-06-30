@@ -37,9 +37,12 @@ final class StudyQueueStore {
     }
 
     private var entries: [StudyMode: Entry] = [:]
+    private let repository: StudyRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "study-queue-store")
 
-    private init() {}
+    private init(repository: StudyRepository = LiveStudyRepository.shared) {
+        self.repository = repository
+    }
 
     /// Read the warm queue for `mode` if it still matches the current params and
     /// hasn't expired, consuming it so a re-entry without a fresh prefetch falls
@@ -84,13 +87,11 @@ final class StudyQueueStore {
     // MARK: - Internals
 
     private func fetch(mode: StudyMode, params: Params) async throws -> [StudyQueueItem] {
-        let resp: StudyQueueResponse = try await APIClient.shared.get(
-            .studyQueue(
-                mode: mode.asPath,
-                limit: max(1, params.limit),
-                new: params.newCount,
-                categories: params.categories
-            )
+        let resp = try await self.repository.loadQueue(
+            mode: mode,
+            limit: params.limit,
+            newCount: params.newCount,
+            categories: params.categories
         )
         // A custom 自制圖鑑 item can carry more than one card (image_recall +
         // flashcard), but the unified flow studies a word once and the queue is

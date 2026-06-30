@@ -25,9 +25,12 @@ final class ProgressStore {
     private(set) var lastError: Error?
 
     private var lastFetch: Date?
+    private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "progress-store")
 
-    private init() {}
+    private init(repository: ProgressRepository = LiveProgressRepository.shared) {
+        self.repository = repository
+    }
 
     /// Refresh from server if no fetch yet, or the last one is older than `ttl`.
     /// Returns immediately on a hit. Safe to call from view `.task`.
@@ -43,7 +46,7 @@ final class ProgressStore {
         lastError = nil
         defer { loading = false }
         do {
-            let resp: ProgressResponse = try await APIClient.shared.get(.usersProgress)
+            let resp = try await self.repository.loadProgress()
             streak = resp.streak
             heatmap = resp.heatmap ?? []
             categoryProgress = resp.categories ?? []

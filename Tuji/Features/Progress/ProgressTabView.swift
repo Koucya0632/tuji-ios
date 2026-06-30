@@ -15,7 +15,12 @@ final class ProgressVM {
     var clearing: Bool = false
     var clearError: Error?
 
+    private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "progress")
+
+    init(repository: ProgressRepository = LiveProgressRepository.shared) {
+        self.repository = repository
+    }
 
     /// Streak + heatmap reads now live on ProgressStore.shared so Today /
     /// Me / CompleteView share the same fetched copy. This VM just owns
@@ -29,7 +34,7 @@ final class ProgressVM {
         self.clearError = nil
         defer { self.clearing = false }
         do {
-            try await APIClient.shared.delete(.usersProgress)
+            try await self.repository.clearProgress()
             // Reset the local learned cache too — the completion % and
             // category breakdown read it, and sync is union-only so a
             // stale local set would resurrect the cleared ids at next

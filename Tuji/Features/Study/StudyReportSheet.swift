@@ -4,6 +4,7 @@ struct StudyReportSheet: View {
     let draft: StudyReportDraft
 
     @Environment(\.dismiss) private var dismiss
+    private let repository: StudyRepository = LiveStudyRepository.shared
     @State private var issueType: StudyReportIssueType?
     @State private var detail = ""
     @State private var submitting = false
@@ -188,7 +189,7 @@ struct StudyReportSheet: View {
             snapshot: self.draft.snapshot
         )
         do {
-            let _: Empty = try await APIClient.shared.post(.studyReports, body: payload)
+            try await self.repository.submitReport(payload)
             self.submitted = true
         } catch {
             self.errorMessage = self.localized("提交失敗，內容已保留，請再試一次。")

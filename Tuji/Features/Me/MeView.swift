@@ -15,7 +15,12 @@ final class MeVM {
     var weakWords: [TopWord] = []
     var loading: Bool = false
 
+    private let progressRepository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "me")
+
+    init(progressRepository: ProgressRepository = LiveProgressRepository.shared) {
+        self.progressRepository = progressRepository
+    }
 
     /// Streak + 已學字 (studied-word count) are read from ProgressStore.shared
     /// so Today / Progress / Me share a single fetched copy. Weak words live
@@ -23,9 +28,7 @@ final class MeVM {
     func load(progress: ProgressStore) async {
         self.loading = true
         defer { self.loading = false }
-        async let weakResp: TopWordsResponse? = try? APIClient.shared.get(
-            .usersTopWords(type: "weak", limit: 3)
-        )
+        async let weakResp: TopWordsResponse? = try? self.progressRepository.loadTopWords(type: "weak", limit: 3)
         async let progressLoad: Void = progress.loadIfStale()
         let (weak, _) = await (weakResp, progressLoad)
         self.weakWords = weak?.words ?? []

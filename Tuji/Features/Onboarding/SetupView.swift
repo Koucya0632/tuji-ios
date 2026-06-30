@@ -19,6 +19,7 @@ struct SetupView: View {
     @Environment(CategoriesStore.self) private var categories
     @Environment(AuthService.self) private var auth
     @Environment(SettingsStore.self) private var settingsStore
+    private let users: UserRepository = LiveUserRepository.shared
 
     @State private var topicIds: Set<String> = []
     @State private var dailyGoal: Int = 10
@@ -216,11 +217,7 @@ struct SetupView: View {
             )
 
             do {
-                _ = try await APIClient.shared.post(
-                    .usersSettings,
-                    body: settings,
-                    as: SaveSettingsResponse.self
-                )
+                try await self.users.saveSettings(settings)
                 onboarding.markSetupDone(for: userId)
                 onDone()
             } catch APIError.unauthorized {

@@ -69,13 +69,15 @@ final class SettingsStore {
     /// avoid flashing the "pick themes" empty state before settings arrive.
     private(set) var hasLoaded: Bool = false
     private var saveTask: Task<Void, Never>?
+    private let repository: UserRepository
 
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
     private let saveDebounce: Duration = .milliseconds(400)
 
     private let learningDirectionKey = "tuji.learning.direction"
 
-    private init() {
+    private init(repository: UserRepository = LiveUserRepository.shared) {
+        self.repository = repository
         // Seed the learning target from the persisted choice so the launch-time
         // word preload (gated behind the splash) fetches the right language
         // before the server `load()` completes. Without this, `current` stays
@@ -100,12 +102,12 @@ final class SettingsStore {
         self.lastError = nil
         defer { self.loading = false }
         do {
-            let resp: UserSettingsResponse = try await APIClient.shared.get(.usersSettings)
+            let settings = try await self.repository.loadSettings()
             let directionChanged =
-                self.current.learningDirection != resp.settings.learningDirection
-            self.current = resp.settings
-            UserDefaults.standard.set(resp.settings.uiLang, forKey: tujiUILangDefaultsKey)
-            OnboardingState.shared.learningDirection = resp.settings.learningDirection
+                self.current.learningDirection != settings.learningDirection
+            self.current = settings
+            UserDefaults.standard.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
+            OnboardingState.shared.learningDirection = settings.learningDirection
             self.hasLoaded = true
             if directionChanged {
                 WordsStore.shared.invalidate()
@@ -190,10 +192,7 @@ final class SettingsStore {
         self.lastError = nil
         defer { self.saving = false }
         do {
-            let _: SaveSettingsResponse = try await APIClient.shared.post(
-                .usersSettings,
-                body: snapshot
-            )
+            try await self.repository.saveSettings(snapshot)
             self.log.info("settings saved")
         } catch {
             self.lastError = error

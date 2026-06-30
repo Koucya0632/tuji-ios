@@ -16,7 +16,12 @@ final class TodayVM {
     var loading = true
     var error: Error?
 
+    private let users: UserRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "today")
+
+    init(users: UserRepository = LiveUserRepository.shared) {
+        self.users = users
+    }
 
     /// Streak + study stats come from shared stores (ProgressStore,
     /// StudyStatsStore) so Today, Progress, Me, StudyLanding, and
@@ -28,7 +33,7 @@ final class TodayVM {
         async let progressLoad: Void = progress.loadIfStale()
         async let statsLoad: Void = studyStats.loadIfStale()
         do {
-            let me: UserMeResponse = try await APIClient.shared.get(.usersMe)
+            let me = try await self.users.loadMe()
             await progressLoad
             await statsLoad
             self.me = me
