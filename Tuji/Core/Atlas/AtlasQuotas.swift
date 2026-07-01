@@ -9,21 +9,34 @@
 import Foundation
 
 enum AtlasQuotas {
-    /// Remaining item slots, clamped to ≥ 0. nil = unlimited or unknown.
-    static func remainingItems(_ entitlement: AtlasEntitlement?) -> Int? {
-        guard let entitlement, let max = entitlement.limits.maxItems else { return nil }
-        return Swift.max(0, max - entitlement.usage.itemCount)
+    /// Remaining 自製圖鑑 slots, clamped to ≥ 0. nil = unknown (allow).
+    static func remainingSlots(_ entitlement: AtlasEntitlement?) -> Int? {
+        guard let entitlement else { return nil }
+        return Swift.max(0, entitlement.atlasSlotsLimit - entitlement.usage.atlasSlots)
     }
 
     /// Whether another 自製圖鑑 item can be created right now.
     static func canCreateItem(_ entitlement: AtlasEntitlement?) -> Bool {
-        guard let remaining = remainingItems(entitlement) else { return true }
+        guard let remaining = remainingSlots(entitlement) else { return true }
         return remaining > 0
     }
 
-    /// Remaining AI recognitions today, clamped to ≥ 0. nil = unlimited or unknown.
-    static func remainingAi(_ entitlement: AtlasEntitlement?) -> Int? {
-        guard let entitlement, let daily = entitlement.limits.dailyAiRecognitions else { return nil }
-        return Swift.max(0, daily - entitlement.usage.aiRecognitionsToday)
+    /// Remaining ordinary AI recognitions this month, clamped to ≥ 0.
+    static func remainingPrimaryAi(_ entitlement: AtlasEntitlement?) -> Int? {
+        guard let entitlement else { return nil }
+        return Swift.max(0, entitlement.primaryAiSoftLimitMonthly - entitlement.usage.primaryAiThisMonth)
+    }
+
+    /// Whether 高精度 (precision) recognition is available at all — a nonzero
+    /// monthly allowance means Pro. Unknown entitlement = allow (server enforces).
+    static func precisionAvailable(_ entitlement: AtlasEntitlement?) -> Bool {
+        guard let entitlement else { return true }
+        return entitlement.precisionAiLimitMonthly > 0
+    }
+
+    /// Remaining precision recognitions this month, clamped to ≥ 0.
+    static func remainingPrecisionAi(_ entitlement: AtlasEntitlement?) -> Int? {
+        guard let entitlement else { return nil }
+        return Swift.max(0, entitlement.precisionAiLimitMonthly - entitlement.usage.precisionAiThisMonth)
     }
 }

@@ -67,16 +67,22 @@ struct AtlasCaptureView: View {
     }
 
     private var capacityMessage: String {
-        if let max = self.store.entitlement?.limits.maxItems {
-            "自製圖鑑已達上限（\(max)），刪除一些或升級後再新增。"
-        } else {
-            "自製圖鑑已達上限，刪除一些後再新增。"
+        guard let limit = self.store.entitlement?.atlasSlotsLimit else {
+            return "自製圖鑑已達上限，刪除一些後再新增。"
         }
+        let isPro = self.store.entitlement?.isPro ?? false
+        return isPro
+            ? "自製圖鑑已達上限（\(limit)），刪除一些後再新增。"
+            : "自製圖鑑已達免費上限（\(limit)），升級 Pro 可擴充，或刪除一些。"
     }
 
-    /// Remaining AI recognitions today when the tier is limited; nil = unlimited.
-    private var remainingAiToday: Int? {
-        AtlasQuotas.remainingAi(self.store.entitlement)
+    /// Remaining ordinary AI recognitions this month; nil = unknown.
+    private var remainingPrimaryThisMonth: Int? {
+        AtlasQuotas.remainingPrimaryAi(self.store.entitlement)
+    }
+
+    private var isPro: Bool {
+        self.store.entitlement?.isPro ?? false
     }
 
     var body: some View {
@@ -195,8 +201,8 @@ struct AtlasCaptureView: View {
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk3)
-                if let remaining = self.remainingAiToday {
-                    Text("今日 AI 辨識剩 \(remaining) 次")
+                if let remaining = self.remainingPrimaryThisMonth {
+                    Text("本月 AI 辨識剩 \(remaining) 次")
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiInk4)
                 }
@@ -208,14 +214,16 @@ struct AtlasCaptureView: View {
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Button {
-                        self.showPaywall = true
-                    } label: {
-                        Text("升級 Tuji Pro")
-                            .font(.system(size: 13, weight: .heavy))
-                            .foregroundStyle(.tujiTeal)
+                    if !self.isPro {
+                        Button {
+                            self.showPaywall = true
+                        } label: {
+                            Text("升級 Tuji Pro")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(.tujiTeal)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
                 .padding(Space.s3)
                 .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
@@ -314,7 +322,13 @@ struct AtlasCaptureView: View {
             .disabled(self.busy != nil)
 
             Button {
-                self.requestRecognize(imageId: image.id, mode: "escalate")
+                // 高精度 is Pro-only — a Free user goes straight to the paywall
+                // instead of spending a call that the server would 402.
+                if AtlasQuotas.precisionAvailable(self.store.entitlement) {
+                    self.requestRecognize(imageId: image.id, mode: "escalate")
+                } else {
+                    self.showPaywall = true
+                }
             } label: {
                 self.smallActionLabel("高精度", icon: "scope")
             }

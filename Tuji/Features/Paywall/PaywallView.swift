@@ -51,7 +51,7 @@ struct PaywallView: View {
             Text("解鎖 Tuji Pro")
                 .font(.tujiH1)
                 .foregroundStyle(.tujiInk)
-            Text("擴充自製圖鑑容量，拿到更高的每日 AI 辨識額度。")
+            Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
         }
@@ -59,8 +59,8 @@ struct PaywallView: View {
 
     private var benefits: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            self.benefitRow(icon: "square.stack.3d.up.fill", text: "無限自製圖鑑容量")
-            self.benefitRow(icon: "sparkles", text: "更高的每日 AI 辨識次數")
+            self.benefitRow(icon: "square.stack.3d.up.fill", text: "自製圖鑑容量提升至 300 格")
+            self.benefitRow(icon: "scope", text: "高精度 AI 辨識（每月 30 次）")
             self.benefitRow(icon: "bolt.fill", text: "優先支援與後續 Pro 功能")
         }
         .padding(Space.s4)

@@ -132,7 +132,7 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Tuji Pro")
                                 .foregroundStyle(.tujiInk)
-                            Text("解鎖更多自製圖鑑容量與 AI 額度")
+                            Text("擴充自製圖鑑容量，解鎖高精度 AI 辨識")
                                 .font(.tujiCaption)
                                 .foregroundStyle(.tujiInk4)
                         }
