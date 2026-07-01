@@ -56,6 +56,25 @@ struct AtlasCaptureView: View {
         let data: Data
     }
 
+    /// At the tier's 自製圖鑑 capacity — capture is blocked until the user frees a
+    /// slot or upgrades. Unknown entitlement resolves to "allow" (server enforces).
+    private var atCapacity: Bool {
+        !AtlasQuotas.canCreateItem(self.store.entitlement)
+    }
+
+    private var capacityMessage: String {
+        if let max = self.store.entitlement?.limits.maxItems {
+            "自製圖鑑已達上限（\(max)），刪除一些或升級後再新增。"
+        } else {
+            "自製圖鑑已達上限，刪除一些後再新增。"
+        }
+    }
+
+    /// Remaining AI recognitions today when the tier is limited; nil = unlimited.
+    private var remainingAiToday: Int? {
+        AtlasQuotas.remainingAi(self.store.entitlement)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -150,6 +169,11 @@ struct AtlasCaptureView: View {
             isPresented: self.busy == .upload || self.busy == .recognize,
             style: .recognizing
         )
+        .task {
+            // Fresh tier / usage so capture gating and remaining-quota copy are
+            // current when the sheet opens.
+            await self.store.refreshEntitlement()
+        }
     }
 
     // MARK: - Source chooser
@@ -163,6 +187,20 @@ struct AtlasCaptureView: View {
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk3)
+                if let remaining = self.remainingAiToday {
+                    Text("今日 AI 辨識剩 \(remaining) 次")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk4)
+                }
+            }
+
+            if self.atCapacity {
+                Text(self.capacityMessage)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiCoral)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Space.s3)
+                    .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
             }
 
             if CameraPicker.isAvailable {
@@ -180,13 +218,13 @@ struct AtlasCaptureView: View {
                     .background(.tujiTeal, in: .rect(cornerRadius: Radius.lg))
                 }
                 .buttonStyle(.plain)
-                .disabled(self.busy != nil)
+                .disabled(self.busy != nil || self.atCapacity)
             }
 
             PhotosPicker(selection: self.$pickerItem, matching: .images) {
                 AtlasPickerPillLabel(title: "從相簿選", icon: "photo.on.rectangle")
             }
-            .disabled(self.busy != nil)
+            .disabled(self.busy != nil || self.atCapacity)
 
         }
     }

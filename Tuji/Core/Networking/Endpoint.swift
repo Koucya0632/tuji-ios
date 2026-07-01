@@ -42,6 +42,7 @@ enum Endpoint {
     case atlasItemPublish(id: String)
     case atlasSync(since: String?, limit: Int)
     case atlasFriends(limit: Int)
+    case atlasEntitlement
 
     // MARK: - Public
 
@@ -87,6 +88,7 @@ enum Endpoint {
         case let .atlasItemPublish(id): "/api/atlas/items/\(id)/publish"
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
+        case .atlasEntitlement: "/api/atlas/entitlement"
         case .search: "/api/search"
         case .events: "/api/events"
         case .words: "/api/words"
@@ -149,7 +151,7 @@ enum Endpoint {
              .usersCustomWords,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
-             .atlasItemPublish, .atlasSync, .atlasFriends:
+             .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement:
             .reloadIgnoringLocalCacheData
         default:
             .useProtocolCachePolicy

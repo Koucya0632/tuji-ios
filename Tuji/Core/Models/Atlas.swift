@@ -176,6 +176,28 @@ struct AtlasSyncPaging: Decodable, Hashable {
     let truncated: Bool
 }
 
+// MARK: - Entitlement / quota (GET /api/atlas/entitlement)
+
+/// Free/Pro tier, its limits, and the user's current usage. Mirrors the server;
+/// used to gate capture UI and show remaining quota. `nil` limit = unlimited.
+struct AtlasEntitlement: Decodable, Hashable {
+    let tier: String
+    let limits: AtlasLimits
+    let usage: AtlasUsage
+
+    var isPro: Bool { self.tier == "pro" }
+}
+
+struct AtlasLimits: Decodable, Hashable {
+    let maxItems: Int?
+    let dailyAiRecognitions: Int?
+}
+
+struct AtlasUsage: Decodable, Hashable {
+    let itemCount: Int
+    let aiRecognitionsToday: Int
+}
+
 private extension KeyedDecodingContainer {
     /// Decodes a Double that may arrive as a JSON number or a numeric string.
     /// A few atlas routes return raw Postgres NUMERIC columns (e.g. candidate

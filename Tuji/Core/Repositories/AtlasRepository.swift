@@ -15,6 +15,7 @@ protocol AtlasRepository {
     func deleteImage(id: String) async throws
     func enrich(itemId: String) async throws
     func detail(itemId: String) async throws -> Word
+    func entitlement() async throws -> AtlasEntitlement
 }
 
 @MainActor
@@ -83,5 +84,9 @@ struct LiveAtlasRepository: AtlasRepository {
 
     func detail(itemId: String) async throws -> Word {
         try await self.api.get(.atlasItemDetail(id: itemId))
+    }
+
+    func entitlement() async throws -> AtlasEntitlement {
+        try await self.api.get(.atlasEntitlement)
     }
 }

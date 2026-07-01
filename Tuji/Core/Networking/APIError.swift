@@ -6,6 +6,7 @@ import Foundation
 
 enum APIError: LocalizedError {
     case unauthorized // 401 — token missing / expired / invalid
+    case paymentRequired(message: String?) // 402 — quota/entitlement, upgrade required
     case forbidden // 403 — authed but not allowed
     case notFound // 404
     case rateLimited(message: String?) // 429 — optional server-supplied copy
@@ -17,6 +18,8 @@ enum APIError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unauthorized: tujiLocalized("未授權，請重新登入")
+        case let .paymentRequired(message):
+            if let message, !message.isEmpty { message } else { tujiLocalized("已達使用上限，升級後可繼續") }
         case .forbidden: tujiLocalized("沒有權限")
         case .notFound: tujiLocalized("找不到資源")
         case let .rateLimited(message):
@@ -40,6 +43,8 @@ enum APIError: LocalizedError {
             return
         case 401:
             throw APIError.unauthorized
+        case 402:
+            throw APIError.paymentRequired(message: Self.serverMessage(from: data))
         case 403:
             throw APIError.forbidden
         case 404:

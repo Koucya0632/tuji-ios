@@ -12,6 +12,7 @@ final class AtlasStore {
     private(set) var cards: [AtlasCard] = []
     private(set) var cardStates: [String: AtlasCardState] = [:]
     private(set) var masteryByItemId: [String: AtlasMasteryEntry] = [:]
+    private(set) var entitlement: AtlasEntitlement?
     private(set) var lastSyncAt: String?
     private(set) var loading = false
     private(set) var lastError: Error?
@@ -36,6 +37,18 @@ final class AtlasStore {
         } catch {
             self.lastError = error
             self.log.error("atlas sync failed: \(error.localizedDescription, privacy: .public)")
+        }
+        await self.refreshEntitlement()
+    }
+
+    /// Pull the current tier / limits / usage. Best-effort — a failure leaves the
+    /// last snapshot in place and never surfaces as `lastError`, so quota UI
+    /// degrades to "unknown" (permissive) rather than blocking the flow.
+    func refreshEntitlement() async {
+        do {
+            self.entitlement = try await self.repository.entitlement()
+        } catch {
+            self.log.error("atlas entitlement fetch failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
