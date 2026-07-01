@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var showDeleteSecond = false
     @State private var deleting = false
     @State private var deleteError: Error?
+    @State private var showPaywall = false
 
     var body: some View {
         self.list
@@ -23,6 +24,9 @@ struct SettingsView: View {
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
             .task { await self.store.loadIfNeeded() }
+            .sheet(isPresented: self.$showPaywall) {
+                PaywallView()
+            }
             .tujiPrompt(
                 isPresented: self.$showSignOutConfirm,
                 style: .confirmation,
@@ -115,6 +119,27 @@ struct SettingsView: View {
                         AccentPickerView()
                     } label: {
                         self.row(label: "發音口音", value: self.accentLabel)
+                    }
+                }
+            }
+            Section {
+                Button {
+                    self.showPaywall = true
+                } label: {
+                    HStack(spacing: Space.s3) {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(.tujiYellow)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Tuji Pro")
+                                .foregroundStyle(.tujiInk)
+                            Text("解鎖更多自製圖鑑容量與 AI 額度")
+                                .font(.tujiCaption)
+                                .foregroundStyle(.tujiInk4)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.tujiInk4)
                     }
                 }
             }

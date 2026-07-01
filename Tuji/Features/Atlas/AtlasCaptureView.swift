@@ -46,6 +46,7 @@ struct AtlasCaptureView: View {
     @State private var candidatesByMode: [String: [AtlasCandidate]] = [:]
     @State private var confirmDismiss = false
     @State private var confirmRetake = false
+    @State private var showPaywall = false
 
     private enum Busy: String {
         case upload, recognize
@@ -174,6 +175,9 @@ struct AtlasCaptureView: View {
             // current when the sheet opens.
             await self.store.refreshEntitlement()
         }
+        .sheet(isPresented: self.$showPaywall) {
+            PaywallView()
+        }
     }
 
     // MARK: - Source chooser
@@ -195,12 +199,22 @@ struct AtlasCaptureView: View {
             }
 
             if self.atCapacity {
-                Text(self.capacityMessage)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(Space.s3)
-                    .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+                VStack(alignment: .leading, spacing: Space.s2) {
+                    Text(self.capacityMessage)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiCoral)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button {
+                        self.showPaywall = true
+                    } label: {
+                        Text("升級 Tuji Pro")
+                            .font(.system(size: 13, weight: .heavy))
+                            .foregroundStyle(.tujiTeal)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(Space.s3)
+                .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
             }
 
             if CameraPicker.isAvailable {
@@ -490,7 +504,13 @@ struct AtlasCaptureView: View {
             self.candidatesByMode[mode] = response.candidates
             self.applyCandidates(response.candidates)
         } catch {
-            self.errorMessage = error.localizedDescription
+            // A 402 means the daily AI quota is spent — send them to the paywall
+            // rather than showing a raw error. Transient 429s stay as a message.
+            if let apiError = error as? APIError, case .paymentRequired = apiError {
+                self.showPaywall = true
+            } else {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 
