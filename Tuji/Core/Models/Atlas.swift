@@ -74,7 +74,7 @@ struct AtlasRecognitionResponse: Decodable {
     let candidates: [AtlasCandidate]
 }
 
-struct AtlasConfirmPayload: Encodable {
+struct AtlasConfirmPayload: Codable {
     let selectedCandidateId: String?
     let targetLanguage: String?
     let primaryLabel: String

@@ -29,6 +29,9 @@ struct AtlasCaptureView: View {
     @State private var category = ""
     /// The downscaled frame kept around to seed the 圖鑑 progress placeholder.
     @State private var localThumbnail: UIImage?
+    /// The last picked/cropped frame, retained so a failed upload (weak network)
+    /// can be retried without re-picking the photo.
+    @State private var lastUploadData: Data?
 
     @State private var showCamera = false
     @State private var pickerItem: PhotosPickerItem?
@@ -81,6 +84,7 @@ struct AtlasCaptureView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s5) {
                     self.statusMessage
+                    self.uploadRetry
                     if let uploadedImage {
                         self.correctionPanel(uploadedImage)
                     } else {
@@ -418,6 +422,29 @@ struct AtlasCaptureView: View {
         }
     }
 
+    /// Shown when the initial upload failed (typically weak network): re-upload
+    /// the retained frame without making the user re-pick the photo.
+    @ViewBuilder
+    private var uploadRetry: some View {
+        if self.uploadedImage == nil, self.errorMessage != nil, let data = self.lastUploadData {
+            Button {
+                Task { await self.handlePicked(data: data) }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.clockwise")
+                    Text("重試上傳")
+                }
+                .font(.system(size: 14, weight: .heavy))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Space.s3)
+                .background(.tujiTeal, in: .rect(cornerRadius: Radius.md))
+            }
+            .buttonStyle(.plain)
+            .disabled(self.busy != nil)
+        }
+    }
+
     @ViewBuilder
     private var statusMessage: some View {
         if let errorMessage {
@@ -459,6 +486,8 @@ struct AtlasCaptureView: View {
         self.busy = .upload
         self.errorMessage = nil
         self.successMessage = nil
+        // Retain the frame so a failed upload can be retried in place.
+        self.lastUploadData = data
         do {
             let encoded = ImageDownscale.jpeg(from: data) ?? data
             self.localThumbnail = UIImage(data: encoded)
@@ -468,6 +497,7 @@ struct AtlasCaptureView: View {
                 mimeType: "image/jpeg"
             )
             self.uploadedImage = response.image
+            self.lastUploadData = nil
             self.busy = nil
             // Candidates ride back with the upload now (recognition runs inline
             // server-side) — no separate recognize round trip on the first pass.
