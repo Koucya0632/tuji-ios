@@ -184,6 +184,10 @@ struct AtlasCaptureView: View {
             // Fresh tier / usage so capture gating and remaining-quota copy are
             // current when the sheet opens.
             await self.store.refreshEntitlement()
+            // Warm a rewarded ad for Free users so the card-gen gate is instant.
+            if self.store.entitlement?.adsRequiredForCardGeneration == true {
+                Ads.rewarded.preload()
+            }
         }
         .sheet(isPresented: self.$showPaywall) {
             PaywallView()
@@ -603,12 +607,21 @@ struct AtlasCaptureView: View {
             partOfSpeech: self.partOfSpeech.isEmpty ? nil : self.partOfSpeech,
             category: self.category.isEmpty ? nil : self.category
         )
-        AtlasCaptureQueue.shared.enqueue(
-            imageId: imageId,
-            payload: payload,
-            thumbnail: self.localThumbnail
-        )
-        self.dismiss()
+        let thumbnail = self.localThumbnail
+        // Free watches a rewarded ad before card generation; Pro skips it (that's
+        // the "無廣告" benefit). Best-effort — never blocks the card (§3).
+        let showsAd = self.store.entitlement?.adsRequiredForCardGeneration == true
+        Task {
+            if showsAd {
+                await Ads.rewarded.showRewardedAd()
+            }
+            AtlasCaptureQueue.shared.enqueue(
+                imageId: imageId,
+                payload: payload,
+                thumbnail: thumbnail
+            )
+            self.dismiss()
+        }
     }
 
     /// Best-effort delete the just-uploaded image when the user abandons this
