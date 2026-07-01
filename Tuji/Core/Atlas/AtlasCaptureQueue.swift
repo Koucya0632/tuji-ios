@@ -39,6 +39,10 @@ final class AtlasCaptureQueue {
     private(set) var jobs: [Job] = []
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-capture-queue")
+    // Signpost the confirm→cards→enrich tail so the pipeline is measurable in
+    // Instruments (per-stage timing + failure rate); the production funnel is
+    // derived server-side from the atlas tables.
+    private let signposter = OSSignposter(subsystem: "app.tuji.ios", category: "atlas-capture")
 
     private init() {}
 
@@ -68,10 +72,15 @@ final class AtlasCaptureQueue {
 
     private func run(_ id: UUID) async {
         guard let job = self.jobs.first(where: { $0.id == id }) else { return }
+        let signpostID = self.signposter.makeSignpostID()
+        let interval = self.signposter.beginInterval("capture-job", id: signpostID)
+        defer { self.signposter.endInterval("capture-job", interval) }
         do {
             let item = try await AtlasStore.shared.confirm(imageId: job.imageId, payload: job.payload)
+            self.signposter.emitEvent("confirmed", id: signpostID)
             self.update(id) { $0.stage = .creating; $0.progress = 0.5 }
             _ = try await AtlasStore.shared.createCards(itemId: item.id)
+            self.signposter.emitEvent("carded", id: signpostID)
             // Enrich (definition / synonyms / forms / etymology) so the card's
             // detail page matches a dictionary word. Best-effort — a failure
             // doesn't fail the card; the detail endpoint lazily enriches on open.
@@ -93,6 +102,7 @@ final class AtlasCaptureQueue {
             try? await Task.sleep(for: .seconds(4))
             self.remove(id)
         } catch {
+            self.signposter.emitEvent("failed", id: signpostID)
             self.log.error("capture job failed: \(error.localizedDescription, privacy: .public)")
             self.update(id) { $0.stage = .failed }
         }
