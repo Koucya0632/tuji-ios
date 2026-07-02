@@ -43,7 +43,7 @@ final class SearchVM {
             return
         }
         // Instant local results — no waiting on the network.
-        self.results = Self.localMatches(trimmed)
+        self.results = Self.localMatches(trimmed, in: WordsStore.shared.words)
         self.lastQuery = trimmed
         self.lastError = nil
         // Debounced server search to supplement the local hits.
@@ -60,7 +60,7 @@ final class SearchVM {
         self.task?.cancel()
         let trimmed = q.trimmingCharacters(in: .whitespaces)
         self.query = q
-        self.results = Self.localMatches(trimmed)
+        self.results = Self.localMatches(trimmed, in: WordsStore.shared.words)
         self.lastQuery = trimmed
         self.lastError = nil
         Task { await self.runSearch(trimmed) }
@@ -73,7 +73,10 @@ final class SearchVM {
             let resp = try await self.repository.search(q)
             // Drop a stale response if the user kept typing mid-flight.
             guard q == self.query.trimmingCharacters(in: .whitespaces) else { return }
-            self.results = Self.merge(local: Self.localMatches(q), remote: resp.results)
+            self.results = Self.merge(
+                local: Self.localMatches(q, in: WordsStore.shared.words),
+                remote: resp.results
+            )
             self.lastQuery = q
             self.lastError = nil
             self.log.info(
@@ -97,13 +100,14 @@ final class SearchVM {
 
     // MARK: - Matching
 
-    /// Case-insensitive ranked match over the in-memory dictionary. Looks
-    /// at English word, Chinese gloss, and pronunciation. Closer matches
+    /// Case-insensitive ranked match over the supplied dictionary (callers pass
+    /// WordsStore's in-memory list; injected so the ranking is unit-testable).
+    /// Looks at English word, Chinese gloss, and pronunciation. Closer matches
     /// (exact → prefix → contains) and shorter words sort first.
-    static func localMatches(_ q: String) -> [CardWord] {
+    static func localMatches(_ q: String, in words: [CardWord]) -> [CardWord] {
         let needle = q.lowercased()
         guard !needle.isEmpty else { return [] }
-        return WordsStore.shared.words
+        return words
             .compactMap { w -> (word: CardWord, rank: Int)? in
                 let word = w.word.lowercased()
                 let zh = w.chinese.lowercased()

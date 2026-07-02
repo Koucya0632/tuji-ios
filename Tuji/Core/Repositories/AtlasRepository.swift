@@ -9,7 +9,7 @@ protocol AtlasRepository {
         mimeType: String,
         targetLanguage: String?
     ) async throws -> AtlasUploadResponse
-    func recognize(imageId: String, mode: String) async throws -> AtlasRecognitionResponse
+    func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem
     func createCards(itemId: String, cardTypes: [String]) async throws -> [AtlasCard]
     func deleteImage(id: String) async throws
@@ -52,9 +52,9 @@ struct LiveAtlasRepository: AtlasRepository {
         )
     }
 
-    func recognize(imageId: String, mode: String) async throws -> AtlasRecognitionResponse {
+    func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse {
         struct Payload: Encodable { let mode: String }
-        return try await self.api.post(.atlasImageRecognize(id: imageId), body: Payload(mode: mode))
+        return try await self.api.post(.atlasImageRecognize(id: imageId), body: Payload(mode: mode.rawValue))
     }
 
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
