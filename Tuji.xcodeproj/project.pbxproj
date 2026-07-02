@@ -18,6 +18,16 @@
 		CD33660A2FE9000100EF2A26 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = CD33660C2FE9000100EF2A26 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		CDE5700120250702000000A7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CD3365BE2FD8134A00EF2A26 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CD3365C52FD8134A00EF2A26;
+			remoteInfo = Tuji;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		CD3365C62FD8134A00EF2A26 /* Tuji.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tuji.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD3365DA2FD8150B00EF2A26 /* Config/Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Debug.xcconfig; sourceTree = "<group>"; };
@@ -25,12 +35,18 @@
 		CD3365DC2FD8150B00EF2A26 /* Config/Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Secrets.xcconfig; sourceTree = "<group>"; };
 		CD3365DD2FD8150B00EF2A26 /* Config/TestFlight.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/TestFlight.xcconfig; sourceTree = "<group>"; };
 		CD3365DE2FD8150B00EF2A26 /* Config/Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Version.xcconfig; sourceTree = "<group>"; };
+		CDE5700120250702000000A2 /* TujiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TujiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CD3365C82FD8134A00EF2A26 /* Tuji */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Tuji;
+			sourceTree = "<group>";
+		};
+		CDE5700120250702000000A3 /* TujiTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TujiTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +68,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CDE5700120250702000000A5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -64,6 +87,7 @@
 				CD3365DD2FD8150B00EF2A26 /* Config/TestFlight.xcconfig */,
 				CD3365DE2FD8150B00EF2A26 /* Config/Version.xcconfig */,
 				CD3365C82FD8134A00EF2A26 /* Tuji */,
+				CDE5700120250702000000A3 /* TujiTests */,
 				CD3365C72FD8134A00EF2A26 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -72,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				CD3365C62FD8134A00EF2A26 /* Tuji.app */,
+				CDE5700120250702000000A2 /* TujiTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,6 +136,29 @@
 			productReference = CD3365C62FD8134A00EF2A26 /* Tuji.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CDE5700120250702000000A1 /* TujiTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CDE5700120250702000000A9 /* Build configuration list for PBXNativeTarget "TujiTests" */;
+			buildPhases = (
+				CDE5700120250702000000A4 /* Sources */,
+				CDE5700120250702000000A5 /* Frameworks */,
+				CDE5700120250702000000A6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CDE5700120250702000000A8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CDE5700120250702000000A3 /* TujiTests */,
+			);
+			name = TujiTests;
+			packageProductDependencies = (
+			);
+			productName = TujiTests;
+			productReference = CDE5700120250702000000A2 /* TujiTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -123,6 +171,10 @@
 				TargetAttributes = {
 					CD3365C52FD8134A00EF2A26 = {
 						CreatedOnToolsVersion = 26.5;
+					};
+					CDE5700120250702000000A1 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = CD3365C52FD8134A00EF2A26;
 					};
 				};
 			};
@@ -149,12 +201,20 @@
 			projectRoot = "";
 			targets = (
 				CD3365C52FD8134A00EF2A26 /* Tuji */,
+				CDE5700120250702000000A1 /* TujiTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CD3365C42FD8134A00EF2A26 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CDE5700120250702000000A6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -200,7 +260,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CDE5700120250702000000A4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CDE5700120250702000000A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CD3365C52FD8134A00EF2A26 /* Tuji */;
+			targetProxy = CDE5700120250702000000A7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		CD3365CF2FD8134B00EF2A26 /* Debug */ = {
@@ -445,6 +520,69 @@
 			};
 			name = TestFlight;
 		};
+		CDE5700120250702000000AA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TH28V27744;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tuji.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tuji";
+			};
+			name = Debug;
+		};
+		CDE5700120250702000000AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TH28V27744;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tuji.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tuji";
+			};
+			name = Release;
+		};
+		CDE5700120250702000000AC /* TestFlight */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = TH28V27744;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tuji.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Tuji";
+			};
+			name = TestFlight;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -464,6 +602,16 @@
 				CD3365D22FD8134B00EF2A26 /* Debug */,
 				CD3365D32FD8134B00EF2A26 /* Release */,
 				CD3365E52FD8163C00EF2A26 /* TestFlight */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CDE5700120250702000000A9 /* Build configuration list for PBXNativeTarget "TujiTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CDE5700120250702000000AA /* Debug */,
+				CDE5700120250702000000AB /* Release */,
+				CDE5700120250702000000AC /* TestFlight */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
