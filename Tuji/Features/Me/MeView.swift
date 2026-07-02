@@ -28,9 +28,13 @@ final class MeVM {
     func load(progress: ProgressStore) async {
         self.loading = true
         defer { self.loading = false }
-        async let weakResp: TopWordsResponse? = try? self.progressRepository.loadTopWords(type: "weak", limit: 3)
+        // The weak-words fetch stays out of `async let`: that would send the
+        // non-Sendable `any ProgressRepository` into a child task, which the
+        // Swift 6 (TestFlight/WMO) build rejects. The two requests still
+        // overlap — progressLoad runs in its child task while we await here.
         async let progressLoad: Void = progress.loadIfStale()
-        let (weak, _) = await (weakResp, progressLoad)
+        let weak = try? await self.progressRepository.loadTopWords(type: "weak", limit: 3)
+        await progressLoad
         self.weakWords = weak?.words ?? []
     }
 }
