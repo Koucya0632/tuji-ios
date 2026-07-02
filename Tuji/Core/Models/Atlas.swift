@@ -42,6 +42,21 @@ struct AtlasRecognitionJobSummary: Decodable, Hashable, Identifiable {
     let updatedAt: String?
 }
 
+/// Recognition depth requested via POST /images/{id}/recognize. Raw values are
+/// the wire strings the server expects (AI 識別 = primary, 高精度 = escalate).
+enum AtlasRecognitionMode: String {
+    case primary
+    case escalate
+}
+
+/// Candidate granularity tier the server returns. `AtlasCandidate.level` stays
+/// a raw String so an unknown future tier never fails decoding; compare
+/// through `levelKind` instead of string literals.
+enum AtlasCandidateLevel: String {
+    case primary
+    case fine
+}
+
 struct AtlasCandidate: Decodable, Hashable, Identifiable {
     let id: String
     let level: String
@@ -50,6 +65,8 @@ struct AtlasCandidate: Decodable, Hashable, Identifiable {
     let zhHant: String?
     let confidence: Double
     let rank: Int
+
+    var levelKind: AtlasCandidateLevel? { AtlasCandidateLevel(rawValue: self.level) }
 
     private enum CodingKeys: String, CodingKey {
         case id, level, label, normalizedLabel, zhHant, confidence, rank

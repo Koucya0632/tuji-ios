@@ -5,9 +5,10 @@
 //   3. 校正候選 / 人工修正
 //   4. 確認並生成卡片 → 成功後可「完成」或「再拍一張」
 //
-// The whole upload → recognize → confirm → createCards pipeline is reused from
-// AtlasStore; this view just sequences it. Management (list/delete/review) lives
-// separately in AtlasManageView — this screen is create-only.
+// The pipeline state + rules live in AtlasCaptureVM; this view only renders it
+// and owns presentation-only state (covers, prompts, the pending crop frame).
+// Management (list/delete/review) lives separately in AtlasManageView — this
+// screen is create-only.
 
 import NukeUI
 import PhotosUI
@@ -15,23 +16,11 @@ import SwiftUI
 import UIKit
 
 struct AtlasCaptureView: View {
-    @State private var store = AtlasStore.shared
     @Environment(\.dismiss) private var dismiss
 
-    @State private var uploadedImage: AtlasImageSummary?
-    @State private var candidates: [AtlasCandidate] = []
-    @State private var selectedCandidateId: String?
-    @State private var primaryLabel = ""
-    @State private var fineLabel = ""
-    @State private var lemma = ""
-    @State private var displayZhHant = ""
-    @State private var partOfSpeech = "noun"
-    @State private var category = ""
-    /// The downscaled frame kept around to seed the 圖鑑 progress placeholder.
-    @State private var localThumbnail: UIImage?
-    /// The last picked/cropped frame, retained so a failed upload (weak network)
-    /// can be retried without re-picking the photo.
-    @State private var lastUploadData: Data?
+    /// Pipeline + form state. Replaced wholesale on 換一張 — a fresh VM *is* the
+    /// reset, so there's no field-by-field clearing to keep in sync.
+    @State private var vm = AtlasCaptureVM()
 
     @State private var showCamera = false
     @State private var pickerItem: PhotosPickerItem?
@@ -39,59 +28,22 @@ struct AtlasCaptureView: View {
     /// the bytes in an Identifiable drives `.fullScreenCover(item:)` and re-creates
     /// the crop view per pick.
     @State private var pendingCrop: PendingCrop?
-    @State private var busy: Busy?
-    @State private var errorMessage: String?
-    @State private var successMessage: String?
-
-    /// Each recognition mode (primary / escalate) runs at most once and its
-    /// candidates are kept here — a re-run barely differs and just burns another
-    /// AI call, so tapping a mode again re-shows its cached set for free.
-    @State private var candidatesByMode: [String: [AtlasCandidate]] = [:]
     @State private var confirmDismiss = false
     @State private var confirmRetake = false
-    @State private var showPaywall = false
-
-    private enum Busy: String {
-        case upload, recognize
-    }
 
     private struct PendingCrop: Identifiable {
         let id = UUID()
         let data: Data
     }
 
-    /// At the tier's 自製圖鑑 capacity — capture is blocked until the user frees a
-    /// slot or upgrades. Unknown entitlement resolves to "allow" (server enforces).
-    private var atCapacity: Bool {
-        !AtlasQuotas.canCreateItem(self.store.entitlement)
-    }
-
-    private var capacityMessage: String {
-        guard let limit = self.store.entitlement?.atlasSlotsLimit else {
-            return "自製圖鑑已達上限，刪除一些後再新增。"
-        }
-        let isPro = self.store.entitlement?.isPro ?? false
-        return isPro
-            ? "自製圖鑑已達上限（\(limit)），刪除一些後再新增。"
-            : "自製圖鑑已達免費上限（\(limit)），升級 Pro 可擴充，或刪除一些。"
-    }
-
-    /// Remaining ordinary AI recognitions this month; nil = unknown.
-    private var remainingPrimaryThisMonth: Int? {
-        AtlasQuotas.remainingPrimaryAi(self.store.entitlement)
-    }
-
-    private var isPro: Bool {
-        self.store.entitlement?.isPro ?? false
-    }
-
     var body: some View {
+        @Bindable var vm = self.vm
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s5) {
                     self.statusMessage
                     self.uploadRetry
-                    if let uploadedImage {
+                    if let uploadedImage = self.vm.uploadedImage {
                         self.correctionPanel(uploadedImage)
                     } else {
                         self.sourcePanel
@@ -108,7 +60,7 @@ struct AtlasCaptureView: View {
                     Button {
                         // Only warn when there's an in-progress capture to lose;
                         // on the bare source chooser just close.
-                        if self.uploadedImage != nil {
+                        if self.vm.uploadedImage != nil {
                             self.confirmDismiss = true
                         } else {
                             self.dismiss()
@@ -118,7 +70,7 @@ struct AtlasCaptureView: View {
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(.tujiInk2)
                     }
-                    .disabled(self.busy != nil)
+                    .disabled(self.vm.busy != nil)
                 }
             }
         }
@@ -144,7 +96,7 @@ struct AtlasCaptureView: View {
                 imageData: pending.data,
                 onConfirm: { cropped in
                     self.pendingCrop = nil
-                    Task { await self.handlePicked(data: cropped) }
+                    Task { await self.vm.handlePicked(data: cropped) }
                 },
                 onCancel: { self.pendingCrop = nil }
             )
@@ -152,7 +104,13 @@ struct AtlasCaptureView: View {
         }
         .onChange(of: self.pickerItem) { _, newValue in
             guard let newValue else { return }
-            Task { await self.loadFromLibrary(newValue) }
+            Task {
+                let data = await self.vm.loadPhotoData(newValue)
+                self.pickerItem = nil
+                if let data {
+                    self.pendingCrop = PendingCrop(data: data)
+                }
+            }
         }
         .tujiPrompt(
             isPresented: self.$confirmDismiss,
@@ -160,7 +118,7 @@ struct AtlasCaptureView: View {
             title: "放棄這次辨識？",
             message: "這張照片的辨識與校正結果會清除，不會生成卡片。",
             primary: TujiPromptAction("放棄", role: .destructive) {
-                self.discardUploadedImage()
+                self.vm.discardUploadedImage()
                 self.dismiss()
             },
             secondary: TujiPromptAction("繼續校正", role: .cancel) {}
@@ -171,25 +129,18 @@ struct AtlasCaptureView: View {
             title: "換一張照片？",
             message: "目前的辨識與校正結果會清除，再拍或選一張新的。",
             primary: TujiPromptAction("換一張", role: .destructive) {
-                self.discardUploadedImage()
-                self.reset()
+                self.vm.discardUploadedImage()
+                // Fresh VM = full reset back to the source chooser.
+                self.vm = AtlasCaptureVM()
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
         .tujiStatusToast(
-            isPresented: self.busy == .upload || self.busy == .recognize,
+            isPresented: self.vm.busy != nil,
             style: .recognizing
         )
-        .task {
-            // Fresh tier / usage so capture gating and remaining-quota copy are
-            // current when the sheet opens.
-            await self.store.refreshEntitlement()
-            // Warm a rewarded ad for Free users so the card-gen gate is instant.
-            if self.store.entitlement?.adsRequiredForCardGeneration == true {
-                Ads.rewarded.preload()
-            }
-        }
-        .sheet(isPresented: self.$showPaywall) {
+        .task { await self.vm.prepareOnOpen() }
+        .sheet(isPresented: $vm.showPaywall) {
             PaywallView()
         }
     }
@@ -205,22 +156,22 @@ struct AtlasCaptureView: View {
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk3)
-                if let remaining = self.remainingPrimaryThisMonth {
+                if let remaining = self.vm.remainingPrimaryThisMonth {
                     Text("本月 AI 辨識剩 \(remaining) 次")
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiInk4)
                 }
             }
 
-            if self.atCapacity {
+            if self.vm.atCapacity {
                 VStack(alignment: .leading, spacing: Space.s2) {
-                    Text(self.capacityMessage)
+                    Text(self.vm.capacityMessage)
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    if !self.isPro {
+                    if !self.vm.isPro {
                         Button {
-                            self.showPaywall = true
+                            self.vm.showPaywall = true
                         } label: {
                             Text("升級 Tuji Pro")
                                 .font(.system(size: 13, weight: .heavy))
@@ -248,14 +199,13 @@ struct AtlasCaptureView: View {
                     .background(.tujiTeal, in: .rect(cornerRadius: Radius.lg))
                 }
                 .buttonStyle(.plain)
-                .disabled(self.busy != nil || self.atCapacity)
+                .disabled(self.vm.busy != nil || self.vm.atCapacity)
             }
 
             PhotosPicker(selection: self.$pickerItem, matching: .images) {
                 AtlasPickerPillLabel(title: "從相簿選", icon: "photo.on.rectangle")
             }
-            .disabled(self.busy != nil || self.atCapacity)
-
+            .disabled(self.vm.busy != nil || self.vm.atCapacity)
         }
     }
 
@@ -264,9 +214,9 @@ struct AtlasCaptureView: View {
     private func correctionPanel(_ image: AtlasImageSummary) -> some View {
         VStack(alignment: .leading, spacing: Space.s4) {
             self.imagePreview(image)
-            self.actionRow(image)
+            self.actionRow
             self.candidateSection
-            self.correctionForm(image)
+            self.correctionForm
         }
         .padding(Space.s4)
         .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
@@ -294,7 +244,7 @@ struct AtlasCaptureView: View {
                     .foregroundStyle(.tujiInk3)
                 }
                 .buttonStyle(.plain)
-                .disabled(self.busy != nil)
+                .disabled(self.vm.busy != nil)
             }
             ZStack {
                 Rectangle().fill(.tujiBg)
@@ -315,29 +265,29 @@ struct AtlasCaptureView: View {
         }
     }
 
-    private func actionRow(_ image: AtlasImageSummary) -> some View {
+    private var actionRow: some View {
         HStack(spacing: Space.s2) {
             Button {
-                self.requestRecognize(imageId: image.id, mode: "primary")
+                self.vm.requestRecognize(.primary)
             } label: {
                 self.smallActionLabel("AI 識別", icon: "sparkles")
             }
             .buttonStyle(.plain)
-            .disabled(self.busy != nil)
+            .disabled(self.vm.busy != nil)
 
             Button {
                 // 高精度 is Pro-only — a Free user goes straight to the paywall
                 // instead of spending a call that the server would 402.
-                if AtlasQuotas.precisionAvailable(self.store.entitlement) {
-                    self.requestRecognize(imageId: image.id, mode: "escalate")
+                if self.vm.precisionAvailable {
+                    self.vm.requestRecognize(.escalate)
                 } else {
-                    self.showPaywall = true
+                    self.vm.showPaywall = true
                 }
             } label: {
                 self.smallActionLabel("高精度", icon: "scope")
             }
             .buttonStyle(.plain)
-            .disabled(self.busy != nil)
+            .disabled(self.vm.busy != nil)
         }
     }
 
@@ -355,13 +305,13 @@ struct AtlasCaptureView: View {
 
     @ViewBuilder
     private var candidateSection: some View {
-        if !self.candidates.isEmpty {
+        if !self.vm.candidates.isEmpty {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("候選結果")
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(.tujiInk)
-                let primary = self.candidates.filter { $0.level == "primary" }
-                let fine = self.candidates.filter { $0.level == "fine" }
+                let primary = self.vm.candidates.filter { $0.levelKind == .primary }
+                let fine = self.vm.candidates.filter { $0.levelKind == .fine }
                 self.candidateGroup(rows: primary)
                 self.candidateGroup(rows: fine)
             }
@@ -378,15 +328,15 @@ struct AtlasCaptureView: View {
                 ) {
                     ForEach(rows) { candidate in
                         Button {
-                            self.apply(candidate, overwrite: true)
+                            self.vm.apply(candidate, overwrite: true)
                         } label: {
-                            Text(self.candidateLabel(candidate))
+                            Text(self.vm.candidateLabel(candidate))
                                 .font(.system(size: 12, weight: .heavy))
-                                .foregroundStyle(self.selectedCandidateId == candidate.id ? .white : .tujiInk)
+                                .foregroundStyle(self.vm.selectedCandidateId == candidate.id ? .white : .tujiInk)
                                 .padding(.horizontal, Space.s3)
                                 .padding(.vertical, Space.s2)
                                 .background(
-                                    self.selectedCandidateId == candidate.id ? .tujiTeal : .tujiBg,
+                                    self.vm.selectedCandidateId == candidate.id ? .tujiTeal : .tujiBg,
                                     in: .capsule
                                 )
                         }
@@ -397,16 +347,14 @@ struct AtlasCaptureView: View {
         }
     }
 
-    private func correctionForm(_ image: AtlasImageSummary) -> some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
+    private var correctionForm: some View {
+        @Bindable var vm = self.vm
+        return VStack(alignment: .leading, spacing: Space.s3) {
             Text("人工校正")
                 .font(.system(size: 16, weight: .heavy))
                 .foregroundStyle(.tujiInk)
-            // Only the two names are editable; primaryLabel / fineLabel /
-            // partOfSpeech / category stay populated from the AI candidate via
-            // apply(_:) and are sent through on confirm without cluttering the UI.
-            self.field("圖片名稱", text: self.$lemma)
-            self.field("中文名稱", text: self.$displayZhHant)
+            self.field("圖片名稱", text: $vm.lemma)
+            self.field("中文名稱", text: $vm.displayZhHant)
 
             BBtn(
                 title: "確認並生成卡片",
@@ -415,13 +363,14 @@ struct AtlasCaptureView: View {
                 fullWidth: true,
                 icon: "checkmark"
             ) {
-                self.submit(imageId: image.id)
+                // Enqueue (behind the Free rewarded ad) and close the cover
+                // immediately — the user never waits here.
+                Task {
+                    await self.vm.submit()
+                    self.dismiss()
+                }
             }
-            .disabled(
-                self.busy != nil
-                    || self.lemma.trimmingCharacters(in: .whitespaces).isEmpty
-                    || self.displayZhHant.trimmingCharacters(in: .whitespaces).isEmpty
-            )
+            .disabled(!self.vm.canSubmit)
         }
     }
 
@@ -444,9 +393,9 @@ struct AtlasCaptureView: View {
     /// the retained frame without making the user re-pick the photo.
     @ViewBuilder
     private var uploadRetry: some View {
-        if self.uploadedImage == nil, self.errorMessage != nil, let data = self.lastUploadData {
+        if self.vm.uploadedImage == nil, self.vm.errorMessage != nil, let data = self.vm.lastUploadData {
             Button {
-                Task { await self.handlePicked(data: data) }
+                Task { await self.vm.handlePicked(data: data) }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
@@ -459,20 +408,20 @@ struct AtlasCaptureView: View {
                 .background(.tujiTeal, in: .rect(cornerRadius: Radius.md))
             }
             .buttonStyle(.plain)
-            .disabled(self.busy != nil)
+            .disabled(self.vm.busy != nil)
         }
     }
 
     @ViewBuilder
     private var statusMessage: some View {
-        if let errorMessage {
+        if let errorMessage = self.vm.errorMessage {
             Text(errorMessage)
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiCoral)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Space.s3)
                 .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
-        } else if let successMessage {
+        } else if let successMessage = self.vm.successMessage {
             Text(successMessage)
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiTeal)
@@ -480,181 +429,6 @@ struct AtlasCaptureView: View {
                 .padding(Space.s3)
                 .background(Color.tujiTeal.opacity(0.12), in: .rect(cornerRadius: Radius.md))
         }
-    }
-
-    // MARK: - Pipeline
-
-    private func loadFromLibrary(_ item: PhotosPickerItem) async {
-        self.errorMessage = nil
-        self.successMessage = nil
-        defer { self.pickerItem = nil }
-        do {
-            guard let data = try await item.loadTransferable(type: Data.self) else {
-                throw AtlasCaptureError.missingPhotoData
-            }
-            self.pendingCrop = PendingCrop(data: data)
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
-    }
-
-    /// Upload one captured/picked frame, then immediately kick AI recognition so
-    /// the flow feels one-shot.
-    private func handlePicked(data: Data) async {
-        self.busy = .upload
-        self.errorMessage = nil
-        self.successMessage = nil
-        // Retain the frame so a failed upload can be retried in place.
-        self.lastUploadData = data
-        do {
-            let encoded = ImageDownscale.jpeg(from: data) ?? data
-            self.localThumbnail = UIImage(data: encoded)
-            let response = try await self.store.uploadImage(
-                data: encoded,
-                filename: "atlas-photo.jpg",
-                mimeType: "image/jpeg"
-            )
-            self.uploadedImage = response.image
-            self.lastUploadData = nil
-            self.busy = nil
-            // Candidates ride back with the upload now (recognition runs inline
-            // server-side) — no separate recognize round trip on the first pass.
-            // Cache it so a later AI 識別 tap re-shows the same set for free.
-            self.candidatesByMode["primary"] = response.candidates ?? []
-            self.applyCandidates(response.candidates ?? [])
-        } catch {
-            self.busy = nil
-            self.errorMessage = error.localizedDescription
-        }
-    }
-
-    /// AI 識別 / 高精度 tap. A mode is recognized at most once; if we already
-    /// have its candidates, re-show them for free rather than spending another
-    /// AI call (the result barely changes on a re-run). An empty / failed result
-    /// isn't treated as final, so it can still be retried.
-    private func requestRecognize(imageId: String, mode: String) {
-        if let cached = self.candidatesByMode[mode], !cached.isEmpty {
-            self.applyCandidates(cached)
-        } else {
-            Task { await self.recognize(imageId: imageId, mode: mode) }
-        }
-    }
-
-    /// Run recognition once for a mode (AI 識別 = primary, 高精度 = escalate) and
-    /// cache the result; repeat taps re-show the cache via `requestRecognize`.
-    private func recognize(imageId: String, mode: String) async {
-        self.busy = .recognize
-        self.errorMessage = nil
-        self.successMessage = nil
-        defer { self.busy = nil }
-        do {
-            let response = try await self.store.recognize(imageId: imageId, mode: mode)
-            self.candidatesByMode[mode] = response.candidates
-            self.applyCandidates(response.candidates)
-        } catch {
-            // A 402 means the daily AI quota is spent — send them to the paywall
-            // rather than showing a raw error. Transient 429s stay as a message.
-            if let apiError = error as? APIError, case .paymentRequired = apiError {
-                self.showPaywall = true
-            } else {
-                self.errorMessage = error.localizedDescription
-            }
-        }
-    }
-
-    private func applyCandidates(_ list: [AtlasCandidate]) {
-        self.candidates = list.sorted { $0.rank < $1.rank }
-        if let best = self.candidates.first(where: { $0.level == "fine" }) ?? self.candidates.first {
-            self.apply(best)
-        }
-        self.successMessage = list.isEmpty
-            ? "沒有自動辨識到，請手動填寫或按「AI 識別」重試。"
-            : "已辨識，確認名稱後即可生成卡片。"
-    }
-
-    /// `overwrite` is true when the user taps a candidate chip — their explicit
-    /// choice replaces the name fields. It's false for the auto-apply after
-    /// recognition, which only fills empty fields so it never clobbers a name
-    /// the user already typed.
-    private func apply(_ candidate: AtlasCandidate, overwrite: Bool = false) {
-        self.selectedCandidateId = candidate.id
-        if candidate.level == "fine" {
-            self.fineLabel = candidate.label
-            // Same rule as the primary branch: auto-apply only fills an empty
-            // lemma so re-running recognition never clobbers a name the user
-            // already typed; an explicit chip tap (overwrite) always wins.
-            if overwrite || self.lemma.isEmpty { self.lemma = candidate.label }
-        } else {
-            self.primaryLabel = candidate.label
-            if overwrite || self.lemma.isEmpty { self.lemma = candidate.label }
-        }
-        if overwrite || self.displayZhHant.isEmpty {
-            self.displayZhHant = candidate.zhHant ?? candidate.label
-        }
-    }
-
-    /// Hand the heavy tail (confirm → createCards → sync) to the background queue
-    /// and close the cover immediately. The 圖鑑 page shows a "製作中" placeholder
-    /// until it finishes, so the user never waits here.
-    private func submit(imageId: String) {
-        let payload = AtlasConfirmPayload(
-            selectedCandidateId: self.selectedCandidateId,
-            targetLanguage: nil,
-            primaryLabel: self.primaryLabel.isEmpty ? self.lemma : self.primaryLabel,
-            fineLabel: self.fineLabel.isEmpty ? nil : self.fineLabel,
-            lemma: self.lemma,
-            displayZhHant: self.displayZhHant,
-            partOfSpeech: self.partOfSpeech.isEmpty ? nil : self.partOfSpeech,
-            category: self.category.isEmpty ? nil : self.category
-        )
-        let thumbnail = self.localThumbnail
-        // Free watches a rewarded ad before card generation; Pro skips it (that's
-        // the "無廣告" benefit). Best-effort — never blocks the card (§3).
-        let showsAd = self.store.entitlement?.adsRequiredForCardGeneration == true
-        Task {
-            if showsAd {
-                await Ads.rewarded.showRewardedAd()
-            }
-            AtlasCaptureQueue.shared.enqueue(
-                imageId: imageId,
-                payload: payload,
-                thumbnail: thumbnail
-            )
-            self.dismiss()
-        }
-    }
-
-    /// Best-effort delete the just-uploaded image when the user abandons this
-    /// capture (X / 換一張), so an unconfirmed photo is never kept in 自制圖鑑.
-    private func discardUploadedImage() {
-        guard let image = self.uploadedImage else { return }
-        Task { try? await self.store.deleteImage(id: image.id) }
-    }
-
-    /// Back to the source chooser for another capture, clearing the per-photo
-    /// correction state.
-    private func reset() {
-        self.uploadedImage = nil
-        self.candidates = []
-        self.selectedCandidateId = nil
-        self.primaryLabel = ""
-        self.fineLabel = ""
-        self.lemma = ""
-        self.displayZhHant = ""
-        self.partOfSpeech = "noun"
-        self.category = ""
-        self.localThumbnail = nil
-        self.candidatesByMode = [:]
-        self.errorMessage = nil
-        self.successMessage = nil
-    }
-
-    private func candidateLabel(_ candidate: AtlasCandidate) -> String {
-        let pct = Int((candidate.confidence * 100).rounded())
-        if let zh = candidate.zhHant, !zh.isEmpty {
-            return "\(candidate.label) · \(zh) · \(pct)%"
-        }
-        return "\(candidate.label) · \(pct)%"
     }
 }
 
@@ -675,16 +449,6 @@ private nonisolated struct AtlasPickerPillLabel: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, Space.s4)
         .background(.tujiYellow, in: .rect(cornerRadius: Radius.lg))
-    }
-}
-
-private enum AtlasCaptureError: LocalizedError {
-    case missingPhotoData
-
-    var errorDescription: String? {
-        switch self {
-        case .missingPhotoData: "讀取照片失敗"
-        }
     }
 }
 

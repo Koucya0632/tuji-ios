@@ -71,7 +71,7 @@ final class AtlasStore {
         return response
     }
 
-    func recognize(imageId: String, mode: String = "primary") async throws -> AtlasRecognitionResponse {
+    func recognize(imageId: String, mode: AtlasRecognitionMode = .primary) async throws -> AtlasRecognitionResponse {
         try await self.repository.recognize(imageId: imageId, mode: mode)
     }
 
