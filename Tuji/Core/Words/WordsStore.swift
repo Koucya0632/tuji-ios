@@ -93,7 +93,8 @@ final class WordsStore {
         Array(Set(self.words.map(\.category))).sorted()
     }
 
-    private static func merge(publicWords: [CardWord], customWords: [CardWord]) -> [CardWord] {
+    // Internal (not private) so unit tests can exercise the last-wins/sort rules.
+    static func merge(publicWords: [CardWord], customWords: [CardWord]) -> [CardWord] {
         // Last-wins by id. Built with a loop rather than
         // Dictionary(uniqueKeysWithValues:), which traps fatally if the server
         // ever returns a duplicate id in the public list.
