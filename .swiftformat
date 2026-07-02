@@ -9,7 +9,8 @@
 --swiftversion 6.0
 
 # ---------- 掃描 ----------
---exclude .build,.swiftpm,DerivedData,Pods,Preview\ Content,Tuji/Resources
+# build = 本機 / CI 的 derivedDataPath（含 SPM checkouts，數千個第三方檔案）
+--exclude .build,.swiftpm,DerivedData,build,Pods,Preview\ Content,Tuji/Resources
 
 # ---------- 通用 ----------
 --indent 4

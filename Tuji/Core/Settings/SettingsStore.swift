@@ -26,7 +26,7 @@ private nonisolated func tujiLProjBundle(_ code: String) -> Bundle {
     if let cached = tujiLProjCache[code] { return cached }
     let bundle: Bundle =
         if let path = Bundle.main.path(forResource: code, ofType: "lproj"),
-           let lproj = Bundle(path: path) {
+        let lproj = Bundle(path: path) {
             lproj
         } else {
             .main
@@ -85,7 +85,8 @@ final class SettingsStore {
         // skipped the picker briefly preloads English words behind the splash
         // and only swaps once settings arrive.
         if let stored = UserDefaults.standard.string(forKey: self.learningDirectionKey),
-           let direction = LearningDirection(rawValue: stored) {
+           let direction = LearningDirection(rawValue: stored)
+        {
             self.current.learningDirection = direction
         }
     }

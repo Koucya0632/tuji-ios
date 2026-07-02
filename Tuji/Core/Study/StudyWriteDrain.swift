@@ -19,15 +19,17 @@ func drainPendingWrites(_ writes: [Task<Void, Never>], within timeout: Duration)
     guard !writes.isEmpty else { return }
     var resumed = false
     await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-        // Both closures inherit this @MainActor isolation, so `resumed` is
-        // touched serially — the guard makes resume exactly-once.
+        /// Both closures inherit this @MainActor isolation, so `resumed` is
+        /// touched serially — the guard makes resume exactly-once.
         func finishOnce() {
             guard !resumed else { return }
             resumed = true
             cont.resume()
         }
         Task {
-            for w in writes { await w.value }
+            for w in writes {
+                await w.value
+            }
             finishOnce()
         }
         Task {

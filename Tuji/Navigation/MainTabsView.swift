@@ -47,16 +47,16 @@ struct MainTabsView: View {
 
     private let tabs: [MainTab] = [.today, .cards, .progress, .me]
 
-    // Horizontally-paged container so the four tabs can be switched by
-    // swiping left/right, not only by tapping the bar. Each page still owns
-    // its NavigationStack, and `selected` stays in sync with the scroll
-    // offset via `selectedScrollBinding`.
-    //
-    // Swiping is allowed only from a tab's root (the 主頁/home level).
-    // It is disabled while a study session is active or a detail view is
-    // pushed on the current tab, so the page-swipe never fights
-    // NavigationStack's own edge-swipe-to-go-back gesture (nor the
-    // horizontal scroll inside study's CompleteView).
+    /// Horizontally-paged container so the four tabs can be switched by
+    /// swiping left/right, not only by tapping the bar. Each page still owns
+    /// its NavigationStack, and `selected` stays in sync with the scroll
+    /// offset via `selectedScrollBinding`.
+    ///
+    /// Swiping is allowed only from a tab's root (the 主頁/home level).
+    /// It is disabled while a study session is active or a detail view is
+    /// pushed on the current tab, so the page-swipe never fights
+    /// NavigationStack's own edge-swipe-to-go-back gesture (nor the
+    /// horizontal scroll inside study's CompleteView).
     private var pager: some View {
         GeometryReader { geo in
             ScrollView(.horizontal) {
@@ -102,8 +102,8 @@ struct MainTabsView: View {
         }
     }
 
-    // Bridges the page scroll offset to `selected` and back: reads as the
-    // current tab; a settled swipe writes the newly-centred tab through.
+    /// Bridges the page scroll offset to `selected` and back: reads as the
+    /// current tab; a settled swipe writes the newly-centred tab through.
     private var selectedScrollBinding: Binding<MainTab?> {
         Binding(
             get: { self.selected },
@@ -115,8 +115,8 @@ struct MainTabsView: View {
         )
     }
 
-    // Push depth of the currently-selected tab. >0 means a detail view is
-    // on screen, so tab-swiping is suppressed in favour of back-swipe.
+    /// Push depth of the currently-selected tab. >0 means a detail view is
+    /// on screen, so tab-swiping is suppressed in favour of back-swipe.
     private var currentPathDepth: Int {
         switch self.selected {
         case .today: self.todayPath.count

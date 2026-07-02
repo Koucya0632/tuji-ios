@@ -416,7 +416,8 @@ struct TodayView: View {
         // cards in the current deck — e.g. a theme with no 日文 cards yet —
         // which is a different dead-end from "you've learned them all".
         if !self.progress.categoryProgress.isEmpty,
-           self.progress.totalCount(filter: cats) == 0 {
+           self.progress.totalCount(filter: cats) == 0
+        {
             return .noCards
         }
         if self.newAvailable == 0 { return .allLearned }
@@ -562,7 +563,8 @@ struct TodayView: View {
         // studied at least once (seen == total), even if some later decayed
         // below 精通.
         if let row = self.progress.categoryProgress.first(where: { $0.category == id }),
-           row.total > 0, row.seen == row.total {
+           row.total > 0, row.seen == row.total
+        {
             return .completed
         }
         return .none

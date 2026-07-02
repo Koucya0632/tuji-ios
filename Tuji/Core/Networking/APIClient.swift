@@ -218,7 +218,9 @@ final class APIClient {
         filename: String,
         mimeType: String,
         data: Data
-    ) -> Data {
+    )
+        -> Data
+    {
         var body = Data()
         let lineBreak = "\r\n"
         for (name, value) in fields {

@@ -127,7 +127,9 @@ extension View {
     func tujiStatusToast(
         isPresented: Bool,
         style: TujiStatusToastStyle
-    ) -> some View {
+    )
+        -> some View
+    {
         modifier(TujiStatusToastModifier(isPresented: isPresented, style: style))
     }
 }

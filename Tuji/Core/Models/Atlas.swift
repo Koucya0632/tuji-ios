@@ -11,8 +11,13 @@ struct AtlasImageSummary: Decodable, Hashable, Identifiable {
     let imageUrl: String?
     let thumbUrl: String?
 
-    var imageURL: URL? { self.imageUrl.flatMap(URL.init(string:)) }
-    var thumbURL: URL? { self.thumbUrl.flatMap(URL.init(string:)) }
+    var imageURL: URL? {
+        self.imageUrl.flatMap(URL.init(string:))
+    }
+
+    var thumbURL: URL? {
+        self.thumbUrl.flatMap(URL.init(string:))
+    }
 }
 
 struct AtlasImagesResponse: Decodable {
@@ -66,7 +71,9 @@ struct AtlasCandidate: Decodable, Hashable, Identifiable {
     let confidence: Double
     let rank: Int
 
-    var levelKind: AtlasCandidateLevel? { AtlasCandidateLevel(rawValue: self.level) }
+    var levelKind: AtlasCandidateLevel? {
+        AtlasCandidateLevel(rawValue: self.level)
+    }
 
     private enum CodingKeys: String, CodingKey {
         case id, level, label, normalizedLabel, zhHant, confidence, rank
@@ -208,7 +215,9 @@ struct AtlasEntitlement: Decodable, Hashable {
     let subscriptionExpiresAt: String?
     let usage: AtlasUsage
 
-    var isPro: Bool { self.plan == "pro" }
+    var isPro: Bool {
+        self.plan == "pro"
+    }
 }
 
 struct AtlasUsage: Decodable, Hashable {

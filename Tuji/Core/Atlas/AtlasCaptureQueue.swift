@@ -68,9 +68,9 @@ final class AtlasCaptureQueue {
     private(set) var jobs: [Job] = []
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-capture-queue")
-    // Signpost the confirm→cards→enrich tail so the pipeline is measurable in
-    // Instruments (per-stage timing + failure rate); the production funnel is
-    // derived server-side from the atlas tables.
+    /// Signpost the confirm→cards→enrich tail so the pipeline is measurable in
+    /// Instruments (per-stage timing + failure rate); the production funnel is
+    /// derived server-side from the atlas tables.
     private let signposter = OSSignposter(subsystem: "app.tuji.ios", category: "atlas-capture")
 
     /// On-disk home for in-flight jobs. Application Support survives app kills
@@ -103,7 +103,9 @@ final class AtlasCaptureQueue {
 
     func retry(_ id: UUID) {
         guard let job = self.jobs.first(where: { $0.id == id }), job.stage == .failed else { return }
-        self.update(id) { $0.stage = .confirming; $0.progress = 0.15 }
+        self.update(id) { $0.stage = .confirming
+            $0.progress = 0.15
+        }
         Task { await self.run(id) }
     }
 
@@ -131,13 +133,17 @@ final class AtlasCaptureQueue {
                 self.persistCurrent(id) // checkpoint before the (idempotent) tail
                 self.signposter.emitEvent("confirmed", id: signpostID)
             }
-            self.update(id) { $0.stage = .creating; $0.progress = 0.5 }
+            self.update(id) { $0.stage = .creating
+                $0.progress = 0.5
+            }
             _ = try await AtlasStore.shared.createCards(itemId: itemId)
             self.signposter.emitEvent("carded", id: signpostID)
             // Enrich (definition / synonyms / forms / etymology) so the card's
             // detail page matches a dictionary word. Best-effort — a failure
             // doesn't fail the card; the detail endpoint lazily enriches on open.
-            self.update(id) { $0.stage = .enriching; $0.progress = 0.7 }
+            self.update(id) { $0.stage = .enriching
+                $0.progress = 0.7
+            }
             try? await AtlasStore.shared.enrich(itemId: itemId)
             self.update(id) { $0.progress = 0.9 }
             // One reconciling sync for the atlas list, plus in-place store
@@ -150,7 +156,9 @@ final class AtlasCaptureQueue {
             async let progress: Void = ProgressStore.shared.reload()
             async let stats: Void = StudyStatsStore.shared.reload()
             _ = await (words, progress, stats)
-            self.update(id) { $0.stage = .done; $0.progress = 1 }
+            self.update(id) { $0.stage = .done
+                $0.progress = 1
+            }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             self.deletePersisted(id) // done — drop the on-disk record now
             try? await Task.sleep(for: .seconds(4))
@@ -217,16 +225,14 @@ final class AtlasCaptureQueue {
     /// skipped when an itemId checkpoint exists, so createCards (idempotent) is
     /// the worst that can repeat.
     private func restore() {
-        guard
-            let files = try? FileManager.default.contentsOfDirectory(
-                at: self.store,
-                includingPropertiesForKeys: nil
-            )
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: self.store,
+            includingPropertiesForKeys: nil
+        )
         else { return }
         for file in files where file.pathExtension == "json" {
-            guard
-                let data = try? Data(contentsOf: file),
-                let record = try? JSONDecoder().decode(PersistedJob.self, from: data)
+            guard let data = try? Data(contentsOf: file),
+                  let record = try? JSONDecoder().decode(PersistedJob.self, from: data)
             else { continue }
             let job = Job(
                 id: record.id,

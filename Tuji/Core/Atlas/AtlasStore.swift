@@ -33,7 +33,10 @@ final class AtlasStore {
             let response = try await self.repository.sync(since: since ?? self.lastSyncAt, limit: limit)
             self.merge(response)
             self.lastSyncAt = response.serverTime
-            self.log.info("atlas sync images=\(response.images.count, privacy: .public) items=\(response.items.count, privacy: .public)")
+            self.log
+                .info(
+                    "atlas sync images=\(response.images.count, privacy: .public) items=\(response.items.count, privacy: .public)"
+                )
         } catch {
             self.lastError = error
             self.log.error("atlas sync failed: \(error.localizedDescription, privacy: .public)")
@@ -57,7 +60,9 @@ final class AtlasStore {
         filename: String = "atlas.webp",
         mimeType: String = "image/webp",
         targetLanguage: String? = nil
-    ) async throws -> AtlasUploadResponse {
+    ) async throws
+        -> AtlasUploadResponse
+    {
         let response = try await self.repository.uploadImage(
             data: data,
             filename: filename,

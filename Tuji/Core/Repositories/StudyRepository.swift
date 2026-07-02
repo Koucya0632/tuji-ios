@@ -19,7 +19,14 @@ struct LiveStudyRepository: StudyRepository {
         self.api = api
     }
 
-    func loadQueue(mode: StudyMode, limit: Int, newCount: Int, categories: [String]) async throws -> StudyQueueResponse {
+    func loadQueue(
+        mode: StudyMode,
+        limit: Int,
+        newCount: Int,
+        categories: [String]
+    ) async throws
+        -> StudyQueueResponse
+    {
         try await self.api.get(
             .studyQueue(
                 mode: mode.asPath,

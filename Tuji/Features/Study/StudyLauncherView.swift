@@ -84,11 +84,10 @@ struct StudyLauncherView: View {
             // take() returns instantly and the spinner only flashes for a frame.
             // Cache miss → live fetch (the old behaviour). Both share the param
             // computation + dedupe inside StudyQueueStore.
-            let queue: [StudyQueueItem]
-            if let cached = StudyQueueStore.shared.take(mode: self.mode) {
-                queue = cached
+            let queue: [StudyQueueItem] = if let cached = StudyQueueStore.shared.take(mode: self.mode) {
+                cached
             } else {
-                queue = try await StudyQueueStore.shared.fetch(mode: self.mode)
+                try await StudyQueueStore.shared.fetch(mode: self.mode)
             }
             if queue.isEmpty {
                 self.queueError = NSError(

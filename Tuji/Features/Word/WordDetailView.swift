@@ -8,14 +8,14 @@ import Nuke
 import NukeUI
 import SwiftUI
 
-// Pushed entry point. Hosts a horizontally-paged TabView so the user can
-// swipe left/right between adjacent words in the 圖鑑, without popping back
-// to the grid. The page sequence is the full word list in store order
-// (same order as the 全部 grid); we open centred on the tapped word.
-//
-// All full-screen chrome (hide the tab bar via study-focus, hidden nav
-// bar, bottom inset) lives here once, so swiping between pages doesn't
-// churn the StudyFocus counter or re-evaluate the inset per word.
+/// Pushed entry point. Hosts a horizontally-paged TabView so the user can
+/// swipe left/right between adjacent words in the 圖鑑, without popping back
+/// to the grid. The page sequence is the full word list in store order
+/// (same order as the 全部 grid); we open centred on the tapped word.
+///
+/// All full-screen chrome (hide the tab bar via study-focus, hidden nav
+/// bar, bottom inset) lives here once, so swiping between pages doesn't
+/// churn the StudyFocus counter or re-evaluate the inset per word.
 struct WordDetailView: View {
     let id: String
 
@@ -29,9 +29,9 @@ struct WordDetailView: View {
         _currentId = State(initialValue: id)
     }
 
-    // Ordered ids to page through. Falls back to just this word if the
-    // store hasn't loaded yet or the id isn't in it, so the page always
-    // renders something.
+    /// Ordered ids to page through. Falls back to just this word if the
+    /// store hasn't loaded yet or the id isn't in it, so the page always
+    /// renders something.
     private var ids: [String] {
         let all = self.wordsStore.words.map(\.id)
         return all.contains(self.id) ? all : [self.id]
@@ -63,9 +63,9 @@ struct WordDetailView: View {
     }
 }
 
-// A single word's detail screen. Owns its own load so each page in the
-// pager fetches and renders independently; the DETAILS / EXAMPLE sections
-// (and their tab state) live in the reusable WordDetailSections.
+/// A single word's detail screen. Owns its own load so each page in the
+/// pager fetches and renders independently; the DETAILS / EXAMPLE sections
+/// (and their tab state) live in the reusable WordDetailSections.
 struct WordDetailPage: View {
     let id: String
 

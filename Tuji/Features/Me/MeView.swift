@@ -164,7 +164,14 @@ struct MeView: View {
         )
     }
 
-    private func statCell(value: String, label: LocalizedStringKey, icon: String? = nil, iconTint: Color = .clear) -> some View {
+    private func statCell(
+        value: String,
+        label: LocalizedStringKey,
+        icon: String? = nil,
+        iconTint: Color = .clear
+    )
+        -> some View
+    {
         VStack(spacing: 4) {
             HStack(spacing: 4) {
                 if let icon {
@@ -306,7 +313,14 @@ struct MeView: View {
         )
     }
 
-    private func listRow(icon: String, title: LocalizedStringKey, tint: Color, subtitle: LocalizedStringKey? = nil) -> some View {
+    private func listRow(
+        icon: String,
+        title: LocalizedStringKey,
+        tint: Color,
+        subtitle: LocalizedStringKey? = nil
+    )
+        -> some View
+    {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .heavy))

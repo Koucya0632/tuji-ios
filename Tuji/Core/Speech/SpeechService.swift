@@ -71,8 +71,11 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
 
         self.downloadTask = Task { [weak self] in
             do {
+                // Raw audio-clip download from an absolute (storage) URL — not an
+                // API call, so APIClient's Endpoint/JSON pipeline doesn't apply.
+                // swiftlint:disable:next no_urlsession_outside_networking
                 let (data, response) = try await URLSession.shared.data(from: url)
-                if let http = response as? HTTPURLResponse, !(200 ..< 300).contains(http.statusCode) {
+                if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                     throw URLError(.badServerResponse)
                 }
                 try Task.checkCancellation()

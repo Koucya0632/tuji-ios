@@ -296,7 +296,9 @@ extension View {
         detail: LocalizedStringKey? = nil,
         primary: TujiPromptAction,
         secondary: TujiPromptAction? = nil
-    ) -> some View {
+    )
+        -> some View
+    {
         modifier(
             TujiPromptModifier(
                 isPresented: isPresented,

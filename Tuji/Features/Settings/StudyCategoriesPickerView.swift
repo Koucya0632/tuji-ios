@@ -80,7 +80,9 @@ struct StudyCategoriesPickerView: View {
         category: TujiCategory,
         selected: Bool,
         action: @escaping () -> Void
-    ) -> some View {
+    )
+        -> some View
+    {
         Button(action: action) {
             Text(category.nameZh)
                 .font(.system(size: 13, weight: .heavy))
@@ -88,18 +90,18 @@ struct StudyCategoriesPickerView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .padding(.vertical, Space.s5)
-            .frame(maxWidth: .infinity)
-            .background(
-                selected ? Color.tujiTealSoft : .tujiCard,
-                in: .rect(cornerRadius: Radius.md)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.md)
-                    .stroke(
-                        selected ? Color.tujiTeal : .tujiInk4.opacity(0.25),
-                        lineWidth: selected ? 1.5 : 1
-                    )
-            )
+                .frame(maxWidth: .infinity)
+                .background(
+                    selected ? Color.tujiTealSoft : .tujiCard,
+                    in: .rect(cornerRadius: Radius.md)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(
+                            selected ? Color.tujiTeal : .tujiInk4.opacity(0.25),
+                            lineWidth: selected ? 1.5 : 1
+                        )
+                )
         }
         .buttonStyle(.plain)
     }

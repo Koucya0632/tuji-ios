@@ -183,8 +183,8 @@ struct SearchView: View {
                         ? "搜尋日文 / 假名 / 中文"
                         : "搜尋英文 / 中文",
                     text: Binding(
-                    get: { self.vm.query },
-                    set: { self.vm.updateQuery($0) }
+                        get: { self.vm.query },
+                        set: { self.vm.updateQuery($0) }
                     )
                 )
                 .focused(self.$fieldFocused)
