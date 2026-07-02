@@ -12,7 +12,9 @@ struct MilestoneView: View {
     let onFinish: () -> Void
 
     private var shareText: String {
-        tujiLocalized("我在 Tuji 連勝 \(self.milestone.streak) 天了！\nhttps://tuji.app/share/milestone?n=\(self.milestone.streak)")
+        tujiLocalized(
+            "我在 Tuji 連勝 \(self.milestone.streak) 天了！\nhttps://tuji.app/share/milestone?n=\(self.milestone.streak)"
+        )
     }
 
     var body: some View {
@@ -26,11 +28,11 @@ struct MilestoneView: View {
                     dark: true
                 ) {
                     VStack(spacing: Space.s3) {
-                    Text(self.subtitle)
-                        .font(.tujiBody)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, Space.s6)
+                        Text(self.subtitle)
+                            .font(.tujiBody)
+                            .foregroundStyle(.white.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, Space.s6)
                         self.streakCapsule
                     }
                 }

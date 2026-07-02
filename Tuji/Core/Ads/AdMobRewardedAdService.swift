@@ -20,7 +20,9 @@ final class AdMobRewardedAdService: NSObject, RewardedAdService, FullScreenConte
     private var dismissal: CheckedContinuation<Void, Never>?
     private let log = Logger(subsystem: "app.tuji.ios", category: "ads")
 
-    override private init() { super.init() }
+    private override init() {
+        super.init()
+    }
 
     func preload() {
         guard self.loaded == nil, !self.isLoading else { return }
@@ -71,7 +73,7 @@ final class AdMobRewardedAdService: NSObject, RewardedAdService, FullScreenConte
 
     func ad(
         _ ad: FullScreenPresentingAd,
-        didFailToPresentFullScreenContentWithError error: any Error,
+        didFailToPresentFullScreenContentWithError error: any Error
     ) {
         self.log.error("rewarded present failed: \(error.localizedDescription, privacy: .public)")
         self.finish()

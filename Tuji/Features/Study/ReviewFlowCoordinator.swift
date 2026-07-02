@@ -20,8 +20,8 @@ enum ReviewPhase: Hashable {
 @MainActor
 @Observable
 final class ReviewFlowCoordinator {
-    // Mutable so a wrong first answer can requeue the word once (appended to
-    // the tail for an in-session re-test, mirroring NewFlow).
+    /// Mutable so a wrong first answer can requeue the word once (appended to
+    /// the tail for an in-session re-test, mirroring NewFlow).
     var queue: [StudyQueueItem]
     /// Distinct word count at start — the stable progress denominator so
     /// requeued re-tests don't inflate it.
@@ -156,7 +156,7 @@ final class ReviewFlowCoordinator {
     /// Writes one SRS answer with a few retries and folds the returned
     /// mastery/milestone back into session state. Runs detached from the UI.
     private func persist(_ payload: StudyAnswerPayload, wordId: String) async {
-        for attempt in 0 ..< 3 {
+        for attempt in 0..<3 {
             if Task.isCancelled { return }
             do {
                 let resp = try await self.repository.submitAnswer(payload)
@@ -213,5 +213,4 @@ final class ReviewFlowCoordinator {
             self.startedAt = .now
         }
     }
-
 }

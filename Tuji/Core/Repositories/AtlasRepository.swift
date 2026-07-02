@@ -8,7 +8,8 @@ protocol AtlasRepository {
         filename: String,
         mimeType: String,
         targetLanguage: String?
-    ) async throws -> AtlasUploadResponse
+    ) async throws
+        -> AtlasUploadResponse
     func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem
     func createCards(itemId: String, cardTypes: [String]) async throws -> [AtlasCard]
@@ -37,7 +38,9 @@ struct LiveAtlasRepository: AtlasRepository {
         filename: String,
         mimeType: String,
         targetLanguage: String?
-    ) async throws -> AtlasUploadResponse {
+    ) async throws
+        -> AtlasUploadResponse
+    {
         var fields: [String: String] = [:]
         if let targetLanguage {
             fields["targetLanguage"] = targetLanguage

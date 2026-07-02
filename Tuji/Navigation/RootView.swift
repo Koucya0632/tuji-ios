@@ -47,8 +47,8 @@ struct RootView: View {
                     .zIndex(10)
             }
         }
-            .task { await self.runLaunchSequence() }
-            .animation(.easeInOut(duration: 0.25), value: stateKey)
+        .task { await self.runLaunchSequence() }
+        .animation(.easeInOut(duration: 0.25), value: stateKey)
     }
 
     @MainActor

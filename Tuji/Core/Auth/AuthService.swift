@@ -32,7 +32,9 @@ final class AuthService {
 
     private let supabase = SupabaseProvider.client
     private let log = Logger(subsystem: "app.tuji.ios", category: "auth")
-    private var users: UserRepository { LiveUserRepository.shared }
+    private var users: UserRepository {
+        LiveUserRepository.shared
+    }
 
     private init() {}
 

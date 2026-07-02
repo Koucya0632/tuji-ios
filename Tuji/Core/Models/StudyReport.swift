@@ -8,10 +8,12 @@ enum StudyReportIssueType: String, CaseIterable, Identifiable {
     case ui
     case other
 
-    var id: String { self.rawValue }
+    var id: String {
+        self.rawValue
+    }
 }
 
-struct StudyReportSnapshot: Encodable, Sendable {
+struct StudyReportSnapshot: Encodable {
     let word: String
     let chinese: String
     let imageUrl: String
@@ -66,7 +68,7 @@ struct StudyReportDraft: Identifiable {
     }
 }
 
-nonisolated struct StudyReportPayload: Encodable, Sendable {
+nonisolated struct StudyReportPayload: Encodable {
     let requestId: String
     let wordId: String
     let cardId: String

@@ -60,10 +60,9 @@ enum APIError: LocalizedError {
     /// Pulls a user-facing `message` string out of a JSON error body, if any.
     /// Used for 429 so the server owns the copy (e.g. the atlas daily-AI cap).
     private static func serverMessage(from data: Data) -> String? {
-        guard
-            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let message = object["message"] as? String,
-            !message.isEmpty
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let message = object["message"] as? String,
+              !message.isEmpty
         else { return nil }
         return message
     }

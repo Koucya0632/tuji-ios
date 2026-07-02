@@ -54,7 +54,9 @@ extension MascotPose {
 
     /// Visible artwork height as a fraction of the frame, after trimming the
     /// transparent margins above and below.
-    var visibleHeightRatio: CGFloat { self.groundLine - self.topInset }
+    var visibleHeightRatio: CGFloat {
+        self.groundLine - self.topInset
+    }
 }
 
 struct Mascot: View {
@@ -66,7 +68,7 @@ struct Mascot: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .accessibilityHidden(true)
-        .frame(width: size, height: size)
+            .frame(width: size, height: size)
     }
 }
 
@@ -93,7 +95,9 @@ struct MascotFigure: View {
     var size: CGFloat = 104
     var grounding: MascotGrounding = .shadow
 
-    private var visibleHeight: CGFloat { self.pose.visibleHeightRatio * self.size }
+    private var visibleHeight: CGFloat {
+        self.pose.visibleHeightRatio * self.size
+    }
 
     var body: some View {
         ZStack {

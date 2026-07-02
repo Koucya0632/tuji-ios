@@ -58,7 +58,7 @@ struct EditProfileView: View {
 
     private var heroAvatar: some View {
         MascotAvatar(pose: self.pose, size: 104, selected: true)
-        .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity)
     }
 
     private var avatarPicker: some View {
@@ -81,13 +81,13 @@ struct EditProfileView: View {
                             size: 68,
                             selected: self.pose == candidate
                         )
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Space.s2)
-                            .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Radius.md)
-                                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
-                            )
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Space.s2)
+                        .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: Radius.md)
+                                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                        )
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("頭像 \(candidate.rawValue)")

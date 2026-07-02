@@ -89,8 +89,8 @@ final class MasteryStore {
 struct MasteryEntry: Decodable, Hashable {
     let wordId: String
     let mastery: Int
-    // ISO8601 string (not Date): the global .iso8601 decoder rejects the
-    // fractional seconds the server emits. Parsed via ReviewSchedule.parseISO.
+    /// ISO8601 string (not Date): the global .iso8601 decoder rejects the
+    /// fractional seconds the server emits. Parsed via ReviewSchedule.parseISO.
     let nextReviewAt: String?
 }
 

@@ -287,11 +287,10 @@ private struct LearningDirectionPickerView: View {
             return
         }
         self.onboarding.learningDirection = direction
-        let shouldPersist: Bool
-        if case .signedIn = self.auth.state {
-            shouldPersist = true
+        let shouldPersist = if case .signedIn = self.auth.state {
+            true
         } else {
-            shouldPersist = false
+            false
         }
         self.settings.setLearningDirection(direction, persist: shouldPersist)
         self.words.invalidate()

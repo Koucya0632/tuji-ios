@@ -64,7 +64,6 @@ struct NewDoneView: View {
         }
         .padding(.top, Space.s8)
     }
-
 }
 
 /// Two-column word grid shown on the study-complete screens (new-word and

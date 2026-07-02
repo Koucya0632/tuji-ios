@@ -130,7 +130,7 @@ enum Endpoint {
             [
                 since.map { URLQueryItem(name: "since", value: $0) },
                 URLQueryItem(name: "limit", value: String(limit))
-            ].compactMap { $0 }
+            ].compactMap(\.self)
         case let .words(lang, learning),
              let .word(_, lang, learning):
             [

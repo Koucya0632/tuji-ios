@@ -21,20 +21,29 @@ jobs:
     name: Lint
     runs-on: macos-15
     timeout-minutes: 5
+    env:
+      # 釘版：brew install 抓 latest，工具一升版規則就變、CI 就無預警轉紅
+      # （0.61 的 indent/docComments 曾讓 main 紅了一段時間）。要升版時
+      # 改這裡 + 本地跑一次 `swiftformat Tuji TujiTests` 同一個 PR 進。
+      SWIFTFORMAT_VERSION: 0.61.1
+      SWIFTLINT_VERSION: 0.64.0
     steps:
       - uses: actions/checkout@v7
 
-      - name: Cache Homebrew
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /usr/local/Homebrew
-          key: brew-${{ runner.os }}-swiftlint-swiftformat
-
-      - name: Install SwiftLint & SwiftFormat
+      - name: Install SwiftLint & SwiftFormat (pinned)
         run: |
-          brew install swiftlint swiftformat
+          mkdir -p "$HOME/.lint-tools"
+          curl -fsSL -o /tmp/swiftformat.zip \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+          unzip -o -q /tmp/swiftformat.zip -d /tmp/swiftformat-dist
+          install -m 755 "$(find /tmp/swiftformat-dist -name swiftformat -type f | head -1)" "$HOME/.lint-tools/"
+          curl -fsSL -o /tmp/swiftlint.zip \
+            "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip"
+          unzip -o -q /tmp/swiftlint.zip -d /tmp/swiftlint-dist
+          install -m 755 "$(find /tmp/swiftlint-dist -name swiftlint -type f | head -1)" "$HOME/.lint-tools/"
+          echo "$HOME/.lint-tools" >> "$GITHUB_PATH"
+          "$HOME/.lint-tools/swiftformat" --version
+          "$HOME/.lint-tools/swiftlint" version
 
       - name: SwiftFormat (lint mode)
         run: swiftformat . --lint
@@ -47,8 +56,9 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15
-    timeout-minutes: 15
-    needs: lint
+    timeout-minutes: 20
+    # 刻意不設 needs: lint — 之前 Lint 紅了整條測試就被跳過，
+    # style 問題不該擋正確性檢查。
     steps:
       - uses: actions/checkout@v7
 
@@ -96,10 +106,10 @@ jobs:
             -project Tuji.xcodeproj \
             -scheme Tuji-Debug
 
-      - name: Build
+      - name: Build for testing
         run: |
           set -o pipefail
-          xcodebuild build \
+          xcodebuild build-for-testing \
             -project Tuji.xcodeproj \
             -scheme Tuji-Debug \
             -configuration Debug \
@@ -108,28 +118,45 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
 
-      # No test target yet — W2 didn't add one. When TujiTests lands,
-      # uncomment this block + remove the `Targets: Tuji` comment in the
-      # PR description checklist.
-      # - name: Unit Tests
-      #   run: |
-      #     set -o pipefail
-      #     xcodebuild test \
-      #       -project Tuji.xcodeproj \
-      #       -scheme Tuji-Debug \
-      #       -configuration Debug \
-      #       -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
-      #       -derivedDataPath build \
-      #       -enableCodeCoverage YES \
-      #       CODE_SIGNING_ALLOWED=NO \
-      #       | xcbeautify --renderer github-actions
+      - name: Select simulator
+        # runner image 的機型/OS 會隨 Xcode 版本變，寫死機名容易斷 —
+        # 挑最新 iOS runtime 裡第一台可用 iPhone。
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          data = json.load(sys.stdin)["devices"]
+          def rt_key(rt):
+              tail = rt.rsplit("iOS-", 1)
+              return [int(x) for x in tail[1].split("-")] if len(tail) == 2 else [-1]
+          for rt in sorted((r for r in data if "iOS" in r), key=rt_key, reverse=True):
+              iphones = [d for d in data[rt] if d["name"].startswith("iPhone")]
+              if iphones:
+                  print(iphones[0]["udid"]); break
+          ')
+          [ -n "$UDID" ] || { echo "::error::找不到可用的 iPhone simulator"; exit 1; }
+          xcrun simctl list devices available | grep "$UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
-      # - name: Upload test results
-      #   if: always()
-      #   uses: actions/upload-artifact@v7
-      #   with:
-      #     name: test-results
-      #     path: build/Logs/Test/*.xcresult
+      - name: Unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project Tuji.xcodeproj \
+            -scheme Tuji-Debug \
+            -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            -enableCodeCoverage YES \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify --renderer github-actions
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: build/Logs/Test/*.xcresult
 
   api-contract:
     name: API contract check

@@ -63,7 +63,8 @@ final class StudyQueueStore {
         let params = self.params(for: mode)
         if let entry = self.entries[mode],
            entry.signature == params.signature,
-           Date().timeIntervalSince(entry.fetchedAt) < self.ttl {
+           Date().timeIntervalSince(entry.fetchedAt) < self.ttl
+        {
             return
         }
         do {
@@ -71,7 +72,9 @@ final class StudyQueueStore {
             self.entries[mode] = Entry(queue: queue, signature: params.signature, fetchedAt: Date())
         } catch {
             self.log
-                .error("prefetch \(mode.asPath, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                .error(
+                    "prefetch \(mode.asPath, privacy: .public) failed: \(error.localizedDescription, privacy: .public)"
+                )
         }
     }
 
