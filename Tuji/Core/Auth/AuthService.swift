@@ -32,6 +32,7 @@ final class AuthService {
 
     private let supabase = SupabaseProvider.client
     private let log = Logger(subsystem: "app.tuji.ios", category: "auth")
+    private var users: UserRepository { LiveUserRepository.shared }
 
     private init() {}
 
@@ -220,11 +221,7 @@ final class AuthService {
             return
         }
         do {
-            try await APIClient.shared.post(
-                .usersSync,
-                body: snapshot,
-                as: SyncAckResponse.self
-            )
+            try await self.users.syncLocalCache(snapshot)
             log.info("synced \(snapshot.favorites.count) favs + \(snapshot.learned.count) learned to server")
         } catch {
             log.error("sync failed: \(error.localizedDescription, privacy: .public)")
@@ -239,10 +236,7 @@ final class AuthService {
         guard let fullName, !fullName.isEmpty else { return }
         guard case let .signedIn(user) = state, (user.nickname ?? "").isEmpty else { return }
         do {
-            let _: ProfileUpdateResponse = try await APIClient.shared.post(
-                .usersProfile,
-                body: ProfileUpdatePayload(nickname: fullName, avatar: nil)
-            )
+            _ = try await self.users.updateProfile(ProfileUpdatePayload(nickname: fullName, avatar: nil))
             applyNickname(fullName)
             log.info("captured apple full name into profile")
         } catch {
@@ -278,8 +272,4 @@ final class AuthService {
         }
         return msg
     }
-}
-
-private struct SyncAckResponse: Decodable {
-    let ok: Bool?
 }

@@ -10,6 +10,7 @@ import SwiftUI
 struct EditProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
+    private let users: UserRepository = LiveUserRepository.shared
 
     @State private var nickname: String = ""
     @State private var pose: MascotPose = .face
@@ -185,10 +186,7 @@ struct EditProfileView: View {
         let newNickname = trimmed.isEmpty ? nil : trimmed
         let payload = ProfileUpdatePayload(nickname: newNickname, avatar: self.pose.rawValue)
         do {
-            let _: ProfileUpdateResponse = try await APIClient.shared.post(
-                .usersProfile,
-                body: payload
-            )
+            _ = try await self.users.updateProfile(payload)
             self.log.info("profile saved")
             self.auth.applyProfile(nickname: newNickname, avatar: self.pose.rawValue)
             self.dismiss()

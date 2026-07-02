@@ -23,11 +23,14 @@ final class PushNotificationService {
 
     private(set) var authorization: Authorization = .undetermined
 
+    private let repository: UserRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "push")
     private let promptedKey = "tuji.push.prompted"
     private let deviceIdKey = "tuji.push.deviceId"
 
-    private init() {}
+    private init(repository: UserRepository = LiveUserRepository.shared) {
+        self.repository = repository
+    }
 
     /// Has the user been through an in-app permission prompt yet?
     var hasBeenPrompted: Bool {
@@ -82,10 +85,8 @@ final class PushNotificationService {
     /// Called by PushAppDelegate when APNs returns the token.
     func handleAPNsToken(_ token: String) async {
         do {
-            try await APIClient.shared.post(
-                .usersPushToken,
-                body: PushTokenPayload(token: token, deviceId: deviceId, platform: "ios"),
-                as: AckResponse.self
+            try await self.repository.registerPushToken(
+                PushTokenPayload(token: token, deviceId: self.deviceId, platform: "ios")
             )
             log.info("APNs token uploaded for device=\(self.deviceId, privacy: .public)")
         } catch {
@@ -97,7 +98,7 @@ final class PushNotificationService {
     /// for the previous account. Best-effort — failures are logged only.
     func unregister() async {
         do {
-            try await APIClient.shared.delete(.usersPushTokenDelete(deviceId: deviceId))
+            try await self.repository.unregisterPushToken(deviceId: self.deviceId)
             log.info("APNs token unregistered for device=\(self.deviceId, privacy: .public)")
         } catch {
             log.info("unregister dropped: \(error.localizedDescription, privacy: .public)")
@@ -112,14 +113,4 @@ final class PushNotificationService {
         @unknown default: .undetermined
         }
     }
-}
-
-private struct PushTokenPayload: Encodable {
-    let token: String
-    let deviceId: String
-    let platform: String
-}
-
-private struct AckResponse: Decodable {
-    let ok: Bool?
 }

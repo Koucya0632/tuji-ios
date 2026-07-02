@@ -79,41 +79,17 @@ struct StudyLauncherView: View {
     }
 
     private func loadQueue() async {
-        let due = self.studyStats.stats?.due ?? 0
-        let goal = self.settings.current.dailyGoal
-        let limit: Int
-        let newCount: Int
-        // New cards are drawn from the user's selected themes; review spans
-        // every studied word regardless of theme, so it sends no filter.
-        let categories: [String]
-        switch self.mode {
-        case .new:
-            let n = StudyQuotas.computeNewLimit(goal: goal, due: due)
-            limit = n
-            newCount = n
-            categories = self.settings.current.studyCategories
-        case .review:
-            limit = min(due, 30)
-            newCount = 0
-            categories = []
-        }
         do {
-            let resp: StudyQueueResponse = try await APIClient.shared.get(
-                .studyQueue(
-                    mode: self.mode.asPath,
-                    limit: max(1, limit),
-                    new: newCount,
-                    categories: categories
-                )
-            )
-            // A custom 自制圖鑑 item can carry more than one card (image_recall +
-            // flashcard), but the unified flow studies a word once and the queue
-            // is keyed by word.id (StudyQueueItem.id). Collapse to one item per
-            // word so the same word can't surface twice in a session — keep the
-            // first, since the server orders in-progress reviews ahead of new
-            // cards.
-            var seenWordIds = Set<String>()
-            let queue = resp.queue.filter { seenWordIds.insert($0.word.id).inserted }
+            // Warm path: TodayView pre-fetched this queue in the background, so
+            // take() returns instantly and the spinner only flashes for a frame.
+            // Cache miss → live fetch (the old behaviour). Both share the param
+            // computation + dedupe inside StudyQueueStore.
+            let queue: [StudyQueueItem]
+            if let cached = StudyQueueStore.shared.take(mode: self.mode) {
+                queue = cached
+            } else {
+                queue = try await StudyQueueStore.shared.fetch(mode: self.mode)
+            }
             if queue.isEmpty {
                 self.queueError = NSError(
                     domain: "tuji.study",

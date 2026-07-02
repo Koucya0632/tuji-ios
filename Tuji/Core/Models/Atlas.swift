@@ -74,7 +74,7 @@ struct AtlasRecognitionResponse: Decodable {
     let candidates: [AtlasCandidate]
 }
 
-struct AtlasConfirmPayload: Encodable {
+struct AtlasConfirmPayload: Codable {
     let selectedCandidateId: String?
     let targetLanguage: String?
     let primaryLabel: String
@@ -174,6 +174,30 @@ struct AtlasSyncResponse: Decodable {
 struct AtlasSyncPaging: Decodable, Hashable {
     let limit: Int
     let truncated: Bool
+}
+
+// MARK: - Entitlement / quota (GET /api/atlas/entitlement)
+
+/// Free/Pro plan, its limits, and the user's current usage. Mirrors the server
+/// (docs/ATLAS_PRICING_PLAN.md); used to gate capture UI and show remaining
+/// quota. Ordinary AI is a shared monthly soft limit; precision (高精度) is
+/// Pro-only (Free limit 0).
+struct AtlasEntitlement: Decodable, Hashable {
+    let plan: String
+    let atlasSlotsLimit: Int
+    let primaryAiSoftLimitMonthly: Int
+    let precisionAiLimitMonthly: Int
+    let adsRequiredForCardGeneration: Bool
+    let subscriptionExpiresAt: String?
+    let usage: AtlasUsage
+
+    var isPro: Bool { self.plan == "pro" }
+}
+
+struct AtlasUsage: Decodable, Hashable {
+    let atlasSlots: Int
+    let primaryAiThisMonth: Int
+    let precisionAiThisMonth: Int
 }
 
 private extension KeyedDecodingContainer {

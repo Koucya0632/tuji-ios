@@ -20,9 +20,12 @@ final class CategoriesStore {
     /// Used by the splash gate so a failed load doesn't trap us on Splash.
     private(set) var loaded: Bool = false
 
+    private let repository: CatalogRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "categories")
 
-    private init() {}
+    private init(repository: CatalogRepository = LiveCatalogRepository.shared) {
+        self.repository = repository
+    }
 
     func loadIfNeeded() async {
         guard self.categories.isEmpty else { return }
@@ -37,9 +40,7 @@ final class CategoriesStore {
             self.loaded = true
         }
         do {
-            let resp: CategoriesResponse = try await APIClient.shared.get(
-                .categories(lang: SettingsStore.shared.current.uiLang)
-            )
+            let resp = try await self.repository.loadCategories(lang: SettingsStore.shared.current.uiLang)
             self.categories = resp.categories
             self.log.info("loaded \(resp.categories.count, privacy: .public) categories")
         } catch {

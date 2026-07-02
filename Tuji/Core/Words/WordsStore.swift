@@ -26,9 +26,12 @@ final class WordsStore {
     /// Used by the splash gate so a failed load doesn't trap us on Splash.
     private(set) var loaded: Bool = false
 
+    private let repository: CatalogRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "words")
 
-    private init() {}
+    private init(repository: CatalogRepository = LiveCatalogRepository.shared) {
+        self.repository = repository
+    }
 
     /// Returns immediately if we already have words. Triggers a fresh
     /// network load otherwise.
@@ -46,15 +49,13 @@ final class WordsStore {
         }
         do {
             let settings = SettingsStore.shared.current
-            let resp: WordsListResponse = try await APIClient.shared.get(
-                .words(
-                    lang: settings.uiLang,
-                    learning: settings.learningDirection.rawValue
-                )
+            let resp = try await self.repository.loadWords(
+                lang: settings.uiLang,
+                learning: settings.learningDirection.rawValue
             )
             var merged = resp.words
             do {
-                let custom: WordsListResponse = try await APIClient.shared.get(.usersCustomWords)
+                let custom = try await self.repository.loadCustomWords()
                 merged = Self.merge(publicWords: resp.words, customWords: custom.words)
             } catch {
                 self.log.info("custom words skipped: \(error.localizedDescription, privacy: .public)")

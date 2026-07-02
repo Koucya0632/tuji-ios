@@ -28,9 +28,12 @@ final class MasteryStore {
     /// to avoid re-fetching for users who legitimately have an empty map.
     private(set) var loaded: Bool = false
 
+    private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "mastery-store")
 
-    private init() {}
+    private init(repository: ProgressRepository = LiveProgressRepository.shared) {
+        self.repository = repository
+    }
 
     /// Score for a word, or nil if the user has never studied it (→ 未學).
     func score(for wordId: String) -> Int? {
@@ -57,7 +60,7 @@ final class MasteryStore {
             self.loaded = true
         }
         do {
-            let resp: MasteryListResponse = try await APIClient.shared.get(.usersMastery)
+            let resp = try await self.repository.loadMastery()
             self.byId = Dictionary(
                 resp.items.map { ($0.wordId, $0.mastery) },
                 uniquingKeysWith: { _, last in last }

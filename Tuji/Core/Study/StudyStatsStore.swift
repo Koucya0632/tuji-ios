@@ -29,9 +29,12 @@ final class StudyStatsStore {
     private(set) var lastError: Error?
 
     private var lastFetch: Date?
+    private let repository: StudyRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "study-stats-store")
 
-    private init() {}
+    private init(repository: StudyRepository = LiveStudyRepository.shared) {
+        self.repository = repository
+    }
 
     func loadIfStale(ttl: TimeInterval = 30) async {
         if let last = lastFetch, Date().timeIntervalSince(last) < ttl, stats != nil {
@@ -45,7 +48,7 @@ final class StudyStatsStore {
         lastError = nil
         defer { loading = false }
         do {
-            let resp: StudyStatsResponse = try await APIClient.shared.get(.studyStats)
+            let resp = try await self.repository.loadStats()
             stats = resp.stats
             lastFetch = Date()
         } catch {

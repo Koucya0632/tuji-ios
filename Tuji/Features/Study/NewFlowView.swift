@@ -186,7 +186,7 @@ struct NewFlowView: View {
                 SpellView(coord: self.coord, item: item)
             }
         case .done:
-            NewDoneView(queue: self.coord.queue, onFinish: { self.dismiss() })
+            NewDoneView(coord: self.coord, queue: self.coord.queue, onFinish: { self.dismiss() })
         }
     }
 }

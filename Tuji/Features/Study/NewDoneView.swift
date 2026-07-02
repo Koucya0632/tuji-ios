@@ -6,6 +6,7 @@ import NukeUI
 import SwiftUI
 
 struct NewDoneView: View {
+    let coord: NewFlowCoordinator
     let queue: [StudyQueueItem]
     let onFinish: () -> Void
 
@@ -27,8 +28,15 @@ struct NewDoneView: View {
         // the just-learned words leave 未學 on the 圖鑑/詳情, and 今日目標 on Today
         // reflects this session's completions instead of waiting out the 30s TTL.
         .task {
+            // The recognize POSTs are optimistic, so wait for them to land (cap
+            // at 800ms) before reloading — otherwise the reload races the write
+            // and the just-learned words show stale on the 圖鑑/詳情.
+            await self.coord.drainPendingWrites(within: .milliseconds(800))
             self.mastery.invalidate()
             self.studyStats.invalidate()
+            // Drop any prefetched queue — the cards just learned changed the
+            // SRS state, so the next 復習 / 學新字 must re-fetch.
+            StudyQueueStore.shared.invalidate()
             await self.mastery.reload()
         }
         .safeAreaInset(edge: .bottom) {

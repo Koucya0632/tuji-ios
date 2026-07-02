@@ -29,9 +29,16 @@ struct AtlasCaptureView: View {
     @State private var category = ""
     /// The downscaled frame kept around to seed the 圖鑑 progress placeholder.
     @State private var localThumbnail: UIImage?
+    /// The last picked/cropped frame, retained so a failed upload (weak network)
+    /// can be retried without re-picking the photo.
+    @State private var lastUploadData: Data?
 
     @State private var showCamera = false
     @State private var pickerItem: PhotosPickerItem?
+    /// A freshly picked frame awaiting the crop/preview step before upload. Wrapping
+    /// the bytes in an Identifiable drives `.fullScreenCover(item:)` and re-creates
+    /// the crop view per pick.
+    @State private var pendingCrop: PendingCrop?
     @State private var busy: Busy?
     @State private var errorMessage: String?
     @State private var successMessage: String?
@@ -42,9 +49,40 @@ struct AtlasCaptureView: View {
     @State private var candidatesByMode: [String: [AtlasCandidate]] = [:]
     @State private var confirmDismiss = false
     @State private var confirmRetake = false
+    @State private var showPaywall = false
 
     private enum Busy: String {
         case upload, recognize
+    }
+
+    private struct PendingCrop: Identifiable {
+        let id = UUID()
+        let data: Data
+    }
+
+    /// At the tier's 自製圖鑑 capacity — capture is blocked until the user frees a
+    /// slot or upgrades. Unknown entitlement resolves to "allow" (server enforces).
+    private var atCapacity: Bool {
+        !AtlasQuotas.canCreateItem(self.store.entitlement)
+    }
+
+    private var capacityMessage: String {
+        guard let limit = self.store.entitlement?.atlasSlotsLimit else {
+            return "自製圖鑑已達上限，刪除一些後再新增。"
+        }
+        let isPro = self.store.entitlement?.isPro ?? false
+        return isPro
+            ? "自製圖鑑已達上限（\(limit)），刪除一些後再新增。"
+            : "自製圖鑑已達免費上限（\(limit)），升級 Pro 可擴充，或刪除一些。"
+    }
+
+    /// Remaining ordinary AI recognitions this month; nil = unknown.
+    private var remainingPrimaryThisMonth: Int? {
+        AtlasQuotas.remainingPrimaryAi(self.store.entitlement)
+    }
+
+    private var isPro: Bool {
+        self.store.entitlement?.isPro ?? false
     }
 
     var body: some View {
@@ -52,6 +90,7 @@ struct AtlasCaptureView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s5) {
                     self.statusMessage
+                    self.uploadRetry
                     if let uploadedImage {
                         self.correctionPanel(uploadedImage)
                     } else {
@@ -87,9 +126,27 @@ struct AtlasCaptureView: View {
             CameraPicker(
                 onCapture: { data in
                     self.showCamera = false
-                    Task { await self.handlePicked(data: data) }
+                    // Hand off to the crop cover only after the camera cover has
+                    // dismissed — presenting a second fullScreenCover in the same
+                    // runloop tick gets dropped by SwiftUI. (The 相簿 path has no
+                    // such race; it isn't coming from another cover.)
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(350))
+                        self.pendingCrop = PendingCrop(data: data)
+                    }
                 },
                 onCancel: { self.showCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .fullScreenCover(item: self.$pendingCrop) { pending in
+            ImageCropView(
+                imageData: pending.data,
+                onConfirm: { cropped in
+                    self.pendingCrop = nil
+                    Task { await self.handlePicked(data: cropped) }
+                },
+                onCancel: { self.pendingCrop = nil }
             )
             .ignoresSafeArea()
         }
@@ -119,6 +176,22 @@ struct AtlasCaptureView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .tujiStatusToast(
+            isPresented: self.busy == .upload || self.busy == .recognize,
+            style: .recognizing
+        )
+        .task {
+            // Fresh tier / usage so capture gating and remaining-quota copy are
+            // current when the sheet opens.
+            await self.store.refreshEntitlement()
+            // Warm a rewarded ad for Free users so the card-gen gate is instant.
+            if self.store.entitlement?.adsRequiredForCardGeneration == true {
+                Ads.rewarded.preload()
+            }
+        }
+        .sheet(isPresented: self.$showPaywall) {
+            PaywallView()
+        }
     }
 
     // MARK: - Source chooser
@@ -132,6 +205,32 @@ struct AtlasCaptureView: View {
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk3)
+                if let remaining = self.remainingPrimaryThisMonth {
+                    Text("本月 AI 辨識剩 \(remaining) 次")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk4)
+                }
+            }
+
+            if self.atCapacity {
+                VStack(alignment: .leading, spacing: Space.s2) {
+                    Text(self.capacityMessage)
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiCoral)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if !self.isPro {
+                        Button {
+                            self.showPaywall = true
+                        } label: {
+                            Text("升級 Tuji Pro")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(.tujiTeal)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(Space.s3)
+                .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
             }
 
             if CameraPicker.isAvailable {
@@ -140,7 +239,7 @@ struct AtlasCaptureView: View {
                 } label: {
                     HStack {
                         Image(systemName: "camera.fill")
-                        Text(self.busy == .upload ? "上傳中…" : "拍照")
+                        Text("拍照")
                     }
                     .font(.system(size: 16, weight: .heavy))
                     .foregroundStyle(.white)
@@ -149,24 +248,14 @@ struct AtlasCaptureView: View {
                     .background(.tujiTeal, in: .rect(cornerRadius: Radius.lg))
                 }
                 .buttonStyle(.plain)
-                .disabled(self.busy != nil)
+                .disabled(self.busy != nil || self.atCapacity)
             }
 
             PhotosPicker(selection: self.$pickerItem, matching: .images) {
                 AtlasPickerPillLabel(title: "從相簿選", icon: "photo.on.rectangle")
             }
-            .disabled(self.busy != nil)
+            .disabled(self.busy != nil || self.atCapacity)
 
-            if self.busy == .upload {
-                HStack(spacing: Space.s2) {
-                    ProgressView().tint(.tujiTeal)
-                    Text("上傳並辨識中…")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, Space.s2)
-            }
         }
     }
 
@@ -231,13 +320,19 @@ struct AtlasCaptureView: View {
             Button {
                 self.requestRecognize(imageId: image.id, mode: "primary")
             } label: {
-                self.smallActionLabel(self.busy == .recognize ? "識別中…" : "AI 識別", icon: "sparkles")
+                self.smallActionLabel("AI 識別", icon: "sparkles")
             }
             .buttonStyle(.plain)
             .disabled(self.busy != nil)
 
             Button {
-                self.requestRecognize(imageId: image.id, mode: "escalate")
+                // 高精度 is Pro-only — a Free user goes straight to the paywall
+                // instead of spending a call that the server would 402.
+                if AtlasQuotas.precisionAvailable(self.store.entitlement) {
+                    self.requestRecognize(imageId: image.id, mode: "escalate")
+                } else {
+                    self.showPaywall = true
+                }
             } label: {
                 self.smallActionLabel("高精度", icon: "scope")
             }
@@ -345,6 +440,29 @@ struct AtlasCaptureView: View {
         }
     }
 
+    /// Shown when the initial upload failed (typically weak network): re-upload
+    /// the retained frame without making the user re-pick the photo.
+    @ViewBuilder
+    private var uploadRetry: some View {
+        if self.uploadedImage == nil, self.errorMessage != nil, let data = self.lastUploadData {
+            Button {
+                Task { await self.handlePicked(data: data) }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.clockwise")
+                    Text("重試上傳")
+                }
+                .font(.system(size: 14, weight: .heavy))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Space.s3)
+                .background(.tujiTeal, in: .rect(cornerRadius: Radius.md))
+            }
+            .buttonStyle(.plain)
+            .disabled(self.busy != nil)
+        }
+    }
+
     @ViewBuilder
     private var statusMessage: some View {
         if let errorMessage {
@@ -374,7 +492,7 @@ struct AtlasCaptureView: View {
             guard let data = try await item.loadTransferable(type: Data.self) else {
                 throw AtlasCaptureError.missingPhotoData
             }
-            await self.handlePicked(data: data)
+            self.pendingCrop = PendingCrop(data: data)
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -386,6 +504,8 @@ struct AtlasCaptureView: View {
         self.busy = .upload
         self.errorMessage = nil
         self.successMessage = nil
+        // Retain the frame so a failed upload can be retried in place.
+        self.lastUploadData = data
         do {
             let encoded = ImageDownscale.jpeg(from: data) ?? data
             self.localThumbnail = UIImage(data: encoded)
@@ -395,6 +515,7 @@ struct AtlasCaptureView: View {
                 mimeType: "image/jpeg"
             )
             self.uploadedImage = response.image
+            self.lastUploadData = nil
             self.busy = nil
             // Candidates ride back with the upload now (recognition runs inline
             // server-side) — no separate recognize round trip on the first pass.
@@ -431,7 +552,13 @@ struct AtlasCaptureView: View {
             self.candidatesByMode[mode] = response.candidates
             self.applyCandidates(response.candidates)
         } catch {
-            self.errorMessage = error.localizedDescription
+            // A 402 means the daily AI quota is spent — send them to the paywall
+            // rather than showing a raw error. Transient 429s stay as a message.
+            if let apiError = error as? APIError, case .paymentRequired = apiError {
+                self.showPaywall = true
+            } else {
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -480,12 +607,21 @@ struct AtlasCaptureView: View {
             partOfSpeech: self.partOfSpeech.isEmpty ? nil : self.partOfSpeech,
             category: self.category.isEmpty ? nil : self.category
         )
-        AtlasCaptureQueue.shared.enqueue(
-            imageId: imageId,
-            payload: payload,
-            thumbnail: self.localThumbnail
-        )
-        self.dismiss()
+        let thumbnail = self.localThumbnail
+        // Free watches a rewarded ad before card generation; Pro skips it (that's
+        // the "無廣告" benefit). Best-effort — never blocks the card (§3).
+        let showsAd = self.store.entitlement?.adsRequiredForCardGeneration == true
+        Task {
+            if showsAd {
+                await Ads.rewarded.showRewardedAd()
+            }
+            AtlasCaptureQueue.shared.enqueue(
+                imageId: imageId,
+                payload: payload,
+                thumbnail: thumbnail
+            )
+            self.dismiss()
+        }
     }
 
     /// Best-effort delete the just-uploaded image when the user abandons this

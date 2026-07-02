@@ -76,6 +76,7 @@ struct WordDetailPage: View {
     @State private var word: Word?
     @State private var loading = false
     @State private var error: Error?
+    private let repository: CatalogRepository = LiveCatalogRepository.shared
 
     var body: some View {
         GeometryReader { geo in
@@ -293,12 +294,10 @@ extension WordDetailPage {
         }
         do {
             let settings = SettingsStore.shared.current
-            self.word = try await APIClient.shared.get(
-                .word(
-                    id: self.id,
-                    lang: settings.uiLang,
-                    learning: settings.learningDirection.rawValue
-                )
+            self.word = try await self.repository.word(
+                id: self.id,
+                lang: settings.uiLang,
+                learning: settings.learningDirection.rawValue
             )
         } catch {
             self.error = error

@@ -9,12 +9,14 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(AuthService.self) private var auth
+    private let users: UserRepository = LiveUserRepository.shared
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteFirst = false
     @State private var showDeleteSecond = false
     @State private var deleting = false
     @State private var deleteError: Error?
+    @State private var showPaywall = false
 
     var body: some View {
         self.list
@@ -22,6 +24,9 @@ struct SettingsView: View {
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
             .task { await self.store.loadIfNeeded() }
+            .sheet(isPresented: self.$showPaywall) {
+                PaywallView()
+            }
             .tujiPrompt(
                 isPresented: self.$showSignOutConfirm,
                 style: .confirmation,
@@ -117,6 +122,27 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section {
+                Button {
+                    self.showPaywall = true
+                } label: {
+                    HStack(spacing: Space.s3) {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(.tujiYellow)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Tuji Pro")
+                                .foregroundStyle(.tujiInk)
+                            Text("擴充自製圖鑑容量，解鎖高精度 AI 辨識")
+                                .font(.tujiCaption)
+                                .foregroundStyle(.tujiInk4)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.tujiInk4)
+                    }
+                }
+            }
             Section("帳號") {
                 NavigationLink {
                     EditProfileView()
@@ -202,12 +228,8 @@ struct SettingsView: View {
         self.deleting = true
         self.deleteError = nil
         defer { self.deleting = false }
-        struct EmptyBody: Encodable {}
         do {
-            let _: SaveSettingsResponse = try await APIClient.shared.post(
-                .usersDeleteAccount,
-                body: EmptyBody()
-            )
+            try await self.users.deleteAccount()
             await self.auth.signOut()
         } catch {
             self.deleteError = error

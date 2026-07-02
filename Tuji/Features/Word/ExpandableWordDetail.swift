@@ -33,6 +33,7 @@ struct ExpandableWordDetail: View {
     @State private var fullWord: Word?
     @State private var loading = false
     @State private var error: Error?
+    private let repository: CatalogRepository = LiveCatalogRepository.shared
 
     var body: some View {
         Group {
@@ -66,12 +67,10 @@ struct ExpandableWordDetail: View {
         defer { self.loading = false }
         do {
             let settings = SettingsStore.shared.current
-            self.fullWord = try await APIClient.shared.get(
-                .word(
-                    id: self.wordId,
-                    lang: settings.uiLang,
-                    learning: settings.learningDirection.rawValue
-                )
+            self.fullWord = try await self.repository.word(
+                id: self.wordId,
+                lang: settings.uiLang,
+                learning: settings.learningDirection.rawValue
             )
         } catch {
             self.error = error
