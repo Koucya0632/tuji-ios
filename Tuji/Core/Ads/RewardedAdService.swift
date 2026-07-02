@@ -34,9 +34,9 @@ final class NoopRewardedAdService: RewardedAdService {
     func preload() {}
 }
 
-/// The app-wide rewarded-ad service. Swap `NoopRewardedAdService.shared` for the
-/// concrete SDK-backed implementation once the ad SDK is added to the project.
+/// The app-wide rewarded-ad service. Backed by AdMob; swap to
+/// `NoopRewardedAdService.shared` for previews/tests without the SDK.
 @MainActor
 enum Ads {
-    static let rewarded: RewardedAdService = NoopRewardedAdService.shared
+    static let rewarded: RewardedAdService = AdMobRewardedAdService.shared
 }
