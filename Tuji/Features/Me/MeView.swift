@@ -47,7 +47,9 @@ struct MeView: View {
     @Environment(SettingsStore.self) private var settings
 
     @State private var vm = MeVM()
+    @State private var store = StoreKitService.shared
     @State private var peekId: String?
+    @State private var showPaywall = false
     @State private var showSignOutConfirm = false
 
     private var isGuest: Bool {
@@ -105,6 +107,9 @@ struct MeView: View {
         }
         .navigationDestination(item: self.$peekId) { id in
             WordDetailView(id: id)
+        }
+        .sheet(isPresented: self.$showPaywall) {
+            PaywallView()
         }
         .tujiPrompt(
             isPresented: self.$showSignOutConfirm,
@@ -283,6 +288,13 @@ struct MeView: View {
 
     private var listGroup: some View {
         VStack(spacing: 0) {
+            Button {
+                self.showPaywall = true
+            } label: {
+                self.proEntry
+            }
+            .buttonStyle(.plain)
+            Divider().background(.tujiInk4.opacity(0.15))
             NavigationLink(value: NavRoute.favorites) {
                 self.listRow(icon: "heart.fill", title: "我的收藏", tint: .tujiCoral)
             }
@@ -311,6 +323,53 @@ struct MeView: View {
             RoundedRectangle(cornerRadius: Radius.lg)
                 .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
         )
+    }
+
+    private var proEntry: some View {
+        HStack(spacing: Space.s3) {
+            ZStack {
+                Circle()
+                    .fill(.white.opacity(0.22))
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 18, weight: .heavy))
+                    .foregroundStyle(.tujiYellow)
+            }
+            .frame(width: 42, height: 42)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Tuji Pro")
+                    .font(.system(size: 17, weight: .heavy))
+                    .foregroundStyle(.white)
+                Text("擴充自製圖鑑容量，解鎖高精度 AI 辨識")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.white.opacity(0.82))
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Text(self.store.isPro ? "已啟用" : "升級")
+                .font(.system(size: 12, weight: .heavy))
+                .foregroundStyle(.tujiInk)
+                .padding(.horizontal, Space.s3)
+                .padding(.vertical, 7)
+                .background(.tujiYellow, in: .capsule)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundStyle(.white.opacity(0.72))
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s4)
+        .frame(minHeight: 82)
+        .background(
+            LinearGradient(
+                colors: [.tujiTeal, .tujiGreen],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .contentShape(Rectangle())
     }
 
     private func listRow(

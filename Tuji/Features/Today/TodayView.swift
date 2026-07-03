@@ -255,7 +255,7 @@ struct TodayView: View {
                     .disabled(self.newDisabled)
                 }
 
-                if let hint = self.newBlockHint {
+                if let hint = self.heroHint {
                     Text(hint)
                         .font(.tujiCaption)
                         .foregroundStyle(.white.opacity(0.6))
@@ -445,6 +445,44 @@ struct TodayView: View {
         case .reviewBacklog: "要複習的字有點多，先清一些再學新字"
         case .noThemes, .none: nil
         }
+    }
+
+    private var newQuotaAdjustmentHint: LocalizedStringKey? {
+        guard let text = Self.newQuotaAdjustmentHintText(
+            isGuest: self.isGuest,
+            stats: self.studyStats.stats,
+            newAvailable: self.newAvailable,
+            dailyGoal: self.settings.current.dailyGoal
+        ) else { return nil }
+        return LocalizedStringKey(text)
+    }
+
+    static func newQuotaAdjustmentHintText(
+        isGuest: Bool,
+        stats: StudyStats?,
+        newAvailable: Int,
+        dailyGoal: Int
+    ) -> String? {
+        guard !isGuest, let stats else { return nil }
+        let goal = max(1, dailyGoal)
+        guard (stats.todayNew ?? 0) < goal else { return nil }
+        guard newAvailable > 0 else { return nil }
+        let limit = StudyQuotas.computeNewLimit(goal: goal, due: stats.due)
+        guard limit > 0, limit < goal else { return nil }
+        return "因為還有 \(stats.due) 個字要複習，今天新字先調整為 \(limit) 個。"
+    }
+
+    /// One explanatory line under the CTAs. A greyed 學新字 explains itself
+    /// (newBlockHint); otherwise a greyed 復習 gets its own line so neither
+    /// button is ever silently dead. Waits for stats so it never claims
+    /// "nothing due" before the first fetch answers.
+    private var heroHint: LocalizedStringKey? {
+        if let hint = self.newBlockHint { return hint }
+        if let hint = self.newQuotaAdjustmentHint { return hint }
+        if self.reviewDisabled, self.studyStats.stats != nil {
+            return "今天沒有要複習的字，先學點新的吧"
+        }
+        return nil
     }
 
     // MARK: - Themes grid
