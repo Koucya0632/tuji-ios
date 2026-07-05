@@ -15,26 +15,53 @@ struct SignupView: View {
     @State private var password = ""
     @State private var username = ""
     @State private var showPwd = false
+    @State private var showEmailConfirmation = false
+
+    private var trimmedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var trimmedUsername: String {
+        username.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var passwordUsesAllowedCharacters: Bool {
+        password.unicodeScalars.allSatisfy { scalar in
+            (33...126).contains(scalar.value)
+        }
+    }
 
     private var canSubmit: Bool {
-        email.contains("@") && password.count >= 8 && !username.isEmpty && !auth.loading
+        trimmedEmail.contains("@") &&
+            password.count >= 8 &&
+            passwordUsesAllowedCharacters &&
+            !trimmedUsername.isEmpty &&
+            !auth.loading
     }
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s5) {
-                    Text("建立帳號")
-                        .font(.tujiH2)
-                        .foregroundStyle(.tujiInk)
+                    VStack(alignment: .leading, spacing: Space.s2) {
+                        Text("建立帳號")
+                            .font(.tujiH2)
+                            .foregroundStyle(.tujiInk)
+
+                        Text("填入登入信箱、密碼和顯示名稱，開始建立你的單字卡。")
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
                     field(
                         label: "Email",
                         text: $email,
-                        placeholder: "you@example.com",
+                        placeholder: "name@example.com",
                         keyboard: .emailAddress,
                         contentType: .emailAddress,
-                        capitalize: false
+                        capitalize: false,
+                        helper: "用來登入與接收驗證信"
                     )
 
                     passwordField
@@ -42,10 +69,11 @@ struct SignupView: View {
                     field(
                         label: "暱稱",
                         text: $username,
-                        placeholder: "Rex",
+                        placeholder: "想讓大家怎麼稱呼你",
                         keyboard: .default,
                         contentType: .username,
-                        capitalize: true
+                        capitalize: true,
+                        helper: "之後可以在個人設定中修改"
                     )
 
                     if let err = auth.error {
@@ -93,6 +121,13 @@ struct SignupView: View {
         .background(.tujiBg)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.tujiBg, for: .navigationBar)
+        .alert("確認信已寄出", isPresented: $showEmailConfirmation) {
+            Button("前往登入") {
+                path = [.signin]
+            }
+        } message: {
+            Text("請開信箱點擊驗證連結，完成後再用這組 Email 和密碼登入。")
+        }
     }
 
     private var passwordField: some View {
@@ -104,9 +139,9 @@ struct SignupView: View {
             HStack {
                 Group {
                     if showPwd {
-                        TextField("8 字以上", text: $password)
+                        TextField("至少 8 個字元", text: $password)
                     } else {
-                        SecureField("8 字以上", text: $password)
+                        SecureField("至少 8 個字元", text: $password)
                     }
                 }
                 .textContentType(.newPassword)
@@ -125,9 +160,15 @@ struct SignupView: View {
                     .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
             )
 
-            // The placeholder already says 8 字以上 — repeating it below was
-            // noise. Only speak up while the rule is actually unmet.
-            if !password.isEmpty, password.count < 8 {
+            if password.contains(where: { !$0.unicodeScalars.allSatisfy { scalar in (33...126).contains(scalar.value) } }) {
+                Text("密碼只能使用英文、數字或符號")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiCoral)
+            } else if password.isEmpty {
+                Text("至少 8 個字元，英文、數字或符號皆可")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk4)
+            } else if password.count < 8 {
                 Text("還差 \(8 - password.count) 個字元")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk4)
@@ -141,7 +182,8 @@ struct SignupView: View {
         placeholder: String,
         keyboard: UIKeyboardType,
         contentType: UITextContentType,
-        capitalize: Bool
+        capitalize: Bool,
+        helper: String? = nil
     )
         -> some View
     {
@@ -161,12 +203,21 @@ struct SignupView: View {
                     RoundedRectangle(cornerRadius: Radius.md)
                         .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
                 )
+
+            if let helper {
+                Text(helper)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk4)
+            }
         }
     }
 
     private func submit() {
         Task {
-            await auth.signUp(email: email, password: password, username: username)
+            let result = await auth.signUp(email: trimmedEmail, password: password, username: trimmedUsername)
+            if result == .pendingEmailConfirmation {
+                showEmailConfirmation = true
+            }
         }
     }
 }

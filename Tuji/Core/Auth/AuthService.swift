@@ -24,6 +24,12 @@ final class AuthService {
         case signedIn(SessionUser)
     }
 
+    enum SignUpResult: Equatable {
+        case signedIn
+        case pendingEmailConfirmation
+        case failed
+    }
+
     static let shared = AuthService()
 
     private(set) var state: State = .checking
@@ -77,7 +83,7 @@ final class AuthService {
 
     // MARK: - Email
 
-    func signUp(email: String, password: String, username: String) async {
+    func signUp(email: String, password: String, username: String) async -> SignUpResult {
         loading = true
         error = nil
         defer { loading = false }
@@ -85,20 +91,22 @@ final class AuthService {
             let resp = try await supabase.auth.signUp(
                 email: email,
                 password: password,
-                data: ["username": .string(username)]
+                data: ["username": .string(username)],
+                redirectTo: emailConfirmationRedirectURL
             )
             if let session = resp.session {
                 state = .signedIn(SessionUser(from: session.user))
                 await syncLocalCacheToServer()
                 log.info("signup ok uid=\(session.user.id.uuidString, privacy: .public)")
+                return .signedIn
             } else {
-                // Supabase dev project has email confirmation enabled by default.
-                error = tujiLocalized("已寄出確認信，請開信箱點連結後再登入。")
                 log.info("signup pending email confirmation")
+                return .pendingEmailConfirmation
             }
         } catch {
             self.error = friendly(error)
             log.error("signup failed: \(error.localizedDescription, privacy: .public)")
+            return .failed
         }
     }
 
@@ -237,6 +245,16 @@ final class AuthService {
         } catch {
             log.error("sync failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    private var emailConfirmationRedirectURL: URL? {
+        let fallback = URL(string: "https://everyday-english-picture-dictionary.vercel.app/auth/confirmed")
+        guard let str = Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL") as? String,
+              let baseURL = URL(string: str)
+        else {
+            return fallback
+        }
+        return baseURL.appending(path: "auth/confirmed")
     }
 
     /// Apple hands over the user's name only on the FIRST authorization, so a
