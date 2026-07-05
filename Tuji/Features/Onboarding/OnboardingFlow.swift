@@ -267,7 +267,7 @@ private struct PageView: View {
         case .streak:
             VStack(alignment: .leading, spacing: Space.s3) {
                 HStack(spacing: 6) {
-                    Image(systemName: "flame.fill").foregroundStyle(.tujiCoral)
+                    Image(systemName: "flame.fill").foregroundStyle(.tujiAmber)
                     Text("連勝").font(.tujiCaption).foregroundStyle(.white.opacity(0.7))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: Space.s2) {
@@ -316,7 +316,7 @@ private struct OptionRow: View {
     var body: some View {
         HStack {
             Text(text)
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(state == .selected ? .tujiTeal : .tujiInk2)
             Spacer()
             if state == .selected {

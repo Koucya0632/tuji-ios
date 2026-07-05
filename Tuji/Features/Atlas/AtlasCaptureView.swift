@@ -67,7 +67,7 @@ struct AtlasCaptureView: View {
                         }
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .heavy))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                     }
                     .disabled(self.vm.busy != nil)
@@ -174,7 +174,7 @@ struct AtlasCaptureView: View {
                             self.vm.showPaywall = true
                         } label: {
                             Text("升級 Tuji Pro")
-                                .font(.system(size: 13, weight: .heavy))
+                                .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.tujiTeal)
                         }
                         .buttonStyle(.plain)
@@ -192,7 +192,7 @@ struct AtlasCaptureView: View {
                         Image(systemName: "camera.fill")
                         Text("拍照")
                     }
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Space.s4)
@@ -230,7 +230,7 @@ struct AtlasCaptureView: View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
                 Text("校正資料")
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 Spacer()
                 Button {
@@ -240,7 +240,7 @@ struct AtlasCaptureView: View {
                         Image(systemName: "arrow.counterclockwise")
                         Text("換一張")
                     }
-                    .font(.system(size: 12, weight: .heavy))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
                 }
                 .buttonStyle(.plain)
@@ -296,7 +296,7 @@ struct AtlasCaptureView: View {
             Image(systemName: icon)
             Text(title)
         }
-        .font(.system(size: 13, weight: .heavy))
+        .font(.system(size: 13, weight: .semibold))
         .foregroundStyle(.tujiInk)
         .frame(maxWidth: .infinity)
         .padding(.vertical, Space.s3)
@@ -308,7 +308,7 @@ struct AtlasCaptureView: View {
         if !self.vm.candidates.isEmpty {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("候選結果")
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 let primary = self.vm.candidates.filter { $0.levelKind == .primary }
                 let fine = self.vm.candidates.filter { $0.levelKind == .fine }
@@ -331,7 +331,7 @@ struct AtlasCaptureView: View {
                             self.vm.apply(candidate, overwrite: true)
                         } label: {
                             Text(self.vm.candidateLabel(candidate))
-                                .font(.system(size: 12, weight: .heavy))
+                                .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(self.vm.selectedCandidateId == candidate.id ? .white : .tujiInk)
                                 .padding(.horizontal, Space.s3)
                                 .padding(.vertical, Space.s2)
@@ -351,7 +351,7 @@ struct AtlasCaptureView: View {
         @Bindable var vm = self.vm
         return VStack(alignment: .leading, spacing: Space.s3) {
             Text("人工校正")
-                .font(.system(size: 16, weight: .heavy))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.tujiInk)
             self.field("圖片名稱", text: $vm.lemma)
             self.field("中文名稱", text: $vm.displayZhHant)
@@ -371,6 +371,13 @@ struct AtlasCaptureView: View {
                 }
             }
             .disabled(!self.vm.canSubmit)
+
+            if self.vm.adsRequiredBeforeGeneration {
+                Text("免費版會先播一小段廣告，看完即開始生成（Pro 免廣告）")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -401,7 +408,7 @@ struct AtlasCaptureView: View {
                     Image(systemName: "arrow.clockwise")
                     Text("重試上傳")
                 }
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
@@ -444,7 +451,7 @@ private nonisolated struct AtlasPickerPillLabel: View {
             Image(systemName: self.icon)
             Text(self.title)
         }
-        .font(.system(size: 15, weight: .heavy))
+        .font(.system(size: 15, weight: .semibold))
         .foregroundStyle(.tujiInk)
         .frame(maxWidth: .infinity)
         .padding(.vertical, Space.s4)

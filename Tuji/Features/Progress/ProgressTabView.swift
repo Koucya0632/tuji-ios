@@ -2,8 +2,8 @@
 // + 42-cell heatmap) and overlays it on the locally-known WordsStore
 // totals + LocalCache learned count.
 //
-// "清除進度" calls DELETE /api/users/progress (wipes mastery + study
-// logs; preserves favorites + settings).
+// "清除學習進度" (DELETE /api/users/progress) lives in 設定 → 帳號 — a
+// destructive account action didn't belong one tap from the stats screen.
 
 import Observation
 import OSLog
@@ -29,6 +29,7 @@ final class ProgressVM {
     /// Server-side `clearLearningProgress` wipes user_cards too, so the
     /// stats store has to be invalidated alongside progress — otherwise
     /// the Study tab shows the pre-wipe due/seen counts for up to 30s.
+    /// Invoked from 設定 → 帳號 → 清除學習進度.
     func clearProgress(cache: LocalCache, progress: ProgressStore, studyStats: StudyStatsStore) async {
         self.clearing = true
         self.clearError = nil
@@ -54,17 +55,11 @@ final class ProgressVM {
 }
 
 struct ProgressTabView: View {
-    @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
     @Environment(ProgressStore.self) private var progress
-    @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
-
-    @State private var vm = ProgressVM()
-    @State private var showClearConfirm = false
-    @State private var showClearSuccess = false
 
     private var isGuest: Bool {
         if case .signedIn = auth.state { return false }
@@ -85,10 +80,6 @@ struct ProgressTabView: View {
 
                 self.sectionHeader("明細")
                 self.categoryBreakdownCard
-
-                if !self.isGuest {
-                    self.clearButton
-                }
             }
             .padding(.horizontal, Space.s6)
             .padding(.top, Space.s4)
@@ -108,46 +99,6 @@ struct ProgressTabView: View {
             await self.settings.loadIfNeeded()
             if !self.isGuest { await self.progress.loadIfStale() }
         }
-        .tujiPrompt(
-            isPresented: self.$showClearConfirm,
-            style: .destructive,
-            title: "清除所有學習進度？",
-            message: "此操作無法復原。",
-            detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
-            primary: TujiPromptAction("確認清除", role: .destructive) {
-                Task {
-                    await self.vm.clearProgress(
-                        cache: self.cache,
-                        progress: self.progress,
-                        studyStats: self.studyStats
-                    )
-                    if self.vm.clearError == nil {
-                        self.showClearSuccess = true
-                    }
-                }
-            },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
-        )
-        .tujiPrompt(
-            isPresented: Binding(
-                get: { self.vm.clearError != nil },
-                set: { if !$0 { self.vm.clearError = nil } }
-            ),
-            style: .error,
-            title: "清除失敗",
-            message: "\(self.vm.clearError?.localizedDescription ?? tujiLocalized("請稍後再試一次。"))",
-            primary: TujiPromptAction("再試一次") {
-                self.showClearConfirm = true
-            },
-            secondary: TujiPromptAction("稍後再說", role: .cancel) {}
-        )
-        .tujiPrompt(
-            isPresented: self.$showClearSuccess,
-            style: .success,
-            title: "學習進度已清除",
-            message: "可以重新開始建立你的圖鑑。",
-            primary: TujiPromptAction("知道了") {}
-        )
     }
 
     // MARK: - Completion card
@@ -219,7 +170,7 @@ struct ProgressTabView: View {
                 value: self.progress.streak?.current ?? 0,
                 unit: "天",
                 icon: "flame.fill",
-                tint: .tujiCoral
+                tint: .tujiAmber
             )
             self.statTile(
                 label: "最長連勝",
@@ -246,7 +197,7 @@ struct ProgressTabView: View {
                     .foregroundStyle(.tujiInk)
                     .contentTransition(.numericText())
                 Text(unit)
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
             }
         }
@@ -389,7 +340,7 @@ struct ProgressTabView: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(spacing: Space.s2) {
                 Text(stat.nameZh)
-                    .font(.system(size: 14, weight: .heavy))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 Spacer()
                 Text("\(stat.learned) / \(stat.total)")
@@ -399,28 +350,6 @@ struct ProgressTabView: View {
             }
             self.progressBar(ratio: stat.ratio)
         }
-    }
-
-    private var clearButton: some View {
-        Button(role: .destructive) {
-            self.showClearConfirm = true
-        } label: {
-            HStack(spacing: Space.s2) {
-                if self.vm.clearing {
-                    ProgressView().tint(.tujiCoral)
-                } else {
-                    Image(systemName: "trash")
-                }
-                Text(self.vm.clearing ? "清除中…" : "清除進度")
-            }
-            .font(.system(size: 14, weight: .heavy))
-            .foregroundStyle(.tujiCoral)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Space.s3)
-            .background(.tujiCoral.opacity(0.08), in: .rect(cornerRadius: Radius.lg))
-        }
-        .buttonStyle(.plain)
-        .disabled(self.vm.clearing)
     }
 }
 
@@ -454,7 +383,7 @@ struct HeatmapGrid: View {
         return HStack(spacing: 5) {
             ForEach(labels, id: \.self) { l in
                 Text(l)
-                    .font(.system(size: 10, weight: .heavy))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.tujiInk4)
                     .frame(maxWidth: .infinity)
             }
@@ -464,7 +393,7 @@ struct HeatmapGrid: View {
     private var legend: some View {
         HStack(spacing: 6) {
             Text("少")
-                .font(.system(size: 10, weight: .heavy))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
             ForEach(0..<4, id: \.self) { lvl in
                 RoundedRectangle(cornerRadius: 3)
@@ -472,7 +401,7 @@ struct HeatmapGrid: View {
                     .frame(width: 14, height: 14)
             }
             Text("多")
-                .font(.system(size: 10, weight: .heavy))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
             Spacer()
         }

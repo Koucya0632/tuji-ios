@@ -1,6 +1,9 @@
 // Step 1 of NewFlow: present the word + image + audio and ask whether
-// the user already knows it. Both buttons write SRS (the only step that
-// does); "知道" = .hard, "熟悉" = .good.
+// the user already knows it. All three buttons write SRS (the only step
+// that does): "第一次見" = .again, "有點印象" = .hard, "已經認識" = .good.
+// Three options because this is the *new words* flow — not knowing the
+// word is the expected answer, so it must have a button (the old 知道/熟悉
+// pair were both positive and left first-timers guessing).
 
 import Nuke
 import NukeUI
@@ -71,7 +74,7 @@ struct RecognizeView: View {
 
     private var hero: some View {
         ZStack {
-            Rectangle().fill(.tujiCard)
+            Rectangle().fill(.tujiBg)
             LazyImage(url: self.item.word.imageURL) { state in
                 if let image = state.image {
                     image.resizable()
@@ -93,23 +96,36 @@ struct RecognizeView: View {
     }
 
     private var buttons: some View {
-        HStack(spacing: Space.s3) {
-            BBtn(
-                title: "知道",
-                bg: .tujiTealSoft,
-                fg: .tujiTeal,
-                fullWidth: true,
-                action: { self.rate(.hard) }
-            )
-            .disabled(self.coord.recLocked)
-            BBtn(
-                title: "熟悉",
-                bg: .tujiInk,
-                fg: .white,
-                fullWidth: true,
-                action: { self.rate(.good) }
-            )
-            .disabled(self.coord.recLocked)
+        VStack(spacing: Space.s2) {
+            Text("這個字你認識嗎？")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk3)
+            HStack(spacing: Space.s3) {
+                BBtn(
+                    title: "沒見過",
+                    bg: .tujiCoral.opacity(0.12),
+                    fg: .tujiCoral,
+                    fullWidth: true,
+                    action: { self.rate(.again) }
+                )
+                .disabled(self.coord.recLocked)
+                BBtn(
+                    title: "有印象",
+                    bg: .tujiTealSoft,
+                    fg: .tujiTeal,
+                    fullWidth: true,
+                    action: { self.rate(.hard) }
+                )
+                .disabled(self.coord.recLocked)
+                BBtn(
+                    title: "已認識",
+                    bg: .tujiInk,
+                    fg: .white,
+                    fullWidth: true,
+                    action: { self.rate(.good) }
+                )
+                .disabled(self.coord.recLocked)
+            }
         }
     }
 

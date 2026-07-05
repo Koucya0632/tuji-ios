@@ -72,7 +72,7 @@ struct SpellView: View {
             )
         } else {
             MascotSpeechBubble(
-                pose: .think,
+                pose: self.coord.combo >= 3 ? .cheer : .think,
                 text: self.isReadingMode
                     ? "這個讀音正確嗎？"
                     : (self.settings.current.learningDirection == .zhJa
@@ -143,7 +143,7 @@ struct SpellView: View {
 
     private var hero: some View {
         ZStack {
-            Rectangle().fill(.tujiCard)
+            Rectangle().fill(.tujiBg)
             LazyImage(url: self.item.word.imageURL) { state in
                 if let image = state.image {
                     image.resizable()

@@ -249,7 +249,7 @@ private struct TujiPromptModifier: ViewModifier {
             item.action()
         } label: {
             Text(item.title)
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(buttonForeground(for: item.role))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)

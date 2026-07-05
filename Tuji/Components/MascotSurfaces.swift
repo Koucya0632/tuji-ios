@@ -42,7 +42,7 @@ struct MascotSpeechBubble: View {
                 }
                 Text(self.text)
             }
-            .font(.system(size: 14, weight: .heavy))
+            .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(self.tone.foreground)
             .padding(.leading, Space.s4)
             .padding(.trailing, Space.s4)

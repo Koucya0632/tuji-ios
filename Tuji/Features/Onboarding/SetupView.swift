@@ -89,7 +89,7 @@ struct SetupView: View {
                                     Task { await auth.signOut() }
                                 } label: {
                                     Text("重新登入")
-                                        .font(.system(size: 14, weight: .heavy))
+                                        .font(.system(size: 14, weight: .semibold))
                                         .foregroundStyle(.tujiTeal)
                                         .padding(.vertical, Space.s2)
                                         .padding(.horizontal, Space.s4)
@@ -143,7 +143,7 @@ struct SetupView: View {
     private func tile(label: LocalizedStringKey, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
                 .padding(.vertical, Space.s4)
                 .frame(maxWidth: .infinity)
@@ -164,7 +164,7 @@ struct SetupView: View {
     private func categoryTile(category: TujiCategory, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(category.nameZh)
-                .font(.system(size: 13, weight: .heavy))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -218,7 +218,16 @@ struct SetupView: View {
 
             do {
                 try await self.users.saveSettings(settings)
+                // Seed the shared store too — the study-queue params and
+                // Today's theme grid read SettingsStore.current, which would
+                // otherwise stay at defaults until the next server load.
+                settingsStore.adoptPersisted(settings)
                 onboarding.markSetupDone(for: userId)
+                // The CTA promises 開始今天的 N 題 — keep it. markSetupDone flips
+                // RootView to MainTabsView; parking a study deep link makes the
+                // freshly-mounted tab shell push straight into the new-words
+                // session instead of dropping the user on Today to re-find it.
+                DeepLinkCoordinator.shared.receive(.study(mode: .new))
                 onDone()
             } catch APIError.unauthorized {
                 error = tujiLocalized("後端不認這次登入。可能要重新登入一次。")

@@ -10,6 +10,11 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var store = StoreKitService.shared
     @State private var errorMessage: String?
+    /// True while Product.products(for:) is in flight. Needed because that
+    /// call can *succeed with an empty array* (misconfigured store, App Store
+    /// hiccup) — without this flag the paywall showed an infinite spinner with
+    /// no price, no error, and no way to retry.
+    @State private var loadingProducts = true
 
     var body: some View {
         NavigationStack {
@@ -31,13 +36,14 @@ struct PaywallView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { self.dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .heavy))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                     }
                 }
             }
             .task {
                 await self.store.loadProducts()
+                self.loadingProducts = false
                 await self.store.refreshFromCurrentEntitlements()
             }
         }
@@ -72,7 +78,7 @@ struct PaywallView: View {
     private func benefitRow(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.tujiTeal)
                 .frame(width: 22)
             Text(text)
@@ -94,16 +100,32 @@ struct PaywallView: View {
 
         if self.store.isPro {
             Text("你已經是 Tuji Pro，感謝支持！")
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.tujiGreen)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else if self.store.products.isEmpty {
-            if self.store.loadError != nil {
-                Text("暫時無法載入方案，請稍後再試。")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-            } else {
+            if self.loadingProducts {
                 ProgressView().tint(.tujiTeal).frame(maxWidth: .infinity)
+            } else {
+                VStack(spacing: Space.s3) {
+                    Text("暫時無法載入方案，請檢查網路後再試一次。")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    BBtn(
+                        title: "重新載入方案",
+                        bg: .tujiTealSoft,
+                        fg: .tujiTeal,
+                        fullWidth: true,
+                        icon: "arrow.clockwise"
+                    ) {
+                        Task {
+                            self.loadingProducts = true
+                            await self.store.loadProducts()
+                            self.loadingProducts = false
+                        }
+                    }
+                }
             }
         } else {
             VStack(spacing: Space.s3) {
@@ -151,7 +173,7 @@ struct PaywallView: View {
             Task { await self.restore() }
         } label: {
             Text("恢復購買")
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.tujiInk3)
                 .frame(maxWidth: .infinity)
         }

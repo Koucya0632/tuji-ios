@@ -34,8 +34,10 @@ struct ReviewFlowView: View {
                     CompleteView(
                         answered: self.coord.answered,
                         masteryByWord: self.coord.masteryByWord,
+                        wrongIds: self.coord.retriedIds,
                         unsyncedCount: self.coord.unsyncedCount,
-                        onFinish: { self.dismiss() }
+                        onFinish: { self.dismiss() },
+                        onAnotherRound: { await self.startAnotherRound() }
                     )
                 }
             } else {
@@ -52,7 +54,7 @@ struct ReviewFlowView: View {
                         self.showExitConfirm = true
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .heavy))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                     }
                 }
@@ -63,7 +65,7 @@ struct ReviewFlowView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 17, weight: .heavy))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                             .frame(width: 36, height: 36)
                     }
@@ -87,6 +89,16 @@ struct ReviewFlowView: View {
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)
         }
+    }
+
+    /// 再來一輪 from CompleteView: fetch a fresh due queue and restart the
+    /// flow in place (the coordinator swap resets `finished`, so the surface
+    /// flips back to the question view without re-navigating).
+    private func startAnotherRound() async {
+        guard let queue = try? await StudyQueueStore.shared.fetch(mode: .review),
+              !queue.isEmpty
+        else { return }
+        self.coord = ReviewFlowCoordinator(queue: queue)
     }
 
     private func captureReport() {
@@ -126,10 +138,22 @@ struct ReviewFlowView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 Color.clear.frame(height: self.studyFocus.active ? 0 : 78)
             }
+            // Flash capsule for the no-sheet paths (auto-rated fast correct /
+            // passed retest) so the write is still visibly acknowledged.
+            .overlay(alignment: .bottom) {
+                if let flash = self.coord.flash {
+                    ReviewFlashCapsule(flash: flash)
+                        .padding(.bottom, Space.s10)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.spring(duration: 0.3), value: self.coord.flash)
             // The reveal (summary + full-detail pull-up + SRS rating) rides up
-            // as a detent sheet, mirroring the new-word peek sheet. Driven by
-            // phase: rating advances the queue → phase flips to .answer → the
-            // sheet dismisses on its own. Not swipe-dismissable — you must rate.
+            // as a detent sheet, mirroring the new-word peek sheet. Raised only
+            // when the answer needs the user (wrong, or correct-but-slow) —
+            // fast correct answers auto-rate and skip it entirely. Rating (or
+            // 下一題 on a retest) advances the queue → revealMode clears → the
+            // sheet dismisses on its own. Not swipe-dismissable.
             //
             // Hide it while the exit-confirm prompt is up: the rest detent
             // leaves the toolbar ✕ tappable (presentationBackgroundInteraction),
@@ -138,7 +162,7 @@ struct ReviewFlowView: View {
             // returns if the user taps 繼續複習.
             .sheet(isPresented: Binding(
                 get: {
-                    self.coord.phase == .review && !self.coord.finished
+                    self.coord.revealMode != nil && !self.coord.finished
                         && !self.showExitConfirm && !self.leaving
                 },
                 set: { _ in }
@@ -178,7 +202,7 @@ struct ReviewFlowView: View {
                     .foregroundStyle(.tujiTeal)
                 Spacer()
                 Text("\(self.coord.passedCount) / \(self.coord.originalCount)")
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
             }
             GeometryReader { geo in
@@ -226,14 +250,14 @@ private struct ReviewQuestionView: View {
     }
 
     private var bubble: some View {
-        MascotSpeechBubble(pose: .think, text: "這個是什麼？")
+        MascotSpeechBubble(pose: self.coord.combo >= 3 ? .cheer : .think, text: "這個是什麼？")
     }
 
     private var hero: some View {
         ZStack(alignment: .bottomTrailing) {
             GeometryReader { proxy in
                 ZStack {
-                    Rectangle().fill(.tujiCard)
+                    Rectangle().fill(.tujiBg)
                     LazyImage(url: self.item.word.imageURL) { state in
                         if let image = state.image {
                             image.resizable()
@@ -275,10 +299,15 @@ private struct ReviewQuestionView: View {
     }
 
     private var computedChoices: [String] {
-        if let c = item.choices, !c.isEmpty { return c }
-        // Custom (自制圖鑑) cards arrive without server distractors — build a
-        // stable on-device MCQ from the user's other words.
-        return mcqFallbackChoices(for: self.item, pool: self.words.words)
+        // Server choices scrubbed of near-synonyms of the answer + topped up;
+        // custom (自制圖鑑) cards build the whole set from the local pool.
+        // The variant bumps once the word leaves the screen, so its re-test
+        // shows a fresh shuffle instead of rewarding position memory.
+        studyChoices(
+            for: self.item,
+            pool: self.words.words,
+            variant: self.coord.choicesVariant(for: self.item)
+        )
     }
 
     private func optionRow(label: String, letter: String) -> some View {
@@ -288,12 +317,12 @@ private struct ReviewQuestionView: View {
         } label: {
             HStack(spacing: Space.s3) {
                 Text(letter)
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(style.letterFg)
                     .frame(width: 24, height: 24)
                     .background(style.letterBg, in: .circle)
                 Text(label)
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(style.fg)
                 Spacer()
                 if let icon = style.icon {
@@ -363,159 +392,45 @@ private struct ReviewQuestionView: View {
     }
 }
 
-// MARK: - Reveal sheet (summary + pull-up details + rating)
+// MARK: - Flash capsule (auto-rated / retest passed)
 
-private struct ReviewRevealSheet: View {
-    let coord: ReviewFlowCoordinator
-    let item: StudyQueueItem
-
-    @Environment(SettingsStore.self) private var settings
-    @Environment(WordsStore.self) private var words
-
-    /// Resting detent — just tall enough for the header + hint + pinned rating
-    /// row, so there's little dead space. Drag up to `.large` to reveal the
-    /// full word details inline.
-    private static let restDetent: PresentationDetent = .fraction(0.4)
-
-    @State private var detent: PresentationDetent = ReviewRevealSheet.restDetent
+/// Bottom capsule acknowledging an answer that advanced without the reveal
+/// sheet: fast correct answers show the auto-applied rating, passed retests a
+/// plain 答對了. Visible for the ~700ms advance beat.
+private struct ReviewFlashCapsule: View {
+    let flash: ReviewFlash
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
-                self.summary
-                ExpandableWordDetail(wordId: self.item.word.id, expanded: self.detent == .large)
-                    .padding(.top, self.detent == .large ? 0 : Space.s4)
-            }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s5)
-            .padding(.bottom, Space.s4)
-        }
-        .safeAreaInset(edge: .bottom) {
-            self.ratingSection
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiBg)
-        .presentationDetents([Self.restDetent, .large], selection: self.$detent)
-        .presentationDragIndicator(.visible)
-        .presentationCornerRadius(24)
-        .presentationBackground(.tujiBg)
-        .presentationBackgroundInteraction(.enabled(upThrough: Self.restDetent))
-        // Must rate to proceed — never swipe the sheet away (dragging between
-        // detents to peek at details is still allowed).
-        .interactiveDismissDisabled(true)
-    }
-
-    /// Pinned "CTA" for review: the SRS rating buttons (plus the prompt and
-    /// the sync-failed retry hint), always reachable at either detent.
-    private var ratingSection: some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            Divider().background(.tujiInk4.opacity(0.15))
-            Text(self.coord.wasCorrect ? "記得多牢？" : "沒關係，標記一下")
-                .font(.system(size: 14, weight: .heavy))
-                .foregroundStyle(.tujiInk2)
-            self.ratingRow
-        }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s3)
-        .padding(.bottom, Space.s5)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiBg)
-    }
-
-    /// Header laid out like the new-word peek sheet: no image (it's already on
-    /// screen in the question above), word + pronunciation + 中文 on the left,
-    /// favourite + audio buttons stacked on the right.
-    private var summary: some View {
-        HStack(alignment: .top, spacing: Space.s3) {
-            VStack(alignment: .leading, spacing: Space.s1) {
-                Text(self.item.word.word)
-                    .font(.tujiH1)
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                if !self.item.word.pronunciation.isEmpty {
-                    Text(self.item.word.pronunciation)
-                        .font(.tujiMono)
-                        .foregroundStyle(.tujiInk3)
-                }
-                if self.settings.current.showZh {
-                    Text(self.item.word.chinese)
-                        .font(.tujiBody)
-                        .foregroundStyle(.tujiInk2)
-                        .padding(.top, 2)
-                }
-            }
-            Spacer()
-            VStack(spacing: Space.s2) {
-                FavoriteButton(wordId: self.item.word.id, size: 44)
-                PronunciationButton(
-                    text: self.item.word.word,
-                    audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
-                    size: 44
-                )
-            }
-        }
-    }
-
-    private var ratingRow: some View {
         HStack(spacing: Space.s2) {
-            ForEach(self.coord.availableRatings, id: \.self) { r in
-                self.rateButton(r)
-            }
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 15, weight: .semibold))
+            Text(self.label)
+                .font(.system(size: 15, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, Space.s5)
+        .padding(.vertical, Space.s3)
+        .background(self.tint, in: .capsule)
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 3)
+    }
+
+    private var label: LocalizedStringKey {
+        switch self.flash {
+        case let .autoRated(rating): rating.label
+        case .retestPassed: "答對了"
         }
     }
 
-    private func rateButton(_ r: SRSRating) -> some View {
-        let isSuggested = r == self.coord.suggested
-        let isRated = self.coord.rated == r
-        return Button {
-            self.coord.rate(r)
-        } label: {
-            VStack(spacing: 4) {
-                if isSuggested {
-                    Text("建議")
-                        .font(.system(size: 9, weight: .heavy))
-                        .foregroundStyle(.tujiTeal)
-                } else {
-                    Color.clear.frame(height: 11)
-                }
-                Text(r.label)
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundStyle(self.fg(for: r, rated: isRated))
-                    .padding(.vertical, Space.s3)
-                    .frame(maxWidth: .infinity)
-                    .background(self.bg(for: r, rated: isRated), in: .rect(cornerRadius: Radius.md))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.md)
-                            .stroke(self.border(for: r, suggested: isSuggested), lineWidth: isSuggested ? 2 : 1)
-                    )
+    private var tint: Color {
+        switch self.flash {
+        case let .autoRated(rating):
+            switch rating {
+            case .again: .tujiCoral
+            case .hard: .tujiYellow
+            case .good: .tujiTeal
+            case .easy: .tujiGreen
             }
-        }
-        .buttonStyle(.plain)
-        .disabled(self.coord.rated != nil)
-    }
-
-    private func fg(for r: SRSRating, rated: Bool) -> Color {
-        if rated { return .white }
-        return self.tint(for: r)
-    }
-
-    private func bg(for r: SRSRating, rated: Bool) -> Color {
-        if rated { return self.tint(for: r) }
-        return self.tint(for: r).opacity(0.08)
-    }
-
-    private func border(for r: SRSRating, suggested: Bool) -> Color {
-        if suggested { return .tujiTeal }
-        return self.tint(for: r).opacity(0.3)
-    }
-
-    private func tint(for r: SRSRating) -> Color {
-        switch r {
-        case .again: .tujiCoral
-        case .hard: .tujiYellow
-        case .good: .tujiTeal
-        case .easy: .tujiGreen
+        case .retestPassed: .tujiGreen
         }
     }
 }

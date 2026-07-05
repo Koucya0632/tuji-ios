@@ -141,7 +141,7 @@ struct FavoritesView: View {
                     Image(systemName: "arrow.up.arrow.down")
                     Text(self.sort.label)
                 }
-                .font(.system(size: 13, weight: .heavy))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.tujiTeal)
             }
         }
@@ -168,7 +168,7 @@ struct FavoritesView: View {
             ) {
                 NavigationLink(value: NavRoute.cards) {
                     Text("去單字庫逛逛")
-                        .font(.system(size: 15, weight: .heavy))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.tujiInk)
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s6)

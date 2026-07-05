@@ -24,6 +24,23 @@ struct AppleSignInButton: View {
         .signInWithAppleButtonStyle(.black)
         .frame(height: 52)
         .clipShape(.rect(cornerRadius: Radius.lg))
+        // The system control labels itself from the *device* language, so on
+        // a non-Chinese phone it reads "Continue with Apple" next to the zh
+        // 繼續使用 Google — the one button that ignores the app's pinned
+        // locale. Draw our own label (per HIG: Apple logo + approved wording)
+        // and let touches fall through to the real control underneath.
+        .overlay {
+            HStack(spacing: Space.s2) {
+                Image(systemName: "applelogo")
+                    .font(.system(size: 17, weight: .medium))
+                Text("繼續使用 Apple")
+                    .font(.system(size: 15, weight: .heavy))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(.black, in: .rect(cornerRadius: Radius.lg))
+            .allowsHitTesting(false)
+        }
         .disabled(auth.loading)
     }
 

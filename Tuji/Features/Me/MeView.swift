@@ -156,7 +156,7 @@ struct MeView: View {
                 value: "\(self.progress.streak?.current ?? 0)",
                 label: "連勝天",
                 icon: "flame.fill",
-                iconTint: .tujiCoral
+                iconTint: .tujiAmber
             )
             Divider().frame(height: 36)
             self.statCell(value: "\(self.cache.favoriteIds.count)", label: "收藏")
@@ -181,7 +181,7 @@ struct MeView: View {
             HStack(spacing: 4) {
                 if let icon {
                     Image(systemName: icon)
-                        .font(.system(size: 13, weight: .heavy))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(iconTint)
                 }
                 Text(value)
@@ -263,7 +263,7 @@ struct MeView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 if self.settings.current.showZh {
                     Text(word.chinese)
@@ -274,10 +274,10 @@ struct MeView: View {
             }
             Spacer()
             Text("\(word.mastery)")
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(accent)
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .heavy))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
         }
         .padding(.horizontal, Space.s4)
@@ -382,12 +382,12 @@ struct MeView: View {
     {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .heavy))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(tint)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 0) {
                 Text(title)
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 if let subtitle {
                     Text(subtitle)
@@ -397,7 +397,7 @@ struct MeView: View {
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .heavy))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
         }
         .padding(.horizontal, Space.s4)
@@ -471,7 +471,7 @@ private struct DebugSmokeSection: View {
                         .foregroundStyle(.tujiInk3)
                     Spacer()
                     Image(systemName: self.open ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11, weight: .heavy))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.tujiInk4)
                 }
             }

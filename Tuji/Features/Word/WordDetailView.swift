@@ -160,7 +160,7 @@ extension WordDetailPage {
             // aspect ratio or baked-in background.
             ZStack {
                 RoundedRectangle(cornerRadius: Radius.xl)
-                    .fill(.tujiCard)
+                    .fill(.tujiBg)
                 LazyImage(url: w.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fit)
@@ -207,7 +207,7 @@ extension WordDetailPage {
                     }
                     if let cefr = w.cefrLevel {
                         Text(cefr)
-                            .font(.system(size: 11, weight: .heavy))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.tujiTeal)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
@@ -227,7 +227,7 @@ extension WordDetailPage {
                     .fill(.tujiCard)
                     .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1.5))
                 Image(systemName: systemImage)
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk)
             }
             .frame(width: 40, height: 40)
@@ -253,36 +253,7 @@ extension WordDetailPage {
                 // No embedded detail (cold store, or an item that missed
                 // enrichment): show the lite card instantly, then upgrade via
                 // the detail endpoint, which lazily enriches on first open.
-                self.word = Word(
-                    id: lite.id,
-                    word: lite.word,
-                    alsoKnownAs: nil,
-                    category: lite.category,
-                    partOfSpeech: nil,
-                    pronunciation: lite.pronunciation,
-                    reading: lite.reading,
-                    targetLanguage: lite.targetLanguage,
-                    audioUrl: nil,
-                    audioUrls: lite.audioUrls,
-                    imageUrl: lite.imageUrl,
-                    cefrLevel: nil,
-                    status: "published",
-                    chinese: lite.chinese,
-                    definitions: [
-                        WordDefinition(language: "zh", definition: lite.chinese, cefrLevel: nil, sortOrder: 0)
-                    ],
-                    examples: nil,
-                    relations: nil,
-                    collocations: nil,
-                    collocationsZh: nil,
-                    note: nil,
-                    etymology: nil,
-                    forms: nil,
-                    chineseDefinition: lite.chinese,
-                    targetDefinition: nil,
-                    englishDefinition: nil,
-                    tags: ["custom"]
-                )
+                self.word = Self.provisionalWord(from: lite, tags: ["custom"])
             }
             do {
                 let uuid = String(self.id.dropFirst("atlas:".count))
@@ -292,6 +263,13 @@ extension WordDetailPage {
             }
             return
         }
+        // Public words: the grid already knows the word / image / 中文, so
+        // render those instantly and let the enrichment sections (definitions,
+        // 例句, 詞形, 來源) fill in when the full payload lands — a blank page
+        // with a lone spinner made every card feel broken for 2-3s.
+        if let lite = self.wordsStore.find(id: self.id) {
+            self.word = Self.provisionalWord(from: lite, tags: [])
+        }
         do {
             let settings = SettingsStore.shared.current
             self.word = try await self.repository.word(
@@ -300,8 +278,43 @@ extension WordDetailPage {
                 learning: settings.learningDirection.rawValue
             )
         } catch {
-            self.error = error
+            if self.word == nil { self.error = error }
         }
+    }
+
+    /// Lite grid payload → renderable Word shell: enough for the hero, title
+    /// row, and 中文 definition while the full detail is fetched.
+    private static func provisionalWord(from lite: CardWord, tags: [String]) -> Word {
+        Word(
+            id: lite.id,
+            word: lite.word,
+            alsoKnownAs: nil,
+            category: lite.category,
+            partOfSpeech: nil,
+            pronunciation: lite.pronunciation,
+            reading: lite.reading,
+            targetLanguage: lite.targetLanguage,
+            audioUrl: nil,
+            audioUrls: lite.audioUrls,
+            imageUrl: lite.imageUrl,
+            cefrLevel: nil,
+            status: "published",
+            chinese: lite.chinese,
+            definitions: [
+                WordDefinition(language: "zh", definition: lite.chinese, cefrLevel: nil, sortOrder: 0)
+            ],
+            examples: nil,
+            relations: nil,
+            collocations: nil,
+            collocationsZh: nil,
+            note: nil,
+            etymology: nil,
+            forms: nil,
+            chineseDefinition: lite.chinese,
+            targetDefinition: nil,
+            englishDefinition: nil,
+            tags: tags
+        )
     }
 }
 

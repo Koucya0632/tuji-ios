@@ -9,6 +9,9 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(AuthService.self) private var auth
+    @Environment(LocalCache.self) private var cache
+    @Environment(ProgressStore.self) private var progress
+    @Environment(StudyStatsStore.self) private var studyStats
     private let users: UserRepository = LiveUserRepository.shared
 
     @State private var showSignOutConfirm = false
@@ -17,6 +20,11 @@ struct SettingsView: View {
     @State private var deleting = false
     @State private var deleteError: Error?
     @State private var showPaywall = false
+    // 清除學習進度 (moved here from the Progress tab so a destructive,
+    // account-wide wipe isn't one tap from the stats screen).
+    @State private var progressVM = ProgressVM()
+    @State private var showClearConfirm = false
+    @State private var showClearSuccess = false
 
     var body: some View {
         self.list
@@ -70,6 +78,46 @@ struct SettingsView: View {
                 primary: TujiPromptAction("知道了") {
                     self.deleteError = nil
                 }
+            )
+            .tujiPrompt(
+                isPresented: self.$showClearConfirm,
+                style: .destructive,
+                title: "清除所有學習進度？",
+                message: "此操作無法復原。",
+                detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
+                primary: TujiPromptAction("確認清除", role: .destructive) {
+                    Task {
+                        await self.progressVM.clearProgress(
+                            cache: self.cache,
+                            progress: self.progress,
+                            studyStats: self.studyStats
+                        )
+                        if self.progressVM.clearError == nil {
+                            self.showClearSuccess = true
+                        }
+                    }
+                },
+                secondary: TujiPromptAction("取消", role: .cancel) {}
+            )
+            .tujiPrompt(
+                isPresented: Binding(
+                    get: { self.progressVM.clearError != nil },
+                    set: { if !$0 { self.progressVM.clearError = nil } }
+                ),
+                style: .error,
+                title: "清除失敗",
+                message: "\(self.progressVM.clearError?.localizedDescription ?? tujiLocalized("請稍後再試一次。"))",
+                primary: TujiPromptAction("再試一次") {
+                    self.showClearConfirm = true
+                },
+                secondary: TujiPromptAction("稍後再說", role: .cancel) {}
+            )
+            .tujiPrompt(
+                isPresented: self.$showClearSuccess,
+                style: .success,
+                title: "學習進度已清除",
+                message: "可以重新開始建立你的圖鑑。",
+                primary: TujiPromptAction("知道了") {}
             )
     }
 
@@ -158,6 +206,18 @@ struct SettingsView: View {
             }
             Section {
                 Button(role: .destructive) {
+                    self.showClearConfirm = true
+                } label: {
+                    HStack {
+                        if self.progressVM.clearing {
+                            ProgressView().tint(.tujiCoral)
+                        }
+                        Text(self.progressVM.clearing ? "清除中…" : "清除學習進度")
+                            .foregroundStyle(.tujiCoral)
+                    }
+                }
+                .disabled(self.progressVM.clearing)
+                Button(role: .destructive) {
                     self.showDeleteFirst = true
                 } label: {
                     HStack {
@@ -169,6 +229,8 @@ struct SettingsView: View {
                     }
                 }
                 .disabled(self.deleting)
+            } footer: {
+                Text("清除學習進度會刪除掌握度與答題紀錄，但保留收藏、設定與自制圖鑑。")
             }
             Section {
                 Text("Tuji v1.0.0 · 圖記")

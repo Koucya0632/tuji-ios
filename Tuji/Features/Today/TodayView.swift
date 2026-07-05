@@ -57,6 +57,7 @@ struct TodayView: View {
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
     @Environment(MasteryStore.self) private var mastery
+    @Environment(AuthService.self) private var auth
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var vm = TodayVM()
@@ -127,7 +128,7 @@ struct TodayView: View {
             Spacer()
             NavigationLink(value: NavRoute.search) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk2)
                     .padding(Space.s2)
                     .background(.tujiCard, in: .circle)
@@ -143,10 +144,10 @@ struct TodayView: View {
         let n = self.progress.streak?.current ?? 0
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
-                .font(.system(size: 12, weight: .heavy))
-                .foregroundStyle(n > 0 ? .tujiCoral : .tujiInk4)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(n > 0 ? .tujiAmber : .tujiInk4)
             Text("\(n)")
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .contentTransition(.numericText())
         }
@@ -209,21 +210,30 @@ struct TodayView: View {
                 ? "訪客模式 · 已認得 \(learned) 個字"
                 : "訪客模式 · 先逛逛圖鑑，喜歡的字按愛心收藏"
         }
-        if let due = self.studyStats.stats?.due, due > 0 {
-            return "今天有 \(due) 個字要復習"
-        }
         if self.showThemePrompt {
             return "先選學習主題，開始學新字"
+        }
+        // Until the day's stats have loaded there's nothing truthful to say —
+        // a neutral line beats a wrong verdict ("都學過了" flashing on a brand
+        // new account while the first fetch is in flight).
+        guard let stats = self.studyStats.stats else {
+            return "今天想學點什麼呢？"
+        }
+        if stats.due > 0 {
+            return "今天有 \(stats.due) 個字要復習"
+        }
+        // Goal reached wins over everything below so this line can never
+        // contradict the 達成 badge on the hero card.
+        if self.dailyGoalReached {
+            return "今天目標達成，明天再來"
+        }
+        if let done = stats.todayNew, done > 0 {
+            return "今天已學 \(done) 個新字，繼續加油"
         }
         if self.newAvailable > 0 {
             return "今天還沒學新字，挑一個來試試"
         }
-        // No new words left in the selected themes. Only call it a "goal
-        // reached" when they actually hit the daily target — otherwise the
-        // theme is just emptied out and the honest nudge is to add more.
-        return self.dailyGoalReached
-            ? "今天目標達成，明天再來"
-            : "這些主題的字都學過了，多選幾個主題吧"
+        return "這些主題的字都學過了，多選幾個主題吧"
     }
 
     // MARK: - Hero card (deep ink)
@@ -239,27 +249,45 @@ struct TodayView: View {
                 }
                 .padding(.trailing, 96)
 
-                HStack(spacing: Space.s3) {
-                    NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
-                        Text("復習")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(HeroPillStyle(fg: .tujiInk, bg: .tujiYellow))
-                    .disabled(self.reviewDisabled)
-
-                    NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
-                        Text("學新字")
+                if self.isGuest {
+                    // Guests can't study (SRS is account-scoped), so instead of
+                    // two permanently-dead buttons the hero offers the one
+                    // action that actually works: creating an account.
+                    Button {
+                        self.auth.exitGuestMode()
+                    } label: {
+                        Text("建立帳號，開始學習")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
-                    .disabled(self.newDisabled)
-                }
 
-                if let hint = self.heroHint {
-                    Text(hint)
+                    Text("免費註冊就能學新字、排復習，進度存在雲端")
                         .font(.tujiCaption)
                         .foregroundStyle(.white.opacity(0.6))
                         .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    HStack(spacing: Space.s3) {
+                        NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
+                            Text("復習")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(HeroPillStyle(fg: .tujiInk, bg: .tujiYellow))
+                        .disabled(self.reviewDisabled)
+
+                        NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
+                            Text("學新字")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
+                        .disabled(self.newDisabled)
+                    }
+
+                    if let hint = self.heroHint {
+                        Text(hint)
+                            .font(.tujiCaption)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
 
@@ -306,14 +334,14 @@ struct TodayView: View {
                 if reached {
                     HStack(spacing: 3) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 11, weight: .heavy))
+                            .font(.system(size: 11, weight: .semibold))
                         Text("達成")
-                            .font(.system(size: 12, weight: .heavy))
+                            .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundStyle(.tujiYellow)
                 } else {
                     Text("\(done) / \(goal)")
-                        .font(.system(size: 12, weight: .heavy))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.7))
                 }
             }
@@ -343,7 +371,7 @@ struct TodayView: View {
                     .foregroundStyle(.white.opacity(0.6))
                 Spacer()
                 Text("\(learned) / \(total)")
-                    .font(.system(size: 12, weight: .heavy))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
             }
             GeometryReader { geo in
@@ -503,7 +531,7 @@ struct TodayView: View {
                         Spacer()
                         NavigationLink(value: NavRoute.cards) {
                             Text("全部 →")
-                                .font(.system(size: 13, weight: .heavy))
+                                .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.tujiInk3)
                         }
                         .buttonStyle(.plain)
@@ -547,14 +575,14 @@ struct TodayView: View {
                 .foregroundStyle(.tujiTeal)
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("還沒選學習主題")
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 Text("選幾個你想學的主題，這裡會顯示它們，學新字也會從中出題。")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
                 NavigationLink(value: NavRoute.studyCategories) {
                     Text("選擇主題")
-                        .font(.system(size: 14, weight: .heavy))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s5)
@@ -634,7 +662,7 @@ private struct CategoryTile: View {
     var body: some View {
         VStack(spacing: 3) {
             Text(self.category.nameZh)
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -676,9 +704,9 @@ private struct ThemeStatusBadge: View {
     private func pill(text: String, icon: String, tint: Color) -> some View {
         HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.system(size: 8, weight: .heavy))
+                .font(.system(size: 8, weight: .semibold))
             Text(text)
-                .font(.system(size: 9, weight: .heavy))
+                .font(.system(size: 9, weight: .semibold))
         }
         .foregroundStyle(tint)
         .padding(.horizontal, 5)
@@ -694,14 +722,26 @@ private struct HeroPillStyle: ButtonStyle {
     let bg: Color
     @Environment(\.isEnabled) private var isEnabled
 
+    /// Disabled = ghost (faint fill + hairline + dim label). Dropping the
+    /// whole pill to 0.4 opacity turned the yellow 復習 into a muddy olive
+    /// blob on the deep-ink hero card.
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .heavy))
-            .foregroundStyle(self.fg)
+            .foregroundStyle(self.isEnabled ? self.fg : .white.opacity(0.4))
             .padding(.vertical, Space.s3)
             .padding(.horizontal, Space.s4)
-            .background(self.bg, in: .rect(cornerRadius: Radius.md))
-            .opacity(self.isEnabled ? (configuration.isPressed ? 0.85 : 1) : 0.4)
+            .background(
+                self.isEnabled ? self.bg : Color.white.opacity(0.06),
+                in: .rect(cornerRadius: Radius.md)
+            )
+            .overlay {
+                if !self.isEnabled {
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(.white.opacity(0.2), lineWidth: 1.5)
+                }
+            }
+            .opacity(configuration.isPressed && self.isEnabled ? 0.85 : 1)
     }
 }
 
@@ -714,6 +754,8 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
             .environment(SettingsStore.shared)
+            .environment(MasteryStore.shared)
+            .environment(AuthService.shared)
     }
 }
 
@@ -726,6 +768,8 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
             .environment(SettingsStore.shared)
+            .environment(MasteryStore.shared)
+            .environment(AuthService.shared)
     }
 }
 

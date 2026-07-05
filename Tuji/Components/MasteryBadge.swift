@@ -18,7 +18,7 @@ struct MasteryBadge: View {
                 .fill(tint)
                 .frame(width: 6, height: 6)
             Text(self.level.name)
-                .font(.system(size: 10, weight: .heavy))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(tint)
         }
         .padding(.horizontal, Space.s2)
@@ -47,7 +47,7 @@ struct MasteryBar: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(spacing: Space.s2) {
                 Text(self.level.name)
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(self.level.color)
                     .padding(.horizontal, Space.s3)
                     .padding(.vertical, 4)
@@ -55,7 +55,7 @@ struct MasteryBar: View {
                 Spacer()
                 if let s = self.score {
                     Text("\(s)%")
-                        .font(.system(size: 15, weight: .heavy))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(self.level.color)
                         .contentTransition(.numericText())
                 } else {

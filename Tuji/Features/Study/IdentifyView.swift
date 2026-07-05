@@ -25,8 +25,10 @@ struct IdentifyView: View {
     }
 
     private var bubble: some View {
+        // 3+ consecutive correct answers put the mascot in cheer — a small
+        // momentum reward wired straight to existing art.
         MascotSpeechBubble(
-            pose: .think,
+            pose: self.coord.combo >= 3 ? .cheer : .think,
             text: self.settings.current.learningDirection == .zhJa
                 ? "對應的日文是哪個？"
                 : "對應的英文是哪個？"
@@ -36,7 +38,7 @@ struct IdentifyView: View {
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
             ZStack {
-                Rectangle().fill(.tujiCard)
+                Rectangle().fill(.tujiBg)
                 LazyImage(url: self.item.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable()
@@ -58,7 +60,7 @@ struct IdentifyView: View {
 
             HStack {
                 Text(self.item.word.chinese)
-                    .font(.system(size: 14, weight: .heavy))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                     .padding(.horizontal, Space.s3)
                     .padding(.vertical, 6)
@@ -84,10 +86,14 @@ struct IdentifyView: View {
     }
 
     private var computedChoices: [String] {
-        if let c = item.choices, !c.isEmpty { return c }
-        // Custom (自制圖鑑) cards arrive without server distractors — build a
-        // stable on-device MCQ from the user's other words.
-        return mcqFallbackChoices(for: self.item, pool: self.words.words)
+        // Server choices scrubbed of near-synonyms of the answer + topped up;
+        // custom (自制圖鑑) cards build the whole set from the local pool.
+        // The variant bumps per wrong attempt so a retry reshuffles.
+        studyChoices(
+            for: self.item,
+            pool: self.words.words,
+            variant: self.coord.choicesVariant(for: self.item)
+        )
     }
 
     private func optionRow(label: String, letter: String) -> some View {
@@ -97,12 +103,12 @@ struct IdentifyView: View {
         } label: {
             HStack(spacing: Space.s3) {
                 Text(letter)
-                    .font(.system(size: 13, weight: .heavy))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(state.letterFg)
                     .frame(width: 24, height: 24)
                     .background(state.letterBg, in: .circle)
                 Text(label)
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(state.fg)
                 Spacer()
                 if let icon = state.icon {

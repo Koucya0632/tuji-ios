@@ -15,6 +15,9 @@ extension Color {
     static let tujiTealDark = Color(hex: 0x004A4C)
     static let tujiTealSoft = Color(hex: 0xD4ECEC)
     static let tujiYellow = Color(hex: 0xFFD24A)
+    /// Streak / momentum accent. Split from coral so the flame (a positive
+    /// achievement) never wears the same colour as errors and delete actions.
+    static let tujiAmber = Color(hex: 0xF28C28)
     static let tujiCoral = Color(hex: 0xFF6F4D)
     static let tujiPink = Color(hex: 0xFFCDD2)
     static let tujiGreen = Color(hex: 0x4FAE6F)
@@ -90,6 +93,10 @@ extension ShapeStyle where Self == Color {
 
     static var tujiYellow: Color {
         .tujiYellow
+    }
+
+    static var tujiAmber: Color {
+        .tujiAmber
     }
 
     static var tujiCoral: Color {

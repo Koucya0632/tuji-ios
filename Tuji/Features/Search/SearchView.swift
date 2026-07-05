@@ -176,7 +176,7 @@ struct SearchView: View {
         HStack(spacing: Space.s3) {
             HStack(spacing: Space.s2) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14, weight: .heavy))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
                 TextField(
                     self.settings.current.learningDirection == .zhJa
@@ -215,7 +215,7 @@ struct SearchView: View {
                 self.dismiss()
             } label: {
                 Text("取消")
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiTeal)
             }
             .buttonStyle(.plain)
@@ -268,7 +268,7 @@ struct SearchView: View {
                             self.cache.clearRecentSearches()
                         } label: {
                             Text("清除全部")
-                                .font(.system(size: 13, weight: .heavy))
+                                .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.tujiInk3)
                         }
                         .buttonStyle(.plain)
@@ -280,14 +280,14 @@ struct SearchView: View {
                         } label: {
                             HStack(spacing: Space.s3) {
                                 Image(systemName: "clock.arrow.circlepath")
-                                    .font(.system(size: 14, weight: .heavy))
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(.tujiInk4)
                                 Text(q)
                                     .font(.tujiBody)
                                     .foregroundStyle(.tujiInk)
                                 Spacer()
                                 Image(systemName: "arrow.up.left")
-                                    .font(.system(size: 12, weight: .heavy))
+                                    .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(.tujiInk4)
                             }
                             .frame(minHeight: 48)
@@ -384,7 +384,7 @@ private struct SearchResultRow: View {
     var body: some View {
         HStack(spacing: Space.s3) {
             ZStack {
-                RoundedRectangle(cornerRadius: Radius.md).fill(.tujiCard)
+                RoundedRectangle(cornerRadius: Radius.md).fill(.tujiBg)
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
                         image
@@ -412,7 +412,7 @@ private struct SearchResultRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(self.highlighted(self.word.word))
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                 if self.settings.current.showZh {
@@ -426,7 +426,7 @@ private struct SearchResultRow: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .heavy))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
         }
         .padding(.vertical, Space.s2)

@@ -74,7 +74,7 @@ struct MilestoneView: View {
                     Image(systemName: "square.and.arrow.up")
                     Text("分享")
                 }
-                .font(.system(size: 16, weight: .heavy))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s4)
@@ -82,7 +82,7 @@ struct MilestoneView: View {
             }
             Button(action: self.onFinish) {
                 Text("繼續")
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.85))
                     .padding(.vertical, Space.s3)
             }

@@ -122,7 +122,7 @@ struct WordPeekSheet: View {
     private var heroImage: some View {
         GeometryReader { proxy in
             ZStack {
-                Rectangle().fill(.tujiCard)
+                Rectangle().fill(.tujiBg)
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable()

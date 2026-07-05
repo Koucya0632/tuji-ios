@@ -19,18 +19,41 @@ import SwiftUI
 struct CompleteView: View {
     let answered: [StudyQueueItem]
     let masteryByWord: [String: MasteryDelta]
-    /// Ratings whose SRS write never reached the server (e.g. offline). Shown as
-    /// a gentle notice so a silently dropped answer doesn't look fully saved.
+    /// Words missed (and re-tested) this session — marked 答錯過 in the list.
+    var wrongIds: Set<String> = []
+    /// Ratings whose SRS write never reached the server (e.g. offline). Parked
+    /// in StudyAnswerOutbox for auto-replay; shown as a gentle notice so the
+    /// session doesn't silently look fully synced.
     var unsyncedCount: Int = 0
     let onFinish: () -> Void
+    /// Starts a follow-up session when words are still due (再來一輪). nil
+    /// hides the chaining CTA.
+    var onAnotherRound: (() async -> Void)?
 
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(MasteryStore.self) private var mastery
     @Environment(SettingsStore.self) private var settings
 
+    /// The remaining-due CTA waits for refresh(): before the round-trip the
+    /// store still holds the pre-session due count.
+    @State private var refreshed = false
+    @State private var startingNextRound = false
+
     private var done: Int {
         self.answered.count
+    }
+
+    /// Words still due after this session (post-refresh). Drives the 再來一輪
+    /// CTA — the full celebration is reserved for an actually-cleared queue,
+    /// so "complete" never contradicts a still-lit 復習 button on Today.
+    private var remainingDue: Int {
+        guard self.refreshed else { return 0 }
+        return self.studyStats.stats?.due ?? 0
+    }
+
+    private var hasMoreDue: Bool {
+        self.remainingDue > 0 && self.onAnotherRound != nil
     }
 
     var body: some View {
@@ -56,7 +79,10 @@ struct CompleteView: View {
     // MARK: - Bits
 
     private var hero: some View {
-        MascotCelebrationCard(title: "複習完成！", accent: .tujiYellow) {
+        MascotCelebrationCard(
+            title: self.hasMoreDue ? "這一輪完成" : "複習完成！",
+            accent: .tujiYellow
+        ) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(self.done)")
                     .font(.tujiDisplay)
@@ -72,10 +98,10 @@ struct CompleteView: View {
     private var streakCapsule: some View {
         HStack(spacing: Space.s2) {
             Image(systemName: "flame.fill")
-                .foregroundStyle(.tujiCoral)
+                .foregroundStyle(.tujiAmber)
             if let streak = self.progress.streak?.current {
                 Text("連勝 \(streak) 天")
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                     .contentTransition(.numericText())
             } else {
@@ -86,8 +112,8 @@ struct CompleteView: View {
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-        .background(.tujiCoral.opacity(0.12), in: .capsule)
-        .overlay(Capsule().stroke(.tujiCoral.opacity(0.5), lineWidth: 1))
+        .background(.tujiAmber.opacity(0.12), in: .capsule)
+        .overlay(Capsule().stroke(.tujiAmber.opacity(0.5), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -96,7 +122,7 @@ struct CompleteView: View {
             HStack(spacing: Space.s2) {
                 Image(systemName: "icloud.slash")
                     .foregroundStyle(.tujiCoral)
-                Text("有 \(self.unsyncedCount) 筆評分未能同步，連上網路後請再複習一次。")
+                Text("有 \(self.unsyncedCount) 筆評分還沒送出，已排入待同步，連上網路後會自動補送。")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk2)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -134,10 +160,20 @@ struct CompleteView: View {
         return HStack(spacing: Space.s3) {
             self.thumb(item.word)
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.word.word)
-                    .font(.system(size: 15, weight: .heavy))
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(1)
+                HStack(spacing: Space.s2) {
+                    Text(item.word.word)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.tujiInk)
+                        .lineLimit(1)
+                    if self.wrongIds.contains(item.word.id) {
+                        Text("答錯過")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.tujiCoral)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(.tujiCoral.opacity(0.12), in: .capsule)
+                    }
+                }
                 if self.settings.current.showZh {
                     Text(item.word.chinese)
                         .font(.tujiCaption)
@@ -162,7 +198,7 @@ struct CompleteView: View {
                             .foregroundStyle(.tujiInk3)
                             .contentTransition(.numericText())
                         Text(self.deltaText(change.delta))
-                            .font(.system(size: 12, weight: .heavy))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(self.deltaColor(change.delta))
                     }
                 }
@@ -179,7 +215,7 @@ struct CompleteView: View {
 
     private func thumb(_ word: StudyQueueWord) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: Radius.sm).fill(.tujiCard)
+            RoundedRectangle(cornerRadius: Radius.sm).fill(.tujiBg)
             LazyImage(url: word.imageURL) { state in
                 if let image = state.image {
                     image.resizable().aspectRatio(contentMode: .fit).padding(4)
@@ -200,7 +236,7 @@ struct CompleteView: View {
 
     private func levelPill(_ level: MasteryLevel) -> some View {
         Text(level.name)
-            .font(.system(size: 11, weight: .heavy))
+            .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(level.color)
             .padding(.horizontal, Space.s2)
             .padding(.vertical, 2)
@@ -217,15 +253,47 @@ struct CompleteView: View {
         return .tujiInk3
     }
 
+    /// 回首頁 when the queue is clear; when words are still due, the primary
+    /// action chains straight into the next round so clearing a backlog is a
+    /// tap, not a round-trip through Today.
     private var footer: some View {
-        BBtn(
-            title: "回首頁",
-            bg: .tujiTeal,
-            fg: .white,
-            fullWidth: true,
-            icon: "house.fill",
-            action: self.onFinish
-        )
+        VStack(spacing: Space.s2) {
+            if self.hasMoreDue {
+                BBtn(
+                    title: self.startingNextRound
+                        ? "載入下一輪…"
+                        : "再來一輪（還有 \(self.remainingDue) 字）",
+                    bg: .tujiTeal,
+                    fg: .white,
+                    fullWidth: true,
+                    icon: "arrow.clockwise"
+                ) {
+                    guard !self.startingNextRound else { return }
+                    Task {
+                        self.startingNextRound = true
+                        defer { self.startingNextRound = false }
+                        await self.onAnotherRound?()
+                    }
+                }
+                .disabled(self.startingNextRound)
+                Button(action: self.onFinish) {
+                    Text("先到這裡，回首頁")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.tujiInk3)
+                        .padding(.vertical, Space.s2)
+                }
+                .buttonStyle(.plain)
+            } else {
+                BBtn(
+                    title: "回首頁",
+                    bg: .tujiTeal,
+                    fg: .white,
+                    fullWidth: true,
+                    icon: "house.fill",
+                    action: self.onFinish
+                )
+            }
+        }
         .padding(.horizontal, Space.s6)
         .padding(.vertical, Space.s4)
         .background(.tujiBg)
@@ -247,6 +315,7 @@ struct CompleteView: View {
         await p
         await s
         await m
+        self.refreshed = true
     }
 }
 

@@ -1,7 +1,8 @@
 // NewFlow root (§III.P). Owns the NewFlowCoordinator, renders the
-// header + progress, then dispatches to RecognizeView / IdentifyView /
-// SpellView / NewDoneView based on coordinator.step. Wrong answers
-// in steps 2 & 3 surface a WordPeekSheet via coordinator.peek.
+// header + progress, then dispatches on the current interleaved task's
+// kind to RecognizeView / IdentifyView / SpellView / TilesView, and to
+// NewDoneView once the queue drains. Wrong answers surface a
+// WordPeekSheet via coordinator.peek.
 
 import OSLog
 import Observation
@@ -33,26 +34,26 @@ struct NewFlowView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
-                    if self.coord.step == .done {
+                    if self.coord.finished {
                         self.dismiss()
                     } else {
                         self.showExitConfirm = true
                     }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .heavy))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.tujiInk2)
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                if self.coord.step != .done {
+                if !self.coord.finished {
                     Menu {
                         Button("報錯", systemImage: "exclamationmark.bubble") {
                             self.captureReport()
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 17, weight: .heavy))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                             .frame(width: 36, height: 36)
                     }
@@ -63,7 +64,7 @@ struct NewFlowView: View {
             isPresented: self.$showExitConfirm,
             style: .confirmation,
             title: "要離開這次學習嗎？",
-            message: "目前進度會丟失，下次會重新開始。",
+            message: "完成全部三步的字會保留，其餘下次重新開始。",
             primary: TujiPromptAction("先離開") { self.dismiss() },
             secondary: TujiPromptAction("繼續學習", role: .cancel) {}
         )
@@ -98,34 +99,27 @@ struct NewFlowView: View {
     }
 
     private func captureReport() {
-        let item: StudyQueueItem?
-        let phase: String
+        guard let task = self.coord.current, !task.item.card.id.hasPrefix("atlas:") else { return }
         let answer: String?
         let shown: String?
-        switch self.coord.step {
+        switch task.kind {
         case .recognize:
-            item = self.coord.recognizeItem
-            phase = "recognize"
             answer = self.coord.recRating?.rawValue
             shown = nil
         case .identify:
-            item = self.coord.identifyItem
-            phase = "identify"
             answer = self.coord.idPicked
             shown = nil
-        case .spell:
-            item = self.coord.spellItem
-            phase = "spell"
+        case .spellJudge:
             answer = self.coord.spJudge == .yes ? "yes" : self.coord.spJudge == .no ? "no" : nil
-            shown = item.map { self.coord.spellShown(for: $0) }
-        case .done:
-            return
+            shown = self.coord.spellShown(for: task.item)
+        case .spellTiles:
+            answer = nil
+            shown = nil
         }
-        guard let item, !item.card.id.hasPrefix("atlas:") else { return }
         self.reportDraft = StudyReportDraft(
-            item: item,
+            item: task.item,
             mode: "new",
-            phase: phase,
+            phase: task.kind.rawValue,
             selectedAnswer: answer,
             uiLang: self.settings.current.uiLang,
             displayedSpelling: shown
@@ -140,9 +134,12 @@ struct NewFlowView: View {
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 Spacer()
-                Text(self.headerCount)
-                    .font(.system(size: 13, weight: .heavy))
-                    .foregroundStyle(.tujiInk3)
+                if !self.coord.finished {
+                    Text("完成 \(self.coord.clearedWords) / \(self.coord.queue.count) 字")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.tujiInk3)
+                        .contentTransition(.numericText())
+                }
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -161,31 +158,26 @@ struct NewFlowView: View {
         .padding(.bottom, Space.s4)
     }
 
-    private var headerCount: String {
-        switch self.coord.step {
-        case .recognize: "\(self.coord.recIdx + 1) / \(self.coord.queue.count)"
-        case .identify: "剩 \(self.coord.identifyRemaining)"
-        case .spell: "剩 \(self.coord.spellRemaining)"
-        case .done: ""
-        }
-    }
-
     @ViewBuilder
     private var stepContent: some View {
-        switch self.coord.step {
-        case .recognize:
-            if let item = coord.recognizeItem {
-                RecognizeView(coord: self.coord, item: item)
+        if let task = self.coord.current {
+            Group {
+                switch task.kind {
+                case .recognize:
+                    RecognizeView(coord: self.coord, item: task.item)
+                case .identify:
+                    IdentifyView(coord: self.coord, item: task.item)
+                case .spellJudge:
+                    SpellView(coord: self.coord, item: task.item)
+                case .spellTiles:
+                    TilesView(coord: self.coord, item: task.item)
+                }
             }
-        case .identify:
-            if let item = coord.identifyItem {
-                IdentifyView(coord: self.coord, item: item)
-            }
-        case .spell:
-            if let item = coord.spellItem {
-                SpellView(coord: self.coord, item: item)
-            }
-        case .done:
+            // Keyed per (task, attempt): a requeued task returns as a fresh
+            // view — local state like assembled tiles resets, and the options
+            // reshuffle takes visual effect.
+            .id(self.coord.currentPresentationId)
+        } else if self.coord.finished {
             NewDoneView(coord: self.coord, queue: self.coord.queue, onFinish: { self.dismiss() })
         }
     }

@@ -13,10 +13,10 @@ struct PullUpHint: View {
     var body: some View {
         VStack(spacing: Space.s1) {
             Image(systemName: "chevron.up")
-                .font(.system(size: 14, weight: .heavy))
+                .font(.system(size: 14, weight: .semibold))
                 .symbolEffect(.bounce, options: .repeating)
             Text("向上拉看完整詳情")
-                .font(.system(size: 13, weight: .heavy))
+                .font(.system(size: 13, weight: .semibold))
         }
         .foregroundStyle(.tujiInk4)
         .frame(maxWidth: .infinity)

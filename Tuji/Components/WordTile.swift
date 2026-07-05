@@ -29,7 +29,7 @@ struct WordTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiCard)
+                Rectangle().fill(.tujiBg)
 
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
@@ -106,7 +106,7 @@ struct WordTile: View {
             Image(systemName: "clock")
             Text(ReviewSchedule.countdownLabel(until: date))
         }
-        .font(.system(size: 10, weight: .heavy))
+        .font(.system(size: 10, weight: .semibold))
         .foregroundStyle(.tujiInk3)
         .lineLimit(1)
         .padding(.horizontal, Space.s2)

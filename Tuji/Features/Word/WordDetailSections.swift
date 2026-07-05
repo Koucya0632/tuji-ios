@@ -70,7 +70,7 @@ struct WordDetailSections: View {
                     }
                 } label: {
                     Text(tab.label)
-                        .font(.system(size: 13, weight: .heavy))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(active ? .white : .tujiTeal)
                         .padding(.horizontal, Space.s3)
                         .padding(.vertical, Space.s2)
@@ -218,11 +218,11 @@ struct WordDetailSections: View {
                 let zhText = (zh != nil && idx < (zh?.count ?? 0)) ? zh?[idx] : nil
                 VStack(alignment: .leading, spacing: 2) {
                     Text(c)
-                        .font(.system(size: 13, weight: .heavy))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.tujiTeal)
                     if let zhText, !zhText.isEmpty {
                         Text(zhText)
-                            .font(.system(size: 11, weight: .heavy))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.tujiTealDark)
                     }
                 }

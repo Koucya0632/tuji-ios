@@ -59,7 +59,7 @@ struct AtlasManageView: View {
                         self.isSelecting.toggle()
                         if !self.isSelecting { self.selectedIds.removeAll() }
                     }
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .tint(.tujiTeal)
                 }
             }
@@ -166,7 +166,7 @@ struct AtlasManageView: View {
     private var emptyRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("還沒有自制圖鑑卡片")
-                .font(.system(size: 15, weight: .heavy))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.tujiInk)
             Text("回圖鑑頁點右上角相機，拍一張就能做卡片。")
                 .font(.tujiCaption)
@@ -179,7 +179,7 @@ struct AtlasManageView: View {
         let item = self.item(for: image)
         return HStack(spacing: Space.s3) {
             ZStack {
-                Rectangle().fill(.tujiCard)
+                Rectangle().fill(.tujiBg)
                 LazyImage(url: image.thumbURL) { state in
                     if let img = state.image {
                         img.resizable().aspectRatio(contentMode: .fill)
@@ -195,7 +195,7 @@ struct AtlasManageView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item?.lemma ?? tujiLocalized("未完成"))
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                 if let zh = item?.displayZhHant, !zh.isEmpty {
@@ -206,8 +206,8 @@ struct AtlasManageView: View {
                 }
             }
             Spacer()
-            Text(image.status)
-                .font(.system(size: 11, weight: .heavy))
+            Text(atlasImageStatusLabel(image.status))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
         }
         .padding(.vertical, 2)
@@ -245,6 +245,22 @@ struct AtlasManageView: View {
     }
 }
 
+/// Server pipeline status → user-facing label. The raw enum ("cards_ready")
+/// used to leak straight into the list + detail rows. Unknown values fall
+/// through untranslated so a new backend status is at least visible.
+private func atlasImageStatusLabel(_ status: String) -> String {
+    switch status {
+    case "uploaded": tujiLocalized("已上傳")
+    case "processing": tujiLocalized("生成中")
+    case "needs_review": tujiLocalized("待確認")
+    case "confirmed": tujiLocalized("已確認")
+    case "cards_ready": tujiLocalized("已完成")
+    case "failed": tujiLocalized("生成失敗")
+    case "deleted": tujiLocalized("已刪除")
+    default: status
+    }
+}
+
 // MARK: - Read-only detail
 
 private struct AtlasManageDetailView: View {
@@ -262,7 +278,7 @@ private struct AtlasManageDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.s4) {
                 ZStack {
-                    Rectangle().fill(.tujiCard)
+                    Rectangle().fill(.tujiBg)
                     LazyImage(url: self.image.imageURL) { state in
                         if let img = state.image {
                             img.resizable().aspectRatio(contentMode: .fit)
@@ -289,7 +305,7 @@ private struct AtlasManageDetailView: View {
                         .font(.tujiBody)
                         .foregroundStyle(.tujiInk3)
                 }
-                self.detailRow("狀態", self.image.status)
+                self.detailRow("狀態", atlasImageStatusLabel(self.image.status))
 
                 BBtn(title: "刪除這張卡片", bg: .tujiCoral, fg: .white, fullWidth: true, icon: "trash") {
                     self.onDelete()

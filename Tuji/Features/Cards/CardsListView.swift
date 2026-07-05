@@ -143,7 +143,7 @@ struct CardsListView: View {
                         self.visibleCount += self.pageSize
                     } label: {
                         Text("顯示更多")
-                            .font(.system(size: 14, weight: .heavy))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.tujiInk3)
                             .padding(.vertical, Space.s4)
                     }

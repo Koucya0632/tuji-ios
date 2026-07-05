@@ -68,7 +68,7 @@ private struct AtlasCaptureJobCard: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
 
             Text(self.job.lemma)
-                .font(.system(size: 12, weight: .heavy))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .lineLimit(1)
             Text(self.statusText)

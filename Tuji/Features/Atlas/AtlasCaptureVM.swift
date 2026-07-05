@@ -89,6 +89,13 @@ final class AtlasCaptureVM {
         AtlasQuotas.precisionAvailable(self.store.entitlement)
     }
 
+    /// Free-tier users watch a rewarded ad before card generation (see
+    /// submit()). Surfaced so the confirm form can say so *before* the tap —
+    /// an unannounced video ad right after 確認並生成卡片 reads as a hijack.
+    var adsRequiredBeforeGeneration: Bool {
+        self.store.entitlement?.adsRequiredForCardGeneration == true
+    }
+
     /// 確認並生成卡片 enabled: not busy and both editable names filled.
     var canSubmit: Bool {
         self.busy == nil

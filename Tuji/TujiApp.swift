@@ -23,6 +23,8 @@ struct TujiApp: App {
         MobileAds.shared.start(completionHandler: nil)
     }
 
+    @Environment(\.scenePhase) private var scenePhase
+
     @State private var auth = AuthService.shared
     @State private var push = PushNotificationService.shared
     @State private var onboarding = OnboardingState.shared
@@ -58,6 +60,14 @@ struct TujiApp: App {
                 }
                 .task { await settings.loadIfNeeded() }
                 .task { await push.refreshAuthorization() }
+                // Re-send SRS answers that failed offline (see
+                // StudyAnswerOutbox). Launch covers "opened at home with wifi";
+                // the foreground trigger covers "came back online mid-day".
+                .task { await StudyAnswerOutbox.shared.replay() }
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active else { return }
+                    Task { await StudyAnswerOutbox.shared.replay() }
+                }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback
                     // internally, but forward here as a safety net for any

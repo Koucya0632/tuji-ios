@@ -128,6 +128,17 @@ final class SettingsStore {
         }
     }
 
+    /// Adopt settings that were already persisted server-side by the caller
+    /// (first-run SetupView POSTs via UserRepository directly). Seeds `current`
+    /// so downstream readers — the study-queue params, Today's theme grid —
+    /// see the fresh choices immediately instead of waiting for the next
+    /// server load().
+    func adoptPersisted(_ settings: UserSettings) {
+        self.current = settings
+        self.hasLoaded = true
+        UserDefaults.standard.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
+    }
+
     // MARK: - Immediate edits
 
     /// Mutate the live settings and persist automatically. The change is

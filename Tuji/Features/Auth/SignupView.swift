@@ -125,9 +125,13 @@ struct SignupView: View {
                     .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
             )
 
-            Text("8 字以上")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk4)
+            // The placeholder already says 8 字以上 — repeating it below was
+            // noise. Only speak up while the rule is actually unmet.
+            if !password.isEmpty, password.count < 8 {
+                Text("還差 \(8 - password.count) 個字元")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk4)
+            }
         }
     }
 

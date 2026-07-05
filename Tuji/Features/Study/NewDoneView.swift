@@ -12,6 +12,7 @@ struct NewDoneView: View {
 
     @Environment(MasteryStore.self) private var mastery
     @Environment(StudyStatsStore.self) private var studyStats
+    @Environment(ProgressStore.self) private var progress
 
     var body: some View {
         ScrollView {
@@ -23,21 +24,40 @@ struct NewDoneView: View {
             .padding(.top, Space.s4)
             .padding(.bottom, Space.s8)
         }
-        // Learning new words writes mastery + creates user_cards (the deferred
-        // recognize POSTs fired as each word cleared Spell). Bust both caches so
-        // the just-learned words leave 未學 on the 圖鑑/詳情, and 今日目標 on Today
-        // reflects this session's completions instead of waiting out the 30s TTL.
+        // Learning new words writes mastery + creates user_cards + study_logs
+        // (the deferred recognize POSTs fired as each word cleared Spell).
+        // Reload — not just invalidate — every store the home surfaces read:
+        // Today stays mounted under this push, so its .task won't re-run on
+        // pop, and an invalidated-but-unreloaded store leaves 今日目標 0/10 and
+        // the streak flame at 0 right after the session (until a tab swap).
         .task {
             // The recognize POSTs are optimistic, so wait for them to land (cap
-            // at 800ms) before reloading — otherwise the reload races the write
+            // at 2s) before reloading — otherwise the reload races the write
             // and the just-learned words show stale on the 圖鑑/詳情.
-            await self.coord.drainPendingWrites(within: .milliseconds(800))
+            await self.coord.drainPendingWrites(within: .seconds(2))
             self.mastery.invalidate()
             self.studyStats.invalidate()
+            self.progress.invalidate()
             // Drop any prefetched queue — the cards just learned changed the
             // SRS state, so the next 復習 / 學新字 must re-fetch.
             StudyQueueStore.shared.invalidate()
-            await self.mastery.reload()
+            async let masteryReload: Void = self.mastery.reload()
+            async let statsReload: Void = self.studyStats.reload()
+            async let progressReload: Void = self.progress.reload()
+            _ = await (masteryReload, statsReload, progressReload)
+            // The last word's write starts moments before this task, so it's
+            // the one most likely to miss the window (it may also be retrying).
+            // Wait it out and reload once more so no word is left 未學.
+            if self.coord.hasPendingWrites {
+                await self.coord.drainPendingWrites(within: .seconds(15))
+                self.mastery.invalidate()
+                self.studyStats.invalidate()
+                self.progress.invalidate()
+                async let mastery2: Void = self.mastery.reload()
+                async let stats2: Void = self.studyStats.reload()
+                async let progress2: Void = self.progress.reload()
+                _ = await (mastery2, stats2, progress2)
+            }
         }
         .safeAreaInset(edge: .bottom) {
             BBtn(
@@ -90,7 +110,7 @@ struct StudyWordGrid: View {
     private func tile(for item: StudyQueueItem) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiCard)
+                Rectangle().fill(.tujiBg)
                 LazyImage(url: item.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable()
@@ -109,7 +129,7 @@ struct StudyWordGrid: View {
             .clipped()
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.word.word)
-                    .font(.system(size: 14, weight: .heavy))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 if self.settings.current.showZh {
                     Text(item.word.chinese)

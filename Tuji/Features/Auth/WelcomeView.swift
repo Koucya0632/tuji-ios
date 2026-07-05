@@ -23,6 +23,27 @@ struct WelcomeView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
+            // Reached from inside guest mode (Me tab / Today hero) this screen
+            // is a root swap, not a push — without an explicit way back it's a
+            // dead end for an accidental tap.
+            if auth.cameFromGuest {
+                HStack {
+                    Button {
+                        auth.enterGuestMode()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.tujiInk2)
+                            .padding(Space.s3)
+                            .background(.tujiCard, in: .circle)
+                            .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
+                }
+                .padding(.horizontal, Space.s5)
+                .padding(.top, Space.s3)
+            }
             Spacer()
             TujiBrandLockup(scale: 0.88)
             Spacer()
@@ -81,7 +102,9 @@ struct WelcomeView: View {
                 Button {
                     auth.enterGuestMode()
                 } label: {
-                    Text("先逛逛 → 訪客模式")
+                    // Someone who *left* guest mode to get here isn't choosing
+                    // a mode — they're going back.
+                    Text(auth.cameFromGuest ? "返回訪客模式" : "先逛逛 → 訪客模式")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.tujiInk4)
                 }

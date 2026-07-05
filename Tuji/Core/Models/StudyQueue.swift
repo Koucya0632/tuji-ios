@@ -85,11 +85,12 @@ enum SRSRating: String, Codable {
     }
 }
 
-// Marked `nonisolated` so the synthesized `Encodable` conformance is
+// Marked `nonisolated` so the synthesized `Codable` conformance is
 // non-MainActor — APIClient.fireAndForget's `B: Encodable & Sendable`
-// requires non-isolated conformance.
+// requires non-isolated conformance. Decodable too so the offline outbox
+// (StudyAnswerOutbox) can round-trip unsent answers through disk.
 // swiftformat:disable:next redundantSendable
-nonisolated struct StudyAnswerPayload: Encodable, Sendable {
+nonisolated struct StudyAnswerPayload: Codable, Sendable {
     let cardId: String
     let rating: String
     let responseMs: Int?

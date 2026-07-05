@@ -89,7 +89,7 @@ struct CategoryView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("分類說明")
-                            .font(.system(size: 11, weight: .heavy))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.tujiInk3)
 
                         Text(self.categoryDescription(c))
@@ -115,7 +115,7 @@ struct CategoryView: View {
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
                 Text("分類說明")
-                    .font(.system(size: 11, weight: .heavy))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
                 Text("探索這個主題的常用單字")
                     .font(.tujiBody)
@@ -164,7 +164,7 @@ struct CategoryView: View {
                 .foregroundStyle(.tujiTeal)
             Spacer()
             Text("\(self.filteredWords.count)")
-                .font(.system(size: 13, weight: .heavy))
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, Space.s2)

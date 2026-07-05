@@ -95,7 +95,7 @@ private struct TujiStatusToast: View {
 
             VStack(spacing: 3) {
                 Text(self.style.title)
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)

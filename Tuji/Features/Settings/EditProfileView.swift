@@ -47,7 +47,7 @@ struct EditProfileView: View {
                     Task { await self.save() }
                 } label: {
                     Text(self.saving ? "儲存中…" : "儲存")
-                        .font(.system(size: 15, weight: .heavy))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(self.dirty && !self.saving ? .tujiTeal : .tujiInk4)
                 }
                 .disabled(!self.dirty || self.saving)

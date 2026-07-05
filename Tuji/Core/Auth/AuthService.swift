@@ -53,9 +53,16 @@ final class AuthService {
 
     // MARK: - Guest mode
 
+    /// True when the Welcome screen was reached by leaving guest mode (Me tab
+    /// / Today hero 登入/註冊) rather than at first launch. Welcome uses it to
+    /// offer a close button back to guest browsing — otherwise the screen is
+    /// an exit-less dead end for someone who tapped in by accident.
+    private(set) var cameFromGuest = false
+
     func enterGuestMode() {
         guard case .signedOut = state else { return }
         state = .guest
+        cameFromGuest = false
         log.info("entered guest mode")
     }
 
@@ -64,6 +71,7 @@ final class AuthService {
     func exitGuestMode() {
         guard case .guest = state else { return }
         state = .signedOut
+        cameFromGuest = true
         log.info("exited guest mode")
     }
 
@@ -186,6 +194,7 @@ final class AuthService {
         _ = await unregisterPush
 
         state = .signedOut
+        cameFromGuest = false
         error = nil
         log.info("signed out")
     }
