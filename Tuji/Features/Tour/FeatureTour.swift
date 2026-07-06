@@ -6,7 +6,10 @@
 
 import SwiftUI
 
-enum TourTarget: Hashable {
+/// nonisolated: TourAnchorKey's nonisolated PreferenceKey members hash this
+/// during layout, so the Hashable conformance can't be MainActor-isolated
+/// (the project's default). The TestFlight (release/WMO) build enforces it.
+nonisolated enum TourTarget: Hashable {
     /// Whole hero card on Today (guest fallback — guests have no CTA pair).
     case hero
     /// The 復習/學新字 button pair inside the hero (signed-in).
