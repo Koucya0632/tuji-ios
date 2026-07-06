@@ -40,6 +40,22 @@ struct TileBoard: Hashable {
     }
 }
 
+/// One entry of a word's stage ladder (認識 → 選字 → 拼字) as shown by the
+/// header pips. `skipped` marks a stage removed by the fast path (an 已認識
+/// self-rating drops 選字) — visually a dimmed check, not a hole.
+struct NewStageStep: Hashable, Identifiable {
+    enum State: Hashable {
+        case pending, active, done, skipped
+    }
+
+    let kind: NewTaskKind
+    let state: State
+
+    var id: NewTaskKind {
+        self.kind
+    }
+}
+
 extension SRSRating {
     /// One step harsher — used when quiz mistakes contradict the self-rating.
     var downgraded: SRSRating {

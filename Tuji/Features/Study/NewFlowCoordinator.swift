@@ -152,6 +152,34 @@ final class NewFlowCoordinator {
         return "\(task.id)#\(attempt)"
     }
 
+    /// The current word's stage ladder for the header pips: which of
+    /// 認識/選字/拼字 it walks and where it stands. Words with a single-tile
+    /// subject carry no spell entry.
+    func stagePlan(for item: StudyQueueItem) -> [NewStageStep] {
+        let wordId = item.word.id
+        let currentKind = self.current?.item.word.id == wordId ? self.current?.kind : nil
+
+        func state(_ kind: NewTaskKind, done: Bool) -> NewStageStep.State {
+            if currentKind == kind { return .active }
+            return done ? .done : .pending
+        }
+
+        var steps = [
+            NewStageStep(
+                kind: .recognize,
+                state: state(.recognize, done: self.pendingRatings[item.card.id] != nil)
+            ),
+            NewStageStep(
+                kind: .identify,
+                state: state(.identify, done: self.identifyCleared.contains(wordId))
+            )
+        ]
+        if Self.tileBoard(for: item).unitCount >= 2 {
+            steps.append(NewStageStep(kind: .spellTiles, state: state(.spellTiles, done: false)))
+        }
+        return steps
+    }
+
     // MARK: - Queue mechanics
 
     /// Pop the head after a completed stage. If the word has no tasks left,

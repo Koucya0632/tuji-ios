@@ -143,6 +143,11 @@ struct NewFlowView: View {
                 }
             }
             .frame(height: 6)
+            // The interleave hides that every word walks the same ladder —
+            // the pips make the current word's 認識→選字→拼字 position explicit.
+            if let task = self.coord.current {
+                NewStagePips(steps: self.coord.stagePlan(for: task.item))
+            }
         }
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s2)
@@ -172,6 +177,82 @@ struct NewFlowView: View {
             .id(self.coord.currentPresentationId)
         } else if self.coord.finished {
             NewDoneView(coord: self.coord, queue: self.coord.queue, onFinish: { self.dismiss() })
+        }
+    }
+}
+
+/// The current word's stage ladder: labeled dots for 認識/選字/拼字 with
+/// connecting ticks. Done = filled check, active = ringed dot, skipped
+/// (fast path) = dimmed check, pending = hollow.
+private struct NewStagePips: View {
+    let steps: [NewStageStep]
+
+    var body: some View {
+        HStack(spacing: Space.s2) {
+            ForEach(Array(self.steps.enumerated()), id: \.element.kind) { idx, step in
+                if idx > 0 {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(.tujiInk4.opacity(0.3))
+                        .frame(width: 14, height: 2)
+                }
+                self.pip(step)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .animation(.easeInOut(duration: 0.2), value: self.steps)
+    }
+
+    private func pip(_ step: NewStageStep) -> some View {
+        HStack(spacing: 4) {
+            ZStack {
+                Circle()
+                    .fill(self.dotFill(step.state))
+                    .frame(width: 16, height: 16)
+                switch step.state {
+                case .done, .skipped:
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 8, weight: .heavy))
+                        .foregroundStyle(.white)
+                case .active:
+                    Circle()
+                        .stroke(.tujiTeal, lineWidth: 2)
+                        .frame(width: 16, height: 16)
+                    Circle()
+                        .fill(.tujiTeal)
+                        .frame(width: 6, height: 6)
+                case .pending:
+                    EmptyView()
+                }
+            }
+            Text(self.label(step.kind))
+                .font(.system(size: 12, weight: step.state == .active ? .bold : .semibold))
+                .foregroundStyle(self.labelColor(step.state))
+        }
+    }
+
+    private func label(_ kind: NewTaskKind) -> LocalizedStringKey {
+        switch kind {
+        case .recognize: "認識"
+        case .identify: "選字"
+        case .spellTiles: "拼字"
+        }
+    }
+
+    private func dotFill(_ state: NewStageStep.State) -> Color {
+        switch state {
+        case .done: .tujiTeal
+        case .skipped: .tujiTeal.opacity(0.35)
+        case .active: .tujiTealSoft
+        case .pending: .tujiInk4.opacity(0.25)
+        }
+    }
+
+    private func labelColor(_ state: NewStageStep.State) -> Color {
+        switch state {
+        case .done: .tujiInk3
+        case .skipped: .tujiInk4
+        case .active: .tujiTeal
+        case .pending: .tujiInk4
         }
     }
 }
