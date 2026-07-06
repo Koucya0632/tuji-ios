@@ -18,6 +18,9 @@ struct NewFlowView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var showExitConfirm = false
     @State private var reportDraft: StudyReportDraft?
+    /// Preview gate: the session opens on a scannable list of today's words
+    /// (a pre-teach pass) and the queue only starts on 開始學習.
+    @State private var started = false
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -26,8 +29,12 @@ struct NewFlowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            self.header
-            self.stepContent
+            if self.started {
+                self.header
+                self.stepContent
+            } else {
+                self.preview
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
@@ -35,7 +42,9 @@ struct NewFlowView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
-                    if self.coord.finished {
+                    // Nothing is lost before the first task or after the last,
+                    // so only the mid-session exit needs a confirmation.
+                    if !self.started || self.coord.finished {
                         self.dismiss()
                     } else {
                         self.showExitConfirm = true
@@ -115,6 +124,39 @@ struct NewFlowView: View {
             uiLang: self.settings.current.uiLang,
             displayedSpelling: nil
         )
+    }
+
+    /// Pre-session scan of today's words: reading the grid before the first
+    /// card is itself a teach pass, and the explicit 開始學習 makes the
+    /// lesson feel like a chosen unit instead of an ambush.
+    private var preview: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: Space.s5) {
+                    MascotSpeechBubble(
+                        pose: .think,
+                        text: "先看一眼這些字，準備好就開始"
+                    )
+                    Text("今天學這 \(self.queue.count) 個字")
+                        .font(.tujiH3)
+                        .foregroundStyle(.tujiInk)
+                    StudyWordGrid(items: self.queue)
+                }
+                .padding(.horizontal, Space.s6)
+                .padding(.top, Space.s4)
+                .padding(.bottom, Space.s6)
+            }
+            BBtn(
+                title: "開始學習",
+                bg: .tujiTeal,
+                fg: .white,
+                fullWidth: true,
+                icon: "play.fill",
+                action: { self.started = true }
+            )
+            .padding(.horizontal, Space.s6)
+            .padding(.bottom, Space.s5)
+        }
     }
 
     private var header: some View {

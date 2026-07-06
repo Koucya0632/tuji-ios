@@ -18,7 +18,7 @@ struct NewDoneView: View {
         ScrollView {
             VStack(spacing: Space.s5) {
                 self.hero
-                StudyWordGrid(items: self.queue)
+                StudyWordGrid(items: self.queue, mistakeCounts: self.coord.mistakeCounts)
             }
             .padding(.horizontal, Space.s6)
             .padding(.top, Space.s4)
@@ -90,6 +90,9 @@ struct NewDoneView: View {
 /// review), so both celebrate the session's words with the same tile style.
 struct StudyWordGrid: View {
     let items: [StudyQueueItem]
+    /// Session mistakes by word id; words with retries get a 答錯 badge so
+    /// the recap points at what to watch. Empty (the default) shows none.
+    var mistakeCounts: [String: Int] = [:]
 
     @Environment(SettingsStore.self) private var settings
 
@@ -128,9 +131,18 @@ struct StudyWordGrid: View {
             .frame(height: 100)
             .clipped()
             VStack(alignment: .leading, spacing: 2) {
-                Text(item.word.word)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(item.word.word)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.tujiInk)
+                    Spacer(minLength: Space.s1)
+                    if let wrongs = self.mistakeCounts[item.word.id], wrongs > 0 {
+                        Text("答錯 \(wrongs) 次")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.tujiCoral)
+                            .lineLimit(1)
+                    }
+                }
                 if self.settings.current.showZh {
                     Text(item.word.chinese)
                         .font(.tujiCaption)

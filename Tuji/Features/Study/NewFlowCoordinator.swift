@@ -157,6 +157,12 @@ final class NewFlowCoordinator {
         return "\(task.id)#\(attempt)"
     }
 
+    /// Session mistake counts by word id (wrong 選字/拼字 attempts) — the
+    /// done screen badges words that needed retries.
+    var mistakeCounts: [String: Int] {
+        self.mistakes
+    }
+
     /// The current word's stage ladder for the header pips: which of
     /// 認識/選字/拼字 it walks and where it stands. Words with a single-tile
     /// subject carry no spell entry.
@@ -310,7 +316,9 @@ final class NewFlowCoordinator {
         }
         let ok = choice == task.item.word.word
         Task {
-            try? await Task.sleep(for: .milliseconds(800))
+            // Correct answers clear faster than wrong ones: momentum for the
+            // fast-learning feel, while a miss keeps time to read the reveal.
+            try? await Task.sleep(for: .milliseconds(ok ? 500 : 800))
             if ok {
                 self.idLocked = false
                 self.idPicked = nil
@@ -370,7 +378,7 @@ final class NewFlowCoordinator {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles else { return }
         self.tiLocked = true
         Task {
-            try? await Task.sleep(for: .milliseconds(correct ? 600 : 800))
+            try? await Task.sleep(for: .milliseconds(correct ? 450 : 800))
             if correct {
                 self.tiLocked = false
                 self.resolveTiles(correct: true)
