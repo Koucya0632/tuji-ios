@@ -11,6 +11,7 @@ import SwiftUI
 struct NewFlowView: View {
     let queue: [StudyQueueItem]
     @State private var coord: NewFlowCoordinator
+    @State private var teach = NewFlowTeachLoader()
     @Environment(\.dismiss) private var dismiss
     @Environment(WordsStore.self) private var words
     @Environment(StudyFocus.self) private var studyFocus
@@ -89,6 +90,7 @@ struct NewFlowView: View {
         }
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
+        .task { await self.teach.preload(queue: self.queue, words: self.words) }
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)
         }
@@ -153,7 +155,11 @@ struct NewFlowView: View {
             Group {
                 switch task.kind {
                 case .recognize:
-                    RecognizeView(coord: self.coord, item: task.item)
+                    RecognizeView(
+                        coord: self.coord,
+                        item: task.item,
+                        detail: self.teach.details[task.item.word.id]
+                    )
                 case .identify:
                     IdentifyView(coord: self.coord, item: task.item)
                 case .spellTiles:

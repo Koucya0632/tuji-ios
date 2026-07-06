@@ -15,14 +15,10 @@ struct PronunciationButton: View {
 
     @Environment(SettingsStore.self) private var settings
 
-    /// Resolve the accent: explicit param wins, otherwise map the saved
-    /// setting code ("us"/"uk") to a SpeechService voice.
+    /// Resolve the accent: explicit param wins, otherwise the shared
+    /// settings-based default.
     private var effectiveVoice: SpeechService.Voice {
-        if let voice { return voice }
-        if self.settings.current.learningDirection == .zhJa {
-            return .japanese
-        }
-        return self.settings.current.accent == "uk" ? .uk : .us
+        self.voice ?? .preferred(for: self.settings.current)
     }
 
     var body: some View {
