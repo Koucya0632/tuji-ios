@@ -155,6 +155,7 @@ struct TodayView: View {
         .padding(.vertical, 6)
         .background(.tujiCard, in: .capsule)
         .overlay(Capsule().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+        .tourAnchor(.streak)
     }
 
     // MARK: - Greeting
@@ -281,6 +282,7 @@ struct TodayView: View {
                         .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
                         .disabled(self.newDisabled)
                     }
+                    .tourAnchor(.heroCTAs)
 
                     if let hint = self.heroHint {
                         Text(hint)
@@ -303,6 +305,7 @@ struct TodayView: View {
         .padding(Space.s5)
         .padding(.top, Space.s2)
         .background(.tujiBgInk, in: .rect(cornerRadius: Radius.xl))
+        .tourAnchor(.hero)
         .animation(
             self.reduceMotion ? nil : .spring(duration: 0.32, bounce: 0.18),
             value: self.dailyGoalReached
@@ -356,6 +359,7 @@ struct TodayView: View {
             }
             .frame(height: 8)
         }
+        .tourAnchor(.dailyGoal)
     }
 
     @ViewBuilder
@@ -481,7 +485,8 @@ struct TodayView: View {
             stats: self.studyStats.stats,
             newAvailable: self.newAvailable,
             dailyGoal: self.settings.current.dailyGoal
-        ) else { return nil }
+        )
+        else { return nil }
         return LocalizedStringKey(text)
     }
 
@@ -490,7 +495,9 @@ struct TodayView: View {
         stats: StudyStats?,
         newAvailable: Int,
         dailyGoal: Int
-    ) -> String? {
+    )
+        -> String?
+    {
         guard !isGuest, let stats else { return nil }
         let goal = max(1, dailyGoal)
         guard (stats.todayNew ?? 0) < goal else { return nil }

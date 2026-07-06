@@ -160,7 +160,9 @@ struct SignupView: View {
                     .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
             )
 
-            if password.contains(where: { !$0.unicodeScalars.allSatisfy { scalar in (33...126).contains(scalar.value) } }) {
+            if password
+                .contains(where: { !$0.unicodeScalars.allSatisfy { scalar in (33...126).contains(scalar.value) } })
+            {
                 Text("密碼只能使用英文、數字或符號")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiCoral)

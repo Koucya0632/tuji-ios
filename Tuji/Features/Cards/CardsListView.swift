@@ -61,6 +61,7 @@ struct CardsListView: View {
                     .foregroundStyle(.tujiInk2)
             }
             .buttonStyle(.plain)
+            .tourAnchor(.capture)
             NavigationLink(value: NavRoute.search) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18, weight: .bold))

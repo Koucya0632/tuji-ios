@@ -159,7 +159,8 @@ struct AtlasCaptureView: View {
                 // Free and Pro allowances differ (30 vs 500), so the hint names
                 // the plan and its own limit instead of a shared count.
                 if let remaining = self.vm.remainingPrimaryThisMonth,
-                   let limit = self.vm.primaryLimitPerMonth {
+                   let limit = self.vm.primaryLimitPerMonth
+                {
                     if self.vm.isPro {
                         Text("Pro：本月 AI 辨識剩 \(remaining)／\(limit) 次")
                             .font(.tujiCaption)
