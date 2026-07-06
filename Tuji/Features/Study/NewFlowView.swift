@@ -65,7 +65,7 @@ struct NewFlowView: View {
             isPresented: self.$showExitConfirm,
             style: .confirmation,
             title: "要離開這次學習嗎？",
-            message: "完成全部三步的字會保留，其餘下次重新開始。",
+            message: "完成全部步驟的字會保留，其餘下次重新開始。",
             primary: TujiPromptAction("先離開") { self.dismiss() },
             secondary: TujiPromptAction("繼續學習", role: .cancel) {}
         )

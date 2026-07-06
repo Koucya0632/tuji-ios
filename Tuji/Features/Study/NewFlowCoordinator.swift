@@ -7,7 +7,9 @@
 // a steady cadence with 2-3 tasks of lag between a word's stages. Wrong
 // answers requeue the same task a few positions later; a requeued 選字 that
 // would slip behind its word's pre-scheduled 拼字 is caught by normalizeHead()
-// so the stage ladder always holds.
+// so the stage ladder always holds. The ladder length varies: an 已認識
+// self-rating drops the word's 選字 (fast path — production still gates the
+// commit) and single-tile subjects carry no 拼字 at all.
 //
 // SRS: the recognize self-rating is held back per word and posted once that
 // word clears its final stage (今日目標 counts full completions only). The
@@ -59,6 +61,9 @@ final class NewFlowCoordinator {
     private var identifyResponseMs: [String: Int] = [:]
     /// Words whose 選字 was answered correctly — gates their 拼字 task.
     private var identifyCleared: Set<String> = []
+    /// Words whose 選字 was dropped by the 已認識 fast path (subset of
+    /// identifyCleared) — shown as a dimmed check in the stage pips.
+    private var skippedIdentify: Set<String> = []
     /// Wrong-attempt counts per word id: reshuffles MCQ options, re-seeds the
     /// spell variant, and re-scrambles the tiles on each retry so position
     /// memory doesn't stand in for the word.
@@ -171,7 +176,9 @@ final class NewFlowCoordinator {
             ),
             NewStageStep(
                 kind: .identify,
-                state: state(.identify, done: self.identifyCleared.contains(wordId))
+                state: self.skippedIdentify.contains(wordId)
+                    ? .skipped
+                    : state(.identify, done: self.identifyCleared.contains(wordId))
             )
         ]
         if Self.tileBoard(for: item).unitCount >= 2 {
@@ -263,7 +270,28 @@ final class NewFlowCoordinator {
         // its final stage (see commitLearned). This keeps 今日目標 counting
         // full completions instead of bare recognize taps.
         self.pendingRatings[task.item.card.id] = rating
+        // 已認識 fast path: skip straight to production. Tiles still gate the
+        // commit, and a tile miss downgrades the rating — an overconfident
+        // self-rating gets corrected there instead of by an easy MCQ.
+        if rating == .good {
+            self.skipIdentify(for: task.item)
+        }
         self.completeCurrentTask()
+    }
+
+    /// Drop the word's pending 選字 task. Marking it cleared is load-bearing:
+    /// normalizeHead() gates a head 拼字 on identifyCleared, so without the
+    /// insert the word's tiles would be deferred forever.
+    private func skipIdentify(for item: StudyQueueItem) {
+        let wordId = item.word.id
+        guard let idx = self.tasks.firstIndex(where: {
+            $0.kind == .identify && $0.item.word.id == wordId
+        })
+        else { return }
+        self.tasks.remove(at: idx)
+        self.identifyCleared.insert(wordId)
+        self.skippedIdentify.insert(wordId)
+        self.totalStages -= 1
     }
 
     // MARK: - 選字 (identify)

@@ -202,9 +202,10 @@ struct NewFlowCoordinatorTests {
     func wrongIdentifyRequeuesAFewBackAndSpellWaitsForIt() throws {
         let queue = try Array(self.makeQueue().prefix(2))
         let c = NewFlowCoordinator(queue: queue)
-        // n=2 schedule: r0 r1 i0 i1 s0 s1.
-        c.resolveRecognize(rating: .good)
-        c.resolveRecognize(rating: .good)
+        // n=2 schedule: r0 r1 i0 i1 s0 s1. (.hard keeps the full ladder —
+        // .good would fast-path past 選字.)
+        c.resolveRecognize(rating: .hard)
+        c.resolveRecognize(rating: .hard)
         #expect(c.current?.kind == .identify)
         // Wrong 選字 for w-apple: freeze + peek, requeue on peek dismiss.
         c.resolveIdentify(correct: false)
@@ -230,9 +231,82 @@ struct NewFlowCoordinatorTests {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
         #expect(c.progress == 0)
-        c.resolveRecognize(rating: .good)
+        c.resolveRecognize(rating: .hard)
         // One cleared stage of 9 (3 items × 3 stages).
         #expect(abs(c.progress - 1.0 / 9.0) < 0.0001)
+    }
+
+    // MARK: - 已認識 fast path
+
+    @Test
+    func goodSelfRatingSkipsIdentifyAndKeepsProgressMonotone() async throws {
+        let queue = try Array(self.makeQueue().prefix(2))
+        let spy = SpyStudyRepository()
+        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        // Schedule r0 r1 i0 i1 s0 s1 → 已認識 on w-apple drops i0.
+        var lastProgress = c.progress
+        func expectMonotone() {
+            #expect(c.progress >= lastProgress)
+            lastProgress = c.progress
+        }
+        c.resolveRecognize(rating: .good)
+        #expect(!c.tasks.contains { $0.kind == .identify && $0.item.word.id == "w-apple" })
+        #expect(c.stagePlan(for: queue[0]).first { $0.kind == .identify }?.state == .skipped)
+        expectMonotone()
+        c.resolveRecognize(rating: .hard)
+        expectMonotone()
+        // w-ringo keeps its 選字; apple's tiles surface right after despite
+        // never running 選字 (skip marks it cleared for normalizeHead).
+        #expect(c.current?.kind == .identify)
+        #expect(c.current?.item.word.id == "w-ringo")
+        c.resolveIdentify(correct: true)
+        expectMonotone()
+        #expect(c.current?.kind == .spellTiles)
+        #expect(c.current?.item.word.id == "w-apple")
+        c.resolveTiles(correct: true)
+        expectMonotone()
+        // Denominator shrank to 5 (6 scheduled − 1 skipped): 4 clears in.
+        #expect(abs(c.progress - 4.0 / 5.0) < 0.0001)
+        c.resolveTiles(correct: true)
+        #expect(c.finished)
+        #expect(c.clearedWords == 2)
+        #expect(c.progress == 1.0)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(spy.answers.map(\.rating) == ["穩定", "困難"])
+    }
+
+    @Test
+    func fastPathWrongTilesRequeuesWithoutStalling() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let spy = SpyStudyRepository()
+        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        c.resolveRecognize(rating: .good)
+        // Identify skipped → straight to production.
+        #expect(c.current?.kind == .spellTiles)
+        c.resolveTiles(correct: false)
+        #expect(c.peek?.id == "w-apple")
+        c.advanceFromPeek()
+        // Requeued tiles must come back (not be deferred by normalizeHead).
+        #expect(c.current?.kind == .spellTiles)
+        c.resolveTiles(correct: true)
+        #expect(c.finished)
+        await c.drainPendingWrites(within: .seconds(2))
+        // The tile miss corrects the overconfident self-rating: 穩定 → 困難.
+        #expect(spy.answers.map(\.rating) == ["困難"])
+    }
+
+    @Test
+    func singleUnitWordRatedGoodCommitsAfterRecognize() async throws {
+        let queue = try [self.makeKanaEdgeQueue()[1]]
+        let spy = SpyStudyRepository()
+        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        // め has no spell stage; 已認識 also drops 選字 → one-task word.
+        c.resolveRecognize(rating: .good)
+        #expect(c.finished)
+        #expect(c.clearedWords == 1)
+        #expect(c.progress == 1.0)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(spy.answers.map(\.rating) == ["穩定"])
     }
 
     // MARK: - Seeded tile scrambles
@@ -293,13 +367,13 @@ struct NewFlowCoordinatorTests {
         let queue = try self.makeMultiWordQueue()
         let spy = SpyStudyRepository()
         let c = NewFlowCoordinator(queue: queue, repository: spy)
-        c.resolveRecognize(rating: .good)
+        c.resolveRecognize(rating: .hard)
         c.resolveIdentify(correct: true)
         c.resolveTiles(correct: true)
         #expect(c.finished)
         #expect(c.clearedWords == 1)
         await c.drainPendingWrites(within: .seconds(2))
-        #expect(spy.answers.map(\.rating) == ["穩定"])
+        #expect(spy.answers.map(\.rating) == ["困難"])
         #expect(spy.answers.first?.responseMs != nil)
     }
 
@@ -308,14 +382,29 @@ struct NewFlowCoordinatorTests {
         let queue = try Array(self.makeQueue().prefix(1))
         let spy = SpyStudyRepository()
         let c = NewFlowCoordinator(queue: queue, repository: spy)
+        // .good fast-paths to tiles; the one tile miss drops 穩定 → 困難.
         c.resolveRecognize(rating: .good)
+        c.resolveTiles(correct: false)
+        c.advanceFromPeek()
+        c.resolveTiles(correct: true)
+        #expect(c.finished)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(spy.answers.map(\.rating) == ["困難"])
+    }
+
+    @Test
+    func identifyMistakeDowngradesOnFullLadder() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let spy = SpyStudyRepository()
+        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        c.resolveRecognize(rating: .hard)
         c.resolveIdentify(correct: false)
         c.advanceFromPeek()
         c.resolveIdentify(correct: true)
         c.resolveTiles(correct: true)
         #expect(c.finished)
         await c.drainPendingWrites(within: .seconds(2))
-        #expect(spy.answers.map(\.rating) == ["困難"])
+        #expect(spy.answers.map(\.rating) == ["重來"])
     }
 
     @Test
@@ -324,9 +413,8 @@ struct NewFlowCoordinatorTests {
         let spy = SpyStudyRepository()
         let c = NewFlowCoordinator(queue: queue, repository: spy)
         c.resolveRecognize(rating: .good)
-        c.resolveIdentify(correct: false)
+        c.resolveTiles(correct: false)
         c.advanceFromPeek()
-        c.resolveIdentify(correct: true)
         c.resolveTiles(correct: false)
         c.advanceFromPeek()
         c.resolveTiles(correct: true)
