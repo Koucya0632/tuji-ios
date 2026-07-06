@@ -1,9 +1,9 @@
 // Pins the synchronous parts of the interleaved new-word lesson: queue
 // decoding (including the int-or-string card id the backend emits), the
-// initial task interleave + the stage-ladder guard, the seeded spell/tile
-// variants, and the mistake-downgraded SRS commit. The async lock/sleep
-// choreography is exercised in the app, not here — tests walk the scheduler
-// through the resolve* synchronous cores.
+// initial task interleave + the stage-ladder guard, the tile board layout +
+// seeded scrambles, and the mistake-downgraded SRS commit. The async
+// lock/sleep choreography is exercised in the app, not here — tests walk the
+// scheduler through the resolve* synchronous cores.
 
 import Foundation
 import Testing
@@ -52,7 +52,8 @@ struct NewFlowCoordinatorTests {
         return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
-    /// Single multi-word EN item — too long for tiles, keeps the judge task.
+    /// Single multi-word EN item — 12 letters across two tokens, so its tile
+    /// board chunks units and lays out two slot rows.
     private func makeMultiWordQueue() throws -> [StudyQueueItem] {
         let json = """
         [
@@ -61,6 +62,37 @@ struct NewFlowCoordinatorTests {
             "word": {
               "id": "w-board", "word": "cutting board", "chinese": "砧板", "imageUrl": "",
               "pronunciation": "", "reading": null, "targetLanguage": "en", "category": "kitchen"
+            },
+            "choices": null,
+            "spellingChoices": null,
+            "mastery": null
+          }
+        ]
+        """
+        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+    }
+
+    /// JA items exercising kana tiling: a yōon reading (きょう) whose small
+    /// kana must merge into the preceding unit, and a single-kana reading (め)
+    /// whose 1-tile board would be a free answer.
+    private func makeKanaEdgeQueue() throws -> [StudyQueueItem] {
+        let json = """
+        [
+          {
+            "card": { "id": 505, "cardType": "flashcard", "deckKey": "core" },
+            "word": {
+              "id": "w-kyou", "word": "今日", "chinese": "今天", "imageUrl": "",
+              "pronunciation": "", "reading": "きょう", "targetLanguage": "ja", "category": "time"
+            },
+            "choices": null,
+            "spellingChoices": null,
+            "mastery": null
+          },
+          {
+            "card": { "id": 606, "cardType": "flashcard", "deckKey": "core" },
+            "word": {
+              "id": "w-me", "word": "目", "chinese": "眼睛", "imageUrl": "",
+              "pronunciation": "", "reading": "め", "targetLanguage": "ja", "category": "body"
             },
             "choices": null,
             "spellingChoices": null,
@@ -120,15 +152,50 @@ struct NewFlowCoordinatorTests {
     }
 
     @Test
-    func spellStageKindFallsBackToJudgeForLongSubjects() throws {
+    func tileBoardSplitsPerGraphemeForShortSubjects() throws {
         let queue = try self.makeQueue()
-        // Short single tokens (apple / りんご / ねこ) get the tiles task.
-        for item in queue {
-            #expect(NewFlowCoordinator.spellStageKind(for: item) == .spellTiles)
-        }
-        // Multi-word subject keeps the judge task.
-        let board = try self.makeMultiWordQueue()[0]
-        #expect(NewFlowCoordinator.spellStageKind(for: board) == .spellJudge)
+        let apple = NewFlowCoordinator.tileBoard(for: queue[0])
+        #expect(apple.tokenUnits == [["a", "p", "p", "l", "e"]])
+        #expect(apple.target == "apple")
+        let ringo = NewFlowCoordinator.tileBoard(for: queue[1])
+        #expect(ringo.tokenUnits == [["り", "ん", "ご"]])
+    }
+
+    @Test
+    func tileBoardChunksLongSubjectsWithinTokens() throws {
+        // 12 base units > the 10-tile cap → chunk length 2, re-grouped per
+        // token (never across the space), space itself is not a tile.
+        let board = try NewFlowCoordinator.tileBoard(for: self.makeMultiWordQueue()[0])
+        #expect(board.tokenUnits == [["cu", "tt", "in", "g"], ["bo", "ar", "d"]])
+        #expect(board.target == "cuttingboard")
+        #expect(board.unitCount == 7)
+    }
+
+    @Test
+    func tileBoardMergesSmallKanaIntoPrecedingUnit() throws {
+        let queue = try self.makeKanaEdgeQueue()
+        let kyou = NewFlowCoordinator.tileBoard(for: queue[0])
+        #expect(kyou.tokenUnits == [["きょ", "う"]])
+        let me = NewFlowCoordinator.tileBoard(for: queue[1])
+        #expect(me.unitCount == 1)
+    }
+
+    @Test
+    func singleUnitSubjectSkipsSpellStageAndStillCommits() async throws {
+        let queue = try [self.makeKanaEdgeQueue()[1]]
+        let spy = SpyStudyRepository()
+        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        // A 1-tile board is a free answer, so め gets no spell task…
+        #expect(c.tasks.map(\.kind) == [.recognize, .identify])
+        c.resolveRecognize(rating: .hard)
+        #expect(abs(c.progress - 0.5) < 0.0001)
+        c.resolveIdentify(correct: true)
+        // …and the word commits after 選字 clears.
+        #expect(c.finished)
+        #expect(c.clearedWords == 1)
+        #expect(c.progress == 1.0)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(spy.answers.map(\.rating) == ["困難"])
     }
 
     @Test
@@ -168,53 +235,37 @@ struct NewFlowCoordinatorTests {
         #expect(abs(c.progress - 1.0 / 9.0) < 0.0001)
     }
 
-    // MARK: - Seeded variants (no global alternation)
+    // MARK: - Seeded tile scrambles
 
     @Test
-    func spellShownIsDeterministicPerAttemptAndVaries() throws {
+    func tileUnitsArePermutationNotAnswer() throws {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
         let apple = queue[0]
-        // Deterministic: same (item, attempt) → same variant on re-render.
-        #expect(c.spellShown(for: apple, attempt: 0) == c.spellShown(for: apple, attempt: 0))
-        // Across attempts both the correct and a wrong variant must appear,
-        // and a wrong variant never equals the subject.
-        var sawCorrect = false
-        var sawWrong = false
-        for attempt in 0..<8 {
-            let shown = c.spellShown(for: apple, attempt: attempt)
-            if shown == "apple" {
-                sawCorrect = true
-            } else {
-                sawWrong = true
-                #expect(["appel", "aple"].contains(shown))
-            }
-        }
-        #expect(sawCorrect && sawWrong)
-        // Reading mode: variants are the subject or an on-device scramble of
-        // the same kana — never empty, always the same letters.
-        for attempt in 0..<8 {
-            let shown = c.spellShown(for: queue[1], attempt: attempt)
-            #expect(shown.map(String.init).sorted() == "りんご".map(String.init).sorted())
-        }
+        let units = c.tileUnits(for: apple, attempt: 0)
+        // Deterministic across re-renders.
+        #expect(units == c.tileUnits(for: apple, attempt: 0))
+        // A permutation of the subject's letters…
+        #expect(units.sorted() == "apple".map(String.init).sorted())
+        // …that never spells the answer outright.
+        #expect(units.joined() != "apple")
+        // Kana subjects tile the same way.
+        let kana = c.tileUnits(for: queue[1], attempt: 0)
+        #expect(kana.sorted() == "りんご".map(String.init).sorted())
+        #expect(kana.joined() != "りんご")
     }
 
     @Test
-    func tileLettersArePermutationNotAnswer() throws {
-        let queue = try self.makeQueue()
-        let c = NewFlowCoordinator(queue: queue)
-        let apple = queue[0]
-        let letters = c.tileLetters(for: apple, attempt: 0)
-        // Deterministic across re-renders.
-        #expect(letters == c.tileLetters(for: apple, attempt: 0))
-        // A permutation of the subject's letters…
-        #expect(letters.sorted() == "apple".map(String.init).sorted())
-        // …that never spells the answer outright.
-        #expect(letters.joined() != "apple")
-        // Kana subjects tile the same way.
-        let kana = c.tileLetters(for: queue[1], attempt: 0)
-        #expect(kana.sorted() == "りんご".map(String.init).sorted())
-        #expect(kana.joined() != "りんご")
+    func tileUnitsOfChunkedSubjectRebuildTheTarget() throws {
+        let board = try self.makeMultiWordQueue()[0]
+        let c = NewFlowCoordinator(queue: [board])
+        let units = c.tileUnits(for: board, attempt: 0)
+        let expected = NewFlowCoordinator.tileBoard(for: board)
+        // The pool is the board's chunks reshuffled — same multiset, never in
+        // solved order, and a later attempt reshuffles differently.
+        #expect(units.sorted() == expected.orderedUnits.sorted())
+        #expect(units.joined() != expected.target)
+        #expect((1...4).contains { c.tileUnits(for: board, attempt: $0) != units })
     }
 
     @Test
@@ -244,7 +295,7 @@ struct NewFlowCoordinatorTests {
         let c = NewFlowCoordinator(queue: queue, repository: spy)
         c.resolveRecognize(rating: .good)
         c.resolveIdentify(correct: true)
-        c.resolveSpellJudge(judgedRight: true)
+        c.resolveTiles(correct: true)
         #expect(c.finished)
         #expect(c.clearedWords == 1)
         await c.drainPendingWrites(within: .seconds(2))

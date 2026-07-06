@@ -1,6 +1,6 @@
 // NewFlow root (§III.P). Owns the NewFlowCoordinator, renders the
 // header + progress, then dispatches on the current interleaved task's
-// kind to RecognizeView / IdentifyView / SpellView / TilesView, and to
+// kind to RecognizeView / IdentifyView / TilesView, and to
 // NewDoneView once the queue drains. Wrong answers surface a
 // WordPeekSheet via coordinator.peek.
 
@@ -100,21 +100,10 @@ struct NewFlowView: View {
 
     private func captureReport() {
         guard let task = self.coord.current, !task.item.card.id.hasPrefix("atlas:") else { return }
-        let answer: String?
-        let shown: String?
-        switch task.kind {
-        case .recognize:
-            answer = self.coord.recRating?.rawValue
-            shown = nil
-        case .identify:
-            answer = self.coord.idPicked
-            shown = nil
-        case .spellJudge:
-            answer = self.coord.spJudge == .yes ? "yes" : self.coord.spJudge == .no ? "no" : nil
-            shown = self.coord.spellShown(for: task.item)
-        case .spellTiles:
-            answer = nil
-            shown = nil
+        let answer: String? = switch task.kind {
+        case .recognize: self.coord.recRating?.rawValue
+        case .identify: self.coord.idPicked
+        case .spellTiles: nil
         }
         self.reportDraft = StudyReportDraft(
             item: task.item,
@@ -122,7 +111,7 @@ struct NewFlowView: View {
             phase: task.kind.rawValue,
             selectedAnswer: answer,
             uiLang: self.settings.current.uiLang,
-            displayedSpelling: shown
+            displayedSpelling: nil
         )
     }
 
@@ -167,8 +156,6 @@ struct NewFlowView: View {
                     RecognizeView(coord: self.coord, item: task.item)
                 case .identify:
                     IdentifyView(coord: self.coord, item: task.item)
-                case .spellJudge:
-                    SpellView(coord: self.coord, item: task.item)
                 case .spellTiles:
                     TilesView(coord: self.coord, item: task.item)
                 }

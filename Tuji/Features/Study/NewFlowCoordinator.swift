@@ -43,8 +43,6 @@ final class NewFlowCoordinator {
     var recLocked: Bool = false
     var idPicked: String?
     var idLocked: Bool = false
-    var spJudge: JudgeAnswer?
-    var spLocked: Bool = false
     var tiLocked: Bool = false
 
     /// Surface to NewFlowView so it can present WordPeek for wrong answers.
@@ -68,9 +66,13 @@ final class NewFlowCoordinator {
     private var spellAttempts: [String: Int] = [:]
 
     /// Completed stage count (recognize taps + correct 選字 + correct 拼字)
-    /// out of 3n — requeued retries don't inflate the denominator, so the
-    /// header bar only ever moves forward.
+    /// out of `totalStages` — requeued retries don't inflate the denominator,
+    /// so the header bar only ever moves forward.
     private var stageClears = 0
+    /// Stages actually scheduled: 3 per word, minus the spell stage of
+    /// single-tile subjects (a 1-tile board is a free answer, so those words
+    /// finish after 選字).
+    private var totalStages: Int
 
     /// In-flight SRS writes (POST /api/study/answer) fired by commitLearned.
     /// NewDoneView drains these before reloading mastery so the just-learned
@@ -95,14 +97,17 @@ final class NewFlowCoordinator {
 
     init(queue: [StudyQueueItem], repository: StudyRepository = LiveStudyRepository.shared) {
         self.queue = queue
-        self.tasks = Self.initialSchedule(for: queue)
+        let tasks = Self.initialSchedule(for: queue)
+        self.tasks = tasks
+        self.totalStages = tasks.count
         self.repository = repository
         self.afterMutation()
     }
 
     /// rec@3i, id@3i+4, spell@3i+8, stable-sorted by position. Guarantees each
     /// word's stages stay ordered while neighbouring words interleave between
-    /// them (for w₀: 認識, then ~2 other tasks, then 選字, …).
+    /// them (for w₀: 認識, then ~2 other tasks, then 選字, …). Words whose
+    /// tile board has a single unit skip the spell stage entirely.
     private static func initialSchedule(for queue: [StudyQueueItem]) -> [NewStudyTask] {
         struct Slot {
             let pos: Int
@@ -116,7 +121,9 @@ final class NewFlowCoordinator {
         for (i, item) in queue.enumerated() {
             add(3 * i, NewStudyTask(item: item, kind: .recognize))
             add(3 * i + 4, NewStudyTask(item: item, kind: .identify))
-            add(3 * i + 8, NewStudyTask(item: item, kind: self.spellStageKind(for: item)))
+            if self.tileBoard(for: item).unitCount >= 2 {
+                add(3 * i + 8, NewStudyTask(item: item, kind: .spellTiles))
+            }
         }
         return scheduled
             .sorted { ($0.pos, $0.order) < ($1.pos, $1.order) }
@@ -128,9 +135,8 @@ final class NewFlowCoordinator {
     }
 
     var progress: Double {
-        let n = self.queue.count
-        guard n > 0 else { return 0 }
-        return Double(self.stageClears) / Double(3 * n)
+        guard self.totalStages > 0 else { return 0 }
+        return Double(self.stageClears) / Double(self.totalStages)
     }
 
     /// Stable identity for the current presentation: same task shown again
@@ -141,20 +147,23 @@ final class NewFlowCoordinator {
         let attempt = switch task.kind {
         case .recognize: 0
         case .identify: self.identifyAttempts[task.item.word.id] ?? 0
-        case .spellJudge, .spellTiles: self.spellAttempts[task.item.word.id] ?? 0
+        case .spellTiles: self.spellAttempts[task.item.word.id] ?? 0
         }
         return "\(task.id)#\(attempt)"
     }
 
     // MARK: - Queue mechanics
 
-    /// Pop the head after a completed stage. If it was the word's final stage,
-    /// flush its held-back SRS write.
+    /// Pop the head after a completed stage. If the word has no tasks left,
+    /// flush its held-back SRS write. "No tasks left" instead of "spell done"
+    /// because stage counts vary per word (single-tile subjects skip spell);
+    /// a wrong answer keeps its task queued, so this never commits early.
     private func completeCurrentTask() {
         guard let task = self.tasks.first else { return }
         self.tasks.removeFirst()
         self.stageClears += 1
-        if task.kind == .spellJudge || task.kind == .spellTiles {
+        let wordId = task.item.word.id
+        if !self.tasks.contains(where: { $0.item.word.id == wordId }) {
             self.clearedWords += 1
             self.commitLearned(task.item)
         }
@@ -187,7 +196,7 @@ final class NewFlowCoordinator {
     private func normalizeHead() {
         var moved = 0
         while let head = tasks.first,
-              head.kind == .spellJudge || head.kind == .spellTiles,
+              head.kind == .spellTiles,
               !self.identifyCleared.contains(head.item.word.id),
               moved <= self.tasks.count
         {
@@ -292,61 +301,12 @@ final class NewFlowCoordinator {
         self.identifyAttempts[item.word.id] ?? 0
     }
 
-    // MARK: - 拼字 (spell judge)
-
-    /// Correct-or-wrong variant seeded per (item, attempt) — see the
-    /// attempt-parameterised core in NewFlowTasks.swift.
-    func spellShown(for item: StudyQueueItem) -> String {
-        self.spellShown(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
-    }
-
-    func spellJudge(shown: String, says: JudgeAnswer) {
-        guard !self.spLocked, let task = current, task.kind == .spellJudge else { return }
-        self.spJudge = says
-        self.spLocked = true
-        let shownIsCorrect = shown == Self.spellSubject(for: task.item)
-        let judgedRight = (says == .yes) == shownIsCorrect
-        Task {
-            try? await Task.sleep(for: .milliseconds(800))
-            if judgedRight {
-                self.spLocked = false
-                self.spJudge = nil
-                self.resolveSpellJudge(judgedRight: true)
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
-            } else {
-                // Wrong: stay frozen (keep spLocked / spJudge so the 正解 line
-                // and colour stay) and surface the peek. Requeue is deferred
-                // to advanceFromPeek().
-                self.resolveSpellJudge(judgedRight: false)
-                UINotificationFeedbackGenerator().notificationOccurred(.warning)
-            }
-        }
-    }
-
-    /// Synchronous core for tests.
-    func resolveSpellJudge(judgedRight: Bool) {
-        guard let task = current, task.kind == .spellJudge else { return }
-        if judgedRight {
-            self.combo += 1
-            self.completeCurrentTask()
-        } else {
-            self.combo = 0
-            self.mistakes[task.item.word.id, default: 0] += 1
-            self.peek = task.item.word
-        }
-    }
-
-    var spellShownIsCorrect: Bool {
-        guard let task = current, task.kind == .spellJudge else { return false }
-        return self.spellShown(for: task.item) == Self.spellSubject(for: task.item)
-    }
-
     // MARK: - 拼字塊 (letter tiles)
 
     /// Scrambled tiles, seeded per (item, attempt) — see the core in
     /// NewFlowTasks.swift.
-    func tileLetters(for item: StudyQueueItem) -> [String] {
-        self.tileLetters(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
+    func tileUnits(for item: StudyQueueItem) -> [String] {
+        self.tileUnits(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
     }
 
     /// Called by TilesView once every slot is filled.
@@ -395,11 +355,6 @@ final class NewFlowCoordinator {
             self.idPicked = nil
             self.idLocked = false
             self.identifyAttempts[task.item.word.id, default: 0] += 1
-            self.requeueCurrentTask()
-        case .spellJudge:
-            self.spJudge = nil
-            self.spLocked = false
-            self.spellAttempts[task.item.word.id, default: 0] += 1
             self.requeueCurrentTask()
         case .spellTiles:
             self.tiLocked = false

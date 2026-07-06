@@ -1,12 +1,14 @@
 // 拼字塊 — the production step of NewFlow. Shows the image + 中文 (never the
-// word) and a scrambled tile per letter; the user taps tiles into slots to
+// word) and a scrambled tile per unit; the user taps tiles into slots to
 // spell the word from recall. Auto-checks when every slot is filled: correct
 // advances (and commits the word's SRS write upstream), wrong freezes the
 // board red and surfaces the WordPeek sheet — the retry comes back later with
 // a fresh scramble (coordinator bumps the attempt on advanceFromPeek).
 //
-// Only short single-token subjects get this task; longer or multi-word ones
-// keep the judge task (see NewFlowCoordinator.spellStageKind).
+// Every word takes this task: the TileBoard splits the subject per whitespace
+// token (one slot row each — spaces are never tiles) and re-chunks units so
+// long subjects stay within a 10-tile board. Single-unit subjects skip the
+// spell stage entirely (see NewFlowCoordinator.initialSchedule).
 
 import Nuke
 import NukeUI
@@ -20,29 +22,34 @@ struct TilesView: View {
     @Environment(WordsStore.self) private var words
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Indices into `letters`, in tap order. Index-based so duplicate letters
+    /// Indices into `units`, in tap order. Index-based so duplicate units
     /// stay distinguishable. Local state — the flow view keys this whole view
     /// by (task, attempt), so a requeued task starts clean.
     @State private var picked: [Int] = []
 
-    private var letters: [String] {
-        self.coord.tileLetters(for: self.item)
+    private var units: [String] {
+        self.coord.tileUnits(for: self.item)
     }
 
+    private var board: TileBoard {
+        NewFlowCoordinator.tileBoard(for: self.item)
+    }
+
+    /// The original subject (spaces intact) — the 正解 reveal shows this.
     private var subject: String {
         self.coord.spellSubject(for: self.item)
     }
 
     private var assembled: String {
-        self.picked.map { self.letters[$0] }.joined()
+        self.picked.map { self.units[$0] }.joined()
     }
 
     private var boardFull: Bool {
-        self.picked.count == self.letters.count
+        self.picked.count == self.units.count
     }
 
     private var isCorrect: Bool {
-        self.assembled == self.subject
+        self.assembled == self.board.target
     }
 
     /// Result colours apply once the board is full (the coordinator locks at
@@ -142,12 +149,17 @@ struct TilesView: View {
         .clipShape(.rect(topLeadingRadius: Radius.xl, topTrailingRadius: Radius.xl))
     }
 
-    /// Answer slots — one box per letter; tapping a filled box takes that
-    /// letter back out (before the board locks).
+    /// Answer slots — one box per unit, one row per token (the visual stand-in
+    /// for the space, which is never a tile); tapping a filled box takes that
+    /// unit back out (before the board locks).
     private var slotsRow: some View {
-        HStack(spacing: Space.s1) {
-            ForEach(0..<self.letters.count, id: \.self) { slot in
-                self.slotBox(at: slot)
+        VStack(spacing: Space.s2) {
+            ForEach(0..<self.board.tokenUnits.count, id: \.self) { row in
+                HStack(spacing: Space.s1) {
+                    ForEach(self.slotRange(ofRow: row), id: \.self) { slot in
+                        self.slotBox(at: slot)
+                    }
+                }
             }
         }
         // After the wrong-freeze, reveal the correct spelling under the red
@@ -163,26 +175,35 @@ struct TilesView: View {
         .padding(.bottom, Space.s2)
     }
 
+    /// Flat slot indices covered by a token row (picked stays one flat list).
+    private func slotRange(ofRow row: Int) -> Range<Int> {
+        let counts = self.board.tokenUnits.map(\.count)
+        let start = counts.prefix(row).reduce(0, +)
+        return start..<(start + counts[row])
+    }
+
     @ViewBuilder
     private func slotBox(at slot: Int) -> some View {
-        let letter: String? = slot < self.picked.count ? self.letters[self.picked[slot]] : nil
+        let unit: String? = slot < self.picked.count ? self.units[self.picked[slot]] : nil
         Button {
             guard !self.coord.tiLocked, slot < self.picked.count else { return }
             self.picked.remove(at: slot)
         } label: {
-            Text(letter ?? " ")
+            Text(unit ?? " ")
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .foregroundStyle(self.slotFg)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: 52)
                 .frame(height: 46)
-                .background(self.slotBg(filled: letter != nil), in: .rect(cornerRadius: Radius.md))
+                .background(self.slotBg(filled: unit != nil), in: .rect(cornerRadius: Radius.md))
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(self.slotBorder(filled: letter != nil), lineWidth: 1.5)
+                        .stroke(self.slotBorder(filled: unit != nil), lineWidth: 1.5)
                 )
         }
         .buttonStyle(.plain)
-        .disabled(self.coord.tiLocked || letter == nil)
+        .disabled(self.coord.tiLocked || unit == nil)
     }
 
     private var slotFg: Color {
@@ -205,16 +226,20 @@ struct TilesView: View {
     }
 
     /// The scrambled tiles. A used tile stays in place but dims, so the board
-    /// doesn't reflow under the user's finger.
+    /// doesn't reflow under the user's finger. Multi-unit tiles (chunked long
+    /// words, merged yōon kana) get fewer, wider columns.
     private var tilePool: some View {
-        LazyVGrid(
+        let hasWideUnits = self.units.contains { $0.count > 1 }
+        return LazyVGrid(
             columns: Array(
                 repeating: GridItem(.flexible(), spacing: Space.s2),
-                count: max(4, min(6, self.letters.count))
+                count: hasWideUnits
+                    ? max(3, min(5, self.units.count))
+                    : max(4, min(6, self.units.count))
             ),
             spacing: Space.s2
         ) {
-            ForEach(0..<self.letters.count, id: \.self) { idx in
+            ForEach(0..<self.units.count, id: \.self) { idx in
                 self.tile(at: idx)
             }
         }
@@ -228,8 +253,10 @@ struct TilesView: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             self.picked.append(idx)
         } label: {
-            Text(self.letters[idx])
+            Text(self.units[idx])
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
                 .foregroundStyle(used ? .tujiInk4 : .tujiInk)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
