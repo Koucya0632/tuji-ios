@@ -66,8 +66,8 @@ struct PaywallView: View {
     private var benefits: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             self.benefitRow(icon: "square.stack.3d.up.fill", text: "自製圖鑑容量提升至 300 格")
+            self.benefitRow(icon: "sparkles", text: "AI 辨識次數提升至每月 500 次")
             self.benefitRow(icon: "scope", text: "高精度 AI 辨識（每月 30 次）")
-            self.benefitRow(icon: "rectangle.slash", text: "無廣告生成學習卡片")
             self.benefitRow(icon: "bolt.fill", text: "優先支援與後續 Pro 功能")
         }
         .padding(Space.s4)

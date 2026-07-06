@@ -156,10 +156,19 @@ struct AtlasCaptureView: View {
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk3)
-                if let remaining = self.vm.remainingPrimaryThisMonth {
-                    Text("本月 AI 辨識剩 \(remaining) 次")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk4)
+                // Free and Pro allowances differ (30 vs 500), so the hint names
+                // the plan and its own limit instead of a shared count.
+                if let remaining = self.vm.remainingPrimaryThisMonth,
+                   let limit = self.vm.primaryLimitPerMonth {
+                    if self.vm.isPro {
+                        Text("Pro：本月 AI 辨識剩 \(remaining)／\(limit) 次")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk4)
+                    } else {
+                        Text("免費版：本月 AI 辨識剩 \(remaining)／\(limit) 次")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk4)
+                    }
                 }
             }
 
@@ -363,21 +372,14 @@ struct AtlasCaptureView: View {
                 fullWidth: true,
                 icon: "checkmark"
             ) {
-                // Enqueue (behind the Free rewarded ad) and close the cover
-                // immediately — the user never waits here.
+                // Enqueue and close the cover immediately — the user never
+                // waits here.
                 Task {
                     await self.vm.submit()
                     self.dismiss()
                 }
             }
             .disabled(!self.vm.canSubmit)
-
-            if self.vm.adsRequiredBeforeGeneration {
-                Text("免費版會先播一小段廣告，看完即開始生成（Pro 免廣告）")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 

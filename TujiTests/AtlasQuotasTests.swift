@@ -21,7 +21,6 @@ struct AtlasQuotasTests {
             atlasSlotsLimit: slots,
             primaryAiSoftLimitMonthly: primaryLimit,
             precisionAiLimitMonthly: precisionLimit,
-            adsRequiredForCardGeneration: plan == "free",
             subscriptionExpiresAt: nil,
             usage: AtlasUsage(
                 atlasSlots: slotsUsed,

@@ -5,7 +5,6 @@
 // the only way to receive APNs registration callbacks from a SwiftUI
 // lifecycle.
 
-import GoogleMobileAds
 import GoogleSignIn
 import SwiftUI
 
@@ -18,9 +17,6 @@ struct TujiApp: App {
     /// before SwiftUI mounts the view tree.
     init() {
         TujiImagePipeline.install()
-        // Kick off the Google Mobile Ads SDK (rewarded ads for the Free
-        // card-generation gate). Requires GADApplicationIdentifier in Info.plist.
-        MobileAds.shared.start(completionHandler: nil)
     }
 
     @Environment(\.scenePhase) private var scenePhase

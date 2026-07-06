@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CD092F8C2FF597C100F902D8 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = CD092F8B2FF597C100F902D8 /* GoogleMobileAds */; };
 		CD3365FA2FD81B1200EF2A26 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = CD3365F92FD81B1200EF2A26 /* Supabase */; };
 		CD3365FD2FD81B3500EF2A26 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = CD3365FC2FD81B3500EF2A26 /* GoogleSignIn */; };
 		CD3365FF2FD81B3500EF2A26 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CD3365FE2FD81B3500EF2A26 /* GoogleSignInSwift */; };
@@ -59,7 +58,6 @@
 				CD3366042FD81B6200EF2A26 /* NukeUI in Frameworks */,
 				CD3365FF2FD81B3500EF2A26 /* GoogleSignInSwift in Frameworks */,
 				CD3366072FD81B8C00EF2A26 /* KeychainAccess in Frameworks */,
-				CD092F8C2FF597C100F902D8 /* GoogleMobileAds in Frameworks */,
 				CD3365FA2FD81B1200EF2A26 /* Supabase in Frameworks */,
 				CD3365FD2FD81B3500EF2A26 /* GoogleSignIn in Frameworks */,
 				CD3366022FD81B6200EF2A26 /* Nuke in Frameworks */,
@@ -130,7 +128,6 @@
 				CD3366062FD81B8C00EF2A26 /* KeychainAccess */,
 				CD33660B2FE9000100EF2A26 /* FirebaseCore */,
 				CD33660C2FE9000100EF2A26 /* FirebaseCrashlytics */,
-				CD092F8B2FF597C100F902D8 /* GoogleMobileAds */,
 			);
 			productName = Tuji;
 			productReference = CD3365C62FD8134A00EF2A26 /* Tuji.app */;
@@ -193,7 +190,6 @@
 				CD3366002FD81B6200EF2A26 /* XCRemoteSwiftPackageReference "Nuke" */,
 				CD3366052FD81B8C00EF2A26 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				CD3366082FE9000100EF2A26 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-				CD092F8A2FF597C100F902D8 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CD3365C72FD8134A00EF2A26 /* Products */;
@@ -619,14 +615,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		CD092F8A2FF597C100F902D8 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 13.6.0;
-			};
-		};
 		CD3365F82FD81B1200EF2A26 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift";
@@ -670,11 +658,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		CD092F8B2FF597C100F902D8 /* GoogleMobileAds */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CD092F8A2FF597C100F902D8 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
-			productName = GoogleMobileAds;
-		};
 		CD3365F92FD81B1200EF2A26 /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CD3365F82FD81B1200EF2A26 /* XCRemoteSwiftPackageReference "supabase-swift" */;

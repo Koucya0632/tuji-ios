@@ -79,6 +79,11 @@ final class AtlasCaptureVM {
         AtlasQuotas.remainingPrimaryAi(self.store.entitlement)
     }
 
+    /// The tier's monthly ordinary-AI allowance (Free 30 / Pro 500); nil = unknown.
+    var primaryLimitPerMonth: Int? {
+        self.store.entitlement?.primaryAiSoftLimitMonthly
+    }
+
     var isPro: Bool {
         self.store.entitlement?.isPro ?? false
     }
@@ -87,13 +92,6 @@ final class AtlasCaptureVM {
     /// instead of spending a call the server would 402.
     var precisionAvailable: Bool {
         AtlasQuotas.precisionAvailable(self.store.entitlement)
-    }
-
-    /// Free-tier users watch a rewarded ad before card generation (see
-    /// submit()). Surfaced so the confirm form can say so *before* the tap —
-    /// an unannounced video ad right after 確認並生成卡片 reads as a hijack.
-    var adsRequiredBeforeGeneration: Bool {
-        self.store.entitlement?.adsRequiredForCardGeneration == true
     }
 
     /// 確認並生成卡片 enabled: not busy and both editable names filled.
@@ -106,13 +104,9 @@ final class AtlasCaptureVM {
     // MARK: - Pipeline
 
     /// Fresh tier / usage so capture gating and remaining-quota copy are current
-    /// when the sheet opens, plus a rewarded-ad warm-up for Free users so the
-    /// card-gen gate is instant.
+    /// when the sheet opens.
     func prepareOnOpen() async {
         await self.store.refreshEntitlement()
-        if self.store.entitlement?.adsRequiredForCardGeneration == true {
-            Ads.rewarded.preload()
-        }
     }
 
     /// Resolve a PhotosPicker selection to raw bytes for the crop step.
@@ -240,15 +234,10 @@ final class AtlasCaptureVM {
     }
 
     /// Hand the heavy tail (confirm → createCards → sync) to the background
-    /// queue. Free watches a rewarded ad first; Pro skips it (that's the "無廣告"
-    /// benefit) — best-effort, never blocks the card (pricing plan §3). Returns
-    /// once the job is enqueued so the caller can dismiss the cover; the 圖鑑
-    /// page shows a 製作中 placeholder until the queue finishes.
+    /// queue. Returns once the job is enqueued so the caller can dismiss the
+    /// cover; the 圖鑑 page shows a 製作中 placeholder until the queue finishes.
     func submit() async {
         guard let image = self.uploadedImage else { return }
-        if self.store.entitlement?.adsRequiredForCardGeneration == true {
-            await Ads.rewarded.showRewardedAd()
-        }
         AtlasCaptureQueue.shared.enqueue(
             imageId: image.id,
             payload: self.confirmPayload,
