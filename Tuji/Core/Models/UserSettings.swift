@@ -13,8 +13,8 @@ enum LearningDirection: String, Codable, CaseIterable {
     case zhEn = "zh-en"
     case zhJa = "zh-ja"
 
-    var targetLanguage: String {
-        self == .zhJa ? "ja" : "en"
+    var targetLanguage: TargetLanguage {
+        self == .zhJa ? .ja : .en
     }
 
     var title: String {

@@ -5,8 +5,10 @@ import SwiftUI
 
 struct PronunciationButton: View {
     let text: String
-    /// Explicit override; `nil` means follow the user's 發音口音 setting.
-    var voice: SpeechService.Voice?
+    /// The word's own language (`wordLanguage`); wins over the session
+    /// direction when picking the voice. `nil` follows the learning
+    /// direction + 發音口音 setting.
+    var language: TargetLanguage?
     /// Pre-generated clips keyed by locale ("en-US"/"en-GB"/"ja-JP"). When the
     /// resolved voice has a clip it plays that; otherwise SpeechService falls
     /// back to on-device synthesis of `text`.
@@ -15,10 +17,8 @@ struct PronunciationButton: View {
 
     @Environment(SettingsStore.self) private var settings
 
-    /// Resolve the accent: explicit param wins, otherwise the shared
-    /// settings-based default.
     private var effectiveVoice: SpeechService.Voice {
-        self.voice ?? .preferred(for: self.settings.current)
+        .preferred(for: self.settings.current, language: self.language)
     }
 
     var body: some View {

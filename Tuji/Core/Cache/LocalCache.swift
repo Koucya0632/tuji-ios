@@ -18,26 +18,32 @@ final class LocalCache {
     static let shared = LocalCache()
 
     private(set) var favoriteIds: Set<String>
-    private var learnedByLanguage: [String: Set<String>]
+    private var learnedByLanguage: [TargetLanguage: Set<String>]
     private(set) var recentSearches: [String]
     let sessionId: String
 
     private let favsKey = "tuji.cache.favorites"
-    private let learnedKey = "tuji.cache.learned"
-    private let learnedEnKey = "tuji.cache.learned.en"
-    private let learnedJaKey = "tuji.cache.learned.ja"
+    private let legacyLearnedKey = "tuji.cache.learned"
     private let recentKey = "tuji.cache.recentSearches"
     private let sessionKey = "tuji.cache.sessionId"
     private let maxRecent = 10
 
+    /// "tuji.cache.learned.en" / ".ja" — rawValue keeps the pre-enum keys.
+    private static func learnedKey(for language: TargetLanguage) -> String {
+        "tuji.cache.learned.\(language.rawValue)"
+    }
+
     private init() {
         let d = UserDefaults.standard
         favoriteIds = Set((d.array(forKey: favsKey) as? [String]) ?? [])
-        let legacyEnglish = Set((d.array(forKey: learnedKey) as? [String]) ?? [])
-        let english = Set((d.array(forKey: learnedEnKey) as? [String]) ?? [])
-            .union(legacyEnglish)
-        let japanese = Set((d.array(forKey: learnedJaKey) as? [String]) ?? [])
-        learnedByLanguage = ["en": english, "ja": japanese]
+        var learned: [TargetLanguage: Set<String>] = [:]
+        for language in TargetLanguage.allCases {
+            learned[language] = Set((d.array(forKey: Self.learnedKey(for: language)) as? [String]) ?? [])
+        }
+        // Pre-split installs stored a single (English) learned list.
+        learned[.en, default: []]
+            .formUnion(Set((d.array(forKey: legacyLearnedKey) as? [String]) ?? []))
+        learnedByLanguage = learned
         recentSearches = (d.array(forKey: recentKey) as? [String]) ?? []
         if let existing = d.string(forKey: sessionKey) {
             sessionId = existing
@@ -82,7 +88,7 @@ final class LocalCache {
     /// and settings are intentionally left untouched.
     func clearLearned() {
         guard self.learnedByLanguage.values.contains(where: { !$0.isEmpty }) else { return }
-        self.learnedByLanguage = ["en": [], "ja": []]
+        self.learnedByLanguage = [:]
         persistLearned()
     }
 
@@ -133,18 +139,16 @@ final class LocalCache {
     }
 
     private func persistLearned() {
-        UserDefaults.standard.set(
-            Array(self.learnedByLanguage["en"] ?? []),
-            forKey: self.learnedEnKey
-        )
-        UserDefaults.standard.set(
-            Array(self.learnedByLanguage["ja"] ?? []),
-            forKey: self.learnedJaKey
-        )
-        UserDefaults.standard.removeObject(forKey: self.learnedKey)
+        for language in TargetLanguage.allCases {
+            UserDefaults.standard.set(
+                Array(self.learnedByLanguage[language] ?? []),
+                forKey: Self.learnedKey(for: language)
+            )
+        }
+        UserDefaults.standard.removeObject(forKey: self.legacyLearnedKey)
     }
 
-    private var currentTargetLanguage: String {
+    private var currentTargetLanguage: TargetLanguage {
         SettingsStore.shared.current.learningDirection.targetLanguage
     }
 }

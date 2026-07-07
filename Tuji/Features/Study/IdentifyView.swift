@@ -27,11 +27,13 @@ struct IdentifyView: View {
     private var bubble: some View {
         // 3+ consecutive correct answers put the mascot in cheer — a small
         // momentum reward wired straight to existing art.
-        MascotSpeechBubble(
+        // The quizzed word's own language, so a JA custom word asks 日文 even
+        // if the session direction disagrees; untagged words follow the session.
+        let language = self.item.word.wordLanguage
+            ?? self.settings.current.learningDirection.targetLanguage
+        return MascotSpeechBubble(
             pose: self.coord.combo >= 3 ? .cheer : .think,
-            text: self.settings.current.learningDirection == .zhJa
-                ? "對應的日文是哪個？"
-                : "對應的英文是哪個？"
+            text: language == .ja ? "對應的日文是哪個？" : "對應的英文是哪個？"
         )
     }
 
@@ -68,6 +70,7 @@ struct IdentifyView: View {
                 Spacer()
                 PronunciationButton(
                     text: self.item.word.word,
+                    language: self.item.word.wordLanguage,
                     audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                     size: 36
                 )

@@ -59,7 +59,7 @@ final class AtlasStore {
         data: Data,
         filename: String = "atlas.webp",
         mimeType: String = "image/webp",
-        targetLanguage: String? = nil
+        targetLanguage: TargetLanguage? = nil
     ) async throws
         -> AtlasUploadResponse
     {

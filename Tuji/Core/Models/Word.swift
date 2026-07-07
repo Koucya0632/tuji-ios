@@ -17,7 +17,7 @@ struct CardWord: Codable, Identifiable, Hashable {
     let category: String
     let pronunciation: String
     let reading: String?
-    let targetLanguage: String?
+    let targetLanguage: TargetLanguage?
     /// Pre-generated pronunciation clips keyed by locale ("en-US" / "en-GB" /
     /// "ja-JP"). The server only sends the locales relevant to the active
     /// learning direction; nil when no audio has been generated.
@@ -35,7 +35,7 @@ struct CardWord: Codable, Identifiable, Hashable {
         category: String,
         pronunciation: String,
         reading: String? = nil,
-        targetLanguage: String? = nil,
+        targetLanguage: TargetLanguage? = nil,
         audioUrls: [String: String]? = nil,
         detail: Word? = nil
     ) {
@@ -74,7 +74,7 @@ struct Word: Codable, Identifiable, Hashable {
     let partOfSpeech: String?
     let pronunciation: String?
     let reading: String?
-    let targetLanguage: String?
+    let targetLanguage: TargetLanguage?
     let audioUrl: String?
     /// Per-locale pronunciation clips ("en-US" / "en-GB" / "ja-JP"); superset
     /// of `audioUrl`, which mirrors the en-US clip.

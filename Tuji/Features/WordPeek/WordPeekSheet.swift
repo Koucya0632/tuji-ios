@@ -171,7 +171,12 @@ struct WordPeekSheet: View {
             Spacer()
             VStack(spacing: Space.s2) {
                 FavoriteButton(wordId: self.word.id, size: 44)
-                PronunciationButton(text: self.word.word, audioUrls: self.word.audioUrls, size: 44)
+                PronunciationButton(
+                    text: self.word.word,
+                    language: self.word.wordLanguage,
+                    audioUrls: self.word.audioUrls,
+                    size: 44
+                )
             }
         }
     }

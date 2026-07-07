@@ -37,15 +37,15 @@ struct RecognizeView: View {
         .task { await self.autoPlay() }
     }
 
-    private var isJa: Bool {
-        (self.detail?.targetLanguage ?? self.item.word.targetLanguage) == "ja"
+    private var wordLanguage: TargetLanguage? {
+        self.detail?.wordLanguage ?? self.item.word.wordLanguage
     }
 
     /// The first example that has a sentence in the learning language — JA
     /// entries missing `target` teach nothing, so they're skipped.
     private var teachExample: (sentence: String, zh: String?)? {
         for ex in self.detail?.examples ?? [] {
-            let sentence = ex.target ?? (self.isJa ? "" : ex.en)
+            let sentence = ex.target ?? (self.wordLanguage == .ja ? "" : ex.en)
             if !sentence.isEmpty {
                 return (sentence, ex.zh)
             }
@@ -58,7 +58,7 @@ struct RecognizeView: View {
     private func autoPlay() async {
         try? await Task.sleep(for: .milliseconds(300))
         guard !Task.isCancelled else { return }
-        let voice = SpeechService.Voice.preferred(for: self.settings.current)
+        let voice = SpeechService.Voice.preferred(for: self.settings.current, language: self.wordLanguage)
         let audioUrls = self.words.find(id: self.item.word.id)?.audioUrls
             ?? self.detail?.audioUrls
         SpeechService.shared.play(
@@ -81,6 +81,7 @@ struct RecognizeView: View {
                     Spacer()
                     PronunciationButton(
                         text: self.item.word.word,
+                        language: self.wordLanguage,
                         audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                         size: 44
                     )
@@ -133,7 +134,7 @@ struct RecognizeView: View {
                 Spacer(minLength: Space.s2)
                 PronunciationButton(
                     text: example.sentence,
-                    voice: self.isJa ? .japanese : nil,
+                    language: self.wordLanguage,
                     size: 32
                 )
             }

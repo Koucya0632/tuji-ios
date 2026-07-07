@@ -7,7 +7,7 @@ protocol AtlasRepository {
         data: Data,
         filename: String,
         mimeType: String,
-        targetLanguage: String?
+        targetLanguage: TargetLanguage?
     ) async throws
         -> AtlasUploadResponse
     func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse
@@ -37,13 +37,13 @@ struct LiveAtlasRepository: AtlasRepository {
         data: Data,
         filename: String,
         mimeType: String,
-        targetLanguage: String?
+        targetLanguage: TargetLanguage?
     ) async throws
         -> AtlasUploadResponse
     {
         var fields: [String: String] = [:]
         if let targetLanguage {
-            fields["targetLanguage"] = targetLanguage
+            fields["targetLanguage"] = targetLanguage.rawValue
         }
         return try await self.api.upload(
             .atlasImages(limit: 30),

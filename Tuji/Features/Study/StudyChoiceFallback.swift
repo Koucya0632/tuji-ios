@@ -50,10 +50,11 @@ func studyChoices(for item: StudyQueueItem, pool: [CardWord], variant: Int = 0) 
         admit(label)
     }
 
-    // Top up from the local dictionary, same-language first.
+    // Top up from the local dictionary, same-language first. `wordLanguage`
+    // so untagged custom words still land in the right half of the pool.
     if distractors.count < 3 {
-        if let lang = item.word.targetLanguage {
-            for word in pool.filter({ $0.targetLanguage == lang }).shuffled(using: &rng) {
+        if let lang = item.word.wordLanguage {
+            for word in pool.filter({ $0.wordLanguage == lang }).shuffled(using: &rng) {
                 admit(word.word)
             }
         }

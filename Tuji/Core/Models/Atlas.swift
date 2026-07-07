@@ -26,7 +26,7 @@ struct AtlasImagesResponse: Decodable {
 
 struct AtlasUploadResponse: Decodable {
     let duplicate: Bool?
-    let targetLanguage: String?
+    let targetLanguage: TargetLanguage?
     let image: AtlasImageSummary
     let job: AtlasRecognitionJobSummary?
     /// Primary candidates now come back inline with the upload (recognition runs
@@ -100,7 +100,7 @@ struct AtlasRecognitionResponse: Decodable {
 
 struct AtlasConfirmPayload: Codable {
     let selectedCandidateId: String?
-    let targetLanguage: String?
+    let targetLanguage: TargetLanguage?
     let primaryLabel: String
     let fineLabel: String?
     let lemma: String
@@ -112,7 +112,7 @@ struct AtlasConfirmPayload: Codable {
 struct AtlasItem: Decodable, Hashable, Identifiable {
     let id: String
     let imageId: String
-    let targetLanguage: String
+    let targetLanguage: TargetLanguage
     let canonicalWordId: String?
     let primaryLabel: String
     let fineLabel: String?
@@ -178,7 +178,7 @@ struct AtlasCardState: Decodable, Hashable {
 
 struct AtlasMasteryEntry: Decodable, Hashable {
     let itemId: String
-    let targetLanguage: String
+    let targetLanguage: TargetLanguage
     let mastery: Double
     let lastReviewedAt: String?
     let reviewCount: Int

@@ -182,7 +182,7 @@ struct WordDetailSections: View {
     private func examplesCard(_ examples: [WordExample]) -> some View {
         VStack(spacing: Space.s3) {
             ForEach(Array(examples.prefix(3).enumerated()), id: \.offset) { _, ex in
-                let sentence = ex.target ?? (word.targetLanguage == "ja" ? "" : ex.en)
+                let sentence = ex.target ?? (word.wordLanguage == .ja ? "" : ex.en)
                 VStack(alignment: .leading, spacing: Space.s1) {
                     HStack(alignment: .top, spacing: Space.s2) {
                         Text(sentence)
@@ -191,7 +191,7 @@ struct WordDetailSections: View {
                         Spacer(minLength: Space.s2)
                         PronunciationButton(
                             text: sentence,
-                            voice: word.targetLanguage == "ja" ? .japanese : nil,
+                            language: word.wordLanguage,
                             size: 32
                         )
                     }

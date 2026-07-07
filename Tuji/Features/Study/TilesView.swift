@@ -112,6 +112,7 @@ struct TilesView: View {
                 Spacer()
                 PronunciationButton(
                     text: self.item.word.word,
+                    language: self.item.word.wordLanguage,
                     audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                     size: 36
                 )

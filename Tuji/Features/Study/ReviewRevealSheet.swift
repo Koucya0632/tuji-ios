@@ -107,6 +107,7 @@ struct ReviewRevealSheet: View {
                 FavoriteButton(wordId: self.item.word.id, size: 44)
                 PronunciationButton(
                     text: self.item.word.word,
+                    language: self.item.word.wordLanguage,
                     audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                     size: 44
                 )

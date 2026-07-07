@@ -216,7 +216,7 @@ extension WordDetailPage {
                 }
             }
             Spacer()
-            PronunciationButton(text: w.word, audioUrls: w.audioUrls, size: 48)
+            PronunciationButton(text: w.word, language: w.wordLanguage, audioUrls: w.audioUrls, size: 48)
         }
     }
 
