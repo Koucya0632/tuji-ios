@@ -294,7 +294,7 @@ struct AtlasCaptureView: View {
                     self.vm.showPaywall = true
                 }
             } label: {
-                self.smallActionLabel("高精度", icon: "scope")
+                self.precisionActionLabel
             }
             .buttonStyle(.plain)
             .disabled(self.vm.busy != nil)
@@ -305,6 +305,26 @@ struct AtlasCaptureView: View {
         HStack(spacing: 5) {
             Image(systemName: icon)
             Text(title)
+        }
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(.tujiInk)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Space.s3)
+        .background(.tujiBg, in: .rect(cornerRadius: Radius.md))
+    }
+
+    /// 高精度 label. Free always reads 「高精度升級」 — the tap opens the
+    /// paywall, so the button says what it is.
+    private var precisionActionLabel: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "scope")
+            // A ternary here would infer String and skip the uiLang switch —
+            // branch so both stay LocalizedStringKey.
+            if self.vm.precisionAvailable {
+                Text("高精度")
+            } else {
+                Text("高精度升級")
+            }
         }
         .font(.system(size: 13, weight: .semibold))
         .foregroundStyle(.tujiInk)

@@ -4666,6 +4666,16 @@
     "高精度 AI 辨識（每月 30 次）" : {
 
     },
+    "高精度升級" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高精度升级"
+          }
+        }
+      }
+    },
     "點「學新字」認識新單字，用「復習」複習快忘記的字。" : {
       "localizations" : {
         "zh-Hans" : {
