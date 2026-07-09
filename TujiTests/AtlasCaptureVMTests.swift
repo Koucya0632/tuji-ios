@@ -53,22 +53,26 @@ struct AtlasCaptureVMTests {
         let vm = AtlasCaptureVM()
         let coarse = try self.candidate(id: "coarse", level: "primary", label: "animal", rank: 1)
         let fine = try self.candidate(id: "fine", level: "fine", label: "tabby cat", rank: 2)
-        vm.applyCandidates([fine, coarse])
+        vm.applyCandidates([fine, coarse], mode: .primary)
         #expect(vm.candidates.map(\.id) == ["coarse", "fine"])
         // The fine candidate wins the auto-apply even though it ranks later.
         #expect(vm.selectedCandidateId == "fine")
         #expect(vm.lemma == "tabby cat")
-        #expect(vm.successMessage != nil)
+        // A successful recognition shows no banner; it just marks the mode active.
+        #expect(vm.successMessage == nil)
+        #expect(vm.activeMode == .primary)
     }
 
     @Test
     func applyCandidatesWithEmptyListLeavesFormAlone() {
         let vm = AtlasCaptureVM()
         vm.lemma = "typed"
-        vm.applyCandidates([])
+        vm.applyCandidates([], mode: .escalate)
         #expect(vm.lemma == "typed")
         #expect(vm.selectedCandidateId == nil)
+        // An empty result still surfaces the manual-entry guidance.
         #expect(vm.successMessage != nil)
+        #expect(vm.activeMode == .escalate)
     }
 
     @Test

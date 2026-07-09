@@ -77,11 +77,6 @@ private struct TujiStatusToast: View {
                     .fill(self.style.tint.opacity(0.12))
                     .frame(width: 48, height: 48)
 
-                ProgressView()
-                    .controlSize(.regular)
-                    .tint(self.style.tint)
-                    .frame(width: 48, height: 48)
-
                 Image(systemName: self.style.icon)
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(self.style.tint)

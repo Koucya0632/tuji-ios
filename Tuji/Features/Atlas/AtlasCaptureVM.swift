@@ -21,6 +21,9 @@ final class AtlasCaptureVM {
     private(set) var uploadedImage: AtlasImageSummary?
     private(set) var candidates: [AtlasCandidate] = []
     private(set) var selectedCandidateId: String?
+    /// Which recognition depth produced the on-screen candidates, so the mode
+    /// buttons can show a selected state. nil until the first recognition runs.
+    private(set) var activeMode: AtlasRecognitionMode?
     private(set) var busy: Busy?
     private(set) var errorMessage: String?
     private(set) var successMessage: String?
@@ -146,23 +149,23 @@ final class AtlasCaptureVM {
             self.busy = nil
             // Candidates ride back with the upload (recognition runs inline
             // server-side) — no separate recognize round trip on the first pass.
-            // Cache them so a later AI 識別 tap re-shows the same set for free.
+            // Cache them so a later 普通識別 tap re-shows the same set for free.
             self.candidatesByMode[.primary] = response.candidates ?? []
-            self.applyCandidates(response.candidates ?? [])
+            self.applyCandidates(response.candidates ?? [], mode: .primary)
         } catch {
             self.busy = nil
             self.errorMessage = error.localizedDescription
         }
     }
 
-    /// AI 識別 / 高精度 tap. A mode is recognized at most once; if we already
+    /// 普通識別 / 高精度識別 tap. A mode is recognized at most once; if we already
     /// have its candidates, re-show them for free rather than spending another
     /// AI call (the result barely changes on a re-run). An empty / failed result
     /// isn't treated as final, so it can still be retried.
     func requestRecognize(_ mode: AtlasRecognitionMode) {
         guard let image = self.uploadedImage else { return }
         if let cached = self.candidatesByMode[mode], !cached.isEmpty {
-            self.applyCandidates(cached)
+            self.applyCandidates(cached, mode: mode)
         } else {
             Task { await self.recognize(imageId: image.id, mode: mode) }
         }
@@ -178,7 +181,7 @@ final class AtlasCaptureVM {
         do {
             let response = try await self.store.recognize(imageId: imageId, mode: mode)
             self.candidatesByMode[mode] = response.candidates
-            self.applyCandidates(response.candidates)
+            self.applyCandidates(response.candidates, mode: mode)
         } catch {
             // A 402 means the monthly AI quota is spent — send them to the paywall
             // rather than showing a raw error. Transient 429s stay as a message.
@@ -190,14 +193,17 @@ final class AtlasCaptureVM {
         }
     }
 
-    func applyCandidates(_ list: [AtlasCandidate]) {
+    func applyCandidates(_ list: [AtlasCandidate], mode: AtlasRecognitionMode) {
+        self.activeMode = mode
         self.candidates = list.sorted { $0.rank < $1.rank }
         if let best = self.candidates.first(where: { $0.levelKind == .fine }) ?? self.candidates.first {
             self.apply(best)
         }
+        // No "已辨識…" success banner — only surface the empty-result guidance so
+        // the user knows to fill the fields in manually.
         self.successMessage = list.isEmpty
-            ? tujiLocalized("沒有自動辨識到，請手動填寫或按「AI 識別」重試。")
-            : tujiLocalized("已辨識，確認名稱後即可生成卡片。")
+            ? tujiLocalized("沒有自動辨識到，請手動填寫或按「普通識別」重試。")
+            : nil
     }
 
     /// `overwrite` is true when the user taps a candidate chip — their explicit

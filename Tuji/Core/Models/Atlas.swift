@@ -31,7 +31,7 @@ struct AtlasUploadResponse: Decodable {
     let job: AtlasRecognitionJobSummary?
     /// Primary candidates now come back inline with the upload (recognition runs
     /// server-side in the same request) — nil/empty if recognition was skipped
-    /// or failed, in which case the user retries via the AI 識別 button.
+    /// or failed, in which case the user retries via the 普通識別 button.
     let candidates: [AtlasCandidate]?
 }
 

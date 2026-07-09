@@ -30,6 +30,7 @@ struct AtlasCaptureView: View {
     @State private var pendingCrop: PendingCrop?
     @State private var confirmDismiss = false
     @State private var confirmRetake = false
+    @State private var showPrecisionInfo = false
 
     private struct PendingCrop: Identifiable {
         let id = UUID()
@@ -134,6 +135,14 @@ struct AtlasCaptureView: View {
                 self.vm = AtlasCaptureVM()
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showPrecisionInfo,
+            style: .confirmation,
+            title: "高精度識別",
+            message: "高精度識別會用更強的 AI 重新辨識，適合普通識別認錯或不確定的物件，準確度更高。",
+            detail: "系統會先用普通識別自動辨識一次。你隨時可以切換「普通識別」或「高精度識別」重新辨識，再生成卡片。",
+            primary: TujiPromptAction("知道了", role: .cancel) {}
         )
         .tujiStatusToast(
             isPresented: self.vm.busy != nil,
@@ -280,7 +289,11 @@ struct AtlasCaptureView: View {
             Button {
                 self.vm.requestRecognize(.primary)
             } label: {
-                self.smallActionLabel("AI 識別", icon: "sparkles")
+                self.modeActionLabel(
+                    "普通識別",
+                    icon: "sparkles",
+                    selected: self.vm.activeMode == .primary
+                )
             }
             .buttonStyle(.plain)
             .disabled(self.vm.busy != nil)
@@ -298,39 +311,70 @@ struct AtlasCaptureView: View {
             }
             .buttonStyle(.plain)
             .disabled(self.vm.busy != nil)
+
+            Button {
+                self.showPrecisionInfo = true
+            } label: {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.tujiInk3)
+                    .frame(width: 32)
+                    .padding(.vertical, Space.s3)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("高精度識別說明")
         }
     }
 
-    private func smallActionLabel(_ title: LocalizedStringKey, icon: String) -> some View {
+    /// A recognition-mode pill with a selected (filled teal) vs unselected
+    /// (outlined cream) state, so the currently active depth is obvious.
+    private func modeActionLabel(
+        _ title: LocalizedStringKey,
+        icon: String,
+        selected: Bool
+    )
+        -> some View
+    {
         HStack(spacing: 5) {
             Image(systemName: icon)
             Text(title)
         }
-        .font(.system(size: 13, weight: .semibold))
-        .foregroundStyle(.tujiInk)
+        .font(.system(size: 13, weight: selected ? .bold : .semibold))
+        .foregroundStyle(selected ? Color.white : .tujiInk)
         .frame(maxWidth: .infinity)
         .padding(.vertical, Space.s3)
-        .background(.tujiBg, in: .rect(cornerRadius: Radius.md))
+        .background(selected ? Color.tujiTeal : .tujiBg, in: .rect(cornerRadius: Radius.md))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.md)
+                .stroke(selected ? Color.clear : Color.tujiInk4.opacity(0.25), lineWidth: 1)
+        )
     }
 
-    /// 高精度 label. Free always reads 「高精度升級」 — the tap opens the
-    /// paywall, so the button says what it is.
+    /// 高精度識別. For Pro it's a selectable mode (filled when active); for Free
+    /// it's a locked upsell pill whose tap opens the paywall.
+    @ViewBuilder
     private var precisionActionLabel: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "scope")
-            // A ternary here would infer String and skip the uiLang switch —
-            // branch so both stay LocalizedStringKey.
-            if self.vm.precisionAvailable {
-                Text("高精度")
-            } else {
-                Text("高精度升級")
+        if self.vm.precisionAvailable {
+            self.modeActionLabel(
+                "高精度識別",
+                icon: "scope",
+                selected: self.vm.activeMode == .escalate
+            )
+        } else {
+            HStack(spacing: 5) {
+                Image(systemName: "lock.fill")
+                Text("高精度識別")
             }
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(.tujiTeal)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Space.s3)
+            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.md)
+                    .stroke(.tujiTeal.opacity(0.55), lineWidth: 1.5)
+            )
         }
-        .font(.system(size: 13, weight: .semibold))
-        .foregroundStyle(.tujiInk)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Space.s3)
-        .background(.tujiBg, in: .rect(cornerRadius: Radius.md))
     }
 
     @ViewBuilder
