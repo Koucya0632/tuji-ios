@@ -141,7 +141,7 @@ struct AtlasCaptureView: View {
             style: .confirmation,
             title: "高精度識別",
             message: "高精度識別會用更強的 AI 重新辨識，適合普通識別認錯或不確定的物件，準確度更高。",
-            detail: "系統會先用普通識別自動辨識一次。你隨時可以切換「普通識別」或「高精度識別」重新辨識，再生成卡片。",
+            detail: "你隨時可以切換觀看「普通識別」「高精度識別」已識別的選項。",
             primary: TujiPromptAction("知道了", role: .cancel) {}
         )
         .tujiStatusToast(
