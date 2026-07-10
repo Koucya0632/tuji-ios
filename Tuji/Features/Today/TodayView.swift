@@ -413,12 +413,22 @@ struct TodayView: View {
         self.isGuest || (self.studyStats.stats?.due ?? 0) == 0
     }
 
-    /// New words still to learn within the selected themes. New cards = those
-    /// with no SRS row yet, i.e. (total − seen) scoped to studyCategories —
-    /// derived from ProgressStore so it tracks the selection without a stats
-    /// refetch. Falls back to the global `new` count before progress loads.
-    private var newAvailable: Int {
+    /// Categories the 學新字 queue actually draws from: the selected themes
+    /// plus the "custom" pseudo-category (StudyQueueStore appends it the same
+    /// way). The gate below must count what the queue serves, or unstudied
+    /// 自製圖鑑 cards leave the button greyed as .allLearned.
+    private var newFilterCategories: [String] {
         let cats = self.settings.current.studyCategories
+        return cats.isEmpty ? [] : cats + ["custom"]
+    }
+
+    /// New words still to learn within the selected themes (plus 自製圖鑑).
+    /// New cards = those with no SRS row yet, i.e. (total − seen) scoped to
+    /// newFilterCategories — derived from ProgressStore so it tracks the
+    /// selection without a stats refetch. Falls back to the global `new`
+    /// count before progress loads.
+    private var newAvailable: Int {
+        let cats = self.newFilterCategories
         if self.progress.categoryProgress.isEmpty {
             return self.studyStats.stats?.new ?? 0
         }
@@ -443,7 +453,7 @@ struct TodayView: View {
         // No themes selected → nothing to draw new words from; the user must
         // pick themes first (review stays available — it spans all studied words).
         if self.settings.current.studyCategories.isEmpty { return .noThemes }
-        let cats = self.settings.current.studyCategories
+        let cats = self.newFilterCategories
         // total == 0 with progress loaded means the selected themes have no
         // cards in the current deck — e.g. a theme with no 日文 cards yet —
         // which is a different dead-end from "you've learned them all".
