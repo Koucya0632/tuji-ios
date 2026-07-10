@@ -1,6 +1,6 @@
 # Tuji iOS Release
 
-更新日期：2026-07-01
+更新日期：2026-07-11
 
 ## 1. Release 原則
 
@@ -20,7 +20,13 @@ iOS 是 Tuji 的主要產品面。發版前必須先保證：
 | `Tuji-TestFlight` | TestFlight |
 | `Tuji-Release` | App Store archive |
 
-## 3. Build
+## 3. 支援版本
+
+- 最低支援：iOS 18.0（`IPHONEOS_DEPLOYMENT_TARGET`）。
+- 已驗證可正常 build/啟動、無 crash：iOS 18.0（最低）與 iOS 26.5（目前最新）。
+- 程式碼目前沒有 `@available`/版本分支，單一 build 即涵蓋整個支援範圍，不需分版本另外編譯。
+
+## 4. Build
 
 ```bash
 xcodebuild -project Tuji.xcodeproj \
@@ -32,7 +38,7 @@ xcodebuild -project Tuji.xcodeproj \
 
 Archive 前用 Release/TestFlight scheme 再跑一次。
 
-## 4. 配置
+## 5. 配置
 
 核對：
 
@@ -47,7 +53,7 @@ Archive 前用 Release/TestFlight scheme 再跑一次。
 
 不要提交 private key、service role key、App Store Connect API private key。
 
-## 5. Capability
+## 6. Capability
 
 目前可確認：
 
@@ -60,7 +66,7 @@ Archive 前用 Release/TestFlight scheme 再跑一次。
 - Push service 代碼存在，但 entitlement 目前未見 `aps-environment`。未完成前不要打開正式推播能力。
 - Universal Links 尚未完成 Associated Domains/AASA。metadata 不要宣稱完整支援。
 
-## 6. 手工測試
+## 7. 手工測試
 
 發 TestFlight 前至少跑：
 
@@ -77,7 +83,7 @@ Archive 前用 Release/TestFlight scheme 再跑一次。
 
 詳見 `docs/ios/MANUAL_TEST.md`。
 
-## 7. App Store Review Notes
+## 8. App Store Review Notes
 
 需要準備：
 
