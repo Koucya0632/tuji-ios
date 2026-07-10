@@ -132,7 +132,12 @@ final class StudyQueueStore {
             newCount = 0
             categories = []
         }
-        let signature = "\(mode.asPath)|\(limit)|\(newCount)|\(categories.sorted().joined(separator: ","))|due\(due)"
+        // The learning direction is folded in because the queue's content is
+        // direction-scoped server-side but nothing invalidates this cache on a
+        // direction switch — without it, switching EN↔JA within the TTL could
+        // serve the old direction's prefetched queue.
+        let signature = "\(mode.asPath)|\(limit)|\(newCount)|\(categories.sorted().joined(separator: ","))"
+            + "|due\(due)|\(settings.learningDirection.rawValue)"
         return Params(limit: limit, newCount: newCount, categories: categories, signature: signature)
     }
 }
