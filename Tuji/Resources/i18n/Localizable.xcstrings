@@ -1160,6 +1160,16 @@
         }
       }
     },
+    "另有 %lld 張卡片屬於%@，切換學習方向後即可查看與管理。" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另有 %lld 张卡片属于%@，切换学习方向后即可查看与管理。"
+          }
+        }
+      }
+    },
     "可以重新開始建立你的圖鑑。" : {
       "localizations" : {
         "zh-Hans" : {
