@@ -120,7 +120,13 @@ final class StudyQueueStore {
             let n = StudyQuotas.computeNewLimit(goal: settings.dailyGoal, due: due)
             limit = n
             newCount = n
-            categories = settings.studyCategories
+            // 自製圖鑑 cards only join the queue when "custom" is requested by
+            // name (or the filter is empty) — the theme picker offers no such
+            // option, so append it here or captured cards never get their
+            // first study. Empty themes stay empty: the backend treats an
+            // empty filter as "everything", custom included.
+            let themes = settings.studyCategories
+            categories = themes.isEmpty ? [] : themes + ["custom"]
         case .review:
             limit = min(due, 30)
             newCount = 0
