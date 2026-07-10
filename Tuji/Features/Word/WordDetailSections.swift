@@ -15,29 +15,33 @@ struct WordDetailSections: View {
 
     init(word: Word) {
         self.word = word
-        _selectedDetailTab = State(
-            initialValue: Self.availableTabs(for: word).first ?? .definition
-        )
+        // `.definition` is a safe default — body clamps it to the tabs actually
+        // available for this word.
+        _selectedDetailTab = State(initialValue: .definition)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s5) {
-            let tabs = Self.availableTabs(for: self.word)
+            let tabs = self.currentTabs
+            // Keep the shown tab valid when availability shifts (e.g. showZh
+            // toggling the 譯義 tab) so the switch never renders a card whose
+            // pill isn't present.
+            let selected = tabs.contains(self.selectedDetailTab)
+                ? self.selectedDetailTab
+                : (tabs.first ?? .definition)
             if !tabs.isEmpty {
                 self.sectionTitle("字詞資料 · DETAILS")
                 if tabs.count > 1 {
-                    self.tabPills(tabs)
+                    self.tabPills(tabs, selected: selected)
                 }
                 Group {
-                    switch self.selectedDetailTab {
+                    switch selected {
                     case .definition:
-                        if let targetDef = word.targetDefinition, !targetDef.isEmpty {
-                            self.definitionCard(
-                                word,
-                                targetDef: targetDef,
-                                chineseDef: word.chineseDefinition
-                            )
-                        }
+                        self.definitionCard(
+                            word,
+                            targetDef: word.targetDefinition,
+                            chineseDef: word.chineseDefinition
+                        )
                     case .forms:
                         if let forms = word.forms, !forms.isEmpty {
                             self.formsCard(forms)
@@ -60,10 +64,10 @@ struct WordDetailSections: View {
         }
     }
 
-    private func tabPills(_ tabs: [WordDetailTab]) -> some View {
+    private func tabPills(_ tabs: [WordDetailTab], selected: WordDetailTab) -> some View {
         HStack(spacing: Space.s2) {
             ForEach(tabs, id: \.self) { tab in
-                let active = tab == self.selectedDetailTab
+                let active = tab == selected
                 Button {
                     withAnimation(.spring(duration: 0.25)) {
                         self.selectedDetailTab = tab
@@ -82,13 +86,25 @@ struct WordDetailSections: View {
         }
     }
 
-    static func availableTabs(for w: Word) -> [WordDetailTab] {
+    /// Tabs to show. `.definition` appears whenever the definition card would
+    /// render anything — a target-language definition, or (when 中文 is shown)
+    /// the 中文 name / 中文 釋義 — so a card with only Chinese content (e.g. a
+    /// custom word whose JA definition is missing) still shows its meaning
+    /// instead of collapsing to just the headword.
+    private var currentTabs: [WordDetailTab] {
         var tabs: [WordDetailTab] = []
-        if let target = w.targetDefinition, !target.isEmpty { tabs.append(.definition) }
-        if let forms = w.forms, !forms.isEmpty { tabs.append(.forms) }
-        if let ety = w.etymology, !ety.isEmpty { tabs.append(.origin) }
-        if let cols = w.collocations, !cols.isEmpty { tabs.append(.collocations) }
+        if self.definitionHasVisibleContent(self.word) { tabs.append(.definition) }
+        if let forms = word.forms, !forms.isEmpty { tabs.append(.forms) }
+        if let ety = word.etymology, !ety.isEmpty { tabs.append(.origin) }
+        if let cols = word.collocations, !cols.isEmpty { tabs.append(.collocations) }
         return tabs
+    }
+
+    private func definitionHasVisibleContent(_ w: Word) -> Bool {
+        if let target = w.targetDefinition, !target.isEmpty { return true }
+        guard self.settings.current.showZh else { return false }
+        if let zh = w.chineseDefinition, !zh.isEmpty { return true }
+        return !w.chinese.isEmpty
     }
 
     // MARK: - Sections
@@ -101,7 +117,7 @@ struct WordDetailSections: View {
             .padding(.top, Space.s2)
     }
 
-    private func definitionCard(_ w: Word, targetDef: String, chineseDef: String?) -> some View {
+    private func definitionCard(_ w: Word, targetDef: String?, chineseDef: String?) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
                 if self.settings.current.showZh {
@@ -116,9 +132,11 @@ struct WordDetailSections: View {
                         .foregroundStyle(.tujiInk3)
                 }
             }
-            Text(targetDef)
-                .font(.tujiBody)
-                .foregroundStyle(.tujiInk)
+            if let targetDef, !targetDef.isEmpty {
+                Text(targetDef)
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiInk)
+            }
             if self.settings.current.showZh,
                let chineseDef,
                !chineseDef.isEmpty
