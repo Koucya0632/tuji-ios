@@ -65,10 +65,10 @@ struct MeView: View {
         return self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
     }
 
-    /// Placeholder share URL until the App Store listing exists. Lives
-    /// in code rather than a literal at the ShareLink call site so the
-    /// no-hardcoded-base-url lint rule stays clean.
-    private static let shareURL = URL(string: "https://apps.apple.com/app/tuji") ?? URL(fileURLWithPath: "/")
+    /// Points at the public landing page until the App Store listing
+    /// exists. Lives in code rather than a literal at the ShareLink call
+    /// site so the no-hardcoded-base-url lint rule stays clean.
+    private static let shareURL = URL(string: "https://tuji.nexflow.team/") ?? URL(fileURLWithPath: "/")
 
     var body: some View {
         ScrollView {
