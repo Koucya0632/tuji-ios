@@ -19,6 +19,35 @@ struct AtlasManageView: View {
     @State private var errorMessage: String?
     @State private var deleting = false
 
+    @Environment(SettingsStore.self) private var settings
+
+    /// The manage list follows the learning direction, same as the 圖鑑 grid
+    /// and the study queue: only captures whose confirmed item teaches the
+    /// current target language. Images still waiting for an item (未完成 /
+    /// 生成中 / 失敗) carry no language yet, so they stay visible in both.
+    /// The sync itself stays full-fidelity — this is display-only, so the
+    /// incremental `since` cursor keeps covering every capture.
+    private var visibleImages: [AtlasImageSummary] {
+        let lang = self.settings.current.learningDirection.targetLanguage
+        return self.store.images.filter { image in
+            guard let item = self.item(for: image) else { return true }
+            return item.targetLanguage == lang
+        }
+    }
+
+    /// Captures hidden by the direction filter — surfaced as a count so
+    /// cards don't read as deleted after a direction switch.
+    private var hiddenCount: Int {
+        self.store.images.count - self.visibleImages.count
+    }
+
+    /// 「英文圖鑑」/「日文圖鑑」 for the hidden-cards hint — the *other*
+    /// direction, i.e. where the hidden cards live.
+    private var otherDirectionTitle: String {
+        let current = self.settings.current.learningDirection
+        return (current == .zhJa ? LearningDirection.zhEn : .zhJa).title
+    }
+
     var body: some View {
         // Capture the pending rows before the prompt runs its action: tujiPrompt
         // sets isPresented = false first (which nils the backing state), so
@@ -32,18 +61,25 @@ struct AtlasManageView: View {
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
                 }
-                if self.store.images.isEmpty {
+                if self.visibleImages.isEmpty {
                     // Distinguish "still syncing" from "genuinely empty" so the
                     // first cold open doesn't flash 「還沒有卡片」 over a user who
                     // actually has cards still loading from /api/atlas/sync.
                     if self.store.loading {
                         self.loadingRow
+                    } else if self.hiddenCount > 0 {
+                        // Everything the user owns lives in the other
+                        // direction — 還沒有卡片 here would read as data loss.
+                        self.hiddenHintRow
                     } else {
                         self.emptyRow
                     }
                 } else {
-                    ForEach(self.store.images) { image in
+                    ForEach(self.visibleImages) { image in
                         self.imageRow(image)
+                    }
+                    if self.hiddenCount > 0 {
+                        self.hiddenHintRow
                     }
                 }
             }
@@ -54,7 +90,7 @@ struct AtlasManageView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if !self.store.images.isEmpty {
+                if !self.visibleImages.isEmpty {
                     Button(self.isSelecting ? "完成" : "選取") {
                         self.isSelecting.toggle()
                         if !self.isSelecting { self.selectedIds.removeAll() }
@@ -161,6 +197,16 @@ struct AtlasManageView: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.vertical, Space.s4)
+    }
+
+    /// Shown whenever the direction filter is hiding cards, so a user who
+    /// switched EN↔JA knows where their captures went (and that nothing was
+    /// deleted).
+    private var hiddenHintRow: some View {
+        Text("另有 \(self.hiddenCount) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
+            .font(.tujiCaption)
+            .foregroundStyle(.tujiInk3)
+            .padding(.vertical, Space.s2)
     }
 
     private var emptyRow: some View {
@@ -338,5 +384,6 @@ private struct AtlasManageDetailView: View {
     NavigationStack {
         AtlasManageView()
             .environment(AuthService.shared)
+            .environment(SettingsStore.shared)
     }
 }
