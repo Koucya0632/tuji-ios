@@ -29,8 +29,29 @@ enum APIError: LocalizedError {
         case let .server(s, b):
             if let b, !b.isEmpty { "Server \(s): \(b)" } else { "Server error \(s)" }
         case let .decoding(e): tujiLocalized("資料解析失敗：\(e.localizedDescription)")
-        case let .transport(e): tujiLocalized("網路錯誤：\(e.localizedDescription)")
+        case let .transport(e): Self.friendlyTransportMessage(for: e)
         case .missingBaseURL: tujiLocalized("TUJI_BASE_URL 未設定")
+        }
+    }
+
+    /// Maps common `URLError` codes (offline, timeout, unreachable host) to
+    /// plain-language Chinese copy instead of Foundation's raw English
+    /// description, so weak/no-network states read like the rest of the UI.
+    private static func friendlyTransportMessage(for error: Error) -> String {
+        guard let urlError = error as? URLError else {
+            return tujiLocalized("網路錯誤：\(error.localizedDescription)")
+        }
+        switch urlError.code {
+        case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+            return tujiLocalized("目前沒有網路連線，請檢查網路設定後再試")
+        case .networkConnectionLost:
+            return tujiLocalized("網路連線中斷，請稍後再試")
+        case .timedOut:
+            return tujiLocalized("連線逾時，請檢查網路狀況後再試")
+        case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed:
+            return tujiLocalized("無法連接伺服器，請稍後再試")
+        default:
+            return tujiLocalized("網路錯誤：\(urlError.localizedDescription)")
         }
     }
 

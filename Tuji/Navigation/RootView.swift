@@ -25,6 +25,7 @@ struct RootView: View {
     @Environment(OnboardingState.self) private var onboarding
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
+    @Environment(NetworkMonitor.self) private var network
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var minimumSplashElapsed = false
@@ -38,7 +39,7 @@ struct RootView: View {
     }
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             content
 
             if !self.minimumSplashElapsed {
@@ -46,9 +47,17 @@ struct RootView: View {
                     .transition(.opacity)
                     .zIndex(10)
             }
+
+            if self.network.hasStatus, !self.network.isConnected {
+                OfflineBanner()
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(5)
+            }
         }
         .task { await self.runLaunchSequence() }
         .animation(.easeInOut(duration: 0.25), value: stateKey)
+        .animation(.easeInOut(duration: 0.25), value: network.isConnected)
     }
 
     @MainActor
@@ -121,6 +130,27 @@ struct RootView: View {
     }
 }
 
+/// Pinned to the top of the screen (over splash/onboarding/main tabs alike,
+/// since RootView is the top-level container) whenever NWPathMonitor reports
+/// no connectivity. APIClient's per-request error handling stays reactive —
+/// this is a proactive heads-up so a lost connection doesn't look like a
+/// silent hang before the first failed request surfaces an error.
+private struct OfflineBanner: View {
+    var body: some View {
+        HStack(spacing: Space.s2) {
+            Image(systemName: "wifi.slash")
+                .foregroundStyle(.white)
+            Text("目前沒有網路連線")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s2)
+        .background(.tujiCoral, in: .capsule)
+        .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+    }
+}
+
 #Preview {
     RootView()
         .environment(AuthService.shared)
@@ -128,4 +158,5 @@ struct RootView: View {
         .environment(WordsStore.shared)
         .environment(CategoriesStore.shared)
         .environment(MasteryStore.shared)
+        .environment(NetworkMonitor.shared)
 }

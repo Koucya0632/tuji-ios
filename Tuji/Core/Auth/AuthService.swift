@@ -52,8 +52,23 @@ final class AuthService {
             state = .signedIn(SessionUser(from: session.user))
             log.info("session restored uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
-            state = .signedOut
-            log.info("no existing session")
+            // `supabase.auth.session` refreshes an expired token over the
+            // network. If that refresh fails while a session is still
+            // cached locally — i.e. the failure isn't "no session at all"
+            // — the likely cause is the device being offline. Stay signed
+            // in with the stale cached session rather than bouncing an
+            // already-authenticated user out to Welcome for a transient
+            // network hiccup; it'll refresh next time we have connectivity.
+            if let cached = supabase.auth.currentSession, (error as? AuthError) != .sessionMissing {
+                state = .signedIn(SessionUser(from: cached.user))
+                log
+                    .info(
+                        "session refresh failed, keeping cached session uid=\(cached.user.id.uuidString, privacy: .public)"
+                    )
+            } else {
+                state = .signedOut
+                log.info("no existing session")
+            }
         }
     }
 
