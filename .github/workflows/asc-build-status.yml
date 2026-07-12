@@ -1,0 +1,82 @@
+# =============================================================================
+# asc-build-status.yml — 查 App Store Connect 的 build 處理狀態
+# 觸發：手動（gh workflow run asc-build-status.yml -f build_number=13）
+#
+# 為什麼需要：release.yml 的 pilot 上傳開了 skip_waiting_for_build_processing，
+# 所以 Release workflow 綠了只代表「上傳完成」；build 要等 ASC 處理成
+# processingState=VALID 才能在 App Store 版本頁選用。這個 workflow 用
+# ASC API 查指定 build number 的狀態：VALID → job 成功；其他狀態或還沒
+# 出現 → job 失敗（訊息在 log），方便外部輪詢。
+# =============================================================================
+
+name: ASC build status
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'CFBundleVersion（build number，例：13）'
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  status:
+    name: Query
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+      # Tuji 的 App Store numeric id（同 tuji-web 的 APPSTORE_APP_APPLE_ID）
+      APP_APPLE_ID: '6781950004'
+      BUILD_NUMBER: ${{ inputs.build_number }}
+
+    steps:
+      - name: Install jwt gem
+        run: sudo gem install jwt --no-document
+
+      - name: Query build processing state
+        run: |
+          ruby <<'RUBY'
+          require "jwt"
+          require "net/http"
+          require "json"
+          require "base64"
+          require "openssl"
+
+          key = OpenSSL::PKey::EC.new(Base64.decode64(ENV.fetch("APP_STORE_CONNECT_API_KEY_P8")))
+          now = Time.now.to_i
+          token = JWT.encode(
+            { iss: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"), iat: now, exp: now + 600, aud: "appstoreconnect-v1" },
+            key, "ES256", { kid: ENV.fetch("APP_STORE_CONNECT_KEY_ID") }
+          )
+
+          uri = URI("https://api.appstoreconnect.apple.com/v1/builds")
+          uri.query = URI.encode_www_form(
+            "filter[app]" => ENV.fetch("APP_APPLE_ID"),
+            "filter[version]" => ENV.fetch("BUILD_NUMBER"),
+            "fields[builds]" => "version,processingState,uploadedDate,expired,usesNonExemptEncryption"
+          )
+          req = Net::HTTP::Get.new(uri)
+          req["Authorization"] = "Bearer #{token}"
+          res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+          abort "ASC API #{res.code}: #{res.body}" unless res.code == "200"
+
+          data = JSON.parse(res.body)["data"]
+          abort "NOT_FOUND: build #{ENV["BUILD_NUMBER"]} 還沒出現在 ASC（剛上傳完的幾分鐘內屬正常）" if data.empty?
+
+          data.each do |b|
+            a = b["attributes"]
+            puts "build #{a["version"]}: processingState=#{a["processingState"]} " \
+                 "uploaded=#{a["uploadedDate"]} expired=#{a["expired"]} " \
+                 "usesNonExemptEncryption=#{a["usesNonExemptEncryption"].inspect}"
+          end
+
+          state = data.first["attributes"]["processingState"]
+          abort "STATE=#{state}" unless state == "VALID"
+          puts "STATE=VALID"
+          RUBY
