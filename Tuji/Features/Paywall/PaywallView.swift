@@ -7,6 +7,9 @@ import StoreKit
 import SwiftUI
 
 struct PaywallView: View {
+    private static let termsURL = URL(string: "https://tuji.nexflow.team/terms") ?? URL(fileURLWithPath: "/")
+    private static let privacyURL = URL(string: "https://tuji.nexflow.team/privacy") ?? URL(fileURLWithPath: "/")
+
     @Environment(\.dismiss) private var dismiss
     @State private var store = StoreKitService.shared
     @State private var errorMessage: String?
@@ -182,10 +185,20 @@ struct PaywallView: View {
     }
 
     private var legal: some View {
-        Text("訂閱會自動續訂，可隨時在 App Store 帳號設定取消。付款於確認購買時向 Apple ID 收取。")
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("訂閱會自動續訂，可隨時在 App Store 帳號設定取消。付款於確認購買時向 Apple ID 收取。")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk4)
+            // App Review 3.1.2: auto-renewable subscriptions must link to the
+            // Terms of Use (EULA) and privacy policy from inside the app.
+            HStack(spacing: Space.s4) {
+                Link("使用條款", destination: Self.termsURL)
+                Link("隱私權政策", destination: Self.privacyURL)
+            }
             .font(.tujiCaption)
-            .foregroundStyle(.tujiInk4)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundStyle(.tujiTeal)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// zh-Hant period label from the subscription's renewal period.
