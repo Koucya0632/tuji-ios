@@ -114,6 +114,18 @@ final class AtlasCaptureQueue {
         self.deletePersisted(id)
     }
 
+    /// Drop every job, in memory and on disk. Called on sign-out — a leftover
+    /// job (persisted records survive app kills) would otherwise resume under
+    /// the next account's session and surface the previous account's capture
+    /// there. In-flight stage requests fail with 401 once the session is gone;
+    /// their `update`/`persist` calls no-op after the job is removed.
+    func reset() {
+        for job in self.jobs {
+            self.deletePersisted(job.id)
+        }
+        self.jobs = []
+    }
+
     private func run(_ id: UUID) async {
         guard let job = self.jobs.first(where: { $0.id == id }) else { return }
         let signpostID = self.signposter.makeSignpostID()

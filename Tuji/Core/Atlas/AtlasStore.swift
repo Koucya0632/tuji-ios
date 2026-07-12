@@ -20,8 +20,29 @@ final class AtlasStore {
     private let repository: AtlasRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-store")
 
+    /// Bumped by `reset()`. Requests capture it before awaiting and drop their
+    /// response if it changed, so a request racing a sign-out can't repopulate
+    /// the store with the previous account's data.
+    private var generation = 0
+
     private init(repository: AtlasRepository = LiveAtlasRepository.shared) {
         self.repository = repository
+    }
+
+    /// Wipe all account-scoped state. Called on sign-out: this singleton lives
+    /// for the app's lifetime and `merge` is additive, so without this the
+    /// previous account's 自製圖鑑 (and its stale incremental `lastSyncAt`)
+    /// would survive into the next account's session.
+    func reset() {
+        self.generation += 1
+        self.images = []
+        self.items = []
+        self.cards = []
+        self.cardStates = [:]
+        self.masteryByItemId = [:]
+        self.entitlement = nil
+        self.lastSyncAt = nil
+        self.lastError = nil
     }
 
     func sync(since: String? = nil, limit: Int = 500) async {
@@ -29,8 +50,10 @@ final class AtlasStore {
         self.lastError = nil
         defer { self.loading = false }
 
+        let generation = self.generation
         do {
             let response = try await self.repository.sync(since: since ?? self.lastSyncAt, limit: limit)
+            guard generation == self.generation else { return }
             self.merge(response)
             self.lastSyncAt = response.serverTime
             self.log
@@ -38,6 +61,7 @@ final class AtlasStore {
                     "atlas sync images=\(response.images.count, privacy: .public) items=\(response.items.count, privacy: .public)"
                 )
         } catch {
+            guard generation == self.generation else { return }
             self.lastError = error
             self.log.error("atlas sync failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -48,8 +72,11 @@ final class AtlasStore {
     /// last snapshot in place and never surfaces as `lastError`, so quota UI
     /// degrades to "unknown" (permissive) rather than blocking the flow.
     func refreshEntitlement() async {
+        let generation = self.generation
         do {
-            self.entitlement = try await self.repository.entitlement()
+            let entitlement = try await self.repository.entitlement()
+            guard generation == self.generation else { return }
+            self.entitlement = entitlement
         } catch {
             self.log.error("atlas entitlement fetch failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -63,12 +90,14 @@ final class AtlasStore {
     ) async throws
         -> AtlasUploadResponse
     {
+        let generation = self.generation
         let response = try await self.repository.uploadImage(
             data: data,
             filename: filename,
             mimeType: mimeType,
             targetLanguage: targetLanguage
         )
+        guard generation == self.generation else { return response }
         // Foreground updates local state only; the full reconciling sync is
         // deferred to AtlasCaptureQueue's background job.
         self.images = Self.merged(self.images, [response.image])
@@ -81,14 +110,18 @@ final class AtlasStore {
     }
 
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
+        let generation = self.generation
         let item = try await self.repository.confirm(imageId: imageId, payload: payload)
+        guard generation == self.generation else { return item }
         self.items = Self.merged(self.items, [item])
             .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
         return item
     }
 
     func createCards(itemId: String, cardTypes: [String] = ["image_recall", "flashcard"]) async throws -> [AtlasCard] {
+        let generation = self.generation
         let cards = try await self.repository.createCards(itemId: itemId, cardTypes: cardTypes)
+        guard generation == self.generation else { return cards }
         self.cards = Self.merged(self.cards, cards)
             .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
         return cards

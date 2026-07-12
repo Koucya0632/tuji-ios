@@ -216,6 +216,13 @@ final class AuthService {
 
         _ = await unregisterPush
 
+        // The atlas store is an app-lifetime singleton whose sync merge is
+        // additive, so without an explicit wipe the next account would still
+        // see this account's 自製圖鑑; the capture queue likewise persists its
+        // jobs and would resume them under the next account's session.
+        AtlasStore.shared.reset()
+        AtlasCaptureQueue.shared.reset()
+
         state = .signedOut
         cameFromGuest = false
         error = nil
