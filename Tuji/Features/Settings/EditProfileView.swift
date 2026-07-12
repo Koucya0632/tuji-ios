@@ -46,7 +46,7 @@ struct EditProfileView: View {
                 Button {
                     Task { await self.save() }
                 } label: {
-                    Text(self.saving ? "儲存中…" : "儲存")
+                    Text(self.saving ? LocalizedStringKey("儲存中…") : LocalizedStringKey("儲存"))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(self.dirty && !self.saving ? .tujiTeal : .tujiInk4)
                 }

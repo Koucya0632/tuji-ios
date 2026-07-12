@@ -79,6 +79,11 @@ struct TodayView: View {
             .padding(.bottom, Space.s12)
         }
         .background(.tujiBg)
+        // Metadata only (VoiceOver, back-button label on pushed screens,
+        // multitasking window title) — the custom `topBar` above is the
+        // visible header, so the system nav bar itself stays hidden.
+        .navigationTitle("主頁")
+        .toolbar(.hidden, for: .navigationBar)
         .refreshable {
             if !self.isGuest {
                 self.progress.invalidate()
@@ -126,7 +131,7 @@ struct TodayView: View {
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             Spacer()
-            NavigationLink(value: NavRoute.search) {
+            NavigationLink(value: NavRoute.search(query: nil)) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk2)

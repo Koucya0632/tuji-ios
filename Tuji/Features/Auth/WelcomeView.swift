@@ -57,7 +57,7 @@ struct WelcomeView: View {
                     HStack(spacing: Space.s2) {
                         Image(systemName: "g.circle.fill")
                             .foregroundStyle(.tujiInk)
-                        Text(auth.loading ? "Google 登入中..." : "繼續使用 Google")
+                        Text(auth.loading ? LocalizedStringKey("Google 登入中...") : LocalizedStringKey("繼續使用 Google"))
                             .foregroundStyle(.tujiInk)
                     }
                     .font(.system(size: 15, weight: .heavy))
@@ -104,7 +104,7 @@ struct WelcomeView: View {
                 } label: {
                     // Someone who *left* guest mode to get here isn't choosing
                     // a mode — they're going back.
-                    Text(auth.cameFromGuest ? "返回訪客模式" : "先逛逛 → 訪客模式")
+                    Text(auth.cameFromGuest ? LocalizedStringKey("返回訪客模式") : LocalizedStringKey("先逛逛 → 訪客模式"))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.tujiInk4)
                 }

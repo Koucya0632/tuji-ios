@@ -6,9 +6,7 @@
 //   tuji://cards                        →  Cards tab root
 //   tuji://favorites                    →  Me tab → Favorites
 //   tuji://settings                     →  Me tab → Settings
-//   tuji://search?q=word                →  Cards tab → Search (auto-fills q
-//                                          if the field listens; v1 just
-//                                          opens the empty search)
+//   tuji://search?q=word                →  Cards tab → Search (auto-fills q)
 //   tuji://word/{id}                    →  Cards tab → WordDetail
 //   tuji://category/{id}                →  Cards tab → CategoryDetail
 //   tuji://study?mode=new|review        →  Today tab → StudyLanding
@@ -44,7 +42,7 @@ enum TujiDeepLink: Hashable {
         case .today, .cards: nil
         case .favorites: .favorites
         case .settings: .settings
-        case .search: .search
+        case let .search(q): .search(query: q)
         case let .word(id): .wordDetail(id: id)
         case let .category(id): .categoryDetail(id: id)
         case let .study(mode): .studyLanding(mode: mode)

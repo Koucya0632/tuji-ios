@@ -148,6 +148,10 @@ struct SearchView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(\.dismiss) private var dismiss
 
+    /// Prefills the field for `tuji://search?q=...` deep links; nil for the
+    /// normal empty-search entry point (magnifying-glass icon).
+    var initialQuery: String? = nil
+
     @State private var vm = SearchVM()
     @FocusState private var fieldFocused: Bool
 
@@ -166,6 +170,11 @@ struct SearchView: View {
         .onAppear {
             self.studyFocus.enter()
             self.fieldFocused = true
+            if let initialQuery, !initialQuery.trimmingCharacters(in: .whitespaces).isEmpty,
+               self.vm.query.isEmpty
+            {
+                self.vm.updateQuery(initialQuery)
+            }
         }
         .onDisappear { self.studyFocus.exit() }
     }

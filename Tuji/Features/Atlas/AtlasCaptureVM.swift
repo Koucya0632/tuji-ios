@@ -259,6 +259,19 @@ final class AtlasCaptureVM {
         Task { try? await store.deleteImage(id: image.id) }
     }
 
+    /// Non-blocking heads-up when an existing custom word already uses this
+    /// lemma (case/whitespace-insensitive). The user can still submit a
+    /// second card on purpose (e.g. a different specimen of the same word),
+    /// but shouldn't be left guessing why 圖鑑 shows "Flower" twice.
+    var duplicateLemmaWarning: String? {
+        let trimmed = self.lemma.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+        let exists = self.store.items.contains {
+            $0.lemma.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare(trimmed) == .orderedSame
+        }
+        return exists ? tujiLocalized("你已經有一張「\(trimmed)」的卡片，這會再新增一張。") : nil
+    }
+
     func candidateLabel(_ candidate: AtlasCandidate) -> String {
         let pct = Int((candidate.confidence * 100).rounded())
         if let zh = candidate.zhHant, !zh.isEmpty {

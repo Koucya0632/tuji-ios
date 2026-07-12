@@ -26,6 +26,11 @@ struct CardsListView: View {
             self.content
         }
         .background(.tujiBg)
+        // Metadata only (VoiceOver, back-button label on pushed screens,
+        // multitasking window title) — `header` below is the visible title,
+        // so the system nav bar itself stays hidden.
+        .navigationTitle("圖鑑")
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await self.store.loadIfNeeded()
             await self.categories.loadIfNeeded()
@@ -62,7 +67,7 @@ struct CardsListView: View {
             }
             .buttonStyle(.plain)
             .tourAnchor(.capture)
-            NavigationLink(value: NavRoute.search) {
+            NavigationLink(value: NavRoute.search(query: nil)) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(.tujiInk2)

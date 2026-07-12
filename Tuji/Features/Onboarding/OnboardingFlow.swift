@@ -18,26 +18,34 @@ struct LearningDirectionOnboardingView: View {
     var body: some View {
         ZStack {
             Color.tujiBg.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: Space.s6) {
-                Spacer()
-                MascotFigure(pose: .wave, size: 112)
-                    .frame(maxWidth: .infinity)
-                VStack(alignment: .leading, spacing: Space.s2) {
-                    Text("想學哪一種語言？")
-                        .font(.tujiH2)
-                        .foregroundStyle(.tujiInk)
-                    Text("之後可以隨時在設定中切換，兩種語言的學習進度會分開保留。")
-                        .font(.tujiBody)
-                        .foregroundStyle(.tujiInk3)
+            // Wrapped in a scroll view so large Dynamic Type sizes on small
+            // screens (e.g. iPhone SE) can scroll to see the full content
+            // instead of the two Spacers squeezing it off-screen.
+            GeometryReader { geo in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.s6) {
+                        Spacer()
+                        MascotFigure(pose: .wave, size: 112)
+                            .frame(maxWidth: .infinity)
+                        VStack(alignment: .leading, spacing: Space.s2) {
+                            Text("想學哪一種語言？")
+                                .font(.tujiH2)
+                                .foregroundStyle(.tujiInk)
+                            Text("之後可以隨時在設定中切換，兩種語言的學習進度會分開保留。")
+                                .font(.tujiBody)
+                                .foregroundStyle(.tujiInk3)
+                        }
+                        VStack(spacing: Space.s3) {
+                            self.option(.zhEn, subtitle: "圖片、中文提示與英文發音")
+                            self.option(.zhJa, subtitle: "圖片、中文提示與日文發音")
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, Space.s6)
+                    .padding(.vertical, Space.s8)
+                    .frame(minHeight: geo.size.height)
                 }
-                VStack(spacing: Space.s3) {
-                    self.option(.zhEn, subtitle: "圖片、中文提示與英文發音")
-                    self.option(.zhJa, subtitle: "圖片、中文提示與日文發音")
-                }
-                Spacer()
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.vertical, Space.s8)
         }
     }
 
