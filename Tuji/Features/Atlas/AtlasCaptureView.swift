@@ -428,6 +428,11 @@ struct AtlasCaptureView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.tujiInk)
             self.field("圖片名稱", text: $vm.lemma)
+            if let warning = self.vm.duplicateLemmaWarning {
+                Text(warning)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiAmber)
+            }
             self.field("中文名稱", text: $vm.displayZhHant)
 
             BBtn(

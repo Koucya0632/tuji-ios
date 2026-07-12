@@ -86,6 +86,11 @@ struct ProgressTabView: View {
             .padding(.bottom, Space.s24)
         }
         .background(.tujiBg)
+        // Metadata only (VoiceOver, back-button label on pushed screens,
+        // multitasking window title) — the "進度" Text above is the visible
+        // title, so the system nav bar itself stays hidden.
+        .navigationTitle("進度")
+        .toolbar(.hidden, for: .navigationBar)
         .refreshable {
             if !self.isGuest {
                 self.progress.invalidate()
@@ -121,8 +126,13 @@ struct ProgressTabView: View {
         let total = self.dictTotal
         let ratio = total > 0 ? Double(learned) / Double(total) : 0
         let pct = Int((ratio * 100).rounded())
+        // Both this stat and its detail line are scoped to the user's
+        // selected 學習主題 (empty selection = all categories), same as the
+        // 明細 breakdown below. Label it explicitly so it doesn't read as a
+        // whole-catalog number next to Me tab's unscoped 已學字 total.
+        let scoped = !self.settings.current.studyCategories.isEmpty
         return VStack(alignment: .leading, spacing: Space.s3) {
-            Text("圖鑑完成度")
+            Text(scoped ? LocalizedStringKey("所選主題完成度") : LocalizedStringKey("圖鑑完成度"))
                 .font(.tujiOverline)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
@@ -134,9 +144,13 @@ struct ProgressTabView: View {
                 Spacer()
             }
             self.progressBar(ratio: ratio)
-            Text("已學 \(learned) / 共 \(total) 字")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
+            Text(
+                scoped
+                    ? LocalizedStringKey("已學 \(learned) / 所選主題共 \(total) 字")
+                    : LocalizedStringKey("已學 \(learned) / 共 \(total) 字")
+            )
+            .font(.tujiCaption)
+            .foregroundStyle(.tujiInk3)
         }
         .padding(Space.s5)
         .frame(maxWidth: .infinity, alignment: .leading)

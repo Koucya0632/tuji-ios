@@ -66,7 +66,7 @@ struct ReviewRevealSheet: View {
                     self.coord.continueFromReveal()
                 }
             } else {
-                Text(self.coord.wasCorrect ? "記得多牢？" : "沒關係，標記一下")
+                Text(self.coord.wasCorrect ? LocalizedStringKey("記得多牢？") : LocalizedStringKey("沒關係，標記一下"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.tujiInk2)
                 self.ratingRow

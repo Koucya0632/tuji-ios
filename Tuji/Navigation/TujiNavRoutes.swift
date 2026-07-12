@@ -9,7 +9,7 @@ extension View {
             switch route {
             case .cards: CardsListView()
             case .today: TodayView(user: user)
-            case .search: SearchView()
+            case let .search(query): SearchView(initialQuery: query)
             case .favorites: FavoritesView()
             case .settings: SettingsView()
             case .atlasManage: AtlasManageView()

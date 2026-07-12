@@ -25,6 +25,14 @@ struct SettingsView: View {
     @State private var showClearConfirm = false
     @State private var showClearSuccess = false
 
+    /// Guests have no server account, so the 帳號 section (edit profile /
+    /// sign out) and the clear-progress / delete-account section — both of
+    /// which act on a server record — don't apply and are hidden.
+    private var isGuest: Bool {
+        if case .signedIn = self.auth.state { return false }
+        return true
+    }
+
     var body: some View {
         self.list
             .background(.tujiBg)
@@ -166,46 +174,48 @@ struct SettingsView: View {
                     }
                 }
             }
-            Section("帳號") {
-                NavigationLink {
-                    EditProfileView()
-                } label: {
-                    self.row(label: "編輯個人資料", value: nil)
-                }
-                Button(role: .destructive) {
-                    self.showSignOutConfirm = true
-                } label: {
-                    Text("登出")
-                        .foregroundStyle(.tujiCoral)
-                }
-            }
-            Section {
-                Button(role: .destructive) {
-                    self.showClearConfirm = true
-                } label: {
-                    HStack {
-                        if self.progressVM.clearing {
-                            ProgressView().tint(.tujiCoral)
-                        }
-                        Text(self.progressVM.clearing ? "清除中…" : "清除學習進度")
+            if !self.isGuest {
+                Section("帳號") {
+                    NavigationLink {
+                        EditProfileView()
+                    } label: {
+                        self.row(label: "編輯個人資料", value: nil)
+                    }
+                    Button(role: .destructive) {
+                        self.showSignOutConfirm = true
+                    } label: {
+                        Text("登出")
                             .foregroundStyle(.tujiCoral)
                     }
                 }
-                .disabled(self.progressVM.clearing)
-                Button(role: .destructive) {
-                    self.showDeleteFirst = true
-                } label: {
-                    HStack {
-                        if self.deleting {
-                            ProgressView().tint(.tujiCoral)
+                Section {
+                    Button(role: .destructive) {
+                        self.showClearConfirm = true
+                    } label: {
+                        HStack {
+                            if self.progressVM.clearing {
+                                ProgressView().tint(.tujiCoral)
+                            }
+                            Text(self.progressVM.clearing ? LocalizedStringKey("清除中…") : LocalizedStringKey("清除學習進度"))
+                                .foregroundStyle(.tujiCoral)
                         }
-                        Text(self.deleting ? "刪除中…" : "刪除帳號")
-                            .foregroundStyle(.tujiCoral)
                     }
+                    .disabled(self.progressVM.clearing)
+                    Button(role: .destructive) {
+                        self.showDeleteFirst = true
+                    } label: {
+                        HStack {
+                            if self.deleting {
+                                ProgressView().tint(.tujiCoral)
+                            }
+                            Text(self.deleting ? LocalizedStringKey("刪除中…") : LocalizedStringKey("刪除帳號"))
+                                .foregroundStyle(.tujiCoral)
+                        }
+                    }
+                    .disabled(self.deleting)
+                } footer: {
+                    Text("清除學習進度會刪除掌握度與答題紀錄，但保留收藏、設定與自制圖鑑。")
                 }
-                .disabled(self.deleting)
-            } footer: {
-                Text("清除學習進度會刪除掌握度與答題紀錄，但保留收藏、設定與自制圖鑑。")
             }
             Section {
                 Text("Tuji v1.0.0 · 圖記")

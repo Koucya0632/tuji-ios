@@ -132,6 +132,9 @@ GoogleService-Info.plist
 # 設計 reference 大檔（要的話放專案外或 LFS）
 ReferenceAssets/
 
+# Supabase CLI 的本地連結暫存（`supabase link` 產物，含 project ref）
+supabase/.temp/
+
 # 本地 backup
 *.bak
 *.orig

@@ -48,9 +48,19 @@ struct MeView: View {
 
     @State private var vm = MeVM()
     @State private var store = StoreKitService.shared
+    @State private var atlas = AtlasStore.shared
     @State private var peekId: String?
     @State private var showPaywall = false
     @State private var showSignOutConfirm = false
+
+    /// Prefer the server-authoritative Atlas entitlement (kept warm by the
+    /// `.task` sync below) over the device-local StoreKit flag: `store.isPro`
+    /// only reflects a transaction verified on this Apple ID/device via
+    /// PaywallView, so it can read false for an account that's actually Pro
+    /// (admin grant, cross-device purchase) until the paywall happens to open.
+    private var isPro: Bool {
+        self.atlas.entitlement?.isPro ?? self.store.isPro
+    }
 
     private var isGuest: Bool {
         self.user == nil
@@ -89,6 +99,11 @@ struct MeView: View {
             .padding(.bottom, Space.s24)
         }
         .background(.tujiBg)
+        // Metadata only (VoiceOver, back-button label on pushed screens,
+        // multitasking window title) — `profileHeader` above is the visible
+        // title, so the system nav bar itself stays hidden.
+        .navigationTitle("我的")
+        .toolbar(.hidden, for: .navigationBar)
         .refreshable {
             if !self.isGuest {
                 self.progress.invalidate()
@@ -348,7 +363,7 @@ struct MeView: View {
 
             Spacer()
 
-            Text(self.store.isPro ? "已啟用" : "升級")
+            Text(self.isPro ? LocalizedStringKey("已啟用") : LocalizedStringKey("升級"))
                 .font(.system(size: 12, weight: .heavy))
                 .foregroundStyle(.tujiInk)
                 .padding(.horizontal, Space.s3)
@@ -416,7 +431,7 @@ struct MeView: View {
                 self.showSignOutConfirm = true
             }
         } label: {
-            Text(self.isGuest ? "登入 / 註冊" : "登出")
+            Text(self.isGuest ? LocalizedStringKey("登入 / 註冊") : LocalizedStringKey("登出"))
                 .font(.system(size: 15, weight: .heavy))
                 .foregroundStyle(self.isGuest ? .tujiTeal : .tujiCoral)
                 .frame(maxWidth: .infinity)

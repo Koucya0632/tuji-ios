@@ -7,7 +7,7 @@ import Foundation
 enum NavRoute: Hashable {
     case cards
     case today
-    case search
+    case search(query: String?)
     case favorites
     case settings
     case atlasManage
