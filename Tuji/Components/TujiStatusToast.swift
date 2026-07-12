@@ -70,6 +70,9 @@ private struct TujiStatusToastModifier: ViewModifier {
 private struct TujiStatusToast: View {
     let style: TujiStatusToastStyle
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isSpinning = false
+
     var body: some View {
         VStack(spacing: Space.s3) {
             ZStack {
@@ -77,9 +80,25 @@ private struct TujiStatusToast: View {
                     .fill(self.style.tint.opacity(0.12))
                     .frame(width: 48, height: 48)
 
-                Image(systemName: self.style.icon)
-                    .font(.system(size: 18, weight: .heavy))
-                    .foregroundStyle(self.style.tint)
+                if !self.reduceMotion {
+                    Circle()
+                        .stroke(
+                            AngularGradient(
+                                colors: [self.style.tint.opacity(0), self.style.tint],
+                                center: .center
+                            ),
+                            style: StrokeStyle(lineWidth: 2.75, lineCap: .round)
+                        )
+                        .frame(width: 58, height: 58)
+                        .rotationEffect(.degrees(self.isSpinning ? 360 : 0))
+                        .animation(
+                            .linear(duration: 1.1).repeatForever(autoreverses: false),
+                            value: self.isSpinning
+                        )
+                        .onAppear { self.isSpinning = true }
+                }
+
+                self.animatedIcon
 
                 Circle()
                     .fill(.tujiYellow)
@@ -115,6 +134,20 @@ private struct TujiStatusToast: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(self.style.title)
         .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    @ViewBuilder
+    private var animatedIcon: some View {
+        let icon = Image(systemName: self.style.icon)
+            .font(.system(size: 18, weight: .heavy))
+            .foregroundStyle(self.style.tint)
+
+        switch self.style {
+        case .recognizing:
+            icon.symbolEffect(.variableColor.iterative.nonReversing)
+        case .deleting:
+            icon.symbolEffect(.pulse)
+        }
     }
 }
 
