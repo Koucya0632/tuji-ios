@@ -150,7 +150,7 @@ struct SearchView: View {
 
     /// Prefills the field for `tuji://search?q=...` deep links; nil for the
     /// normal empty-search entry point (magnifying-glass icon).
-    var initialQuery: String? = nil
+    var initialQuery: String?
 
     @State private var vm = SearchVM()
     @FocusState private var fieldFocused: Bool
