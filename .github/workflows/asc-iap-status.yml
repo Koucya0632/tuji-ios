@@ -56,7 +56,15 @@ jobs:
             JSON.parse(res.body)
           end
 
-          groups = get("/v1/apps/#{ENV.fetch("APP_APPLE_ID")}/subscriptionGroups", token)["data"]
+          app_id = ENV.fetch("APP_APPLE_ID")
+
+          versions = get("/v1/apps/#{app_id}/appStoreVersions?limit=3&fields[appStoreVersions]=versionString,appStoreState", token)["data"]
+          versions.each do |v|
+            a = v["attributes"]
+            puts "app version #{a["versionString"]}: #{a["appStoreState"]}"
+          end
+
+          groups = get("/v1/apps/#{app_id}/subscriptionGroups", token)["data"]
           puts "subscription groups: #{groups.size}"
           abort "NO_GROUPS: no subscription groups exist yet" if groups.empty?
 
@@ -67,6 +75,16 @@ jobs:
             subs.each do |s|
               a = s["attributes"]
               puts "  #{a["productId"]} (#{a["name"]}): state=#{a["state"]}"
+
+              avail = get("/v1/subscriptions/#{s["id"]}/subscriptionAvailability?include=availableTerritories&limit[availableTerritories]=50", token)
+              attrs = avail.dig("data", "attributes") || {}
+              territories = (avail["included"] || []).map { |t| t["id"] }
+              puts "    availableInNewTerritories=#{attrs["availableInNewTerritories"]}"
+              puts "    availableTerritories (first 50): #{territories.empty? ? "NONE" : territories.join(",")}"
+
+              prices = get("/v1/subscriptions/#{s["id"]}/prices?include=territory&limit=200", token)
+              price_territories = (prices["included"] || []).select { |i| i["type"] == "territories" }.map { |t| t["id"] }
+              puts "    price territories: #{price_territories.size} (#{price_territories.sort.first(20).join(",")}...)"
             end
           end
           RUBY
