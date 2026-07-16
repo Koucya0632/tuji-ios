@@ -1,0 +1,72 @@
+# =============================================================================
+# asc-iap-status.yml — 查 App Store Connect 訂閱商品的審核狀態
+# 觸發：手動（gh workflow run asc-iap-status.yml）
+#
+# 為什麼需要：帶 IAP 的版本送審時，訂閱必須到 READY_TO_SUBMIT 並掛進
+# 版本審核，否則吃 2.1(b) 退件。這個 workflow 列出每個訂閱群組的商品
+# 與其 state（MISSING_METADATA / READY_TO_SUBMIT / WAITING_FOR_REVIEW /
+# APPROVED ...），方便判斷還缺什麼。
+# =============================================================================
+
+name: ASC IAP status
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  status:
+    name: Query
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+      APP_APPLE_ID: '6781950004'
+
+    steps:
+      - name: Install jwt gem
+        run: sudo gem install jwt --no-document
+
+      - name: Query subscription states
+        run: |
+          ruby <<'RUBY'
+          require "jwt"
+          require "net/http"
+          require "json"
+          require "base64"
+          require "openssl"
+
+          key = OpenSSL::PKey::EC.new(Base64.decode64(ENV.fetch("APP_STORE_CONNECT_API_KEY_P8")))
+          now = Time.now.to_i
+          token = JWT.encode(
+            { iss: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"), iat: now, exp: now + 600, aud: "appstoreconnect-v1" },
+            key, "ES256", { kid: ENV.fetch("APP_STORE_CONNECT_KEY_ID") }
+          )
+
+          def get(path, token)
+            uri = URI("https://api.appstoreconnect.apple.com#{path}")
+            req = Net::HTTP::Get.new(uri)
+            req["Authorization"] = "Bearer #{token}"
+            res = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |h| h.request(req) }
+            abort "ASC API #{res.code} for #{path}: #{res.body}" unless res.code == "200"
+            JSON.parse(res.body)
+          end
+
+          groups = get("/v1/apps/#{ENV.fetch("APP_APPLE_ID")}/subscriptionGroups", token)["data"]
+          puts "subscription groups: #{groups.size}"
+          abort "NO_GROUPS: no subscription groups exist yet" if groups.empty?
+
+          groups.each do |g|
+            puts "group #{g.dig("attributes", "referenceName").inspect}:"
+            subs = get("/v1/subscriptionGroups/#{g["id"]}/subscriptions?fields[subscriptions]=name,productId,state", token)["data"]
+            puts "  (no subscriptions in this group)" if subs.empty?
+            subs.each do |s|
+              a = s["attributes"]
+              puts "  #{a["productId"]} (#{a["name"]}): state=#{a["state"]}"
+            end
+          end
+          RUBY
