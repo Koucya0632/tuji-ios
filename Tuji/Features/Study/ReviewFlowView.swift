@@ -19,6 +19,7 @@ struct ReviewFlowView: View {
     /// through the pop instead of flashing back up when the confirm closes.
     @State private var leaving = false
     @State private var reportDraft: StudyReportDraft?
+    @State private var showCustomCardNotice = false
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -86,6 +87,13 @@ struct ReviewFlowView: View {
             },
             secondary: TujiPromptAction("繼續複習", role: .cancel) {}
         )
+        .tujiPrompt(
+            isPresented: self.$showCustomCardNotice,
+            style: .confirmation,
+            title: "自制卡片暫不支援報錯",
+            message: "報錯僅適用於官方單字內容。自制卡片如有問題，可以到自制圖鑑刪除重拍，或透過「我的」頁的意見收集告訴我們。",
+            primary: TujiPromptAction("知道了") {}
+        )
         .onAppear {
             self.studyFocus.enter()
             AnalyticsService.shared.track(.studyStart, category: "review")
@@ -107,7 +115,13 @@ struct ReviewFlowView: View {
     }
 
     private func captureReport() {
-        guard let item = self.coord.current, !item.card.id.hasPrefix("atlas:") else { return }
+        guard let item = self.coord.current else { return }
+        // Custom cards have no cards-table row, so /api/study/reports
+        // can't accept them — explain instead of silently dropping the tap.
+        guard !item.card.id.hasPrefix("atlas:") else {
+            self.showCustomCardNotice = true
+            return
+        }
         self.reportDraft = StudyReportDraft(
             item: item,
             mode: "review",

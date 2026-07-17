@@ -18,6 +18,7 @@ struct NewFlowView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var showExitConfirm = false
     @State private var reportDraft: StudyReportDraft?
+    @State private var showCustomCardNotice = false
     /// Preview gate: the session opens on a scannable list of today's words
     /// (a pre-teach pass) and the queue only starts on 開始學習.
     @State private var started = false
@@ -78,6 +79,13 @@ struct NewFlowView: View {
             primary: TujiPromptAction("先離開") { self.dismiss() },
             secondary: TujiPromptAction("繼續學習", role: .cancel) {}
         )
+        .tujiPrompt(
+            isPresented: self.$showCustomCardNotice,
+            style: .confirmation,
+            title: "自制卡片暫不支援報錯",
+            message: "報錯僅適用於官方單字內容。自制卡片如有問題，可以到自制圖鑑刪除重拍，或透過「我的」頁的意見收集告訴我們。",
+            primary: TujiPromptAction("知道了") {}
+        )
         .sheet(
             item: Binding(
                 get: { self.coord.peek.map { PeekIdent(word: $0) } },
@@ -113,7 +121,13 @@ struct NewFlowView: View {
     }
 
     private func captureReport() {
-        guard let task = self.coord.current, !task.item.card.id.hasPrefix("atlas:") else { return }
+        guard let task = self.coord.current else { return }
+        // Custom cards have no cards-table row, so /api/study/reports
+        // can't accept them — explain instead of silently dropping the tap.
+        guard !task.item.card.id.hasPrefix("atlas:") else {
+            self.showCustomCardNotice = true
+            return
+        }
         let answer: String? = switch task.kind {
         case .recognize: self.coord.recRating?.rawValue
         case .identify: self.coord.idPicked
