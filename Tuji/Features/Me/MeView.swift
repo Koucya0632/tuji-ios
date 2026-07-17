@@ -51,6 +51,7 @@ struct MeView: View {
     @State private var atlas = AtlasStore.shared
     @State private var peekId: String?
     @State private var showPaywall = false
+    @State private var showFeedback = false
     @State private var showSignOutConfirm = false
 
     /// Prefer the server-authoritative Atlas entitlement (kept warm by the
@@ -125,6 +126,9 @@ struct MeView: View {
         }
         .sheet(isPresented: self.$showPaywall) {
             PaywallView()
+        }
+        .sheet(isPresented: self.$showFeedback) {
+            FeedbackSheet()
         }
         .tujiPrompt(
             isPresented: self.$showSignOutConfirm,
@@ -328,6 +332,17 @@ struct MeView: View {
                 self.listRow(icon: "gearshape.fill", title: "設定", tint: .tujiInk3)
             }
             .buttonStyle(.plain)
+            // 意見收集 is account-scoped; guests have no Bearer token so the
+            // submit could only 401 — hidden, matching 自制圖鑑 above.
+            if !self.isGuest {
+                Divider().background(.tujiInk4.opacity(0.15))
+                Button {
+                    self.showFeedback = true
+                } label: {
+                    self.listRow(icon: "bubble.left.and.bubble.right.fill", title: "意見收集", tint: .tujiAmber)
+                }
+                .buttonStyle(.plain)
+            }
             Divider().background(.tujiInk4.opacity(0.15))
             ShareLink(item: Self.shareURL) {
                 self.listRow(icon: "square.and.arrow.up", title: "分享 App", tint: .tujiTeal)

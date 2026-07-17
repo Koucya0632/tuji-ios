@@ -21,6 +21,7 @@ enum Endpoint {
     case usersDeleteAccount
     case usersPushToken
     case usersPushTokenDelete(deviceId: String)
+    case usersFeedback
 
     // MARK: - Study (auth-protected)
 
@@ -77,6 +78,7 @@ enum Endpoint {
         case .usersDeleteAccount: "/api/users/delete-account"
         case .usersPushToken,
              .usersPushTokenDelete: "/api/users/push-token"
+        case .usersFeedback: "/api/users/feedback"
         case .studyQueue: "/api/study/queue"
         case .studyAnswer: "/api/study/answer"
         case .studyStats: "/api/study/stats"
@@ -153,7 +155,7 @@ enum Endpoint {
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
-             .usersCustomWords,
+             .usersFeedback, .usersCustomWords,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement,

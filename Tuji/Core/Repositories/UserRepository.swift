@@ -10,6 +10,7 @@ protocol UserRepository {
     func loadMe() async throws -> UserMeResponse
     func registerPushToken(_ payload: PushTokenPayload) async throws
     func unregisterPushToken(deviceId: String) async throws
+    func submitFeedback(_ payload: FeedbackPayload) async throws
 }
 
 @MainActor
@@ -54,6 +55,10 @@ struct LiveUserRepository: UserRepository {
 
     func unregisterPushToken(deviceId: String) async throws {
         try await self.api.delete(.usersPushTokenDelete(deviceId: deviceId))
+    }
+
+    func submitFeedback(_ payload: FeedbackPayload) async throws {
+        let _: AckResponse = try await self.api.post(.usersFeedback, body: payload)
     }
 }
 
