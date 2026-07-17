@@ -1,8 +1,9 @@
 // Pins the review answer paths: fast-correct auto-rating (with the
 // mastery-capped suggestion), the wrong-answer restricted ratings + requeue,
 // and the retest contract — reshuffled options, no second SRS write. The
-// advance beats are real (300-800ms) Tasks, so the end-to-end test sleeps
-// through them; everything else asserts synchronously.
+// advance beats are real (300-800ms) Tasks, so the end-to-end test polls
+// until each beat lands (fixed sleeps raced the beats on slow CI runners);
+// everything else asserts synchronously.
 
 import Foundation
 import Testing
@@ -42,6 +43,21 @@ struct ReviewFlowCoordinatorTests {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("outbox-\(UUID().uuidString).json")
         return StudyAnswerOutbox(fileURL: url)
+    }
+
+    /// Yields the main actor in short beats until `condition` holds. Returns
+    /// on the first poll that passes, so the happy path stays as fast as the
+    /// beat — the ceiling only bounds a genuinely broken build. It must be
+    /// extravagant: Swift Testing runs every @MainActor suite in parallel on
+    /// one main actor, and on CI runners that starved a beat past 5s.
+    private func waitUntil(
+        timeout: Duration = .seconds(60),
+        _ condition: () -> Bool
+    ) async throws {
+        let deadline = ContinuousClock.now + timeout
+        while !condition(), ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(50))
+        }
     }
 
     @Test
@@ -96,13 +112,13 @@ struct ReviewFlowCoordinatorTests {
         // Item 1 (fork): wrong → manual 重來 → requeued.
         c.pick("spoon")
         c.rate(.again)
-        try await Task.sleep(for: .milliseconds(500)) // 300ms advance beat
+        try await self.waitUntil { c.current?.word.id == "w-cup" } // 300ms advance beat
         #expect(c.current?.word.id == "w-cup")
 
         // Item 2 (cup): fast correct → auto-rated (mastery 80 → 熟練).
         c.pick("cup")
         #expect(c.flash == .autoRated(.easy))
-        try await Task.sleep(for: .milliseconds(900)) // 700ms advance beat
+        try await self.waitUntil { c.current?.word.id == "w-fork" } // 700ms advance beat
 
         // Retest of fork: options reshuffle (variant bumped on first leave)…
         #expect(c.current?.word.id == "w-fork")
@@ -115,8 +131,9 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.passedCount == 2)
 
         // …and the session wrote exactly two answers: fork's 重來 and cup's
-        // auto 熟練 — nothing for the retest.
-        await c.drainPendingWrites(within: .seconds(2))
+        // auto 熟練 — nothing for the retest. Same generous ceiling as
+        // waitUntil: the drain returns as soon as both writes land.
+        await c.drainPendingWrites(within: .seconds(10))
         #expect(spy.answers.map(\.rating).sorted() == ["熟練", "重來"].sorted())
     }
 
