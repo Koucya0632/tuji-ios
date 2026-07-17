@@ -550,7 +550,7 @@ struct TodayView: View {
                             .tracking(2)
                             .foregroundStyle(.tujiTeal)
                         Spacer()
-                        NavigationLink(value: NavRoute.cards) {
+                        NavigationLink(value: NavRoute.studyCategories) {
                             Text("全部 →")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.tujiInk3)
