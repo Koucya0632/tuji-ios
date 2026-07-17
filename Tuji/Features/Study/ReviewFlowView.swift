@@ -30,6 +30,7 @@ struct ReviewFlowView: View {
             if self.coord.finished {
                 if let m = coord.milestone {
                     MilestoneView(milestone: m, onFinish: { self.dismiss() })
+                        .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
                 } else {
                     CompleteView(
                         answered: self.coord.answered,
@@ -39,6 +40,7 @@ struct ReviewFlowView: View {
                         onFinish: { self.dismiss() },
                         onAnotherRound: { await self.startAnotherRound() }
                     )
+                    .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
                 }
             } else {
                 self.flowSurface
@@ -84,7 +86,10 @@ struct ReviewFlowView: View {
             },
             secondary: TujiPromptAction("繼續複習", role: .cancel) {}
         )
-        .onAppear { self.studyFocus.enter() }
+        .onAppear {
+            self.studyFocus.enter()
+            AnalyticsService.shared.track(.studyStart, category: "review")
+        }
         .onDisappear { self.studyFocus.exit() }
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)

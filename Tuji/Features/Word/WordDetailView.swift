@@ -216,7 +216,13 @@ extension WordDetailPage {
                 }
             }
             Spacer()
-            PronunciationButton(text: w.word, language: w.wordLanguage, audioUrls: w.audioUrls, size: 48)
+            PronunciationButton(
+                text: w.word,
+                language: w.wordLanguage,
+                audioUrls: w.audioUrls,
+                size: 48,
+                wordId: self.id.hasPrefix("atlas:") ? nil : w.id
+            )
         }
     }
 
@@ -279,6 +285,11 @@ extension WordDetailPage {
             )
         } catch {
             if self.word == nil { self.error = error }
+        }
+        // Public-word page view (the atlas branch above returned already —
+        // private 自製 content stays out of analytics).
+        if let w = self.word {
+            AnalyticsService.shared.track(.view, wordId: w.id, category: w.category)
         }
     }
 

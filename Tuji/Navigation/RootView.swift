@@ -62,6 +62,8 @@ struct RootView: View {
 
     @MainActor
     private func runLaunchSequence() async {
+        // Once per launch — deliberately not re-fired on foregrounding.
+        AnalyticsService.shared.track(.appOpen)
         async let sessionRestore: Void = self.auth.restoreSession()
 
         if !self.reduceMotion {

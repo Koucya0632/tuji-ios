@@ -14,6 +14,9 @@ struct PronunciationButton: View {
     /// back to on-device synthesis of `text`.
     var audioUrls: [String: String]?
     var size: CGFloat = 40
+    /// Analytics only — set at call sites where the word id is public and
+    /// worth attributing (word detail); nil elsewhere.
+    var wordId: String?
 
     @Environment(SettingsStore.self) private var settings
 
@@ -24,6 +27,7 @@ struct PronunciationButton: View {
     var body: some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            AnalyticsService.shared.track(.pronounce, wordId: self.wordId)
             SpeechService.shared.play(
                 urlString: self.audioUrls?[self.effectiveVoice.rawValue],
                 fallbackText: self.text,
