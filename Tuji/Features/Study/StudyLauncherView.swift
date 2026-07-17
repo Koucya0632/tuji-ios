@@ -19,6 +19,11 @@ struct StudyLauncherView: View {
 
     @State private var pushQueue: QueuePush?
     @State private var queueError: Error?
+    /// Latched once a flow has been pushed. The launcher is single-shot: when
+    /// the flow pops back (✕ or 回首頁 on the summary), re-running loadQueue
+    /// would fetch a fresh queue and immediately re-push the flow — the user
+    /// could never get home while words remained due.
+    @State private var hasLaunched = false
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "study-launcher")
 
@@ -36,6 +41,14 @@ struct StudyLauncherView: View {
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
         .task {
+            // Re-appear after the flow popped back: the launcher's job is
+            // done, so head straight back to the caller. This also backstops
+            // the onChange dismiss below when the stack swallows it mid
+            // pop-transition.
+            if self.hasLaunched {
+                self.dismiss()
+                return
+            }
             // Both stores are cheap if already warm (store-level TTLs handle
             // it). settings.loadIfNeeded fixes the silent-default-10 bug the
             // old StudyLandingVM never noticed.
@@ -97,6 +110,7 @@ struct StudyLauncherView: View {
                 )
                 return
             }
+            self.hasLaunched = true
             self.pushQueue = QueuePush(mode: self.mode, queue: queue)
         } catch {
             self.log
