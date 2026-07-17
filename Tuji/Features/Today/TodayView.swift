@@ -419,15 +419,14 @@ struct TodayView: View {
     }
 
     /// Categories the 學新字 queue actually draws from: the selected themes
-    /// plus the "custom" pseudo-category (StudyQueueStore appends it the same
-    /// way). The gate below must count what the queue serves, or unstudied
-    /// 自製圖鑑 cards leave the button greyed as .allLearned.
+    /// exactly as picked (StudyQueueStore sends the same list — 自定義 is a
+    /// pickable theme, included only when ticked). The gate below must count
+    /// what the queue serves, or the button's state drifts from the queue.
     private var newFilterCategories: [String] {
-        let cats = self.settings.current.studyCategories
-        return cats.isEmpty ? [] : cats + ["custom"]
+        self.settings.current.studyCategories
     }
 
-    /// New words still to learn within the selected themes (plus 自製圖鑑).
+    /// New words still to learn within the selected themes.
     /// New cards = those with no SRS row yet, i.e. (total − seen) scoped to
     /// newFilterCategories — derived from ProgressStore so it tracks the
     /// selection without a stats refetch. Falls back to the global `new`
