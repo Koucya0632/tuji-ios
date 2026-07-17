@@ -1,8 +1,9 @@
 // Pins the review answer paths: fast-correct auto-rating (with the
 // mastery-capped suggestion), the wrong-answer restricted ratings + requeue,
 // and the retest contract — reshuffled options, no second SRS write. The
-// advance beats are real (300-800ms) Tasks, so the end-to-end test sleeps
-// through them; everything else asserts synchronously.
+// advance beats are real (300-800ms) Tasks, so the end-to-end test polls
+// until each beat lands (fixed sleeps raced the beats on slow CI runners);
+// everything else asserts synchronously.
 
 import Foundation
 import Testing
@@ -42,6 +43,19 @@ struct ReviewFlowCoordinatorTests {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("outbox-\(UUID().uuidString).json")
         return StudyAnswerOutbox(fileURL: url)
+    }
+
+    /// Yields the main actor in short beats until `condition` holds, giving a
+    /// generous ceiling so a loaded CI runner can't outlast it. Returns on the
+    /// first poll that passes, so the happy path stays as fast as the beat.
+    private func waitUntil(
+        timeout: Duration = .seconds(5),
+        _ condition: () -> Bool
+    ) async throws {
+        let deadline = ContinuousClock.now + timeout
+        while !condition(), ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(50))
+        }
     }
 
     @Test
@@ -96,13 +110,13 @@ struct ReviewFlowCoordinatorTests {
         // Item 1 (fork): wrong → manual 重來 → requeued.
         c.pick("spoon")
         c.rate(.again)
-        try await Task.sleep(for: .milliseconds(500)) // 300ms advance beat
+        try await self.waitUntil { c.current?.word.id == "w-cup" } // 300ms advance beat
         #expect(c.current?.word.id == "w-cup")
 
         // Item 2 (cup): fast correct → auto-rated (mastery 80 → 熟練).
         c.pick("cup")
         #expect(c.flash == .autoRated(.easy))
-        try await Task.sleep(for: .milliseconds(900)) // 700ms advance beat
+        try await self.waitUntil { c.current?.word.id == "w-fork" } // 700ms advance beat
 
         // Retest of fork: options reshuffle (variant bumped on first leave)…
         #expect(c.current?.word.id == "w-fork")
