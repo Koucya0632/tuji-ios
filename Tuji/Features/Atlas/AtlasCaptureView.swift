@@ -148,7 +148,10 @@ struct AtlasCaptureView: View {
             isPresented: self.vm.busy != nil,
             style: .recognizing
         )
-        .task { await self.vm.prepareOnOpen() }
+        .task {
+            AnalyticsService.shared.track(.atlasCaptureOpen)
+            await self.vm.prepareOnOpen()
+        }
         .sheet(isPresented: $vm.showPaywall) {
             PaywallView()
         }

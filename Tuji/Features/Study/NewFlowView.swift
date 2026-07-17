@@ -99,7 +99,10 @@ struct NewFlowView: View {
         }
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
-        .task { await self.teach.preload(queue: self.queue, words: self.words) }
+        .task {
+            AnalyticsService.shared.track(.studyStart, category: "new")
+            await self.teach.preload(queue: self.queue, words: self.words)
+        }
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)
         }
@@ -219,6 +222,7 @@ struct NewFlowView: View {
             .id(self.coord.currentPresentationId)
         } else if self.coord.finished {
             NewDoneView(coord: self.coord, queue: self.coord.queue, onFinish: { self.dismiss() })
+                .onAppear { AnalyticsService.shared.track(.studyComplete, category: "new") }
         }
     }
 }

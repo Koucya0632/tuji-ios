@@ -347,6 +347,11 @@ struct MeView: View {
             ShareLink(item: Self.shareURL) {
                 self.listRow(icon: "square.and.arrow.up", title: "分享 App", tint: .tujiTeal)
             }
+            // ShareLink has no tap callback — this records "share sheet
+            // opened", not a completed share.
+            .simultaneousGesture(TapGesture().onEnded {
+                AnalyticsService.shared.track(.shareApp)
+            })
         }
         .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
         .overlay(

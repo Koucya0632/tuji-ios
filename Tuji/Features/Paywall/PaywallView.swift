@@ -45,6 +45,7 @@ struct PaywallView: View {
                 }
             }
             .task {
+                AnalyticsService.shared.track(.paywallView)
                 await self.store.loadProducts()
                 self.loadingProducts = false
                 await self.store.refreshFromCurrentEntitlements()
