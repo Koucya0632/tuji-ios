@@ -45,11 +45,13 @@ struct ReviewFlowCoordinatorTests {
         return StudyAnswerOutbox(fileURL: url)
     }
 
-    /// Yields the main actor in short beats until `condition` holds, giving a
-    /// generous ceiling so a loaded CI runner can't outlast it. Returns on the
-    /// first poll that passes, so the happy path stays as fast as the beat.
+    /// Yields the main actor in short beats until `condition` holds. Returns
+    /// on the first poll that passes, so the happy path stays as fast as the
+    /// beat — the ceiling only bounds a genuinely broken build. It must be
+    /// extravagant: Swift Testing runs every @MainActor suite in parallel on
+    /// one main actor, and on CI runners that starved a beat past 5s.
     private func waitUntil(
-        timeout: Duration = .seconds(5),
+        timeout: Duration = .seconds(60),
         _ condition: () -> Bool
     ) async throws {
         let deadline = ContinuousClock.now + timeout
@@ -129,8 +131,9 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.passedCount == 2)
 
         // …and the session wrote exactly two answers: fork's 重來 and cup's
-        // auto 熟練 — nothing for the retest.
-        await c.drainPendingWrites(within: .seconds(2))
+        // auto 熟練 — nothing for the retest. Same generous ceiling as
+        // waitUntil: the drain returns as soon as both writes land.
+        await c.drainPendingWrites(within: .seconds(10))
         #expect(spy.answers.map(\.rating).sorted() == ["熟練", "重來"].sorted())
     }
 
