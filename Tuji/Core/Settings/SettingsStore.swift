@@ -44,7 +44,8 @@ private nonisolated func tujiLProjBundle(_ code: String) -> Bundle {
 /// explicit `.lproj` bundle for the uiLang and look the key up there. Reads the
 /// mirrored uiLang from UserDefaults (thread-safe, usable off the main actor).
 nonisolated func tujiLocalized(_ key: String.LocalizationValue) -> String {
-    let code = UserDefaults.standard.string(forKey: tujiUILangDefaultsKey) ?? "zh-Hant"
+    let code = UserDefaults.standard.string(forKey: tujiUILangDefaultsKey)
+        ?? UILanguage.deviceDefault.rawValue
     return tujiLocalized(key, lang: code)
 }
 
@@ -89,6 +90,13 @@ final class SettingsStore {
         {
             self.current.learningDirection = direction
         }
+        // Same idea for the UI language: `.default` starts at the *device*
+        // language (right for a first run), so re-seed from the mirror to keep
+        // a returning user's stored choice from flashing the device language
+        // before the server load() lands.
+        if let storedLang = UserDefaults.standard.string(forKey: tujiUILangDefaultsKey) {
+            self.current.uiLang = UILanguage(code: storedLang).rawValue
+        }
     }
 
     /// Returns immediately on subsequent calls; only the first call hits
@@ -103,7 +111,17 @@ final class SettingsStore {
         self.lastError = nil
         defer { self.loading = false }
         do {
-            let settings = try await self.repository.loadSettings()
+            var settings = try await self.repository.loadSettings()
+            // Before first-run setup completes, the server row is boilerplate
+            // (uiLang defaults to zh-Hant), not a choice the user made. Keep
+            // the locally detected device language so a ja/en-device user's
+            // onboarding doesn't flip to Chinese mid-setup — SetupView then
+            // persists the surviving value.
+            if case let .signedIn(user) = AuthService.shared.state,
+               !OnboardingState.shared.setupDone(for: user.id)
+            {
+                settings.uiLang = self.current.uiLang
+            }
             let directionChanged =
                 self.current.learningDirection != settings.learningDirection
             self.current = settings

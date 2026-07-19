@@ -144,7 +144,7 @@ struct SettingsView: View {
                 } label: {
                     self.row(
                         label: "每日目標題數",
-                        value: "\(self.store.current.dailyGoal) 題",
+                        value: tujiLocalized("\(self.store.current.dailyGoal) 題"),
                         subtitle: "每天想新學的題數，複習多時會自動調降"
                     )
                 }
@@ -250,8 +250,8 @@ struct SettingsView: View {
 
     private var accentLabel: String {
         switch self.store.current.accent {
-        case "uk": "英式"
-        case "us": "美式"
+        case "uk": tujiLocalized("英式")
+        case "us": tujiLocalized("美式")
         default: self.store.current.accent.uppercased()
         }
     }
@@ -261,12 +261,10 @@ struct SettingsView: View {
         return n == 0 ? tujiLocalized("全部") : tujiLocalized("\(n) 個主題")
     }
 
+    /// The language's own name (never localized); unknown codes read as 繁中
+    /// via UILanguage's fallback.
     private var langLabel: String {
-        switch self.store.current.uiLang {
-        case "zh-Hans": "简体中文"
-        // zh-Hant and any retired/unknown code (e.g. legacy "ja") show as 繁中.
-        default: "繁體中文"
-        }
+        self.store.current.uiLanguage.nativeName
     }
 
     // MARK: - Account actions

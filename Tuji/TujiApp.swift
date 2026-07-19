@@ -51,7 +51,7 @@ struct TujiApp: App {
                 .environment(studyFocus)
                 .environment(deepLinks)
                 .environment(network)
-                .environment(\.locale, Self.locale(for: settings.current.uiLang))
+                .environment(\.locale, settings.current.uiLanguage.locale)
                 .task {
                     await words.loadIfNeeded()
                     await categories.loadIfNeeded()
@@ -90,17 +90,6 @@ struct TujiApp: App {
         #else
         RootView()
         #endif
-    }
-
-    /// Resolves the server-supplied uiLang code (zh-Hant / zh-Hans) into a
-    /// `Locale` so the SwiftUI environment knows which localized strings to
-    /// fetch. Unknown codes — including the retired `ja` UI language — fall
-    /// back to zh-Hant.
-    private static func locale(for code: String) -> Locale {
-        switch code {
-        case "zh-Hans": Locale(identifier: "zh-Hans")
-        default: Locale(identifier: "zh-Hant")
-        }
     }
 }
 

@@ -22,7 +22,7 @@ enum LearningDirection: String, Codable, CaseIterable {
     }
 
     var shortTitle: String {
-        self == .zhJa ? "日文" : "英文"
+        self == .zhJa ? tujiLocalized("日文") : tujiLocalized("英文")
     }
 }
 
@@ -36,6 +36,18 @@ struct UserSettings: Codable, Equatable {
     var uiLang: String
     var fontSize: String
 
+    /// Typed view over the wire `uiLang` string. Unknown or legacy codes
+    /// read as zh-Hant without disturbing the stored value (computed, so
+    /// synthesized Codable/Equatable still use the raw string).
+    var uiLanguage: UILanguage {
+        get { UILanguage(code: self.uiLang) }
+        set { self.uiLang = newValue.rawValue }
+    }
+
+    /// Pre-load defaults. `uiLang` follows the device language so a first-run
+    /// user's Welcome/onboarding renders in their language before any server
+    /// value exists; SettingsStore re-seeds from its UserDefaults mirror on
+    /// init so returning users keep their stored choice instead.
     static let `default` = UserSettings(
         dailyGoal: 10,
         accent: "us",
@@ -43,7 +55,7 @@ struct UserSettings: Codable, Equatable {
         studyCategories: [],
         studyDecks: [],
         learningDirection: .zhEn,
-        uiLang: "zh-Hant",
+        uiLang: UILanguage.deviceDefault.rawValue,
         fontSize: "md"
     )
 }

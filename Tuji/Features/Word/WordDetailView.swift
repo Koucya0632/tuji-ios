@@ -280,7 +280,7 @@ extension WordDetailPage {
             let settings = SettingsStore.shared.current
             self.word = try await self.repository.word(
                 id: self.id,
-                lang: settings.uiLang,
+                lang: settings.uiLanguage.contentLanguageCode,
                 learning: settings.learningDirection.rawValue
             )
         } catch {
