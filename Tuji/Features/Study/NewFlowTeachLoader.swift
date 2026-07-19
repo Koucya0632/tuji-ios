@@ -46,7 +46,7 @@ final class NewFlowTeachLoader {
             do {
                 self.details[id] = try await catalog.word(
                     id: id,
-                    lang: settings.uiLang,
+                    lang: settings.uiLanguage.contentLanguageCode,
                     learning: settings.learningDirection.rawValue
                 )
             } catch {

@@ -1,7 +1,7 @@
-// UI language picker. Writes the chosen code into SettingsStore via
-// update(_:), applying it immediately and auto-persisting via
-// POST /api/users/settings. RootView reads SettingsStore.current.uiLang at
-// render time to apply the matching locale to the whole app.
+// UI language picker over UILanguage.allCases. Writes the choice into
+// SettingsStore via update(_:), applying it immediately and auto-persisting
+// via POST /api/users/settings. TujiApp reads SettingsStore.current.uiLanguage
+// at render time to apply the matching locale to the whole app.
 
 import SwiftUI
 
@@ -9,30 +9,19 @@ struct LangPickerView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.dismiss) private var dismiss
 
-    private struct Option: Hashable {
-        let code: String
-        let label: String
-        let native: String
-    }
-
-    private static let options: [Option] = [
-        Option(code: "zh-Hant", label: "繁體中文", native: "繁體中文"),
-        Option(code: "zh-Hans", label: "简体中文", native: "简体中文")
-    ]
-
     var body: some View {
         List {
             Section {
-                ForEach(Self.options, id: \.code) { opt in
+                ForEach(UILanguage.allCases, id: \.self) { lang in
                     Button {
-                        self.store.update { $0.uiLang = opt.code }
+                        self.store.update { $0.uiLanguage = lang }
                         self.dismiss()
                     } label: {
                         HStack(spacing: Space.s3) {
-                            Text(opt.native)
+                            Text(verbatim: lang.nativeName)
                                 .foregroundStyle(.tujiInk)
                             Spacer()
-                            if self.store.current.uiLang == opt.code {
+                            if self.store.current.uiLanguage == lang {
                                 Image(systemName: "checkmark")
                                     .foregroundStyle(.tujiTeal)
                             }
@@ -40,9 +29,9 @@ struct LangPickerView: View {
                     }
                 }
             } header: {
-                Text("App 介面與後端內容會用這個語言")
+                Text("App 介面會使用這個語言")
             } footer: {
-                Text("儲存後立即生效。Word definition / examples 也會用這個語言請求。")
+                Text("變更立即生效。單字與例句維持中文內容，繁簡會跟隨此設定。")
                     .foregroundStyle(.tujiInk3)
             }
         }

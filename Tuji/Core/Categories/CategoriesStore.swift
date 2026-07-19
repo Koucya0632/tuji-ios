@@ -40,7 +40,9 @@ final class CategoriesStore {
             self.loaded = true
         }
         do {
-            let resp = try await self.repository.loadCategories(lang: SettingsStore.shared.current.uiLang)
+            let resp = try await self.repository.loadCategories(
+                lang: SettingsStore.shared.current.uiLanguage.contentLanguageCode
+            )
             self.categories = resp.categories
             self.log.info("loaded \(resp.categories.count, privacy: .public) categories")
         } catch {

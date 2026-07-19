@@ -50,7 +50,7 @@ final class WordsStore {
         do {
             let settings = SettingsStore.shared.current
             let resp = try await self.repository.loadWords(
-                lang: settings.uiLang,
+                lang: settings.uiLanguage.contentLanguageCode,
                 learning: settings.learningDirection.rawValue
             )
             var merged = resp.words

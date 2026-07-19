@@ -182,14 +182,14 @@ struct ProgressTabView: View {
             self.statTile(
                 label: "目前連勝",
                 value: self.progress.streak?.current ?? 0,
-                unit: "天",
+                unit: tujiLocalized("天"),
                 icon: "flame.fill",
                 tint: .tujiAmber
             )
             self.statTile(
                 label: "最長連勝",
                 value: self.progress.streak?.longest ?? 0,
-                unit: "天",
+                unit: tujiLocalized("天"),
                 icon: "trophy.fill",
                 tint: .tujiInk
             )
@@ -371,6 +371,7 @@ struct ProgressTabView: View {
 
 struct HeatmapGrid: View {
     let cells: [HeatmapCell]
+    @Environment(SettingsStore.self) private var settings
     /// 7 columns laid out top → bottom, then left → right by week.
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 7)
 
@@ -393,10 +394,14 @@ struct HeatmapGrid: View {
     }
 
     private var weekdayHeader: some View {
-        let labels = ["日", "一", "二", "三", "四", "五", "六"]
+        // Sunday-first, matching the heatmap's column order. Index-keyed:
+        // English's very-short symbols repeat ("S", "T").
+        let f = DateFormatter()
+        f.locale = self.settings.current.uiLanguage.locale
+        let labels = f.veryShortStandaloneWeekdaySymbols ?? ["日", "一", "二", "三", "四", "五", "六"]
         return HStack(spacing: 5) {
-            ForEach(labels, id: \.self) { l in
-                Text(l)
+            ForEach(labels.indices, id: \.self) { i in
+                Text(labels[i])
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.tujiInk4)
                     .frame(maxWidth: .infinity)

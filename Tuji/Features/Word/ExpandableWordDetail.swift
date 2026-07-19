@@ -69,7 +69,7 @@ struct ExpandableWordDetail: View {
             let settings = SettingsStore.shared.current
             self.fullWord = try await self.repository.word(
                 id: self.wordId,
-                lang: settings.uiLang,
+                lang: settings.uiLanguage.contentLanguageCode,
                 learning: settings.learningDirection.rawValue
             )
         } catch {

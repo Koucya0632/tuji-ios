@@ -171,13 +171,13 @@ struct TodayView: View {
                 .font(.tujiOverline)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
-            HStack(spacing: 0) {
-                Text(self.greetingPrefix)
-                Text(self.displayName).foregroundStyle(.tujiTeal)
-                Text("。")
-            }
-            .font(.tujiH2)
-            .foregroundStyle(.tujiInk)
+            // Concatenated so long localizations (en/ja) wrap as one flowing
+            // line instead of an HStack pushing the name off to the side.
+            (Text(self.greetingPrefix)
+                + Text(self.displayName).foregroundStyle(.tujiTeal)
+                + Text("。"))
+                .font(.tujiH2)
+                .foregroundStyle(.tujiInk)
             Text(self.subtitle)
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
@@ -187,9 +187,9 @@ struct TodayView: View {
     private var greetingPrefix: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<11: return "早安，"
-        case 11..<18: return "午安，"
-        default: return "晚安，"
+        case 5..<11: return tujiLocalized("早安，")
+        case 11..<18: return tujiLocalized("午安，")
+        default: return tujiLocalized("晚安，")
         }
     }
 
@@ -202,10 +202,13 @@ struct TodayView: View {
         return tujiLocalized("探險者")
     }
 
+    /// Overline date in the interface language (reading `settings.current`
+    /// here also registers the observation that re-renders the greeting
+    /// block when the user switches languages).
     private var dateLabel: String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "EEE · MMM d"
+        f.locale = self.settings.current.uiLanguage.locale
+        f.setLocalizedDateFormatFromTemplate("EEEMMMd")
         return f.string(from: Date()).uppercased()
     }
 

@@ -212,7 +212,10 @@ struct SetupView: View {
                 studyCategories: topicIds.sorted(),
                 studyDecks: [],
                 learningDirection: onboarding.learningDirection ?? settingsStore.current.learningDirection,
-                uiLang: "zh-Hant",
+                // The live value: device-detected on first run, or whatever
+                // the user already picked in-app. Never hardcode — the server
+                // clamps unknown codes, so what we send here sticks.
+                uiLang: settingsStore.current.uiLang,
                 fontSize: "md"
             )
 
