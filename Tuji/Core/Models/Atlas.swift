@@ -68,6 +68,8 @@ struct AtlasCandidate: Decodable, Hashable, Identifiable {
     let label: String
     let normalizedLabel: String
     let zhHant: String?
+    /// Gloss in the user's UI language (ja/en interfaces only; nil otherwise).
+    let gloss: String?
     let confidence: Double
     let rank: Int
 
@@ -76,7 +78,7 @@ struct AtlasCandidate: Decodable, Hashable, Identifiable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, level, label, normalizedLabel, zhHant, confidence, rank
+        case id, level, label, normalizedLabel, zhHant, gloss, confidence, rank
     }
 
     init(from decoder: Decoder) throws {
@@ -86,6 +88,7 @@ struct AtlasCandidate: Decodable, Hashable, Identifiable {
         self.label = try c.decode(String.self, forKey: .label)
         self.normalizedLabel = try c.decode(String.self, forKey: .normalizedLabel)
         self.zhHant = try c.decodeIfPresent(String.self, forKey: .zhHant)
+        self.gloss = try c.decodeIfPresent(String.self, forKey: .gloss)
         // The recognize route returns the raw DB row, where `confidence`
         // (Postgres NUMERIC) serializes as a string — tolerate string-or-number.
         self.confidence = try c.decodeFlexibleDouble(forKey: .confidence)
@@ -105,6 +108,9 @@ struct AtlasConfirmPayload: Codable {
     let fineLabel: String?
     let lemma: String
     let displayZhHant: String
+    /// The gloss field's value in the user's UI language (ja/en); the server
+    /// routes it to display_ja/display_en. nil for Chinese UIs.
+    let displayGloss: String?
     let partOfSpeech: String?
     let category: String?
 }

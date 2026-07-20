@@ -54,11 +54,12 @@ struct UILanguageTests {
     }
 
     @Test
-    func contentLanguageOnlyDivergesForSimplified() {
+    func contentLanguageIsTheWireCode() {
+        // Gloss language follows the UI language; the server resolves it.
         #expect(UILanguage.zhHans.contentLanguageCode == "zh-Hans")
         #expect(UILanguage.zhHant.contentLanguageCode == "zh-Hant")
-        #expect(UILanguage.ja.contentLanguageCode == "zh-Hant")
-        #expect(UILanguage.en.contentLanguageCode == "zh-Hant")
+        #expect(UILanguage.ja.contentLanguageCode == "ja")
+        #expect(UILanguage.en.contentLanguageCode == "en")
     }
 
     @Test

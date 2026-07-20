@@ -16,7 +16,7 @@ enum Endpoint {
     case usersSync
     case usersProgress
     case usersMastery
-    case usersCustomWords
+    case usersCustomWords(lang: String)
     case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
     case usersPushToken
@@ -133,6 +133,10 @@ enum Endpoint {
                 since.map { URLQueryItem(name: "since", value: $0) },
                 URLQueryItem(name: "limit", value: String(limit))
             ].compactMap(\.self)
+        case let .usersCustomWords(lang):
+            // ?lang= wins over the server-stored setting right after an in-app
+            // switch (the settings save is debounced).
+            [URLQueryItem(name: "lang", value: lang)]
         case let .words(lang, learning),
              let .word(_, lang, learning):
             [

@@ -45,6 +45,10 @@ final class AtlasCaptureVM {
     /// apply(_:) and ride through on confirm without cluttering the UI.
     var lemma = ""
     var displayZhHant = ""
+    /// The name field the user actually edits when the UI is ja/en (their
+    /// own-language gloss). displayZhHant still rides through as the Chinese
+    /// base column. Empty (and unused) for Chinese UIs.
+    var displayGloss = ""
     private(set) var primaryLabel = ""
     private(set) var fineLabel = ""
     private(set) var partOfSpeech = "noun"
@@ -221,6 +225,11 @@ final class AtlasCaptureVM {
         if overwrite || self.displayZhHant.isEmpty {
             self.displayZhHant = candidate.zhHant ?? candidate.label
         }
+        // The ja/en gloss the user edits; falls back to the Chinese gloss or
+        // the label so the field is never blank for a ja/en capture.
+        if overwrite || self.displayGloss.isEmpty {
+            self.displayGloss = candidate.gloss ?? candidate.zhHant ?? candidate.label
+        }
     }
 
     /// Payload assembled from the correction form. Split from submit() so the
@@ -234,6 +243,7 @@ final class AtlasCaptureVM {
             fineLabel: self.fineLabel.isEmpty ? nil : self.fineLabel,
             lemma: self.lemma,
             displayZhHant: self.displayZhHant,
+            displayGloss: self.displayGloss.isEmpty ? nil : self.displayGloss,
             partOfSpeech: self.partOfSpeech.isEmpty ? nil : self.partOfSpeech,
             category: self.category.isEmpty ? nil : self.category
         )

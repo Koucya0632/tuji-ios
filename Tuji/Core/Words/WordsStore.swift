@@ -55,7 +55,9 @@ final class WordsStore {
             )
             var merged = resp.words
             do {
-                let custom = try await self.repository.loadCustomWords()
+                let custom = try await self.repository.loadCustomWords(
+                    lang: settings.uiLanguage.contentLanguageCode
+                )
                 merged = Self.merge(publicWords: resp.words, customWords: custom.words)
             } catch {
                 self.log.info("custom words skipped: \(error.localizedDescription, privacy: .public)")

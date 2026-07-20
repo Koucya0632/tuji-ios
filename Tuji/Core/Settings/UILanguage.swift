@@ -42,11 +42,11 @@ nonisolated enum UILanguage: String, CaseIterable {
     }
 
     /// `lang` query value for server *content* endpoints (/api/words,
-    /// /api/categories, word detail). Content is Chinese-glossed study data:
-    /// zh-Hans gets an OpenCC conversion server-side, every other interface
-    /// language reads the zh-Hant base.
+    /// /api/categories, word detail). Study-content glosses follow the UI
+    /// language, so this is just the wire code — the server picks the gloss
+    /// language (ja/en definitions, zh-Hant base, or OpenCC zh-Hans).
     var contentLanguageCode: String {
-        self == .zhHans ? Self.zhHans.rawValue : Self.zhHant.rawValue
+        self.rawValue
     }
 
     /// First-run default: the first supported language in the device's

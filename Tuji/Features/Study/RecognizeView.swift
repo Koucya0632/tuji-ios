@@ -99,7 +99,12 @@ struct RecognizeView: View {
                         .font(.tujiBody)
                         .foregroundStyle(.tujiInk3)
                 }
-                if self.settings.current.showZh {
+                // In monolingual mode (UI language == target) the gloss equals
+                // the target definition below — show it once, keeping the
+                // ungated definition and dropping the duplicate gloss chip.
+                if self.settings.current.showZh,
+                   self.item.word.chinese != self.detail?.targetDefinition
+                {
                     Text(self.item.word.chinese)
                         .font(.tujiBody)
                         .foregroundStyle(.tujiInk2)
