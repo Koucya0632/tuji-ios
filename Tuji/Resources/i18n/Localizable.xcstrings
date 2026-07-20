@@ -3168,6 +3168,28 @@
         }
       }
     },
+    "因為還有 %lld 個字要複習，今天新字先調整為 %lld 個。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld words are still due for review, so today’s new words are trimmed to %lld."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復習する単語がまだ %lld 語あるため、今日の新しい単語はひとまず %lld 語に調整しました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "因为还有 %lld 个字要复习，今天新字先调整为 %lld 个。"
+          }
+        }
+      }
+    },
     "困難" : {
       "localizations" : {
         "en" : {
