@@ -33,7 +33,8 @@ struct LiveStudyRepository: StudyRepository {
                 mode: mode.asPath,
                 limit: max(1, limit),
                 new: newCount,
-                categories: categories
+                categories: categories,
+                lang: SettingsStore.shared.current.uiLang
             )
         )
     }
