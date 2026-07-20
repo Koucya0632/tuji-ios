@@ -23,12 +23,24 @@ struct AtlasCaptureView: View {
     /// reset, so there's no field-by-field clearing to keep in sync.
     @State private var vm = AtlasCaptureVM()
 
-    /// ja/en interfaces edit their own-language gloss (displayGloss); Chinese
-    /// interfaces edit the zh-Hant name directly.
-    private var usesGlossField: Bool {
-        switch self.settings.current.uiLanguage {
-        case .ja, .en: true
-        case .zhHant, .zhHans: false
+    /// What the correction sheet's second (meaning) field should be.
+    private enum SecondField {
+        case chineseName // zh UIs edit displayZhHant directly
+        case gloss // ja/en learning a different language: edit their-language gloss
+        case hidden // monolingual (UI language == target): lemma is already in
+        // their language and the definition is auto-generated, so there's no
+        // useful meaning to hand-enter.
+    }
+
+    private var secondField: SecondField {
+        let ui = self.settings.current.uiLanguage
+        switch ui {
+        case .zhHant, .zhHans:
+            return .chineseName
+        case .ja, .en:
+            let target = self.settings.current.learningDirection.targetLanguage
+            let monolingual = (ui == .ja && target == .ja) || (ui == .en && target == .en)
+            return monolingual ? .hidden : .gloss
         }
     }
 
@@ -446,13 +458,16 @@ struct AtlasCaptureView: View {
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiAmber)
             }
-            // ja/en users edit the gloss in their own language ("中文名稱"
-            // localizes to Meaning/意味); displayZhHant still rides through as
-            // the Chinese base column. Chinese UIs edit displayZhHant directly.
-            if self.usesGlossField {
-                self.field("中文名稱", text: $vm.displayGloss)
-            } else {
+            // "中文名稱" localizes to Meaning/意味 for ja/en. displayZhHant
+            // always rides through as the Chinese base column (prefilled from
+            // the candidate) even when the field is hidden or bound to the gloss.
+            switch self.secondField {
+            case .chineseName:
                 self.field("中文名稱", text: $vm.displayZhHant)
+            case .gloss:
+                self.field("中文名稱", text: $vm.displayGloss)
+            case .hidden:
+                EmptyView()
             }
 
             BBtn(

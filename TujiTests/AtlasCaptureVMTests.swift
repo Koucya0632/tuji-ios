@@ -13,6 +13,7 @@ struct AtlasCaptureVMTests {
         level: String = "primary",
         label: String = "cat",
         zhHant: String? = "貓",
+        gloss: String? = nil,
         confidence: String = "0.9",
         rank: Int = 1
     ) throws
@@ -28,6 +29,9 @@ struct AtlasCaptureVMTests {
         ]
         if let zhHant {
             fields.append("\"zhHant\": \"\(zhHant)\"")
+        }
+        if let gloss {
+            fields.append("\"gloss\": \"\(gloss)\"")
         }
         let json = "{ \(fields.joined(separator: ", ")) }"
         return try JSONDecoder().decode(AtlasCandidate.self, from: Data(json.utf8))
@@ -100,6 +104,24 @@ struct AtlasCaptureVMTests {
         let vm = AtlasCaptureVM()
         try vm.apply(self.candidate(label: "cat", zhHant: nil))
         #expect(vm.displayZhHant == "cat")
+    }
+
+    @Test
+    func glossPrefillsOnlyWhenModelReturnsOne() throws {
+        // Cross-language capture: the model returns a UI-language gloss →
+        // prefill it. displayZhHant still carries the Chinese base.
+        let withGloss = AtlasCaptureVM()
+        try withGloss.apply(self.candidate(label: "cat", zhHant: "貓", gloss: "猫"))
+        #expect(withGloss.displayGloss == "猫")
+        #expect(withGloss.displayZhHant == "貓")
+
+        // Monolingual / Chinese-UI capture: no gloss from the model → the
+        // gloss field stays empty (never seeded with Chinese), so confirm
+        // sends nil and display_ja/en aren't polluted.
+        let noGloss = AtlasCaptureVM()
+        try noGloss.apply(self.candidate(label: "cat", zhHant: "貓"))
+        #expect(noGloss.displayGloss.isEmpty)
+        #expect(noGloss.confirmPayload.displayGloss == nil)
     }
 
     @Test
