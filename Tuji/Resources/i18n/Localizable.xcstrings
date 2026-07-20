@@ -3195,13 +3195,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Images, Chinese hints, and Japanese audio"
+            "value" : "Images, meaning hints, and Japanese audio"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画像・中国語ヒント・日本語音声"
+            "value" : "画像・意味のヒント・日本語音声"
           }
         },
         "zh-Hans" : {
@@ -3217,13 +3217,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Images, Chinese hints, and English audio"
+            "value" : "Images, meaning hints, and English audio"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "画像・中国語ヒント・英語音声"
+            "value" : "画像・意味のヒント・英語音声"
           }
         },
         "zh-Hans" : {
