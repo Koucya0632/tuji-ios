@@ -497,23 +497,31 @@ struct TodayView: View {
     }
 
     private var newQuotaAdjustmentHint: LocalizedStringKey? {
-        guard let text = Self.newQuotaAdjustmentHintText(
+        guard let adj = Self.newQuotaAdjustment(
             isGuest: self.isGuest,
             stats: self.studyStats.stats,
             newAvailable: self.newAvailable,
             dailyGoal: self.settings.current.dailyGoal
         )
         else { return nil }
-        return LocalizedStringKey(text)
+        // tujiLocalized resolves the interpolated key against the uiLang; wrap
+        // the already-localized result verbatim (a String-keyed
+        // LocalizedStringKey never re-looks-up, which is why the old
+        // LocalizedStringKey(rawChinese) leaked Chinese into ja/en UIs).
+        return LocalizedStringKey(
+            tujiLocalized("因為還有 \(adj.due) 個字要複習，今天新字先調整為 \(adj.limit) 個。")
+        )
     }
 
-    static func newQuotaAdjustmentHintText(
+    /// The backlog-tapers-new-quota decision + counts, split from the localized
+    /// string so the logic stays unit-testable without a bundle/locale.
+    static func newQuotaAdjustment(
         isGuest: Bool,
         stats: StudyStats?,
         newAvailable: Int,
         dailyGoal: Int
     )
-        -> String?
+        -> (due: Int, limit: Int)?
     {
         guard !isGuest, let stats else { return nil }
         let goal = max(1, dailyGoal)
@@ -521,7 +529,7 @@ struct TodayView: View {
         guard newAvailable > 0 else { return nil }
         let limit = StudyQuotas.computeNewLimit(goal: goal, due: stats.due)
         guard limit > 0, limit < goal else { return nil }
-        return "因為還有 \(stats.due) 個字要複習，今天新字先調整為 \(limit) 個。"
+        return (stats.due, limit)
     }
 
     /// One explanatory line under the CTAs. A greyed 學新字 explains itself
