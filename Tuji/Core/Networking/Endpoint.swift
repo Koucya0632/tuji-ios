@@ -34,8 +34,8 @@ enum Endpoint {
 
     case atlasImages(limit: Int)
     case atlasImage(id: String)
-    case atlasImageRecognize(id: String)
-    case atlasImageConfirm(id: String)
+    case atlasImageRecognize(id: String, lang: String, learning: String)
+    case atlasImageConfirm(id: String, lang: String)
     case atlasItem(id: String)
     case atlasItemCards(id: String)
     case atlasItemEnrich(id: String)
@@ -85,8 +85,8 @@ enum Endpoint {
         case .studyReports: "/api/study/reports"
         case .atlasImages: "/api/atlas/images"
         case let .atlasImage(id): "/api/atlas/images/\(id)"
-        case let .atlasImageRecognize(id): "/api/atlas/images/\(id)/recognize"
-        case let .atlasImageConfirm(id): "/api/atlas/images/\(id)/confirm"
+        case let .atlasImageRecognize(id, _, _): "/api/atlas/images/\(id)/recognize"
+        case let .atlasImageConfirm(id, _): "/api/atlas/images/\(id)/confirm"
         case let .atlasItem(id): "/api/atlas/items/\(id)"
         case let .atlasItemCards(id): "/api/atlas/items/\(id)/cards"
         case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
@@ -136,6 +136,16 @@ enum Endpoint {
         case let .usersCustomWords(lang):
             // ?lang= wins over the server-stored setting right after an in-app
             // switch (the settings save is debounced).
+            [URLQueryItem(name: "lang", value: lang)]
+        case let .atlasImageRecognize(_, lang, learning):
+            // Recognition's candidate gloss + target labels follow the user's
+            // live UI language and learning direction, not the debounced
+            // server settings — otherwise the meaning field comes back empty.
+            [
+                URLQueryItem(name: "lang", value: lang),
+                URLQueryItem(name: "learning", value: learning)
+            ]
+        case let .atlasImageConfirm(_, lang):
             [URLQueryItem(name: "lang", value: lang)]
         case let .words(lang, learning),
              let .word(_, lang, learning):
