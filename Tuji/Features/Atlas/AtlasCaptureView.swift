@@ -17,10 +17,20 @@ import UIKit
 
 struct AtlasCaptureView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SettingsStore.self) private var settings
 
     /// Pipeline + form state. Replaced wholesale on 換一張 — a fresh VM *is* the
     /// reset, so there's no field-by-field clearing to keep in sync.
     @State private var vm = AtlasCaptureVM()
+
+    /// ja/en interfaces edit their own-language gloss (displayGloss); Chinese
+    /// interfaces edit the zh-Hant name directly.
+    private var usesGlossField: Bool {
+        switch self.settings.current.uiLanguage {
+        case .ja, .en: true
+        case .zhHant, .zhHans: false
+        }
+    }
 
     @State private var showCamera = false
     @State private var pickerItem: PhotosPickerItem?
@@ -436,7 +446,14 @@ struct AtlasCaptureView: View {
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiAmber)
             }
-            self.field("中文名稱", text: $vm.displayZhHant)
+            // ja/en users edit the gloss in their own language ("中文名稱"
+            // localizes to Meaning/意味); displayZhHant still rides through as
+            // the Chinese base column. Chinese UIs edit displayZhHant directly.
+            if self.usesGlossField {
+                self.field("中文名稱", text: $vm.displayGloss)
+            } else {
+                self.field("中文名稱", text: $vm.displayZhHant)
+            }
 
             BBtn(
                 title: "確認並生成卡片",

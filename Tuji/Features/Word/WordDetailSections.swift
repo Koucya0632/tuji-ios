@@ -118,9 +118,13 @@ struct WordDetailSections: View {
     }
 
     private func definitionCard(_ w: Word, targetDef: String?, chineseDef: String?) -> some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
+        // Monolingual mode (UI language == target language): the gloss and the
+        // target definition are the same string. Show it once, via targetDef
+        // (which is ungated), and drop the duplicate headline.
+        let glossDupesTarget = targetDef.map { $0 == w.chinese } ?? false
+        return VStack(alignment: .leading, spacing: Space.s2) {
             HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
-                if self.settings.current.showZh {
+                if self.settings.current.showZh, !glossDupesTarget {
                     Text(w.chinese)
                         .font(.system(size: 17, weight: .heavy))
                         .foregroundStyle(.tujiInk)
@@ -159,7 +163,9 @@ struct WordDetailSections: View {
         VStack(spacing: 0) {
             ForEach(Array(forms.enumerated()), id: \.offset) { idx, form in
                 HStack {
-                    Text(form.label)
+                    // Grammar labels (單數/複數/過去式…) come from the model as
+                    // zh-Hant; localize the known set, pass anything else through.
+                    Text(tujiLocalized(String.LocalizationValue(form.label)))
                         .font(.tujiBody)
                         .foregroundStyle(.tujiInk2)
                     Spacer()
