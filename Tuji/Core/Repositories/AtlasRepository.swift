@@ -57,12 +57,20 @@ struct LiveAtlasRepository: AtlasRepository {
 
     func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse {
         struct Payload: Encodable { let mode: String }
-        return try await self.api.post(.atlasImageRecognize(id: imageId), body: Payload(mode: mode.rawValue))
+        let settings = SettingsStore.shared.current
+        return try await self.api.post(
+            .atlasImageRecognize(
+                id: imageId,
+                lang: settings.uiLang,
+                learning: settings.learningDirection.rawValue
+            ),
+            body: Payload(mode: mode.rawValue)
+        )
     }
 
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
         let response: AtlasItemResponse = try await self.api.post(
-            .atlasImageConfirm(id: imageId),
+            .atlasImageConfirm(id: imageId, lang: SettingsStore.shared.current.uiLang),
             body: payload
         )
         return response.item
