@@ -225,10 +225,12 @@ final class AtlasCaptureVM {
         if overwrite || self.displayZhHant.isEmpty {
             self.displayZhHant = candidate.zhHant ?? candidate.label
         }
-        // The ja/en gloss the user edits; falls back to the Chinese gloss or
-        // the label so the field is never blank for a ja/en capture.
-        if overwrite || self.displayGloss.isEmpty {
-            self.displayGloss = candidate.gloss ?? candidate.zhHant ?? candidate.label
+        // The ja/en gloss the user edits, only when the model returned one
+        // (cross-language capture: UI language ≠ target). No zh fallback — a
+        // Chinese value must never land in display_ja/en; monolingual and
+        // Chinese-UI captures leave this empty so confirm sends nil.
+        if let gloss = candidate.gloss, overwrite || self.displayGloss.isEmpty {
+            self.displayGloss = gloss
         }
     }
 
