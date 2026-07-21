@@ -56,7 +56,8 @@ final class WordsStore {
             var merged = resp.words
             do {
                 let custom = try await self.repository.loadCustomWords(
-                    lang: settings.uiLanguage.contentLanguageCode
+                    lang: settings.uiLanguage.contentLanguageCode,
+                    learning: settings.learningDirection.rawValue
                 )
                 merged = Self.merge(publicWords: resp.words, customWords: custom.words)
             } catch {

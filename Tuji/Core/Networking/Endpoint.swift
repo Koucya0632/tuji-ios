@@ -16,7 +16,7 @@ enum Endpoint {
     case usersSync
     case usersProgress
     case usersMastery
-    case usersCustomWords(lang: String)
+    case usersCustomWords(lang: String, learning: String)
     case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
     case usersPushToken
@@ -136,10 +136,15 @@ enum Endpoint {
                 since.map { URLQueryItem(name: "since", value: $0) },
                 URLQueryItem(name: "limit", value: String(limit))
             ].compactMap(\.self)
-        case let .usersCustomWords(lang):
-            // ?lang= wins over the server-stored setting right after an in-app
-            // switch (the settings save is debounced).
-            [URLQueryItem(name: "lang", value: lang)]
+        case let .usersCustomWords(lang, learning):
+            // ?lang= / ?learning= win over the server-stored setting right after
+            // an in-app switch (the settings save is debounced). Without the
+            // live learning direction the custom 圖鑑 comes back for the *old*
+            // target language until the debounced POST lands.
+            [
+                URLQueryItem(name: "lang", value: lang),
+                URLQueryItem(name: "learning", value: learning)
+            ]
         case let .atlasImageRecognize(_, lang, learning):
             // Recognition's candidate gloss + target labels follow the user's
             // live UI language and learning direction, not the debounced
