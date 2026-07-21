@@ -37,6 +37,10 @@ final class AtlasCaptureVM {
     /// candidates are kept here — a re-run barely differs and just burns another
     /// AI call, so tapping a mode again re-shows its cached set for free.
     private var candidatesByMode: [AtlasRecognitionMode: [AtlasCandidate]] = [:]
+    /// An incomplete legacy cache gets one explicit repair attempt per mode.
+    /// If that provider still cannot supply a gloss, later taps reuse the result
+    /// instead of repeatedly spending the user's AI allowance.
+    private var glossRepairAttemptedModes: Set<AtlasRecognitionMode> = []
 
     // MARK: - Correction form
 
@@ -169,9 +173,28 @@ final class AtlasCaptureVM {
     func requestRecognize(_ mode: AtlasRecognitionMode) {
         guard let image = self.uploadedImage else { return }
         if let cached = self.candidatesByMode[mode], !cached.isEmpty {
-            self.applyCandidates(cached, mode: mode)
-        } else {
-            Task { await self.recognize(imageId: image.id, mode: mode) }
+            if self.needsGlossRefresh(cached), !self.glossRepairAttemptedModes.contains(mode) {
+                self.glossRepairAttemptedModes.insert(mode)
+                Task { await self.recognize(imageId: image.id, mode: mode) }
+            } else {
+                self.applyCandidates(cached, mode: mode)
+            }
+            return
+        }
+        Task { await self.recognize(imageId: image.id, mode: mode) }
+    }
+
+    /// Candidates saved by older upload responses may have their target label
+    /// but no UI-language meaning. Let an explicit tap repair that incomplete
+    /// cache instead of showing it forever.
+    private func needsGlossRefresh(_ candidates: [AtlasCandidate]) -> Bool {
+        let settings = SettingsStore.shared.current
+        let ui = settings.uiLanguage
+        let target = settings.learningDirection.targetLanguage
+        let needsSeparateGloss = (ui == .en && target == .ja) || (ui == .ja && target == .en)
+        guard needsSeparateGloss else { return false }
+        return candidates.contains { candidate in
+            candidate.gloss?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
         }
     }
 

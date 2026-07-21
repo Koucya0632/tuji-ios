@@ -41,7 +41,14 @@ struct LiveAtlasRepository: AtlasRepository {
     ) async throws
         -> AtlasUploadResponse
     {
-        var fields: [String: String] = [:]
+        // Upload performs the first recognition inline, so it needs the same
+        // live language context as an explicit recognize request. Do not rely
+        // only on the debounced server settings after an in-app switch.
+        let settings = SettingsStore.shared.current
+        var fields: [String: String] = [
+            "lang": settings.uiLang,
+            "learning": settings.learningDirection.rawValue
+        ]
         if let targetLanguage {
             fields["targetLanguage"] = targetLanguage.rawValue
         }
