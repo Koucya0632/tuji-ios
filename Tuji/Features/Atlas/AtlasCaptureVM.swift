@@ -309,8 +309,13 @@ final class AtlasCaptureVM {
 
     func candidateLabel(_ candidate: AtlasCandidate) -> String {
         let pct = Int((candidate.confidence * 100).rounded())
-        if let zh = candidate.zhHant, !zh.isEmpty {
-            return "\(candidate.label) · \(zh) · \(pct)%"
+        // Cross-language ja/en captures carry the interface-language meaning
+        // in `gloss`; Chinese captures have no gloss and fall back to zhHant.
+        let meaning = [candidate.gloss, candidate.zhHant]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
+        if let meaning {
+            return "\(candidate.label) · \(meaning) · \(pct)%"
         }
         return "\(candidate.label) · \(pct)%"
     }

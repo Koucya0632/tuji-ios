@@ -152,11 +152,13 @@ struct AtlasCaptureVMTests {
     }
 
     @Test
-    func candidateLabelFormatsWithAndWithoutZh() throws {
+    func candidateLabelPrefersUiGlossAndFallsBackToChinese() throws {
         let vm = AtlasCaptureVM()
-        let withZh = try self.candidate(label: "cat", zhHant: "貓", confidence: "0.87")
-        #expect(vm.candidateLabel(withZh) == "cat · 貓 · 87%")
-        let noZh = try self.candidate(label: "cat", zhHant: nil, confidence: "0.87")
-        #expect(vm.candidateLabel(noZh) == "cat · 87%")
+        let withGloss = try self.candidate(label: "猫", zhHant: "貓", gloss: "cat", confidence: "0.87")
+        #expect(vm.candidateLabel(withGloss) == "猫 · cat · 87%")
+        let chineseFallback = try self.candidate(label: "猫", zhHant: "貓", confidence: "0.87")
+        #expect(vm.candidateLabel(chineseFallback) == "猫 · 貓 · 87%")
+        let noMeaning = try self.candidate(label: "猫", zhHant: nil, confidence: "0.87")
+        #expect(vm.candidateLabel(noMeaning) == "猫 · 87%")
     }
 }
