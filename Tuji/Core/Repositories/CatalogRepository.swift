@@ -4,7 +4,7 @@ import Foundation
 protocol CatalogRepository {
     func loadCategories(lang: String) async throws -> CategoriesResponse
     func loadWords(lang: String, learning: String) async throws -> WordsListResponse
-    func loadCustomWords(lang: String) async throws -> WordsListResponse
+    func loadCustomWords(lang: String, learning: String) async throws -> WordsListResponse
     func search(_ query: String) async throws -> SearchResponse
     func word(id: String, lang: String, learning: String) async throws -> Word
 }
@@ -27,8 +27,8 @@ struct LiveCatalogRepository: CatalogRepository {
         try await self.api.get(.words(lang: lang, learning: learning))
     }
 
-    func loadCustomWords(lang: String) async throws -> WordsListResponse {
-        try await self.api.get(.usersCustomWords(lang: lang))
+    func loadCustomWords(lang: String, learning: String) async throws -> WordsListResponse {
+        try await self.api.get(.usersCustomWords(lang: lang, learning: learning))
     }
 
     func search(_ query: String) async throws -> SearchResponse {
