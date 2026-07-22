@@ -37,15 +37,22 @@ struct ImageCropView: View {
         ZStack {
             Color.tujiInk.ignoresSafeArea()
 
-            if let proxy {
-                self.cropCanvas(proxy)
-            } else if self.loadFailed {
-                self.failureView
-            } else {
-                ProgressView().tint(.white)
+            Group {
+                if let proxy {
+                    self.cropCanvas(proxy)
+                } else if self.loadFailed {
+                    self.failureView
+                } else {
+                    ProgressView().tint(.white)
+                }
             }
-
-            self.toolbar
+            // Reserve the toolbar's height out of the crop area (instead of floating
+            // it over the image) so the bottom crop handles never sit under the
+            // buttons — the failure mode for full-bleed sources like phone
+            // screenshots, whose aspect ratio matches the screen.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                self.toolbar
+            }
         }
         .task {
             let data = self.imageData
@@ -64,13 +71,24 @@ struct ImageCropView: View {
 
     private func cropCanvas(_ proxy: UIImage) -> some View {
         GeometryReader { geo in
-            let frame = self.displayedFrame(for: proxy.size, in: geo.size)
+            // Inset the fitting area so the corner handles at the image's edges keep
+            // clear of the screen edges and stay draggable. Without this a full-bleed
+            // source (a phone screenshot fills the whole screen, since its aspect
+            // matches the device) pins the handles into the status-bar / home-indicator
+            // zones where they can't be grabbed — so the crop can't be adjusted at all.
+            let margin: CGFloat = 20
+            let available = CGRect(origin: .zero, size: geo.size).insetBy(dx: margin, dy: margin)
+            let frame = self.displayedFrame(for: proxy.size, in: available)
             let window = self.viewRect(self.cropN, in: frame)
 
             ZStack {
+                // Draw the proxy at the computed frame (rather than an aspect-fit that
+                // fills the whole canvas) so the image and the handle geometry share
+                // the exact same rect.
                 Image(uiImage: proxy)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .frame(width: frame.width, height: frame.height)
+                    .position(x: frame.midX, y: frame.midY)
 
                 // Dim everything outside the crop window (even-odd punches the hole).
                 Path { path in
@@ -102,7 +120,6 @@ struct ImageCropView: View {
                 self.handle(.bottomRight, window: window, frame: frame)
             }
         }
-        .ignoresSafeArea()
     }
 
     private func thirdsGrid(in window: CGRect) -> some View {
@@ -191,8 +208,9 @@ struct ImageCropView: View {
 
     // MARK: - Geometry
 
-    /// Aspect-fit the image inside `container`, returning the displayed image frame.
-    private func displayedFrame(for imageSize: CGSize, in container: CGSize) -> CGRect {
+    /// Aspect-fit the image inside `container`, returning the displayed image frame
+    /// in the parent's coordinate space (centered within `container`).
+    private func displayedFrame(for imageSize: CGSize, in container: CGRect) -> CGRect {
         guard imageSize.width > 0, imageSize.height > 0,
               container.width > 0, container.height > 0
         else { return .zero }
@@ -207,7 +225,12 @@ struct ImageCropView: View {
             dw = container.width
             dh = dw / imageAspect
         }
-        return CGRect(x: (container.width - dw) / 2, y: (container.height - dh) / 2, width: dw, height: dh)
+        return CGRect(
+            x: container.minX + (container.width - dw) / 2,
+            y: container.minY + (container.height - dh) / 2,
+            width: dw,
+            height: dh
+        )
     }
 
     private func viewRect(_ norm: CGRect, in frame: CGRect) -> CGRect {
@@ -231,48 +254,46 @@ struct ImageCropView: View {
     // MARK: - Toolbar & failure
 
     private var toolbar: some View {
-        VStack {
-            Spacer()
-            HStack(spacing: Space.s3) {
+        HStack(spacing: Space.s3) {
+            Button {
+                self.onCancel()
+            } label: {
+                Text("取消")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.vertical, Space.s3)
+                    .padding(.horizontal, Space.s4)
+            }
+            .disabled(self.working)
+
+            if self.proxy != nil {
                 Button {
-                    self.onCancel()
+                    self.cropN = CGRect(x: 0, y: 0, width: 1, height: 1)
                 } label: {
-                    Text("取消")
+                    Text("重設")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.white.opacity(0.85))
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s4)
                 }
                 .disabled(self.working)
-
-                if self.proxy != nil {
-                    Button {
-                        self.cropN = CGRect(x: 0, y: 0, width: 1, height: 1)
-                    } label: {
-                        Text("重設")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.85))
-                            .padding(.vertical, Space.s3)
-                            .padding(.horizontal, Space.s4)
-                    }
-                    .disabled(self.working)
-                }
-
-                Spacer()
-
-                BBtn(
-                    title: self.working ? "處理中…" : "使用裁切",
-                    bg: .tujiTeal,
-                    fg: .white,
-                    icon: "checkmark"
-                ) {
-                    self.confirm()
-                }
-                .disabled(self.working || self.proxy == nil)
             }
-            .padding(.horizontal, Space.s5)
-            .padding(.bottom, Space.s4)
+
+            Spacer()
+
+            BBtn(
+                title: self.working ? "處理中…" : "使用裁切",
+                bg: .tujiTeal,
+                fg: .white,
+                icon: "checkmark"
+            ) {
+                self.confirm()
+            }
+            .disabled(self.working || self.proxy == nil)
         }
+        .padding(.horizontal, Space.s5)
+        .padding(.top, Space.s3)
+        .padding(.bottom, Space.s2)
     }
 
     private var failureView: some View {

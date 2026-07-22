@@ -123,7 +123,6 @@ struct AtlasCaptureView: View {
                 },
                 onCancel: { self.pendingCrop = nil }
             )
-            .ignoresSafeArea()
         }
         .onChange(of: self.pickerItem) { _, newValue in
             guard let newValue else { return }
