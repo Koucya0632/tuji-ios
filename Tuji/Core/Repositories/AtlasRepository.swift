@@ -17,6 +17,13 @@ protocol AtlasRepository {
     func enrich(itemId: String) async throws
     func detail(itemId: String) async throws -> Word
     func entitlement() async throws -> AtlasEntitlement
+    func publish(itemId: String) async throws -> AtlasPublishResponse
+    func publicItems(lemma: String, language: TargetLanguage, limit: Int) async throws -> [AtlasPublicItem]
+    func publicFeed(limit: Int) async throws -> [AtlasPublicItem]
+    func author(username: String) async throws -> AtlasAuthorResponse
+    func save(slug: String) async throws -> AtlasSaveResponse
+    func unsave(slug: String) async throws -> AtlasSaveResponse
+    func report(slug: String, reason: AtlasReportReason, detail: String?) async throws
 }
 
 @MainActor
@@ -106,5 +113,54 @@ struct LiveAtlasRepository: AtlasRepository {
 
     func entitlement() async throws -> AtlasEntitlement {
         try await self.api.get(.atlasEntitlement)
+    }
+
+    /// Submits an item for public review. This is a *submission*, not a publish:
+    /// the server runs a machine gate that may publish it, queue it for a human,
+    /// or reject it — see `AtlasPublishResponse.moderation`.
+    func publish(itemId: String) async throws -> AtlasPublishResponse {
+        try await self.api.post(.atlasItemPublish(id: itemId), body: Empty())
+    }
+
+    /// Other users' public 圖鑑 for one word. Public endpoint — no bearer token,
+    /// and it honors the server's CDN cache headers.
+    func publicItems(
+        lemma: String,
+        language: TargetLanguage,
+        limit: Int = 12
+    ) async throws -> [AtlasPublicItem] {
+        let response: AtlasPublicByLemmaResponse = try await self.api.get(
+            .atlasPublicByLemma(lemma: lemma, lang: language.rawValue, limit: limit)
+        )
+        return response.items
+    }
+
+    func publicFeed(limit: Int = 60) async throws -> [AtlasPublicItem] {
+        let response: AtlasPublicFeedResponse = try await self.api.get(.atlasPublicFeed(limit: limit))
+        return response.items
+    }
+
+    func author(username: String) async throws -> AtlasAuthorResponse {
+        try await self.api.get(.atlasPublicAuthor(username: username))
+    }
+
+    /// Saving is the CONSUMPTION path — it does not touch the user's 自製圖鑑
+    /// capacity (docs/COMMUNITY_ATLAS_PLAN.md §4.1).
+    func save(slug: String) async throws -> AtlasSaveResponse {
+        try await self.api.post(.atlasPublicSave(slug: slug), body: Empty())
+    }
+
+    func unsave(slug: String) async throws -> AtlasSaveResponse {
+        // The backend answers DELETE with the updated save state, so this uses
+        // the decoding delete rather than APIClient.delete (which discards it).
+        try await self.api.delete(.atlasPublicSave(slug: slug), as: AtlasSaveResponse.self)
+    }
+
+    func report(slug: String, reason: AtlasReportReason, detail: String?) async throws {
+        struct Ack: Decodable { let ok: Bool? }
+        let _: Ack = try await self.api.post(
+            .atlasPublicReport(slug: slug),
+            body: AtlasReportPayload(reason: reason.rawValue, detail: detail)
+        )
     }
 }

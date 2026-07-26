@@ -45,6 +45,20 @@ enum Endpoint {
     case atlasFriends(limit: Int)
     case atlasEntitlement
 
+    // MARK: - Public 圖鑑 (community; no auth)
+
+    /// Other users' approved public items for one lemma — the word detail
+    /// page's 「大家的圖鑑」 section.
+    case atlasPublicByLemma(lemma: String, lang: String, limit: Int)
+    /// The community wall.
+    case atlasPublicFeed(limit: Int)
+    /// A community author's profile + their public items.
+    case atlasPublicAuthor(username: String)
+    /// Save / unsave a community item (auth required; consumption quota).
+    case atlasPublicSave(slug: String)
+    /// Report a community item (auth required).
+    case atlasPublicReport(slug: String)
+
     // MARK: - Billing (auth-protected)
 
     case billingVerify
@@ -95,6 +109,11 @@ enum Endpoint {
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
         case .atlasEntitlement: "/api/atlas/entitlement"
+        case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
+        case .atlasPublicFeed: "/api/atlas/public"
+        case let .atlasPublicAuthor(username): "/api/atlas/public/authors/\(username)"
+        case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
+        case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
         case .billingVerify: "/api/billing/verify"
         case .search: "/api/search"
         case .events: "/api/events"
@@ -129,7 +148,8 @@ enum Endpoint {
                 URLQueryItem(name: "limit", value: String(limit))
             ]
         case let .atlasImages(limit),
-             let .atlasFriends(limit):
+             let .atlasFriends(limit),
+             let .atlasPublicFeed(limit):
             [URLQueryItem(name: "limit", value: String(limit))]
         case let .atlasSync(since, limit):
             [
@@ -155,6 +175,14 @@ enum Endpoint {
             ]
         case let .atlasImageConfirm(_, lang):
             [URLQueryItem(name: "lang", value: lang)]
+        case let .atlasPublicByLemma(lemma, lang, limit):
+            // `lang` is required by the backend: the same spelling can exist in
+            // both decks, so omitting it would mix languages into one list.
+            [
+                URLQueryItem(name: "lemma", value: lemma),
+                URLQueryItem(name: "lang", value: lang),
+                URLQueryItem(name: "limit", value: String(limit))
+            ]
         case let .words(lang, learning),
              let .word(_, lang, learning):
             [
@@ -173,7 +201,9 @@ enum Endpoint {
     /// the cache so writes immediately reflect.
     var cachePolicy: URLRequest.CachePolicy {
         switch self {
-        case .words, .word, .categories, .search:
+        // Community reads are public and CDN-cached server-side; honor it.
+        case .words, .word, .categories, .search,
+             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor:
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
@@ -181,6 +211,7 @@ enum Endpoint {
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement,
+             .atlasPublicSave, .atlasPublicReport,
              .billingVerify:
             .reloadIgnoringLocalCacheData
         default:
@@ -196,7 +227,9 @@ enum Endpoint {
     /// the Bearer path. The backend tolerates either.
     var isPublic: Bool {
         switch self {
-        case .events, .search, .word, .words, .categories: true
+        // Save / report stay authed — only the reads are anonymous.
+        case .events, .search, .word, .words, .categories,
+             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor: true
         default: false
         }
     }

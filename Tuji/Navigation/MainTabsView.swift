@@ -1,4 +1,4 @@
-// 4-tab post-login shell (§I.9.2).
+// 5-tab post-login shell (§I.9.2): 主頁 / 圖鑑 / 進度 / 社群 / 我的.
 //
 // Each tab owns its own NavigationStack so cross-tab pushes don't
 // interfere. Tab bar is custom (not SwiftUI TabView) to preserve the
@@ -24,6 +24,7 @@ struct MainTabsView: View {
     @State private var todayPath = NavigationPath()
     @State private var cardsPath = NavigationPath()
     @State private var progressPath = NavigationPath()
+    @State private var communityPath = NavigationPath()
     @State private var mePath = NavigationPath()
 
     @State private var tourIndex: Int?
@@ -67,7 +68,7 @@ struct MainTabsView: View {
         .task { await self.startTourIfNeeded() }
     }
 
-    private let tabs: [MainTab] = [.today, .cards, .progress, .me]
+    private let tabs: [MainTab] = [.today, .cards, .progress, .community, .me]
 
     /// Horizontally-paged container so the four tabs can be switched by
     /// swiping left/right, not only by tapping the bar. Each page still owns
@@ -116,6 +117,11 @@ struct MainTabsView: View {
                 ProgressTabView()
                     .tujiNavDestinations(user: self.user)
             }
+        case .community:
+            NavigationStack(path: self.$communityPath) {
+                AtlasPublicFeedView()
+                    .tujiNavDestinations(user: self.user)
+            }
         case .me:
             NavigationStack(path: self.$mePath) {
                 MeView(user: self.user)
@@ -144,6 +150,7 @@ struct MainTabsView: View {
         case .today: self.todayPath.count
         case .cards: self.cardsPath.count
         case .progress: self.progressPath.count
+        case .community: self.communityPath.count
         case .me: self.mePath.count
         }
     }
@@ -223,6 +230,7 @@ struct MainTabsView: View {
             case .today: self.todayPath.append(route)
             case .cards: self.cardsPath.append(route)
             case .progress: self.progressPath.append(route)
+            case .community: self.communityPath.append(route)
             case .me: self.mePath.append(route)
             }
         }
@@ -232,7 +240,7 @@ struct MainTabsView: View {
 private struct TujiTabBar: View {
     @Binding var selected: MainTab
 
-    private let tabs: [MainTab] = [.today, .cards, .progress, .me]
+    private let tabs: [MainTab] = [.today, .cards, .progress, .community, .me]
 
     var body: some View {
         HStack(spacing: 0) {

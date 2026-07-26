@@ -107,6 +107,9 @@ struct WordDetailPage: View {
             self.hero(w)
             self.titleRow(w)
             WordDetailSections(word: w)
+            // Community photos for this word. Renders nothing when nobody has
+            // published one, so untouched words look exactly as before.
+            WordCommunityAtlasSection(word: w)
         }
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s2)

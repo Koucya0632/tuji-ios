@@ -11,6 +11,8 @@ enum NavRoute: Hashable {
     case favorites
     case settings
     case atlasManage
+    /// 公開圖鑑 — other users' shared 圖鑑 (community).
+    case atlasPublic
     case studyCategories
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)

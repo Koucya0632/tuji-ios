@@ -19,6 +19,13 @@ enum AnalyticsEvent: String, CaseIterable {
     case paywallView = "paywall_view"
     case shareApp = "share_app"
     case atlasCaptureOpen = "atlas_capture_open"
+    // Community 圖鑑 funnel (docs/COMMUNITY_ATLAS_PLAN.md §6). Measures whether
+    // publishing correlates with upgrading — the question that decides whether
+    // community features earn more investment.
+    case atlasPublishSubmitted = "atlas_publish_submitted"
+    case atlasPublicItemViewed = "atlas_public_item_viewed"
+    case atlasPublicSaved = "atlas_public_saved"
+    case authorProfileViewed = "author_profile_viewed"
 }
 
 @MainActor

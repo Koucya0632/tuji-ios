@@ -3,13 +3,14 @@
 import SwiftUI
 
 enum MainTab: Hashable, CaseIterable {
-    case today, cards, progress, me
+    case today, cards, progress, community, me
 
     var titleZh: LocalizedStringKey {
         switch self {
         case .today: "主頁"
         case .cards: "圖鑑"
         case .progress: "進度"
+        case .community: "社群"
         case .me: "我的"
         }
     }
@@ -19,6 +20,7 @@ enum MainTab: Hashable, CaseIterable {
         case .today: "sun.max.fill"
         case .cards: "books.vertical.fill"
         case .progress: "chart.bar.fill"
+        case .community: "person.2.fill"
         case .me: "person.fill"
         }
     }

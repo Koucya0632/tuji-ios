@@ -314,6 +314,10 @@ private struct AtlasManageDetailView: View {
     let onDelete: () -> Void
 
     @State private var store = AtlasStore.shared
+    @State private var submitting = false
+    @State private var showSubmitConfirm = false
+    @State private var submitError: String?
+    @State private var submitResult: AtlasPublishModeration?
     @Environment(\.dismiss) private var dismiss
 
     private var item: AtlasItem? {
@@ -353,6 +357,10 @@ private struct AtlasManageDetailView: View {
                 }
                 self.detailRow("狀態", atlasImageStatusLabel(self.image.status))
 
+                if let item {
+                    self.shareSection(item)
+                }
+
                 BBtn(title: "刪除這張卡片", bg: .tujiCoral, fg: .white, fullWidth: true, icon: "trash") {
                     self.onDelete()
                     self.dismiss()
@@ -365,6 +373,75 @@ private struct AtlasManageDetailView: View {
         .background(.tujiBg)
         .navigationTitle(self.item?.lemma ?? tujiLocalized("圖片詳情"))
         .navigationBarTitleDisplayMode(.inline)
+        .tujiPrompt(
+            isPresented: self.$showSubmitConfirm,
+            style: .confirmation,
+            title: "要公開這張卡片嗎？",
+            message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
+            detail: "公開後其他人可以看到這張照片，也可以檢舉。",
+            primary: TujiPromptAction("送出審核") {
+                self.submit()
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+    }
+
+    // MARK: - 公開 / 送審
+
+    /// Public-sharing state + the submit action. Wording is deliberately
+    /// 「送審」 — approval is not automatic (docs/COMMUNITY_ATLAS_PLAN.md §5),
+    /// so nothing here may imply the card is already public.
+    @ViewBuilder
+    private func shareSection(_ item: AtlasItem) -> some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            self.detailRow("公開狀態", item.review.label)
+
+            if let submitError {
+                Text(submitError)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiCoral)
+            }
+
+            if let submitResult {
+                Text(submitResult.published
+                    ? tujiLocalized("已通過審核，現在出現在公開圖鑑了。")
+                    : tujiLocalized("已送出，審核通過後就會出現在公開圖鑑。"))
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+            }
+
+            if item.review.canSubmit {
+                BBtn(
+                    title: self.submitting ? "送出中…" : "公開到圖鑑",
+                    bg: .tujiTeal,
+                    fg: .white,
+                    fullWidth: true,
+                    icon: "square.and.arrow.up"
+                ) {
+                    self.showSubmitConfirm = true
+                }
+                .disabled(self.submitting)
+                .opacity(self.submitting ? 0.6 : 1)
+            }
+        }
+        .padding(.top, Space.s2)
+    }
+
+    private func submit() {
+        guard let item, !self.submitting else { return }
+        self.submitting = true
+        self.submitError = nil
+        self.submitResult = nil
+        Task {
+            do {
+                let response = try await self.store.publish(itemId: item.id)
+                self.submitResult = response.moderation
+                AnalyticsService.shared.track(.atlasPublishSubmitted)
+            } catch {
+                self.submitError = error.localizedDescription
+            }
+            self.submitting = false
+        }
     }
 
     private func detailRow(_ title: LocalizedStringKey, _ value: String) -> some View {

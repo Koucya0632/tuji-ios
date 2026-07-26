@@ -147,6 +147,152 @@ struct AtlasItemResponse: Decodable {
     let item: AtlasItem
 }
 
+// MARK: - Public 圖鑑 (community)
+
+/// One approved, publicly shared 圖鑑 item by any user. Served by
+/// `/api/atlas/public*`; contains no private user data.
+struct AtlasPublicItem: Decodable, Identifiable, Hashable {
+    let id: String
+    let slug: String
+    let lemma: String
+    let displayZhHant: String
+    let targetLanguage: TargetLanguage
+    let category: String?
+    let imageUrl: String?
+    let attributionName: String?
+    let publishedAt: String?
+
+    var imageURL: URL? { self.imageUrl.flatMap(URL.init(string:)) }
+    var langBadge: String { self.targetLanguage.rawValue.uppercased() }
+}
+
+/// GET /api/atlas/public/by-lemma — everyone else's public items for one word.
+struct AtlasPublicByLemmaResponse: Decodable {
+    let lemma: String
+    let targetLanguage: TargetLanguage
+    let items: [AtlasPublicItem]
+}
+
+/// GET /api/atlas/public — the community wall.
+struct AtlasPublicFeedResponse: Decodable {
+    let items: [AtlasPublicItem]
+}
+
+/// A community author's public identity and aggregate impact.
+struct AtlasAuthor: Decodable, Identifiable, Hashable {
+    let username: String
+    let displayName: String
+    /// Avatar pose key from `profiles.avatar`.
+    let avatar: String
+    let joinedAt: String?
+    let publishedCount: Int
+    /// How many times this author's items have been saved by others — the
+    /// altruistic feedback signal (docs/COMMUNITY_ATLAS_PLAN.md §3C).
+    let saveCount: Int
+
+    var id: String { self.username }
+}
+
+/// GET /api/atlas/public/authors/{username}
+struct AtlasAuthorResponse: Decodable, Hashable {
+    let author: AtlasAuthor
+    let items: [AtlasPublicItem]
+}
+
+/// POST/DELETE /api/atlas/public/{slug}/save
+struct AtlasSaveResponse: Decodable, Hashable {
+    let ok: Bool
+    let saved: Bool
+    let saveCount: Int
+}
+
+/// POST /api/atlas/public/{slug}/report
+enum AtlasReportReason: String, CaseIterable, Identifiable {
+    case spam
+    case inappropriate
+    case copyright
+    case wrong
+    case other
+
+    var id: String { self.rawValue }
+
+    var label: String {
+        switch self {
+        case .spam: tujiLocalized("垃圾內容")
+        case .inappropriate: tujiLocalized("不當內容")
+        case .copyright: tujiLocalized("侵犯版權")
+        case .wrong: tujiLocalized("內容有誤")
+        case .other: tujiLocalized("其他")
+        }
+    }
+}
+
+struct AtlasReportPayload: Encodable {
+    let reason: String
+    let detail: String?
+}
+
+// MARK: - Publish / review (POST /api/atlas/items/{id}/publish)
+
+/// Where a 自製圖鑑 item sits in the public-review pipeline. Mirrors the
+/// server's `review_status` (docs/COMMUNITY_ATLAS_PLAN.md §5): submitting runs
+/// a machine gate that either publishes immediately, routes to a human, or
+/// rejects. `pending` is the legacy single queue kept for older rows.
+enum AtlasReviewStatus: String, Decodable, Hashable {
+    case draft
+    case pending
+    case pendingAuto = "pending_auto"
+    case pendingReview = "pending_review"
+    case approved
+    case rejected
+    case takedown
+
+    /// Short label for the detail screen. Deliberately says 送審/審核 — approval
+    /// is not automatic, so the UI must never imply "already public".
+    var label: String {
+        switch self {
+        case .draft: tujiLocalized("未公開")
+        case .pending, .pendingAuto, .pendingReview: tujiLocalized("審核中")
+        case .approved: tujiLocalized("已公開")
+        case .rejected: tujiLocalized("未通過")
+        case .takedown: tujiLocalized("已下架")
+        }
+    }
+
+    /// Only these states offer the submit action; anything in-flight or already
+    /// public must not be re-submitted.
+    var canSubmit: Bool {
+        switch self {
+        case .draft, .rejected: true
+        case .pending, .pendingAuto, .pendingReview, .approved, .takedown: false
+        }
+    }
+}
+
+extension AtlasItem {
+    /// Parsed `reviewStatus`, defaulting to `.draft` for items that predate the
+    /// field or arrive without it.
+    var review: AtlasReviewStatus {
+        AtlasReviewStatus(rawValue: self.reviewStatus ?? "") ?? .draft
+    }
+}
+
+/// Server's answer to a submit. `moderation.published` is true only when the
+/// machine gate cleared it outright.
+struct AtlasPublishResponse: Decodable {
+    let item: AtlasItem
+    let moderation: AtlasPublishModeration?
+}
+
+struct AtlasPublishModeration: Decodable, Hashable {
+    let reviewStatus: String
+    let published: Bool
+
+    var status: AtlasReviewStatus {
+        AtlasReviewStatus(rawValue: self.reviewStatus) ?? .pendingReview
+    }
+}
+
 struct AtlasCardsPayload: Encodable {
     let cardTypes: [String]
 }

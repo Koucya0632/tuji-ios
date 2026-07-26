@@ -71,6 +71,13 @@ final class APIClient {
         _ = try await request(ep, method: "DELETE", body: Empty?.none, decodeAs: Empty.self)
     }
 
+    /// DELETE that decodes a response body. `as:` is required (no default) so
+    /// existing `delete(_:)` call sites stay unambiguous.
+    @discardableResult
+    func delete<T: Decodable>(_ ep: Endpoint, as: T.Type) async throws -> T {
+        try await request(ep, method: "DELETE", body: Empty?.none, decodeAs: T.self)
+    }
+
     @discardableResult
     func upload<T: Decodable>(
         _ ep: Endpoint,
