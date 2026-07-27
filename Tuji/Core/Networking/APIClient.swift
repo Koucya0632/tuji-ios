@@ -35,9 +35,16 @@ final class APIClient {
 
     // MARK: - Public API
 
+    /// `cachePolicy` overrides the endpoint's default for this one call — e.g. a
+    /// pull-to-refresh passes `.reloadIgnoringLocalCacheData` so a public,
+    /// URLCache-backed GET skips the disk cache and hits the network.
     @discardableResult
-    func get<T: Decodable>(_ ep: Endpoint, as: T.Type = T.self) async throws -> T {
-        try await request(ep, method: "GET", body: Empty?.none, decodeAs: T.self)
+    func get<T: Decodable>(
+        _ ep: Endpoint,
+        as: T.Type = T.self,
+        cachePolicy: URLRequest.CachePolicy? = nil
+    ) async throws -> T {
+        try await request(ep, method: "GET", body: Empty?.none, decodeAs: T.self, cachePolicy: cachePolicy)
     }
 
     @discardableResult
@@ -123,11 +130,14 @@ final class APIClient {
         _ ep: Endpoint,
         method: String,
         body: (some Encodable)?,
-        decodeAs: T.Type
+        decodeAs: T.Type,
+        cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws
         -> T
     {
-        let req = try await buildRequest(ep, method: method, body: body, retryingAfter401: false)
+        let req = try await buildRequest(
+            ep, method: method, body: body, retryingAfter401: false, cachePolicy: cachePolicy
+        )
         return try await execute(req, ep: ep, method: method, body: body, decodeAs: T.self)
     }
 
@@ -135,7 +145,8 @@ final class APIClient {
         _ ep: Endpoint,
         method: String,
         body: (some Encodable)?,
-        retryingAfter401: Bool
+        retryingAfter401: Bool,
+        cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws
         -> URLRequest
     {
@@ -152,7 +163,7 @@ final class APIClient {
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         req.timeoutInterval = ep.timeout
-        req.cachePolicy = ep.cachePolicy
+        req.cachePolicy = cachePolicy ?? ep.cachePolicy
 
         if !ep.isPublic {
             let token = try await auth.validAccessToken()

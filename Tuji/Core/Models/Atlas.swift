@@ -293,6 +293,113 @@ struct AtlasPublishModeration: Decodable, Hashable {
     }
 }
 
+// MARK: - Community collections 合集
+
+/// Minimal author identity carried on a public collection card. The browse card
+/// shows the collection's own counts, not the author's totals, so this is
+/// deliberately smaller than `AtlasAuthor`.
+struct AtlasAuthorRef: Decodable, Hashable {
+    let username: String
+    let displayName: String
+    let avatar: String
+}
+
+/// A public collection: browse-card meta, and the header of the detail page.
+struct AtlasCollection: Decodable, Identifiable, Hashable {
+    let id: String
+    let slug: String
+    let title: String
+    let description: String?
+    let targetLanguage: TargetLanguage
+    let author: AtlasAuthorRef
+    let itemCount: Int
+    let saveCount: Int
+    let coverImageUrl: String?
+    let publishedAt: String?
+
+    var coverURL: URL? { self.coverImageUrl.flatMap(URL.init(string:)) }
+    var langBadge: String { self.targetLanguage.rawValue.uppercased() }
+}
+
+/// GET /api/atlas/public/collections
+struct AtlasPublicCollectionsResponse: Decodable {
+    let collections: [AtlasCollection]
+}
+
+/// GET /api/atlas/public/collections/{slug}
+struct AtlasCollectionDetailResponse: Decodable {
+    let collection: AtlasCollection
+    let items: [AtlasPublicItem]
+}
+
+/// One of the current user's own collections (all review states) — 我的合集 list.
+struct AtlasMyCollection: Decodable, Identifiable, Hashable {
+    let id: String
+    let slug: String
+    let title: String
+    let description: String?
+    let targetLanguage: TargetLanguage
+    let reviewStatus: String
+    let itemCount: Int
+    let coverImageUrl: String?
+    let publishedAt: String?
+    let updatedAt: String?
+
+    var coverURL: URL? { self.coverImageUrl.flatMap(URL.init(string:)) }
+    var review: AtlasReviewStatus { AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft }
+}
+
+/// GET /api/atlas/collections  and the body of POST create.
+struct AtlasMyCollectionsResponse: Decodable {
+    let collections: [AtlasMyCollection]
+}
+
+struct AtlasMyCollectionResponse: Decodable {
+    let collection: AtlasMyCollection
+}
+
+/// GET /api/atlas/collections/{id} — the owner edit view (collection + members).
+struct AtlasCollectionEditResponse: Decodable {
+    let collection: AtlasCollectionEdit
+    let items: [AtlasPublicItem]
+}
+
+struct AtlasCollectionEdit: Decodable, Hashable {
+    let id: String
+    let slug: String
+    let title: String
+    let description: String?
+    let targetLanguage: TargetLanguage
+    let reviewStatus: String
+    let coverPublicItemId: String?
+    let coverImageUrl: String?
+    let publishedAt: String?
+    let updatedAt: String?
+
+    var review: AtlasReviewStatus { AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft }
+}
+
+/// POST /api/atlas/collections/{id}/publish
+struct AtlasCollectionPublishResponse: Decodable {
+    let moderation: AtlasPublishModeration?
+}
+
+struct AtlasCollectionCreatePayload: Encodable {
+    let title: String
+    let description: String?
+    let targetLanguage: String
+}
+
+struct AtlasCollectionUpdatePayload: Encodable {
+    let title: String
+    let description: String?
+    let coverPublicItemId: String?
+}
+
+struct AtlasCollectionAddItemPayload: Encodable {
+    let publicItemId: String
+}
+
 struct AtlasCardsPayload: Encodable {
     let cardTypes: [String]
 }

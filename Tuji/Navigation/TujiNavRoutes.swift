@@ -14,6 +14,8 @@ extension View {
             case .settings: SettingsView()
             case .atlasManage: AtlasManageView()
             case .atlasPublic: AtlasPublicFeedView()
+            case .atlasMyCollections: AtlasMyCollectionsView()
+            case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
             case .studyCategories: StudyCategoriesPickerView()
             case let .studyLanding(mode): StudyLauncherView(mode: mode)
             case let .wordDetail(id): WordDetailView(id: id)

@@ -436,6 +436,11 @@ private struct AtlasManageDetailView: View {
             do {
                 let response = try await self.store.publish(itemId: item.id)
                 self.submitResult = response.moderation
+                // Auto-approved items go live now; force the community feed to
+                // bypass its URLCache so this item appears there immediately.
+                if response.moderation?.published == true {
+                    AtlasFeedRefreshCenter.shared.markNeedsForceReload()
+                }
                 AnalyticsService.shared.track(.atlasPublishSubmitted)
             } catch {
                 self.submitError = error.localizedDescription

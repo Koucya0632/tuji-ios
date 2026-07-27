@@ -19,11 +19,28 @@ protocol AtlasRepository {
     func entitlement() async throws -> AtlasEntitlement
     func publish(itemId: String) async throws -> AtlasPublishResponse
     func publicItems(lemma: String, language: TargetLanguage, limit: Int) async throws -> [AtlasPublicItem]
-    func publicFeed(limit: Int) async throws -> [AtlasPublicItem]
+    func publicFeed(limit: Int, forceReload: Bool) async throws -> [AtlasPublicItem]
     func author(username: String) async throws -> AtlasAuthorResponse
     func save(slug: String) async throws -> AtlasSaveResponse
     func unsave(slug: String) async throws -> AtlasSaveResponse
     func report(slug: String, reason: AtlasReportReason, detail: String?) async throws
+
+    // Community collections 合集
+    func publicCollections(lang: TargetLanguage, forceReload: Bool) async throws -> [AtlasCollection]
+    func collection(slug: String) async throws -> AtlasCollectionDetailResponse
+    func myCollections() async throws -> [AtlasMyCollection]
+    func createCollection(
+        title: String, description: String?, targetLanguage: TargetLanguage
+    ) async throws -> AtlasMyCollection
+    func collectionEdit(id: String) async throws -> AtlasCollectionEditResponse
+    func updateCollection(
+        id: String, title: String, description: String?, coverPublicItemId: String?
+    ) async throws
+    func deleteCollection(id: String) async throws
+    func addCollectionItem(id: String, publicItemId: String) async throws
+    func removeCollectionItem(id: String, publicItemId: String) async throws
+    func publishCollection(id: String) async throws -> AtlasCollectionPublishResponse
+    func collectionCandidates(lang: TargetLanguage) async throws -> [AtlasPublicItem]
 }
 
 @MainActor
@@ -135,8 +152,14 @@ struct LiveAtlasRepository: AtlasRepository {
         return response.items
     }
 
-    func publicFeed(limit: Int = 60) async throws -> [AtlasPublicItem] {
-        let response: AtlasPublicFeedResponse = try await self.api.get(.atlasPublicFeed(limit: limit))
+    /// `forceReload` bypasses the disk URLCache (pull-to-refresh, or right after
+    /// publishing) so a freshly published item shows up immediately rather than
+    /// waiting for the cached list to expire.
+    func publicFeed(limit: Int = 60, forceReload: Bool = false) async throws -> [AtlasPublicItem] {
+        let response: AtlasPublicFeedResponse = try await self.api.get(
+            .atlasPublicFeed(limit: limit),
+            cachePolicy: forceReload ? .reloadIgnoringLocalCacheData : nil
+        )
         return response.items
     }
 
@@ -162,5 +185,96 @@ struct LiveAtlasRepository: AtlasRepository {
             .atlasPublicReport(slug: slug),
             body: AtlasReportPayload(reason: reason.rawValue, detail: detail)
         )
+    }
+
+    // MARK: - Community collections 合集
+
+    /// Public browse feed, scoped to one learning language. `forceReload`
+    /// bypasses the URLCache (pull-to-refresh / right after publishing).
+    func publicCollections(
+        lang: TargetLanguage,
+        forceReload: Bool = false
+    ) async throws -> [AtlasCollection] {
+        // On force-reload, a nonce query param makes this a distinct edge-cache
+        // key so Vercel serves a fresh list (the on-device cache bypass alone
+        // can't beat the CDN copy).
+        let cacheBust = forceReload ? String(Int(Date().timeIntervalSince1970)) : nil
+        let response: AtlasPublicCollectionsResponse = try await self.api.get(
+            .atlasPublicCollections(lang: lang.rawValue, limit: 60, cacheBust: cacheBust),
+            cachePolicy: forceReload ? .reloadIgnoringLocalCacheData : nil
+        )
+        return response.collections
+    }
+
+    func collection(slug: String) async throws -> AtlasCollectionDetailResponse {
+        try await self.api.get(.atlasPublicCollection(slug: slug))
+    }
+
+    func myCollections() async throws -> [AtlasMyCollection] {
+        let response: AtlasMyCollectionsResponse = try await self.api.get(.atlasCollections)
+        return response.collections
+    }
+
+    func createCollection(
+        title: String,
+        description: String?,
+        targetLanguage: TargetLanguage
+    ) async throws -> AtlasMyCollection {
+        let response: AtlasMyCollectionResponse = try await self.api.post(
+            .atlasCollections,
+            body: AtlasCollectionCreatePayload(
+                title: title,
+                description: description,
+                targetLanguage: targetLanguage.rawValue
+            )
+        )
+        return response.collection
+    }
+
+    func collectionEdit(id: String) async throws -> AtlasCollectionEditResponse {
+        try await self.api.get(.atlasCollection(id: id))
+    }
+
+    func updateCollection(
+        id: String,
+        title: String,
+        description: String?,
+        coverPublicItemId: String?
+    ) async throws {
+        let _: Empty = try await self.api.patch(
+            .atlasCollection(id: id),
+            body: AtlasCollectionUpdatePayload(
+                title: title,
+                description: description,
+                coverPublicItemId: coverPublicItemId
+            )
+        )
+    }
+
+    func deleteCollection(id: String) async throws {
+        try await self.api.delete(.atlasCollection(id: id))
+    }
+
+    func addCollectionItem(id: String, publicItemId: String) async throws {
+        let _: Empty = try await self.api.post(
+            .atlasCollectionItems(id: id),
+            body: AtlasCollectionAddItemPayload(publicItemId: publicItemId)
+        )
+    }
+
+    func removeCollectionItem(id: String, publicItemId: String) async throws {
+        try await self.api.delete(.atlasCollectionItem(id: id, publicItemId: publicItemId))
+    }
+
+    func publishCollection(id: String) async throws -> AtlasCollectionPublishResponse {
+        try await self.api.post(.atlasCollectionPublish(id: id), body: Empty())
+    }
+
+    /// The user's own approved public items in a language — the add-member pool.
+    func collectionCandidates(lang: TargetLanguage) async throws -> [AtlasPublicItem] {
+        let response: AtlasPublicFeedResponse = try await self.api.get(
+            .atlasCollectionCandidates(lang: lang.rawValue)
+        )
+        return response.items
     }
 }

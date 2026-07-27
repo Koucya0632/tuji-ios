@@ -1,10 +1,8 @@
-// 公開圖鑑「瀏覽」頁（探索別人送審通過、已公開的 Atlas 項目）。
+// 公開圖鑑「瀏覽」頁 —— 大家整理的具名合集（MOJi 風格）。
 //
-// 資料來源：GET /api/atlas/public（公開、吃 CDN 快取）。點作者進 AtlasAuthorProfileView，
-// 點項目進 AtlasPublicDetailView（可收藏 / 檢舉）。
-//
-// 樣式沿用 CardsListView / WordTile（.tujiCard tile、2 欄 LazyVGrid、
-// target-language badge、NukeUI LazyImage + 佔位）。
+// 資料來源：GET /api/atlas/public/collections?lang=（公開、吃 CDN 快取）。列表**自動依
+// 使用者當前學習語言過濾**（學日文只看日文合集），無手動語言切換。點合集卡片進
+// AtlasCollectionDetailView（目錄/簡介），再點項目進 AtlasPublicDetailView（收藏 / 檢舉）。
 
 import Nuke
 import NukeUI
@@ -13,40 +11,65 @@ import SwiftUI
 // `AtlasPublicItem` now lives in Core/Models/Atlas.swift — the word detail
 // section consumes the same model from the real API.
 
-// MARK: - 列表頁
+// MARK: - Refresh signal
+
+/// One-shot cross-view signal: set when the user publishes an item that goes
+/// live, so the community feed bypasses its URLCache on its next load and shows
+/// the new item immediately. Without it the feed (GET /api/atlas/public, served
+/// under `.useProtocolCachePolicy`) can return a list captured before the publish.
+@MainActor
+final class AtlasFeedRefreshCenter {
+    static let shared = AtlasFeedRefreshCenter()
+    private init() {}
+
+    private var pending = false
+
+    /// Mark the feed as needing a cache-bypassing reload on its next load.
+    func markNeedsForceReload() { self.pending = true }
+
+    /// Whether a force reload is pending; reading it clears the flag.
+    func consumePendingForceReload() -> Bool {
+        defer { self.pending = false }
+        return self.pending
+    }
+}
+
+// MARK: - 列表頁（合集）
 
 struct AtlasPublicFeedView: View {
-    @State private var items: [AtlasPublicItem] = []
+    @Environment(SettingsStore.self) private var settings
+
+    @State private var collections: [AtlasCollection] = []
     @State private var loading = true
     @State private var loadError: String?
-    @State private var langFilter: TargetLanguage? = nil
-    @State private var selectedItem: AtlasPublicItem?
-    @State private var selectedAuthorName: String?
+    @State private var selectedCollection: AtlasCollection?
+    /// Language whose list is currently loaded, so returning from a detail
+    /// doesn't refetch-and-clobber a good list (see load()).
+    @State private var loadedLang: TargetLanguage?
 
-    private var visibleItems: [AtlasPublicItem] {
-        guard let langFilter else { return self.items }
-        return self.items.filter { $0.targetLanguage == langFilter }
+    /// The feed follows the user's current learning direction — Japanese learners
+    /// see Japanese collections, English learners see English ones. There is no
+    /// manual language switch on this screen, by product decision.
+    private var targetLanguage: TargetLanguage {
+        self.settings.current.learningDirection.targetLanguage
     }
 
     var body: some View {
         VStack(spacing: 0) {
             self.header
-            self.filterRow
             self.content
         }
         .background(.tujiBg)
         // Tab root (社群), so the visible title is the in-view header below and
         // the system nav bar stays hidden — same pattern as CardsListView.
-        // navigationTitle is metadata only (VoiceOver / back-button label).
         .navigationTitle("公開圖鑑")
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(item: self.$selectedItem) { item in
-            AtlasPublicDetailView(item: item)
+        .navigationDestination(item: self.$selectedCollection) { collection in
+            AtlasCollectionDetailView(slug: collection.slug, preview: collection)
         }
-        .navigationDestination(item: self.$selectedAuthorName) { username in
-            AtlasAuthorProfileView(username: username)
-        }
-        .task {
+        // Re-runs on first appearance AND whenever the learning direction flips,
+        // so switching 日文/英文 圖鑑 reloads the feed for the new language.
+        .task(id: self.targetLanguage) {
             await self.load()
         }
     }
@@ -54,53 +77,34 @@ struct AtlasPublicFeedView: View {
     // MARK: Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("PUBLIC ATLAS")
-                .font(.tujiOverline)
-                .foregroundStyle(.tujiInk3)
-            Text("公開圖鑑")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-            Text("看看大家拍下、分享的單字")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("PUBLIC ATLAS")
+                    .font(.tujiOverline)
+                    .foregroundStyle(.tujiInk3)
+                Text("公開圖鑑")
+                    .font(.tujiH2)
+                    .foregroundStyle(.tujiInk)
+                Text("看看大家整理的單字合集")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+            }
+            Spacer(minLength: Space.s3)
+            NavigationLink(value: NavRoute.atlasMyCollections) {
+                VStack(spacing: 3) {
+                    Image(systemName: "rectangle.stack")
+                        .font(.system(size: 18, weight: .semibold))
+                    Text("我的合集")
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundStyle(.tujiTeal)
+            }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s4)
         .padding(.bottom, Space.s3)
-    }
-
-    // MARK: Filter chips
-
-    private var filterRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Space.s2) {
-                self.chip(label: "全部", value: nil)
-                self.chip(label: "英文", value: .en)
-                self.chip(label: "日文", value: .ja)
-            }
-            .padding(.horizontal, Space.s6)
-        }
-        .padding(.bottom, Space.s3)
-    }
-
-    private func chip(label: String, value: TargetLanguage?) -> some View {
-        let selected = self.langFilter == value
-        return Button {
-            self.langFilter = value
-        } label: {
-            Text(label)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(selected ? .white : .tujiInk2)
-                .padding(.horizontal, Space.s4)
-                .padding(.vertical, Space.s2)
-                .background(selected ? Color.tujiTeal : Color.tujiCard, in: .capsule)
-                .overlay(
-                    Capsule().stroke(.tujiInk4.opacity(selected ? 0 : 0.25), lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: Content
@@ -118,62 +122,165 @@ struct AtlasPublicFeedView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity)
-        } else if self.visibleItems.isEmpty {
-            VStack(spacing: Space.s3) {
-                Spacer()
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.tujiInk4)
-                Text(self.loadError == nil
-                    ? tujiLocalized("這個語言還沒有公開項目")
-                    : tujiLocalized("載入失敗，請稍後再試"))
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk3)
-                if self.loadError != nil {
-                    BBtn(title: "重試", fullWidth: false) {
-                        Task { await self.load() }
-                    }
-                }
-                Spacer()
-            }
-            .frame(maxWidth: .infinity)
         } else {
+            // Empty and populated states share one ScrollView so pull-to-refresh
+            // works in both — the empty case is exactly when the user needs it.
             ScrollView {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: Space.s3),
-                        GridItem(.flexible(), spacing: Space.s3)
-                    ],
-                    spacing: Space.s3
-                ) {
-                    ForEach(self.visibleItems) { item in
-                        AtlasPublicTile(
-                            item: item,
-                            onOpen: { self.selectedItem = item },
-                            onOpenAuthor: item.attributionName.map { name in
-                                { self.selectedAuthorName = name }
+                if self.collections.isEmpty {
+                    self.emptyState
+                        .containerRelativeFrame(.vertical)
+                } else {
+                    LazyVStack(spacing: Space.s3) {
+                        ForEach(self.collections) { collection in
+                            AtlasCollectionCard(collection: collection) {
+                                self.selectedCollection = collection
                             }
-                        )
+                        }
                     }
+                    .padding(.horizontal, Space.s6)
+                    .padding(.top, Space.s1)
+                    .padding(.bottom, Space.s8)
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.bottom, Space.s8)
             }
+            // Allow the pull gesture even when the content is shorter than the viewport.
+            .scrollBounceBehavior(.always, axes: .vertical)
+            .refreshable { await self.load(forceReload: true) }
         }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: Space.s3) {
+            Spacer()
+            Image(systemName: "square.stack.3d.up.slash")
+                .font(.system(size: 40))
+                .foregroundStyle(.tujiInk4)
+            Text(self.loadError == nil
+                ? tujiLocalized("這個語言還沒有公開合集")
+                : tujiLocalized("載入失敗，請稍後再試"))
+                .font(.tujiBody)
+                .foregroundStyle(.tujiInk3)
+            if self.loadError != nil {
+                BBtn(title: "重試", fullWidth: false) {
+                    Task { await self.load(forceReload: true) }
+                }
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: Load
 
-    private func load() async {
-        self.loading = true
+    /// `forceReload` (pull-to-refresh, retry, or a pending publish signal) bypasses
+    /// the URLCache. It also keeps the list on screen — only a first/appearance load
+    /// shows the full-screen spinner; the pull gesture uses the refresh control's own.
+    private func load(forceReload: Bool = false) async {
+        let force = forceReload || AtlasFeedRefreshCenter.shared.consumePendingForceReload()
+        // Returning from a collection detail re-triggers this appearance load. If
+        // we already have this language's list and it isn't a deliberate refresh,
+        // keep it — a plain refetch can hit a stale edge/device copy and clobber
+        // the list with an empty one (the "disappears on back" bug).
+        if !force, self.loadedLang == self.targetLanguage, !self.collections.isEmpty {
+            return
+        }
+        if !forceReload { self.loading = true }
         self.loadError = nil
         do {
-            self.items = try await LiveAtlasRepository.shared.publicFeed()
+            self.collections = try await LiveAtlasRepository.shared.publicCollections(
+                lang: self.targetLanguage,
+                forceReload: force
+            )
+            self.loadedLang = self.targetLanguage
         } catch {
-            self.items = []
+            if !forceReload { self.collections = [] }
             self.loadError = error.localizedDescription
         }
         self.loading = false
+    }
+}
+
+// MARK: - 合集卡片
+
+struct AtlasCollectionCard: View {
+    let collection: AtlasCollection
+    var onOpen: () -> Void = {}
+
+    private var pose: MascotPose { MascotPose(rawValue: self.collection.author.avatar) ?? .face }
+
+    var body: some View {
+        Button(action: self.onOpen) {
+            HStack(spacing: Space.s3) {
+                self.cover
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(self.collection.title)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.tujiInk)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    HStack(spacing: Space.s2) {
+                        MascotAvatar(pose: self.pose, size: 22)
+                        Text(self.collection.author.displayName)
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk2)
+                            .lineLimit(1)
+                    }
+                    HStack(spacing: Space.s3) {
+                        Label("\(self.collection.itemCount)", systemImage: "square.stack")
+                        if self.collection.saveCount > 0 {
+                            Label("\(self.collection.saveCount)", systemImage: "bookmark")
+                        }
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tujiInk3)
+                    if let desc = self.collection.description, !desc.isEmpty {
+                        Text(desc)
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiInk3)
+                            .lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(Space.s3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiCard)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.lg)
+                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var cover: some View {
+        ZStack {
+            Rectangle().fill(.tujiBg)
+            LazyImage(url: self.collection.coverURL) { state in
+                if let image = state.image {
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } else if state.error != nil {
+                    Image(systemName: "square.stack.3d.up")
+                        .font(.system(size: 22))
+                        .foregroundStyle(.tujiInk4)
+                } else {
+                    ProgressView().tint(.tujiTeal)
+                }
+            }
+            .pipeline(.shared)
+        }
+        .frame(width: 84, height: 84)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+        .overlay(alignment: .topTrailing) {
+            Text(self.collection.langBadge)
+                .font(.system(size: 9, weight: .heavy))
+                .foregroundStyle(.tujiTeal)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(.tujiTealSoft, in: .capsule)
+                .padding(4)
+        }
     }
 }
 

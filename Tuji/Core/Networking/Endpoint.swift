@@ -45,6 +45,21 @@ enum Endpoint {
     case atlasFriends(limit: Int)
     case atlasEntitlement
 
+    // MARK: - Community collections 合集 (auth-protected authoring)
+
+    /// GET the current user's collections / POST to create a draft.
+    case atlasCollections
+    /// GET (edit view) / PATCH / DELETE a single owned collection.
+    case atlasCollection(id: String)
+    /// POST to add a member (the owner's own approved public item).
+    case atlasCollectionItems(id: String)
+    /// DELETE a member from a collection.
+    case atlasCollectionItem(id: String, publicItemId: String)
+    /// POST to submit a collection for review.
+    case atlasCollectionPublish(id: String)
+    /// GET the pool of the user's own approved public items (add-member picker).
+    case atlasCollectionCandidates(lang: String)
+
     // MARK: - Public 圖鑑 (community; no auth)
 
     /// Other users' approved public items for one lemma — the word detail
@@ -58,6 +73,12 @@ enum Endpoint {
     case atlasPublicSave(slug: String)
     /// Report a community item (auth required).
     case atlasPublicReport(slug: String)
+    /// Language-scoped public collection browse feed. `cacheBust` (a nonce on
+    /// force-reload) makes the request a distinct edge-cache key so pull-to-refresh
+    /// and post-publish bypass Vercel's CDN copy, not just the on-device cache.
+    case atlasPublicCollections(lang: String, limit: Int, cacheBust: String?)
+    /// A public collection's detail (meta + author + member items).
+    case atlasPublicCollection(slug: String)
 
     // MARK: - Billing (auth-protected)
 
@@ -109,11 +130,19 @@ enum Endpoint {
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
         case .atlasEntitlement: "/api/atlas/entitlement"
+        case .atlasCollections: "/api/atlas/collections"
+        case let .atlasCollection(id): "/api/atlas/collections/\(id)"
+        case let .atlasCollectionItems(id): "/api/atlas/collections/\(id)/items"
+        case let .atlasCollectionItem(id, publicItemId): "/api/atlas/collections/\(id)/items/\(publicItemId)"
+        case let .atlasCollectionPublish(id): "/api/atlas/collections/\(id)/publish"
+        case .atlasCollectionCandidates: "/api/atlas/collections/candidates"
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
         case let .atlasPublicAuthor(username): "/api/atlas/public/authors/\(username)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
+        case .atlasPublicCollections: "/api/atlas/public/collections"
+        case let .atlasPublicCollection(slug): "/api/atlas/public/collections/\(slug)"
         case .billingVerify: "/api/billing/verify"
         case .search: "/api/search"
         case .events: "/api/events"
@@ -183,6 +212,15 @@ enum Endpoint {
                 URLQueryItem(name: "lang", value: lang),
                 URLQueryItem(name: "limit", value: String(limit))
             ]
+        case let .atlasPublicCollections(lang, limit, cacheBust):
+            // `lang` scopes the browse feed to the user's current learning
+            // direction, so it's required (the backend 400s without it).
+            [
+                URLQueryItem(name: "lang", value: lang),
+                URLQueryItem(name: "limit", value: String(limit))
+            ] + (cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? [])
+        case let .atlasCollectionCandidates(lang):
+            [URLQueryItem(name: "lang", value: lang)]
         case let .words(lang, learning),
              let .word(_, lang, learning):
             [
@@ -203,7 +241,8 @@ enum Endpoint {
         switch self {
         // Community reads are public and CDN-cached server-side; honor it.
         case .words, .word, .categories, .search,
-             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor:
+             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor,
+             .atlasPublicCollections, .atlasPublicCollection:
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
@@ -211,6 +250,8 @@ enum Endpoint {
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement,
+             .atlasCollections, .atlasCollection, .atlasCollectionItems,
+             .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
              .billingVerify:
             .reloadIgnoringLocalCacheData
@@ -229,7 +270,8 @@ enum Endpoint {
         switch self {
         // Save / report stay authed — only the reads are anonymous.
         case .events, .search, .word, .words, .categories,
-             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor: true
+             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor,
+             .atlasPublicCollections, .atlasPublicCollection: true
         default: false
         }
     }
