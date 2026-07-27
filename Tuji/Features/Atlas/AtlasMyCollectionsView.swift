@@ -240,7 +240,9 @@ struct AtlasCollectionEditView: View {
     @State private var showConfirm = false
     @State private var showPicker = false
 
-    private var language: TargetLanguage { self.collection?.targetLanguage ?? .ja }
+    private var language: TargetLanguage {
+        self.collection?.targetLanguage ?? .ja
+    }
 
     var body: some View {
         ScrollView {

@@ -162,8 +162,13 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
     let attributionName: String?
     let publishedAt: String?
 
-    var imageURL: URL? { self.imageUrl.flatMap(URL.init(string:)) }
-    var langBadge: String { self.targetLanguage.rawValue.uppercased() }
+    var imageURL: URL? {
+        self.imageUrl.flatMap(URL.init(string:))
+    }
+
+    var langBadge: String {
+        self.targetLanguage.rawValue.uppercased()
+    }
 }
 
 /// GET /api/atlas/public/by-lemma — everyone else's public items for one word.
@@ -190,7 +195,9 @@ struct AtlasAuthor: Decodable, Identifiable, Hashable {
     /// altruistic feedback signal (docs/COMMUNITY_ATLAS_PLAN.md §3C).
     let saveCount: Int
 
-    var id: String { self.username }
+    var id: String {
+        self.username
+    }
 }
 
 /// GET /api/atlas/public/authors/{username}
@@ -214,7 +221,9 @@ enum AtlasReportReason: String, CaseIterable, Identifiable {
     case wrong
     case other
 
-    var id: String { self.rawValue }
+    var id: String {
+        self.rawValue
+    }
 
     var label: String {
         switch self {
@@ -317,8 +326,13 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
     let coverImageUrl: String?
     let publishedAt: String?
 
-    var coverURL: URL? { self.coverImageUrl.flatMap(URL.init(string:)) }
-    var langBadge: String { self.targetLanguage.rawValue.uppercased() }
+    var coverURL: URL? {
+        self.coverImageUrl.flatMap(URL.init(string:))
+    }
+
+    var langBadge: String {
+        self.targetLanguage.rawValue.uppercased()
+    }
 }
 
 /// GET /api/atlas/public/collections
@@ -345,8 +359,13 @@ struct AtlasMyCollection: Decodable, Identifiable, Hashable {
     let publishedAt: String?
     let updatedAt: String?
 
-    var coverURL: URL? { self.coverImageUrl.flatMap(URL.init(string:)) }
-    var review: AtlasReviewStatus { AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft }
+    var coverURL: URL? {
+        self.coverImageUrl.flatMap(URL.init(string:))
+    }
+
+    var review: AtlasReviewStatus {
+        AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft
+    }
 }
 
 /// GET /api/atlas/collections  and the body of POST create.
@@ -376,7 +395,9 @@ struct AtlasCollectionEdit: Decodable, Hashable {
     let publishedAt: String?
     let updatedAt: String?
 
-    var review: AtlasReviewStatus { AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft }
+    var review: AtlasReviewStatus {
+        AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft
+    }
 }
 
 /// POST /api/atlas/collections/{id}/publish

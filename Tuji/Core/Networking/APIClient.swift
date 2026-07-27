@@ -43,7 +43,9 @@ final class APIClient {
         _ ep: Endpoint,
         as: T.Type = T.self,
         cachePolicy: URLRequest.CachePolicy? = nil
-    ) async throws -> T {
+    ) async throws
+        -> T
+    {
         try await request(ep, method: "GET", body: Empty?.none, decodeAs: T.self, cachePolicy: cachePolicy)
     }
 

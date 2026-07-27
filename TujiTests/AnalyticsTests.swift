@@ -12,7 +12,9 @@ struct AnalyticsTests {
     func eventRawValuesMatchBackendWhitelist() {
         #expect(AnalyticsEvent.allCases.map(\.rawValue) == [
             "view", "pronounce", "app_open", "study_start",
-            "study_complete", "paywall_view", "share_app", "atlas_capture_open"
+            "study_complete", "paywall_view", "share_app", "atlas_capture_open",
+            "atlas_publish_submitted", "atlas_public_item_viewed", "atlas_public_saved",
+            "author_profile_viewed"
         ])
     }
 

@@ -31,7 +31,8 @@ protocol AtlasRepository {
     func myCollections() async throws -> [AtlasMyCollection]
     func createCollection(
         title: String, description: String?, targetLanguage: TargetLanguage
-    ) async throws -> AtlasMyCollection
+    ) async throws
+        -> AtlasMyCollection
     func collectionEdit(id: String) async throws -> AtlasCollectionEditResponse
     func updateCollection(
         id: String, title: String, description: String?, coverPublicItemId: String?
@@ -145,7 +146,9 @@ struct LiveAtlasRepository: AtlasRepository {
         lemma: String,
         language: TargetLanguage,
         limit: Int = 12
-    ) async throws -> [AtlasPublicItem] {
+    ) async throws
+        -> [AtlasPublicItem]
+    {
         let response: AtlasPublicByLemmaResponse = try await self.api.get(
             .atlasPublicByLemma(lemma: lemma, lang: language.rawValue, limit: limit)
         )
@@ -194,7 +197,9 @@ struct LiveAtlasRepository: AtlasRepository {
     func publicCollections(
         lang: TargetLanguage,
         forceReload: Bool = false
-    ) async throws -> [AtlasCollection] {
+    ) async throws
+        -> [AtlasCollection]
+    {
         // On force-reload, a nonce query param makes this a distinct edge-cache
         // key so Vercel serves a fresh list (the on-device cache bypass alone
         // can't beat the CDN copy).
@@ -219,7 +224,9 @@ struct LiveAtlasRepository: AtlasRepository {
         title: String,
         description: String?,
         targetLanguage: TargetLanguage
-    ) async throws -> AtlasMyCollection {
+    ) async throws
+        -> AtlasMyCollection
+    {
         let response: AtlasMyCollectionResponse = try await self.api.post(
             .atlasCollections,
             body: AtlasCollectionCreatePayload(

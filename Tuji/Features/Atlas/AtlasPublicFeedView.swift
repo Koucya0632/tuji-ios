@@ -25,7 +25,9 @@ final class AtlasFeedRefreshCenter {
     private var pending = false
 
     /// Mark the feed as needing a cache-bypassing reload on its next load.
-    func markNeedsForceReload() { self.pending = true }
+    func markNeedsForceReload() {
+        self.pending = true
+    }
 
     /// Whether a force reload is pending; reading it clears the flag.
     func consumePendingForceReload() -> Bool {
@@ -205,7 +207,9 @@ struct AtlasCollectionCard: View {
     let collection: AtlasCollection
     var onOpen: () -> Void = {}
 
-    private var pose: MascotPose { MascotPose(rawValue: self.collection.author.avatar) ?? .face }
+    private var pose: MascotPose {
+        MascotPose(rawValue: self.collection.author.avatar) ?? .face
+    }
 
     var body: some View {
         Button(action: self.onOpen) {
@@ -291,7 +295,7 @@ struct AtlasPublicTile: View {
     /// 點卡片主體（圖/詞）→ 開項目詳情。
     var onOpen: () -> Void = {}
     /// 點「by 作者」→ 開作者主頁。nil = 無作者，不可點。
-    var onOpenAuthor: (() -> Void)? = nil
+    var onOpenAuthor: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
