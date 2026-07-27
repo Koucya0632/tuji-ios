@@ -29,11 +29,15 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **Role seams (emerging)** — narrow protocols carved off `AtlasRepository` as real
   consumers appear. `LiveAtlasRepository` conforms to each via a free extension; tests
   fake only the role.
-  - **CollectionEditing** — the 5-method seam a collection-edit screen needs
+  - **CollectionEditing** — 5-method seam for the collection-edit screen
     (`collectionEdit`, `updateCollection`, `add/removeCollectionItem`, `publishCollection`).
+  - **CollectionsBrowsing** — 1-method seam for the 公開圖鑑 feed (`publicCollections`).
+  - **CollectionDetailReading** — 1-method seam for the collection detail (`collection(slug:)`).
+  - **AuthorReading** — 1-method seam for the author profile (`author(username:)`).
 - **Screen view model convention** — non-trivial screen logic (fetch / paginate / save /
   publish / form + async state) lives in an `@Observable @MainActor` view model,
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
-  The View is presentation-only. Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`).
-  The community screens (合集 / 公開圖鑑) are being brought onto this pattern — see
-  `CollectionEditVM` first.
+  The View is presentation-only; analytics stays in the View (VMs don't reach
+  `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`). All four
+  community screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`, `PublicFeedVM`,
+  `CollectionDetailVM`, `AuthorProfileVM`.

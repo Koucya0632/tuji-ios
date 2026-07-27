@@ -8,12 +8,7 @@ import NukeUI
 import SwiftUI
 
 struct AtlasCollectionDetailView: View {
-    let slug: String
-
-    @State private var collection: AtlasCollection?
-    @State private var items: [AtlasPublicItem] = []
-    @State private var loading = true
-    @State private var loadError: String?
+    @State private var vm: CollectionDetailVM
     @State private var tab: Tab = .catalog
     @State private var selectedItem: AtlasPublicItem?
     @State private var selectedAuthorName: String?
@@ -23,18 +18,17 @@ struct AtlasCollectionDetailView: View {
     /// `preview` is the card data from the feed, so the header renders instantly
     /// while the member items load.
     init(slug: String, preview: AtlasCollection? = nil) {
-        self.slug = slug
-        _collection = State(initialValue: preview)
+        _vm = State(initialValue: CollectionDetailVM(slug: slug, preview: preview))
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                if let collection {
+                if let collection = self.vm.collection {
                     self.header(collection)
                     self.tabBar
                     self.tabContent(collection)
-                } else if self.loading {
+                } else if case .loading = self.vm.phase {
                     ProgressView()
                         .tint(.tujiTeal)
                         .padding(.top, Space.s12)
@@ -44,7 +38,7 @@ struct AtlasCollectionDetailView: View {
             }
         }
         .background(.tujiBg)
-        .navigationTitle(self.collection?.title ?? tujiLocalized("合集"))
+        .navigationTitle(self.vm.collection?.title ?? tujiLocalized("合集"))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: self.$selectedItem) { item in
             AtlasPublicDetailView(item: item)
@@ -52,8 +46,8 @@ struct AtlasCollectionDetailView: View {
         .navigationDestination(item: self.$selectedAuthorName) { username in
             AtlasAuthorProfileView(username: username)
         }
-        .task(id: self.slug) {
-            await self.load()
+        .task(id: self.vm.slug) {
+            await self.vm.load()
         }
     }
 
@@ -171,9 +165,9 @@ struct AtlasCollectionDetailView: View {
     private func tabContent(_ collection: AtlasCollection) -> some View {
         switch self.tab {
         case .catalog:
-            if self.items.isEmpty, self.loading {
+            if self.vm.items.isEmpty, case .loading = self.vm.phase {
                 ProgressView().tint(.tujiTeal).padding(.vertical, Space.s8)
-            } else if self.items.isEmpty {
+            } else if self.vm.items.isEmpty {
                 Text("這個合集還沒有項目")
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk3)
@@ -187,7 +181,7 @@ struct AtlasCollectionDetailView: View {
                     ],
                     spacing: Space.s3
                 ) {
-                    ForEach(self.items) { item in
+                    ForEach(self.vm.items) { item in
                         AtlasPublicTile(
                             item: item,
                             onOpen: { self.selectedItem = item },
@@ -217,30 +211,15 @@ struct AtlasCollectionDetailView: View {
             Image(systemName: "square.stack.3d.up.slash")
                 .font(.system(size: 40))
                 .foregroundStyle(.tujiInk4)
-            Text(self.loadError == nil
+            Text(self.vm.errorMessage == nil
                 ? tujiLocalized("找不到這個合集")
                 : tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
             BBtn(title: "重試", fullWidth: false) {
-                Task { await self.load() }
+                Task { await self.vm.load() }
             }
         }
         .padding(.top, Space.s12)
-    }
-
-    // MARK: Load
-
-    private func load() async {
-        self.loading = true
-        self.loadError = nil
-        do {
-            let response = try await LiveAtlasRepository.shared.collection(slug: self.slug)
-            self.collection = response.collection
-            self.items = response.items
-        } catch {
-            self.loadError = error.localizedDescription
-        }
-        self.loading = false
     }
 }
