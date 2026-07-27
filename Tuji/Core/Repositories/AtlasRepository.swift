@@ -1,51 +1,13 @@
 import Foundation
 
+/// Concrete atlas API client. Its surface reaches callers through focused role
+/// protocols — `AtlasAuthoring`, `CollectionEditing`, `CollectionsBrowsing`,
+/// `CollectionDetailReading`, `AuthorReading` — each conformed in its own file, so
+/// every consumer (and its test fake) depends only on the slice it uses. A few
+/// consumption methods (save / unsave / report / publicItems / publicFeed) are still
+/// called directly on the concrete `.shared` by not-yet-extracted screens.
 @MainActor
-protocol AtlasRepository {
-    func sync(since: String?, limit: Int) async throws -> AtlasSyncResponse
-    func uploadImage(
-        data: Data,
-        filename: String,
-        mimeType: String,
-        targetLanguage: TargetLanguage?
-    ) async throws
-        -> AtlasUploadResponse
-    func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse
-    func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem
-    func createCards(itemId: String, cardTypes: [String]) async throws -> [AtlasCard]
-    func deleteImage(id: String) async throws
-    func enrich(itemId: String) async throws
-    func detail(itemId: String) async throws -> Word
-    func entitlement() async throws -> AtlasEntitlement
-    func publish(itemId: String) async throws -> AtlasPublishResponse
-    func publicItems(lemma: String, language: TargetLanguage, limit: Int) async throws -> [AtlasPublicItem]
-    func publicFeed(limit: Int, forceReload: Bool) async throws -> [AtlasPublicItem]
-    func author(username: String) async throws -> AtlasAuthorResponse
-    func save(slug: String) async throws -> AtlasSaveResponse
-    func unsave(slug: String) async throws -> AtlasSaveResponse
-    func report(slug: String, reason: AtlasReportReason, detail: String?) async throws
-
-    // Community collections 合集
-    func publicCollections(lang: TargetLanguage, forceReload: Bool) async throws -> [AtlasCollection]
-    func collection(slug: String) async throws -> AtlasCollectionDetailResponse
-    func myCollections() async throws -> [AtlasMyCollection]
-    func createCollection(
-        title: String, description: String?, targetLanguage: TargetLanguage
-    ) async throws
-        -> AtlasMyCollection
-    func collectionEdit(id: String) async throws -> AtlasCollectionEditResponse
-    func updateCollection(
-        id: String, title: String, description: String?, coverPublicItemId: String?
-    ) async throws
-    func deleteCollection(id: String) async throws
-    func addCollectionItem(id: String, publicItemId: String) async throws
-    func removeCollectionItem(id: String, publicItemId: String) async throws
-    func publishCollection(id: String) async throws -> AtlasCollectionPublishResponse
-    func collectionCandidates(lang: TargetLanguage) async throws -> [AtlasPublicItem]
-}
-
-@MainActor
-struct LiveAtlasRepository: AtlasRepository {
+struct LiveAtlasRepository {
     static let shared = LiveAtlasRepository()
 
     private let api: APIClient

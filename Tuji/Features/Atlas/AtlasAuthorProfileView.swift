@@ -10,23 +10,22 @@ import SwiftUI
 // MARK: - 作者主頁
 
 struct AtlasAuthorProfileView: View {
-    /// The attribution name shown on public items, which is the author's
-    /// username on the server.
-    let username: String
-
-    @State private var author: AtlasAuthor?
-    @State private var items: [AtlasPublicItem] = []
-    @State private var loading = true
-    @State private var loadError: String?
+    @State private var vm: AuthorProfileVM
     @State private var selectedItem: AtlasPublicItem?
+
+    /// `username` is the attribution name shown on public items — the author's
+    /// username on the server.
+    init(username: String) {
+        _vm = State(initialValue: AuthorProfileVM(username: username))
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s5) {
-                if let author {
+                if let author = self.vm.author {
                     self.headerCard(author)
                     self.itemsSection
-                } else if self.loading {
+                } else if case .loading = self.vm.phase {
                     ProgressView()
                         .tint(.tujiTeal)
                         .padding(.top, Space.s12)
@@ -37,13 +36,18 @@ struct AtlasAuthorProfileView: View {
             .padding(Space.s6)
         }
         .background(.tujiBg)
-        .navigationTitle(self.author?.displayName ?? self.username)
+        .navigationTitle(self.vm.author?.displayName ?? self.vm.username)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: self.$selectedItem) { item in
             AtlasPublicDetailView(item: item)
         }
-        .task(id: self.username) {
-            await self.load()
+        // Analytics stays in the view (VMs don't reach AnalyticsService); track a
+        // successful load once per author.
+        .task(id: self.vm.username) {
+            await self.vm.load()
+            if case .ready = self.vm.phase {
+                AnalyticsService.shared.track(.authorProfileViewed)
+            }
         }
     }
 
@@ -52,34 +56,18 @@ struct AtlasAuthorProfileView: View {
             Image(systemName: "person.crop.circle.badge.questionmark")
                 .font(.system(size: 40))
                 .foregroundStyle(.tujiInk4)
-            Text(self.loadError == nil
+            Text(self.vm.errorMessage == nil
                 ? tujiLocalized("找不到這個作者")
                 : tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
-            if self.loadError != nil {
+            if self.vm.errorMessage != nil {
                 BBtn(title: "重試", fullWidth: false) {
-                    Task { await self.load() }
+                    Task { await self.vm.load() }
                 }
             }
         }
         .padding(.top, Space.s12)
-    }
-
-    private func load() async {
-        self.loading = true
-        self.loadError = nil
-        do {
-            let response = try await LiveAtlasRepository.shared.author(username: self.username)
-            self.author = response.author
-            self.items = response.items
-            AnalyticsService.shared.track(.authorProfileViewed)
-        } catch {
-            self.author = nil
-            self.items = []
-            self.loadError = error.localizedDescription
-        }
-        self.loading = false
     }
 
     // MARK: Header
@@ -144,7 +132,7 @@ struct AtlasAuthorProfileView: View {
                 .foregroundStyle(.tujiInk2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            if self.items.isEmpty {
+            if self.vm.items.isEmpty {
                 Text("還沒有公開項目")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
@@ -157,7 +145,7 @@ struct AtlasAuthorProfileView: View {
                     ],
                     spacing: Space.s3
                 ) {
-                    ForEach(self.items) { item in
+                    ForEach(self.vm.items) { item in
                         AtlasPublicTile(item: item, onOpen: { self.selectedItem = item })
                     }
                 }

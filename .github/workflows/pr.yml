@@ -166,11 +166,14 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Check ARCHITECTURE links
-        # 提醒：若 PR 改了 Endpoint enum / Models.swift，描述要連結 backend PR
+        # 提醒：若 PR 改了 Endpoint enum / Models.swift，描述要連結 backend PR。
+        # PR body 透過 env 傳入（不要內插進 script，否則描述裡的反引號/括號會被當成 shell）。
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           if git diff --name-only origin/${{ github.base_ref }}...HEAD \
             | grep -E "Core/Networking/Endpoints\.swift|Models/.*\.swift" >/dev/null; then
-            if ! echo "${{ github.event.pull_request.body }}" \
+            if ! printf '%s' "$PR_BODY" \
               | grep -E "(tuji#[0-9]+|Backend PR:)" >/dev/null; then
               echo "::warning::Endpoint/Models 有改但 PR 沒連 backend PR — 確認後端是否已配套部署？"
             fi

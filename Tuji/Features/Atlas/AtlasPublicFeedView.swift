@@ -11,43 +11,14 @@ import SwiftUI
 // `AtlasPublicItem` now lives in Core/Models/Atlas.swift — the word detail
 // section consumes the same model from the real API.
 
-// MARK: - Refresh signal
-
-/// One-shot cross-view signal: set when the user publishes an item that goes
-/// live, so the community feed bypasses its URLCache on its next load and shows
-/// the new item immediately. Without it the feed (GET /api/atlas/public, served
-/// under `.useProtocolCachePolicy`) can return a list captured before the publish.
-@MainActor
-final class AtlasFeedRefreshCenter {
-    static let shared = AtlasFeedRefreshCenter()
-    private init() {}
-
-    private var pending = false
-
-    /// Mark the feed as needing a cache-bypassing reload on its next load.
-    func markNeedsForceReload() {
-        self.pending = true
-    }
-
-    /// Whether a force reload is pending; reading it clears the flag.
-    func consumePendingForceReload() -> Bool {
-        defer { self.pending = false }
-        return self.pending
-    }
-}
-
 // MARK: - 列表頁（合集）
 
 struct AtlasPublicFeedView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
-    @State private var collections: [AtlasCollection] = []
-    @State private var loading = true
-    @State private var loadError: String?
+    @State private var vm = PublicFeedVM()
     @State private var selectedCollection: AtlasCollection?
-    /// Language whose list is currently loaded, so returning from a detail
-    /// doesn't refetch-and-clobber a good list (see load()).
-    @State private var loadedLang: TargetLanguage?
 
     /// The feed follows the user's current learning direction — Japanese learners
     /// see Japanese collections, English learners see English ones. There is no
@@ -69,10 +40,15 @@ struct AtlasPublicFeedView: View {
         .navigationDestination(item: self.$selectedCollection) { collection in
             AtlasCollectionDetailView(slug: collection.slug, preview: collection)
         }
-        // Re-runs on first appearance AND whenever the learning direction flips,
-        // so switching 日文/英文 圖鑑 reloads the feed for the new language.
+        // Re-runs on first appearance AND whenever the learning direction flips, so
+        // switching 日文/英文 圖鑑 reloads the feed for the new language. The pending
+        // publish signal is consumed here (the view owns the global) and handed to
+        // the VM as a plain flag.
         .task(id: self.targetLanguage) {
-            await self.load()
+            await self.vm.load(
+                lang: self.targetLanguage,
+                pendingForce: self.feedRefresh.consume()
+            )
         }
     }
 
@@ -113,7 +89,7 @@ struct AtlasPublicFeedView: View {
 
     @ViewBuilder
     private var content: some View {
-        if self.loading {
+        if case .loading = self.vm.phase {
             VStack {
                 Spacer()
                 ProgressView().tint(.tujiTeal)
@@ -128,12 +104,12 @@ struct AtlasPublicFeedView: View {
             // Empty and populated states share one ScrollView so pull-to-refresh
             // works in both — the empty case is exactly when the user needs it.
             ScrollView {
-                if self.collections.isEmpty {
+                if self.vm.collections.isEmpty {
                     self.emptyState
                         .containerRelativeFrame(.vertical)
                 } else {
                     LazyVStack(spacing: Space.s3) {
-                        ForEach(self.collections) { collection in
+                        ForEach(self.vm.collections) { collection in
                             AtlasCollectionCard(collection: collection) {
                                 self.selectedCollection = collection
                             }
@@ -146,7 +122,7 @@ struct AtlasPublicFeedView: View {
             }
             // Allow the pull gesture even when the content is shorter than the viewport.
             .scrollBounceBehavior(.always, axes: .vertical)
-            .refreshable { await self.load(forceReload: true) }
+            .refreshable { await self.vm.load(lang: self.targetLanguage, forceReload: true) }
         }
     }
 
@@ -156,48 +132,19 @@ struct AtlasPublicFeedView: View {
             Image(systemName: "square.stack.3d.up.slash")
                 .font(.system(size: 40))
                 .foregroundStyle(.tujiInk4)
-            Text(self.loadError == nil
+            Text(self.vm.errorMessage == nil
                 ? tujiLocalized("這個語言還沒有公開合集")
                 : tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
-            if self.loadError != nil {
+            if self.vm.errorMessage != nil {
                 BBtn(title: "重試", fullWidth: false) {
-                    Task { await self.load(forceReload: true) }
+                    Task { await self.vm.load(lang: self.targetLanguage, forceReload: true) }
                 }
             }
             Spacer()
         }
         .frame(maxWidth: .infinity)
-    }
-
-    // MARK: Load
-
-    /// `forceReload` (pull-to-refresh, retry, or a pending publish signal) bypasses
-    /// the URLCache. It also keeps the list on screen — only a first/appearance load
-    /// shows the full-screen spinner; the pull gesture uses the refresh control's own.
-    private func load(forceReload: Bool = false) async {
-        let force = forceReload || AtlasFeedRefreshCenter.shared.consumePendingForceReload()
-        // Returning from a collection detail re-triggers this appearance load. If
-        // we already have this language's list and it isn't a deliberate refresh,
-        // keep it — a plain refetch can hit a stale edge/device copy and clobber
-        // the list with an empty one (the "disappears on back" bug).
-        if !force, self.loadedLang == self.targetLanguage, !self.collections.isEmpty {
-            return
-        }
-        if !forceReload { self.loading = true }
-        self.loadError = nil
-        do {
-            self.collections = try await LiveAtlasRepository.shared.publicCollections(
-                lang: self.targetLanguage,
-                forceReload: force
-            )
-            self.loadedLang = self.targetLanguage
-        } catch {
-            if !forceReload { self.collections = [] }
-            self.loadError = error.localizedDescription
-        }
-        self.loading = false
     }
 }
 
@@ -586,4 +533,5 @@ struct AtlasPublicDetailView: View {
         AtlasPublicFeedView()
     }
     .environment(SettingsStore.shared)
+    .environment(CommunityFeedRefresh())
 }

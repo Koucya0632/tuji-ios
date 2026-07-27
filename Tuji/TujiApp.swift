@@ -34,6 +34,7 @@ struct TujiApp: App {
     @State private var studyFocus = StudyFocus.shared
     @State private var deepLinks = DeepLinkCoordinator.shared
     @State private var network = NetworkMonitor.shared
+    @State private var feedRefresh = CommunityFeedRefresh()
 
     var body: some Scene {
         WindowGroup {
@@ -51,6 +52,7 @@ struct TujiApp: App {
                 .environment(studyFocus)
                 .environment(deepLinks)
                 .environment(network)
+                .environment(feedRefresh)
                 .environment(\.locale, settings.current.uiLanguage.locale)
                 .task {
                     await words.loadIfNeeded()
