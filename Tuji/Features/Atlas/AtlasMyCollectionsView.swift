@@ -223,52 +223,39 @@ private struct AtlasCollectionCreateSheet: View {
 // MARK: - 編輯合集
 
 struct AtlasCollectionEditView: View {
-    let collectionId: String
-
-    @State private var collection: AtlasCollectionEdit?
-    @State private var members: [AtlasPublicItem] = []
-    @State private var title = ""
-    @State private var description = ""
-    @State private var coverId: String?
-    @State private var loading = true
-    @State private var loadError: String?
-    @State private var savingMeta = false
-    @State private var metaSaved = false
-    @State private var submitting = false
-    @State private var submitError: String?
-    @State private var submitResult: AtlasPublishModeration?
+    @State private var vm: CollectionEditVM
     @State private var showConfirm = false
     @State private var showPicker = false
 
-    private var language: TargetLanguage {
-        self.collection?.targetLanguage ?? .ja
+    init(collectionId: String) {
+        _vm = State(initialValue: CollectionEditVM(collectionId: collectionId))
     }
 
     var body: some View {
         ScrollView {
-            if let collection {
+            if let collection = self.vm.collection {
                 VStack(alignment: .leading, spacing: Space.s5) {
                     self.metaSection
                     self.membersSection
                     self.submitSection(collection)
                 }
                 .padding(Space.s6)
-            } else if self.loading {
+            } else if case .loading = self.vm.phase {
                 ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
             } else {
                 self.errorState
             }
         }
         .background(.tujiBg)
-        .navigationTitle(self.collection?.title ?? tujiLocalized("編輯合集"))
+        .navigationTitle(self.vm.collection?.title ?? tujiLocalized("編輯合集"))
         .navigationBarTitleDisplayMode(.inline)
-        .task { await self.load() }
+        .task { await self.vm.load() }
         .sheet(isPresented: self.$showPicker) {
             AtlasCollectionItemPicker(
-                language: self.language,
-                existingIds: Set(self.members.map(\.id))
+                language: self.vm.language,
+                existingIds: Set(self.vm.members.map(\.id))
             ) { publicItemId in
-                await self.addMember(publicItemId)
+                await self.vm.addMember(publicItemId)
             }
         }
         .tujiPrompt(
@@ -277,7 +264,16 @@ struct AtlasCollectionEditView: View {
             title: "要公開這個合集嗎？",
             message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
             detail: "公開後其他人可以看到合集裡的所有項目。",
-            primary: TujiPromptAction("送出審核") { self.submit() },
+            // The VM owns the publish; the view decides whether the public feed
+            // needs a cache-busting reload — keeping the VM free of the global
+            // refresh center (and unit-testable).
+            primary: TujiPromptAction("送出審核") {
+                Task {
+                    if await self.vm.submit() {
+                        AtlasFeedRefreshCenter.shared.markNeedsForceReload()
+                    }
+                }
+            },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
     }
@@ -287,19 +283,21 @@ struct AtlasCollectionEditView: View {
     private var metaSection: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("標題").font(.tujiCaption).foregroundStyle(.tujiInk3)
-            TextField("標題", text: self.$title)
+            TextField("標題", text: self.$vm.title)
                 .textFieldStyle(.roundedBorder)
             Text("簡介").font(.tujiCaption).foregroundStyle(.tujiInk3).padding(.top, Space.s2)
-            TextField("簡介（選填）", text: self.$description, axis: .vertical)
+            TextField("簡介（選填）", text: self.$vm.description, axis: .vertical)
                 .lineLimit(2...5)
                 .textFieldStyle(.roundedBorder)
             HStack {
-                if self.metaSaved {
+                if self.vm.metaSaved {
                     Text("已儲存").font(.tujiCaption).foregroundStyle(.tujiInk3)
                 }
                 Spacer()
-                BBtn(title: self.savingMeta ? "儲存中…" : "儲存", fullWidth: false) { self.saveMeta() }
-                    .disabled(self.savingMeta || self.title.trimmingCharacters(in: .whitespaces).isEmpty)
+                BBtn(title: self.vm.savingMeta ? "儲存中…" : "儲存", fullWidth: false) {
+                    Task { await self.vm.saveMeta() }
+                }
+                .disabled(!self.vm.canSaveMeta)
             }
             .padding(.top, Space.s1)
         }
@@ -310,7 +308,7 @@ struct AtlasCollectionEditView: View {
     private var membersSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
-                Text("項目 \(self.members.count)")
+                Text("項目 \(self.vm.members.count)")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.tujiInk)
                 Spacer()
@@ -323,7 +321,7 @@ struct AtlasCollectionEditView: View {
                 }
                 .buttonStyle(.plain)
             }
-            if self.members.isEmpty {
+            if self.vm.members.isEmpty {
                 Text("還沒有項目。點「新增」把你已通過的公開項目加進來。")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
@@ -335,7 +333,7 @@ struct AtlasCollectionEditView: View {
                     columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
                     spacing: Space.s3
                 ) {
-                    ForEach(self.members) { item in
+                    ForEach(self.vm.members) { item in
                         self.memberCell(item)
                     }
                 }
@@ -344,7 +342,7 @@ struct AtlasCollectionEditView: View {
     }
 
     private func memberCell(_ item: AtlasPublicItem) -> some View {
-        let isCover = self.coverId == item.id
+        let isCover = self.vm.coverId == item.id
         return VStack(spacing: 2) {
             ZStack(alignment: .topTrailing) {
                 ZStack {
@@ -366,10 +364,10 @@ struct AtlasCollectionEditView: View {
                         .stroke(isCover ? Color.tujiTeal : .clear, lineWidth: 2)
                 )
                 .contentShape(Rectangle())
-                .onTapGesture { self.setCover(item.id) }
+                .onTapGesture { Task { await self.vm.setCover(item.id) } }
 
                 Button {
-                    Task { await self.removeMember(item.id) }
+                    Task { await self.vm.removeMember(item.id) }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 18))
@@ -406,18 +404,18 @@ struct AtlasCollectionEditView: View {
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.tujiInk)
             }
-            if let submitError {
-                Text(submitError).font(.tujiCaption).foregroundStyle(.tujiCoral)
+            if let errorMessage = self.vm.errorMessage {
+                Text(errorMessage).font(.tujiCaption).foregroundStyle(.tujiCoral)
             }
-            if let submitResult {
-                Text(submitResult.published
+            if case let .done(moderation) = self.vm.submitState {
+                Text(moderation?.published == true
                     ? tujiLocalized("已通過審核，合集現在出現在公開圖鑑了。")
                     : tujiLocalized("已送出，審核通過後就會出現在公開圖鑑。"))
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
             }
             BBtn(
-                title: self.submitting ? "送出中…" : "公開合集",
+                title: self.vm.isSubmitting ? "送出中…" : "公開合集",
                 bg: .tujiTeal,
                 fg: .white,
                 fullWidth: true,
@@ -425,9 +423,9 @@ struct AtlasCollectionEditView: View {
             ) {
                 self.showConfirm = true
             }
-            .disabled(self.submitting || self.members.isEmpty)
-            .opacity((self.submitting || self.members.isEmpty) ? 0.6 : 1)
-            if self.members.isEmpty {
+            .disabled(!self.vm.canSubmit)
+            .opacity(self.vm.canSubmit ? 1 : 0.6)
+            if self.vm.members.isEmpty {
                 Text("合集至少要有一個項目才能公開。")
                     .font(.system(size: 11))
                     .foregroundStyle(.tujiInk4)
@@ -444,115 +442,10 @@ struct AtlasCollectionEditView: View {
             Text(tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
-            BBtn(title: "重試", fullWidth: false) { Task { await self.load() } }
+            BBtn(title: "重試", fullWidth: false) { Task { await self.vm.load() } }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, Space.s12)
-    }
-
-    // MARK: Actions
-
-    private func load() async {
-        self.loading = true
-        self.loadError = nil
-        do {
-            let response = try await LiveAtlasRepository.shared.collectionEdit(id: self.collectionId)
-            self.collection = response.collection
-            self.members = response.items
-            self.title = response.collection.title
-            self.description = response.collection.description ?? ""
-            self.coverId = response.collection.coverPublicItemId ?? response.items.first?.id
-        } catch {
-            self.loadError = error.localizedDescription
-        }
-        self.loading = false
-    }
-
-    private func saveMeta() {
-        guard !self.savingMeta else { return }
-        self.savingMeta = true
-        self.metaSaved = false
-        Task {
-            do {
-                try await LiveAtlasRepository.shared.updateCollection(
-                    id: self.collectionId,
-                    title: self.title.trimmingCharacters(in: .whitespaces),
-                    description: self.description.trimmingCharacters(in: .whitespaces).isEmpty
-                        ? nil : self.description,
-                    coverPublicItemId: self.coverId
-                )
-                self.metaSaved = true
-            } catch {
-                self.submitError = error.localizedDescription
-            }
-            self.savingMeta = false
-        }
-    }
-
-    private func setCover(_ id: String) {
-        self.coverId = id
-        self.saveMeta()
-    }
-
-    private func addMember(_ publicItemId: String) async {
-        do {
-            try await LiveAtlasRepository.shared.addCollectionItem(
-                id: self.collectionId, publicItemId: publicItemId
-            )
-            await self.reloadMembers()
-        } catch {
-            self.submitError = error.localizedDescription
-        }
-    }
-
-    private func removeMember(_ publicItemId: String) async {
-        do {
-            try await LiveAtlasRepository.shared.removeCollectionItem(
-                id: self.collectionId, publicItemId: publicItemId
-            )
-            if self.coverId == publicItemId { self.coverId = nil }
-            await self.reloadMembers()
-        } catch {
-            self.submitError = error.localizedDescription
-        }
-    }
-
-    private func reloadMembers() async {
-        do {
-            let response = try await LiveAtlasRepository.shared.collectionEdit(id: self.collectionId)
-            self.members = response.items
-            if self.coverId == nil { self.coverId = response.items.first?.id }
-        } catch {
-            self.submitError = error.localizedDescription
-        }
-    }
-
-    private func submit() {
-        guard !self.submitting, !self.members.isEmpty else { return }
-        self.submitting = true
-        self.submitError = nil
-        self.submitResult = nil
-        Task {
-            do {
-                // Persist the latest title/description/cover before the gate reads them.
-                try await LiveAtlasRepository.shared.updateCollection(
-                    id: self.collectionId,
-                    title: self.title.trimmingCharacters(in: .whitespaces),
-                    description: self.description.trimmingCharacters(in: .whitespaces).isEmpty
-                        ? nil : self.description,
-                    coverPublicItemId: self.coverId
-                )
-                let response = try await LiveAtlasRepository.shared.publishCollection(id: self.collectionId)
-                self.submitResult = response.moderation
-                if response.moderation?.published == true {
-                    AtlasFeedRefreshCenter.shared.markNeedsForceReload()
-                }
-                await self.load()
-            } catch {
-                self.submitError = error.localizedDescription
-            }
-            self.submitting = false
-        }
     }
 }
 
