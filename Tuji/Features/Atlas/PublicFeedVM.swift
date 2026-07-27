@@ -5,8 +5,8 @@
 //
 // The view supplies the current learning language on each call (the feed follows
 // SettingsStore, but the VM stays decoupled from it) and consumes the pending
-// publish signal from AtlasFeedRefreshCenter itself, handing it in as a flag —
-// keeping the VM free of the global.
+// publish signal from CommunityFeedRefresh itself, handing it in as a flag —
+// keeping the VM free of that shared signal.
 
 import Foundation
 import Observation
@@ -45,7 +45,7 @@ final class PublicFeedVM {
     }
 
     /// `forceReload` (pull-to-refresh / retry) and `pendingForce` (a publish that
-    /// went live, consumed from AtlasFeedRefreshCenter by the view) both bypass the
+    /// went live, consumed from CommunityFeedRefresh by the view) both bypass the
     /// URLCache. Only a first/appearance load shows the full-screen spinner; a
     /// forced reload keeps the current list on screen.
     func load(lang: TargetLanguage, forceReload: Bool = false, pendingForce: Bool = false) async {

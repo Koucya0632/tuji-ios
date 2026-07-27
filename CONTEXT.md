@@ -46,3 +46,8 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`). All four
   community screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`, `PublicFeedVM`,
   `CollectionDetailVM`, `AuthorProfileVM`.
+- **CommunityFeedRefresh** — an `@Observable` injected at the app root (`TujiApp`) that
+  signals a just-published item/collection went live, so 公開圖鑑 bypasses its URLCache on
+  its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
+  `consume()`s it once. Replaces the former `AtlasFeedRefreshCenter` global singleton — the
+  cross-view coupling is now an explicit environment dependency, not a hidden global.

@@ -319,6 +319,7 @@ private struct AtlasManageDetailView: View {
     @State private var submitError: String?
     @State private var submitResult: AtlasPublishModeration?
     @Environment(\.dismiss) private var dismiss
+    @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     private var item: AtlasItem? {
         self.store.items.first { $0.imageId == self.image.id }
@@ -438,7 +439,7 @@ private struct AtlasManageDetailView: View {
                 // Auto-approved items go live now; force the community feed to
                 // bypass its URLCache so this item appears there immediately.
                 if response.moderation?.published == true {
-                    AtlasFeedRefreshCenter.shared.markNeedsForceReload()
+                    self.feedRefresh.markNeedsReload()
                 }
                 AnalyticsService.shared.track(.atlasPublishSubmitted)
             } catch {
@@ -466,5 +467,6 @@ private struct AtlasManageDetailView: View {
         AtlasManageView()
             .environment(AuthService.shared)
             .environment(SettingsStore.shared)
+            .environment(CommunityFeedRefresh())
     }
 }

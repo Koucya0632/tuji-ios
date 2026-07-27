@@ -11,35 +11,11 @@ import SwiftUI
 // `AtlasPublicItem` now lives in Core/Models/Atlas.swift — the word detail
 // section consumes the same model from the real API.
 
-// MARK: - Refresh signal
-
-/// One-shot cross-view signal: set when the user publishes an item that goes
-/// live, so the community feed bypasses its URLCache on its next load and shows
-/// the new item immediately. Without it the feed (GET /api/atlas/public, served
-/// under `.useProtocolCachePolicy`) can return a list captured before the publish.
-@MainActor
-final class AtlasFeedRefreshCenter {
-    static let shared = AtlasFeedRefreshCenter()
-    private init() {}
-
-    private var pending = false
-
-    /// Mark the feed as needing a cache-bypassing reload on its next load.
-    func markNeedsForceReload() {
-        self.pending = true
-    }
-
-    /// Whether a force reload is pending; reading it clears the flag.
-    func consumePendingForceReload() -> Bool {
-        defer { self.pending = false }
-        return self.pending
-    }
-}
-
 // MARK: - 列表頁（合集）
 
 struct AtlasPublicFeedView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     @State private var vm = PublicFeedVM()
     @State private var selectedCollection: AtlasCollection?
@@ -71,7 +47,7 @@ struct AtlasPublicFeedView: View {
         .task(id: self.targetLanguage) {
             await self.vm.load(
                 lang: self.targetLanguage,
-                pendingForce: AtlasFeedRefreshCenter.shared.consumePendingForceReload()
+                pendingForce: self.feedRefresh.consume()
             )
         }
     }
@@ -557,4 +533,5 @@ struct AtlasPublicDetailView: View {
         AtlasPublicFeedView()
     }
     .environment(SettingsStore.shared)
+    .environment(CommunityFeedRefresh())
 }

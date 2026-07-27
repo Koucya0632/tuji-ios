@@ -223,6 +223,8 @@ private struct AtlasCollectionCreateSheet: View {
 // MARK: - 編輯合集
 
 struct AtlasCollectionEditView: View {
+    @Environment(CommunityFeedRefresh.self) private var feedRefresh
+
     @State private var vm: CollectionEditVM
     @State private var showConfirm = false
     @State private var showPicker = false
@@ -265,12 +267,12 @@ struct AtlasCollectionEditView: View {
             message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
             detail: "公開後其他人可以看到合集裡的所有項目。",
             // The VM owns the publish; the view decides whether the public feed
-            // needs a cache-busting reload — keeping the VM free of the global
-            // refresh center (and unit-testable).
+            // needs a cache-busting reload — keeping the VM free of the shared
+            // refresh signal (and unit-testable).
             primary: TujiPromptAction("送出審核") {
                 Task {
                     if await self.vm.submit() {
-                        AtlasFeedRefreshCenter.shared.markNeedsForceReload()
+                        self.feedRefresh.markNeedsReload()
                     }
                 }
             },
