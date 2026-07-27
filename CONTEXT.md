@@ -23,12 +23,17 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 ## Architecture — seams & conventions
 
-- **AtlasRepository** — the (currently broad, 25-method) seam over the atlas HTTP API.
-  Spans three roles: authoring pipeline, community consumption, and collection
-  authoring/browse. Being split by role incrementally as consumers need it.
-- **Role seams (emerging)** — narrow protocols carved off `AtlasRepository` as real
-  consumers appear. `LiveAtlasRepository` conforms to each via a free extension; tests
-  fake only the role.
+- **LiveAtlasRepository** — the concrete atlas HTTP client (in `AtlasRepository.swift`).
+  There is **no** umbrella `AtlasRepository` protocol any more — it was a 25-method
+  god-protocol with one real consumer, retired once the role seams below covered the
+  need. The struct's surface reaches callers through focused role protocols (each
+  conformed via a free `extension LiveAtlasRepository: Role {}`); a few consumption
+  methods (save / unsave / report / publicItems / publicFeed) are still called directly
+  on the concrete `.shared` by not-yet-extracted screens.
+- **Role seams** — narrow protocols, one per consumer, so each consumer (and its test
+  fake) depends only on the slice it uses.
+  - **AtlasAuthoring** — 10-method authoring/sync pipeline used by `AtlasStore`
+    (sync/upload/recognize/confirm/createCards/deleteImage/enrich/detail/entitlement/publish).
   - **CollectionEditing** — 5-method seam for the collection-edit screen
     (`collectionEdit`, `updateCollection`, `add/removeCollectionItem`, `publishCollection`).
   - **CollectionsBrowsing** — 1-method seam for the 公開圖鑑 feed (`publicCollections`).

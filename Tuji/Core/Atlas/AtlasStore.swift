@@ -17,7 +17,7 @@ final class AtlasStore {
     private(set) var loading = false
     private(set) var lastError: Error?
 
-    private let repository: AtlasRepository
+    private let repository: AtlasAuthoring
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-store")
 
     /// Bumped by `reset()`. Requests capture it before awaiting and drop their
@@ -25,7 +25,7 @@ final class AtlasStore {
     /// the store with the previous account's data.
     private var generation = 0
 
-    private init(repository: AtlasRepository = LiveAtlasRepository.shared) {
+    private init(repository: AtlasAuthoring = LiveAtlasRepository.shared) {
         self.repository = repository
     }
 
