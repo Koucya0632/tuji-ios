@@ -391,7 +391,6 @@ private struct AtlasManageDetailView: View {
     /// Public-sharing state + the submit action. Wording is deliberately
     /// 「送審」 — approval is not automatic (docs/COMMUNITY_ATLAS_PLAN.md §5),
     /// so nothing here may imply the card is already public.
-    @ViewBuilder
     private func shareSection(_ item: AtlasItem) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             self.detailRow("公開狀態", item.review.label)
@@ -436,6 +435,11 @@ private struct AtlasManageDetailView: View {
             do {
                 let response = try await self.store.publish(itemId: item.id)
                 self.submitResult = response.moderation
+                // Auto-approved items go live now; force the community feed to
+                // bypass its URLCache so this item appears there immediately.
+                if response.moderation?.published == true {
+                    AtlasFeedRefreshCenter.shared.markNeedsForceReload()
+                }
                 AnalyticsService.shared.track(.atlasPublishSubmitted)
             } catch {
                 self.submitError = error.localizedDescription
