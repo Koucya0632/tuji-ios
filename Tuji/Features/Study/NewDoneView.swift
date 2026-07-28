@@ -32,33 +32,10 @@ struct NewDoneView: View {
         // pop, and an invalidated-but-unreloaded store leaves 今日目標 0/10 and
         // the streak flame at 0 right after the session (until a tab swap).
         .task {
-            // The recognize POSTs are optimistic, so wait for them to land (cap
-            // at 2s) before reloading — otherwise the reload races the write
-            // and the just-learned words show stale on the 圖鑑/詳情.
-            await self.coord.drainPendingWrites(within: .seconds(2))
-            self.mastery.invalidate()
-            self.studyStats.invalidate()
-            self.progress.invalidate()
-            // Drop any prefetched queue — the cards just learned changed the
-            // SRS state, so the next 復習 / 學新字 must re-fetch.
-            StudyQueueStore.shared.invalidate()
-            async let masteryReload: Void = self.mastery.reload()
-            async let statsReload: Void = self.studyStats.reload()
-            async let progressReload: Void = self.progress.reload()
-            _ = await (masteryReload, statsReload, progressReload)
-            // The last word's write starts moments before this task, so it's
-            // the one most likely to miss the window (it may also be retrying).
-            // Wait it out and reload once more so no word is left 未學.
-            if self.coord.hasPendingWrites {
-                await self.coord.drainPendingWrites(within: .seconds(15))
-                self.mastery.invalidate()
-                self.studyStats.invalidate()
-                self.progress.invalidate()
-                async let mastery2: Void = self.mastery.reload()
-                async let stats2: Void = self.studyStats.reload()
-                async let progress2: Void = self.progress.reload()
-                _ = await (mastery2, stats2, progress2)
-            }
+            await SessionRefresh(
+                stores: [self.mastery, self.studyStats, self.progress],
+                invalidateQueue: { StudyQueueStore.shared.invalidate() }
+            ).run(draining: self.coord)
         }
         .safeAreaInset(edge: .bottom) {
             BBtn(

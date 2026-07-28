@@ -83,6 +83,15 @@ final class ReviewFlowCoordinator {
     /// In-flight SRS writes (POST /api/study/answer). The UI advances
     /// optimistically without awaiting these; the finish boundary drains them.
     private var pendingWrites: [Task<Void, Never>] = []
+    /// Writes fired but not yet landed — drives SessionRefresh's conditional
+    /// second drain (the last word's write is the one most likely to miss the
+    /// short window). Mirrors NewFlowCoordinator.
+    private(set) var pendingWriteRemaining = 0
+
+    var hasPendingWrites: Bool {
+        self.pendingWriteRemaining > 0
+    }
+
     /// Ratings whose write exhausted all retries (e.g. offline). They're parked
     /// in StudyAnswerOutbox for replay; CompleteView surfaces the count so the
     /// session doesn't silently look fully synced.
@@ -244,7 +253,11 @@ final class ReviewFlowCoordinator {
             activity: "mcq"
         )
         let wordId = item.word.id
-        self.pendingWrites.append(Task { await self.persist(payload, wordId: wordId) })
+        self.pendingWriteRemaining += 1
+        self.pendingWrites.append(Task {
+            await self.persist(payload, wordId: wordId)
+            self.pendingWriteRemaining -= 1
+        })
     }
 
     private func scheduleAdvance(after delay: Duration) {

@@ -91,6 +91,13 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
   longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a
   clean full reset beats resetting ~20 fields in place).
+- **SessionRefresh** — the one home for "what a finished session refreshes, and when":
+  `drain → invalidate → reload`, plus the conditional second drain for the last word's
+  write. Behind `RefreshableStore { invalidate(); reload() async }` (conformed by
+  Mastery/Progress/StudyStats), an `invalidateQueue` closure, and `PendingWriteDraining`
+  (both coordinators). `NewDoneView` and `CompleteView` both call it — review **gains** the
+  drain guard it previously lacked (its reload used to race the last answer's write). Both
+  coordinators now track `pendingWriteRemaining` / `hasPendingWrites`.
 
 ## Dependency injection
 
