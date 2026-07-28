@@ -42,6 +42,7 @@ enum Endpoint {
     case atlasItemEnrich(id: String)
     case atlasItemDetail(id: String)
     case atlasItemPublish(id: String)
+    case atlasItemWithdraw(id: String)
     case atlasSync(since: String?, limit: Int)
     case atlasFriends(limit: Int)
     case atlasEntitlement
@@ -129,6 +130,7 @@ enum Endpoint {
         case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
         case let .atlasItemDetail(id): "/api/atlas/items/\(id)/detail"
         case let .atlasItemPublish(id): "/api/atlas/items/\(id)/publish"
+        case let .atlasItemWithdraw(id): "/api/atlas/items/\(id)/withdraw"
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
         case .atlasEntitlement: "/api/atlas/entitlement"
@@ -251,7 +253,7 @@ enum Endpoint {
              .usersFeedback, .usersCustomWords, .usersPublicAuthor,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
-             .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement,
+             .atlasItemPublish, .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
              .atlasCollections, .atlasCollection, .atlasCollectionItems,
              .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,

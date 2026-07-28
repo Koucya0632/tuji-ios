@@ -260,7 +260,10 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
     case pendingReview = "pending_review"
     case approved
     case rejected
+    /// Moderation removed it. Final — the server refuses to re-submit it.
     case takedown
+    /// The author took it down themselves. Reversible, and carries no penalty.
+    case withdrawn
 
     /// Short label for the detail screen. Deliberately says 送審/審核 — approval
     /// is not automatic, so the UI must never imply "already public".
@@ -271,16 +274,25 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
         case .approved: tujiLocalized("已公開")
         case .rejected: tujiLocalized("未通過")
         case .takedown: tujiLocalized("已下架")
+        case .withdrawn: tujiLocalized("已收回")
         }
     }
 
     /// Only these states offer the submit action; anything in-flight or already
-    /// public must not be re-submitted.
+    /// public must not be re-submitted. `withdrawn` is submittable precisely
+    /// because it was the author's own decision — unlike `takedown`.
     var canSubmit: Bool {
         switch self {
-        case .draft, .rejected: true
+        case .draft, .rejected, .withdrawn: true
         case .pending, .pendingAuto, .pendingReview, .approved, .takedown: false
         }
+    }
+
+    /// Only a live public item can be pulled back. Withdrawal is not a way to
+    /// escape a moderation takedown, and there is nothing to withdraw from a
+    /// draft or a queued submission.
+    var canWithdraw: Bool {
+        self == .approved
     }
 }
 
@@ -297,6 +309,13 @@ extension AtlasItem {
 struct AtlasPublishResponse: Decodable {
     let item: AtlasItem
     let moderation: AtlasPublishModeration?
+}
+
+/// POST /api/atlas/items/{id}/withdraw. The server owns the resulting state;
+/// the client re-syncs rather than guessing it.
+struct AtlasWithdrawResponse: Decodable, Hashable {
+    let ok: Bool
+    let reviewStatus: String?
 }
 
 struct AtlasPublishModeration: Decodable, Hashable {

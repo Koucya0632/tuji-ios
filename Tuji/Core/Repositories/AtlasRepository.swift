@@ -104,6 +104,13 @@ struct LiveAtlasRepository {
         try await self.api.post(.atlasItemPublish(id: itemId), body: Empty())
     }
 
+    /// 取消公開 — pulls the item back off the community wall. Not a delete: the
+    /// card, its study history and other people's saves all survive, and the
+    /// item can be submitted again.
+    func withdraw(itemId: String) async throws -> AtlasWithdrawResponse {
+        try await self.api.post(.atlasItemWithdraw(id: itemId), body: Empty())
+    }
+
     /// Other users' public 圖鑑 for one word. Public endpoint — no bearer token,
     /// and it honors the server's CDN cache headers.
     func publicItems(

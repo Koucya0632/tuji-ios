@@ -161,6 +161,14 @@ final class AtlasStore {
         return response
     }
 
+    /// 取消公開. The withdraw response carries no item (the row is the server's
+    /// to describe), so refresh from sync rather than patching a status in
+    /// locally and risking a stale 已公開 badge on a card that is no longer up.
+    func withdraw(itemId: String) async throws {
+        _ = try await self.repository.withdraw(itemId: itemId)
+        await self.sync()
+    }
+
     private func merge(_ response: AtlasSyncResponse) {
         self.images = Self.merged(self.images, response.images)
             .filter { $0.deletedAt == nil }

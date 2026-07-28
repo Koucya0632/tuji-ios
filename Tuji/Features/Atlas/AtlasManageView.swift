@@ -316,6 +316,8 @@ private struct AtlasManageDetailView: View {
     @State private var store = AtlasStore.shared
     @State private var submitting = false
     @State private var showSubmitConfirm = false
+    @State private var withdrawing = false
+    @State private var showWithdrawConfirm = false
     @State private var submitError: String?
     @State private var submitResult: AtlasPublishModeration?
     /// Non-nil while the 公開作者身分 sheet is up: publishing names the author,
@@ -390,6 +392,17 @@ private struct AtlasManageDetailView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .tujiPrompt(
+            isPresented: self.$showWithdrawConfirm,
+            style: .confirmation,
+            title: "要取消公開嗎？",
+            message: "這張卡片會從公開圖鑑移除，你的卡片和學習紀錄都會保留。",
+            detail: "之後隨時可以再公開一次。",
+            primary: TujiPromptAction("取消公開") {
+                self.withdraw()
+            },
+            secondary: TujiPromptAction("先不要", role: .cancel) {}
+        )
         .sheet(item: self.$identityToConfirm) { identity in
             PublicAuthorIdentitySheet(identity: identity) {
                 // Consent just given — carry on with the publish they asked for.
@@ -434,6 +447,23 @@ private struct AtlasManageDetailView: View {
                 .disabled(self.submitting)
                 .opacity(self.submitting ? 0.6 : 1)
             }
+
+            // The counterpart to publishing. Without it the only way off the
+            // wall is deleting the card — which also deletes this user's study
+            // history and every saver's review progress.
+            if item.review.canWithdraw {
+                BBtn(
+                    title: self.withdrawing ? "收回中…" : "取消公開",
+                    bg: .tujiCard,
+                    fg: .tujiInk,
+                    fullWidth: true,
+                    icon: "arrow.uturn.backward"
+                ) {
+                    self.showWithdrawConfirm = true
+                }
+                .disabled(self.withdrawing)
+                .opacity(self.withdrawing ? 0.6 : 1)
+            }
         }
         .padding(.top, Space.s2)
     }
@@ -475,6 +505,28 @@ private struct AtlasManageDetailView: View {
                 self.submitError = error.localizedDescription
             }
             self.submitting = false
+        }
+    }
+
+    /// The item stays, its cards stay, savers keep their progress — only the
+    /// public row is retired. `AtlasStore.withdraw` re-syncs, so the 公開狀態
+    /// row above reflects the server rather than a locally guessed status.
+    private func withdraw() {
+        guard let item, !self.withdrawing else { return }
+        self.withdrawing = true
+        self.submitError = nil
+        self.submitResult = nil
+        Task {
+            do {
+                try await self.store.withdraw(itemId: item.id)
+                // The wall still has a CDN copy of the old list; force the next
+                // read past it so the item disappears immediately.
+                self.feedRefresh.markNeedsReload()
+                AnalyticsService.shared.track(.atlasPublishWithdrawn)
+            } catch {
+                self.submitError = error.localizedDescription
+            }
+            self.withdrawing = false
         }
     }
 
