@@ -75,6 +75,23 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   broke the former `StudyRepository ↔ StudyAnswerOutbox` cycle before it could block
   injection.
 
+## Study — flow decisions live in the coordinators, not the views
+
+- **Tile spell-check is a coordinator decision.** `NewFlowCoordinator` owns the tile
+  selection model — `tilePicked`, `pickTile(_:for:)` (auto-checks when the board fills),
+  `unpickTile(atSlot:)`, and the pure `tilesMatch(_:for:)` (assemble → compare against the
+  target). `TilesView` reads `tilePicked` and forwards taps; only the flat-index-to-row
+  *layout* stays in the view. The coordinator resets `tilePicked` on a correct advance /
+  wrong requeue.
+- **`StudyOptionRow` / `StudyOptionStyle`** — one shared MCQ option row + its
+  right/wrong/answer/dim reveal logic (`StudyOptionStyle.forOption`), used by both
+  `IdentifyView` (選字) and `ReviewFlowView` (複習). Replaced the two near-identical private
+  `OptStyle` / `OptionStyle` copies.
+- **StudyQueueProviding** — 1-method seam (`fetch(mode:)`) over `StudyQueueStore`, injected
+  into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
+  longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a
+  clean full reset beats resetting ~20 fields in place).
+
 ## Dependency injection
 
 - **Convention & singletons: see [ADR-0001](docs/adr/0001-di-and-singletons.md).** Inject

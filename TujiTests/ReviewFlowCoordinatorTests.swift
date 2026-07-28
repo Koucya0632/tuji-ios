@@ -175,6 +175,45 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.suggested == .hard)
         #expect(c.availableRatings == [.hard, .good, .easy])
     }
+
+    // MARK: - 再來一輪 (another round)
+
+    @Test
+    func fetchAnotherRoundReturnsTheProviderQueue() async throws {
+        let queue = try self.makeQueue()
+        let provider = FakeQueueProvider()
+        provider.result = .success(queue)
+        let c = ReviewFlowCoordinator(queue: [], writer: SpyAnswerWriter(), queueProvider: provider)
+
+        let next = await c.fetchAnotherRound()
+
+        #expect(next.map(\.word.id) == queue.map(\.word.id))
+        #expect(provider.fetched == [.review])
+    }
+
+    @Test
+    func fetchAnotherRoundReturnsEmptyOnFailure() async {
+        let provider = FakeQueueProvider()
+        provider.result = .failure(RoundError.boom)
+        let c = ReviewFlowCoordinator(queue: [], writer: SpyAnswerWriter(), queueProvider: provider)
+
+        let next = await c.fetchAnotherRound()
+
+        #expect(next.isEmpty)
+    }
+}
+
+private enum RoundError: Error { case boom }
+
+@MainActor
+private final class FakeQueueProvider: StudyQueueProviding {
+    var result: Result<[StudyQueueItem], Error> = .success([])
+    private(set) var fetched: [StudyMode] = []
+
+    func fetch(mode: StudyMode) async throws -> [StudyQueueItem] {
+        self.fetched.append(mode)
+        return try self.result.get()
+    }
 }
 
 /// Records submitted answers and returns a configurable outcome. Defaults to a

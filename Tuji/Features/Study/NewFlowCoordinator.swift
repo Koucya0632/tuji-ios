@@ -46,6 +46,12 @@ final class NewFlowCoordinator {
     var idLocked: Bool = false
     var tiLocked: Bool = false
 
+    /// Tiles tapped into slots, in tap order — indices into `tileUnits(for:)`.
+    /// Index-based so duplicate units stay distinguishable. Owned here (not in
+    /// TilesView) so the assemble-and-compare is a testable coordinator decision;
+    /// reset when the spell task advances (correct) or requeues (wrong).
+    private(set) var tilePicked: [Int] = []
+
     /// Surface to NewFlowView so it can present WordPeek for wrong answers.
     var peek: StudyQueueWord?
 
@@ -377,7 +383,34 @@ final class NewFlowCoordinator {
         self.tileUnits(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
     }
 
-    /// Called by TilesView once every slot is filled.
+    /// Tap a pool tile into the next slot. Auto-checks when the board fills. A
+    /// no-op once locked, off a non-spell task, or if the tile is already placed.
+    func pickTile(_ idx: Int, for item: StudyQueueItem) {
+        guard !self.tiLocked, let task = current, task.kind == .spellTiles,
+              !self.tilePicked.contains(idx)
+        else { return }
+        self.tilePicked.append(idx)
+        if self.tilePicked.count == self.tileUnits(for: item).count {
+            self.tilesAnswer(correct: self.tilesMatch(self.tilePicked, for: item))
+        }
+    }
+
+    /// Tap a filled slot to take that tile back out (before the board locks).
+    func unpickTile(atSlot slot: Int) {
+        guard !self.tiLocked, slot < self.tilePicked.count else { return }
+        self.tilePicked.remove(at: slot)
+    }
+
+    /// Does this pick sequence spell the target? Pure — the correctness decision
+    /// the production step turns on, testable without driving the board.
+    func tilesMatch(_ picked: [Int], for item: StudyQueueItem) -> Bool {
+        let units = self.tileUnits(for: item)
+        let assembled = picked.compactMap { units.indices.contains($0) ? units[$0] : nil }.joined()
+        return assembled == Self.tileBoard(for: item).target
+    }
+
+    /// Locks the board and, after a beat, resolves. Called by pickTile when the
+    /// last slot fills; kept internal so tests can drive `resolveTiles` directly.
     func tilesAnswer(correct: Bool) {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles else { return }
         self.tiLocked = true
@@ -402,6 +435,10 @@ final class NewFlowCoordinator {
         if correct {
             self.combo += 1
             self.completeCurrentTask()
+            // The next spell task (whenever it surfaces) starts from an empty
+            // board. Wrong answers keep the picks so the red board stays until
+            // advanceFromPeek() requeues + clears.
+            self.tilePicked = []
         } else {
             self.combo = 0
             self.mistakes[task.item.word.id, default: 0] += 1
@@ -426,6 +463,7 @@ final class NewFlowCoordinator {
             self.requeueCurrentTask()
         case .spellTiles:
             self.tiLocked = false
+            self.tilePicked = []
             self.spellAttempts[task.item.word.id, default: 0] += 1
             self.requeueCurrentTask()
         case .recognize:
