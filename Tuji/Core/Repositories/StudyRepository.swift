@@ -16,9 +16,11 @@ struct LiveStudyRepository: StudyRepository {
     static let shared = LiveStudyRepository()
 
     private let api: APIClient
+    private let settings: LanguageContext
 
-    init(api: APIClient = .shared) {
+    init(api: APIClient = .shared, settings: LanguageContext = SettingsStore.shared) {
         self.api = api
+        self.settings = settings
     }
 
     func loadQueue(
@@ -35,7 +37,7 @@ struct LiveStudyRepository: StudyRepository {
                 limit: max(1, limit),
                 new: newCount,
                 categories: categories,
-                lang: SettingsStore.shared.current.uiLang
+                lang: self.settings.uiLang
             )
         )
     }

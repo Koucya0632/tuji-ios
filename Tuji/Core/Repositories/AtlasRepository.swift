@@ -11,9 +11,11 @@ struct LiveAtlasRepository {
     static let shared = LiveAtlasRepository()
 
     private let api: APIClient
+    private let settings: LanguageContext
 
-    init(api: APIClient = .shared) {
+    init(api: APIClient = .shared, settings: LanguageContext = SettingsStore.shared) {
         self.api = api
+        self.settings = settings
     }
 
     func sync(since: String?, limit: Int) async throws -> AtlasSyncResponse {
@@ -31,10 +33,9 @@ struct LiveAtlasRepository {
         // Upload performs the first recognition inline, so it needs the same
         // live language context as an explicit recognize request. Do not rely
         // only on the debounced server settings after an in-app switch.
-        let settings = SettingsStore.shared.current
         var fields: [String: String] = [
-            "lang": settings.uiLang,
-            "learning": settings.learningDirection.rawValue
+            "lang": self.settings.uiLang,
+            "learning": self.settings.learningDirection.rawValue
         ]
         if let targetLanguage {
             fields["targetLanguage"] = targetLanguage.rawValue
@@ -51,12 +52,11 @@ struct LiveAtlasRepository {
 
     func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse {
         struct Payload: Encodable { let mode: String }
-        let settings = SettingsStore.shared.current
         return try await self.api.post(
             .atlasImageRecognize(
                 id: imageId,
-                lang: settings.uiLang,
-                learning: settings.learningDirection.rawValue
+                lang: self.settings.uiLang,
+                learning: self.settings.learningDirection.rawValue
             ),
             body: Payload(mode: mode.rawValue)
         )
@@ -64,7 +64,7 @@ struct LiveAtlasRepository {
 
     func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
         let response: AtlasItemResponse = try await self.api.post(
-            .atlasImageConfirm(id: imageId, lang: SettingsStore.shared.current.uiLang),
+            .atlasImageConfirm(id: imageId, lang: self.settings.uiLang),
             body: payload
         )
         return response.item
