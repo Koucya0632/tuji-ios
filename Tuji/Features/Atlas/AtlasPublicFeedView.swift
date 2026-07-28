@@ -335,13 +335,14 @@ struct AtlasPublicTile: View {
 struct AtlasPublicDetailView: View {
     let item: AtlasPublicItem
 
-    @State private var saved = false
-    @State private var saveCount: Int?
-    @State private var busy = false
-    @State private var actionError: String?
-    @State private var reportSent = false
+    @State private var vm: AtlasPublicDetailVM
     @State private var showReport = false
     @State private var selectedAuthorName: String?
+
+    init(item: AtlasPublicItem, repo: AtlasItemConsuming = LiveAtlasRepository.shared) {
+        self.item = item
+        _vm = State(initialValue: AtlasPublicDetailVM(item: item, repo: repo))
+    }
 
     var body: some View {
         ScrollView {
@@ -406,31 +407,36 @@ struct AtlasPublicDetailView: View {
                     self.metaRow(icon: "calendar", text: date)
                 }
 
-                if let saveCount, saveCount > 0 {
+                if let saveCount = self.vm.saveCount, saveCount > 0 {
                     self.metaRow(icon: "bookmark", text: tujiLocalized("\(saveCount) 人收藏"))
                 }
 
                 // Saving is the consumption path: it does NOT use up the user's
                 // 自製圖鑑 capacity (docs/COMMUNITY_ATLAS_PLAN.md §4.1).
                 Button {
-                    self.toggleSave()
+                    Task {
+                        // The VM owns the state; analytics stays in the view.
+                        if await self.vm.toggleSave() == true {
+                            AnalyticsService.shared.track(.atlasPublicSaved)
+                        }
+                    }
                 } label: {
                     HStack {
-                        Image(systemName: self.saved ? "checkmark" : "plus")
-                        Text(self.saved ? "已收藏" : "收進我的圖鑑")
+                        Image(systemName: self.vm.saved ? "checkmark" : "plus")
+                        Text(self.vm.saved ? "已收藏" : "收進我的圖鑑")
                     }
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Space.s3)
-                    .background(self.saved ? Color.tujiInk4 : Color.tujiTeal, in: .capsule)
+                    .background(self.vm.saved ? Color.tujiInk4 : Color.tujiTeal, in: .capsule)
                 }
                 .buttonStyle(.plain)
-                .disabled(self.busy)
-                .opacity(self.busy ? 0.6 : 1)
+                .disabled(self.vm.busy)
+                .opacity(self.vm.busy ? 0.6 : 1)
                 .padding(.top, Space.s2)
 
-                if let actionError {
+                if let actionError = self.vm.actionError {
                     Text(actionError)
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
@@ -440,14 +446,14 @@ struct AtlasPublicDetailView: View {
                 Button {
                     self.showReport = true
                 } label: {
-                    Text(self.reportSent ? "已收到檢舉" : "檢舉這個項目")
+                    Text(self.vm.reportSent ? "已收到檢舉" : "檢舉這個項目")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(self.reportSent ? .tujiInk4 : .tujiCoral)
+                        .foregroundStyle(self.vm.reportSent ? .tujiInk4 : .tujiCoral)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Space.s2)
                 }
                 .buttonStyle(.plain)
-                .disabled(self.reportSent)
+                .disabled(self.vm.reportSent)
             }
             .padding(Space.s6)
         }
@@ -463,51 +469,10 @@ struct AtlasPublicDetailView: View {
         .confirmationDialog("檢舉原因", isPresented: self.$showReport, titleVisibility: .visible) {
             ForEach(AtlasReportReason.allCases) { reason in
                 Button(reason.label, role: .destructive) {
-                    self.report(reason)
+                    Task { await self.vm.report(reason) }
                 }
             }
             Button("取消", role: .cancel) {}
-        }
-    }
-
-    // MARK: - Actions
-
-    private func toggleSave() {
-        guard !self.busy else { return }
-        self.busy = true
-        self.actionError = nil
-        let wasSaved = self.saved
-        Task {
-            do {
-                let repo = LiveAtlasRepository.shared
-                let response = wasSaved
-                    ? try await repo.unsave(slug: self.item.slug)
-                    : try await repo.save(slug: self.item.slug)
-                self.saved = response.saved
-                self.saveCount = response.saveCount
-                if response.saved {
-                    AnalyticsService.shared.track(.atlasPublicSaved)
-                }
-            } catch {
-                self.actionError = error.localizedDescription
-            }
-            self.busy = false
-        }
-    }
-
-    private func report(_ reason: AtlasReportReason) {
-        self.actionError = nil
-        Task {
-            do {
-                try await LiveAtlasRepository.shared.report(
-                    slug: self.item.slug,
-                    reason: reason,
-                    detail: nil
-                )
-                self.reportSent = true
-            } catch {
-                self.actionError = error.localizedDescription
-            }
         }
     }
 

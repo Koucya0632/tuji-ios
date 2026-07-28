@@ -27,9 +27,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   There is **no** umbrella `AtlasRepository` protocol any more — it was a 25-method
   god-protocol with one real consumer, retired once the role seams below covered the
   need. The struct's surface reaches callers through focused role protocols (each
-  conformed via a free `extension LiveAtlasRepository: Role {}`); a few consumption
-  methods (save / unsave / report / publicItems / publicFeed) are still called directly
-  on the concrete `.shared` by not-yet-extracted screens.
+  conformed via a free `extension LiveAtlasRepository: Role {}`). **No screen binds to
+  the concrete type any more** — the only members behind no seam are `publicFeed` and
+  `deleteCollection`, which have no caller (ADR-0001 lazy-narrowing).
 - **Role seams** — narrow protocols, one per consumer, so each consumer (and its test
   fake) depends only on the slice it uses.
   - **AtlasAuthoring** — 10-method authoring/sync pipeline used by `AtlasStore`
@@ -39,13 +39,21 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   - **CollectionsBrowsing** — 1-method seam for the 公開圖鑑 feed (`publicCollections`).
   - **CollectionDetailReading** — 1-method seam for the collection detail (`collection(slug:)`).
   - **AuthorReading** — 1-method seam for the author profile (`author(username:)`).
+  - **PublicItemsReading** — 1-method seam (`publicItems`) for `WordCommunityAtlasSection`
+    (injected into the view; the trivial fetch stays there, no VM).
+  - **AtlasItemConsuming** — save/unsave/report for one public item, used by `AtlasPublicDetailVM`.
+  - **CollectionManaging** — myCollections/createCollection/collectionCandidates, one method
+    each for `MyCollectionsVM`, `AtlasCollectionCreateSheet`, `AtlasCollectionItemPicker`.
 - **Screen view model convention** — non-trivial screen logic (fetch / paginate / save /
   publish / form + async state) lives in an `@Observable @MainActor` view model,
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
   The View is presentation-only; analytics stays in the View (VMs don't reach
-  `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`). All four
-  community screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`, `PublicFeedVM`,
-  `CollectionDetailVM`, `AuthorProfileVM`.
+  `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`). The community
+  screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`, `PublicFeedVM`,
+  `CollectionDetailVM`, `AuthorProfileVM`, `MyCollectionsVM`, `AtlasPublicDetailVM`. A
+  screen whose only logic is a single fetch keeps the seam injected into the View instead
+  (`WordCommunityAtlasSection`, `AtlasCollectionCreateSheet`, `AtlasCollectionItemPicker`) —
+  ADR-0001 lazy-narrowing.
 - **CommunityFeedRefresh** — an `@Observable` injected at the app root (`TujiApp`) that
   signals a just-published item/collection went live, so 公開圖鑑 bypasses its URLCache on
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
