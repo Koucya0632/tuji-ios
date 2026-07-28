@@ -29,6 +29,10 @@ struct CompleteView: View {
     /// Starts a follow-up session when words are still due (再來一輪). nil
     /// hides the chaining CTA.
     var onAnotherRound: (() async -> Void)?
+    /// The review coordinator, so the post-session refresh can drain its
+    /// optimistic writes before reloading (mirrors NewDoneView). Defaults to a
+    /// no-op drainer for previews.
+    var draining: PendingWriteDraining = NoPendingWrites()
 
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
@@ -288,21 +292,15 @@ struct CompleteView: View {
     }
 
     private func refresh() async {
-        // Force round trips — streak, due/seen counts, and per-word mastery
-        // all just changed on the answer POST, and we want fresh values here
-        // and on the 圖鑑/詳情 the user returns to.
-        self.progress.invalidate()
-        self.studyStats.invalidate()
-        self.mastery.invalidate()
-        // Drop any prefetched queue — this session changed due/seen counts, so
-        // the next 復習 / 學新字 must re-fetch rather than reuse a stale queue.
-        StudyQueueStore.shared.invalidate()
-        async let p: Void = self.progress.reload()
-        async let s: Void = self.studyStats.reload()
-        async let m: Void = self.mastery.reload()
-        await p
-        await s
-        await m
+        // Same drain → invalidate → reload as NewDoneView, via the shared home:
+        // streak, due/seen counts, and per-word mastery all just changed on the
+        // answer POST, and we want fresh values here and on the 圖鑑/詳情 the user
+        // returns to. Draining first (which review didn't used to do) keeps the
+        // reload from racing the last answer's write.
+        await SessionRefresh(
+            stores: [self.mastery, self.studyStats, self.progress],
+            invalidateQueue: { StudyQueueStore.shared.invalidate() }
+        ).run(draining: self.draining)
         self.refreshed = true
     }
 }

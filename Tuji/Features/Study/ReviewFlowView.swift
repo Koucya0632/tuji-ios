@@ -39,7 +39,8 @@ struct ReviewFlowView: View {
                         wrongIds: self.coord.retriedIds,
                         unsyncedCount: self.coord.unsyncedCount,
                         onFinish: { self.dismiss() },
-                        onAnotherRound: { await self.startAnotherRound() }
+                        onAnotherRound: { await self.startAnotherRound() },
+                        draining: self.coord
                     )
                     .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
                 }
