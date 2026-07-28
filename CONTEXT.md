@@ -76,3 +76,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   repository protocol only when a test needs the narrower slice (`BillingRepository` stays
   whole). Cross-cutting lifecycle glue (`AuthService`→`AtlasStore` reset, `NetworkMonitor`→
   outbox replay) deliberately stays `.shared`.
+- **Read seams (settings/stats slices).** Modules that used to reach `SettingsStore.shared`
+  / `StudyStatsStore.shared` inside their methods now inject a narrow read seam instead, so
+  they're hermetically testable:
+  - **LanguageContext** — `{ uiLang, learningDirection }`, conformed by `SettingsStore`.
+    Injected into `LiveStudyRepository` (queue lang) and `LiveAtlasRepository`
+    (upload/recognize/confirm lang + learning). Read live at call time (an in-app switch
+    must take effect on the next request).
+  - **StudyQueueInputs** — `{ learningDirection, dailyGoal, studyCategories, due }`, the
+    slice `StudyQueueStore` folds into its queue params + cache signature. `LiveStudyQueueInputs`
+    is the live adapter over settings + stats; `StudyQueueStore.init` is now injectable so a
+    test can assert a direction switch busts a warm entry.

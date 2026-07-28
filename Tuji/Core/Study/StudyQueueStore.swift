@@ -38,10 +38,18 @@ final class StudyQueueStore {
 
     private var entries: [StudyMode: Entry] = [:]
     private let repository: StudyRepository
+    private let inputs: StudyQueueInputs
     private let log = Logger(subsystem: "app.tuji.ios", category: "study-queue-store")
 
-    private init(repository: StudyRepository = LiveStudyRepository.shared) {
+    /// Internal (not private) so tests can substitute a stub repository + inputs
+    /// and assert the cache signature — e.g. that a direction switch busts a warm
+    /// entry. App code uses `.shared`.
+    init(
+        repository: StudyRepository = LiveStudyRepository.shared,
+        inputs: StudyQueueInputs = LiveStudyQueueInputs()
+    ) {
         self.repository = repository
+        self.inputs = inputs
     }
 
     /// Read the warm queue for `mode` if it still matches the current params and
@@ -110,14 +118,13 @@ final class StudyQueueStore {
     /// it sends no filter. The signature folds in everything that should bust a
     /// cached entry, including the live `due` count.
     private func params(for mode: StudyMode) -> Params {
-        let due = StudyStatsStore.shared.stats?.due ?? 0
-        let settings = SettingsStore.shared.current
+        let due = self.inputs.due
         let limit: Int
         let newCount: Int
         let categories: [String]
         switch mode {
         case .new:
-            let n = StudyQuotas.computeNewLimit(goal: settings.dailyGoal, due: due)
+            let n = StudyQuotas.computeNewLimit(goal: self.inputs.dailyGoal, due: due)
             limit = n
             newCount = n
             // The theme picker lists 自定義 ("custom") as a pickable category,
@@ -125,7 +132,7 @@ final class StudyQueueStore {
             // only when the user actually ticked 自定義. Empty themes stay
             // empty: the backend treats an empty filter as "everything",
             // custom included.
-            categories = settings.studyCategories
+            categories = self.inputs.studyCategories
         case .review:
             limit = min(due, 30)
             newCount = 0
@@ -136,7 +143,7 @@ final class StudyQueueStore {
         // direction switch — without it, switching EN↔JA within the TTL could
         // serve the old direction's prefetched queue.
         let signature = "\(mode.asPath)|\(limit)|\(newCount)|\(categories.sorted().joined(separator: ","))"
-            + "|due\(due)|\(settings.learningDirection.rawValue)"
+            + "|due\(due)|\(self.inputs.learningDirection.rawValue)"
         return Params(limit: limit, newCount: newCount, categories: categories, signature: signature)
     }
 }
