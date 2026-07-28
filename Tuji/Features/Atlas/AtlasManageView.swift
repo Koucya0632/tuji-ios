@@ -318,8 +318,13 @@ private struct AtlasManageDetailView: View {
     @State private var showSubmitConfirm = false
     @State private var submitError: String?
     @State private var submitResult: AtlasPublishModeration?
+    /// Non-nil while the 公開作者身分 sheet is up: publishing names the author,
+    /// so it cannot run until this is accepted once.
+    @State private var identityToConfirm: PublicAuthorIdentity?
     @Environment(\.dismiss) private var dismiss
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
+
+    private let authorGate = PublicAuthorGate()
 
     private var item: AtlasItem? {
         self.store.items.first { $0.imageId == self.image.id }
@@ -381,10 +386,16 @@ private struct AtlasManageDetailView: View {
             message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
             detail: "公開後其他人可以看到這張照片，也可以檢舉。",
             primary: TujiPromptAction("送出審核") {
-                self.submit()
+                Task { await self.submitAfterIdentityCheck() }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .sheet(item: self.$identityToConfirm) { identity in
+            PublicAuthorIdentitySheet(identity: identity) {
+                // Consent just given — carry on with the publish they asked for.
+                self.submit()
+            }
+        }
     }
 
     // MARK: - 公開 / 送審
@@ -427,6 +438,16 @@ private struct AtlasManageDetailView: View {
         .padding(.top, Space.s2)
     }
 
+    /// Publishing puts the author's name on the item, so it runs only after the
+    /// 公開作者身分 step. The sheet resumes the publish once accepted.
+    private func submitAfterIdentityCheck() async {
+        if let identity = await self.authorGate.identityNeedingConfirmation() {
+            self.identityToConfirm = identity
+            return
+        }
+        self.submit()
+    }
+
     private func submit() {
         guard let item, !self.submitting else { return }
         self.submitting = true
@@ -442,6 +463,14 @@ private struct AtlasManageDetailView: View {
                     self.feedRefresh.markNeedsReload()
                 }
                 AnalyticsService.shared.track(.atlasPublishSubmitted)
+            } catch where PublicAuthorGate.isIdentityRequired(error) {
+                // The pre-check failed open (offline, slow) and the server said
+                // no. Land the user on the screen that fixes it.
+                if let identity = await self.authorGate.identityNeedingConfirmation() {
+                    self.identityToConfirm = identity
+                } else {
+                    self.submitError = error.localizedDescription
+                }
             } catch {
                 self.submitError = error.localizedDescription
             }

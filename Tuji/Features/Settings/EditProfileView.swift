@@ -11,12 +11,16 @@ struct EditProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
     private let users: UserRepository = LiveUserRepository.shared
+    /// Narrow seam — this screen only reads the public identity, the sheet writes it.
+    private let identities: PublicAuthorIdentityEditing = LiveUserRepository.shared
 
     @State private var nickname: String = ""
     @State private var pose: MascotPose = .face
     @State private var saving = false
     @State private var error: Error?
     @State private var initialized = false
+    @State private var loadingIdentity = false
+    @State private var publicIdentity: PublicAuthorIdentity?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "edit-profile")
 
@@ -27,6 +31,7 @@ struct EditProfileView: View {
                 self.avatarPicker
                 self.nicknameField
                 self.handleField
+                self.publicAuthorLink
                 if let error {
                     Text(error.localizedDescription)
                         .font(.tujiCaption)
@@ -54,6 +59,9 @@ struct EditProfileView: View {
             }
         }
         .onAppear { self.initialize() }
+        .sheet(item: self.$publicIdentity) { identity in
+            PublicAuthorIdentitySheet(identity: identity)
+        }
     }
 
     private var heroAvatar: some View {
@@ -133,20 +141,64 @@ struct EditProfileView: View {
                 .padding(.vertical, Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.tujiInk4.opacity(0.06), in: .rect(cornerRadius: Radius.md))
-            Text("Handle 由系統指派，無法修改")
+            Text("在「公開作者身分」裡修改")
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiInk4)
         }
     }
 
+    /// Entry point for editing what the community sees. Deliberately separate
+    /// from the fields above: those are the in-app greeting, this is what gets
+    /// published — and only this one asks for consent.
+    private var publicAuthorLink: some View {
+        Button {
+            Task { await self.openPublicAuthor() }
+        } label: {
+            HStack(spacing: Space.s3) {
+                Image(systemName: "person.crop.circle.badge.checkmark")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.tujiTeal)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("公開作者身分")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.tujiInk)
+                    Text("公開圖鑑上其他人看到的名字")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                }
+                Spacer(minLength: 0)
+                if self.loadingIdentity {
+                    ProgressView().tint(.tujiTeal)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.tujiInk4)
+                }
+            }
+            .padding(Space.s4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+        }
+        .buttonStyle(.plain)
+        .disabled(self.loadingIdentity)
+    }
+
     // MARK: - State
 
+    private func openPublicAuthor() async {
+        guard !self.loadingIdentity else { return }
+        self.loadingIdentity = true
+        defer { self.loadingIdentity = false }
+        do {
+            self.publicIdentity = try await self.identities.publicAuthorIdentity()
+        } catch {
+            self.error = error
+        }
+    }
+
     private var handleFromAuth: String {
-        if case let .signedIn(user) = auth.state {
-            if let u = user.username, !u.isEmpty { return u }
-            if let e = user.email, let local = e.split(separator: "@").first {
-                return String(local)
-            }
+        if case let .signedIn(user) = auth.state, let handle = user.username, !handle.isEmpty {
+            return handle
         }
         return "guest"
     }

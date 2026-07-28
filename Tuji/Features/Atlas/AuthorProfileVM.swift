@@ -13,15 +13,15 @@ final class AuthorProfileVM {
         case loading, ready, failed(String)
     }
 
-    let username: String
+    let handle: String
     private(set) var author: AtlasAuthor?
     private(set) var items: [AtlasPublicItem] = []
     private(set) var phase: Phase = .loading
 
     private let repo: AuthorReading
 
-    init(username: String, repo: AuthorReading = LiveAtlasRepository.shared) {
-        self.username = username
+    init(handle: String, repo: AuthorReading = LiveAtlasRepository.shared) {
+        self.handle = handle
         self.repo = repo
     }
 
@@ -33,7 +33,7 @@ final class AuthorProfileVM {
     func load() async {
         self.phase = .loading
         do {
-            let response = try await self.repo.author(username: self.username)
+            let response = try await self.repo.author(handle: self.handle)
             self.author = response.author
             self.items = response.items
             self.phase = .ready

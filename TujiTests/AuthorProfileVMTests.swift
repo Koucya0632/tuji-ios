@@ -8,9 +8,9 @@ import Testing
 
 @MainActor
 struct AuthorProfileVMTests {
-    private func author(username: String = "mika_k") -> AtlasAuthor {
+    private func author(handle: String = "mika_k") -> AtlasAuthor {
         AtlasAuthor(
-            username: username,
+            handle: handle,
             displayName: "Mika",
             avatar: "face",
             joinedAt: "2026-01",
@@ -28,7 +28,7 @@ struct AuthorProfileVMTests {
             targetLanguage: .ja,
             category: nil,
             imageUrl: nil,
-            attributionName: nil,
+            author: nil,
             publishedAt: nil
         )
     }
@@ -37,7 +37,7 @@ struct AuthorProfileVMTests {
     func loadPopulatesAuthorAndItemsAndMarksReady() async {
         let fake = FakeAuthorReading()
         fake.result = .success(.init(author: self.author(), items: [self.item(id: "x")]))
-        let vm = AuthorProfileVM(username: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
 
         await vm.load()
 
@@ -50,7 +50,7 @@ struct AuthorProfileVMTests {
     func failedLoadClearsAndSurfacesError() async {
         let fake = FakeAuthorReading()
         fake.result = .success(.init(author: self.author(), items: [self.item(id: "x")]))
-        let vm = AuthorProfileVM(username: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
         await vm.load() // first a good load…
 
         fake.result = .failure(FakeError.boom)
@@ -73,7 +73,7 @@ private final class FakeAuthorReading: AuthorReading {
     var result: Result<AtlasAuthorResponse, Error> = .success(
         .init(
             author: AtlasAuthor(
-                username: "u",
+                handle: "u",
                 displayName: "U",
                 avatar: "face",
                 joinedAt: nil,
@@ -84,7 +84,7 @@ private final class FakeAuthorReading: AuthorReading {
         )
     )
 
-    func author(username _: String) async throws -> AtlasAuthorResponse {
+    func author(handle _: String) async throws -> AtlasAuthorResponse {
         try self.result.get()
     }
 }

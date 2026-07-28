@@ -226,6 +226,11 @@ struct AtlasCollectionEditView: View {
     @State private var vm: CollectionEditVM
     @State private var showConfirm = false
     @State private var showPicker = false
+    /// Same consent gate as single-item publishing: the collection card carries
+    /// the author's name and avatar.
+    @State private var identityToConfirm: PublicAuthorIdentity?
+
+    private let authorGate = PublicAuthorGate()
 
     init(collectionId: String) {
         _vm = State(initialValue: CollectionEditVM(collectionId: collectionId))
@@ -268,14 +273,35 @@ struct AtlasCollectionEditView: View {
             // needs a cache-busting reload — keeping the VM free of the shared
             // refresh signal (and unit-testable).
             primary: TujiPromptAction("送出審核") {
-                Task {
-                    if await self.vm.submit() {
-                        self.feedRefresh.markNeedsReload()
-                    }
-                }
+                Task { await self.submitAfterIdentityCheck() }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .sheet(item: self.$identityToConfirm) { identity in
+            PublicAuthorIdentitySheet(identity: identity) {
+                Task { await self.publish() }
+            }
+        }
+    }
+
+    /// Publishing names the author, so it runs only after the 公開作者身分 step.
+    private func submitAfterIdentityCheck() async {
+        if let identity = await self.authorGate.identityNeedingConfirmation() {
+            self.identityToConfirm = identity
+            return
+        }
+        await self.publish()
+    }
+
+    private func publish() async {
+        if await self.vm.submit() {
+            self.feedRefresh.markNeedsReload()
+        } else if self.vm.needsAuthorIdentity {
+            // The pre-check failed open (offline, slow) and the server refused;
+            // land the user on the screen that fixes it rather than on a bare
+            // error line.
+            self.identityToConfirm = await self.authorGate.identityNeedingConfirmation()
+        }
     }
 
     // MARK: Meta

@@ -1,6 +1,6 @@
 // 公開圖鑑「作者主頁」（點公開項目的「by 作者」進來）。
 //
-// 資料來源：GET /api/atlas/public/authors/{username} —— 作者身分 + 其已公開項目
+// 資料來源：GET /api/atlas/public/authors/{handle} —— 作者身分 + 其已公開項目
 // + 累計被收藏數（docs/COMMUNITY_ATLAS_PLAN.md §3B/§3C）。公開、吃 CDN 快取。
 
 import Nuke
@@ -13,10 +13,10 @@ struct AtlasAuthorProfileView: View {
     @State private var vm: AuthorProfileVM
     @State private var selectedItem: AtlasPublicItem?
 
-    /// `username` is the attribution name shown on public items — the author's
-    /// username on the server.
-    init(username: String) {
-        _vm = State(initialValue: AuthorProfileVM(username: username))
+    /// `handle` is the author's public handle (`profiles.username`) — the link
+    /// target carried on public items, never the name shown on them.
+    init(handle: String) {
+        _vm = State(initialValue: AuthorProfileVM(handle: handle))
     }
 
     var body: some View {
@@ -36,14 +36,14 @@ struct AtlasAuthorProfileView: View {
             .padding(Space.s6)
         }
         .background(.tujiBg)
-        .navigationTitle(self.vm.author?.displayName ?? self.vm.username)
+        .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: self.$selectedItem) { item in
             AtlasPublicDetailView(item: item)
         }
         // Analytics stays in the view (VMs don't reach AnalyticsService); track a
         // successful load once per author.
-        .task(id: self.vm.username) {
+        .task(id: self.vm.handle) {
             await self.vm.load()
             if case .ready = self.vm.phase {
                 AnalyticsService.shared.track(.authorProfileViewed)
@@ -86,7 +86,7 @@ struct AtlasAuthorProfileView: View {
                 Text(author.displayName)
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
-                Text("@\(author.username)")
+                Text("@\(author.handle)")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
             }
@@ -160,7 +160,7 @@ struct AtlasAuthorProfileView: View {
 // backend, which is the state worth eyeballing anyway.
 #Preview("作者主頁") {
     NavigationStack {
-        AtlasAuthorProfileView(username: "mika_k")
+        AtlasAuthorProfileView(handle: "mika_k")
     }
     .environment(SettingsStore.shared)
 }

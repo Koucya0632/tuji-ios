@@ -39,6 +39,10 @@ final class CollectionEditVM {
     /// Shared error line for meta-save and member edits; a failed publish takes
     /// precedence (see `errorMessage`).
     private(set) var actionError: String?
+    /// True when the last submit failed only because no public author identity
+    /// has been confirmed — the one failure the view can resolve by showing the
+    /// 公開作者身分 sheet instead of an error line.
+    private(set) var needsAuthorIdentity = false
 
     /// The two fields the view binds and edits directly.
     var title = ""
@@ -178,6 +182,7 @@ final class CollectionEditVM {
         guard !self.isSubmitting, !self.members.isEmpty else { return false }
         self.submitState = .submitting
         self.actionError = nil
+        self.needsAuthorIdentity = false
         do {
             try await self.repo.updateCollection(
                 id: self.collectionId,
@@ -190,6 +195,7 @@ final class CollectionEditVM {
             await self.load()
             return response.moderation?.published == true
         } catch {
+            self.needsAuthorIdentity = PublicAuthorGate.isIdentityRequired(error)
             self.submitState = .failed(error.localizedDescription)
             return false
         }

@@ -21,7 +21,7 @@ struct CollectionEditVMTests {
             targetLanguage: .ja,
             category: nil,
             imageUrl: nil,
-            attributionName: nil,
+            author: nil,
             publishedAt: nil
         )
     }

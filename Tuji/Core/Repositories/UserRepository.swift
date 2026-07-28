@@ -36,6 +36,18 @@ struct LiveUserRepository: UserRepository {
         try await self.api.post(.usersProfile, body: payload)
     }
 
+    func publicAuthorIdentity() async throws -> PublicAuthorIdentity {
+        try await self.api.get(.usersPublicAuthor)
+    }
+
+    func setPublicAuthorIdentity(
+        _ payload: PublicAuthorIdentityPayload
+    ) async throws
+        -> PublicAuthorIdentityResponse
+    {
+        try await self.api.post(.usersPublicAuthor, body: payload)
+    }
+
     func deleteAccount() async throws {
         struct EmptyBody: Encodable {}
         let _: SaveSettingsResponse = try await self.api.post(.usersDeleteAccount, body: EmptyBody())

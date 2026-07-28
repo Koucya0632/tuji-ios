@@ -130,8 +130,8 @@ struct LiveAtlasRepository {
         return response.items
     }
 
-    func author(username: String) async throws -> AtlasAuthorResponse {
-        try await self.api.get(.atlasPublicAuthor(username: username))
+    func author(handle: String) async throws -> AtlasAuthorResponse {
+        try await self.api.get(.atlasPublicAuthor(handle: handle))
     }
 
     /// Saving is the CONSUMPTION path — it does not touch the user's 自製圖鑑

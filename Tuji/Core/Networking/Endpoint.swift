@@ -10,6 +10,7 @@ enum Endpoint {
 
     case usersMe
     case usersProfile
+    case usersPublicAuthor
     case usersSettings
     case usersFavorites
     case usersLearned
@@ -68,7 +69,7 @@ enum Endpoint {
     /// The community wall.
     case atlasPublicFeed(limit: Int)
     /// A community author's profile + their public items.
-    case atlasPublicAuthor(username: String)
+    case atlasPublicAuthor(handle: String)
     /// Save / unsave a community item (auth required; consumption quota).
     case atlasPublicSave(slug: String)
     /// Report a community item (auth required).
@@ -102,6 +103,7 @@ enum Endpoint {
         switch self {
         case .usersMe: "/api/users/me"
         case .usersProfile: "/api/users/profile"
+        case .usersPublicAuthor: "/api/users/public-author"
         case .usersSettings: "/api/users/settings"
         case .usersFavorites: "/api/users/favorites"
         case .usersLearned: "/api/users/learned"
@@ -138,7 +140,7 @@ enum Endpoint {
         case .atlasCollectionCandidates: "/api/atlas/collections/candidates"
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
-        case let .atlasPublicAuthor(username): "/api/atlas/public/authors/\(username)"
+        case let .atlasPublicAuthor(handle): "/api/atlas/public/authors/\(handle)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
         case .atlasPublicCollections: "/api/atlas/public/collections"
@@ -246,7 +248,7 @@ enum Endpoint {
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
-             .usersFeedback, .usersCustomWords,
+             .usersFeedback, .usersCustomWords, .usersPublicAuthor,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement,

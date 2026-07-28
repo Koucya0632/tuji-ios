@@ -19,7 +19,7 @@ struct PublicFeedVMTests {
             title: "C\(id)",
             description: nil,
             targetLanguage: lang,
-            author: AtlasAuthorRef(username: "u", displayName: "U", avatar: "face"),
+            author: AtlasAuthorRef(handle: "u", displayName: "U", avatar: "face"),
             itemCount: 3,
             saveCount: 0,
             coverImageUrl: nil,

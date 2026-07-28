@@ -155,7 +155,7 @@ struct AtlasCollectionCard: View {
     var onOpen: () -> Void = {}
 
     private var pose: MascotPose {
-        MascotPose(rawValue: self.collection.author.avatar) ?? .face
+        MascotPose(rawValue: self.collection.author?.avatar ?? "") ?? .face
     }
 
     var body: some View {
@@ -168,12 +168,16 @@ struct AtlasCollectionCard: View {
                         .foregroundStyle(.tujiInk)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
-                    HStack(spacing: Space.s2) {
-                        MascotAvatar(pose: self.pose, size: 22)
-                        Text(self.collection.author.displayName)
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk2)
-                            .lineLimit(1)
+                    // Nothing at all when the author has no confirmed public
+                    // identity — the card must not fall back to a handle.
+                    if let author = self.collection.author {
+                        HStack(spacing: Space.s2) {
+                            MascotAvatar(pose: self.pose, size: 22)
+                            Text(author.displayName)
+                                .font(.tujiCaption)
+                                .foregroundStyle(.tujiInk2)
+                                .lineLimit(1)
+                        }
                     }
                     HStack(spacing: Space.s3) {
                         Label("\(self.collection.itemCount)", systemImage: "square.stack")
@@ -286,10 +290,10 @@ struct AtlasPublicTile: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture { self.onOpen() }
-                if let name = self.item.attributionName, !name.isEmpty {
+                if let author = self.item.author {
                     if let onOpenAuthor {
                         Button(action: onOpenAuthor) {
-                            Text("by \(name)")
+                            Text("by \(author.displayName)")
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.tujiTeal)
                                 .lineLimit(1)
@@ -297,7 +301,7 @@ struct AtlasPublicTile: View {
                         }
                         .buttonStyle(.plain)
                     } else {
-                        Text("by \(name)")
+                        Text("by \(author.displayName)")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(.tujiInk4)
                             .lineLimit(1)
@@ -337,7 +341,9 @@ struct AtlasPublicDetailView: View {
 
     @State private var vm: AtlasPublicDetailVM
     @State private var showReport = false
-    @State private var selectedAuthorName: String?
+    /// The author route is keyed by handle, never by display name — two people
+    /// may share a name, and only the handle is a valid path component.
+    @State private var selectedAuthorHandle: String?
 
     init(item: AtlasPublicItem, repo: AtlasItemConsuming = LiveAtlasRepository.shared) {
         self.item = item
@@ -384,16 +390,16 @@ struct AtlasPublicDetailView: View {
                 if let category = self.item.category {
                     self.metaRow(icon: "square.grid.2x2", text: category)
                 }
-                if let name = self.item.attributionName {
+                if let author = self.item.author {
                     Button {
-                        self.selectedAuthorName = name
+                        self.selectedAuthorHandle = author.handle
                     } label: {
                         HStack(spacing: Space.s2) {
                             Image(systemName: "person.crop.circle")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.tujiTeal)
                                 .frame(width: 18)
-                            Text("由 \(name) 分享")
+                            Text("由 \(author.displayName) 分享")
                                 .font(.tujiCaption)
                                 .foregroundStyle(.tujiTeal)
                             Image(systemName: "chevron.right")
@@ -460,8 +466,8 @@ struct AtlasPublicDetailView: View {
         .background(.tujiBg)
         .navigationTitle(self.item.lemma)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(item: self.$selectedAuthorName) { username in
-            AtlasAuthorProfileView(username: username)
+        .navigationDestination(item: self.$selectedAuthorHandle) { handle in
+            AtlasAuthorProfileView(handle: handle)
         }
         .task {
             AnalyticsService.shared.track(.atlasPublicItemViewed)
