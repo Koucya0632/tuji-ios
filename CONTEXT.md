@@ -51,3 +51,28 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
   `consume()`s it once. Replaces the former `AtlasFeedRefreshCenter` global singleton — the
   cross-view coupling is now an explicit environment dependency, not a hidden global.
+
+## Study — the SRS write path
+
+- **DurableAnswerWriter** (`DurableAnswerWriting` seam) — the one home for the durable
+  "retry a few times, then park in `StudyAnswerOutbox`" policy. `submitAnswer` is
+  non-throwing and returns a `StudyWriteOutcome` — `.synced(StudyAnswerResponse)` (server
+  accepted; mastery/milestone inside) or `.parked` (retries exhausted, parked for replay).
+  Both study coordinators depend on it: `ReviewFlowCoordinator` folds the `.synced`
+  mastery delta into its summary and bumps `unsyncedCount` on `.parked`; `NewFlowCoordinator`
+  ignores the body and bumps `parkedCount`. Both surface the shared `UnsyncedAnswersNotice`.
+- **LiveStudyRepository is now a pure network adapter** — one raw `submitAnswer(throws) ->
+  response`, no retries, no outbox. Retrying/parking lives in `DurableAnswerWriter`; the
+  outbox replay is the only other caller of the raw method (and must NOT re-park). This
+  broke the former `StudyRepository ↔ StudyAnswerOutbox` cycle before it could block
+  injection.
+
+## Dependency injection
+
+- **Convention & singletons: see [ADR-0001](docs/adr/0001-di-and-singletons.md).** Inject
+  dependencies as an `init`/`@Environment` seam defaulted to `.shared` (migration bridge);
+  construct at the root only when a real second adapter exists. Prefer a narrow read seam
+  over the whole store. Carve a role seam when a consumer's slice diverges; split a fat
+  repository protocol only when a test needs the narrower slice (`BillingRepository` stays
+  whole). Cross-cutting lifecycle glue (`AuthService`→`AtlasStore` reset, `NetworkMonitor`→
+  outbox replay) deliberately stays `.shared`.

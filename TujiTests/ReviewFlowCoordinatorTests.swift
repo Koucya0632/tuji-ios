@@ -3,7 +3,9 @@
 // and the retest contract — reshuffled options, no second SRS write. The
 // advance beats are real (300-800ms) Tasks, so the end-to-end test polls
 // until each beat lands (fixed sleeps raced the beats on slow CI runners);
-// everything else asserts synchronously.
+// everything else asserts synchronously. Writes go through an injected
+// DurableAnswerWriting spy, so the coordinator's reaction to `.synced` (fold
+// mastery) and `.parked` (bump unsyncedCount) is asserted directly.
 
 import Foundation
 import Testing
@@ -39,12 +41,6 @@ struct ReviewFlowCoordinatorTests {
         return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
-    private func makeOutbox() -> StudyAnswerOutbox {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("outbox-\(UUID().uuidString).json")
-        return StudyAnswerOutbox(fileURL: url)
-    }
-
     /// Yields the main actor in short beats until `condition` holds. Returns
     /// on the first poll that passes, so the happy path stays as fast as the
     /// beat — the ceiling only bounds a genuinely broken build. It must be
@@ -63,7 +59,7 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func suggestionCapsEasyForLowMastery() throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, outbox: self.makeOutbox())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         // Fast + wobbly word → good, not easy; fast + established word → easy.
         #expect(c.computeSuggestion(correct: true, elapsed: 1, mastery: 10) == .good)
         #expect(c.computeSuggestion(correct: true, elapsed: 1, mastery: 80) == .easy)
@@ -75,8 +71,8 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func fastCorrectAutoRatesWithoutSheet() async throws {
         let queue = try self.makeQueue()
-        let spy = SpyReviewRepository()
-        let c = ReviewFlowCoordinator(queue: queue, repository: spy, outbox: self.makeOutbox())
+        let writer = SpyAnswerWriter()
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
         c.pick("fork")
         // No sheet, flash capsule instead, suggested applied (mastery 10 → 穩定).
         #expect(c.revealMode == nil)
@@ -84,14 +80,33 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.rated == .good)
         #expect(c.passedCount == 1)
         await c.drainPendingWrites(within: .seconds(2))
-        #expect(spy.answers.map(\.rating) == ["穩定"])
-        #expect(spy.answers.first?.responseMs != nil)
+        #expect(writer.answers.map(\.rating) == ["穩定"])
+        #expect(writer.answers.first?.responseMs != nil)
+        // The .synced response's mastery delta folds into the session summary.
+        #expect(c.masteryByWord["w-fork"]?.after == 20)
+    }
+
+    @Test
+    func parkedWriteBumpsUnsyncedCountAndSkipsMastery() async throws {
+        let queue = try self.makeQueue()
+        let writer = SpyAnswerWriter()
+        writer.outcome = .parked
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        // Fast correct → auto-rate fires exactly one write, which the writer
+        // reports as parked (offline). The coordinator must count it, not merge
+        // a (non-existent) mastery delta.
+        c.pick("fork")
+        #expect(c.rated == .good)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(writer.answers.count == 1)
+        #expect(c.unsyncedCount == 1)
+        #expect(c.masteryByWord["w-fork"] == nil)
     }
 
     @Test
     func wrongAnswerRestrictsRatingsAndRequeues() throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, outbox: self.makeOutbox())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         c.pick("spoon")
         #expect(c.revealMode == .rate)
         #expect(c.suggested == .again)
@@ -106,8 +121,8 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func retestReshufflesOptionsAndNeverWritesAgain() async throws {
         let queue = try self.makeQueue()
-        let spy = SpyReviewRepository()
-        let c = ReviewFlowCoordinator(queue: queue, repository: spy, outbox: self.makeOutbox())
+        let writer = SpyAnswerWriter()
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
 
         // Item 1 (fork): wrong → manual 重來 → requeued.
         c.pick("spoon")
@@ -134,13 +149,13 @@ struct ReviewFlowCoordinatorTests {
         // auto 熟練 — nothing for the retest. Same generous ceiling as
         // waitUntil: the drain returns as soon as both writes land.
         await c.drainPendingWrites(within: .seconds(10))
-        #expect(spy.answers.map(\.rating).sorted() == ["熟練", "重來"].sorted())
+        #expect(writer.answers.map(\.rating).sorted() == ["熟練", "重來"].sorted())
     }
 
     @Test
     func retestWrongShowsContinueOnlySheet() throws {
         let queue = try Array(self.makeQueue().prefix(1))
-        let c = ReviewFlowCoordinator(queue: queue, outbox: self.makeOutbox())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         // Force the retest state directly: mark as already retried.
         c.retriedIds.insert("w-fork")
         c.pick("spoon")
@@ -152,7 +167,7 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func slowCorrectStillAsksForManualRating() throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, outbox: self.makeOutbox())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         // Simulate a slow answer by backdating the item start.
         c.startedAt = Date(timeIntervalSinceNow: -10)
         c.pick("fork")
@@ -162,37 +177,22 @@ struct ReviewFlowCoordinatorTests {
     }
 }
 
-/// Records submitted answers and returns a canned mastery delta.
+/// Records submitted answers and returns a configurable outcome. Defaults to a
+/// `.synced` response with a canned mastery delta; set `outcome = .parked` to
+/// exercise the offline path.
 @MainActor
-private final class SpyReviewRepository: StudyRepository {
+private final class SpyAnswerWriter: DurableAnswerWriting {
     private(set) var answers: [StudyAnswerPayload] = []
-
-    struct NotImplemented: Error {}
-
-    func loadQueue(mode _: StudyMode, limit _: Int, newCount _: Int, categories _: [String]) async throws
-        -> StudyQueueResponse
-    {
-        throw NotImplemented()
-    }
-
-    func loadStats() async throws -> StudyStatsResponse {
-        throw NotImplemented()
-    }
-
-    func submitAnswer(_ payload: StudyAnswerPayload) async throws -> StudyAnswerResponse {
-        self.answers.append(payload)
-        return StudyAnswerResponse(
+    var outcome: StudyWriteOutcome = .synced(
+        StudyAnswerResponse(
             ok: true,
             milestone: nil,
             mastery: MasteryDelta(before: 10, after: 20, delta: 10)
         )
-    }
+    )
 
-    func submitAnswerBestEffort(_ payload: StudyAnswerPayload) async {
+    func submitAnswer(_ payload: StudyAnswerPayload) async -> StudyWriteOutcome {
         self.answers.append(payload)
-    }
-
-    func submitReport(_: StudyReportPayload) async throws {
-        throw NotImplemented()
+        return self.outcome
     }
 }
