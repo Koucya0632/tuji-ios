@@ -2,10 +2,12 @@ import Foundation
 
 /// Concrete atlas API client. Its surface reaches callers through focused role
 /// protocols — `AtlasAuthoring`, `CollectionEditing`, `CollectionsBrowsing`,
-/// `CollectionDetailReading`, `AuthorReading` — each conformed in its own file, so
-/// every consumer (and its test fake) depends only on the slice it uses. A few
-/// consumption methods (save / unsave / report / publicItems / publicFeed) are still
-/// called directly on the concrete `.shared` by not-yet-extracted screens.
+/// `CollectionDetailReading`, `AuthorReading`, `PublicItemsReading`,
+/// `AtlasItemConsuming`, `CollectionManaging` — each conformed in its own file, so
+/// every consumer (and its test fake) depends only on the slice it uses. No screen
+/// binds to this concrete type any more. The only members behind no seam are
+/// `publicFeed` and `deleteCollection`, which have no caller (per ADR-0001's
+/// lazy-narrowing, a seam is carved when a consumer needs it).
 @MainActor
 struct LiveAtlasRepository {
     static let shared = LiveAtlasRepository()

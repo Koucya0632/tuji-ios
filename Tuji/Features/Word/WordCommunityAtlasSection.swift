@@ -14,6 +14,7 @@ import SwiftUI
 
 struct WordCommunityAtlasSection: View {
     let word: Word
+    private let repo: PublicItemsReading
 
     @Environment(SettingsStore.self) private var settings
 
@@ -23,6 +24,11 @@ struct WordCommunityAtlasSection: View {
     /// Slugs saved during this session — the list endpoint is public and
     /// therefore can't carry a per-user saved flag.
     @State private var savedSlugs: Set<String> = []
+
+    init(word: Word, repo: PublicItemsReading = LiveAtlasRepository.shared) {
+        self.word = word
+        self.repo = repo
+    }
 
     private var language: TargetLanguage {
         self.settings.current.learningDirection.targetLanguage
@@ -129,9 +135,10 @@ struct WordCommunityAtlasSection: View {
             return
         }
         do {
-            let items = try await LiveAtlasRepository.shared.publicItems(
+            let items = try await self.repo.publicItems(
                 lemma: lemma,
-                language: self.language
+                language: self.language,
+                limit: 12
             )
             self.items = items
         } catch {

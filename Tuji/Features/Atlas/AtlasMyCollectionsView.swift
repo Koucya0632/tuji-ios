@@ -12,9 +12,7 @@ import SwiftUI
 struct AtlasMyCollectionsView: View {
     @Environment(SettingsStore.self) private var settings
 
-    @State private var collections: [AtlasMyCollection] = []
-    @State private var loading = true
-    @State private var loadError: String?
+    @State private var vm = MyCollectionsVM()
     @State private var showCreate = false
 
     private var newCollectionLanguage: TargetLanguage {
@@ -23,13 +21,13 @@ struct AtlasMyCollectionsView: View {
 
     var body: some View {
         ScrollView {
-            if self.loading {
+            if self.vm.loading {
                 ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
-            } else if self.collections.isEmpty {
+            } else if self.vm.collections.isEmpty {
                 self.emptyState
             } else {
                 LazyVStack(spacing: Space.s3) {
-                    ForEach(self.collections) { collection in
+                    ForEach(self.vm.collections) { collection in
                         NavigationLink(value: NavRoute.atlasCollectionEdit(id: collection.id)) {
                             AtlasMyCollectionRow(collection: collection)
                         }
@@ -52,11 +50,11 @@ struct AtlasMyCollectionsView: View {
                 }
             }
         }
-        .task { await self.load() }
-        .refreshable { await self.load() }
+        .task { await self.vm.load() }
+        .refreshable { await self.vm.load() }
         .sheet(isPresented: self.$showCreate) {
             AtlasCollectionCreateSheet(language: self.newCollectionLanguage) {
-                Task { await self.load() }
+                Task { await self.vm.load() }
             }
         }
     }
@@ -66,30 +64,19 @@ struct AtlasMyCollectionsView: View {
             Image(systemName: "square.stack.3d.up")
                 .font(.system(size: 40))
                 .foregroundStyle(.tujiInk4)
-            Text(self.loadError == nil
+            Text(self.vm.loadError == nil
                 ? tujiLocalized("還沒有合集，點右上角＋建立一個")
                 : tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
                 .multilineTextAlignment(.center)
-            if self.loadError != nil {
-                BBtn(title: "重試", fullWidth: false) { Task { await self.load() } }
+            if self.vm.loadError != nil {
+                BBtn(title: "重試", fullWidth: false) { Task { await self.vm.load() } }
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, Space.s12)
         .padding(.horizontal, Space.s6)
-    }
-
-    private func load() async {
-        self.loading = true
-        self.loadError = nil
-        do {
-            self.collections = try await LiveAtlasRepository.shared.myCollections()
-        } catch {
-            self.loadError = error.localizedDescription
-        }
-        self.loading = false
     }
 }
 
@@ -153,12 +140,23 @@ private struct AtlasMyCollectionRow: View {
 private struct AtlasCollectionCreateSheet: View {
     let language: TargetLanguage
     let onCreated: () -> Void
+    private let repo: CollectionManaging
 
     @Environment(\.dismiss) private var dismiss
     @State private var title = ""
     @State private var description = ""
     @State private var creating = false
     @State private var error: String?
+
+    init(
+        language: TargetLanguage,
+        repo: CollectionManaging = LiveAtlasRepository.shared,
+        onCreated: @escaping () -> Void
+    ) {
+        self.language = language
+        self.repo = repo
+        self.onCreated = onCreated
+    }
 
     var body: some View {
         NavigationStack {
@@ -204,7 +202,7 @@ private struct AtlasCollectionCreateSheet: View {
         self.error = nil
         Task {
             do {
-                _ = try await LiveAtlasRepository.shared.createCollection(
+                _ = try await self.repo.createCollection(
                     title: trimmed,
                     description: self.description.trimmingCharacters(in: .whitespaces).isEmpty
                         ? nil : self.description,
@@ -457,12 +455,25 @@ private struct AtlasCollectionItemPicker: View {
     let language: TargetLanguage
     let existingIds: Set<String>
     let onAdd: (String) async -> Void
+    private let repo: CollectionManaging
 
     @Environment(\.dismiss) private var dismiss
     @State private var candidates: [AtlasPublicItem] = []
     @State private var loading = true
     @State private var loadError: String?
     @State private var added: Set<String> = []
+
+    init(
+        language: TargetLanguage,
+        existingIds: Set<String>,
+        repo: CollectionManaging = LiveAtlasRepository.shared,
+        onAdd: @escaping (String) async -> Void
+    ) {
+        self.language = language
+        self.existingIds = existingIds
+        self.repo = repo
+        self.onAdd = onAdd
+    }
 
     private var available: [AtlasPublicItem] {
         self.candidates.filter { !self.existingIds.contains($0.id) }
@@ -553,7 +564,7 @@ private struct AtlasCollectionItemPicker: View {
         self.loading = true
         self.loadError = nil
         do {
-            self.candidates = try await LiveAtlasRepository.shared.collectionCandidates(lang: self.language)
+            self.candidates = try await self.repo.collectionCandidates(lang: self.language)
         } catch {
             self.loadError = error.localizedDescription
         }
