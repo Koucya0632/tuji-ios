@@ -18,6 +18,7 @@ struct NewDoneView: View {
         ScrollView {
             VStack(spacing: Space.s5) {
                 self.hero
+                UnsyncedAnswersNotice(unsyncedCount: self.coord.parkedCount)
                 StudyWordGrid(items: self.queue, mistakeCounts: self.coord.mistakeCounts)
             }
             .padding(.horizontal, Space.s6)
@@ -83,6 +84,29 @@ struct NewDoneView: View {
                 .foregroundStyle(.tujiInk3)
         }
         .padding(.top, Space.s8)
+    }
+}
+
+/// Shown on both completion screens (new-word and review) when some SRS
+/// ratings couldn't be sent and were parked in the durable outbox (offline /
+/// server down). They replay automatically on the next launch/foreground, so
+/// this is reassurance, not an error. Hidden when `count` is 0.
+struct UnsyncedAnswersNotice: View {
+    let unsyncedCount: Int
+
+    var body: some View {
+        if self.unsyncedCount > 0 {
+            HStack(spacing: Space.s2) {
+                Image(systemName: "icloud.slash")
+                    .foregroundStyle(.tujiCoral)
+                Text("有 \(self.unsyncedCount) 筆評分還沒送出，已排入待同步，連上網路後會自動補送。")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(Space.s3)
+            .background(.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+        }
     }
 }
 

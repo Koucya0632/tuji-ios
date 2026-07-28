@@ -83,10 +83,6 @@ private final class OutboxSpyRepository: StudyRepository {
         return StudyAnswerResponse(ok: true, milestone: nil, mastery: nil)
     }
 
-    func submitAnswerBestEffort(_ payload: StudyAnswerPayload) async {
-        self.answers.append(payload)
-    }
-
     func submitReport(_: StudyReportPayload) async throws {
         throw NotImplemented()
     }

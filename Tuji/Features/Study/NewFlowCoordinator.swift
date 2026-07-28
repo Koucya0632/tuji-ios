@@ -18,7 +18,6 @@
 // as responseMs, so the scheduler learns from behaviour, not just self-report.
 // 選字/拼字 are otherwise practice-only (no extra POST per answer).
 
-import OSLog
 import Observation
 import SwiftUI
 
@@ -90,22 +89,27 @@ final class NewFlowCoordinator {
     /// mastery reload is needed (otherwise that word stays 未學).
     private(set) var pendingWriteRemaining = 0
 
+    /// Held-back recognize writes whose retries all failed — parked in the
+    /// durable outbox by the writer. NewDoneView surfaces the count so an
+    /// offline session doesn't silently look fully saved (mirrors
+    /// ReviewFlowCoordinator.unsyncedCount).
+    private(set) var parkedCount = 0
+
     var hasPendingWrites: Bool {
         self.pendingWriteRemaining > 0
     }
 
-    private let log = Logger(subsystem: "app.tuji.ios", category: "new-flow")
-    private let repository: StudyRepository
+    private let writer: DurableAnswerWriting
 
     /// How many tasks sit between a wrong answer and its retry.
     private static let requeueGap = 3
 
-    init(queue: [StudyQueueItem], repository: StudyRepository = LiveStudyRepository.shared) {
+    init(queue: [StudyQueueItem], writer: DurableAnswerWriting = DurableAnswerWriter()) {
         self.queue = queue
         let tasks = Self.initialSchedule(for: queue)
         self.tasks = tasks
         self.totalStages = tasks.count
-        self.repository = repository
+        self.writer = writer
         self.afterMutation()
     }
 
@@ -452,10 +456,13 @@ final class NewFlowCoordinator {
             activity: "new_recognize"
         )
         // Tracked (not detached) so NewDoneView can drain it before reloading
-        // mastery — see pendingWrites / drainPendingWrites.
+        // mastery — see pendingWrites / drainPendingWrites. A write the writer
+        // can't land is parked; count it so the done screen can say so.
         self.pendingWriteRemaining += 1
         self.pendingWrites.append(Task {
-            await self.repository.submitAnswerBestEffort(payload)
+            if case .parked = await self.writer.submitAnswer(payload) {
+                self.parkedCount += 1
+            }
             self.pendingWriteRemaining -= 1
         })
     }

@@ -183,8 +183,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func singleUnitSubjectSkipsSpellStageAndStillCommits() async throws {
         let queue = try [self.makeKanaEdgeQueue()[1]]
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         // A 1-tile board is a free answer, so め gets no spell task…
         #expect(c.tasks.map(\.kind) == [.recognize, .identify])
         c.resolveRecognize(rating: .hard)
@@ -241,8 +241,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func goodSelfRatingSkipsIdentifyAndKeepsProgressMonotone() async throws {
         let queue = try Array(self.makeQueue().prefix(2))
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         // Schedule r0 r1 i0 i1 s0 s1 → 已認識 on w-apple drops i0.
         var lastProgress = c.progress
         func expectMonotone() {
@@ -278,8 +278,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func fastPathWrongTilesRequeuesWithoutStalling() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .good)
         // Identify skipped → straight to production.
         #expect(c.current?.kind == .spellTiles)
@@ -298,8 +298,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func singleUnitWordRatedGoodCommitsAfterRecognize() async throws {
         let queue = try [self.makeKanaEdgeQueue()[1]]
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         // め has no spell stage; 已認識 also drops 選字 → one-task word.
         c.resolveRecognize(rating: .good)
         #expect(c.finished)
@@ -365,8 +365,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func cleanRunPostsSelfRating() async throws {
         let queue = try self.makeMultiWordQueue()
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .hard)
         c.resolveIdentify(correct: true)
         c.resolveTiles(correct: true)
@@ -380,8 +380,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func oneMistakeDowngradesOneLevel() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         // .good fast-paths to tiles; the one tile miss drops 穩定 → 困難.
         c.resolveRecognize(rating: .good)
         c.resolveTiles(correct: false)
@@ -395,8 +395,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func identifyMistakeDowngradesOnFullLadder() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .hard)
         c.resolveIdentify(correct: false)
         c.advanceFromPeek()
@@ -410,8 +410,8 @@ struct NewFlowCoordinatorTests {
     @Test
     func twoMistakesPostAgain() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
-        let spy = SpyStudyRepository()
-        let c = NewFlowCoordinator(queue: queue, repository: spy)
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .good)
         c.resolveTiles(correct: false)
         c.advanceFromPeek()
@@ -430,36 +430,37 @@ struct NewFlowCoordinatorTests {
         #expect(SRSRating.hard.downgraded == .again)
         #expect(SRSRating.again.downgraded == .again)
     }
+
+    @Test
+    func parkedCommitBumpsParkedCount() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let writer = SpyAnswerWriter()
+        writer.outcome = .parked
+        let c = NewFlowCoordinator(queue: queue, writer: writer)
+        // .good fast-paths past 選字 to tiles; clearing tiles commits the one
+        // held-back write, which the writer reports as parked (offline).
+        c.resolveRecognize(rating: .good)
+        c.resolveTiles(correct: true)
+        #expect(c.finished)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(writer.answers.count == 1)
+        #expect(c.parkedCount == 1)
+    }
 }
 
-/// Records /api/study/answer payloads; other repository calls are unused by
-/// the coordinator.
+/// Records the held-back recognize writes the coordinator commits, and returns
+/// a configurable outcome. New-word flow ignores the response body, so the
+/// default `.synced` payload is irrelevant; set `outcome = .parked` to exercise
+/// the offline path.
 @MainActor
-private final class SpyStudyRepository: StudyRepository {
+private final class SpyAnswerWriter: DurableAnswerWriting {
     private(set) var answers: [StudyAnswerPayload] = []
+    var outcome: StudyWriteOutcome = .synced(
+        StudyAnswerResponse(ok: true, milestone: nil, mastery: nil)
+    )
 
-    struct NotImplemented: Error {}
-
-    func loadQueue(mode _: StudyMode, limit _: Int, newCount _: Int, categories _: [String]) async throws
-        -> StudyQueueResponse
-    {
-        throw NotImplemented()
-    }
-
-    func loadStats() async throws -> StudyStatsResponse {
-        throw NotImplemented()
-    }
-
-    func submitAnswer(_ payload: StudyAnswerPayload) async throws -> StudyAnswerResponse {
+    func submitAnswer(_ payload: StudyAnswerPayload) async -> StudyWriteOutcome {
         self.answers.append(payload)
-        throw NotImplemented()
-    }
-
-    func submitAnswerBestEffort(_ payload: StudyAnswerPayload) async {
-        self.answers.append(payload)
-    }
-
-    func submitReport(_: StudyReportPayload) async throws {
-        throw NotImplemented()
+        return self.outcome
     }
 }

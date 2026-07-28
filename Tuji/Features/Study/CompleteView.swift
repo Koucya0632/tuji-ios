@@ -116,20 +116,8 @@ struct CompleteView: View {
         .overlay(Capsule().stroke(.tujiAmber.opacity(0.5), lineWidth: 1))
     }
 
-    @ViewBuilder
     private var unsyncedNotice: some View {
-        if self.unsyncedCount > 0 {
-            HStack(spacing: Space.s2) {
-                Image(systemName: "icloud.slash")
-                    .foregroundStyle(.tujiCoral)
-                Text("有 \(self.unsyncedCount) 筆評分還沒送出，已排入待同步，連上網路後會自動補送。")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(Space.s3)
-            .background(.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
-        }
+        UnsyncedAnswersNotice(unsyncedCount: self.unsyncedCount)
     }
 
     @ViewBuilder

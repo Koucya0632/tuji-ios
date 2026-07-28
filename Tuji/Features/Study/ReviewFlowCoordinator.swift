@@ -13,11 +13,11 @@
 //   a single 下一題.
 //
 // Rating writes are optimistic: the UI advances immediately while persist()
-// retries in the background; answers that exhaust all retries are parked in
-// the durable StudyAnswerOutbox (replayed on next launch/foreground) and
-// bump `unsyncedCount` for CompleteView's notice.
+// hands the answer to the DurableAnswerWriter in the background. The writer
+// retries and, on exhaustion, parks the answer in the durable StudyAnswerOutbox
+// (replayed on next launch/foreground) and reports `.parked`, which bumps
+// `unsyncedCount` for CompleteView's notice.
 
-import OSLog
 import Observation
 import SwiftUI
 
@@ -88,19 +88,15 @@ final class ReviewFlowCoordinator {
     /// session doesn't silently look fully synced.
     var unsyncedCount: Int = 0
 
-    private let log = Logger(subsystem: "app.tuji.ios", category: "review-flow")
-    private let repository: StudyRepository
-    private let outbox: StudyAnswerOutbox
+    private let writer: DurableAnswerWriting
 
     init(
         queue: [StudyQueueItem],
-        repository: StudyRepository = LiveStudyRepository.shared,
-        outbox: StudyAnswerOutbox = .shared
+        writer: DurableAnswerWriting = DurableAnswerWriter()
     ) {
         self.queue = queue
         self.originalCount = queue.count
-        self.repository = repository
-        self.outbox = outbox
+        self.writer = writer
     }
 
     var current: StudyQueueItem? {
@@ -249,33 +245,22 @@ final class ReviewFlowCoordinator {
         }
     }
 
-    /// Writes one SRS answer with a few retries and folds the returned
-    /// mastery/milestone back into session state. Runs detached from the UI.
+    /// Hands one SRS answer to the durable writer and folds the returned
+    /// mastery/milestone back into session state. Runs detached from the UI;
+    /// the writer owns the retry+park policy, so a write that can't reach the
+    /// server surfaces as `.parked` and only bumps the unsynced count.
     private func persist(_ payload: StudyAnswerPayload, wordId: String) async {
-        for attempt in 0..<3 {
-            if Task.isCancelled { return }
-            do {
-                let resp = try await self.repository.submitAnswer(payload)
-                if let m = resp.mastery { self.mergeMastery(m, wordId: wordId) }
-                if let ms = resp.milestone {
-                    // Server only emits the milestone on the answer that crosses
-                    // the threshold, so always overwrite when present.
-                    self.milestone = ms
-                }
-                return
-            } catch {
-                self.log.error(
-                    "rate persist failed (attempt \(attempt + 1)): \(error.localizedDescription, privacy: .public)"
-                )
-                if attempt < 2 {
-                    try? await Task.sleep(for: .milliseconds(400 * (attempt + 1)))
-                }
+        switch await self.writer.submitAnswer(payload) {
+        case let .synced(resp):
+            if let m = resp.mastery { self.mergeMastery(m, wordId: wordId) }
+            if let ms = resp.milestone {
+                // Server only emits the milestone on the answer that crosses the
+                // threshold, so always overwrite when present.
+                self.milestone = ms
             }
+        case .parked:
+            self.unsyncedCount += 1
         }
-        // All retries exhausted — park it in the durable outbox (replayed on
-        // next launch/foreground) and flag the session summary.
-        self.outbox.add(payload)
-        self.unsyncedCount += 1
     }
 
     /// Keep the first `before` but the latest `after` when a word is rated
