@@ -104,13 +104,13 @@ struct ReviewFlowView: View {
         }
     }
 
-    /// 再來一輪 from CompleteView: fetch a fresh due queue and restart the
-    /// flow in place (the coordinator swap resets `finished`, so the surface
-    /// flips back to the question view without re-navigating).
+    /// 再來一輪 from CompleteView: fetch a fresh due queue (via the coordinator's
+    /// injected queue provider) and restart the flow with a clean coordinator —
+    /// the swap resets `finished`, so the surface flips back to the question view
+    /// without re-navigating.
     private func startAnotherRound() async {
-        guard let queue = try? await StudyQueueStore.shared.fetch(mode: .review),
-              !queue.isEmpty
-        else { return }
+        let queue = await self.coord.fetchAnotherRound()
+        guard !queue.isEmpty else { return }
         self.coord = ReviewFlowCoordinator(queue: queue)
     }
 
@@ -313,7 +313,17 @@ private struct ReviewQuestionView: View {
         VStack(spacing: Space.s2) {
             let choices = self.computedChoices
             ForEach(Array(choices.enumerated()), id: \.element) { idx, choice in
-                self.optionRow(label: choice, letter: Self.abc[idx])
+                StudyOptionRow(
+                    letter: Self.abc[idx],
+                    label: choice,
+                    style: StudyOptionStyle.forOption(
+                        label: choice,
+                        answer: self.item.word.word,
+                        picked: self.coord.picked,
+                        revealed: self.coord.phase == .review
+                    ),
+                    disabled: self.coord.phase == .review
+                ) { self.coord.pick(choice) }
             }
         }
     }
@@ -327,87 +337,6 @@ private struct ReviewQuestionView: View {
             for: self.item,
             pool: self.words.words,
             variant: self.coord.choicesVariant(for: self.item)
-        )
-    }
-
-    private func optionRow(label: String, letter: String) -> some View {
-        let style = self.optionStyle(for: label)
-        return Button {
-            self.coord.pick(label)
-        } label: {
-            HStack(spacing: Space.s3) {
-                Text(letter)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(style.letterFg)
-                    .frame(width: 24, height: 24)
-                    .background(style.letterBg, in: .circle)
-                Text(label)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(style.fg)
-                Spacer()
-                if let icon = style.icon {
-                    Image(systemName: icon).foregroundStyle(style.iconColor)
-                }
-            }
-            .padding(.horizontal, Space.s4)
-            .padding(.vertical, Space.s3)
-            .background(style.bg, in: .rect(cornerRadius: Radius.lg))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(style.border, lineWidth: 1.5)
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(self.coord.phase == .review)
-        .opacity(style.opacity)
-    }
-
-    private func optionStyle(for label: String) -> OptionStyle {
-        guard self.coord.phase == .review, let picked = coord.picked else {
-            return OptionStyle.idle
-        }
-        let isAnswer = label == self.item.word.word
-        let isPicked = label == picked
-        if isPicked, isAnswer { return .right }
-        if isPicked, !isAnswer { return .wrong }
-        if isAnswer { return .answer }
-        return .dim
-    }
-
-    private struct OptionStyle {
-        let bg: Color
-        let border: Color
-        let fg: Color
-        let letterFg: Color
-        let letterBg: Color
-        let icon: String?
-        let iconColor: Color
-        let opacity: Double
-
-        static let idle = OptionStyle(
-            bg: .tujiCard, border: .tujiInk4.opacity(0.25),
-            fg: .tujiInk, letterFg: .tujiInk3, letterBg: .tujiTealSoft,
-            icon: nil, iconColor: .clear, opacity: 1
-        )
-        static let right = OptionStyle(
-            bg: .tujiGreen.opacity(0.12), border: .tujiGreen,
-            fg: .tujiInk, letterFg: .white, letterBg: .tujiGreen,
-            icon: "checkmark.circle.fill", iconColor: .tujiGreen, opacity: 1
-        )
-        static let wrong = OptionStyle(
-            bg: .tujiCoral.opacity(0.12), border: .tujiCoral,
-            fg: .tujiInk, letterFg: .white, letterBg: .tujiCoral,
-            icon: "xmark.circle.fill", iconColor: .tujiCoral, opacity: 1
-        )
-        static let answer = OptionStyle(
-            bg: .tujiGreen.opacity(0.08), border: .tujiGreen.opacity(0.7),
-            fg: .tujiInk, letterFg: .white, letterBg: .tujiGreen,
-            icon: "arrow.left.circle.fill", iconColor: .tujiGreen, opacity: 1
-        )
-        static let dim = OptionStyle(
-            bg: .tujiCard, border: .tujiInk4.opacity(0.15),
-            fg: .tujiInk3, letterFg: .tujiInk4, letterBg: .tujiInk4.opacity(0.15),
-            icon: nil, iconColor: .clear, opacity: 0.5
         )
     }
 }

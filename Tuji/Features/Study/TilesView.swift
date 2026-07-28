@@ -22,11 +22,6 @@ struct TilesView: View {
     @Environment(WordsStore.self) private var words
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Indices into `units`, in tap order. Index-based so duplicate units
-    /// stay distinguishable. Local state — the flow view keys this whole view
-    /// by (task, attempt), so a requeued task starts clean.
-    @State private var picked: [Int] = []
-
     private var units: [String] {
         self.coord.tileUnits(for: self.item)
     }
@@ -40,8 +35,10 @@ struct TilesView: View {
         self.coord.spellSubject(for: self.item)
     }
 
-    private var assembled: String {
-        self.picked.map { self.units[$0] }.joined()
+    /// Tiles tapped into slots, in tap order — owned by the coordinator so the
+    /// assemble-and-compare is a testable decision, not view state.
+    private var picked: [Int] {
+        self.coord.tilePicked
     }
 
     private var boardFull: Bool {
@@ -49,7 +46,7 @@ struct TilesView: View {
     }
 
     private var isCorrect: Bool {
-        self.assembled == self.board.target
+        self.coord.tilesMatch(self.picked, for: self.item)
     }
 
     /// Result colours apply once the board is full (the coordinator locks at
@@ -68,10 +65,6 @@ struct TilesView: View {
         }
         .padding(.horizontal, Space.s6)
         .padding(.bottom, Space.s5)
-        .onChange(of: self.boardFull) { _, full in
-            guard full else { return }
-            self.coord.tilesAnswer(correct: self.isCorrect)
-        }
     }
 
     @ViewBuilder
@@ -187,8 +180,7 @@ struct TilesView: View {
     private func slotBox(at slot: Int) -> some View {
         let unit: String? = slot < self.picked.count ? self.units[self.picked[slot]] : nil
         Button {
-            guard !self.coord.tiLocked, slot < self.picked.count else { return }
-            self.picked.remove(at: slot)
+            self.coord.unpickTile(atSlot: slot)
         } label: {
             Text(unit ?? " ")
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
@@ -252,7 +244,7 @@ struct TilesView: View {
         Button {
             guard !self.coord.tiLocked, !used else { return }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            self.picked.append(idx)
+            self.coord.pickTile(idx, for: self.item)
         } label: {
             Text(self.units[idx])
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))

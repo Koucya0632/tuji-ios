@@ -89,14 +89,25 @@ final class ReviewFlowCoordinator {
     var unsyncedCount: Int = 0
 
     private let writer: DurableAnswerWriting
+    private let queueProvider: StudyQueueProviding
 
     init(
         queue: [StudyQueueItem],
-        writer: DurableAnswerWriting = DurableAnswerWriter()
+        writer: DurableAnswerWriting = DurableAnswerWriter(),
+        queueProvider: StudyQueueProviding = StudyQueueStore.shared
     ) {
         self.queue = queue
         self.originalCount = queue.count
         self.writer = writer
+        self.queueProvider = queueProvider
+    }
+
+    /// Fetch the next round's due queue for 再來一輪; empty ⇒ nothing left. The
+    /// view uses this to spin up a fresh coordinator (a clean full reset), so the
+    /// fetch is injected and testable instead of the view reaching
+    /// `StudyQueueStore.shared`.
+    func fetchAnotherRound() async -> [StudyQueueItem] {
+        await (try? self.queueProvider.fetch(mode: .review)) ?? []
     }
 
     var current: StudyQueueItem? {

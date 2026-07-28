@@ -431,6 +431,30 @@ struct NewFlowCoordinatorTests {
         #expect(SRSRating.again.downgraded == .again)
     }
 
+    // MARK: - Tile spell-check (the production step's correctness decision)
+
+    @Test
+    func tilesMatchScoresTheSpelling() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        let apple = queue[0]
+        let units = c.tileUnits(for: apple, attempt: 0)
+        let board = NewFlowCoordinator.tileBoard(for: apple)
+
+        // The pick order that spells the target: consume each ordered unit from
+        // the scramble by first-available index (handles the duplicate "p").
+        var pool = Array(units.enumerated())
+        var correct: [Int] = []
+        for unit in board.orderedUnits {
+            let pos = try #require(pool.firstIndex { $0.element == unit })
+            correct.append(pool[pos].offset)
+            pool.remove(at: pos)
+        }
+        #expect(c.tilesMatch(correct, for: apple))
+        // The scramble's own order is, by construction, never the answer.
+        #expect(!c.tilesMatch(Array(units.indices), for: apple))
+    }
+
     @Test
     func parkedCommitBumpsParkedCount() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
