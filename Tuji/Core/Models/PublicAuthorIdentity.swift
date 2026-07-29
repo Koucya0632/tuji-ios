@@ -17,10 +17,22 @@ struct PublicAuthorIdentity: Decodable, Hashable, Identifiable {
     /// Empty when the user never set a display name.
     let displayName: String
     let avatar: String
+    /// False while the rename cooldown is running. A rename rewrites the byline
+    /// on everything the author ever published, so it is rate-limited once they
+    /// have public content.
+    let canChange: Bool?
+    /// ISO timestamp when the next change becomes possible; nil when it already is.
+    let nextChangeAt: String?
 
     /// Handles are unique, so they identify the sheet's presentation state.
     var id: String {
         self.handle
+    }
+
+    /// Editable unless the server explicitly says otherwise, so a payload
+    /// without the field never locks someone out of their own form.
+    var isEditable: Bool {
+        self.canChange ?? true
     }
 }
 

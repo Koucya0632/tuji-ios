@@ -28,6 +28,7 @@ struct PublicAuthorIdentitySheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s5) {
                     self.intro
+                    if !self.vm.isEditable { self.cooldownNotice }
                     self.displayNameField
                     self.handleField
                     if let message = self.vm.errorMessage {
@@ -86,6 +87,33 @@ struct PublicAuthorIdentitySheet: View {
         .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
     }
 
+    /// Shown instead of letting someone retype their name and only then be
+    /// refused by the server. A rename rewrites the byline on everything they
+    /// ever published, which is why it is limited at all.
+    private var cooldownNotice: some View {
+        HStack(alignment: .top, spacing: Space.s3) {
+            Image(systemName: "clock.badge.exclamationmark")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.tujiCoral)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("公開身分暫時無法修改")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.tujiInk)
+                if let date = self.vm.nextChangeText {
+                    Text("\(date) 之後可以再修改一次。")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                }
+                Text("改名會一併改掉你已公開內容上的署名，所以有間隔限制。")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+            }
+        }
+        .padding(Space.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiCoral.opacity(0.08), in: .rect(cornerRadius: Radius.md))
+    }
+
     private var displayNameField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("顯示名稱")
@@ -95,6 +123,7 @@ struct PublicAuthorIdentitySheet: View {
             TextField("大家會怎麼稱呼你", text: self.$vm.displayName)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                .disabled(!self.vm.isEditable)
                 .font(.tujiBody)
                 .padding(.horizontal, Space.s4)
                 .padding(.vertical, Space.s3)
@@ -122,6 +151,7 @@ struct PublicAuthorIdentitySheet: View {
                 TextField("handle", text: self.$vm.handle)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .disabled(!self.vm.isEditable)
                     .font(.tujiMono)
             }
             .padding(.horizontal, Space.s4)
@@ -144,7 +174,9 @@ struct PublicAuthorIdentitySheet: View {
             confirmed: false,
             handle: "tuji-8f3a2c1d9b4e",
             displayName: "",
-            avatar: "face"
+            avatar: "face",
+            canChange: true,
+            nextChangeAt: nil
         )
     )
 }

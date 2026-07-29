@@ -16,7 +16,9 @@ struct PublicAuthorIdentityVMTests {
     private func identity(
         confirmed: Bool = false,
         handle: String = "tuji-8f3a2c1d9b4e",
-        displayName: String = ""
+        displayName: String = "",
+        canChange: Bool? = nil,
+        nextChangeAt: String? = nil
     )
         -> PublicAuthorIdentity
     {
@@ -24,7 +26,9 @@ struct PublicAuthorIdentityVMTests {
             confirmed: confirmed,
             handle: handle,
             displayName: displayName,
-            avatar: "face"
+            avatar: "face",
+            canChange: canChange,
+            nextChangeAt: nextChangeAt
         )
     }
 
@@ -115,6 +119,50 @@ struct PublicAuthorIdentityVMTests {
         #expect(await model.save() == false)
         #expect(repo.saved == nil)
     }
+
+    // MARK: - Rename cooldown
+
+    // A rename rewrites the byline on everything the author already published,
+    // so it is limited once they have public content.
+
+    @Test
+    func aRunningCooldownLocksTheFormBeforeAnythingIsTyped() async {
+        let repo = FakePublicAuthorIdentityEditing()
+        let model = self.vm(
+            self.identity(
+                confirmed: true,
+                displayName: "Mika",
+                canChange: false,
+                nextChangeAt: "2026-08-28T00:00:00.000Z"
+            ),
+            repo: repo
+        )
+        #expect(model.isEditable == false)
+        #expect(model.canSubmit == false)
+        #expect(model.nextChangeText != nil)
+
+        // And the form cannot be submitted around the lock.
+        model.displayName = "Ad Ad Ad"
+        #expect(model.canSubmit == false)
+        #expect(await model.save() == false)
+        #expect(repo.saved == nil)
+    }
+
+    /// A payload without the field must not lock someone out of their own form.
+    @Test
+    func aMissingCooldownFieldMeansEditable() {
+        let model = self.vm(self.identity(canChange: nil))
+        #expect(model.isEditable)
+        #expect(model.nextChangeText == nil)
+    }
+
+    @Test
+    func anExpiredCooldownLeavesTheFormOpen() {
+        let model = self.vm(self.identity(confirmed: true, displayName: "Mika", canChange: true))
+        #expect(model.isEditable)
+        model.handle = "mika_k"
+        #expect(model.canSubmit)
+    }
 }
 
 // MARK: - Gate
@@ -128,7 +176,9 @@ struct PublicAuthorGateTests {
             confirmed: true,
             handle: "mika_k",
             displayName: "Mika",
-            avatar: "face"
+            avatar: "face",
+            canChange: true,
+            nextChangeAt: nil
         )
         #expect(await PublicAuthorGate(repo: repo).identityNeedingConfirmation() == nil)
     }
@@ -167,7 +217,9 @@ final class FakePublicAuthorIdentityEditing: PublicAuthorIdentityEditing {
         confirmed: false,
         handle: "tuji-000000000000",
         displayName: "",
-        avatar: "face"
+        avatar: "face",
+        canChange: true,
+        nextChangeAt: nil
     )
     var loadError: Error?
     var saveError: Error?
