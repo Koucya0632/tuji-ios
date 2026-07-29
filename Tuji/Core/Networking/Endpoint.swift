@@ -73,8 +73,11 @@ enum Endpoint {
     case atlasPublicByLemma(lemma: String, lang: String, limit: Int)
     /// The community wall.
     case atlasPublicFeed(limit: Int)
-    /// A community author's profile + their public items.
-    case atlasPublicAuthor(handle: String)
+    /// A community author's profile + their public items. `cacheBust` (a nonce
+    /// the self-view always sends) makes the request a distinct edge-cache key,
+    /// so an author who just edited their public identity sees the new one
+    /// instead of Vercel's 30-minute copy. Visitors send nil and keep the cache.
+    case atlasPublicAuthor(handle: String, cacheBust: String?)
     /// One public item by slug — the 圖鑑 page's 社群圖鑑 cards open through this.
     case atlasPublicItem(slug: String)
     /// Save / unsave a community item (auth required; consumption quota).
@@ -150,7 +153,7 @@ enum Endpoint {
         case .atlasCollectionCandidates: "/api/atlas/collections/candidates"
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
-        case let .atlasPublicAuthor(handle): "/api/atlas/public/authors/\(handle)"
+        case let .atlasPublicAuthor(handle, _): "/api/atlas/public/authors/\(handle)"
         case let .atlasPublicItem(slug): "/api/atlas/public/\(slug)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
@@ -233,6 +236,8 @@ enum Endpoint {
                 URLQueryItem(name: "lang", value: lang),
                 URLQueryItem(name: "limit", value: String(limit))
             ] + (cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? [])
+        case let .atlasPublicAuthor(_, cacheBust):
+            cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? []
         case let .atlasCollectionCandidates(lang):
             [URLQueryItem(name: "lang", value: lang)]
         case let .words(lang, learning),

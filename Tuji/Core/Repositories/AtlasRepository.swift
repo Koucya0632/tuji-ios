@@ -145,8 +145,14 @@ struct LiveAtlasRepository {
         return response.item
     }
 
-    func author(handle: String) async throws -> AtlasAuthorResponse {
-        try await self.api.get(.atlasPublicAuthor(handle: handle))
+    func author(handle: String, forceReload: Bool = false) async throws -> AtlasAuthorResponse {
+        // Same nonce trick as `publicCollections`: bypassing the on-device cache
+        // alone can't beat the CDN copy, so a fresh read needs a distinct URL.
+        let cacheBust = forceReload ? String(Int(Date().timeIntervalSince1970)) : nil
+        return try await self.api.get(
+            .atlasPublicAuthor(handle: handle, cacheBust: cacheBust),
+            cachePolicy: forceReload ? .reloadIgnoringLocalCacheData : nil
+        )
     }
 
     /// Saving is the CONSUMPTION path — it does not touch the user's 自製圖鑑

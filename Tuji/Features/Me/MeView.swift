@@ -39,6 +39,17 @@ final class MeVM {
     }
 }
 
+/// Target of the 我的公開主頁 push. A distinct type rather than another
+/// `String?`, so it can't be confused with `peekId`'s destination — two
+/// `navigationDestination(item:)` on one view must not share an item type.
+private struct SelfProfileTarget: Identifiable, Hashable {
+    let handle: String
+
+    var id: String {
+        self.handle
+    }
+}
+
 struct MeView: View {
     let user: SessionUser?
     @Environment(AuthService.self) private var auth
@@ -53,6 +64,13 @@ struct MeView: View {
     @State private var showPaywall = false
     @State private var showFeedback = false
     @State private var showSignOutConfirm = false
+    @State private var selfProfile: SelfProfileTarget?
+    @State private var editingIdentity: PublicAuthorIdentity?
+
+    /// Narrow seam — Me only reads the public identity to decide where the
+    /// 我的公開主頁 row goes; the sheet owns the write. Handed to the row, which
+    /// owns the lookup; Me owns only the two destinations it resolves to.
+    private let identities: PublicAuthorIdentityEditing = LiveUserRepository.shared
 
     /// Prefer the server-authoritative Atlas entitlement (kept warm by the
     /// `.task` sync below) over the device-local StoreKit flag: `store.isPro`
@@ -87,7 +105,22 @@ struct MeView: View {
                 self.profileHeader
                 self.statsRow
                 self.weakSection
-                self.listGroup
+                self.proCard
+                // Everything under 創作 is account-scoped (uploads, collections
+                // and the public page all live on the server), so guests get the
+                // whole group hidden rather than a row that can only fail.
+                if !self.isGuest {
+                    MeCreationGroup(
+                        identities: self.identities,
+                        onOpenPublicProfile: { self.selfProfile = SelfProfileTarget(handle: $0) },
+                        onNeedsConsent: { self.editingIdentity = $0 }
+                    )
+                }
+                MeAccountGroup(
+                    isGuest: self.isGuest,
+                    shareURL: Self.shareURL,
+                    onFeedback: { self.showFeedback = true }
+                )
                 #if DEBUG
                 // Dev-only Bearer smoke test. Compiled out of release /
                 // App Store builds so end users never see it.
@@ -124,11 +157,21 @@ struct MeView: View {
         .navigationDestination(item: self.$peekId) { id in
             WordDetailView(id: id)
         }
+        .navigationDestination(item: self.$selfProfile) { target in
+            AtlasAuthorProfileView(handle: target.handle, isSelf: true)
+        }
         .sheet(isPresented: self.$showPaywall) {
             PaywallView()
         }
         .sheet(isPresented: self.$showFeedback) {
             FeedbackSheet()
+        }
+        // Reached only from the row below, and only when there is no confirmed
+        // identity yet. Not auto-pushing the profile afterwards is deliberate: a
+        // just-confirmed author has nothing approved, so it would land them on an
+        // empty page as the reward for consenting.
+        .sheet(item: self.$editingIdentity) { identity in
+            PublicAuthorIdentitySheet(identity: identity)
         }
         .tujiPrompt(
             isPresented: self.$showSignOutConfirm,
@@ -305,59 +348,14 @@ struct MeView: View {
 
     // MARK: - List group
 
-    private var listGroup: some View {
-        VStack(spacing: 0) {
-            Button {
-                self.showPaywall = true
-            } label: {
-                self.proEntry
-            }
-            .buttonStyle(.plain)
-            Divider().background(.tujiInk4.opacity(0.15))
-            NavigationLink(value: NavRoute.favorites) {
-                self.listRow(icon: "heart.fill", title: "我的收藏", tint: .tujiCoral)
-            }
-            .buttonStyle(.plain)
-            Divider().background(.tujiInk4.opacity(0.15))
-            // 自制圖鑑 is account-scoped (uploads + cards live on the server),
-            // so it's hidden for guests — they'd hit an empty, unusable page.
-            if !self.isGuest {
-                NavigationLink(value: NavRoute.atlasManage) {
-                    self.listRow(icon: "camera.fill", title: "自制圖鑑", tint: .tujiTeal)
-                }
-                .buttonStyle(.plain)
-                Divider().background(.tujiInk4.opacity(0.15))
-            }
-            NavigationLink(value: NavRoute.settings) {
-                self.listRow(icon: "gearshape.fill", title: "設定", tint: .tujiInk3)
-            }
-            .buttonStyle(.plain)
-            // 意見收集 is account-scoped; guests have no Bearer token so the
-            // submit could only 401 — hidden, matching 自制圖鑑 above.
-            if !self.isGuest {
-                Divider().background(.tujiInk4.opacity(0.15))
-                Button {
-                    self.showFeedback = true
-                } label: {
-                    self.listRow(icon: "bubble.left.and.bubble.right.fill", title: "意見收集", tint: .tujiAmber)
-                }
-                .buttonStyle(.plain)
-            }
-            Divider().background(.tujiInk4.opacity(0.15))
-            ShareLink(item: Self.shareURL) {
-                self.listRow(icon: "square.and.arrow.up", title: "分享 App", tint: .tujiTeal)
-            }
-            // ShareLink has no tap callback — this records "share sheet
-            // opened", not a completed share.
-            .simultaneousGesture(TapGesture().onEnded {
-                AnalyticsService.shared.track(.shareApp)
-            })
+    private var proCard: some View {
+        Button {
+            self.showPaywall = true
+        } label: {
+            self.proEntry
         }
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
-        )
+        .buttonStyle(.plain)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
     }
 
     private var proEntry: some View {
@@ -404,42 +402,6 @@ struct MeView: View {
                 endPoint: .bottomTrailing
             )
         )
-        .contentShape(Rectangle())
-    }
-
-    private func listRow(
-        icon: String,
-        title: LocalizedStringKey,
-        tint: Color,
-        subtitle: LocalizedStringKey? = nil
-    )
-        -> some View
-    {
-        HStack(spacing: Space.s3) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 24)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk4)
-                }
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s4)
-        .frame(minHeight: 52)
-        // Make the whole row (incl. the Spacer gap) tappable, not just the
-        // text/icon glyphs.
         .contentShape(Rectangle())
     }
 

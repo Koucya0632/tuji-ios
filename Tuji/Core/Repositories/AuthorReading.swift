@@ -5,7 +5,11 @@ import Foundation
 /// seams). `LiveAtlasRepository` already implements it, so it conforms for free.
 @MainActor
 protocol AuthorReading {
-    func author(handle: String) async throws -> AtlasAuthorResponse
+    /// `forceReload` bypasses both caches — the on-device `URLCache` and, via a
+    /// nonce query param, Vercel's 30-minute edge copy. The self-view always
+    /// sets it, so an author who just edited their public identity sees the
+    /// change rather than the version the CDN is still handing out.
+    func author(handle: String, forceReload: Bool) async throws -> AtlasAuthorResponse
 }
 
 extension LiveAtlasRepository: AuthorReading {}
