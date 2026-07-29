@@ -32,6 +32,13 @@ final class PublicAuthorIdentityVM {
     /// step, not an edit, and says so.
     let isFirstTime: Bool
 
+    /// False while the rename cooldown is running. The fields are disabled and
+    /// the sheet says when they unlock: being refused after retyping your own
+    /// name is a worse experience than being told up front.
+    let isEditable: Bool
+    /// Localized unlock date, or nil when nothing is locked.
+    let nextChangeText: String?
+
     private let repo: PublicAuthorIdentityEditing
 
     init(
@@ -42,7 +49,17 @@ final class PublicAuthorIdentityVM {
         self.displayName = identity.displayName
         self.avatar = identity.avatar
         self.isFirstTime = !identity.confirmed
+        self.isEditable = identity.isEditable
+        self.nextChangeText = Self.unlockText(identity.nextChangeAt)
         self.repo = repo
+    }
+
+    /// The server sends an ISO timestamp; the sheet shows a plain date.
+    /// Reuses `ReviewSchedule.parseISO` because Postgres timestamps arrive with
+    /// fractional seconds, which a default `ISO8601DateFormatter` rejects.
+    private static func unlockText(_ iso: String?) -> String? {
+        guard let iso, let date = ReviewSchedule.parseISO(iso) else { return nil }
+        return date.formatted(.dateTime.year().month().day())
     }
 
     var trimmedHandle: String {
@@ -65,7 +82,7 @@ final class PublicAuthorIdentityVM {
     }
 
     var canSubmit: Bool {
-        !self.isSaving && self.handleIsValid && self.displayNameIsValid
+        !self.isSaving && self.isEditable && self.handleIsValid && self.displayNameIsValid
     }
 
     /// Persists the identity. Returns true when the caller may proceed with
