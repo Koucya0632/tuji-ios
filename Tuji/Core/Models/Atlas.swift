@@ -187,6 +187,11 @@ struct AtlasPublicFeedResponse: Decodable {
     let items: [AtlasPublicItem]
 }
 
+/// GET /api/atlas/public/{slug} — one public item.
+struct AtlasPublicItemResponse: Decodable {
+    let item: AtlasPublicItem
+}
+
 /// A community author's public identity and aggregate impact.
 struct AtlasAuthor: Decodable, Identifiable, Hashable {
     /// Link target for the author route. Distinct from `displayName`: the

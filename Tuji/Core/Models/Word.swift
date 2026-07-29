@@ -9,6 +9,19 @@
 
 import Foundation
 
+extension String {
+    /// The public slug when this is a saved 社群圖鑑 word id (`saved:<slug>`),
+    /// else nil. The prefix is the routing decision: these belong to someone
+    /// else, so they open on the public detail rather than the word screen —
+    /// the same way `atlas:` marks the user's own captures.
+    var savedCommunitySlug: String? {
+        let prefix = "saved:"
+        guard self.hasPrefix(prefix) else { return nil }
+        let slug = String(self.dropFirst(prefix.count))
+        return slug.isEmpty ? nil : slug
+    }
+}
+
 struct CardWord: Codable, Identifiable, Hashable {
     let id: String
     let word: String

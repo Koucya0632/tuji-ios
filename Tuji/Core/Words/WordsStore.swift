@@ -54,14 +54,22 @@ final class WordsStore {
                 learning: settings.learningDirection.rawValue
             )
             var merged = resp.words
+            // The two personal sources are fetched independently and each is
+            // allowed to fail on its own: a 社群圖鑑 outage must not also cost
+            // the user their 自製圖鑑, and neither may take down the catalog.
+            let lang = settings.uiLanguage.contentLanguageCode
+            let learning = settings.learningDirection.rawValue
             do {
-                let custom = try await self.repository.loadCustomWords(
-                    lang: settings.uiLanguage.contentLanguageCode,
-                    learning: settings.learningDirection.rawValue
-                )
-                merged = Self.merge(publicWords: resp.words, customWords: custom.words)
+                let custom = try await self.repository.loadCustomWords(lang: lang, learning: learning)
+                merged = Self.merge(publicWords: merged, customWords: custom.words)
             } catch {
                 self.log.info("custom words skipped: \(error.localizedDescription, privacy: .public)")
+            }
+            do {
+                let saved = try await self.repository.loadSavedWords(lang: lang, learning: learning)
+                merged = Self.merge(publicWords: merged, customWords: saved.words)
+            } catch {
+                self.log.info("saved words skipped: \(error.localizedDescription, privacy: .public)")
             }
             self.words = merged
             self.log.info("loaded \(merged.count, privacy: .public) words")
