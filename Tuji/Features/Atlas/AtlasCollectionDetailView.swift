@@ -11,7 +11,7 @@ struct AtlasCollectionDetailView: View {
     @State private var vm: CollectionDetailVM
     @State private var tab: Tab = .catalog
     @State private var selectedItem: AtlasPublicItem?
-    @State private var selectedAuthorName: String?
+    @State private var selectedAuthorHandle: String?
 
     enum Tab: Hashable { case catalog, about }
 
@@ -43,8 +43,8 @@ struct AtlasCollectionDetailView: View {
         .navigationDestination(item: self.$selectedItem) { item in
             AtlasPublicDetailView(item: item)
         }
-        .navigationDestination(item: self.$selectedAuthorName) { username in
-            AtlasAuthorProfileView(username: username)
+        .navigationDestination(item: self.$selectedAuthorHandle) { handle in
+            AtlasAuthorProfileView(handle: handle)
         }
         .task(id: self.vm.slug) {
             await self.vm.load()
@@ -96,21 +96,26 @@ struct AtlasCollectionDetailView: View {
                         .foregroundStyle(.white)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
-                    Button {
-                        self.selectedAuthorName = collection.author.username
-                    } label: {
-                        HStack(spacing: 6) {
-                            MascotAvatar(
-                                pose: MascotPose(rawValue: collection.author.avatar) ?? .face,
-                                size: 22
-                            )
-                            Text(collection.author.displayName)
-                                .font(.tujiCaption)
-                                .foregroundStyle(.white.opacity(0.95))
-                                .lineLimit(1)
+                    // No author line at all when the author never accepted a
+                    // public identity — the header must not fall back to a
+                    // handle, which is what used to leak an email prefix.
+                    if let author = collection.author {
+                        Button {
+                            self.selectedAuthorHandle = author.handle
+                        } label: {
+                            HStack(spacing: 6) {
+                                MascotAvatar(
+                                    pose: MascotPose(rawValue: author.avatar) ?? .face,
+                                    size: 22
+                                )
+                                Text(author.displayName)
+                                    .font(.tujiCaption)
+                                    .foregroundStyle(.white.opacity(0.95))
+                                    .lineLimit(1)
+                            }
                         }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                     HStack(spacing: Space.s3) {
                         self.stat(icon: "square.stack", title: "內容", value: collection.itemCount)
                         self.stat(icon: "bookmark", title: "收藏", value: collection.saveCount)
@@ -185,8 +190,8 @@ struct AtlasCollectionDetailView: View {
                         AtlasPublicTile(
                             item: item,
                             onOpen: { self.selectedItem = item },
-                            onOpenAuthor: item.attributionName.map { name in
-                                { self.selectedAuthorName = name }
+                            onOpenAuthor: item.author.map { author in
+                                { self.selectedAuthorHandle = author.handle }
                             }
                         )
                     }

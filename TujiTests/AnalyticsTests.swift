@@ -13,7 +13,8 @@ struct AnalyticsTests {
         #expect(AnalyticsEvent.allCases.map(\.rawValue) == [
             "view", "pronounce", "app_open", "study_start",
             "study_complete", "paywall_view", "share_app", "atlas_capture_open",
-            "atlas_publish_submitted", "atlas_public_item_viewed", "atlas_public_saved",
+            "atlas_publish_submitted", "atlas_publish_withdrawn",
+            "atlas_public_item_viewed", "atlas_public_saved",
             "author_profile_viewed"
         ])
     }

@@ -15,7 +15,7 @@ struct CollectionDetailVMTests {
             title: "C\(id)",
             description: nil,
             targetLanguage: .ja,
-            author: AtlasAuthorRef(username: "u", displayName: "U", avatar: "face"),
+            author: AtlasAuthorRef(handle: "u", displayName: "U", avatar: "face"),
             itemCount: 2,
             saveCount: 0,
             coverImageUrl: nil,
@@ -32,7 +32,7 @@ struct CollectionDetailVMTests {
             targetLanguage: .ja,
             category: nil,
             imageUrl: nil,
-            attributionName: nil,
+            author: nil,
             publishedAt: nil
         )
     }
@@ -100,7 +100,7 @@ private final class FakeCollectionDetailReading: CollectionDetailReading {
                 title: "C",
                 description: nil,
                 targetLanguage: .ja,
-                author: AtlasAuthorRef(username: "u", displayName: "U", avatar: "face"),
+                author: AtlasAuthorRef(handle: "u", displayName: "U", avatar: "face"),
                 itemCount: 0,
                 saveCount: 0,
                 coverImageUrl: nil,

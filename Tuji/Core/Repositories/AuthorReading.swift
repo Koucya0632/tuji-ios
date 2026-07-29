@@ -5,7 +5,7 @@ import Foundation
 /// seams). `LiveAtlasRepository` already implements it, so it conforms for free.
 @MainActor
 protocol AuthorReading {
-    func author(username: String) async throws -> AtlasAuthorResponse
+    func author(handle: String) async throws -> AtlasAuthorResponse
 }
 
 extension LiveAtlasRepository: AuthorReading {}

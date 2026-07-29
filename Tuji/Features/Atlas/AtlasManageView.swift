@@ -316,10 +316,17 @@ private struct AtlasManageDetailView: View {
     @State private var store = AtlasStore.shared
     @State private var submitting = false
     @State private var showSubmitConfirm = false
+    @State private var withdrawing = false
+    @State private var showWithdrawConfirm = false
     @State private var submitError: String?
     @State private var submitResult: AtlasPublishModeration?
+    /// Non-nil while the 公開作者身分 sheet is up: publishing names the author,
+    /// so it cannot run until this is accepted once.
+    @State private var identityToConfirm: PublicAuthorIdentity?
     @Environment(\.dismiss) private var dismiss
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
+
+    private let authorGate = PublicAuthorGate()
 
     private var item: AtlasItem? {
         self.store.items.first { $0.imageId == self.image.id }
@@ -381,10 +388,27 @@ private struct AtlasManageDetailView: View {
             message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
             detail: "公開後其他人可以看到這張照片，也可以檢舉。",
             primary: TujiPromptAction("送出審核") {
-                self.submit()
+                Task { await self.submitAfterIdentityCheck() }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
+        .tujiPrompt(
+            isPresented: self.$showWithdrawConfirm,
+            style: .confirmation,
+            title: "要取消公開嗎？",
+            message: "這張卡片會從公開圖鑑移除，你的卡片和學習紀錄都會保留。",
+            detail: "之後隨時可以再公開一次。",
+            primary: TujiPromptAction("取消公開") {
+                self.withdraw()
+            },
+            secondary: TujiPromptAction("先不要", role: .cancel) {}
+        )
+        .sheet(item: self.$identityToConfirm) { identity in
+            PublicAuthorIdentitySheet(identity: identity) {
+                // Consent just given — carry on with the publish they asked for.
+                self.submit()
+            }
+        }
     }
 
     // MARK: - 公開 / 送審
@@ -423,8 +447,35 @@ private struct AtlasManageDetailView: View {
                 .disabled(self.submitting)
                 .opacity(self.submitting ? 0.6 : 1)
             }
+
+            // The counterpart to publishing. Without it the only way off the
+            // wall is deleting the card — which also deletes this user's study
+            // history and every saver's review progress.
+            if item.review.canWithdraw {
+                BBtn(
+                    title: self.withdrawing ? "收回中…" : "取消公開",
+                    bg: .tujiCard,
+                    fg: .tujiInk,
+                    fullWidth: true,
+                    icon: "arrow.uturn.backward"
+                ) {
+                    self.showWithdrawConfirm = true
+                }
+                .disabled(self.withdrawing)
+                .opacity(self.withdrawing ? 0.6 : 1)
+            }
         }
         .padding(.top, Space.s2)
+    }
+
+    /// Publishing puts the author's name on the item, so it runs only after the
+    /// 公開作者身分 step. The sheet resumes the publish once accepted.
+    private func submitAfterIdentityCheck() async {
+        if let identity = await self.authorGate.identityNeedingConfirmation() {
+            self.identityToConfirm = identity
+            return
+        }
+        self.submit()
     }
 
     private func submit() {
@@ -442,10 +493,40 @@ private struct AtlasManageDetailView: View {
                     self.feedRefresh.markNeedsReload()
                 }
                 AnalyticsService.shared.track(.atlasPublishSubmitted)
+            } catch where PublicAuthorGate.isIdentityRequired(error) {
+                // The pre-check failed open (offline, slow) and the server said
+                // no. Land the user on the screen that fixes it.
+                if let identity = await self.authorGate.identityNeedingConfirmation() {
+                    self.identityToConfirm = identity
+                } else {
+                    self.submitError = error.localizedDescription
+                }
             } catch {
                 self.submitError = error.localizedDescription
             }
             self.submitting = false
+        }
+    }
+
+    /// The item stays, its cards stay, savers keep their progress — only the
+    /// public row is retired. `AtlasStore.withdraw` re-syncs, so the 公開狀態
+    /// row above reflects the server rather than a locally guessed status.
+    private func withdraw() {
+        guard let item, !self.withdrawing else { return }
+        self.withdrawing = true
+        self.submitError = nil
+        self.submitResult = nil
+        Task {
+            do {
+                try await self.store.withdraw(itemId: item.id)
+                // The wall still has a CDN copy of the old list; force the next
+                // read past it so the item disappears immediately.
+                self.feedRefresh.markNeedsReload()
+                AnalyticsService.shared.track(.atlasPublishWithdrawn)
+            } catch {
+                self.submitError = error.localizedDescription
+            }
+            self.withdrawing = false
         }
     }
 

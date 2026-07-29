@@ -159,7 +159,11 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
     let targetLanguage: TargetLanguage
     let category: String?
     let imageUrl: String?
-    let attributionName: String?
+    /// The author, or nil when they never accepted a public identity. Anonymous
+    /// is a real state, not a missing value: the server refuses to name someone
+    /// who has not agreed to be named, so the UI must render the nil case
+    /// rather than substituting a handle.
+    let author: AtlasAuthorRef?
     let publishedAt: String?
 
     var imageURL: URL? {
@@ -185,7 +189,9 @@ struct AtlasPublicFeedResponse: Decodable {
 
 /// A community author's public identity and aggregate impact.
 struct AtlasAuthor: Decodable, Identifiable, Hashable {
-    let username: String
+    /// Link target for the author route. Distinct from `displayName`: the
+    /// handle is unique and URL-safe, the name is neither.
+    let handle: String
     let displayName: String
     /// Avatar pose key from `profiles.avatar`.
     let avatar: String
@@ -196,7 +202,7 @@ struct AtlasAuthor: Decodable, Identifiable, Hashable {
     let saveCount: Int
 
     var id: String {
-        self.username
+        self.handle
     }
 }
 
@@ -254,7 +260,10 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
     case pendingReview = "pending_review"
     case approved
     case rejected
+    /// Moderation removed it. Final — the server refuses to re-submit it.
     case takedown
+    /// The author took it down themselves. Reversible, and carries no penalty.
+    case withdrawn
 
     /// Short label for the detail screen. Deliberately says 送審/審核 — approval
     /// is not automatic, so the UI must never imply "already public".
@@ -265,16 +274,25 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
         case .approved: tujiLocalized("已公開")
         case .rejected: tujiLocalized("未通過")
         case .takedown: tujiLocalized("已下架")
+        case .withdrawn: tujiLocalized("已收回")
         }
     }
 
     /// Only these states offer the submit action; anything in-flight or already
-    /// public must not be re-submitted.
+    /// public must not be re-submitted. `withdrawn` is submittable precisely
+    /// because it was the author's own decision — unlike `takedown`.
     var canSubmit: Bool {
         switch self {
-        case .draft, .rejected: true
+        case .draft, .rejected, .withdrawn: true
         case .pending, .pendingAuto, .pendingReview, .approved, .takedown: false
         }
+    }
+
+    /// Only a live public item can be pulled back. Withdrawal is not a way to
+    /// escape a moderation takedown, and there is nothing to withdraw from a
+    /// draft or a queued submission.
+    var canWithdraw: Bool {
+        self == .approved
     }
 }
 
@@ -293,6 +311,13 @@ struct AtlasPublishResponse: Decodable {
     let moderation: AtlasPublishModeration?
 }
 
+/// POST /api/atlas/items/{id}/withdraw. The server owns the resulting state;
+/// the client re-syncs rather than guessing it.
+struct AtlasWithdrawResponse: Decodable, Hashable {
+    let ok: Bool
+    let reviewStatus: String?
+}
+
 struct AtlasPublishModeration: Decodable, Hashable {
     let reviewStatus: String
     let published: Bool
@@ -304,11 +329,12 @@ struct AtlasPublishModeration: Decodable, Hashable {
 
 // MARK: - Community collections 合集
 
-/// Minimal author identity carried on a public collection card. The browse card
-/// shows the collection's own counts, not the author's totals, so this is
-/// deliberately smaller than `AtlasAuthor`.
+/// Minimal author identity carried on a public item or collection card. The
+/// browse card shows the collection's own counts, not the author's totals, so
+/// this is deliberately smaller than `AtlasAuthor`.
 struct AtlasAuthorRef: Decodable, Hashable {
-    let username: String
+    /// Link target for the author route — never shown as a name.
+    let handle: String
     let displayName: String
     let avatar: String
 }
@@ -320,7 +346,9 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
     let title: String
     let description: String?
     let targetLanguage: TargetLanguage
-    let author: AtlasAuthorRef
+    /// nil when the author has no confirmed public identity — same rule as
+    /// `AtlasPublicItem.author`.
+    let author: AtlasAuthorRef?
     let itemCount: Int
     let saveCount: Int
     let coverImageUrl: String?

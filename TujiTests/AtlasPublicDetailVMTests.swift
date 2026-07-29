@@ -17,7 +17,7 @@ struct AtlasPublicDetailVMTests {
             targetLanguage: .en,
             category: nil,
             imageUrl: nil,
-            attributionName: nil,
+            author: nil,
             publishedAt: nil
         )
     }

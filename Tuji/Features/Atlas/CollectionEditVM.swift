@@ -36,9 +36,14 @@ final class CollectionEditVM {
     private(set) var savingMeta = false
     private(set) var metaSaved = false
     private(set) var submitState: SubmitState = .idle
+    private(set) var withdrawing = false
     /// Shared error line for meta-save and member edits; a failed publish takes
     /// precedence (see `errorMessage`).
     private(set) var actionError: String?
+    /// True when the last submit failed only because no public author identity
+    /// has been confirmed — the one failure the view can resolve by showing the
+    /// 公開作者身分 sheet instead of an error line.
+    private(set) var needsAuthorIdentity = false
 
     /// The two fields the view binds and edits directly.
     var title = ""
@@ -57,7 +62,13 @@ final class CollectionEditVM {
     /// at least one member (the server rejects an empty collection anyway).
     var canSubmit: Bool {
         if case .submitting = self.submitState { return false }
+        guard self.collection?.review.canSubmit ?? true else { return false }
         return !self.members.isEmpty
+    }
+
+    /// 取消公開 shows only for a collection that is actually on the browse feed.
+    var canWithdraw: Bool {
+        !self.withdrawing && (self.collection?.review.canWithdraw ?? false)
     }
 
     var isSubmitting: Bool {
@@ -178,6 +189,7 @@ final class CollectionEditVM {
         guard !self.isSubmitting, !self.members.isEmpty else { return false }
         self.submitState = .submitting
         self.actionError = nil
+        self.needsAuthorIdentity = false
         do {
             try await self.repo.updateCollection(
                 id: self.collectionId,
@@ -190,7 +202,30 @@ final class CollectionEditVM {
             await self.load()
             return response.moderation?.published == true
         } catch {
+            self.needsAuthorIdentity = PublicAuthorGate.isIdentityRequired(error)
             self.submitState = .failed(error.localizedDescription)
+            return false
+        }
+    }
+
+    /// 取消公開 — takes the collection off the browse feed. Members stay
+    /// published: this retires the shelf, not the photos on it.
+    ///
+    /// Returns true on success so the view can mark the public feed stale;
+    /// like `submit()`, the VM never reaches the shared refresh center itself.
+    @discardableResult
+    func withdraw() async -> Bool {
+        guard self.canWithdraw else { return false }
+        self.withdrawing = true
+        self.actionError = nil
+        self.submitState = .idle
+        defer { self.withdrawing = false }
+        do {
+            _ = try await self.repo.withdrawCollection(id: self.collectionId)
+            await self.load()
+            return true
+        } catch {
+            self.actionError = error.localizedDescription
             return false
         }
     }

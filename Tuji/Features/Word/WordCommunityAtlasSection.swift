@@ -101,8 +101,8 @@ struct WordCommunityAtlasSection: View {
             .clipped()
 
             HStack(spacing: Space.s1) {
-                if let name = item.attributionName, !name.isEmpty {
-                    Text("by \(name)")
+                if let author = item.author {
+                    Text("by \(author.displayName)")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)

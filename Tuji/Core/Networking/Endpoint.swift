@@ -10,6 +10,7 @@ enum Endpoint {
 
     case usersMe
     case usersProfile
+    case usersPublicAuthor
     case usersSettings
     case usersFavorites
     case usersLearned
@@ -41,6 +42,7 @@ enum Endpoint {
     case atlasItemEnrich(id: String)
     case atlasItemDetail(id: String)
     case atlasItemPublish(id: String)
+    case atlasItemWithdraw(id: String)
     case atlasSync(since: String?, limit: Int)
     case atlasFriends(limit: Int)
     case atlasEntitlement
@@ -57,6 +59,8 @@ enum Endpoint {
     case atlasCollectionItem(id: String, publicItemId: String)
     /// POST to submit a collection for review.
     case atlasCollectionPublish(id: String)
+    /// POST to take an approved collection back off the browse feed.
+    case atlasCollectionWithdraw(id: String)
     /// GET the pool of the user's own approved public items (add-member picker).
     case atlasCollectionCandidates(lang: String)
 
@@ -68,7 +72,7 @@ enum Endpoint {
     /// The community wall.
     case atlasPublicFeed(limit: Int)
     /// A community author's profile + their public items.
-    case atlasPublicAuthor(username: String)
+    case atlasPublicAuthor(handle: String)
     /// Save / unsave a community item (auth required; consumption quota).
     case atlasPublicSave(slug: String)
     /// Report a community item (auth required).
@@ -102,6 +106,7 @@ enum Endpoint {
         switch self {
         case .usersMe: "/api/users/me"
         case .usersProfile: "/api/users/profile"
+        case .usersPublicAuthor: "/api/users/public-author"
         case .usersSettings: "/api/users/settings"
         case .usersFavorites: "/api/users/favorites"
         case .usersLearned: "/api/users/learned"
@@ -127,6 +132,7 @@ enum Endpoint {
         case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
         case let .atlasItemDetail(id): "/api/atlas/items/\(id)/detail"
         case let .atlasItemPublish(id): "/api/atlas/items/\(id)/publish"
+        case let .atlasItemWithdraw(id): "/api/atlas/items/\(id)/withdraw"
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
         case .atlasEntitlement: "/api/atlas/entitlement"
@@ -135,10 +141,11 @@ enum Endpoint {
         case let .atlasCollectionItems(id): "/api/atlas/collections/\(id)/items"
         case let .atlasCollectionItem(id, publicItemId): "/api/atlas/collections/\(id)/items/\(publicItemId)"
         case let .atlasCollectionPublish(id): "/api/atlas/collections/\(id)/publish"
+        case let .atlasCollectionWithdraw(id): "/api/atlas/collections/\(id)/withdraw"
         case .atlasCollectionCandidates: "/api/atlas/collections/candidates"
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
-        case let .atlasPublicAuthor(username): "/api/atlas/public/authors/\(username)"
+        case let .atlasPublicAuthor(handle): "/api/atlas/public/authors/\(handle)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
         case .atlasPublicCollections: "/api/atlas/public/collections"
@@ -246,12 +253,13 @@ enum Endpoint {
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
-             .usersFeedback, .usersCustomWords,
+             .usersFeedback, .usersCustomWords, .usersPublicAuthor,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
-             .atlasItemPublish, .atlasSync, .atlasFriends, .atlasEntitlement,
+             .atlasItemPublish, .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
              .atlasCollections, .atlasCollection, .atlasCollectionItems,
-             .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionCandidates,
+             .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
+             .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
              .billingVerify:
             .reloadIgnoringLocalCacheData
