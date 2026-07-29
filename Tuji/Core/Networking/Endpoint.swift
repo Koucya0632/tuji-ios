@@ -18,6 +18,8 @@ enum Endpoint {
     case usersProgress
     case usersMastery
     case usersCustomWords(lang: String, learning: String)
+    /// Saved 公開圖鑑 items, shaped as words for the 圖鑑 page's 社群圖鑑 theme.
+    case usersSavedWords(lang: String, learning: String)
     case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
     case usersPushToken
@@ -73,6 +75,8 @@ enum Endpoint {
     case atlasPublicFeed(limit: Int)
     /// A community author's profile + their public items.
     case atlasPublicAuthor(handle: String)
+    /// One public item by slug — the 圖鑑 page's 社群圖鑑 cards open through this.
+    case atlasPublicItem(slug: String)
     /// Save / unsave a community item (auth required; consumption quota).
     case atlasPublicSave(slug: String)
     /// Report a community item (auth required).
@@ -114,6 +118,7 @@ enum Endpoint {
         case .usersProgress: "/api/users/progress"
         case .usersMastery: "/api/users/mastery"
         case .usersCustomWords: "/api/users/custom-words"
+        case .usersSavedWords: "/api/users/saved-words"
         case .usersTopWords: "/api/users/top-words"
         case .usersDeleteAccount: "/api/users/delete-account"
         case .usersPushToken,
@@ -146,6 +151,7 @@ enum Endpoint {
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
         case let .atlasPublicAuthor(handle): "/api/atlas/public/authors/\(handle)"
+        case let .atlasPublicItem(slug): "/api/atlas/public/\(slug)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
         case .atlasPublicCollections: "/api/atlas/public/collections"
@@ -192,7 +198,8 @@ enum Endpoint {
                 since.map { URLQueryItem(name: "since", value: $0) },
                 URLQueryItem(name: "limit", value: String(limit))
             ].compactMap(\.self)
-        case let .usersCustomWords(lang, learning):
+        case let .usersCustomWords(lang, learning),
+             let .usersSavedWords(lang, learning):
             // ?lang= / ?learning= win over the server-stored setting right after
             // an in-app switch (the settings save is debounced). Without the
             // live learning direction the custom 圖鑑 comes back for the *old*
@@ -248,12 +255,12 @@ enum Endpoint {
         switch self {
         // Community reads are public and CDN-cached server-side; honor it.
         case .words, .word, .categories, .search,
-             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor,
+             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor, .atlasPublicItem,
              .atlasPublicCollections, .atlasPublicCollection:
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
-             .usersFeedback, .usersCustomWords, .usersPublicAuthor,
+             .usersFeedback, .usersCustomWords, .usersSavedWords, .usersPublicAuthor,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
@@ -278,7 +285,7 @@ enum Endpoint {
         switch self {
         // Save / report stay authed — only the reads are anonymous.
         case .events, .search, .word, .words, .categories,
-             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor,
+             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor, .atlasPublicItem,
              .atlasPublicCollections, .atlasPublicCollection: true
         default: false
         }
