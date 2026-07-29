@@ -225,6 +225,7 @@ struct AtlasCollectionEditView: View {
 
     @State private var vm: CollectionEditVM
     @State private var showConfirm = false
+    @State private var showWithdrawConfirm = false
     @State private var showPicker = false
     /// Same consent gate as single-item publishing: the collection card carries
     /// the author's name and avatar.
@@ -276,6 +277,21 @@ struct AtlasCollectionEditView: View {
                 Task { await self.submitAfterIdentityCheck() }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showWithdrawConfirm,
+            style: .confirmation,
+            title: "要取消公開這個合集嗎？",
+            message: "合集會從公開圖鑑移除，裡面的項目仍然是公開的。",
+            detail: "之後隨時可以再公開一次。",
+            primary: TujiPromptAction("取消公開") {
+                Task {
+                    if await self.vm.withdraw() {
+                        self.feedRefresh.markNeedsReload()
+                    }
+                }
+            },
+            secondary: TujiPromptAction("先不要", role: .cancel) {}
         )
         .sheet(item: self.$identityToConfirm) { identity in
             PublicAuthorIdentitySheet(identity: identity) {
@@ -440,21 +456,39 @@ struct AtlasCollectionEditView: View {
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
             }
-            BBtn(
-                title: self.vm.isSubmitting ? "送出中…" : "公開合集",
-                bg: .tujiTeal,
-                fg: .white,
-                fullWidth: true,
-                icon: "square.and.arrow.up"
-            ) {
-                self.showConfirm = true
+            if collection.review.canSubmit {
+                BBtn(
+                    title: self.vm.isSubmitting ? "送出中…" : "公開合集",
+                    bg: .tujiTeal,
+                    fg: .white,
+                    fullWidth: true,
+                    icon: "square.and.arrow.up"
+                ) {
+                    self.showConfirm = true
+                }
+                .disabled(!self.vm.canSubmit)
+                .opacity(self.vm.canSubmit ? 1 : 0.6)
+                if self.vm.members.isEmpty {
+                    Text("合集至少要有一個項目才能公開。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.tujiInk4)
+                }
             }
-            .disabled(!self.vm.canSubmit)
-            .opacity(self.vm.canSubmit ? 1 : 0.6)
-            if self.vm.members.isEmpty {
-                Text("合集至少要有一個項目才能公開。")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tujiInk4)
+
+            // Without this, publishing a 合集 is one-way: the browse feed keeps
+            // it forever and the only escape is deleting the collection.
+            if self.vm.canWithdraw {
+                BBtn(
+                    title: self.vm.withdrawing ? "收回中…" : "取消公開",
+                    bg: .tujiCard,
+                    fg: .tujiInk,
+                    fullWidth: true,
+                    icon: "arrow.uturn.backward"
+                ) {
+                    self.showWithdrawConfirm = true
+                }
+                .disabled(self.vm.withdrawing)
+                .opacity(self.vm.withdrawing ? 0.6 : 1)
             }
         }
         .padding(.top, Space.s2)

@@ -244,6 +244,12 @@ struct LiveAtlasRepository {
         try await self.api.delete(.atlasCollectionItem(id: id, publicItemId: publicItemId))
     }
 
+    /// 取消公開合集. Members stay published — the shelf comes down, not the
+    /// photos on it, each of which is public in its own right.
+    func withdrawCollection(id: String) async throws -> AtlasWithdrawResponse {
+        try await self.api.post(.atlasCollectionWithdraw(id: id), body: Empty())
+    }
+
     func publishCollection(id: String) async throws -> AtlasCollectionPublishResponse {
         try await self.api.post(.atlasCollectionPublish(id: id), body: Empty())
     }

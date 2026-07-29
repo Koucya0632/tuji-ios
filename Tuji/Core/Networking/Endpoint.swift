@@ -59,6 +59,8 @@ enum Endpoint {
     case atlasCollectionItem(id: String, publicItemId: String)
     /// POST to submit a collection for review.
     case atlasCollectionPublish(id: String)
+    /// POST to take an approved collection back off the browse feed.
+    case atlasCollectionWithdraw(id: String)
     /// GET the pool of the user's own approved public items (add-member picker).
     case atlasCollectionCandidates(lang: String)
 
@@ -139,6 +141,7 @@ enum Endpoint {
         case let .atlasCollectionItems(id): "/api/atlas/collections/\(id)/items"
         case let .atlasCollectionItem(id, publicItemId): "/api/atlas/collections/\(id)/items/\(publicItemId)"
         case let .atlasCollectionPublish(id): "/api/atlas/collections/\(id)/publish"
+        case let .atlasCollectionWithdraw(id): "/api/atlas/collections/\(id)/withdraw"
         case .atlasCollectionCandidates: "/api/atlas/collections/candidates"
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
@@ -255,7 +258,8 @@ enum Endpoint {
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
              .atlasCollections, .atlasCollection, .atlasCollectionItems,
-             .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionCandidates,
+             .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
+             .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
              .billingVerify:
             .reloadIgnoringLocalCacheData

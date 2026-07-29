@@ -29,7 +29,8 @@ struct CollectionEditVMTests {
     private func edit(
         cover: String? = nil,
         title: String = "My Collection",
-        description: String? = nil
+        description: String? = nil,
+        status: String = "draft"
     )
         -> AtlasCollectionEdit
     {
@@ -39,7 +40,7 @@ struct CollectionEditVMTests {
             title: title,
             description: description,
             targetLanguage: .ja,
-            reviewStatus: "draft",
+            reviewStatus: status,
             coverPublicItemId: cover,
             coverImageUrl: nil,
             publishedAt: nil,
@@ -149,6 +150,72 @@ struct CollectionEditVMTests {
             Issue.record("expected submitState == .failed, got \(vm.submitState)")
         }
     }
+
+    // MARK: - 取消公開
+
+    // Publishing a 合集 used to be one-way: the browse feed kept it forever and
+    // the only escape was deleting the collection.
+
+    @Test
+    func withdrawTakesTheCollectionOffTheFeedAndKeepsItsMembers() async {
+        let fake = FakeCollectionEditing(
+            response: .init(
+                collection: self.edit(status: "approved"),
+                items: [self.item(id: "a"), self.item(id: "b")]
+            )
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        #expect(vm.canWithdraw)
+
+        #expect(await vm.withdraw())
+
+        #expect(fake.callLog.contains("withdraw"))
+        // Reloaded from the server rather than patched locally.
+        #expect(vm.collection?.review == .withdrawn)
+        // The shelf came down; the photos on it did not.
+        #expect(vm.members.count == 2)
+    }
+
+    /// Publishing must stay reachable afterwards — that is the whole difference
+    /// between 取消公開 and a moderation takedown.
+    @Test
+    func aWithdrawnCollectionCanBePublishedAgain() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "withdrawn"), items: [self.item(id: "a")])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        #expect(vm.canSubmit)
+        #expect(vm.canWithdraw == false)
+    }
+
+    @Test
+    func aTakenDownCollectionOffersNeitherAction() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "takedown"), items: [self.item(id: "a")])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        #expect(vm.canSubmit == false)
+        #expect(vm.canWithdraw == false)
+    }
+
+    @Test
+    func aFailedWithdrawSurfacesTheErrorAndLeavesTheStatusAlone() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "approved"), items: [self.item(id: "a")])
+        )
+        fake.withdrawError = APIError.forbidden
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        #expect(await vm.withdraw() == false)
+        #expect(vm.errorMessage != nil)
+        #expect(vm.collection?.review == .approved)
+    }
 }
 
 // MARK: - Fake
@@ -163,6 +230,7 @@ private final class FakeCollectionEditing: CollectionEditing {
     var response: AtlasCollectionEditResponse
     var moderation: AtlasPublishModeration?
     var publishError: Error?
+    var withdrawError: Error?
 
     init(response: AtlasCollectionEditResponse, moderation: AtlasPublishModeration? = nil) {
         self.response = response
@@ -195,5 +263,28 @@ private final class FakeCollectionEditing: CollectionEditing {
         self.callLog.append("publish")
         if let publishError { throw publishError }
         return AtlasCollectionPublishResponse(moderation: self.moderation)
+    }
+
+    func withdrawCollection(id _: String) async throws -> AtlasWithdrawResponse {
+        self.callLog.append("withdraw")
+        if let withdrawError { throw withdrawError }
+        // Mirror the server: the reloaded collection comes back withdrawn.
+        let current = self.response.collection
+        self.response = AtlasCollectionEditResponse(
+            collection: AtlasCollectionEdit(
+                id: current.id,
+                slug: current.slug,
+                title: current.title,
+                description: current.description,
+                targetLanguage: current.targetLanguage,
+                reviewStatus: "withdrawn",
+                coverPublicItemId: current.coverPublicItemId,
+                coverImageUrl: current.coverImageUrl,
+                publishedAt: current.publishedAt,
+                updatedAt: current.updatedAt
+            ),
+            items: self.response.items
+        )
+        return AtlasWithdrawResponse(ok: true, reviewStatus: "withdrawn")
     }
 }
