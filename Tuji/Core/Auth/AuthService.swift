@@ -283,6 +283,15 @@ final class AuthService {
     /// present name means a fresh account — persist it as the nickname while we
     /// have the one chance (design book §Auth). Skips if a nickname already
     /// exists. Best-effort: failures are logged and swallowed.
+    ///
+    /// This writes a REAL NAME the user never typed, silently. `nickname` is an
+    /// in-app greeting until the user accepts it in 公開作者身分, and only then
+    /// does it become their public display name — so nothing may render it,
+    /// send it, or serialize it into a public payload on the strength of it
+    /// merely being set. The community layer shipped a version that did
+    /// (`displayName: nickname ?? username`), which would have printed Apple
+    /// full names and email prefixes on the public wall; the server now refuses
+    /// to name anyone whose `public_author_confirmed_at` is NULL.
     private func captureAppleNameIfNeeded(_ fullName: String?) async {
         guard let fullName, !fullName.isEmpty else { return }
         guard case let .signedIn(user) = state, (user.nickname ?? "").isEmpty else { return }
