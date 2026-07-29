@@ -12271,6 +12271,28 @@
         }
       }
     },
+    "這張卡片已經不公開了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This card is no longer public"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このカードは公開されていません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这张卡片已经不公开了"
+          }
+        }
+      }
+    },
     "這張卡片會從公開圖鑑移除，你的卡片和學習紀錄都會保留。" : {
       "localizations" : {
         "en" : {
