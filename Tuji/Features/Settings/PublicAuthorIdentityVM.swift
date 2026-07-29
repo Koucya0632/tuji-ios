@@ -21,12 +21,23 @@ final class PublicAuthorIdentityVM {
     )
     private static let handleLength = 2...40
     static let displayNameMax = 20
+    /// Fallback only — the live limit comes down with the identity payload.
+    static let defaultBioMax = 80
 
     var handle: String
     var displayName: String
+    var bio: String
     private(set) var avatar: String
     private(set) var isSaving = false
     private(set) var errorMessage: String?
+
+    /// Server-owned, so the counter can't disagree with the rule that rejects.
+    let bioMax: Int
+
+    /// What the identity fields looked like on open. Used to tell a bio-only
+    /// edit apart from a rename while the cooldown is running.
+    private let originalHandle: String
+    private let originalDisplayName: String
 
     /// True when the user has never confirmed — the sheet is then a consent
     /// step, not an edit, and says so.
@@ -47,10 +58,14 @@ final class PublicAuthorIdentityVM {
     ) {
         self.handle = identity.handle
         self.displayName = identity.displayName
+        self.bio = identity.bio ?? ""
+        self.bioMax = identity.bioMax ?? Self.defaultBioMax
         self.avatar = identity.avatar
         self.isFirstTime = !identity.confirmed
         self.isEditable = identity.isEditable
         self.nextChangeText = Self.unlockText(identity.nextChangeAt)
+        self.originalHandle = identity.handle.trimmingCharacters(in: .whitespaces)
+        self.originalDisplayName = identity.displayName.trimmingCharacters(in: .whitespaces)
         self.repo = repo
     }
 
@@ -81,8 +96,34 @@ final class PublicAuthorIdentityVM {
         return !name.isEmpty && name.count <= Self.displayNameMax
     }
 
+    var trimmedBio: String {
+        self.bio.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// A bio may be empty — clearing it is a legitimate edit.
+    var bioIsValid: Bool {
+        self.trimmedBio.count <= self.bioMax
+    }
+
+    var bioRemaining: Int {
+        self.bioMax - self.trimmedBio.count
+    }
+
+    /// True when neither cooldown-gated field has moved. The bio is excluded on
+    /// purpose — it is what this is used to permit.
+    var identityUnchanged: Bool {
+        self.trimmedHandle == self.originalHandle
+            && self.trimmedDisplayName == self.originalDisplayName
+    }
+
+    /// The cooldown freezes the byline, not the whole form. A bio rewrites no
+    /// published attribution, so a bio-only edit stays submittable even while
+    /// the handle and display name are locked — which matches the server, where
+    /// `isRename` compares only those two fields.
     var canSubmit: Bool {
-        !self.isSaving && self.isEditable && self.handleIsValid && self.displayNameIsValid
+        guard !self.isSaving, self.handleIsValid, self.displayNameIsValid, self.bioIsValid
+        else { return false }
+        return self.isEditable || self.identityUnchanged
     }
 
     /// Persists the identity. Returns true when the caller may proceed with
@@ -96,7 +137,8 @@ final class PublicAuthorIdentityVM {
             let payload = PublicAuthorIdentityPayload(
                 handle: self.trimmedHandle,
                 displayName: self.trimmedDisplayName,
-                avatar: self.avatar
+                avatar: self.avatar,
+                bio: self.trimmedBio
             )
             _ = try await self.repo.setPublicAuthorIdentity(payload)
             return true

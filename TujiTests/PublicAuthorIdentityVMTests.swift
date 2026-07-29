@@ -17,6 +17,8 @@ struct PublicAuthorIdentityVMTests {
         confirmed: Bool = false,
         handle: String = "tuji-8f3a2c1d9b4e",
         displayName: String = "",
+        bio: String? = "",
+        bioMax: Int? = 80,
         canChange: Bool? = nil,
         nextChangeAt: String? = nil
     )
@@ -27,6 +29,8 @@ struct PublicAuthorIdentityVMTests {
             handle: handle,
             displayName: displayName,
             avatar: "face",
+            bio: bio,
+            bioMax: bioMax,
             canChange: canChange,
             nextChangeAt: nextChangeAt
         )
@@ -126,7 +130,7 @@ struct PublicAuthorIdentityVMTests {
     // so it is limited once they have public content.
 
     @Test
-    func aRunningCooldownLocksTheFormBeforeAnythingIsTyped() async {
+    func aRunningCooldownLocksTheIdentityFields() async {
         let repo = FakePublicAuthorIdentityEditing()
         let model = self.vm(
             self.identity(
@@ -138,14 +142,106 @@ struct PublicAuthorIdentityVMTests {
             repo: repo
         )
         #expect(model.isEditable == false)
-        #expect(model.canSubmit == false)
         #expect(model.nextChangeText != nil)
 
-        // And the form cannot be submitted around the lock.
+        // The lock cannot be typed around: renaming during a cooldown is the
+        // exact move it exists to stop.
         model.displayName = "Ad Ad Ad"
         #expect(model.canSubmit == false)
         #expect(await model.save() == false)
         #expect(repo.saved == nil)
+    }
+
+    /// The cooldown protects the BYLINE on already-published work. A bio appears
+    /// on one page and rewrites no attribution, so freezing it too would just
+    /// punish a typo for 30 days. The server agrees — its `isRename` compares
+    /// only the handle and display name.
+    @Test
+    func aBioOnlyEditIsAllowedDuringTheCooldown() async {
+        let repo = FakePublicAuthorIdentityEditing()
+        let model = self.vm(
+            self.identity(
+                confirmed: true,
+                displayName: "Mika",
+                canChange: false,
+                nextChangeAt: "2026-08-28T00:00:00.000Z"
+            ),
+            repo: repo
+        )
+
+        model.bio = "喜歡拍街上的招牌"
+
+        #expect(model.isEditable == false)
+        #expect(model.canSubmit)
+        #expect(await model.save())
+        #expect(repo.saved?.bio == "喜歡拍街上的招牌")
+        // The identity fields must go up unchanged, or the server would read the
+        // write as a rename and refuse it.
+        #expect(repo.saved?.displayName == "Mika")
+    }
+
+    /// Guards the seam between the two rules: touching the name alongside the
+    /// bio is still a rename, and the bio must not smuggle it through.
+    @Test
+    func aBioEditCannotCarryARenameThroughTheCooldown() async {
+        let repo = FakePublicAuthorIdentityEditing()
+        let model = self.vm(
+            self.identity(
+                confirmed: true,
+                displayName: "Mika",
+                canChange: false,
+                nextChangeAt: "2026-08-28T00:00:00.000Z"
+            ),
+            repo: repo
+        )
+
+        model.bio = "喜歡拍街上的招牌"
+        model.displayName = "Ad Ad Ad"
+
+        #expect(model.canSubmit == false)
+        #expect(await model.save() == false)
+        #expect(repo.saved == nil)
+    }
+
+    // MARK: - Bio
+
+    @Test
+    func aBioOverTheLimitBlocksSubmission() {
+        let model = self.vm(self.identity(confirmed: true, displayName: "Mika", bioMax: 10))
+        model.bio = String(repeating: "字", count: 11)
+        #expect(model.bioIsValid == false)
+        #expect(model.canSubmit == false)
+
+        model.bio = String(repeating: "字", count: 10)
+        #expect(model.bioIsValid)
+        #expect(model.canSubmit)
+    }
+
+    /// Clearing a bio is a legitimate edit, not an invalid form.
+    @Test
+    func anEmptyBioIsValid() {
+        let model = self.vm(self.identity(confirmed: true, displayName: "Mika", bio: "先前的簡介"))
+        model.bio = ""
+        #expect(model.bioIsValid)
+        #expect(model.canSubmit)
+    }
+
+    /// The counter has to come from the server, or it can promise a length the
+    /// route then rejects.
+    @Test
+    func theBioLimitFollowsTheServer() {
+        let model = self.vm(self.identity(bioMax: 40))
+        #expect(model.bioMax == 40)
+        model.bio = String(repeating: "a", count: 30)
+        #expect(model.bioRemaining == 10)
+    }
+
+    @Test
+    func aMissingBioLimitFallsBackRatherThanBlockingEverything() {
+        let model = self.vm(self.identity(bio: nil, bioMax: nil))
+        #expect(model.bio.isEmpty)
+        #expect(model.bioMax == PublicAuthorIdentityVM.defaultBioMax)
+        #expect(model.bioIsValid)
     }
 
     /// A payload without the field must not lock someone out of their own form.
@@ -177,6 +273,8 @@ struct PublicAuthorGateTests {
             handle: "mika_k",
             displayName: "Mika",
             avatar: "face",
+            bio: "",
+            bioMax: 80,
             canChange: true,
             nextChangeAt: nil
         )
@@ -218,6 +316,8 @@ final class FakePublicAuthorIdentityEditing: PublicAuthorIdentityEditing {
         handle: "tuji-000000000000",
         displayName: "",
         avatar: "face",
+        bio: "",
+        bioMax: 80,
         canChange: true,
         nextChangeAt: nil
     )

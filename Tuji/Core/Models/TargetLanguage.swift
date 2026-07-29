@@ -14,6 +14,17 @@ import Foundation
 nonisolated enum TargetLanguage: String, Codable, Hashable, CaseIterable {
     case en
     case ja
+
+    /// Human-readable name, for surfaces that show more than one language at
+    /// once (the author profile groups its items this way). Resolved through
+    /// `tujiLocalized` rather than a `LocalizedStringKey`, because the value
+    /// comes from a decoded model and so would otherwise miss the uiLang switch.
+    var label: String {
+        switch self {
+        case .ja: tujiLocalized("日文")
+        case .en: tujiLocalized("英文")
+        }
+    }
 }
 
 /// Word payloads that can tell which language they teach. One shared

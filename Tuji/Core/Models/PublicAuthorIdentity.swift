@@ -17,9 +17,18 @@ struct PublicAuthorIdentity: Decodable, Hashable, Identifiable {
     /// Empty when the user never set a display name.
     let displayName: String
     let avatar: String
+    /// The public self-introduction as it stands today. Unlike `handle` and
+    /// `displayName` this is not a suggestion awaiting consent — once written it
+    /// is already on the author's page. Optional so a payload from a server that
+    /// predates the field still decodes.
+    let bio: String?
+    /// Server-owned length limit, so the client's counter can't drift from the
+    /// rule that actually rejects.
+    let bioMax: Int?
     /// False while the rename cooldown is running. A rename rewrites the byline
     /// on everything the author ever published, so it is rate-limited once they
-    /// have public content.
+    /// have public content. Note this covers the handle and display name only —
+    /// the bio is never frozen.
     let canChange: Bool?
     /// ISO timestamp when the next change becomes possible; nil when it already is.
     let nextChangeAt: String?
@@ -41,6 +50,8 @@ struct PublicAuthorIdentityPayload: Encodable {
     let handle: String
     let displayName: String
     let avatar: String?
+    /// Empty string clears the bio; omitting the key entirely leaves it alone.
+    let bio: String?
 }
 
 struct PublicAuthorIdentityResponse: Decodable {

@@ -54,30 +54,20 @@ struct AtlasPublicFeedView: View {
 
     // MARK: Header
 
+    /// This tab is other people's work — 我的合集 lives in 我的, with the rest of
+    /// what the user makes. What stays here is the CTA at the foot of the feed,
+    /// where "看別人的 → 我也要做一個" actually happens.
     private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("PUBLIC ATLAS")
-                    .font(.tujiOverline)
-                    .foregroundStyle(.tujiInk3)
-                Text("公開圖鑑")
-                    .font(.tujiH2)
-                    .foregroundStyle(.tujiInk)
-                Text("看看大家整理的單字合集")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-            }
-            Spacer(minLength: Space.s3)
-            NavigationLink(value: NavRoute.atlasMyCollections) {
-                VStack(spacing: 3) {
-                    Image(systemName: "rectangle.stack")
-                        .font(.system(size: 18, weight: .semibold))
-                    Text("我的合集")
-                        .font(.system(size: 10, weight: .semibold))
-                }
-                .foregroundStyle(.tujiTeal)
-            }
-            .buttonStyle(.plain)
+        VStack(alignment: .leading, spacing: 2) {
+            Text("PUBLIC ATLAS")
+                .font(.tujiOverline)
+                .foregroundStyle(.tujiInk3)
+            Text("公開圖鑑")
+                .font(.tujiH2)
+                .foregroundStyle(.tujiInk)
+            Text("看看大家整理的單字合集")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, Space.s6)
@@ -114,6 +104,8 @@ struct AtlasPublicFeedView: View {
                                 self.selectedCollection = collection
                             }
                         }
+                        self.myCollectionsCTA
+                            .padding(.top, Space.s3)
                     }
                     .padding(.horizontal, Space.s6)
                     .padding(.top, Space.s1)
@@ -124,6 +116,35 @@ struct AtlasPublicFeedView: View {
             .scrollBounceBehavior(.always, axes: .vertical)
             .refreshable { await self.vm.load(lang: self.targetLanguage, forceReload: true) }
         }
+    }
+
+    /// Sits at the foot of the feed, after the user has seen what others made.
+    /// It's a shortcut into 我的合集, not a second home for it.
+    private var myCollectionsCTA: some View {
+        NavigationLink(value: NavRoute.atlasMyCollections) {
+            HStack(spacing: Space.s3) {
+                Image(systemName: "rectangle.stack.badge.plus")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(.tujiTeal)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("建立你自己的合集")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.tujiInk)
+                    Text("把你公開的圖鑑整理成一份主題")
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tujiInk4)
+            }
+            .padding(Space.s4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
@@ -141,6 +162,12 @@ struct AtlasPublicFeedView: View {
                 BBtn(title: "重試", fullWidth: false) {
                     Task { await self.vm.load(lang: self.targetLanguage, forceReload: true) }
                 }
+            } else {
+                // Nothing published in this language yet is exactly when being
+                // the first one to do it is worth offering.
+                self.myCollectionsCTA
+                    .padding(.horizontal, Space.s6)
+                    .padding(.top, Space.s3)
             }
             Spacer()
         }
@@ -153,6 +180,10 @@ struct AtlasPublicFeedView: View {
 struct AtlasCollectionCard: View {
     let collection: AtlasCollection
     var onOpen: () -> Void = {}
+    /// Off on the author profile, where every card is by the same person and the
+    /// byline would just repeat the header down the whole list. On the browse
+    /// feed it's the main thing distinguishing one card from the next.
+    var showsAuthor = true
 
     private var pose: MascotPose {
         MascotPose(rawValue: self.collection.author?.avatar ?? "") ?? .face
@@ -170,7 +201,7 @@ struct AtlasCollectionCard: View {
                         .multilineTextAlignment(.leading)
                     // Nothing at all when the author has no confirmed public
                     // identity — the card must not fall back to a handle.
-                    if let author = self.collection.author {
+                    if self.showsAuthor, let author = self.collection.author {
                         HStack(spacing: Space.s2) {
                             MascotAvatar(pose: self.pose, size: 22)
                             Text(author.displayName)

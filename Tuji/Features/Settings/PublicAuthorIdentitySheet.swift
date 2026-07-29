@@ -31,6 +31,7 @@ struct PublicAuthorIdentitySheet: View {
                     if !self.vm.isEditable { self.cooldownNotice }
                     self.displayNameField
                     self.handleField
+                    self.bioField
                     if let message = self.vm.errorMessage {
                         Text(message)
                             .font(.tujiCaption)
@@ -166,6 +167,45 @@ struct PublicAuthorIdentitySheet: View {
                 .foregroundStyle(.tujiInk4)
         }
     }
+
+    /// Deliberately NOT disabled during the rename cooldown. That cooldown
+    /// exists because renaming rewrites the byline on everything already
+    /// published; a bio rewrites nothing, so freezing it for 30 days would be a
+    /// penalty for a typo. The server agrees — its rename check compares only
+    /// the handle and display name.
+    private var bioField: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("簡介")
+                .font(.tujiOverline)
+                .tracking(2)
+                .foregroundStyle(.tujiInk3)
+            TextField("介紹一下你自己", text: self.$vm.bio, axis: .vertical)
+                .lineLimit(2...4)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .font(.tujiBody)
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s3)
+                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(
+                            self.vm.bioIsValid ? .tujiInk4.opacity(0.25) : Color.tujiCoral,
+                            lineWidth: 1
+                        )
+                )
+            HStack {
+                Text("不能放網址或個人資訊")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk4)
+                Spacer()
+                Text(verbatim: "\(self.vm.bioRemaining)")
+                    .font(.tujiCaption)
+                    .foregroundStyle(self.vm.bioIsValid ? .tujiInk4 : .tujiCoral)
+                    .monospacedDigit()
+            }
+        }
+    }
 }
 
 #Preview {
@@ -175,6 +215,8 @@ struct PublicAuthorIdentitySheet: View {
             handle: "tuji-8f3a2c1d9b4e",
             displayName: "",
             avatar: "face",
+            bio: "",
+            bioMax: 80,
             canChange: true,
             nextChangeAt: nil
         )
