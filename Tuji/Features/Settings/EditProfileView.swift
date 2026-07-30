@@ -27,6 +27,9 @@ struct EditProfileView: View {
     /// What the server had when the screen opened, so `dirty` compares against
     /// the truth rather than against a stale session copy.
     @State private var loaded: Loaded?
+    /// Server truth for the UID. The session mirror can lag it, and this screen
+    /// is where someone goes to check what their UID actually is.
+    @State private var serverUid: String?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "edit-profile")
 
@@ -203,6 +206,7 @@ struct EditProfileView: View {
     // MARK: - State
 
     private var uid: String {
+        if let serverUid, !serverUid.isEmpty { return serverUid }
         if case let .signedIn(user) = auth.state, let uid = user.username, !uid.isEmpty {
             return uid
         }
@@ -245,6 +249,7 @@ struct EditProfileView: View {
             seeded.pose = MascotPose(rawValue: user.avatar ?? "") ?? .face
         }
         if let me = try? await self.users.loadMe().user {
+            self.serverUid = me.username
             seeded.nickname = me.nickname ?? seeded.nickname
             seeded.bio = me.bio ?? ""
             seeded.pose = MascotPose(rawValue: me.avatar ?? "") ?? seeded.pose

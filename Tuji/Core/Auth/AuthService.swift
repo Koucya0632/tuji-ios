@@ -50,6 +50,7 @@ final class AuthService {
         do {
             let session = try await supabase.auth.session
             state = .signedIn(SessionUser(from: session.user))
+            await hydrateProfile()
             log.info("session restored uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             // `supabase.auth.session` refreshes an expired token over the
@@ -116,6 +117,7 @@ final class AuthService {
             if let session = resp.session {
                 state = .signedIn(SessionUser(from: session.user))
                 await syncLocalCacheToServer()
+                await hydrateProfile()
                 log.info("signup ok uid=\(session.user.id.uuidString, privacy: .public)")
                 return .signedIn
             } else {
@@ -137,6 +139,7 @@ final class AuthService {
             let session = try await supabase.auth.signIn(email: email, password: password)
             state = .signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
+            await hydrateProfile()
             log.info("signin ok uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             self.error = friendly(error)
@@ -169,6 +172,7 @@ final class AuthService {
             )
             state = .signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
+            await hydrateProfile()
             log.info("apple signin ok uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             self.error = friendly(error)
@@ -202,6 +206,7 @@ final class AuthService {
             )
             state = .signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
+            await hydrateProfile()
             log.info("google signin ok uid=\(session.user.id.uuidString, privacy: .public)")
         } catch GoogleSignInBridge.GoogleSignInError.userCancelled {
             log.info("google signin cancelled by user")
@@ -257,6 +262,26 @@ final class AuthService {
     func applyProfile(nickname: String?, avatar: String?) {
         guard case let .signedIn(user) = state else { return }
         state = .signedIn(user.withProfile(nickname: nickname, avatar: avatar))
+    }
+
+    /// Reconciles the session's `user_metadata` mirror against `profiles`.
+    ///
+    /// The UID lives in `profiles.username`; the session only carries a copy,
+    /// minted when the token was issued. Nothing the client does can refresh
+    /// that copy on demand, so an account whose UID was assigned or rewritten
+    /// server-side reads as nil (OAuth signups, which never had the key) or as
+    /// a stale pre-migration handle (email signups) until the token rolls over.
+    /// Both render as a broken 我的公開主頁.
+    ///
+    /// Best-effort: on failure the cached session stands, so this never costs
+    /// an offline launch.
+    private func hydrateProfile() async {
+        guard case let .signedIn(user) = state else { return }
+        guard let me = try? await users.loadMe().user else { return }
+        let merged = user.merging(username: me.username, nickname: me.nickname, avatar: me.avatar)
+        guard merged != user else { return }
+        state = .signedIn(merged)
+        log.info("profile mirror reconciled from server")
     }
 
     // MARK: - Local cache sync
