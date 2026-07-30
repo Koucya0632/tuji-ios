@@ -205,7 +205,9 @@ struct CardsListView: View {
     static func visibleThemeCategories(
         from categories: [TujiCategory],
         presentIds: Set<String>
-    ) -> [TujiCategory] {
+    )
+        -> [TujiCategory]
+    {
         categories.filter {
             presentIds.contains($0.id) || $0.id == "custom" || $0.id == "community"
         }

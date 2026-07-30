@@ -129,5 +129,4 @@ final class CollectionDetailVM {
         self.isSaved = response.saved
         self.collection = self.collection?.withSaveCount(response.saveCount)
     }
-
 }

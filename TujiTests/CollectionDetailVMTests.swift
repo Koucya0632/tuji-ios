@@ -189,13 +189,18 @@ private final class FakeDetailBookmarking: CollectionBookmarking {
         .init(ok: true, saved: true, saveCount: 1)
     )
 
-    func savedCollections(lang _: TargetLanguage) async throws -> [AtlasCollection] { [] }
+    func savedCollections(lang _: TargetLanguage) async throws -> [AtlasCollection] {
+        []
+    }
+
     func collectionSaveState(slug _: String) async throws -> AtlasSaveResponse {
         try self.stateResult.get()
     }
+
     func saveCollection(slug _: String) async throws -> AtlasSaveResponse {
         try self.saveResult.get()
     }
+
     func unsaveCollection(slug _: String) async throws -> AtlasSaveResponse {
         .init(ok: true, saved: false, saveCount: 0)
     }

@@ -29,7 +29,10 @@ struct AtlasPublicFeedView: View {
         case explore
         case saved
 
-        var id: String { self.rawValue }
+        var id: String {
+            self.rawValue
+        }
+
         var title: LocalizedStringKey {
             switch self {
             case .explore: "探索"
@@ -116,7 +119,6 @@ struct AtlasPublicFeedView: View {
         .padding(.bottom, Space.s3)
     }
 
-    @ViewBuilder
     private var content: some View {
         ZStack {
             self.exploreContent

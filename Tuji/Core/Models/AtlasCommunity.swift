@@ -32,7 +32,6 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
     var langBadge: String {
         self.targetLanguage.rawValue.uppercased()
     }
-
 }
 
 /// GET /api/atlas/public/by-lemma — everyone else's public items for one word.
