@@ -189,7 +189,10 @@ struct CardsListView: View {
     /// WordsStore-derived ids if CategoriesStore is still loading.
     private var chipCategories: [TujiCategory] {
         let presentIds = Set(self.store.categories)
-        let known = self.categories.categories.filter { presentIds.contains($0.id) || $0.id == "custom" }
+        let known = Self.visibleThemeCategories(
+            from: self.categories.categories,
+            presentIds: presentIds
+        )
         if known.isEmpty {
             // Fallback: synthesize bare metadata from word-derived ids
             return self.store.categories.map {
@@ -197,6 +200,15 @@ struct CardsListView: View {
             }
         }
         return known
+    }
+
+    static func visibleThemeCategories(
+        from categories: [TujiCategory],
+        presentIds: Set<String>
+    ) -> [TujiCategory] {
+        categories.filter {
+            presentIds.contains($0.id) || $0.id == "custom" || $0.id == "community"
+        }
     }
 
     private var filtered: [CardWord] {

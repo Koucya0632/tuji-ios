@@ -100,8 +100,8 @@ struct MeView: View {
                 self.statsRow
                 self.weakSection
                 self.proCard
-                // Everything under 創作 is account-scoped (uploads, collections
-                // and the public page all live on the server), so guests get the
+                // Everything under 創作 is account-scoped (圖鑑管理 and the
+                // public page both live on the server), so guests get the
                 // whole group hidden rather than a row that can only fail.
                 if !self.isGuest {
                     MeCreationGroup(
@@ -139,7 +139,7 @@ struct MeView: View {
         }
         .task {
             if !self.isGuest {
-                // Warm the 自制圖鑑 store from here (its parent screen) so tapping
+                // Warm the 圖鑑管理 store from here (its parent screen) so tapping
                 // into AtlasManageView renders from the cached singleton instead
                 // of waiting on /api/atlas/sync. Fire-and-forget so it doesn't
                 // block Me's own load; sync() is incremental after the first run.

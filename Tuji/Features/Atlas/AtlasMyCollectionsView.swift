@@ -11,52 +11,108 @@ import SwiftUI
 
 struct AtlasMyCollectionsView: View {
     @Environment(SettingsStore.self) private var settings
+    @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     @State private var vm = MyCollectionsVM()
-    @State private var showCreate = false
+    @State private var pendingDelete: AtlasMyCollection?
+    @State private var deleteError: String?
+    @State private var deleting = false
 
-    private var newCollectionLanguage: TargetLanguage {
+    @Binding var showCreate: Bool
+
+    private var currentLanguage: TargetLanguage {
         self.settings.current.learningDirection.targetLanguage
     }
 
+    private var visibleCollections: [AtlasMyCollection] {
+        self.vm.collections(for: self.currentLanguage)
+    }
+
+    private var emptyTitle: String {
+        switch self.currentLanguage {
+        case .ja: tujiLocalized("目前沒有日文合集")
+        case .en: tujiLocalized("目前沒有英文合集")
+        }
+    }
+
     var body: some View {
-        ScrollView {
+        let target = self.pendingDelete
+        return List {
+            if let deleteError {
+                Text(deleteError)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiCoral)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
             if self.vm.loading {
-                ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
-            } else if self.vm.collections.isEmpty {
+                HStack {
+                    Spacer()
+                    ProgressView().tint(.tujiTeal)
+                    Spacer()
+                }
+                .padding(.top, Space.s12)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            } else if self.visibleCollections.isEmpty {
                 self.emptyState
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             } else {
-                LazyVStack(spacing: Space.s3) {
-                    ForEach(self.vm.collections) { collection in
-                        NavigationLink(value: NavRoute.atlasCollectionEdit(id: collection.id)) {
-                            AtlasMyCollectionRow(collection: collection)
+                ForEach(self.visibleCollections) { collection in
+                    NavigationLink {
+                        AtlasCollectionEditView(collectionId: collection.id)
+                            .onDisappear { Task { await self.vm.load() } }
+                    } label: {
+                        AtlasMyCollectionRow(collection: collection)
+                    }
+                    .buttonStyle(.plain)
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: Space.s2,
+                            leading: Space.s6,
+                            bottom: Space.s2,
+                            trailing: Space.s6
+                        )
+                    )
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            self.pendingDelete = collection
+                        } label: {
+                            Label("刪除", systemImage: "trash")
                         }
-                        .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.vertical, Space.s4)
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(.tujiBg)
-        .navigationTitle("我的合集")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    self.showCreate = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-            }
-        }
         .task { await self.vm.load() }
         .refreshable { await self.vm.load() }
         .sheet(isPresented: self.$showCreate) {
-            AtlasCollectionCreateSheet(language: self.newCollectionLanguage) {
-                Task { await self.vm.load() }
+            AtlasCollectionCreateSheet(language: self.currentLanguage) { collection in
+                self.vm.prepend(collection)
             }
         }
+        .tujiPrompt(
+            isPresented: Binding(
+                get: { self.pendingDelete != nil },
+                set: { if !$0 { self.pendingDelete = nil } }
+            ),
+            style: .destructive,
+            title: "刪除這個合集？",
+            message: LocalizedStringKey(target.map(self.deleteMessage) ?? ""),
+            primary: TujiPromptAction("刪除", role: .destructive) {
+                if let target {
+                    Task { await self.delete(target) }
+                }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiStatusToast(isPresented: self.deleting, style: .deleting)
     }
 
     private var emptyState: some View {
@@ -65,7 +121,7 @@ struct AtlasMyCollectionsView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.tujiInk4)
             Text(self.vm.loadError == nil
-                ? tujiLocalized("還沒有合集，點右上角＋建立一個")
+                ? self.emptyTitle
                 : tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
@@ -77,6 +133,33 @@ struct AtlasMyCollectionsView: View {
         .frame(maxWidth: .infinity)
         .padding(.top, Space.s12)
         .padding(.horizontal, Space.s6)
+    }
+
+    private func deleteMessage(for collection: AtlasMyCollection) -> String {
+        switch collection.review {
+        case .pending, .pendingAuto, .pendingReview:
+            tujiLocalized("這會取消送審並刪除合集，原始圖鑑卡片不受影響。")
+        case .approved:
+            tujiLocalized("這會立即將合集從公開圖鑑下架並刪除，原始圖鑑卡片不受影響。")
+        default:
+            tujiLocalized("這個合集會被永久刪除，原始圖鑑卡片不受影響。")
+        }
+    }
+
+    private func delete(_ collection: AtlasMyCollection) async {
+        guard !self.deleting else { return }
+        self.deleteError = nil
+        self.deleting = true
+        defer { self.deleting = false }
+        do {
+            try await self.vm.delete(id: collection.id)
+            if collection.review == .approved {
+                self.feedRefresh.markNeedsReload()
+            }
+            self.pendingDelete = nil
+        } catch {
+            self.deleteError = error.localizedDescription
+        }
     }
 }
 
@@ -120,9 +203,6 @@ private struct AtlasMyCollectionRow: View {
                 }
             }
             Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.tujiInk4)
         }
         .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -139,7 +219,7 @@ private struct AtlasMyCollectionRow: View {
 
 private struct AtlasCollectionCreateSheet: View {
     let language: TargetLanguage
-    let onCreated: () -> Void
+    let onCreated: (AtlasMyCollection) -> Void
     private let repo: CollectionManaging
 
     @Environment(\.dismiss) private var dismiss
@@ -151,7 +231,7 @@ private struct AtlasCollectionCreateSheet: View {
     init(
         language: TargetLanguage,
         repo: CollectionManaging = LiveAtlasRepository.shared,
-        onCreated: @escaping () -> Void
+        onCreated: @escaping (AtlasMyCollection) -> Void
     ) {
         self.language = language
         self.repo = repo
@@ -202,13 +282,13 @@ private struct AtlasCollectionCreateSheet: View {
         self.error = nil
         Task {
             do {
-                _ = try await self.repo.createCollection(
+                let collection = try await self.repo.createCollection(
                     title: trimmed,
                     description: self.description.trimmingCharacters(in: .whitespaces).isEmpty
                         ? nil : self.description,
                     targetLanguage: self.language
                 )
-                self.onCreated()
+                self.onCreated(collection)
                 self.dismiss()
             } catch {
                 self.error = error.localizedDescription

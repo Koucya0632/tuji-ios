@@ -82,6 +82,71 @@ struct CollectionDetailVMTests {
         #expect(vm.items.isEmpty)
         #expect(vm.errorMessage != nil)
     }
+
+    @Test
+    func unavailableCollectionClearsAStalePreview() async {
+        let fake = FakeCollectionDetailReading()
+        fake.result = .failure(APIError.notFound)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            preview: self.collection(id: "a"),
+            repo: fake
+        )
+
+        await vm.load()
+
+        #expect(vm.collection == nil)
+        #expect(vm.isUnavailable)
+    }
+
+    @Test
+    func bookmarkState404DoesNotEraseSuccessfullyLoadedCollection() async {
+        let details = FakeCollectionDetailReading()
+        let bookmarks = FakeDetailBookmarking()
+        bookmarks.stateResult = .failure(APIError.notFound)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            preview: self.collection(id: "a"),
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+
+        await vm.load()
+        await vm.loadBookmarkState()
+
+        #expect(vm.collection != nil)
+        #expect(!vm.isUnavailable)
+        #expect(vm.bookmarkLoaded)
+        #expect(vm.bookmarkError != nil)
+    }
+
+    @Test
+    func saveStateAndCountChangeOnlyAfterServerSuccess() async {
+        let details = FakeCollectionDetailReading()
+        let bookmarks = FakeDetailBookmarking()
+        bookmarks.saveResult = .failure(FakeError.boom)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            preview: self.collection(id: "a"),
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+
+        let failed = await vm.save()
+        #expect(failed == nil)
+        #expect(!vm.isSaved)
+        #expect(vm.collection?.saveCount == 0)
+        #expect(vm.bookmarkActionError != nil)
+
+        vm.dismissBookmarkActionError()
+        #expect(vm.bookmarkActionError == nil)
+
+        bookmarks.saveResult = .success(.init(ok: true, saved: true, saveCount: 7))
+        let saved = await vm.save()
+        #expect(saved?.saveCount == 7)
+        #expect(vm.isSaved)
+        #expect(vm.bookmarkLoaded)
+    }
 }
 
 // MARK: - Fake
@@ -112,5 +177,26 @@ private final class FakeCollectionDetailReading: CollectionDetailReading {
 
     func collection(slug _: String) async throws -> AtlasCollectionDetailResponse {
         try self.result.get()
+    }
+}
+
+@MainActor
+private final class FakeDetailBookmarking: CollectionBookmarking {
+    var stateResult: Result<AtlasSaveResponse, Error> = .success(
+        .init(ok: true, saved: false, saveCount: 0)
+    )
+    var saveResult: Result<AtlasSaveResponse, Error> = .success(
+        .init(ok: true, saved: true, saveCount: 1)
+    )
+
+    func savedCollections(lang _: TargetLanguage) async throws -> [AtlasCollection] { [] }
+    func collectionSaveState(slug _: String) async throws -> AtlasSaveResponse {
+        try self.stateResult.get()
+    }
+    func saveCollection(slug _: String) async throws -> AtlasSaveResponse {
+        try self.saveResult.get()
+    }
+    func unsaveCollection(slug _: String) async throws -> AtlasSaveResponse {
+        .init(ok: true, saved: false, saveCount: 0)
     }
 }

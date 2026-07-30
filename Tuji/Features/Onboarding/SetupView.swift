@@ -191,10 +191,14 @@ struct SetupView: View {
         guard !initializedDefaults, !categories.categories.isEmpty else { return }
         let allIds = Set(categories.categories.map(\.id))
         let preferred = Self.defaultTopicIds.filter { allIds.contains($0) }
+        let atlasDefaults = StudyCategoryDefaults.newUserCategoryIDs.filter {
+            allIds.contains($0)
+        }
         if preferred.count == Self.defaultTopicIds.count {
-            topicIds = Set(preferred)
+            topicIds = Set(preferred).union(atlasDefaults)
         } else {
             topicIds = Set(categories.categories.prefix(3).map(\.id))
+                .union(atlasDefaults)
         }
         initializedDefaults = true
     }

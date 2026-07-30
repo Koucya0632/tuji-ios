@@ -1,5 +1,6 @@
-// 自制圖鑑「管理」頁 (reached from 設定 → 自制圖鑑). List-based 查 + 刪 only:
-// browse the cards you've made, open one for a read-only look, or delete it.
+// 「圖鑑管理」把使用者自製的卡片與合集收在同一個分頁式入口。卡片頁是
+// list-based 查 + 刪：browse the cards you've made, open one for a read-only
+// look, or delete it.
 // Creating new cards lives in the camera quick-add flow (AtlasCaptureView);
 // editing (改) is a future addition that needs a backend PATCH endpoint.
 //
@@ -10,15 +11,106 @@
 import NukeUI
 import SwiftUI
 
+enum AtlasManagementSection: Hashable {
+    case cards
+    case collections
+}
+
 struct AtlasManageView: View {
+    @Environment(SettingsStore.self) private var settings
+
+    @State private var store = AtlasStore.shared
+    @State private var section: AtlasManagementSection
+    @State private var didVisitCollections: Bool
+    @State private var isSelectingCards = false
+    @State private var showCreateCollection = false
+
+    init(initialSection: AtlasManagementSection = .cards) {
+        _section = State(initialValue: initialSection)
+        _didVisitCollections = State(initialValue: initialSection == .collections)
+    }
+
+    private var canSelectCards: Bool {
+        let language = self.settings.current.learningDirection.targetLanguage
+        return self.store.images.contains { image in
+            guard let item = self.store.items.first(where: { $0.imageId == image.id }) else {
+                return true
+            }
+            return item.targetLanguage == language
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("管理內容", selection: self.$section) {
+                Text("圖鑑卡片").tag(AtlasManagementSection.cards)
+                Text("合集").tag(AtlasManagementSection.collections)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, Space.s6)
+            .padding(.vertical, Space.s3)
+            .background(.tujiBg)
+
+            ZStack {
+                AtlasCardsManagementPane(isSelecting: self.$isSelectingCards)
+                    .opacity(self.section == .cards ? 1 : 0)
+                    .allowsHitTesting(self.section == .cards)
+                    .accessibilityHidden(self.section != .cards)
+
+                if self.didVisitCollections {
+                    AtlasMyCollectionsView(showCreate: self.$showCreateCollection)
+                        .opacity(self.section == .collections ? 1 : 0)
+                        .allowsHitTesting(self.section == .collections)
+                        .accessibilityHidden(self.section != .collections)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .background(.tujiBg)
+        .navigationTitle("圖鑑管理")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                switch self.section {
+                case .cards:
+                    if self.canSelectCards {
+                        Button(self.isSelectingCards ? "完成" : "選取") {
+                            self.isSelectingCards.toggle()
+                        }
+                        .font(.system(size: 15, weight: .semibold))
+                        .tint(.tujiTeal)
+                    }
+                case .collections:
+                    Button {
+                        self.showCreateCollection = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .tint(.tujiTeal)
+                }
+            }
+        }
+        .onChange(of: self.section) { previous, current in
+            if current == .collections {
+                self.didVisitCollections = true
+            }
+            if previous == .cards {
+                self.isSelectingCards = false
+            }
+        }
+    }
+}
+
+private struct AtlasCardsManagementPane: View {
     @State private var store = AtlasStore.shared
     @State private var pendingDelete: AtlasImageSummary?
-    @State private var isSelecting = false
     @State private var selectedIds: Set<String> = []
     @State private var showBatchDeleteConfirm = false
     @State private var errorMessage: String?
     @State private var deleting = false
 
+    @Binding var isSelecting: Bool
     @Environment(SettingsStore.self) private var settings
 
     /// The manage list follows the learning direction, same as the 圖鑑 grid
@@ -86,20 +178,6 @@ struct AtlasManageView: View {
         }
         .scrollContentBackground(.hidden)
         .background(.tujiBg)
-        .navigationTitle("自制圖鑑")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                if !self.visibleImages.isEmpty {
-                    Button(self.isSelecting ? "完成" : "選取") {
-                        self.isSelecting.toggle()
-                        if !self.isSelecting { self.selectedIds.removeAll() }
-                    }
-                    .font(.system(size: 15, weight: .semibold))
-                    .tint(.tujiTeal)
-                }
-            }
-        }
         .safeAreaInset(edge: .bottom) {
             if self.isSelecting, !self.selectedIds.isEmpty {
                 self.deleteBar
@@ -130,6 +208,11 @@ struct AtlasManageView: View {
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
         .tujiStatusToast(isPresented: self.deleting, style: .deleting)
+        .onChange(of: self.isSelecting) { _, isSelecting in
+            if !isSelecting {
+                self.selectedIds.removeAll()
+            }
+        }
     }
 
     /// One card row. In selection mode it's a tappable checkbox row; otherwise

@@ -12,10 +12,12 @@ extension View {
             case let .search(query): SearchView(initialQuery: query)
             case .favorites: FavoritesView()
             case .settings: SettingsView()
-            case .atlasManage: AtlasManageView()
+            case .atlasManage: AtlasManageView(initialSection: .cards)
             case .atlasPublic: AtlasPublicFeedView()
-            case .atlasMyCollections: AtlasMyCollectionsView()
+            case .atlasMyCollections: AtlasManageView(initialSection: .collections)
             case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
+            case let .atlasCollectionDetail(slug, autoSave):
+                AtlasCollectionDetailView(slug: slug, autoSave: autoSave)
             case .studyCategories: StudyCategoriesPickerView()
             case let .studyLanding(mode): StudyLauncherView(mode: mode)
             // The id says where it goes. `saved:` items are other people's

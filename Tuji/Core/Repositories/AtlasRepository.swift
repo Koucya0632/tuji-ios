@@ -5,9 +5,9 @@ import Foundation
 /// `CollectionDetailReading`, `AuthorReading`, `PublicItemsReading`,
 /// `AtlasItemConsuming`, `CollectionManaging` — each conformed in its own file, so
 /// every consumer (and its test fake) depends only on the slice it uses. No screen
-/// binds to this concrete type any more. The only members behind no seam are
-/// `publicFeed` and `deleteCollection`, which have no caller (per ADR-0001's
-/// lazy-narrowing, a seam is carved when a consumer needs it).
+/// binds to this concrete type any more. The only member behind no seam is
+/// `publicFeed`, which has no caller (per ADR-0001's lazy-narrowing, a seam is
+/// carved when a consumer needs it).
 @MainActor
 struct LiveAtlasRepository {
     static let shared = LiveAtlasRepository()
@@ -157,6 +157,13 @@ struct LiveAtlasRepository {
 
     /// Saving is the CONSUMPTION path — it does not touch the user's 自製圖鑑
     /// capacity (docs/COMMUNITY_ATLAS_PLAN.md §4.1).
+    func saveState(slug: String) async throws -> AtlasSaveResponse {
+        try await self.api.get(
+            .atlasPublicSave(slug: slug),
+            cachePolicy: .reloadIgnoringLocalCacheData
+        )
+    }
+
     func save(slug: String) async throws -> AtlasSaveResponse {
         try await self.api.post(.atlasPublicSave(slug: slug), body: Empty())
     }
@@ -198,6 +205,28 @@ struct LiveAtlasRepository {
 
     func collection(slug: String) async throws -> AtlasCollectionDetailResponse {
         try await self.api.get(.atlasPublicCollection(slug: slug))
+    }
+
+    func savedCollections(lang: TargetLanguage) async throws -> [AtlasCollection] {
+        let response: AtlasPublicCollectionsResponse = try await self.api.get(
+            .atlasSavedCollections(lang: lang.rawValue, limit: 100)
+        )
+        return response.collections
+    }
+
+    func collectionSaveState(slug: String) async throws -> AtlasSaveResponse {
+        try await self.api.get(.atlasPublicCollectionSave(slug: slug))
+    }
+
+    func saveCollection(slug: String) async throws -> AtlasSaveResponse {
+        try await self.api.post(.atlasPublicCollectionSave(slug: slug), body: Empty())
+    }
+
+    func unsaveCollection(slug: String) async throws -> AtlasSaveResponse {
+        try await self.api.delete(
+            .atlasPublicCollectionSave(slug: slug),
+            as: AtlasSaveResponse.self
+        )
     }
 
     func myCollections() async throws -> [AtlasMyCollection] {

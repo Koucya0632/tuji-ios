@@ -38,6 +38,33 @@ struct AtlasPublicDetailVMTests {
     }
 
     @Test
+    func successfulSaveRefreshesCommunityWordsBeforeReturning() async {
+        let fake = FakeItemConsuming()
+        var refreshCount = 0
+        let vm = AtlasPublicDetailVM(item: self.item(), repo: fake) {
+            refreshCount += 1
+        }
+
+        let result = await vm.toggleSave()
+
+        #expect(result == true)
+        #expect(refreshCount == 1)
+    }
+
+    @Test
+    func reopeningLoadsExistingSaveState() async {
+        let fake = FakeItemConsuming()
+        fake.saveStateResult = .success(AtlasSaveResponse(ok: true, saved: true, saveCount: 5))
+        let vm = AtlasPublicDetailVM(item: self.item(), repo: fake)
+
+        await vm.loadSaveState()
+
+        #expect(vm.saved)
+        #expect(vm.saveCount == 5)
+        #expect(fake.loadedSlugs == ["s1"])
+    }
+
+    @Test
     func failedUnsaveKeepsSavedStateAndSurfacesError() async {
         let fake = FakeItemConsuming()
         fake.saveResult = .success(AtlasSaveResponse(ok: true, saved: true, saveCount: 1))
@@ -82,6 +109,11 @@ private enum FakeError: Error { case boom }
 
 @MainActor
 private final class FakeItemConsuming: AtlasItemConsuming {
+    var saveStateResult: Result<AtlasSaveResponse, Error> = .success(AtlasSaveResponse(
+        ok: true,
+        saved: false,
+        saveCount: 0
+    ))
     var saveResult: Result<AtlasSaveResponse, Error> = .success(AtlasSaveResponse(ok: true, saved: true, saveCount: 1))
     var unsaveResult: Result<AtlasSaveResponse, Error> = .success(AtlasSaveResponse(
         ok: true,
@@ -89,7 +121,13 @@ private final class FakeItemConsuming: AtlasItemConsuming {
         saveCount: 0
     ))
     var reportResult: Result<Void, Error> = .success(())
+    private(set) var loadedSlugs: [String] = []
     private(set) var reportedSlugs: [String] = []
+
+    func saveState(slug: String) async throws -> AtlasSaveResponse {
+        self.loadedSlugs.append(slug)
+        return try self.saveStateResult.get()
+    }
 
     func save(slug _: String) async throws -> AtlasSaveResponse {
         try self.saveResult.get()
