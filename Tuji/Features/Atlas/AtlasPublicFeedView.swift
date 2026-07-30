@@ -16,9 +16,30 @@ import SwiftUI
 struct AtlasPublicFeedView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
+    @Environment(AuthService.self) private var auth
+    @Environment(CollectionBookmarkStore.self) private var bookmarks
 
     @State private var vm = PublicFeedVM()
+    @State private var savedVM = SavedCollectionsVM()
     @State private var selectedCollection: AtlasCollection?
+    @State private var section: Section = .explore
+    @State private var savedShelfMounted = false
+
+    private enum Section: String, CaseIterable, Identifiable {
+        case explore
+        case saved
+
+        var id: String {
+            self.rawValue
+        }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .explore: "探索"
+            case .saved: "已收藏"
+            }
+        }
+    }
 
     /// The feed follows the user's current learning direction — Japanese learners
     /// see Japanese collections, English learners see English ones. There is no
@@ -30,6 +51,7 @@ struct AtlasPublicFeedView: View {
     var body: some View {
         VStack(spacing: 0) {
             self.header
+            self.segmentedControl
             self.content
         }
         .background(.tujiBg)
@@ -50,13 +72,22 @@ struct AtlasPublicFeedView: View {
                 pendingForce: self.feedRefresh.consume()
             )
         }
+        .task(id: self.savedLoadKey) {
+            guard self.section == .saved, self.isSignedIn else { return }
+            self.savedShelfMounted = true
+            await self.savedVM.load(lang: self.targetLanguage)
+        }
+        .onChange(of: self.bookmarks.revision) { _, _ in
+            guard let change = self.bookmarks.lastChange else { return }
+            self.vm.apply(change)
+            self.savedVM.apply(change, lang: self.targetLanguage)
+        }
     }
 
     // MARK: Header
 
     /// This tab is other people's work — 我的合集 lives in 我的, with the rest of
-    /// what the user makes. What stays here is the CTA at the foot of the feed,
-    /// where "看別人的 → 我也要做一個" actually happens.
+    /// what the user makes.
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("PUBLIC ATLAS")
@@ -77,8 +108,38 @@ struct AtlasPublicFeedView: View {
 
     // MARK: Content
 
-    @ViewBuilder
+    private var segmentedControl: some View {
+        Picker("公開圖鑑區段", selection: self.$section) {
+            ForEach(Section.allCases) { section in
+                Text(section.title).tag(section)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, Space.s6)
+        .padding(.bottom, Space.s3)
+    }
+
     private var content: some View {
+        ZStack {
+            self.exploreContent
+                .opacity(self.section == .explore ? 1 : 0)
+                .allowsHitTesting(self.section == .explore)
+                .accessibilityHidden(self.section != .explore)
+
+            if self.savedShelfMounted || self.section == .saved {
+                self.savedContent
+                    .opacity(self.section == .saved ? 1 : 0)
+                    .allowsHitTesting(self.section == .saved)
+                    .accessibilityHidden(self.section != .saved)
+            }
+        }
+        .onChange(of: self.section) { _, value in
+            if value == .saved { self.savedShelfMounted = true }
+        }
+    }
+
+    @ViewBuilder
+    private var exploreContent: some View {
         if case .loading = self.vm.phase {
             VStack {
                 Spacer()
@@ -104,8 +165,6 @@ struct AtlasPublicFeedView: View {
                                 self.selectedCollection = collection
                             }
                         }
-                        self.myCollectionsCTA
-                            .padding(.top, Space.s3)
                     }
                     .padding(.horizontal, Space.s6)
                     .padding(.top, Space.s1)
@@ -118,33 +177,68 @@ struct AtlasPublicFeedView: View {
         }
     }
 
-    /// Sits at the foot of the feed, after the user has seen what others made.
-    /// It's a shortcut into 我的合集, not a second home for it.
-    private var myCollectionsCTA: some View {
-        NavigationLink(value: NavRoute.atlasMyCollections) {
-            HStack(spacing: Space.s3) {
-                Image(systemName: "rectangle.stack.badge.plus")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.tujiTeal)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("建立你自己的合集")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.tujiInk)
-                    Text("把你公開的圖鑑整理成一份主題")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
+    @ViewBuilder
+    private var savedContent: some View {
+        if !self.isSignedIn {
+            VStack(spacing: Space.s4) {
+                Spacer()
+                Text("登入後才能查看已收藏的合集")
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiInk3)
+                BBtn(title: "登入", fullWidth: false) {
+                    self.auth.exitGuestMode()
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.tujiInk4)
+                Spacer()
             }
-            .padding(Space.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity)
+        } else if case .loading = self.savedVM.phase, self.savedVM.collections.isEmpty {
+            ProgressView()
+                .tint(.tujiTeal)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                if self.savedVM.collections.isEmpty {
+                    Text(self.savedVM.errorMessage == nil
+                        ? self.savedEmptyText
+                        : tujiLocalized("載入失敗，請稍後再試"))
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk3)
+                        .frame(maxWidth: .infinity)
+                        .containerRelativeFrame(.vertical)
+                } else {
+                    LazyVStack(spacing: Space.s3) {
+                        ForEach(self.savedVM.collections) { collection in
+                            AtlasCollectionCard(collection: collection) {
+                                self.selectedCollection = collection
+                            }
+                        }
+                    }
+                    .padding(.horizontal, Space.s6)
+                    .padding(.top, Space.s1)
+                    .padding(.bottom, Space.s8)
+                }
+            }
+            .scrollBounceBehavior(.always, axes: .vertical)
+            .refreshable {
+                await self.savedVM.load(lang: self.targetLanguage, force: true)
+            }
         }
-        .buttonStyle(.plain)
+    }
+
+    private var isSignedIn: Bool {
+        if case .signedIn = self.auth.state { return true }
+        return false
+    }
+
+    private var savedLoadKey: String {
+        "\(self.section.rawValue)-\(self.targetLanguage.rawValue)-\(self.isSignedIn)"
+    }
+
+    private var savedEmptyText: String {
+        switch self.targetLanguage {
+        case .ja: tujiLocalized("目前沒有收藏的日文合集")
+        case .en: tujiLocalized("目前沒有收藏的英文合集")
+        }
     }
 
     private var emptyState: some View {
@@ -162,12 +256,6 @@ struct AtlasPublicFeedView: View {
                 BBtn(title: "重試", fullWidth: false) {
                     Task { await self.vm.load(lang: self.targetLanguage, forceReload: true) }
                 }
-            } else {
-                // Nothing published in this language yet is exactly when being
-                // the first one to do it is worth offering.
-                self.myCollectionsCTA
-                    .padding(.horizontal, Space.s6)
-                    .padding(.top, Space.s3)
             }
             Spacer()
         }
@@ -376,9 +464,20 @@ struct AtlasPublicDetailView: View {
     /// may share a name, and only the handle is a valid path component.
     @State private var selectedAuthorHandle: String?
 
-    init(item: AtlasPublicItem, repo: AtlasItemConsuming = LiveAtlasRepository.shared) {
+    init(
+        item: AtlasPublicItem,
+        repo: AtlasItemConsuming = LiveAtlasRepository.shared,
+        refreshWords: @escaping @MainActor () async -> Void = {
+            StudyQueueStore.shared.invalidate()
+            await WordsStore.shared.reload()
+        }
+    ) {
         self.item = item
-        _vm = State(initialValue: AtlasPublicDetailVM(item: item, repo: repo))
+        _vm = State(initialValue: AtlasPublicDetailVM(
+            item: item,
+            repo: repo,
+            refreshWords: refreshWords
+        ))
     }
 
     var body: some View {
@@ -473,6 +572,11 @@ struct AtlasPublicDetailView: View {
                 .opacity(self.vm.busy ? 0.6 : 1)
                 .padding(.top, Space.s2)
 
+                Text("收藏後即可開始學習這些單詞")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
                 if let actionError = self.vm.actionError {
                     Text(actionError)
                         .font(.tujiCaption)
@@ -502,6 +606,7 @@ struct AtlasPublicDetailView: View {
         }
         .task {
             AnalyticsService.shared.track(.atlasPublicItemViewed)
+            await self.vm.loadSaveState()
         }
         .confirmationDialog("檢舉原因", isPresented: self.$showReport, titleVisibility: .visible) {
             ForEach(AtlasReportReason.allCases) { reason in

@@ -89,6 +89,10 @@ enum Endpoint {
     case atlasPublicCollections(lang: String, limit: Int, cacheBust: String?)
     /// A public collection's detail (meta + author + member items).
     case atlasPublicCollection(slug: String)
+    /// Signed-in reader's saved collection shelf.
+    case atlasSavedCollections(lang: String, limit: Int)
+    /// Save state / save / unsave for one public collection.
+    case atlasPublicCollectionSave(slug: String)
 
     // MARK: - Billing (auth-protected)
 
@@ -157,6 +161,8 @@ enum Endpoint {
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
         case .atlasPublicCollections: "/api/atlas/public/collections"
         case let .atlasPublicCollection(slug): "/api/atlas/public/collections/\(slug)"
+        case .atlasSavedCollections: "/api/atlas/public/collections/saved"
+        case let .atlasPublicCollectionSave(slug): "/api/atlas/public/collections/\(slug)/save"
         case .billingVerify: "/api/billing/verify"
         case .search: "/api/search"
         case .events: "/api/events"
@@ -234,6 +240,11 @@ enum Endpoint {
                 URLQueryItem(name: "lang", value: lang),
                 URLQueryItem(name: "limit", value: String(limit))
             ] + (cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? [])
+        case let .atlasSavedCollections(lang, limit):
+            [
+                URLQueryItem(name: "lang", value: lang),
+                URLQueryItem(name: "limit", value: String(limit))
+            ]
         case let .atlasPublicAuthor(_, cacheBust):
             cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? []
         case let .atlasCollectionCandidates(lang):
@@ -271,6 +282,7 @@ enum Endpoint {
              .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
              .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
+             .atlasSavedCollections, .atlasPublicCollectionSave,
              .billingVerify:
             .reloadIgnoringLocalCacheData
         default:

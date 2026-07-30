@@ -1,24 +1,34 @@
 // 公開合集詳情（MOJi 風格）：封面做主題化 header + 目錄 / 簡介 tab。
 //
 // 資料來源：GET /api/atlas/public/collections/{slug}。目錄裡的項目沿用 AtlasPublicTile，
-// 點進去是既有的 AtlasPublicDetailView（逐張收藏 / 檢舉）——收藏維持逐張，合集層級只顯示數字。
+// 點進去是既有的 AtlasPublicDetailView（逐張收藏 / 檢舉）；封面標頭也提供整個合集的收藏操作。
 
 import Nuke
 import NukeUI
 import SwiftUI
 
 struct AtlasCollectionDetailView: View {
+    @Environment(AuthService.self) private var auth
+    @Environment(CollectionBookmarkStore.self) private var bookmarks
+    @Environment(DeepLinkCoordinator.self) private var deepLinks
+
     @State private var vm: CollectionDetailVM
     @State private var tab: Tab = .catalog
     @State private var selectedItem: AtlasPublicItem?
     @State private var selectedAuthorHandle: String?
+    @State private var showSignInPrompt = false
+    @State private var showUnsavePrompt = false
+    @State private var showBookmarkErrorPrompt = false
+
+    private let autoSave: Bool
 
     enum Tab: Hashable { case catalog, about }
 
     /// `preview` is the card data from the feed, so the header renders instantly
     /// while the member items load.
-    init(slug: String, preview: AtlasCollection? = nil) {
+    init(slug: String, preview: AtlasCollection? = nil, autoSave: Bool = false) {
         _vm = State(initialValue: CollectionDetailVM(slug: slug, preview: preview))
+        self.autoSave = autoSave
     }
 
     var body: some View {
@@ -36,7 +46,9 @@ struct AtlasCollectionDetailView: View {
                     self.errorState
                 }
             }
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("合集"))
         .navigationBarTitleDisplayMode(.inline)
@@ -46,9 +58,42 @@ struct AtlasCollectionDetailView: View {
         .navigationDestination(item: self.$selectedAuthorHandle) { handle in
             AtlasAuthorProfileView(handle: handle)
         }
-        .task(id: self.vm.slug) {
+        .task(id: self.loadKey) {
             await self.vm.load()
+            guard self.isSignedIn, !self.isOwnCollection else { return }
+            await self.vm.loadBookmarkState()
+            if self.autoSave, !self.vm.isSaved {
+                await self.saveCollection()
+            }
         }
+        .tujiPrompt(
+            isPresented: self.$showSignInPrompt,
+            style: .confirmation,
+            title: "登入後才能收藏合集",
+            primary: TujiPromptAction("登入") {
+                self.deepLinks.receive(.collection(slug: self.vm.slug, autoSave: true))
+                self.auth.exitGuestMode()
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showUnsavePrompt,
+            style: .confirmation,
+            title: "取消收藏這個合集？",
+            primary: TujiPromptAction("確定", role: .destructive) {
+                Task { await self.unsaveCollection() }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showBookmarkErrorPrompt,
+            style: .error,
+            title: "操作失敗",
+            message: "請稍後再試一次。",
+            primary: TujiPromptAction("確定") {
+                self.vm.dismissBookmarkActionError()
+            }
+        )
     }
 
     // MARK: Header
@@ -119,9 +164,11 @@ struct AtlasCollectionDetailView: View {
                     HStack(spacing: Space.s3) {
                         self.stat(icon: "square.stack", title: "內容", value: collection.itemCount)
                         self.stat(icon: "bookmark", title: "收藏", value: collection.saveCount)
+                        Spacer(minLength: Space.s2)
+                        self.bookmarkPill
                     }
                 }
-                Spacer(minLength: 0)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(Space.s4)
         }
@@ -134,6 +181,94 @@ struct AtlasCollectionDetailView: View {
             Text("\(value)").font(.system(size: 12, weight: .heavy))
         }
         .foregroundStyle(.white.opacity(0.95))
+    }
+
+    @ViewBuilder
+    private var bookmarkPill: some View {
+        if self.isOwnCollection {
+            self.pillLabel(icon: nil, title: "你的合集")
+        } else {
+            Button(action: self.bookmarkTapped) {
+                if self.vm.bookmarkBusy || (self.isSignedIn && !self.vm.bookmarkLoaded) {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(.white)
+                        .frame(minWidth: 88)
+                } else {
+                    self.pillLabel(
+                        icon: self.vm.isSaved ? "bookmark.fill" : "bookmark",
+                        title: self.vm.isSaved ? "已收藏" : "收藏合集"
+                    )
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(self.vm.bookmarkBusy)
+            .accessibilityLabel(self.vm.isSaved ? "已收藏" : "收藏合集")
+        }
+    }
+
+    private func pillLabel(icon: String?, title: LocalizedStringKey) -> some View {
+        HStack(spacing: 5) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .bold))
+            }
+            Text(title)
+                .font(.system(size: 12, weight: .bold))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, Space.s3)
+        .frame(height: 30)
+        .frame(minWidth: 88)
+        .background(.black.opacity(0.42), in: .capsule)
+    }
+
+    private func bookmarkTapped() {
+        guard self.isSignedIn else {
+            self.showSignInPrompt = true
+            return
+        }
+        if self.vm.isSaved {
+            self.showUnsavePrompt = true
+        } else {
+            Task { await self.saveCollection() }
+        }
+    }
+
+    private func saveCollection() async {
+        if let collection = await self.vm.save() {
+            self.bookmarks.publish(collection: collection, saved: true)
+        } else if self.vm.bookmarkActionError != nil {
+            self.showBookmarkErrorPrompt = true
+        }
+    }
+
+    private func unsaveCollection() async {
+        if let collection = await self.vm.unsave() {
+            self.bookmarks.publish(collection: collection, saved: false)
+        } else if self.vm.bookmarkActionError != nil {
+            self.showBookmarkErrorPrompt = true
+        }
+    }
+
+    private var signedInUser: SessionUser? {
+        if case let .signedIn(user) = self.auth.state { return user }
+        return nil
+    }
+
+    private var isSignedIn: Bool {
+        self.signedInUser != nil
+    }
+
+    private var isOwnCollection: Bool {
+        guard let username = self.signedInUser?.username,
+              let handle = self.vm.collection?.author?.handle
+        else { return false }
+        return username.caseInsensitiveCompare(handle) == .orderedSame
+    }
+
+    private var loadKey: String {
+        "\(self.vm.slug)-\(self.signedInUser?.id.uuidString ?? "guest")"
     }
 
     // MARK: Tabs
@@ -216,7 +351,7 @@ struct AtlasCollectionDetailView: View {
             Image(systemName: "square.stack.3d.up.slash")
                 .font(.system(size: 40))
                 .foregroundStyle(.tujiInk4)
-            Text(self.vm.errorMessage == nil
+            Text(self.vm.isUnavailable
                 ? tujiLocalized("找不到這個合集")
                 : tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBody)

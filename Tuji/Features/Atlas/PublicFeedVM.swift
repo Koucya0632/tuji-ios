@@ -63,4 +63,11 @@ final class PublicFeedVM {
             self.phase = .failed(error.localizedDescription)
         }
     }
+
+    func apply(_ change: CollectionBookmarkStore.Change) {
+        guard let index = self.collections.firstIndex(where: { $0.id == change.collection.id }) else {
+            return
+        }
+        self.collections[index] = change.collection
+    }
 }

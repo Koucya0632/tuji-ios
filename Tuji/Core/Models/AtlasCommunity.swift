@@ -251,6 +251,21 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
     var langBadge: String {
         self.targetLanguage.rawValue.uppercased()
     }
+
+    func withSaveCount(_ saveCount: Int) -> AtlasCollection {
+        AtlasCollection(
+            id: self.id,
+            slug: self.slug,
+            title: self.title,
+            description: self.description,
+            targetLanguage: self.targetLanguage,
+            author: self.author,
+            itemCount: self.itemCount,
+            saveCount: saveCount,
+            coverImageUrl: self.coverImageUrl,
+            publishedAt: self.publishedAt
+        )
+    }
 }
 
 /// GET /api/atlas/public/collections

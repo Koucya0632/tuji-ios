@@ -3,8 +3,8 @@
 // 資料來源：GET /api/atlas/public/authors/{handle} —— 作者身分 + 其已公開項目
 // + 累計被收藏數（docs/COMMUNITY_ATLAS_PLAN.md §3B/§3C）。公開、吃 CDN 快取。
 //
-// 同一個畫面服務兩種讀者。`isSelf` 只加兩樣東西：頂部一條「這是別人看到的你」
-// 橫幅，和一個直接開公開身分 sheet 的編輯入口——看到問題能當場改，迴圈是閉的。
+// 同一個畫面服務兩種讀者。`isSelf` 只加一個直接開公開身分 sheet 的編輯入口
+// ——看到問題能當場改，迴圈是閉的。
 // 其餘完全一致，因為這頁的價值就在於它就是別人看到的那一頁。
 
 import Nuke
@@ -27,9 +27,6 @@ struct AtlasAuthorProfileView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s5) {
-                if self.vm.isSelf {
-                    self.previewBanner
-                }
                 if let author = self.vm.author {
                     self.headerCard(author)
                     // A synthesized header (own page, nothing published yet) has
@@ -91,22 +88,6 @@ struct AtlasAuthorProfileView: View {
 
     // MARK: Self-view chrome
 
-    private var previewBanner: some View {
-        HStack(spacing: Space.s2) {
-            Image(systemName: "eye")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.tujiTeal)
-            Text("這是別人看到的你")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk2)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s3)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
-    }
-
     /// Pushes the profile editor rather than a sheet: 編輯個人資料 is now the
     /// single place the whole profile is edited, so the preview links to it
     /// instead of owning a second copy of the form.
@@ -124,24 +105,14 @@ struct AtlasAuthorProfileView: View {
 
     /// Three different nothings, and they mean different things: the author has
     /// published nothing yet, no such author exists, or the request failed.
-    /// Own page, nothing published. Shown under the header, so the title states
-    /// the situation and the button is the point.
+    /// Own page, nothing published. Shown under the header so the title states
+    /// the situation without adding another authoring shortcut.
     private var nothingPublishedYet: some View {
         MascotEmptyState(
             pose: .think,
             title: "你還沒有公開任何圖鑑",
             message: "公開之後，這裡就是別人看到的你。"
-        ) {
-            NavigationLink(value: NavRoute.atlasManage) {
-                Text("去自製圖鑑")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, Space.s5)
-                    .padding(.vertical, Space.s3)
-                    .background(.tujiTeal, in: .capsule)
-            }
-            .buttonStyle(.plain)
-        }
+        )
         .padding(.top, Space.s4)
     }
 

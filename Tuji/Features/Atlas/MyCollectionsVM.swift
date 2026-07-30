@@ -28,4 +28,18 @@ final class MyCollectionsVM {
         }
         self.loading = false
     }
+
+    func collections(for language: TargetLanguage) -> [AtlasMyCollection] {
+        self.collections.filter { $0.targetLanguage == language }
+    }
+
+    func prepend(_ collection: AtlasMyCollection) {
+        self.collections.removeAll { $0.id == collection.id }
+        self.collections.insert(collection, at: 0)
+    }
+
+    func delete(id: String) async throws {
+        try await self.repo.deleteCollection(id: id)
+        self.collections.removeAll { $0.id == id }
+    }
 }

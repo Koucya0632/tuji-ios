@@ -218,6 +218,15 @@ struct MainTabsView: View {
     }
 
     private func consumePendingLink() {
+        // A guest save intent must survive the root swap to Welcome and the
+        // whole sign-in flow. The newly mounted signed-in tab shell consumes it.
+        if let pending = self.deepLinks.pending,
+           case let .collection(_, autoSave) = pending,
+           autoSave,
+           self.user == nil
+        {
+            return
+        }
         guard let link = deepLinks.consume() else { return }
         // A deep link (e.g. push-notification tap) outranks the tour.
         if self.tourIndex != nil { self.skipTour() }

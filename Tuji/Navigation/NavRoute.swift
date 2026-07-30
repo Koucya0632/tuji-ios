@@ -10,13 +10,16 @@ enum NavRoute: Hashable {
     case search(query: String?)
     case favorites
     case settings
+    /// 圖鑑管理 — opens on the current user's 圖鑑卡片.
     case atlasManage
     /// 公開圖鑑 — other users' shared 圖鑑 (community).
     case atlasPublic
-    /// 我的合集 — the current user's own collections list.
+    /// Compatibility/deep-link route into 圖鑑管理's 合集 section.
     case atlasMyCollections
     /// 編輯合集 — create/edit a single collection (add members, cover, submit).
     case atlasCollectionEdit(id: String)
+    /// 公開合集詳情；autoSave is used only to resume a guest's interrupted save.
+    case atlasCollectionDetail(slug: String, autoSave: Bool)
     case studyCategories
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)

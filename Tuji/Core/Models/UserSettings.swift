@@ -52,7 +52,7 @@ struct UserSettings: Codable, Equatable {
         dailyGoal: 10,
         accent: "us",
         showZh: true,
-        studyCategories: [],
+        studyCategories: StudyCategoryDefaults.newUserCategoryIDs,
         studyDecks: [],
         learningDirection: .zhEn,
         uiLang: UILanguage.deviceDefault.rawValue,

@@ -71,6 +71,7 @@ final class SettingsStore {
     private(set) var hasLoaded: Bool = false
     private var saveTask: Task<Void, Never>?
     private let repository: UserRepository
+    private let communityCategoryMigration = CommunityStudyCategoryMigration()
 
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
     private let saveDebounce: Duration = .milliseconds(400)
@@ -112,15 +113,31 @@ final class SettingsStore {
         defer { self.loading = false }
         do {
             var settings = try await self.repository.loadSettings()
+            let signedInUser: SessionUser? = if case let .signedIn(user) = AuthService.shared.state {
+                user
+            } else {
+                nil
+            }
             // Before first-run setup completes, the server row is boilerplate
             // (uiLang defaults to zh-Hant), not a choice the user made. Keep
             // the locally detected device language so a ja/en-device user's
             // onboarding doesn't flip to Chinese mid-setup — SetupView then
             // persists the surviving value.
-            if case let .signedIn(user) = AuthService.shared.state,
+            if let user = signedInUser,
                !OnboardingState.shared.setupDone(for: user.id)
             {
                 settings.uiLang = self.current.uiLang
+            }
+            var migrationUserID: UUID?
+            var migrationNeedsSave = false
+            if let user = signedInUser,
+               OnboardingState.shared.setupDone(for: user.id),
+               !self.communityCategoryMigration.hasApplied(for: user.id)
+            {
+                let migrated = self.communityCategoryMigration.migrated(settings)
+                migrationUserID = user.id
+                migrationNeedsSave = migrated != settings
+                settings = migrated
             }
             let directionChanged =
                 self.current.learningDirection != settings.learningDirection
@@ -128,6 +145,24 @@ final class SettingsStore {
             UserDefaults.standard.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
             OnboardingState.shared.learningDirection = settings.learningDirection
             self.hasLoaded = true
+            if let migrationUserID {
+                if migrationNeedsSave {
+                    do {
+                        try await self.repository.saveSettings(settings)
+                        self.communityCategoryMigration.markApplied(for: migrationUserID)
+                        self.log.info("community study category migration saved")
+                    } catch {
+                        // Leave the marker unset so the migration retries on a
+                        // later launch instead of silently losing the server update.
+                        self.lastError = error
+                        self.log.error(
+                            "community study category migration failed: \(error.localizedDescription, privacy: .public)"
+                        )
+                    }
+                } else {
+                    self.communityCategoryMigration.markApplied(for: migrationUserID)
+                }
+            }
             if directionChanged {
                 WordsStore.shared.invalidate()
                 MasteryStore.shared.invalidate()

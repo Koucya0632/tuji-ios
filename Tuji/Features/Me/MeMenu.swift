@@ -4,8 +4,8 @@
 // list of destinations, and the only one that does anything more interesting
 // than push a route is 我的公開主頁, which owns its own lookup below.
 //
-// The grouping is the point. 創作 is what the user makes — 自製圖鑑, 我的合集,
-// and the public page those two feed into. 帳號 is the account and the things
+// The grouping is the point. 創作 is what the user makes — 圖鑑管理 and the
+// public page it feeds into. 帳號 is the account and the things
 // that act on the whole app. Before the split, both lived in one eight-row card
 // alongside Pro and 分享, which read as a junk drawer rather than a home.
 
@@ -93,12 +93,7 @@ struct MeCreationGroup: View {
     var body: some View {
         MeListCard(title: "創作") {
             NavigationLink(value: NavRoute.atlasManage) {
-                MeListRow(icon: "camera.fill", title: "自制圖鑑", tint: .tujiTeal)
-            }
-            .buttonStyle(.plain)
-            rowDivider
-            NavigationLink(value: NavRoute.atlasMyCollections) {
-                MeListRow(icon: "rectangle.stack.fill", title: "我的合集", tint: .tujiTeal)
+                MeListRow(icon: "rectangle.stack.fill", title: "圖鑑管理", tint: .tujiTeal)
             }
             .buttonStyle(.plain)
             rowDivider

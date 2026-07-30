@@ -25,12 +25,14 @@ enum TujiDeepLink: Hashable {
     case word(id: String)
     case category(id: String)
     case study(mode: StudyMode)
+    case collection(slug: String, autoSave: Bool)
 
     /// Which tab should be foregrounded before pushing the route.
     var tab: MainTab {
         switch self {
         case .today, .study: .today
         case .cards, .search, .word, .category: .cards
+        case .collection: .community
         case .favorites, .settings: .me
         }
     }
@@ -46,6 +48,8 @@ enum TujiDeepLink: Hashable {
         case let .word(id): .wordDetail(id: id)
         case let .category(id): .categoryDetail(id: id)
         case let .study(mode): .studyLanding(mode: mode)
+        case let .collection(slug, autoSave):
+            .atlasCollectionDetail(slug: slug, autoSave: autoSave)
         }
     }
 
@@ -90,6 +94,9 @@ enum TujiDeepLink: Hashable {
         case "category":
             guard segments.count >= 2 else { return nil }
             return .category(id: segments[1])
+        case "collection":
+            guard segments.count >= 2 else { return nil }
+            return .collection(slug: segments[1], autoSave: false)
         default:
             return nil
         }

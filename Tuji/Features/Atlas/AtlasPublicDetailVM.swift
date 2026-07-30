@@ -6,6 +6,8 @@
 //
 // Analytics stays in the view (VMs don't reach AnalyticsService): toggleSave
 // returns the resulting saved state so the view fires .atlasPublicSaved itself.
+// A successful save/unsave also refreshes WordsStore through an injected closure,
+// so the 圖鑑's 社群圖鑑 theme reflects the mutation before the action completes.
 
 import Foundation
 import Observation
@@ -22,10 +24,35 @@ final class AtlasPublicDetailVM {
     private(set) var reportSent = false
 
     private let repo: AtlasItemConsuming
+    private let refreshWords: @MainActor () async -> Void
 
-    init(item: AtlasPublicItem, repo: AtlasItemConsuming = LiveAtlasRepository.shared) {
+    init(
+        item: AtlasPublicItem,
+        repo: AtlasItemConsuming = LiveAtlasRepository.shared,
+        refreshWords: @escaping @MainActor () async -> Void = {}
+    ) {
         self.item = item
         self.repo = repo
+        self.refreshWords = refreshWords
+    }
+
+    /// Restores the account-specific save state whenever a detail screen is
+    /// created, instead of assuming every newly-created screen is unsaved.
+    func loadSaveState() async {
+        guard !self.busy else { return }
+        self.busy = true
+        self.actionError = nil
+        defer { self.busy = false }
+        do {
+            let response = try await self.repo.saveState(slug: self.item.slug)
+            self.saved = response.saved
+            self.saveCount = response.saveCount
+        } catch is CancellationError {
+            // Navigating away cancels the view task; no user-facing error needed.
+        } catch {
+            // This is a background refresh. If it fails, keep the safe default
+            // and let an explicit save/unsave action surface any real error.
+        }
     }
 
     /// Save when unsaved, unsave when saved. Returns the resulting saved state on
@@ -45,6 +72,7 @@ final class AtlasPublicDetailVM {
                 : try await self.repo.save(slug: self.item.slug)
             self.saved = response.saved
             self.saveCount = response.saveCount
+            await self.refreshWords()
             return response.saved
         } catch {
             self.actionError = error.localizedDescription
