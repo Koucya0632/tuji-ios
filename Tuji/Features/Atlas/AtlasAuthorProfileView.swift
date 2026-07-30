@@ -17,23 +17,11 @@ struct AtlasAuthorProfileView: View {
     @State private var vm: AuthorProfileVM
     @State private var selectedItem: AtlasPublicItem?
     @State private var selectedCollection: AtlasCollection?
-    @State private var editingIdentity: PublicAuthorIdentity?
-    @State private var loadingIdentity = false
-    @State private var identityError: String?
-
-    /// Narrow seam — the self-view reads the public identity to seed the edit
-    /// sheet; the sheet itself owns the write.
-    private let identities: PublicAuthorIdentityEditing
-
+    @State private var editing = false
     /// `handle` is the author's public handle (`profiles.username`) — the link
     /// target carried on public items, never the name shown on them.
-    init(
-        handle: String,
-        isSelf: Bool = false,
-        identities: PublicAuthorIdentityEditing = LiveUserRepository.shared
-    ) {
+    init(handle: String, isSelf: Bool = false) {
         _vm = State(initialValue: AuthorProfileVM(handle: handle, isSelf: isSelf))
-        self.identities = identities
     }
 
     var body: some View {
@@ -41,15 +29,6 @@ struct AtlasAuthorProfileView: View {
             VStack(spacing: Space.s5) {
                 if self.vm.isSelf {
                     self.previewBanner
-                }
-                // Above the fork, not inside the header: the edit button is
-                // reachable from the empty state too, so its failure has to be
-                // visible when there is no header to hang it under.
-                if let identityError {
-                    Text(identityError)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let author = self.vm.author {
                     self.headerCard(author)
@@ -86,12 +65,11 @@ struct AtlasAuthorProfileView: View {
         .navigationDestination(item: self.$selectedCollection) { collection in
             AtlasCollectionDetailView(slug: collection.slug, preview: collection)
         }
-        .sheet(item: self.$editingIdentity) { identity in
-            // A saved identity changes the very thing this page renders, so the
-            // page refetches — past both caches, since `isSelf` forces a reload.
-            PublicAuthorIdentitySheet(identity: identity) {
-                Task { await self.vm.load() }
-            }
+        // Refetch on the way back: the page renders the very fields that screen
+        // edits, and `isSelf` makes the reload bypass both caches.
+        .navigationDestination(isPresented: self.$editing) {
+            EditProfileView()
+                .onDisappear { Task { await self.vm.load() } }
         }
         // Analytics stays in the view (VMs don't reach AnalyticsService); track a
         // successful load once per author. Looking at your own page is not a
@@ -122,30 +100,16 @@ struct AtlasAuthorProfileView: View {
         .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
     }
 
+    /// Pushes the profile editor rather than a sheet: 編輯個人資料 is now the
+    /// single place the whole profile is edited, so the preview links to it
+    /// instead of owning a second copy of the form.
     private var editButton: some View {
         Button {
-            Task { await self.openIdentityEditor() }
+            self.editing = true
         } label: {
-            if self.loadingIdentity {
-                ProgressView().tint(.tujiTeal)
-            } else {
-                Text("編輯")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.tujiTeal)
-            }
-        }
-        .disabled(self.loadingIdentity)
-    }
-
-    private func openIdentityEditor() async {
-        guard !self.loadingIdentity else { return }
-        self.loadingIdentity = true
-        self.identityError = nil
-        defer { self.loadingIdentity = false }
-        do {
-            self.editingIdentity = try await self.identities.publicAuthorIdentity()
-        } catch {
-            self.identityError = error.localizedDescription
+            Text("編輯")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.tujiTeal)
         }
     }
 

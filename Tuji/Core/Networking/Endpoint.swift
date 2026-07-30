@@ -10,7 +10,6 @@ enum Endpoint {
 
     case usersMe
     case usersProfile
-    case usersPublicAuthor
     case usersSettings
     case usersFavorites
     case usersLearned
@@ -113,7 +112,6 @@ enum Endpoint {
         switch self {
         case .usersMe: "/api/users/me"
         case .usersProfile: "/api/users/profile"
-        case .usersPublicAuthor: "/api/users/public-author"
         case .usersSettings: "/api/users/settings"
         case .usersFavorites: "/api/users/favorites"
         case .usersLearned: "/api/users/learned"
@@ -265,7 +263,7 @@ enum Endpoint {
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
-             .usersFeedback, .usersCustomWords, .usersSavedWords, .usersPublicAuthor,
+             .usersFeedback, .usersCustomWords, .usersSavedWords,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemPublish, .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,

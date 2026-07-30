@@ -13,7 +13,7 @@ struct SignupView: View {
 
     @State private var email = ""
     @State private var password = ""
-    @State private var username = ""
+    @State private var nickname = ""
     @State private var showPwd = false
     @State private var showEmailConfirmation = false
 
@@ -21,8 +21,8 @@ struct SignupView: View {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private var trimmedUsername: String {
-        username.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var trimmedNickname: String {
+        nickname.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var passwordUsesAllowedCharacters: Bool {
@@ -35,7 +35,7 @@ struct SignupView: View {
         trimmedEmail.contains("@") &&
             password.count >= 8 &&
             passwordUsesAllowedCharacters &&
-            !trimmedUsername.isEmpty &&
+            !trimmedNickname.isEmpty &&
             !auth.loading
     }
 
@@ -68,7 +68,7 @@ struct SignupView: View {
 
                     field(
                         label: "暱稱",
-                        text: $username,
+                        text: $nickname,
                         placeholder: "想讓大家怎麼稱呼你",
                         keyboard: .default,
                         contentType: .username,
@@ -216,7 +216,7 @@ struct SignupView: View {
 
     private func submit() {
         Task {
-            let result = await auth.signUp(email: trimmedEmail, password: password, username: trimmedUsername)
+            let result = await auth.signUp(email: trimmedEmail, password: password, nickname: trimmedNickname)
             if result == .pendingEmailConfirmation {
                 showEmailConfirmation = true
             }

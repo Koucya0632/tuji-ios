@@ -75,10 +75,19 @@ struct UserSettingsResponse: Decodable {
 struct ProfileUpdatePayload: Encodable {
     let nickname: String?
     let avatar: String?
+    /// Public 簽名. Empty string clears it; omitting the key leaves it alone.
+    let bio: String?
+
+    init(nickname: String?, avatar: String?, bio: String? = nil) {
+        self.nickname = nickname
+        self.avatar = avatar
+        self.bio = bio
+    }
 }
 
 struct ProfileUpdateResponse: Decodable {
     let ok: Bool?
     let nickname: String?
     let avatar: String?
+    let bio: String?
 }
