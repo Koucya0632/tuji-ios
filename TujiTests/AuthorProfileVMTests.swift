@@ -87,14 +87,18 @@ struct AuthorProfileVMTests {
 
     // MARK: - notFound is not a failure
 
-    /// The one distinction the self-view is built on: 404 means "nothing
-    /// approved yet", which is the normal state of a new author, so it must not
-    /// arrive as an error with a retry button.
+    /// 404 means "nothing approved yet", which is the normal state of a new
+    /// author, so it must not arrive as an error with a retry button.
+    ///
+    /// Deliberately a VISITOR: the self case rebuilds an identity from an
+    /// authenticated route (see 「Own page with nothing published」 below), so
+    /// pinning the phase on `isSelf: true` would drag that behaviour in — and,
+    /// without an injected fake, would reach the live network to do it.
     @Test
     func notFoundLandsInItsOwnPhaseWithNoErrorMessage() async {
         let fake = FakeAuthorReading()
         fake.result = .failure(APIError.notFound)
-        let vm = AuthorProfileVM(handle: "mika_k", isSelf: true, repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", repo: fake, selfProfile: FakeSelfProfileReading())
 
         await vm.load()
 
@@ -122,7 +126,12 @@ struct AuthorProfileVMTests {
     @Test
     func selfViewForcesAReload() async {
         let fake = FakeAuthorReading()
-        let vm = AuthorProfileVM(handle: "mika_k", isSelf: true, repo: fake)
+        let vm = AuthorProfileVM(
+            handle: "mika_k",
+            isSelf: true,
+            repo: fake,
+            selfProfile: FakeSelfProfileReading()
+        )
 
         await vm.load()
 
@@ -137,6 +146,84 @@ struct AuthorProfileVMTests {
         await vm.load()
 
         #expect(fake.lastForceReload == false)
+    }
+
+    // MARK: - Own page with nothing published
+
+    // The public endpoint 404s for an account with no approved items — by
+    // design, so it cannot confirm whether a handle exists. But this is the
+    // screen where someone checks their own UID and 簽名, so the identity is
+    // rebuilt from an authenticated route instead.
+
+    @Test
+    func ownEmptyPageStillShowsTheIdentity() async {
+        let fake = FakeAuthorReading()
+        fake.result = .failure(APIError.notFound)
+        let me = FakeSelfProfileReading()
+        let vm = AuthorProfileVM(handle: "TJ73168628", isSelf: true, repo: fake, selfProfile: me)
+
+        await vm.load()
+
+        #expect(vm.phase == .notFound)
+        #expect(vm.author?.handle == "TJ73168628")
+        #expect(vm.author?.displayName == "Mika")
+        #expect(vm.author?.bio == "喜歡拍街上的招牌")
+        // Genuinely zero, not unknown.
+        #expect(vm.author?.publishedCount == 0)
+        #expect(vm.author?.saveCount == 0)
+    }
+
+    /// Same fallback the server applies: an empty 暱稱 is not an error, the UID
+    /// stands in for one. Diverging here would show a nameless author on the one
+    /// page that exists to tell you how you look.
+    @Test
+    func anEmptyNicknameFallsBackToTheUid() async {
+        let fake = FakeAuthorReading()
+        fake.result = .failure(APIError.notFound)
+        let me = FakeSelfProfileReading()
+        me.result = .success(UserMeResponse(
+            user: UserMeUser(
+                id: "u1", email: nil, username: "TJ00000042",
+                nickname: "   ", avatar: "face", bio: nil
+            ),
+            favorites: nil, learned: nil
+        ))
+        let vm = AuthorProfileVM(handle: "TJ00000042", isSelf: true, repo: fake, selfProfile: me)
+
+        await vm.load()
+
+        #expect(vm.author?.displayName == "TJ00000042")
+    }
+
+    /// Offline: the identity fetch fails too. The page must fall back to the
+    /// plain empty state rather than hang or show a half-built header.
+    @Test
+    func aFailedIdentityFetchLeavesTheHeaderOff() async {
+        let fake = FakeAuthorReading()
+        fake.result = .failure(APIError.notFound)
+        let me = FakeSelfProfileReading()
+        me.result = .failure(FakeError.boom)
+        let vm = AuthorProfileVM(handle: "TJ73168628", isSelf: true, repo: fake, selfProfile: me)
+
+        await vm.load()
+
+        #expect(vm.phase == .notFound)
+        #expect(vm.author == nil)
+    }
+
+    /// A visitor looking at an account with nothing published must still get
+    /// nothing — the endpoint's refusal to confirm a handle exists is the point.
+    @Test
+    func aVisitorNeverTriggersTheIdentityFallback() async {
+        let fake = FakeAuthorReading()
+        fake.result = .failure(APIError.notFound)
+        let me = FakeSelfProfileReading()
+        let vm = AuthorProfileVM(handle: "TJ73168628", repo: fake, selfProfile: me)
+
+        await vm.load()
+
+        #expect(vm.author == nil)
+        #expect(me.called == false)
     }
 
     // MARK: - Language grouping
@@ -324,6 +411,31 @@ private final class FakeAuthorReading: AuthorReading {
 
     func author(handle _: String, forceReload: Bool) async throws -> AtlasAuthorResponse {
         self.lastForceReload = forceReload
+        return try self.result.get()
+    }
+}
+
+@MainActor
+private final class FakeSelfProfileReading: SelfProfileReading {
+    var result: Result<UserMeResponse, Error> = .success(
+        UserMeResponse(
+            user: UserMeUser(
+                id: "u1",
+                email: "mika@example.com",
+                username: "TJ73168628",
+                nickname: "Mika",
+                avatar: "wave",
+                bio: "喜歡拍街上的招牌"
+            ),
+            favorites: nil,
+            learned: nil
+        )
+    )
+
+    private(set) var called = false
+
+    func loadMe() async throws -> UserMeResponse {
+        self.called = true
         return try self.result.get()
     }
 }

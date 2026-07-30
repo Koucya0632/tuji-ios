@@ -32,12 +32,19 @@ struct AtlasAuthorProfileView: View {
                 }
                 if let author = self.vm.author {
                     self.headerCard(author)
-                    if self.vm.showsSegmentedControl {
-                        self.segmentPicker
-                    }
-                    switch self.vm.visibleSegment {
-                    case .collections: self.collectionsSection
-                    case .items: self.itemsSection
+                    // A synthesized header (own page, nothing published yet) has
+                    // no segments to show — the counts above already say zero, so
+                    // what is useful here is the way out.
+                    if case .notFound = self.vm.phase {
+                        self.nothingPublishedYet
+                    } else {
+                        if self.vm.showsSegmentedControl {
+                            self.segmentPicker
+                        }
+                        switch self.vm.visibleSegment {
+                        case .collections: self.collectionsSection
+                        case .items: self.itemsSection
+                        }
                     }
                 } else if case .loading = self.vm.phase {
                     ProgressView()
@@ -117,26 +124,35 @@ struct AtlasAuthorProfileView: View {
 
     /// Three different nothings, and they mean different things: the author has
     /// published nothing yet, no such author exists, or the request failed.
+    /// Own page, nothing published. Shown under the header, so the title states
+    /// the situation and the button is the point.
+    private var nothingPublishedYet: some View {
+        MascotEmptyState(
+            pose: .think,
+            title: "你還沒有公開任何圖鑑",
+            message: "公開之後，這裡就是別人看到的你。"
+        ) {
+            NavigationLink(value: NavRoute.atlasManage) {
+                Text("去自製圖鑑")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, Space.s5)
+                    .padding(.vertical, Space.s3)
+                    .background(.tujiTeal, in: .capsule)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, Space.s4)
+    }
+
     @ViewBuilder
     private var blankState: some View {
         switch self.vm.phase {
+        // Own page AND the identity fetch also failed — offline, most likely.
+        // Falls back to the same card without a header above it.
         case .notFound where self.vm.isSelf:
-            MascotEmptyState(
-                pose: .think,
-                title: "你還沒有公開任何圖鑑",
-                message: "公開之後，這裡就是別人看到的你。"
-            ) {
-                NavigationLink(value: NavRoute.atlasManage) {
-                    Text("去自製圖鑑")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, Space.s5)
-                        .padding(.vertical, Space.s3)
-                        .background(.tujiTeal, in: .capsule)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.top, Space.s8)
+            self.nothingPublishedYet
+                .padding(.top, Space.s8)
         case .notFound:
             self.plainBlank(
                 icon: "person.crop.circle.badge.questionmark",
@@ -181,7 +197,10 @@ struct AtlasAuthorProfileView: View {
                 Text(author.displayName)
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
-                Text("@\(author.handle)")
+                // "UID: " rather than "@": the @ form promises a handle you
+                // could type or mention, and this is a machine-assigned code
+                // nobody ever types.
+                Text(verbatim: "\(tujiLocalized("UID")): \(author.handle)")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
             }
@@ -202,9 +221,6 @@ struct AtlasAuthorProfileView: View {
                 // The altruistic signal: how much this author's work has helped
                 // others (docs/COMMUNITY_ATLAS_PLAN.md §3C).
                 self.stat(value: "\(author.saveCount)", label: tujiLocalized("被收藏"))
-                if let joined = author.joinedAt, !joined.isEmpty {
-                    self.stat(value: String(joined.prefix(7)), label: tujiLocalized("加入"))
-                }
             }
             .padding(.top, Space.s1)
         }
