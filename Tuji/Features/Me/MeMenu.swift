@@ -42,7 +42,6 @@ struct MeListRow: View {
     let title: LocalizedStringKey
     let tint: Color
     var subtitle: LocalizedStringKey?
-    var trailing: MeListRowTrailing = .chevron
 
     var body: some View {
         HStack(spacing: Space.s3) {
@@ -61,14 +60,9 @@ struct MeListRow: View {
                 }
             }
             Spacer()
-            switch self.trailing {
-            case .chevron:
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.tujiInk4)
-            case .spinner:
-                ProgressView().tint(.tujiTeal)
-            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.tujiInk4)
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s4)
@@ -77,11 +71,6 @@ struct MeListRow: View {
         // text/icon glyphs.
         .contentShape(Rectangle())
     }
-}
-
-enum MeListRowTrailing {
-    case chevron
-    case spinner
 }
 
 private var rowDivider: some View {
@@ -97,11 +86,9 @@ private var rowDivider: some View {
 /// Account-scoped in full, so the caller hides the whole group for guests rather
 /// than showing rows that could only fail.
 struct MeCreationGroup: View {
-    let identities: PublicAuthorIdentityEditing
-    /// Confirmed identity → open this handle's public page.
+    /// The signed-in user's UID, or nil while the session is still settling.
+    let uid: String?
     let onOpenPublicProfile: (String) -> Void
-    /// No confirmed identity yet → there is no page, so ask for consent first.
-    let onNeedsConsent: (PublicAuthorIdentity) -> Void
 
     var body: some View {
         MeListCard(title: "創作") {
@@ -115,74 +102,31 @@ struct MeCreationGroup: View {
             }
             .buttonStyle(.plain)
             rowDivider
-            MePublicProfileRow(
-                identities: self.identities,
-                onOpenPublicProfile: self.onOpenPublicProfile,
-                onNeedsConsent: self.onNeedsConsent
-            )
+            MePublicProfileRow(uid: self.uid, onOpenPublicProfile: self.onOpenPublicProfile)
         }
     }
 }
 
-/// Always shown, and it costs the 我的 tab no fetch: which of the two things
-/// this row does is decided on tap, not on appearance. Resolving the consent
-/// state up front would put a no-store round trip on every visit to a hot tab,
-/// to change nothing but a subtitle.
-///
-/// The row owns the lookup and its own spinner/error; the caller owns the two
-/// destinations, because those are its sheet and its navigation stack.
+/// Opens the user's own author page. No lookup: the UID is already in the
+/// session, and there is no longer a second thing this row might do — the
+/// consent step it used to branch to no longer exists.
 struct MePublicProfileRow: View {
-    let identities: PublicAuthorIdentityEditing
+    let uid: String?
     let onOpenPublicProfile: (String) -> Void
-    let onNeedsConsent: (PublicAuthorIdentity) -> Void
-
-    @State private var loading = false
-    @State private var error: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            Button {
-                Task { await self.resolve() }
-            } label: {
-                MeListRow(
-                    icon: "person.crop.circle.fill",
-                    title: "我的公開主頁",
-                    tint: .tujiTeal,
-                    subtitle: "別人看到的你",
-                    trailing: self.loading ? .spinner : .chevron
-                )
-            }
-            .buttonStyle(.plain)
-            .disabled(self.loading)
-
-            if let error = self.error {
-                Text(error)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, Space.s4)
-                    .padding(.bottom, Space.s3)
-            }
+        Button {
+            if let uid = self.uid { self.onOpenPublicProfile(uid) }
+        } label: {
+            MeListRow(
+                icon: "person.crop.circle.fill",
+                title: "我的公開主頁",
+                tint: .tujiTeal,
+                subtitle: "別人看到的你"
+            )
         }
-    }
-
-    /// Confirmed → the page itself, 404 and all: the profile knows how to say
-    /// 「你還沒有公開任何圖鑑」 better than a disabled row would.
-    private func resolve() async {
-        guard !self.loading else { return }
-        self.loading = true
-        self.error = nil
-        defer { self.loading = false }
-        do {
-            let identity = try await self.identities.publicAuthorIdentity()
-            if identity.confirmed {
-                self.onOpenPublicProfile(identity.handle)
-            } else {
-                self.onNeedsConsent(identity)
-            }
-        } catch {
-            self.error = error.localizedDescription
-        }
+        .buttonStyle(.plain)
+        .disabled(self.uid == nil)
     }
 }
 

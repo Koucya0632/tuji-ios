@@ -9,8 +9,13 @@ import Foundation
 struct UserMeUser: Decodable, Hashable {
     let id: String
     let email: String?
+    /// The public UID (`TJ` + 8 digits). System-assigned, never editable.
     let username: String?
+    let nickname: String?
     let avatar: String?
+    /// Public 簽名. The only server-side read path for it, so 編輯個人資料
+    /// seeds its field from here rather than from the cached session.
+    let bio: String?
 }
 
 struct UserMeResponse: Decodable {

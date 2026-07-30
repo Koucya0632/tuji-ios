@@ -98,7 +98,11 @@ final class AuthService {
 
     // MARK: - Email
 
-    func signUp(email: String, password: String, username: String) async -> SignUpResult {
+    /// `nickname` is the display name the user typed on the signup form. It is
+    /// seeded into the profile by `handle_new_user()` — which is safe precisely
+    /// because they typed it. The UID is minted server-side and is not
+    /// influenced by anything sent here.
+    func signUp(email: String, password: String, nickname: String) async -> SignUpResult {
         loading = true
         error = nil
         defer { loading = false }
@@ -106,7 +110,7 @@ final class AuthService {
             let resp = try await supabase.auth.signUp(
                 email: email,
                 password: password,
-                data: ["username": .string(username)],
+                data: ["nickname": .string(nickname)],
                 redirectTo: emailConfirmationRedirectURL
             )
             if let session = resp.session {
@@ -144,9 +148,14 @@ final class AuthService {
 
     /// Validates an Apple ID token against Supabase via signInWithIdToken. The
     /// raw `nonce` must match the SHA256 the button put on the Apple request.
-    /// `fullName` is non-nil only on the user's FIRST authorization (Apple
-    /// policy), so we capture it then — see captureAppleNameIfNeeded.
-    func signInWithApple(idToken: String, nonce: String, fullName: String?) async {
+    ///
+    /// `fullName` is accepted and deliberately DISCARDED. Apple sends it only on
+    /// the first authorization, and we used to persist it into `nickname` — a
+    /// real name the user never typed, written silently. That is now the display
+    /// name shown on every public page, so seeding it would publish a legal name
+    /// nobody offered. A name reaches the community only by being typed into a
+    /// field labelled 暱稱.
+    func signInWithApple(idToken: String, nonce: String, fullName _: String?) async {
         loading = true
         error = nil
         defer { loading = false }
@@ -160,7 +169,6 @@ final class AuthService {
             )
             state = .signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
-            await captureAppleNameIfNeeded(fullName)
             log.info("apple signin ok uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             self.error = friendly(error)
@@ -277,31 +285,6 @@ final class AuthService {
             return fallback
         }
         return baseURL.appending(path: "auth/confirmed")
-    }
-
-    /// Apple hands over the user's name only on the FIRST authorization, so a
-    /// present name means a fresh account — persist it as the nickname while we
-    /// have the one chance (design book §Auth). Skips if a nickname already
-    /// exists. Best-effort: failures are logged and swallowed.
-    ///
-    /// This writes a REAL NAME the user never typed, silently. `nickname` is an
-    /// in-app greeting until the user accepts it in 公開作者身分, and only then
-    /// does it become their public display name — so nothing may render it,
-    /// send it, or serialize it into a public payload on the strength of it
-    /// merely being set. The community layer shipped a version that did
-    /// (`displayName: nickname ?? username`), which would have printed Apple
-    /// full names and email prefixes on the public wall; the server now refuses
-    /// to name anyone whose `public_author_confirmed_at` is NULL.
-    private func captureAppleNameIfNeeded(_ fullName: String?) async {
-        guard let fullName, !fullName.isEmpty else { return }
-        guard case let .signedIn(user) = state, (user.nickname ?? "").isEmpty else { return }
-        do {
-            _ = try await self.users.updateProfile(ProfileUpdatePayload(nickname: fullName, avatar: nil))
-            applyNickname(fullName)
-            log.info("captured apple full name into profile")
-        } catch {
-            log.error("apple name capture failed: \(error.localizedDescription, privacy: .public)")
-        }
     }
 
     // MARK: - Helpers

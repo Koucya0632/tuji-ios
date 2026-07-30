@@ -65,12 +65,6 @@ struct MeView: View {
     @State private var showFeedback = false
     @State private var showSignOutConfirm = false
     @State private var selfProfile: SelfProfileTarget?
-    @State private var editingIdentity: PublicAuthorIdentity?
-
-    /// Narrow seam — Me only reads the public identity to decide where the
-    /// 我的公開主頁 row goes; the sheet owns the write. Handed to the row, which
-    /// owns the lookup; Me owns only the two destinations it resolves to.
-    private let identities: PublicAuthorIdentityEditing = LiveUserRepository.shared
 
     /// Prefer the server-authoritative Atlas entitlement (kept warm by the
     /// `.task` sync below) over the device-local StoreKit flag: `store.isPro`
@@ -111,9 +105,8 @@ struct MeView: View {
                 // whole group hidden rather than a row that can only fail.
                 if !self.isGuest {
                     MeCreationGroup(
-                        identities: self.identities,
-                        onOpenPublicProfile: { self.selfProfile = SelfProfileTarget(handle: $0) },
-                        onNeedsConsent: { self.editingIdentity = $0 }
+                        uid: self.user?.username,
+                        onOpenPublicProfile: { self.selfProfile = SelfProfileTarget(handle: $0) }
                     )
                 }
                 MeAccountGroup(
@@ -165,13 +158,6 @@ struct MeView: View {
         }
         .sheet(isPresented: self.$showFeedback) {
             FeedbackSheet()
-        }
-        // Reached only from the row below, and only when there is no confirmed
-        // identity yet. Not auto-pushing the profile afterwards is deliberate: a
-        // just-confirmed author has nothing approved, so it would land them on an
-        // empty page as the reward for consenting.
-        .sheet(item: self.$editingIdentity) { identity in
-            PublicAuthorIdentitySheet(identity: identity)
         }
         .tujiPrompt(
             isPresented: self.$showSignOutConfirm,

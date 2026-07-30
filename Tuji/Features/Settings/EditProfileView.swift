@@ -1,8 +1,14 @@
-// EditProfile (§III.N). Editable nickname over the read-only handle.
-// The nickname and one of the six official mascot poses can be edited here.
-// Saves through /api/users/profile and updates the in-memory session
-// immediately. Dirty-state is local because profile data uses a separate
-// endpoint from /api/users/settings.
+// 編輯個人資料 — the one screen that owns the whole profile.
+//
+// It used to be two: this one edited a *private* in-app greeting, and a
+// separate 公開作者身分 sheet published an identity and asked consent for it.
+// That split existed because `username` defaulted to the email local part and
+// `nickname` was silently seeded from the Apple Sign-In full name, so the app
+// held personal data in fields the community layer wanted to show.
+//
+// Neither is true any more. The UID is machine-minted and immutable, and no
+// name is ever written that the user did not type here. So there is one screen,
+// everything on it is public, and there is nothing left to consent to.
 
 import OSLog
 import SwiftUI
@@ -11,18 +17,27 @@ struct EditProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
     private let users: UserRepository = LiveUserRepository.shared
-    /// Narrow seam — this screen only reads the public identity, the sheet writes it.
-    private let identities: PublicAuthorIdentityEditing = LiveUserRepository.shared
 
     @State private var nickname: String = ""
+    @State private var bio: String = ""
     @State private var pose: MascotPose = .face
     @State private var saving = false
+    @State private var loading = true
     @State private var error: Error?
-    @State private var initialized = false
-    @State private var loadingIdentity = false
-    @State private var publicIdentity: PublicAuthorIdentity?
+    /// What the server had when the screen opened, so `dirty` compares against
+    /// the truth rather than against a stale session copy.
+    @State private var loaded: Loaded?
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "edit-profile")
+
+    private struct Loaded: Equatable {
+        var nickname: String
+        var bio: String
+        var pose: MascotPose
+    }
+
+    static let nicknameMax = 20
+    static let bioMax = 80
 
     var body: some View {
         ScrollView {
@@ -30,8 +45,8 @@ struct EditProfileView: View {
                 self.heroAvatar
                 self.avatarPicker
                 self.nicknameField
-                self.handleField
-                self.publicAuthorLink
+                self.bioField
+                self.uidField
                 if let error {
                     Text(error.localizedDescription)
                         .font(.tujiCaption)
@@ -53,15 +68,12 @@ struct EditProfileView: View {
                 } label: {
                     Text(self.saving ? LocalizedStringKey("儲存中…") : LocalizedStringKey("儲存"))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(self.dirty && !self.saving ? .tujiTeal : .tujiInk4)
+                        .foregroundStyle(self.canSave ? .tujiTeal : .tujiInk4)
                 }
-                .disabled(!self.dirty || self.saving)
+                .disabled(!self.canSave)
             }
         }
-        .onAppear { self.initialize() }
-        .sheet(item: self.$publicIdentity) { identity in
-            PublicAuthorIdentitySheet(identity: identity)
-        }
+        .task { await self.load() }
     }
 
     private var heroAvatar: some View {
@@ -111,7 +123,7 @@ struct EditProfileView: View {
                 .font(.tujiOverline)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
-            TextField("輸入暱稱", text: self.$nickname)
+            TextField("大家會怎麼稱呼你", text: self.$nickname)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .font(.tujiBody)
@@ -120,123 +132,139 @@ struct EditProfileView: View {
                 .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                        .stroke(
+                            self.nicknameIsValid ? .tujiInk4.opacity(0.25) : Color.tujiCoral,
+                            lineWidth: 1
+                        )
                 )
-            Text("最長 20 字")
+            // Not required: an empty 暱稱 falls back to the UID, which is a
+            // valid public identity rather than an error state.
+            Text("最長 20 字，留空就顯示你的 UID")
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiInk4)
         }
     }
 
-    private var handleField: some View {
+    private var bioField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text("Handle")
+            Text("簽名")
                 .font(.tujiOverline)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
-            Text("@\(self.handleFromAuth)")
+            TextField("介紹一下你自己", text: self.$bio, axis: .vertical)
+                .lineLimit(2...4)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .font(.tujiBody)
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s3)
+                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Radius.md)
+                        .stroke(
+                            self.bioIsValid ? .tujiInk4.opacity(0.25) : Color.tujiCoral,
+                            lineWidth: 1
+                        )
+                )
+            HStack {
+                Text("不能放網址或個人資訊")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk4)
+                Spacer()
+                Text(verbatim: "\(Self.bioMax - self.trimmedBio.count)")
+                    .font(.tujiCaption)
+                    .foregroundStyle(self.bioIsValid ? .tujiInk4 : .tujiCoral)
+                    .monospacedDigit()
+            }
+        }
+    }
+
+    /// Read-only by design: the UID is the one thing on this screen the user
+    /// cannot change, and it is what every author link points at.
+    private var uidField: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("UID")
+                .font(.tujiOverline)
+                .tracking(2)
+                .foregroundStyle(.tujiInk3)
+            Text(self.uid)
                 .font(.tujiMono)
                 .foregroundStyle(.tujiInk3)
                 .padding(.horizontal, Space.s4)
                 .padding(.vertical, Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(.tujiInk4.opacity(0.06), in: .rect(cornerRadius: Radius.md))
-            Text("在「公開作者身分」裡修改")
+            Text("系統自動配發，不能修改")
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiInk4)
         }
     }
 
-    /// Entry point for editing what the community sees. Deliberately separate
-    /// from the fields above: those are the in-app greeting, this is what gets
-    /// published — and only this one asks for consent.
-    private var publicAuthorLink: some View {
-        Button {
-            Task { await self.openPublicAuthor() }
-        } label: {
-            HStack(spacing: Space.s3) {
-                Image(systemName: "person.crop.circle.badge.checkmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tujiTeal)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("公開作者身分")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.tujiInk)
-                    Text("公開圖鑑上其他人看到的名字")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk3)
-                }
-                Spacer(minLength: 0)
-                if self.loadingIdentity {
-                    ProgressView().tint(.tujiTeal)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.tujiInk4)
-                }
-            }
-            .padding(Space.s4)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
-        }
-        .buttonStyle(.plain)
-        .disabled(self.loadingIdentity)
-    }
-
     // MARK: - State
 
-    private func openPublicAuthor() async {
-        guard !self.loadingIdentity else { return }
-        self.loadingIdentity = true
-        defer { self.loadingIdentity = false }
-        do {
-            self.publicIdentity = try await self.identities.publicAuthorIdentity()
-        } catch {
-            self.error = error
+    private var uid: String {
+        if case let .signedIn(user) = auth.state, let uid = user.username, !uid.isEmpty {
+            return uid
         }
+        return "—"
     }
 
-    private var handleFromAuth: String {
-        if case let .signedIn(user) = auth.state, let handle = user.username, !handle.isEmpty {
-            return handle
-        }
-        return "guest"
+    private var trimmedNickname: String {
+        self.nickname.trimmingCharacters(in: .whitespaces)
     }
 
-    private func initialize() {
-        guard !self.initialized else { return }
-        if case let .signedIn(user) = auth.state {
-            self.nickname = user.nickname ?? ""
-            // Pose is shown read-only (editing disabled for now).
-            self.pose = MascotPose(rawValue: user.avatar ?? "") ?? .face
-        }
-        self.initialized = true
+    private var trimmedBio: String {
+        self.bio.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var nicknameIsValid: Bool {
+        self.trimmedNickname.count <= Self.nicknameMax
+    }
+
+    private var bioIsValid: Bool {
+        self.trimmedBio.count <= Self.bioMax
     }
 
     private var dirty: Bool {
+        guard let loaded else { return false }
+        return Loaded(nickname: self.trimmedNickname, bio: self.trimmedBio, pose: self.pose) != loaded
+    }
+
+    private var canSave: Bool {
+        self.dirty && !self.saving && !self.loading && self.nicknameIsValid && self.bioIsValid
+    }
+
+    /// The 簽名 has no other read path, so the screen loads its own copy rather
+    /// than seeding from the cached session (which carries no bio at all).
+    private func load() async {
+        guard self.loading else { return }
+        defer { self.loading = false }
+        var seeded = Loaded(nickname: "", bio: "", pose: .face)
         if case let .signedIn(user) = auth.state {
-            let oldNick = user.nickname ?? ""
-            let oldPose = MascotPose(rawValue: user.avatar ?? "") ?? .face
-            return self.nickname != oldNick || self.pose != oldPose
+            seeded.nickname = user.nickname ?? ""
+            seeded.pose = MascotPose(rawValue: user.avatar ?? "") ?? .face
         }
-        return false
+        if let me = try? await self.users.loadMe().user {
+            seeded.nickname = me.nickname ?? seeded.nickname
+            seeded.bio = me.bio ?? ""
+            seeded.pose = MascotPose(rawValue: me.avatar ?? "") ?? seeded.pose
+        }
+        self.nickname = seeded.nickname
+        self.bio = seeded.bio
+        self.pose = seeded.pose
+        self.loaded = seeded
     }
 
     private func save() async {
-        let trimmed = self.nickname.trimmingCharacters(in: .whitespaces)
-        guard trimmed.count <= 20 else {
-            self.error = NSError(
-                domain: "tuji.profile",
-                code: 0,
-                userInfo: [NSLocalizedDescriptionKey: tujiLocalized("暱稱不能超過 20 字")]
-            )
-            return
-        }
         self.saving = true
         self.error = nil
         defer { self.saving = false }
-        let newNickname = trimmed.isEmpty ? nil : trimmed
-        let payload = ProfileUpdatePayload(nickname: newNickname, avatar: self.pose.rawValue)
+        let newNickname = self.trimmedNickname.isEmpty ? nil : self.trimmedNickname
+        let payload = ProfileUpdatePayload(
+            nickname: newNickname,
+            avatar: self.pose.rawValue,
+            bio: self.trimmedBio
+        )
         do {
             _ = try await self.users.updateProfile(payload)
             self.log.info("profile saved")

@@ -940,6 +940,28 @@
         }
       }
     },
+    "UID" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UID"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UID"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UID"
+          }
+        }
+      }
+    },
     "uid %@" : {
       "comment" : "A label showing a user's unique identifier.",
       "extractionState" : "stale",
@@ -3027,6 +3049,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最长 20 字，之后可以修改"
+          }
+        }
+      }
+    },
+    "最長 20 字，留空就顯示你的 UID" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up to 20 characters. Leave blank to show your UID."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "20 文字まで。空欄なら UID が表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最长 20 字，留空就显示你的 UID"
           }
         }
       }
@@ -10037,6 +10081,28 @@
         }
       }
     },
+    "簽名" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ひとこと"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "签名"
+          }
+        }
+      }
+    },
     "精通" : {
       "comment" : "Mastery level 4 (score 80-100): mastered the word.",
       "localizations" : {
@@ -10056,6 +10122,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "精通"
+          }
+        }
+      }
+    },
+    "系統自動配發，不能修改" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Assigned automatically; cannot be changed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動で割り当てられ、変更できません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统自动配发，不能修改"
           }
         }
       }
