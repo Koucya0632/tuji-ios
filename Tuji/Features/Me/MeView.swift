@@ -39,17 +39,6 @@ final class MeVM {
     }
 }
 
-/// Target of the 我的公開主頁 push. A distinct type rather than another
-/// `String?`, so it can't be confused with `peekId`'s destination — two
-/// `navigationDestination(item:)` on one view must not share an item type.
-private struct SelfProfileTarget: Identifiable, Hashable {
-    let handle: String
-
-    var id: String {
-        self.handle
-    }
-}
-
 struct MeView: View {
     let user: SessionUser?
     @Environment(AuthService.self) private var auth
@@ -60,11 +49,9 @@ struct MeView: View {
     @State private var vm = MeVM()
     @State private var store = StoreKitService.shared
     @State private var atlas = AtlasStore.shared
-    @State private var peekId: String?
     @State private var showPaywall = false
     @State private var showFeedback = false
     @State private var showSignOutConfirm = false
-    @State private var selfProfile: SelfProfileTarget?
 
     /// Prefer the server-authoritative Atlas entitlement (kept warm by the
     /// `.task` sync below) over the device-local StoreKit flag: `store.isPro`
@@ -104,10 +91,7 @@ struct MeView: View {
                 // public page both live on the server), so guests get the
                 // whole group hidden rather than a row that can only fail.
                 if !self.isGuest {
-                    MeCreationGroup(
-                        uid: self.user?.username,
-                        onOpenPublicProfile: { self.selfProfile = SelfProfileTarget(handle: $0) }
-                    )
+                    MeCreationGroup(uid: self.user?.username)
                 }
                 MeAccountGroup(
                     isGuest: self.isGuest,
@@ -146,12 +130,6 @@ struct MeView: View {
                 Task { await AtlasStore.shared.sync() }
                 await self.vm.load(progress: self.progress)
             }
-        }
-        .navigationDestination(item: self.$peekId) { id in
-            WordDetailView(id: id)
-        }
-        .navigationDestination(item: self.$selfProfile) { target in
-            AtlasAuthorProfileView(handle: target.handle, isSelf: true)
         }
         .sheet(isPresented: self.$showPaywall) {
             PaywallView()
@@ -273,13 +251,15 @@ struct MeView: View {
                 .foregroundStyle(accent)
             VStack(spacing: 0) {
                 ForEach(Array(words.enumerated()), id: \.element.id) { idx, word in
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        self.peekId = word.id
-                    } label: {
+                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
                         self.wordRow(word: word, accent: accent)
                     }
                     .buttonStyle(.plain)
+                    // A NavigationLink has no tap callback, so the row's light
+                    // haptic rides along on a simultaneous gesture.
+                    .simultaneousGesture(TapGesture().onEnded {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    })
                     if idx < words.count - 1 {
                         Divider().background(.tujiInk4.opacity(0.15))
                     }

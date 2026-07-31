@@ -27,6 +27,12 @@ struct MainTabsView: View {
     @State private var communityPath = NavigationPath()
     @State private var mePath = NavigationPath()
 
+    /// Whether 我的 / 社群 are showing their own root rather than something
+    /// pushed over it. Both start true so a tab that never fires `onAppear`
+    /// (off-screen page) keeps its bar — only a real push takes it away.
+    @State private var meAtRoot = true
+    @State private var communityAtRoot = true
+
     @State private var tourIndex: Int?
     @State private var tourTransitioning = false
 
@@ -35,7 +41,7 @@ struct MainTabsView: View {
             self.pager
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if !self.studyFocus.active {
+            if self.tabBarVisible {
                 TujiTabBar(selected: self.$selected)
                     .tourAnchor(.tabBar)
                     .padding(.horizontal, Space.s4)
@@ -44,7 +50,7 @@ struct MainTabsView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: self.studyFocus.active)
+        .animation(.easeInOut(duration: 0.2), value: self.tabBarVisible)
         .background(.tujiBg)
         .allowsHitTesting(self.tourIndex == nil)
         .accessibilityHidden(self.tourIndex != nil)
@@ -121,11 +127,13 @@ struct MainTabsView: View {
             NavigationStack(path: self.$communityPath) {
                 AtlasPublicFeedView()
                     .tujiNavDestinations(user: self.user)
+                    .tracksStackRoot(self.$communityAtRoot)
             }
         case .me:
             NavigationStack(path: self.$mePath) {
                 MeView(user: self.user)
                     .tujiNavDestinations(user: self.user)
+                    .tracksStackRoot(self.$meAtRoot)
             }
         }
     }
@@ -141,6 +149,24 @@ struct MainTabsView: View {
                 }
             }
         )
+    }
+
+    /// The floating bar steps aside for a focused study session, and for
+    /// anything opened from 我的 or 社群: both tabs are hubs of entry points,
+    /// and a screen opened from one owns the window until the user comes back.
+    ///
+    /// Keyed on the tab root's own visibility rather than its `NavigationPath`,
+    /// because that is the one signal that holds however a screen was pushed —
+    /// a path value, a view-based link (設定's pickers), or a
+    /// `navigationDestination(item:)` (社群's collection cards, which carry a
+    /// preview model no route value could).
+    private var tabBarVisible: Bool {
+        if self.studyFocus.active { return false }
+        switch self.selected {
+        case .me: return self.meAtRoot
+        case .community: return self.communityAtRoot
+        case .today, .cards, .progress: return true
+        }
     }
 
     /// Push depth of the currently-selected tab. >0 means a detail view is
@@ -243,6 +269,18 @@ struct MainTabsView: View {
             case .me: self.mePath.append(route)
             }
         }
+    }
+}
+
+private extension View {
+    /// Reports whether this view — the root of a `NavigationStack` — is the
+    /// screen currently on show. A push covers the root (`onDisappear`), a pop
+    /// back uncovers it (`onAppear`); switching pages in the tab pager does
+    /// neither, since every page stays mounted in the same `HStack`.
+    func tracksStackRoot(_ isShowing: Binding<Bool>) -> some View {
+        self
+            .onAppear { isShowing.wrappedValue = true }
+            .onDisappear { isShowing.wrappedValue = false }
     }
 }
 

@@ -18,6 +18,8 @@ extension View {
             case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
             case let .atlasCollectionDetail(slug, autoSave):
                 AtlasCollectionDetailView(slug: slug, autoSave: autoSave)
+            case let .authorProfile(handle, isSelf):
+                AtlasAuthorProfileView(handle: handle, isSelf: isSelf)
             case .studyCategories: StudyCategoriesPickerView()
             case let .studyLanding(mode): StudyLauncherView(mode: mode)
             // The id says where it goes. `saved:` items are other people's

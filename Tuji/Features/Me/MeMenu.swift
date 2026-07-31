@@ -88,7 +88,6 @@ private var rowDivider: some View {
 struct MeCreationGroup: View {
     /// The signed-in user's UID, or nil while the session is still settling.
     let uid: String?
-    let onOpenPublicProfile: (String) -> Void
 
     var body: some View {
         MeListCard(title: "創作") {
@@ -97,7 +96,7 @@ struct MeCreationGroup: View {
             }
             .buttonStyle(.plain)
             rowDivider
-            MePublicProfileRow(uid: self.uid, onOpenPublicProfile: self.onOpenPublicProfile)
+            MePublicProfileRow(uid: self.uid)
         }
     }
 }
@@ -107,21 +106,28 @@ struct MeCreationGroup: View {
 /// consent step it used to branch to no longer exists.
 struct MePublicProfileRow: View {
     let uid: String?
-    let onOpenPublicProfile: (String) -> Void
 
     var body: some View {
-        Button {
-            if let uid = self.uid { self.onOpenPublicProfile(uid) }
-        } label: {
-            MeListRow(
-                icon: "person.crop.circle.fill",
-                title: "我的公開主頁",
-                tint: .tujiTeal,
-                subtitle: "別人看到的你"
-            )
+        // While the session is still settling there is no handle to open, so
+        // the row renders as plain text rather than a dead link — the card
+        // keeps its shape either way.
+        if let uid = self.uid {
+            NavigationLink(value: NavRoute.authorProfile(handle: uid, isSelf: true)) {
+                self.row
+            }
+            .buttonStyle(.plain)
+        } else {
+            self.row
         }
-        .buttonStyle(.plain)
-        .disabled(self.uid == nil)
+    }
+
+    private var row: some View {
+        MeListRow(
+            icon: "person.crop.circle.fill",
+            title: "我的公開主頁",
+            tint: .tujiTeal,
+            subtitle: "別人看到的你"
+        )
     }
 }
 

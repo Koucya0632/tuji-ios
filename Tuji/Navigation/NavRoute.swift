@@ -20,6 +20,9 @@ enum NavRoute: Hashable {
     case atlasCollectionEdit(id: String)
     /// 公開合集詳情；autoSave is used only to resume a guest's interrupted save.
     case atlasCollectionDetail(slug: String, autoSave: Bool)
+    /// 作者主頁. `isSelf` adds the edit entry point — 我的 pushes its own page
+    /// with it set; 社群 opens other people's from the feed.
+    case authorProfile(handle: String, isSelf: Bool)
     case studyCategories
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)
