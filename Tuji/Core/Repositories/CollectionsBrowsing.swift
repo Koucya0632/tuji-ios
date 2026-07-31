@@ -1,8 +1,8 @@
 import Foundation
 
-/// Narrow role carved off `AtlasRepository` for the 公開圖鑑 browse feed — the one
-/// method `PublicFeedVM` needs, so its test fake stubs one method (see CONTEXT.md
-/// → architecture / role seams).
+/// Narrow public-shelf role used by `PublicAtlasBrowsingModel`. Saved/private
+/// shelf reads remain on `CollectionBookmarking`, so each dependency still
+/// exposes only its own policy boundary.
 ///
 /// `LiveAtlasRepository` already implements it, so it conforms for free.
 @MainActor

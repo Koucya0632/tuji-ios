@@ -78,7 +78,7 @@ enum Endpoint {
     /// instead of Vercel's 30-minute copy. Visitors send nil and keep the cache.
     case atlasPublicAuthor(handle: String, cacheBust: String?)
     /// One public item by slug — the 圖鑑 page's 社群圖鑑 cards open through this.
-    case atlasPublicItem(slug: String)
+    case atlasPublicItem(slug: String, lang: String)
     /// Save / unsave a community item (auth required; consumption quota).
     case atlasPublicSave(slug: String)
     /// Report a community item (auth required).
@@ -93,6 +93,8 @@ enum Endpoint {
     case atlasSavedCollections(lang: String, limit: Int)
     /// Save state / save / unsave for one public collection.
     case atlasPublicCollectionSave(slug: String)
+    /// Add every remaining unlocked collection item to the study queue.
+    case atlasPublicCollectionLearn(slug: String)
 
     // MARK: - Billing (auth-protected)
 
@@ -156,13 +158,14 @@ enum Endpoint {
         case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
         case .atlasPublicFeed: "/api/atlas/public"
         case let .atlasPublicAuthor(handle, _): "/api/atlas/public/authors/\(handle)"
-        case let .atlasPublicItem(slug): "/api/atlas/public/\(slug)"
+        case let .atlasPublicItem(slug, _): "/api/atlas/public/\(slug)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
         case .atlasPublicCollections: "/api/atlas/public/collections"
         case let .atlasPublicCollection(slug): "/api/atlas/public/collections/\(slug)"
         case .atlasSavedCollections: "/api/atlas/public/collections/saved"
         case let .atlasPublicCollectionSave(slug): "/api/atlas/public/collections/\(slug)/save"
+        case let .atlasPublicCollectionLearn(slug): "/api/atlas/public/collections/\(slug)/learn"
         case .billingVerify: "/api/billing/verify"
         case .search: "/api/search"
         case .events: "/api/events"
@@ -247,6 +250,8 @@ enum Endpoint {
             ]
         case let .atlasPublicAuthor(_, cacheBust):
             cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? []
+        case let .atlasPublicItem(_, lang):
+            [URLQueryItem(name: "lang", value: lang)]
         case let .atlasCollectionCandidates(lang):
             [URLQueryItem(name: "lang", value: lang)]
         case let .words(lang, learning),
@@ -270,7 +275,7 @@ enum Endpoint {
         // Community reads are public and CDN-cached server-side; honor it.
         case .words, .word, .categories, .search,
              .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor, .atlasPublicItem,
-             .atlasPublicCollections, .atlasPublicCollection:
+             .atlasPublicCollections:
             .useProtocolCachePolicy
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
@@ -282,7 +287,8 @@ enum Endpoint {
              .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
              .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
-             .atlasSavedCollections, .atlasPublicCollectionSave,
+             .atlasPublicCollection, .atlasSavedCollections,
+             .atlasPublicCollectionSave, .atlasPublicCollectionLearn,
              .billingVerify:
             .reloadIgnoringLocalCacheData
         default:
@@ -304,6 +310,13 @@ enum Endpoint {
              .atlasPublicCollections, .atlasPublicCollection: true
         default: false
         }
+    }
+
+    /// Anonymous access is allowed, but a signed-in request should include its
+    /// bearer token so the server can reveal account-specific access state.
+    var usesOptionalAuth: Bool {
+        if case .atlasPublicCollection = self { return true }
+        return false
     }
 
     /// Per-request timeout (seconds). AI endpoints — image recognition (Google

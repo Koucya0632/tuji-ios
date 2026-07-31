@@ -36,7 +36,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     (sync/upload/recognize/confirm/createCards/deleteImage/enrich/detail/entitlement/publish).
   - **CollectionEditing** — 5-method seam for the collection-edit screen
     (`collectionEdit`, `updateCollection`, `add/removeCollectionItem`, `publishCollection`).
-  - **CollectionsBrowsing** — 1-method seam for the 公開圖鑑 feed (`publicCollections`).
+  - **CollectionsBrowsing** — 1-method public-shelf seam used by
+    `PublicAtlasBrowsingModel` (`publicCollections`).
+  - **CollectionBookmarking** — private saved-shelf reads plus collection bookmark
+    state/mutations; `PublicAtlasBrowsingModel` depends on it only for `savedCollections`.
   - **CollectionDetailReading** — 1-method seam for the collection detail (`collection(slug:)`).
   - **AuthorReading** — 1-method seam for the author profile (`author(username:)`).
   - **PublicItemsReading** — 1-method seam (`publicItems`) for `WordCommunityAtlasSection`
@@ -49,8 +52,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
   The View is presentation-only; analytics stays in the View (VMs don't reach
   `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`). The community
-  screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`, `PublicFeedVM`,
-  `CollectionDetailVM`, `AuthorProfileVM`, `MyCollectionsVM`, `AtlasPublicDetailVM`. A
+  screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`,
+  `PublicAtlasBrowsingModel`, `CollectionDetailVM`, `AuthorProfileVM`, `MyCollectionsVM`,
+  `AtlasPublicDetailVM`. `PublicAtlasBrowsingModel` owns both the public and saved
+  shelves, their refresh/authentication policy, and bookmark reconciliation; the View
+  translates environment state into explicit model inputs. `CollectionDetailVM` exposes
+  one `open(context:)` workflow for detail → owner → bookmark state → optional auto-save;
+  confirmed bookmark mutations return a plain `BookmarkChange` for the View to broadcast,
+  without refetching the detail. A
   screen whose only logic is a single fetch keeps the seam injected into the View instead
   (`WordCommunityAtlasSection`, `AtlasCollectionCreateSheet`, `AtlasCollectionItemPicker`) —
   ADR-0001 lazy-narrowing.
@@ -59,6 +68,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
   `consume()`s it once. Replaces the former `AtlasFeedRefreshCenter` global singleton — the
   cross-view coupling is now an explicit environment dependency, not a hidden global.
+- **CommunityLearningRefreshing** — one injected policy for a confirmed community-item
+  save/unsave or collection batch-learn: invalidate `StudyQueueStore`, then await the
+  best-effort `WordsStore.reload()`. The stateless live adapter is the only place that
+  references those existing singletons; mutation success never depends on refresh success.
 
 ## Study — the SRS write path
 

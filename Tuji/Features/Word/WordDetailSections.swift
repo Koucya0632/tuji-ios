@@ -7,6 +7,47 @@
 
 import SwiftUI
 
+/// Grammar labels arrive as canonical English values from both dictionary and
+/// user-atlas records. Present the common set in the active interface language,
+/// while preserving unknown labels verbatim.
+nonisolated func localizedPartOfSpeech(_ raw: String, language: UILanguage) -> String {
+    let labels: [String: [UILanguage: String]] = [
+        "noun": [.zhHant: "名詞", .zhHans: "名词", .ja: "名詞", .en: "noun"],
+        "verb": [.zhHant: "動詞", .zhHans: "动词", .ja: "動詞", .en: "verb"],
+        "phrasal verb": [.zhHant: "片語動詞", .zhHans: "短语动词", .ja: "句動詞", .en: "phrasal verb"],
+        "adjective": [.zhHant: "形容詞", .zhHans: "形容词", .ja: "形容詞", .en: "adjective"],
+        "adverb": [.zhHant: "副詞", .zhHans: "副词", .ja: "副詞", .en: "adverb"],
+        "pronoun": [.zhHant: "代名詞", .zhHans: "代词", .ja: "代名詞", .en: "pronoun"],
+        "preposition": [.zhHant: "介系詞", .zhHans: "介词", .ja: "前置詞", .en: "preposition"],
+        "conjunction": [.zhHant: "連接詞", .zhHans: "连词", .ja: "接続詞", .en: "conjunction"],
+        "interjection": [.zhHant: "感嘆詞", .zhHans: "感叹词", .ja: "間投詞", .en: "interjection"],
+        "determiner": [.zhHant: "限定詞", .zhHans: "限定词", .ja: "限定詞", .en: "determiner"],
+        "numeral": [.zhHant: "數詞", .zhHans: "数词", .ja: "数詞", .en: "numeral"],
+        "phrase": [.zhHant: "片語", .zhHans: "短语", .ja: "句", .en: "phrase"],
+        "expression": [.zhHant: "慣用語", .zhHans: "惯用语", .ja: "表現", .en: "expression"]
+    ]
+    let aliases = [
+        "n.": "noun", "n": "noun",
+        "v.": "verb", "v": "verb",
+        "adj.": "adjective", "adj": "adjective",
+        "adv.": "adverb", "adv": "adverb",
+        "prep.": "preposition", "prep": "preposition",
+        "conj.": "conjunction", "conj": "conjunction",
+        "pron.": "pronoun", "pron": "pronoun",
+        "interj.": "interjection", "interj": "interjection"
+    ]
+
+    let parts = raw.split(whereSeparator: { $0 == "/" || $0 == "," })
+    let localized = parts.compactMap { part -> String? in
+        let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let key = trimmed.lowercased()
+        let canonical = aliases[key] ?? key
+        return labels[canonical]?[language] ?? trimmed
+    }
+    return localized.isEmpty ? raw : localized.joined(separator: "／")
+}
+
 struct WordDetailSections: View {
     let word: Word
 
@@ -130,7 +171,7 @@ struct WordDetailSections: View {
                         .foregroundStyle(.tujiInk)
                 }
                 if let pos = w.partOfSpeech {
-                    Text(pos)
+                    Text(localizedPartOfSpeech(pos, language: self.settings.current.uiLanguage))
                         .font(.tujiCaption)
                         .italic()
                         .foregroundStyle(.tujiInk3)

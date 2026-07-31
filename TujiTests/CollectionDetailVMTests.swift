@@ -37,6 +37,20 @@ struct CollectionDetailVMTests {
         )
     }
 
+    private func context(
+        isSignedIn: Bool = false,
+        username: String? = nil,
+        autoSave: Bool = false
+    )
+        -> CollectionDetailVM.OpenContext
+    {
+        .init(
+            isSignedIn: isSignedIn,
+            username: username,
+            autoSave: autoSave
+        )
+    }
+
     @Test
     func previewHeaderShowsBeforeLoad() {
         let vm = CollectionDetailVM(
@@ -59,7 +73,7 @@ struct CollectionDetailVMTests {
         ))
         let vm = CollectionDetailVM(slug: "s", repo: fake)
 
-        await vm.load()
+        await vm.open(context: self.context())
 
         #expect(vm.collection != nil)
         #expect(vm.items.count == 2)
@@ -76,7 +90,7 @@ struct CollectionDetailVMTests {
             repo: fake
         )
 
-        await vm.load()
+        await vm.open(context: self.context())
 
         #expect(vm.collection != nil) // preview kept on screen
         #expect(vm.items.isEmpty)
@@ -93,7 +107,7 @@ struct CollectionDetailVMTests {
             repo: fake
         )
 
-        await vm.load()
+        await vm.open(context: self.context())
 
         #expect(vm.collection == nil)
         #expect(vm.isUnavailable)
@@ -111,8 +125,10 @@ struct CollectionDetailVMTests {
             bookmarkRepo: bookmarks
         )
 
-        await vm.load()
-        await vm.loadBookmarkState()
+        await vm.open(context: self.context(
+            isSignedIn: true,
+            username: "other"
+        ))
 
         #expect(vm.collection != nil)
         #expect(!vm.isUnavailable)
@@ -143,9 +159,202 @@ struct CollectionDetailVMTests {
 
         bookmarks.saveResult = .success(.init(ok: true, saved: true, saveCount: 7))
         let saved = await vm.save()
-        #expect(saved?.saveCount == 7)
+        #expect(saved?.collection.saveCount == 7)
+        #expect(saved?.isSaved == true)
         #expect(vm.isSaved)
         #expect(vm.bookmarkLoaded)
+    }
+
+    @Test
+    func lockedResponseKeepsOnlyTheServerPreviewAndAccessCounts() async {
+        let fake = FakeCollectionDetailReading()
+        var response = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: [self.item(id: "x")]
+        )
+        response.access = AtlasCollectionAccess(
+            unlocked: false,
+            isOwner: false,
+            isSaved: false,
+            totalCount: 12,
+            learningCount: 0
+        )
+        fake.result = .success(response)
+        let vm = CollectionDetailVM(slug: "s", repo: fake)
+
+        await vm.open(context: self.context())
+
+        #expect(!vm.unlocked)
+        #expect(vm.items.count == 1)
+        #expect(vm.totalCount == 12)
+        #expect(vm.remainingLearningCount == 12)
+    }
+
+    @Test
+    func batchLearningUpdatesCountsAndRefreshesStudyData() async {
+        let details = FakeCollectionDetailReading()
+        var response = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: [self.item(id: "x"), self.item(id: "y")]
+        )
+        response.access = AtlasCollectionAccess(
+            unlocked: true,
+            isOwner: false,
+            isSaved: true,
+            totalCount: 2,
+            learningCount: 1
+        )
+        details.result = .success(response)
+        let learning = FakeCollectionLearning()
+        let refresher = RecordingCollectionLearningRefresher()
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            learningRepo: learning,
+            learningRefresher: refresher
+        )
+
+        await vm.open(context: self.context())
+        let learned = await vm.learnRemaining()
+
+        #expect(learned)
+        #expect(vm.learningCount == 2)
+        #expect(vm.remainingLearningCount == 0)
+        #expect(refresher.refreshCount == 1)
+        #expect(learning.loadedSlugs == ["s"])
+    }
+
+    @Test
+    func failedBatchLearningDoesNotRefreshClientLearningData() async {
+        let details = FakeCollectionDetailReading()
+        var response = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: [self.item(id: "x")]
+        )
+        response.access = AtlasCollectionAccess(
+            unlocked: true,
+            isOwner: false,
+            isSaved: true,
+            totalCount: 1,
+            learningCount: 0
+        )
+        details.result = .success(response)
+        let learning = FakeCollectionLearning()
+        learning.result = .failure(FakeError.boom)
+        let refresher = RecordingCollectionLearningRefresher()
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            learningRepo: learning,
+            learningRefresher: refresher
+        )
+
+        await vm.open(context: self.context())
+        let learned = await vm.learnRemaining()
+
+        #expect(!learned)
+        #expect(refresher.refreshCount == 0)
+        #expect(vm.learningActionError != nil)
+    }
+
+    @Test
+    func autoSaveContinuesAfterBookmarkStateFailureInWorkflowOrder() async {
+        let recorder = DetailCallRecorder()
+        let details = FakeCollectionDetailReading(recorder: recorder)
+        let bookmarks = FakeDetailBookmarking(recorder: recorder)
+        bookmarks.stateResult = .failure(FakeError.boom)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+
+        let change = await vm.open(context: self.context(
+            isSignedIn: true,
+            username: "other",
+            autoSave: true
+        ))
+
+        #expect(recorder.calls == [.detail, .bookmarkState, .save])
+        #expect(change?.isSaved == true)
+        #expect(vm.isSaved)
+    }
+
+    @Test
+    func serverOwnerSkipsBookmarkWorkflowEvenWhenFallbackWouldDisagree() async {
+        let recorder = DetailCallRecorder()
+        let details = FakeCollectionDetailReading(recorder: recorder)
+        var response = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: []
+        )
+        response.access = AtlasCollectionAccess(
+            unlocked: true,
+            isOwner: true,
+            isSaved: false,
+            totalCount: 0,
+            learningCount: 0
+        )
+        details.result = .success(response)
+        let bookmarks = FakeDetailBookmarking(recorder: recorder)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+
+        let change = await vm.open(context: self.context(
+            isSignedIn: true,
+            username: "different-user",
+            autoSave: true
+        ))
+
+        #expect(recorder.calls == [.detail])
+        #expect(change == nil)
+        #expect(vm.isOwner)
+    }
+
+    @Test
+    func legacyResponseUsesCaseInsensitiveOwnerFallback() async {
+        let recorder = DetailCallRecorder()
+        let details = FakeCollectionDetailReading(recorder: recorder)
+        let bookmarks = FakeDetailBookmarking(recorder: recorder)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+
+        await vm.open(context: self.context(
+            isSignedIn: true,
+            username: "U",
+            autoSave: true
+        ))
+
+        #expect(recorder.calls == [.detail])
+        #expect(vm.isOwner)
+    }
+
+    @Test
+    func failedDetailLoadStopsBeforePrivateWorkflow() async {
+        let recorder = DetailCallRecorder()
+        let details = FakeCollectionDetailReading(recorder: recorder)
+        details.result = .failure(FakeError.boom)
+        let bookmarks = FakeDetailBookmarking(recorder: recorder)
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+
+        let change = await vm.open(context: self.context(
+            isSignedIn: true,
+            username: "other",
+            autoSave: true
+        ))
+
+        #expect(recorder.calls == [.detail])
+        #expect(change == nil)
     }
 }
 
@@ -156,7 +365,25 @@ private enum FakeError: Error {
 }
 
 @MainActor
+private final class DetailCallRecorder {
+    enum Call: Equatable {
+        case detail
+        case bookmarkState
+        case save
+        case unsave
+    }
+
+    private(set) var calls: [Call] = []
+
+    func record(_ call: Call) {
+        self.calls.append(call)
+    }
+}
+
+@MainActor
 private final class FakeCollectionDetailReading: CollectionDetailReading {
+    private let recorder: DetailCallRecorder?
+
     var result: Result<AtlasCollectionDetailResponse, Error> = .success(
         .init(
             collection: AtlasCollection(
@@ -175,13 +402,20 @@ private final class FakeCollectionDetailReading: CollectionDetailReading {
         )
     )
 
+    init(recorder: DetailCallRecorder? = nil) {
+        self.recorder = recorder
+    }
+
     func collection(slug _: String) async throws -> AtlasCollectionDetailResponse {
-        try self.result.get()
+        self.recorder?.record(.detail)
+        return try self.result.get()
     }
 }
 
 @MainActor
 private final class FakeDetailBookmarking: CollectionBookmarking {
+    private let recorder: DetailCallRecorder?
+
     var stateResult: Result<AtlasSaveResponse, Error> = .success(
         .init(ok: true, saved: false, saveCount: 0)
     )
@@ -189,19 +423,53 @@ private final class FakeDetailBookmarking: CollectionBookmarking {
         .init(ok: true, saved: true, saveCount: 1)
     )
 
+    init(recorder: DetailCallRecorder? = nil) {
+        self.recorder = recorder
+    }
+
     func savedCollections(lang _: TargetLanguage) async throws -> [AtlasCollection] {
         []
     }
 
     func collectionSaveState(slug _: String) async throws -> AtlasSaveResponse {
-        try self.stateResult.get()
+        self.recorder?.record(.bookmarkState)
+        return try self.stateResult.get()
     }
 
     func saveCollection(slug _: String) async throws -> AtlasSaveResponse {
-        try self.saveResult.get()
+        self.recorder?.record(.save)
+        return try self.saveResult.get()
     }
 
     func unsaveCollection(slug _: String) async throws -> AtlasSaveResponse {
-        .init(ok: true, saved: false, saveCount: 0)
+        self.recorder?.record(.unsave)
+        return .init(ok: true, saved: false, saveCount: 0)
+    }
+}
+
+@MainActor
+private final class FakeCollectionLearning: CollectionLearning {
+    private(set) var loadedSlugs: [String] = []
+    var result: Result<AtlasCollectionLearnResponse, Error> = .success(
+        AtlasCollectionLearnResponse(
+            ok: true,
+            addedCount: 1,
+            learningCount: 2,
+            totalCount: 2
+        )
+    )
+
+    func learnCollection(slug: String) async throws -> AtlasCollectionLearnResponse {
+        self.loadedSlugs.append(slug)
+        return try self.result.get()
+    }
+}
+
+@MainActor
+private final class RecordingCollectionLearningRefresher: CommunityLearningRefreshing {
+    private(set) var refreshCount = 0
+
+    func refreshAfterLearningMutation() async {
+        self.refreshCount += 1
     }
 }

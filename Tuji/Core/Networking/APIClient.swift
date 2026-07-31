@@ -2,7 +2,8 @@
 // the current access token via AuthService.validAccessToken(). On 401
 // retries once after the supabase-swift SDK refreshes the session.
 //
-// Public endpoints (Endpoint.isPublic) skip the auth lookup entirely.
+// Public endpoints usually skip auth. Optional-auth reads attach a token when
+// one is already available, while remaining usable by signed-out guests.
 
 import Foundation
 import OSLog
@@ -169,6 +170,11 @@ final class APIClient {
 
         if !ep.isPublic {
             let token = try await auth.validAccessToken()
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else if ep.usesOptionalAuth,
+                  case .signedIn = self.auth.state,
+                  let token = try? await self.auth.validAccessToken()
+        {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 

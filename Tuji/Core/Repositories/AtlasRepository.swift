@@ -3,11 +3,11 @@ import Foundation
 /// Concrete atlas API client. Its surface reaches callers through focused role
 /// protocols — `AtlasAuthoring`, `CollectionEditing`, `CollectionsBrowsing`,
 /// `CollectionDetailReading`, `AuthorReading`, `PublicItemsReading`,
-/// `AtlasItemConsuming`, `CollectionManaging` — each conformed in its own file, so
-/// every consumer (and its test fake) depends only on the slice it uses. No screen
-/// binds to this concrete type any more. The only member behind no seam is
-/// `publicFeed`, which has no caller (per ADR-0001's lazy-narrowing, a seam is
-/// carved when a consumer needs it).
+/// `AtlasItemConsuming`, `CollectionBookmarking`, `CollectionManaging` — each
+/// conformed in its own file, so every consumer (and its test fake) depends only
+/// on the slice it uses. No screen binds to this concrete type any more. The only
+/// member behind no seam is `publicFeed`, which has no caller (per ADR-0001's
+/// lazy-narrowing, a seam is carved when a consumer needs it).
 @MainActor
 struct LiveAtlasRepository {
     static let shared = LiveAtlasRepository()
@@ -141,7 +141,12 @@ struct LiveAtlasRepository {
     /// word shape, so opening one fetches the parts the detail screen needs and
     /// the word payload deliberately doesn't carry: author, save count, slug.
     func publicItem(slug: String) async throws -> AtlasPublicItem {
-        let response: AtlasPublicItemResponse = try await self.api.get(.atlasPublicItem(slug: slug))
+        let response: AtlasPublicItemResponse = try await self.api.get(
+            .atlasPublicItem(
+                slug: slug,
+                lang: SettingsStore.shared.current.uiLanguage.contentLanguageCode
+            )
+        )
         return response.item
     }
 
@@ -226,6 +231,13 @@ struct LiveAtlasRepository {
         try await self.api.delete(
             .atlasPublicCollectionSave(slug: slug),
             as: AtlasSaveResponse.self
+        )
+    }
+
+    func learnCollection(slug: String) async throws -> AtlasCollectionLearnResponse {
+        try await self.api.post(
+            .atlasPublicCollectionLearn(slug: slug),
+            body: Empty()
         )
     }
 

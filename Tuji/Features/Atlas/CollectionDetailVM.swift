@@ -13,6 +13,17 @@ final class CollectionDetailVM {
         case loading, ready, failed(String)
     }
 
+    struct OpenContext: Equatable {
+        let isSignedIn: Bool
+        let username: String?
+        let autoSave: Bool
+    }
+
+    struct BookmarkChange: Equatable {
+        let collection: AtlasCollection
+        let isSaved: Bool
+    }
+
     let slug: String
     private(set) var collection: AtlasCollection?
     private(set) var items: [AtlasPublicItem] = []
@@ -23,20 +34,33 @@ final class CollectionDetailVM {
     private(set) var bookmarkError: String?
     private(set) var bookmarkActionError: String?
     private(set) var isUnavailable = false
+    private(set) var unlocked = true
+    private(set) var isOwner = false
+    private(set) var totalCount = 0
+    private(set) var learningCount = 0
+    private(set) var learningBusy = false
+    private(set) var learningActionError: String?
 
     private let repo: CollectionDetailReading
     private let bookmarkRepo: CollectionBookmarking
+    private let learningRepo: CollectionLearning
+    private let learningRefresher: CommunityLearningRefreshing
 
     init(
         slug: String,
         preview: AtlasCollection? = nil,
         repo: CollectionDetailReading = LiveAtlasRepository.shared,
-        bookmarkRepo: CollectionBookmarking = LiveAtlasRepository.shared
+        bookmarkRepo: CollectionBookmarking = LiveAtlasRepository.shared,
+        learningRepo: CollectionLearning = LiveAtlasRepository.shared,
+        learningRefresher: CommunityLearningRefreshing = LiveCommunityLearningRefresher()
     ) {
         self.slug = slug
         self.collection = preview
+        self.totalCount = preview?.itemCount ?? 0
         self.repo = repo
         self.bookmarkRepo = bookmarkRepo
+        self.learningRepo = learningRepo
+        self.learningRefresher = learningRefresher
     }
 
     var errorMessage: String? {
@@ -44,14 +68,55 @@ final class CollectionDetailVM {
         return nil
     }
 
-    func load() async {
+    /// Open the collection through one workflow so the view cannot reorder the
+    /// detail, ownership, bookmark-state, and deep-link auto-save steps.
+    @discardableResult
+    func open(context: OpenContext) async -> BookmarkChange? {
+        guard await self.load(context: context) else { return nil }
+        guard context.isSignedIn, !self.isOwner else { return nil }
+
+        if !self.bookmarkLoaded {
+            await self.loadBookmarkState()
+        }
+
+        guard context.autoSave, !self.isSaved else { return nil }
+        return await self.save()
+    }
+
+    private func load(context: OpenContext) async -> Bool {
         self.phase = .loading
         self.isUnavailable = false
+        self.bookmarkLoaded = false
+        self.bookmarkError = nil
+        self.bookmarkActionError = nil
+        self.isSaved = false
+        self.isOwner = self.matchesOwner(
+            collection: self.collection,
+            username: context.username
+        )
         do {
             let response = try await self.repo.collection(slug: self.slug)
             self.collection = response.collection
             self.items = response.items
+            if let access = response.access {
+                self.unlocked = access.unlocked
+                self.isOwner = access.isOwner
+                self.isSaved = access.isSaved
+                self.bookmarkLoaded = true
+                self.totalCount = access.totalCount
+                self.learningCount = access.learningCount
+            } else {
+                // Compatibility with older responses and lightweight test
+                // fixtures, which always returned the complete catalog.
+                self.unlocked = true
+                self.isOwner = self.matchesOwner(
+                    collection: response.collection,
+                    username: context.username
+                )
+                self.totalCount = response.collection.itemCount
+            }
             self.phase = .ready
+            return true
         } catch {
             if case APIError.notFound = error {
                 self.collection = nil
@@ -61,10 +126,11 @@ final class CollectionDetailVM {
             // Keep any preview header on screen; the error state shows only when
             // there's nothing to render.
             self.phase = .failed(error.localizedDescription)
+            return false
         }
     }
 
-    func loadBookmarkState() async {
+    private func loadBookmarkState() async {
         guard !self.bookmarkBusy else { return }
         self.bookmarkBusy = true
         self.bookmarkError = nil
@@ -84,7 +150,7 @@ final class CollectionDetailVM {
     }
 
     @discardableResult
-    func save() async -> AtlasCollection? {
+    func save() async -> BookmarkChange? {
         guard !self.bookmarkBusy else { return nil }
         self.bookmarkBusy = true
         self.bookmarkError = nil
@@ -94,7 +160,9 @@ final class CollectionDetailVM {
             let response = try await self.bookmarkRepo.saveCollection(slug: self.slug)
             self.apply(response)
             self.bookmarkLoaded = true
-            return self.collection
+            return self.collection.map {
+                BookmarkChange(collection: $0, isSaved: response.saved)
+            }
         } catch {
             self.bookmarkError = error.localizedDescription
             self.bookmarkActionError = error.localizedDescription
@@ -103,7 +171,7 @@ final class CollectionDetailVM {
     }
 
     @discardableResult
-    func unsave() async -> AtlasCollection? {
+    func unsave() async -> BookmarkChange? {
         guard !self.bookmarkBusy else { return nil }
         self.bookmarkBusy = true
         self.bookmarkError = nil
@@ -113,7 +181,9 @@ final class CollectionDetailVM {
             let response = try await self.bookmarkRepo.unsaveCollection(slug: self.slug)
             self.apply(response)
             self.bookmarkLoaded = true
-            return self.collection
+            return self.collection.map {
+                BookmarkChange(collection: $0, isSaved: response.saved)
+            }
         } catch {
             self.bookmarkError = error.localizedDescription
             self.bookmarkActionError = error.localizedDescription
@@ -125,8 +195,48 @@ final class CollectionDetailVM {
         self.bookmarkActionError = nil
     }
 
+    var remainingLearningCount: Int {
+        max(0, self.totalCount - self.learningCount)
+    }
+
+    @discardableResult
+    func learnRemaining() async -> Bool {
+        guard self.unlocked, self.remainingLearningCount > 0, !self.learningBusy else {
+            return false
+        }
+        self.learningBusy = true
+        self.learningActionError = nil
+        defer { self.learningBusy = false }
+        do {
+            let response = try await self.learningRepo.learnCollection(slug: self.slug)
+            self.learningCount = response.learningCount
+            self.totalCount = response.totalCount
+            await self.learningRefresher.refreshAfterLearningMutation()
+            return true
+        } catch {
+            self.learningActionError = error.localizedDescription
+            return false
+        }
+    }
+
+    func dismissLearningActionError() {
+        self.learningActionError = nil
+    }
+
     private func apply(_ response: AtlasSaveResponse) {
         self.isSaved = response.saved
         self.collection = self.collection?.withSaveCount(response.saveCount)
+    }
+
+    private func matchesOwner(
+        collection: AtlasCollection?,
+        username: String?
+    )
+        -> Bool
+    {
+        guard let username, let handle = collection?.author?.handle else {
+            return false
+        }
+        return username.caseInsensitiveCompare(handle) == .orderedSame
     }
 }

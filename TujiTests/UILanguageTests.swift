@@ -76,4 +76,13 @@ struct UILanguageTests {
         settings.uiLang = "nonsense"
         #expect(settings.uiLanguage == .zhHant)
     }
+
+    @Test
+    func partOfSpeechUsesTheInterfaceLanguage() {
+        #expect(localizedPartOfSpeech("noun", language: .zhHant) == "名詞")
+        #expect(localizedPartOfSpeech("verb", language: .zhHans) == "动词")
+        #expect(localizedPartOfSpeech("adjective", language: .ja) == "形容詞")
+        #expect(localizedPartOfSpeech("noun / verb", language: .en) == "noun／verb")
+        #expect(localizedPartOfSpeech("classifier", language: .zhHant) == "classifier")
+    }
 }

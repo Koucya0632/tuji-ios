@@ -18,12 +18,13 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
     let targetLanguage: TargetLanguage
     let category: String?
     let imageUrl: String?
-    /// The author, or nil when they never accepted a public identity. Anonymous
-    /// is a real state, not a missing value: the server refuses to name someone
-    /// who has not agreed to be named, so the UI must render the nil case
-    /// rather than substituting a handle.
+    /// The public identity attached to the share. Nil is reserved for rows whose
+    /// author account is no longer available.
     let author: AtlasAuthorRef?
     let publishedAt: String?
+    /// Full stored learning content. Feed and collection-preview payloads omit
+    /// it; the single-item detail endpoint supplies it without invoking AI.
+    var learningWord: Word?
 
     var imageURL: URL? {
         self.imageUrl.flatMap(URL.init(string:))
@@ -236,8 +237,7 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
     let title: String
     let description: String?
     let targetLanguage: TargetLanguage
-    /// nil when the author has no confirmed public identity — same rule as
-    /// `AtlasPublicItem.author`.
+    /// The public identity attached to the collection.
     let author: AtlasAuthorRef?
     let itemCount: Int
     let saveCount: Int
@@ -277,6 +277,22 @@ struct AtlasPublicCollectionsResponse: Decodable {
 struct AtlasCollectionDetailResponse: Decodable {
     let collection: AtlasCollection
     let items: [AtlasPublicItem]
+    var access: AtlasCollectionAccess?
+}
+
+struct AtlasCollectionAccess: Decodable, Equatable {
+    let unlocked: Bool
+    let isOwner: Bool
+    let isSaved: Bool
+    let totalCount: Int
+    let learningCount: Int
+}
+
+struct AtlasCollectionLearnResponse: Decodable, Equatable {
+    let ok: Bool
+    let addedCount: Int
+    let learningCount: Int
+    let totalCount: Int
 }
 
 /// One of the current user's own collections (all review states) — 我的合集 list.

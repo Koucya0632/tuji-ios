@@ -6,8 +6,8 @@
 //
 // Analytics stays in the view (VMs don't reach AnalyticsService): toggleSave
 // returns the resulting saved state so the view fires .atlasPublicSaved itself.
-// A successful save/unsave also refreshes WordsStore through an injected closure,
-// so the 圖鑑's 社群圖鑑 theme reflects the mutation before the action completes.
+// A successful save/unsave also runs the shared community-learning refresh
+// policy, so the queue and 圖鑑 reflect the mutation before the action completes.
 
 import Foundation
 import Observation
@@ -15,7 +15,7 @@ import Observation
 @MainActor
 @Observable
 final class AtlasPublicDetailVM {
-    let item: AtlasPublicItem
+    private(set) var item: AtlasPublicItem
 
     private(set) var saved = false
     private(set) var saveCount: Int?
@@ -24,16 +24,33 @@ final class AtlasPublicDetailVM {
     private(set) var reportSent = false
 
     private let repo: AtlasItemConsuming
-    private let refreshWords: @MainActor () async -> Void
+    private let itemReader: PublicItemsReading
+    private let learningRefresher: CommunityLearningRefreshing
 
     init(
         item: AtlasPublicItem,
         repo: AtlasItemConsuming = LiveAtlasRepository.shared,
-        refreshWords: @escaping @MainActor () async -> Void = {}
+        itemReader: PublicItemsReading = LiveAtlasRepository.shared,
+        learningRefresher: CommunityLearningRefreshing = LiveCommunityLearningRefresher()
     ) {
         self.item = item
         self.repo = repo
-        self.refreshWords = refreshWords
+        self.itemReader = itemReader
+        self.learningRefresher = learningRefresher
+    }
+
+    /// Feed and collection cards intentionally carry only preview data. Opening
+    /// a detail refreshes the row so stored definitions, forms and examples are
+    /// available without triggering any enrichment request.
+    func loadDetail() async {
+        do {
+            self.item = try await self.itemReader.publicItem(slug: self.item.slug)
+        } catch is CancellationError {
+            // Keep the preview while navigation is being dismissed.
+        } catch {
+            // Detail enrichment is additive. The preview remains useful and an
+            // explicit learning/report action will surface its own failures.
+        }
     }
 
     /// Restores the account-specific save state whenever a detail screen is
@@ -72,7 +89,7 @@ final class AtlasPublicDetailVM {
                 : try await self.repo.save(slug: self.item.slug)
             self.saved = response.saved
             self.saveCount = response.saveCount
-            await self.refreshWords()
+            await self.learningRefresher.refreshAfterLearningMutation()
             return response.saved
         } catch {
             self.actionError = error.localizedDescription
