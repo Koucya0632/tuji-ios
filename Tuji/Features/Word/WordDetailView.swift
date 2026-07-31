@@ -72,6 +72,7 @@ struct WordDetailPage: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(MasteryStore.self) private var mastery
     @Environment(WordsStore.self) private var wordsStore
+    @Environment(SettingsStore.self) private var settings
 
     @State private var word: Word?
     @State private var loading = false
@@ -203,7 +204,7 @@ extension WordDetailPage {
                             .foregroundStyle(.tujiInk2)
                     }
                     if let pos = w.partOfSpeech, !pos.isEmpty {
-                        Text(pos)
+                        Text(localizedPartOfSpeech(pos, language: self.settings.current.uiLanguage))
                             .font(.tujiCaption)
                             .italic()
                             .foregroundStyle(.tujiInk3)

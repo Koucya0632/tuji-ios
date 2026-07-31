@@ -7,6 +7,12 @@ import Nuke
 import NukeUI
 import SwiftUI
 
+private func collectionLearningPillTitle(remaining: Int, total: Int) -> String {
+    if remaining == 0 { return tujiLocalized("全部學習中") }
+    if remaining < total { return tujiLocalized("加入其餘 \(remaining) 個") }
+    return tujiLocalized("全部加入學習")
+}
+
 struct AtlasCollectionDetailView: View {
     @Environment(AuthService.self) private var auth
     @Environment(CollectionBookmarkStore.self) private var bookmarks
@@ -19,6 +25,8 @@ struct AtlasCollectionDetailView: View {
     @State private var showSignInPrompt = false
     @State private var showUnsavePrompt = false
     @State private var showBookmarkErrorPrompt = false
+    @State private var showLearnAllPrompt = false
+    @State private var showLearningErrorPrompt = false
 
     private let autoSave: Bool
 
@@ -59,12 +67,7 @@ struct AtlasCollectionDetailView: View {
             AtlasAuthorProfileView(handle: handle)
         }
         .task(id: self.loadKey) {
-            await self.vm.load()
-            guard self.isSignedIn, !self.isOwnCollection else { return }
-            await self.vm.loadBookmarkState()
-            if self.autoSave, !self.vm.isSaved {
-                await self.saveCollection()
-            }
+            await self.openCollection()
         }
         .tujiPrompt(
             isPresented: self.$showSignInPrompt,
@@ -92,6 +95,28 @@ struct AtlasCollectionDetailView: View {
             message: "請稍後再試一次。",
             primary: TujiPromptAction("確定") {
                 self.vm.dismissBookmarkActionError()
+            }
+        )
+        .tujiPrompt(
+            isPresented: self.$showLearnAllPrompt,
+            style: .confirmation,
+            title: "將這 \(self.vm.remainingLearningCount) 個單詞加入學習？",
+            primary: TujiPromptAction("全部加入") {
+                Task {
+                    if await !(self.vm.learnRemaining()) {
+                        self.showLearningErrorPrompt = self.vm.learningActionError != nil
+                    }
+                }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiPrompt(
+            isPresented: self.$showLearningErrorPrompt,
+            style: .error,
+            title: "加入失敗",
+            message: self.vm.learningActionError.map { LocalizedStringKey($0) },
+            primary: TujiPromptAction("確定") {
+                self.vm.dismissLearningActionError()
             }
         )
     }
@@ -236,19 +261,39 @@ struct AtlasCollectionDetailView: View {
     }
 
     private func saveCollection() async {
-        if let collection = await self.vm.save() {
-            self.bookmarks.publish(collection: collection, saved: true)
+        if let change = await self.vm.save() {
+            self.publish(change)
+        } else if self.vm.bookmarkActionError != nil {
+            self.showBookmarkErrorPrompt = true
+        }
+    }
+
+    private func openCollection() async {
+        let change = await self.vm.open(context: .init(
+            isSignedIn: self.isSignedIn,
+            username: self.signedInUser?.username,
+            autoSave: self.autoSave
+        ))
+        if let change {
+            self.publish(change)
         } else if self.vm.bookmarkActionError != nil {
             self.showBookmarkErrorPrompt = true
         }
     }
 
     private func unsaveCollection() async {
-        if let collection = await self.vm.unsave() {
-            self.bookmarks.publish(collection: collection, saved: false)
+        if let change = await self.vm.unsave() {
+            self.publish(change)
         } else if self.vm.bookmarkActionError != nil {
             self.showBookmarkErrorPrompt = true
         }
+    }
+
+    private func publish(_ change: CollectionDetailVM.BookmarkChange) {
+        self.bookmarks.publish(
+            collection: change.collection,
+            saved: change.isSaved
+        )
     }
 
     private var signedInUser: SessionUser? {
@@ -261,10 +306,7 @@ struct AtlasCollectionDetailView: View {
     }
 
     private var isOwnCollection: Bool {
-        guard let username = self.signedInUser?.username,
-              let handle = self.vm.collection?.author?.handle
-        else { return false }
-        return username.caseInsensitiveCompare(handle) == .orderedSame
+        self.vm.isOwner
     }
 
     private var loadKey: String {
@@ -278,10 +320,47 @@ struct AtlasCollectionDetailView: View {
             self.tabButton("目錄", .catalog)
             self.tabButton("簡介", .about)
             Spacer()
+            if self.tab == .catalog, self.vm.unlocked, self.vm.totalCount > 0 {
+                self.learningPill
+            }
         }
         .padding(.horizontal, Space.s6)
         .padding(.top, Space.s4)
         .padding(.bottom, Space.s2)
+    }
+
+    @ViewBuilder
+    private var learningPill: some View {
+        if self.vm.learningBusy {
+            ProgressView()
+                .controlSize(.small)
+                .tint(.tujiTeal)
+                .frame(minWidth: 98, minHeight: 30)
+        } else {
+            let remaining = self.vm.remainingLearningCount
+            Button {
+                self.showLearnAllPrompt = true
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: remaining == 0 ? "checkmark" : "plus")
+                        .font(.system(size: 11, weight: .bold))
+                    Text(collectionLearningPillTitle(
+                        remaining: remaining,
+                        total: self.vm.totalCount
+                    ))
+                    .font(.system(size: 12, weight: .bold))
+                }
+                .foregroundStyle(remaining == 0 ? .tujiInk3 : .tujiTeal)
+                .padding(.horizontal, Space.s3)
+                .frame(height: 30)
+                .background(
+                    remaining == 0 ? Color.tujiInk4.opacity(0.18) : Color.tujiTealSoft,
+                    in: .capsule
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(remaining == 0)
+        }
     }
 
     private func tabButton(_ label: LocalizedStringKey, _ value: Tab) -> some View {
@@ -314,24 +393,39 @@ struct AtlasCollectionDetailView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Space.s8)
             } else {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: Space.s3),
-                        GridItem(.flexible(), spacing: Space.s3)
-                    ],
-                    spacing: Space.s3
-                ) {
-                    ForEach(self.vm.items) { item in
-                        AtlasPublicTile(
-                            item: item,
-                            onOpen: { self.selectedItem = item },
-                            onOpenAuthor: item.author.map { author in
-                                { self.selectedAuthorHandle = author.handle }
-                            }
-                        )
+                VStack(spacing: 0) {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: Space.s3),
+                            GridItem(.flexible(), spacing: Space.s3)
+                        ],
+                        spacing: Space.s3
+                    ) {
+                        ForEach(self.vm.items) { item in
+                            AtlasPublicTile(
+                                item: item,
+                                onOpen: {
+                                    if self.vm.unlocked { self.selectedItem = item }
+                                },
+                                onOpenAuthor: self.vm.unlocked ? item.author.map { author in
+                                    { self.selectedAuthorHandle = author.handle }
+                                } : nil
+                            )
+                            .allowsHitTesting(self.vm.unlocked)
+                        }
+                    }
+                    .padding(.horizontal, Space.s6)
+                    if !self.vm.unlocked {
+                        HStack(spacing: Space.s2) {
+                            Image(systemName: "lock.fill")
+                            Text("收藏合集後查看全部 \(self.vm.totalCount) 個內容")
+                        }
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiInk3)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, Space.s4)
                     }
                 }
-                .padding(.horizontal, Space.s6)
                 .padding(.bottom, Space.s8)
             }
         case .about:
@@ -357,7 +451,7 @@ struct AtlasCollectionDetailView: View {
                 .font(.tujiBody)
                 .foregroundStyle(.tujiInk3)
             BBtn(title: "重試", fullWidth: false) {
-                Task { await self.vm.load() }
+                Task { await self.openCollection() }
             }
         }
         .padding(.top, Space.s12)

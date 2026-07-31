@@ -26,7 +26,12 @@ struct AtlasPublicDetailVMTests {
     func saveReflectsResponseAndReturnsSaved() async {
         let fake = FakeItemConsuming()
         fake.saveResult = .success(AtlasSaveResponse(ok: true, saved: true, saveCount: 5))
-        let vm = AtlasPublicDetailVM(item: self.item(), repo: fake)
+        let refresher = RecordingCommunityLearningRefresher()
+        let vm = AtlasPublicDetailVM(
+            item: self.item(),
+            repo: fake,
+            learningRefresher: refresher
+        )
 
         let result = await vm.toggleSave()
 
@@ -35,20 +40,41 @@ struct AtlasPublicDetailVMTests {
         #expect(vm.saveCount == 5)
         #expect(vm.actionError == nil)
         #expect(!vm.busy)
+        #expect(refresher.refreshCount == 1)
     }
 
     @Test
     func successfulSaveRefreshesCommunityWordsBeforeReturning() async {
         let fake = FakeItemConsuming()
-        var refreshCount = 0
-        let vm = AtlasPublicDetailVM(item: self.item(), repo: fake) {
-            refreshCount += 1
-        }
+        let refresher = RecordingCommunityLearningRefresher()
+        let vm = AtlasPublicDetailVM(
+            item: self.item(),
+            repo: fake,
+            learningRefresher: refresher
+        )
 
         let result = await vm.toggleSave()
 
         #expect(result == true)
-        #expect(refreshCount == 1)
+        #expect(refresher.refreshCount == 1)
+    }
+
+    @Test
+    func successfulUnsaveRunsTheSameLearningRefreshPolicy() async {
+        let fake = FakeItemConsuming()
+        let refresher = RecordingCommunityLearningRefresher()
+        let vm = AtlasPublicDetailVM(
+            item: self.item(),
+            repo: fake,
+            learningRefresher: refresher
+        )
+
+        _ = await vm.toggleSave()
+        let result = await vm.toggleSave()
+
+        #expect(result == false)
+        #expect(!vm.saved)
+        #expect(refresher.refreshCount == 2)
     }
 
     @Test
@@ -68,7 +94,12 @@ struct AtlasPublicDetailVMTests {
     func failedUnsaveKeepsSavedStateAndSurfacesError() async {
         let fake = FakeItemConsuming()
         fake.saveResult = .success(AtlasSaveResponse(ok: true, saved: true, saveCount: 1))
-        let vm = AtlasPublicDetailVM(item: self.item(), repo: fake)
+        let refresher = RecordingCommunityLearningRefresher()
+        let vm = AtlasPublicDetailVM(
+            item: self.item(),
+            repo: fake,
+            learningRefresher: refresher
+        )
         _ = await vm.toggleSave() // now saved
 
         // The next toggle is an unsave; make it fail — the toggle must not flip.
@@ -79,6 +110,7 @@ struct AtlasPublicDetailVMTests {
         #expect(vm.saved)
         #expect(vm.actionError != nil)
         #expect(!vm.busy)
+        #expect(refresher.refreshCount == 1)
     }
 
     @Test
@@ -102,6 +134,42 @@ struct AtlasPublicDetailVMTests {
 
         #expect(!vm.reportSent)
         #expect(vm.actionError != nil)
+    }
+
+    @Test
+    func openingDetailReplacesTheFeedPreview() async {
+        let preview = self.item(slug: "s1")
+        let detailed = AtlasPublicItem(
+            id: "i1",
+            slug: "s1",
+            lemma: "detailed cup",
+            displayZhHant: "杯子",
+            targetLanguage: .en,
+            category: nil,
+            imageUrl: nil,
+            author: nil,
+            publishedAt: nil
+        )
+        let reader = FakePublicItemsReading(item: detailed)
+        let vm = AtlasPublicDetailVM(
+            item: preview,
+            repo: FakeItemConsuming(),
+            itemReader: reader
+        )
+
+        await vm.loadDetail()
+
+        #expect(vm.item.lemma == "detailed cup")
+        #expect(reader.loadedSlugs == ["s1"])
+    }
+}
+
+@MainActor
+private final class RecordingCommunityLearningRefresher: CommunityLearningRefreshing {
+    private(set) var refreshCount = 0
+
+    func refreshAfterLearningMutation() async {
+        self.refreshCount += 1
     }
 }
 
@@ -140,5 +208,30 @@ private final class FakeItemConsuming: AtlasItemConsuming {
     func report(slug: String, reason _: AtlasReportReason, detail _: String?) async throws {
         self.reportedSlugs.append(slug)
         try self.reportResult.get()
+    }
+}
+
+@MainActor
+private final class FakePublicItemsReading: PublicItemsReading {
+    let item: AtlasPublicItem
+    private(set) var loadedSlugs: [String] = []
+
+    init(item: AtlasPublicItem) {
+        self.item = item
+    }
+
+    func publicItems(
+        lemma _: String,
+        language _: TargetLanguage,
+        limit _: Int
+    ) async throws
+        -> [AtlasPublicItem]
+    {
+        [self.item]
+    }
+
+    func publicItem(slug: String) async throws -> AtlasPublicItem {
+        self.loadedSlugs.append(slug)
+        return self.item
     }
 }
