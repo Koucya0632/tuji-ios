@@ -164,6 +164,10 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v7
+        with:
+          # 預設 fetch-depth: 1 的 checkout 裡沒有 origin/<base>，下面的
+          # `git diff base...HEAD` 會直接 fatal，整個檢查等於沒跑。
+          fetch-depth: 0
 
       - name: Check ARCHITECTURE links
         # 提醒：若 PR 改了 Endpoint enum / Models.swift，描述要連結 backend PR。
@@ -172,7 +176,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           if git diff --name-only origin/${{ github.base_ref }}...HEAD \
-            | grep -E "Core/Networking/Endpoints\.swift|Models/.*\.swift" >/dev/null; then
+            | grep -E "Core/Networking/Endpoint\.swift|Models/.*\.swift" >/dev/null; then
             if ! printf '%s' "$PR_BODY" \
               | grep -E "(tuji#[0-9]+|Backend PR:)" >/dev/null; then
               echo "::warning::Endpoint/Models 有改但 PR 沒連 backend PR — 確認後端是否已配套部署？"
