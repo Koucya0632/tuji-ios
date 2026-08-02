@@ -280,10 +280,6 @@ struct AtlasCollectionCard: View {
     /// feed it's the main thing distinguishing one card from the next.
     var showsAuthor = true
 
-    private var pose: MascotPose {
-        MascotPose(rawValue: self.collection.author?.avatar ?? "") ?? .face
-    }
-
     var body: some View {
         Button(action: self.onOpen) {
             HStack(spacing: Space.s3) {
@@ -298,7 +294,7 @@ struct AtlasCollectionCard: View {
                     // identity — the card must not fall back to a handle.
                     if self.showsAuthor, let author = self.collection.author {
                         HStack(spacing: Space.s2) {
-                            MascotAvatar(pose: self.pose, size: 22)
+                            ProfileAvatar(avatar: author.avatar, size: 22)
                             Text(author.displayName)
                                 .font(.tujiCaption)
                                 .foregroundStyle(.tujiInk2)
@@ -655,10 +651,7 @@ struct AtlasPublicDetailView: View {
                     self.selectedAuthorHandle = author.handle
                 } label: {
                     HStack(spacing: 6) {
-                        MascotAvatar(
-                            pose: MascotPose(rawValue: author.avatar) ?? .face,
-                            size: 24
-                        )
+                        ProfileAvatar(avatar: author.avatar, size: 24)
                         Text(author.displayName)
                             .font(.tujiCaption)
                             .foregroundStyle(.tujiTeal)

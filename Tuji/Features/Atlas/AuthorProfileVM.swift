@@ -12,10 +12,8 @@ final class AuthorProfileVM {
     enum Phase: Equatable {
         case loading
         case ready
-        /// The endpoint 404s for an account with nothing approved — which is the
-        /// ordinary state of a new author, not a failure. Kept separate from
-        /// `.failed` so the self-view can say "你還沒有公開任何圖鑑" (with a way
-        /// to fix it) instead of "找不到這個作者".
+        /// Reserved for an invalid or nonexistent UID. Registered accounts with
+        /// no public work return a ready profile with empty collections.
         case notFound
         case failed(String)
     }
@@ -63,19 +61,16 @@ final class AuthorProfileVM {
     /// switch to and the items stand alone.
     var segment: Segment = .collections
 
-    private let repo: AuthorReading
-    private let selfProfile: SelfProfileReading
+    private let profiles: AuthorProfileLoading
 
     init(
         handle: String,
         isSelf: Bool = false,
-        repo: AuthorReading = LiveAtlasRepository.shared,
-        selfProfile: SelfProfileReading = LiveUserRepository.shared
+        profiles: AuthorProfileLoading = AuthorProfileModule.shared
     ) {
         self.handle = handle
         self.isSelf = isSelf
-        self.repo = repo
-        self.selfProfile = selfProfile
+        self.profiles = profiles
     }
 
     var errorMessage: String? {
@@ -99,10 +94,7 @@ final class AuthorProfileVM {
     func load() async {
         self.phase = .loading
         do {
-            // The self-view always reads past both caches: the author has just
-            // come from the edit sheet, so a stale copy would read as the save
-            // having been lost.
-            let response = try await self.repo.author(handle: self.handle, forceReload: self.isSelf)
+            let response = try await self.profiles.load(handle: self.handle, refresh: self.isSelf)
             self.author = response.author
             self.items = response.items
             self.groups = Self.grouped(response.items)
@@ -115,36 +107,10 @@ final class AuthorProfileVM {
         } catch APIError.notFound {
             self.clear()
             self.phase = .notFound
-            // Your own page before you have published anything. The public
-            // endpoint 404s by design, but the identity still exists — and this
-            // is exactly where someone looks to check their UID or how their
-            // 簽名 reads, so showing nothing at all answers the wrong question.
-            // Counts are genuinely zero.
-            if self.isSelf { await self.loadOwnIdentity() }
         } catch {
             self.clear()
             self.phase = .failed(error.localizedDescription)
         }
-    }
-
-    /// Best-effort: if this fails too (offline), the page falls back to the
-    /// plain empty state rather than blocking on it.
-    private func loadOwnIdentity() async {
-        guard let me = try? await self.selfProfile.loadMe().user,
-              let uid = me.username, !uid.isEmpty
-        else { return }
-        let nickname = me.nickname?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        self.author = AtlasAuthor(
-            handle: uid,
-            // Same fallback the server applies in `publicAuthor()`: an empty
-            // 暱稱 is not an error, the UID stands in for one.
-            displayName: nickname.isEmpty ? uid : nickname,
-            avatar: me.avatar ?? "",
-            bio: me.bio,
-            joinedAt: nil,
-            publishedCount: 0,
-            saveCount: 0
-        )
     }
 
     private func clear() {

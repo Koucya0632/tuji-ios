@@ -70,6 +70,54 @@ struct SessionUserMirrorTests {
         #expect(merged.avatar == "face")
     }
 
+    /// Reproduces the shipped mismatch: the migration cleared the public
+    /// profile nickname but left the old auth-session mirror behind. The old
+    /// value is useful as an edit draft, but must remain dirty until the user
+    /// explicitly saves it back to the public profile.
+    @Test
+    func staleSessionNicknameIsAnUnsavedDraft() {
+        let server = UserMeUser(
+            id: UUID().uuidString,
+            email: "mika@example.com",
+            username: "TJ00000042",
+            nickname: nil,
+            avatar: "face",
+            bio: nil
+        )
+
+        let seed = EditProfileView.profileSeed(session: self.user(nickname: "Mika"), server: server)
+
+        #expect(seed.draft.nickname == "Mika")
+        #expect(seed.saved.nickname == "")
+        #expect(seed.draft != seed.saved)
+    }
+
+    @Test
+    func publicNicknameOverridesTheSessionDraftAndStartsClean() {
+        let server = UserMeUser(
+            id: UUID().uuidString,
+            email: "mika@example.com",
+            username: "TJ00000042",
+            nickname: "Public Mika",
+            avatar: "face",
+            bio: nil
+        )
+
+        let seed = EditProfileView.profileSeed(session: self.user(nickname: "Old Mika"), server: server)
+
+        #expect(seed.draft.nickname == "Public Mika")
+        #expect(seed.saved.nickname == "Public Mika")
+        #expect(seed.draft == seed.saved)
+    }
+
+    @Test
+    func unavailableServerDoesNotInventAnUnsavedChange() {
+        let seed = EditProfileView.profileSeed(session: self.user(nickname: "Mika"), server: nil)
+
+        #expect(seed.draft.nickname == "Mika")
+        #expect(seed.draft == seed.saved)
+    }
+
     /// Identity is keyed on the account, not on the mirror — merging must not
     /// invent a different user.
     @Test

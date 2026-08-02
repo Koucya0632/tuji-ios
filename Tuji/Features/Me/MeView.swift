@@ -153,7 +153,11 @@ struct MeView: View {
 
     private var profileHeader: some View {
         VStack(spacing: Space.s3) {
-            MascotAvatar(pose: self.avatarPose, size: 92)
+            ProfileAvatar(
+                avatar: self.isGuest ? nil : self.user?.avatar,
+                fallbackPose: .face,
+                size: 92
+            )
             Text(self.displayName)
                 .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
@@ -165,11 +169,6 @@ struct MeView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, Space.s5)
-    }
-
-    private var avatarPose: MascotPose {
-        if self.isGuest { return .think }
-        return MascotPose(rawValue: self.user?.avatar ?? "") ?? .face
     }
 
     // MARK: - Stats row

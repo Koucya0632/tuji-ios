@@ -13,16 +13,11 @@ struct SignupView: View {
 
     @State private var email = ""
     @State private var password = ""
-    @State private var nickname = ""
     @State private var showPwd = false
     @State private var showEmailConfirmation = false
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var trimmedNickname: String {
-        nickname.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var passwordUsesAllowedCharacters: Bool {
@@ -35,7 +30,6 @@ struct SignupView: View {
         trimmedEmail.contains("@") &&
             password.count >= 8 &&
             passwordUsesAllowedCharacters &&
-            !trimmedNickname.isEmpty &&
             !auth.loading
     }
 
@@ -48,7 +42,7 @@ struct SignupView: View {
                             .font(.tujiH2)
                             .foregroundStyle(.tujiInk)
 
-                        Text("填入登入信箱、密碼和顯示名稱，開始建立你的單字卡。")
+                        Text("填入登入信箱和密碼，開始建立你的單字卡。")
                             .font(.tujiBody)
                             .foregroundStyle(.tujiInk3)
                             .fixedSize(horizontal: false, vertical: true)
@@ -65,16 +59,6 @@ struct SignupView: View {
                     )
 
                     passwordField
-
-                    field(
-                        label: "暱稱",
-                        text: $nickname,
-                        placeholder: "想讓大家怎麼稱呼你",
-                        keyboard: .default,
-                        contentType: .username,
-                        capitalize: true,
-                        helper: "之後可以在個人設定中修改"
-                    )
 
                     if let err = auth.error {
                         HStack(alignment: .top, spacing: Space.s2) {
@@ -216,7 +200,7 @@ struct SignupView: View {
 
     private func submit() {
         Task {
-            let result = await auth.signUp(email: trimmedEmail, password: password, nickname: trimmedNickname)
+            let result = await auth.signUp(email: trimmedEmail, password: password)
             if result == .pendingEmailConfirmation {
                 showEmailConfirmation = true
             }

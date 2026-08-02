@@ -96,7 +96,7 @@ App 啟動
 
 - 狀態:`.checking → .signedOut / .signedIn`;`.signedOut ⇄ .guest`(訪客模式)。
 - **Email**:`signUp`(可能回 `pendingEmailConfirmation`,確認信 redirect 到 `TUJI_BASE_URL/auth/confirmed`)、`signIn`。
-- **Apple**:`AppleSignInBridge` 取得 idToken + nonce → Supabase `signInWithIdToken`。Apple 只在「第一次授權」提供姓名,若使用者暱稱為空就立刻存成 nickname(`captureAppleNameIfNeeded`)。
+- **Apple**:`AppleSignInBridge` 取得 idToken + nonce → Supabase `signInWithIdToken`。Apple 提供的姓名不會自動成為公開暱稱；暱稱只能在登入後由使用者於「編輯個人資料」主動送出並通過審核。
 - **Google**:`GoogleSignInBridge` 原生流程取 idToken → Supabase(Supabase 專案需開 Skip nonce checks,SDK 不支援 nonce)。使用者取消不顯示錯誤。
 - **登出**:先(並行)刪除裝置推播 token,再 Supabase signOut + 清 Google 快取。
 - 錯誤訊息經 `friendly()` 轉成中文(密碼錯誤、Email 已註冊、rate limit…)。
@@ -441,7 +441,7 @@ App 啟動
 | 學習 | 中文釋義 | showZh 開關,各列表/學習畫面條件渲染中文 |
 | 顯示 | 語言 | 繁體/简体(uiLang) |
 | 顯示 | 發音口音 | 美式/英式(僅 zh-en 顯示) |
-| 帳號 | 編輯個人資料 | nickname/avatar → POST `/api/users/profile`,`AuthService.applyProfile` 樂觀更新 session |
+| 帳號 | 編輯個人資料 | 暱稱/簽名/裁切後照片以單一 multipart POST `/api/users/profile` 儲存；回傳的權威 Author 直接更新主頁快取，再鏡射到 session |
 | 帳號 | 登出 | 確認 prompt → `auth.signOut()` |
 | 危險 | 清除學習進度 | 二段確認,見 §7.3 |
 | 危險 | 刪除帳號 | **兩層確認** prompt → DELETE `/api/users/delete-account` → 自動登出 |

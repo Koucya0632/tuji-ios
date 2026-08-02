@@ -160,9 +160,7 @@ struct AtlasAuthorProfileView: View {
 
     private func headerCard(_ author: AtlasAuthor) -> some View {
         VStack(spacing: Space.s3) {
-            // The author's chosen mascot pose — the same avatar the rest of the
-            // app shows them, so the public page is recognisably theirs.
-            MascotAvatar(pose: MascotPose(rawValue: author.avatar) ?? .face, size: 84)
+            ProfileAvatar(avatar: author.avatar, size: 84)
 
             VStack(spacing: 2) {
                 Text(author.displayName)

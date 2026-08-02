@@ -1,11 +1,9 @@
 // Pins AuthorProfileVM: a successful load populates the author + their items and
-// marks ready; a failed load clears both and surfaces the error. The 404 case is
-// pinned separately because it is NOT a failure — the endpoint 404s for a real
-// account with nothing approved yet, and the self-view has to be able to tell
-// "you haven't published anything" apart from "no such author". Language
-// grouping is pinned here too: it decides what the profile actually renders.
+// marks ready; a failed load clears both and surfaces the error. A zero-work
+// registered account is a successful empty response; 404 is reserved for an
+// invalid or nonexistent UID. Language grouping is pinned here too.
 //
-// Driven through a synchronous FakeAuthorReading.
+// Driven through a synchronous FakeAuthorProfileLoading.
 
 import Foundation
 import Testing
@@ -58,9 +56,9 @@ struct AuthorProfileVMTests {
 
     @Test
     func loadPopulatesAuthorAndItemsAndMarksReady() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(author: self.author(), items: [self.item(id: "x")]))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -71,9 +69,9 @@ struct AuthorProfileVMTests {
 
     @Test
     func failedLoadClearsAndSurfacesError() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(author: self.author(), items: [self.item(id: "x")]))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
         await vm.load() // first a good load…
 
         fake.result = .failure(FakeError.boom)
@@ -85,20 +83,31 @@ struct AuthorProfileVMTests {
         #expect(vm.errorMessage != nil)
     }
 
-    // MARK: - notFound is not a failure
+    // MARK: - Empty profile and notFound
 
-    /// 404 means "nothing approved yet", which is the normal state of a new
-    /// author, so it must not arrive as an error with a retry button.
-    ///
-    /// Deliberately a VISITOR: the self case rebuilds an identity from an
-    /// authenticated route (see 「Own page with nothing published」 below), so
-    /// pinning the phase on `isSelf: true` would drag that behaviour in — and,
-    /// without an injected fake, would reach the live network to do it.
+    @Test
+    func zeroWorkAccountIsAReadyProfile() async {
+        let fake = FakeAuthorProfileLoading()
+        fake.result = .success(.init(
+            author: self.author(handle: "TJ00000042"),
+            items: [],
+            collections: []
+        ))
+        let vm = AuthorProfileVM(handle: "TJ00000042", profiles: fake)
+
+        await vm.load()
+
+        #expect(vm.phase == .ready)
+        #expect(vm.author?.handle == "TJ00000042")
+        #expect(vm.items.isEmpty)
+        #expect(vm.collections.isEmpty)
+    }
+
     @Test
     func notFoundLandsInItsOwnPhaseWithNoErrorMessage() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .failure(APIError.notFound)
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake, selfProfile: FakeSelfProfileReading())
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -109,9 +118,9 @@ struct AuthorProfileVMTests {
 
     @Test
     func nonNotFoundErrorsStillFail() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .failure(APIError.server(status: 500, body: nil))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -125,105 +134,26 @@ struct AuthorProfileVMTests {
     /// served the CDN's 30-minute-old copy.
     @Test
     func selfViewForcesAReload() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         let vm = AuthorProfileVM(
             handle: "mika_k",
             isSelf: true,
-            repo: fake,
-            selfProfile: FakeSelfProfileReading()
+            profiles: fake
         )
 
         await vm.load()
 
-        #expect(fake.lastForceReload == true)
+        #expect(fake.lastRefresh == true)
     }
 
     @Test
     func visitorViewKeepsTheCache() async {
-        let fake = FakeAuthorReading()
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let fake = FakeAuthorProfileLoading()
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
-        #expect(fake.lastForceReload == false)
-    }
-
-    // MARK: - Own page with nothing published
-
-    // The public endpoint 404s for an account with no approved items — by
-    // design, so it cannot confirm whether a handle exists. But this is the
-    // screen where someone checks their own UID and 簽名, so the identity is
-    // rebuilt from an authenticated route instead.
-
-    @Test
-    func ownEmptyPageStillShowsTheIdentity() async {
-        let fake = FakeAuthorReading()
-        fake.result = .failure(APIError.notFound)
-        let me = FakeSelfProfileReading()
-        let vm = AuthorProfileVM(handle: "TJ73168628", isSelf: true, repo: fake, selfProfile: me)
-
-        await vm.load()
-
-        #expect(vm.phase == .notFound)
-        #expect(vm.author?.handle == "TJ73168628")
-        #expect(vm.author?.displayName == "Mika")
-        #expect(vm.author?.bio == "喜歡拍街上的招牌")
-        // Genuinely zero, not unknown.
-        #expect(vm.author?.publishedCount == 0)
-        #expect(vm.author?.saveCount == 0)
-    }
-
-    /// Same fallback the server applies: an empty 暱稱 is not an error, the UID
-    /// stands in for one. Diverging here would show a nameless author on the one
-    /// page that exists to tell you how you look.
-    @Test
-    func anEmptyNicknameFallsBackToTheUid() async {
-        let fake = FakeAuthorReading()
-        fake.result = .failure(APIError.notFound)
-        let me = FakeSelfProfileReading()
-        me.result = .success(UserMeResponse(
-            user: UserMeUser(
-                id: "u1", email: nil, username: "TJ00000042",
-                nickname: "   ", avatar: "face", bio: nil
-            ),
-            favorites: nil, learned: nil
-        ))
-        let vm = AuthorProfileVM(handle: "TJ00000042", isSelf: true, repo: fake, selfProfile: me)
-
-        await vm.load()
-
-        #expect(vm.author?.displayName == "TJ00000042")
-    }
-
-    /// Offline: the identity fetch fails too. The page must fall back to the
-    /// plain empty state rather than hang or show a half-built header.
-    @Test
-    func aFailedIdentityFetchLeavesTheHeaderOff() async {
-        let fake = FakeAuthorReading()
-        fake.result = .failure(APIError.notFound)
-        let me = FakeSelfProfileReading()
-        me.result = .failure(FakeError.boom)
-        let vm = AuthorProfileVM(handle: "TJ73168628", isSelf: true, repo: fake, selfProfile: me)
-
-        await vm.load()
-
-        #expect(vm.phase == .notFound)
-        #expect(vm.author == nil)
-    }
-
-    /// A visitor looking at an account with nothing published must still get
-    /// nothing — the endpoint's refusal to confirm a handle exists is the point.
-    @Test
-    func aVisitorNeverTriggersTheIdentityFallback() async {
-        let fake = FakeAuthorReading()
-        fake.result = .failure(APIError.notFound)
-        let me = FakeSelfProfileReading()
-        let vm = AuthorProfileVM(handle: "TJ73168628", repo: fake, selfProfile: me)
-
-        await vm.load()
-
-        #expect(vm.author == nil)
-        #expect(me.called == false)
+        #expect(fake.lastRefresh == false)
     }
 
     // MARK: - Language grouping
@@ -232,7 +162,7 @@ struct AuthorProfileVMTests {
     /// so every item survives grouping and the counts add back up to the total.
     @Test
     func groupsSplitByLanguageWithoutDroppingItems() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [
@@ -241,7 +171,7 @@ struct AuthorProfileVMTests {
                 self.item(id: "c", language: .ja)
             ]
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -256,7 +186,7 @@ struct AuthorProfileVMTests {
     /// stable, or the page reshuffles between loads.
     @Test
     func groupOrderFollowsFirstAppearance() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [
@@ -264,7 +194,7 @@ struct AuthorProfileVMTests {
                 self.item(id: "b", language: .ja)
             ]
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -277,13 +207,13 @@ struct AuthorProfileVMTests {
     /// is worse than no control, so it isn't drawn at all.
     @Test
     func noCollectionsMeansNoSegmentedControl() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [self.item(id: "a")],
             collections: []
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -294,13 +224,13 @@ struct AuthorProfileVMTests {
     /// Curated work is the stronger signal, so it leads when it exists.
     @Test
     func collectionsLeadWhenTheyExist() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [self.item(id: "a")],
             collections: [self.collection(id: "c1")]
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -312,13 +242,13 @@ struct AuthorProfileVMTests {
     /// The user's choice is honoured while the control is on screen.
     @Test
     func switchingToItemsIsRespected() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [self.item(id: "a")],
             collections: [self.collection(id: "c1")]
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
         await vm.load()
 
         vm.segment = .items
@@ -331,13 +261,13 @@ struct AuthorProfileVMTests {
     /// no longer has a control to switch away from.
     @Test
     func losingTheLastCollectionFallsBackToItems() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [self.item(id: "a")],
             collections: [self.collection(id: "c1")]
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
         await vm.load()
         #expect(vm.visibleSegment == .collections)
 
@@ -370,12 +300,12 @@ struct AuthorProfileVMTests {
 
     @Test
     func oneLanguageProducesOneGroup() async {
-        let fake = FakeAuthorReading()
+        let fake = FakeAuthorProfileLoading()
         fake.result = .success(.init(
             author: self.author(),
             items: [self.item(id: "a"), self.item(id: "b")]
         ))
-        let vm = AuthorProfileVM(handle: "mika_k", repo: fake)
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
 
         await vm.load()
 
@@ -391,7 +321,7 @@ private enum FakeError: Error {
 }
 
 @MainActor
-private final class FakeAuthorReading: AuthorReading {
+private final class FakeAuthorProfileLoading: AuthorProfileLoading {
     var result: Result<AtlasAuthorResponse, Error> = .success(
         .init(
             author: AtlasAuthor(
@@ -407,35 +337,10 @@ private final class FakeAuthorReading: AuthorReading {
         )
     )
 
-    private(set) var lastForceReload: Bool?
+    private(set) var lastRefresh: Bool?
 
-    func author(handle _: String, forceReload: Bool) async throws -> AtlasAuthorResponse {
-        self.lastForceReload = forceReload
-        return try self.result.get()
-    }
-}
-
-@MainActor
-private final class FakeSelfProfileReading: SelfProfileReading {
-    var result: Result<UserMeResponse, Error> = .success(
-        UserMeResponse(
-            user: UserMeUser(
-                id: "u1",
-                email: "mika@example.com",
-                username: "TJ73168628",
-                nickname: "Mika",
-                avatar: "wave",
-                bio: "喜歡拍街上的招牌"
-            ),
-            favorites: nil,
-            learned: nil
-        )
-    )
-
-    private(set) var called = false
-
-    func loadMe() async throws -> UserMeResponse {
-        self.called = true
+    func load(handle _: String, refresh: Bool) async throws -> AtlasAuthorResponse {
+        self.lastRefresh = refresh
         return try self.result.get()
     }
 }
