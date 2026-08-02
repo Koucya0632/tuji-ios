@@ -14,8 +14,23 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   public items, scoped to one learning language. Browsed in 公開圖鑑, authored in 我的合集.
   Members can only be the author's already-approved public items (server-enforced).
   Publishing a collection re-runs the text gate on its title + 簡介.
-- **Author profile** — a public page for one author: identity + their public items +
-  cumulative save count (the altruistic signal).
+- **Author profile** — a public page for every registered account: identity + their
+  public items + cumulative save count (the altruistic signal). It exists independently
+  of published work and is created as soon as registration completes, so an account with
+  zero public items still has an Author profile. No separate publication or consent state
+  activates the page. It is addressable by exact UID or an existing link but is not listed
+  in author search, recommendations, or a public directory. Registration creates it with
+  the UID and default black cat avatar; a public nickname is a later Profile edit.
+- **Author identity** — the public identity rendered on an Author profile and its bylines.
+  A nickname is optional. Its display name is the trimmed nickname when one exists,
+  otherwise the immutable UID.
+  The UID remains separately visible and an email address is never a public fallback. Its
+  avatar is either the author's chosen photo or the single default black cat avatar. A
+  nickname is public text and must pass the same moderation policy whenever it is set.
+- **Profile edit** — one requested change set for the public nickname, bio, and avatar.
+  An accepted edit becomes visible as one Author identity change; a rejected edit leaves
+  the previous Author profile intact rather than exposing a partial change. Acceptance is
+  determined by the authoritative public profile, not by derived session mirrors or cleanup.
 - **Saving (收藏)** — the *consumption* path. Saving a public item does **not** consume
   the user's 自製圖鑑 capacity.
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the

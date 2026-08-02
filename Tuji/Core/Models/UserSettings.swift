@@ -71,23 +71,15 @@ struct UserSettingsResponse: Decodable {
     let settings: UserSettings
 }
 
-/// Body for POST /api/users/profile.
-struct ProfileUpdatePayload: Encodable {
+/// One public profile change set. The live module encodes this as multipart so
+/// an optional photo and the text fields share one server commit.
+struct ProfileEditChange {
     let nickname: String?
     let avatar: String?
-    /// Public 簽名. Empty string clears it; omitting the key leaves it alone.
-    let bio: String?
-
-    init(nickname: String?, avatar: String?, bio: String? = nil) {
-        self.nickname = nickname
-        self.avatar = avatar
-        self.bio = bio
-    }
+    let bio: String
 }
 
 struct ProfileUpdateResponse: Decodable {
-    let ok: Bool?
-    let nickname: String?
-    let avatar: String?
-    let bio: String?
+    let ok: Bool
+    let author: AtlasAuthor
 }

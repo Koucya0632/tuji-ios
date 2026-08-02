@@ -218,6 +218,51 @@ struct MascotAvatar: View {
     }
 }
 
+/// A public profile avatar. HTTPS images render in the circular frame; every
+/// other stored value collapses to the one built-in black-cat default.
+struct ProfileAvatar: View {
+    let avatar: String?
+    var fallbackPose: MascotPose = .face
+    var size: CGFloat = 88
+    var selected = false
+
+    private var imageURL: URL? {
+        guard let avatar, let url = URL(string: avatar), url.scheme == "https" else { return nil }
+        return url
+    }
+
+    var body: some View {
+        if let imageURL {
+            AsyncImage(url: imageURL) { phase in
+                if let image = phase.image {
+                    image.resizable().aspectRatio(contentMode: .fill)
+                } else if phase.error != nil {
+                    MascotAvatar(pose: self.fallbackPose, size: self.size, selected: self.selected)
+                } else {
+                    ProgressView().tint(.tujiTeal)
+                }
+            }
+            .frame(width: self.size, height: self.size)
+            .background(.tujiTealSoft)
+            .clipShape(.circle)
+            .overlay(
+                Circle()
+                    .stroke(
+                        self.selected ? Color.tujiTeal : .tujiInk.opacity(0.08),
+                        lineWidth: self.selected ? 2 : 1
+                    )
+            )
+            .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
+        } else {
+            MascotAvatar(
+                pose: self.fallbackPose,
+                size: self.size,
+                selected: self.selected
+            )
+        }
+    }
+}
+
 #Preview {
     ScrollView {
         VStack(spacing: Space.s8) {

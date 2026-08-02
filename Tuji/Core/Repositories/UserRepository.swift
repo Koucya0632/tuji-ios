@@ -4,7 +4,6 @@ import Foundation
 protocol UserRepository {
     func loadSettings() async throws -> UserSettings
     func saveSettings(_ settings: UserSettings) async throws
-    func updateProfile(_ payload: ProfileUpdatePayload) async throws -> ProfileUpdateResponse
     func deleteAccount() async throws
     func syncLocalCache(_ snapshot: SyncPayload) async throws
     func loadMe() async throws -> UserMeResponse
@@ -30,10 +29,6 @@ struct LiveUserRepository: UserRepository {
 
     func saveSettings(_ settings: UserSettings) async throws {
         let _: SaveSettingsResponse = try await self.api.post(.usersSettings, body: settings)
-    }
-
-    func updateProfile(_ payload: ProfileUpdatePayload) async throws -> ProfileUpdateResponse {
-        try await self.api.post(.usersProfile, body: payload)
     }
 
     func deleteAccount() async throws {

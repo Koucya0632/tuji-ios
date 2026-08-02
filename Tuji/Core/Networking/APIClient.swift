@@ -94,7 +94,7 @@ final class APIClient {
         fileField: String,
         filename: String,
         mimeType: String,
-        data: Data,
+        data: Data?,
         fields: [String: String] = [:],
         as: T.Type = T.self
     ) async throws
@@ -243,7 +243,7 @@ final class APIClient {
         fileField: String,
         filename: String,
         mimeType: String,
-        data: Data
+        data: Data?
     )
         -> Data
     {
@@ -254,13 +254,15 @@ final class APIClient {
             body.appendString("Content-Disposition: form-data; name=\"\(name)\"\(lineBreak)\(lineBreak)")
             body.appendString("\(value)\(lineBreak)")
         }
-        body.appendString("--\(boundary)\(lineBreak)")
-        body.appendString(
-            "Content-Disposition: form-data; name=\"\(fileField)\"; filename=\"\(filename)\"\(lineBreak)"
-        )
-        body.appendString("Content-Type: \(mimeType)\(lineBreak)\(lineBreak)")
-        body.append(data)
-        body.appendString(lineBreak)
+        if let data {
+            body.appendString("--\(boundary)\(lineBreak)")
+            body.appendString(
+                "Content-Disposition: form-data; name=\"\(fileField)\"; filename=\"\(filename)\"\(lineBreak)"
+            )
+            body.appendString("Content-Type: \(mimeType)\(lineBreak)\(lineBreak)")
+            body.append(data)
+            body.appendString(lineBreak)
+        }
         body.appendString("--\(boundary)--\(lineBreak)")
         return body
     }

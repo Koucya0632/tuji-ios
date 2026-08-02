@@ -124,9 +124,8 @@ struct MePublicProfileRow: View {
     private var row: some View {
         MeListRow(
             icon: "person.crop.circle.fill",
-            title: "我的公開主頁",
-            tint: .tujiTeal,
-            subtitle: "別人看到的你"
+            title: "我的主頁",
+            tint: .tujiTeal
         )
     }
 }

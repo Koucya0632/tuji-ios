@@ -174,10 +174,7 @@ struct AtlasCollectionDetailView: View {
                             self.selectedAuthorHandle = author.handle
                         } label: {
                             HStack(spacing: 6) {
-                                MascotAvatar(
-                                    pose: MascotPose(rawValue: author.avatar) ?? .face,
-                                    size: 22
-                                )
+                                ProfileAvatar(avatar: author.avatar, size: 22)
                                 Text(author.displayName)
                                     .font(.tujiCaption)
                                     .foregroundStyle(.white.opacity(0.95))

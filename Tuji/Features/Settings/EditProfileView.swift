@@ -11,16 +11,25 @@
 // everything on it is public, and there is nothing left to consent to.
 
 import OSLog
+import PhotosUI
 import SwiftUI
+import UIKit
 
 struct EditProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
-    private let users: UserRepository = LiveUserRepository.shared
+    private let profiles: ProfileEditing = LiveProfileModule.shared
 
     @State private var nickname: String = ""
     @State private var bio: String = ""
-    @State private var pose: MascotPose = .face
+    @State private var avatar: String = MascotPose.face.rawValue
+    @State private var pendingAvatarData: Data?
+    @State private var pendingAvatarImage: UIImage?
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var pendingCrop: PendingCrop?
+    @State private var showAvatarSources = false
+    @State private var showPhotoLibrary = false
+    @State private var showCamera = false
     @State private var saving = false
     @State private var loading = true
     @State private var error: Error?
@@ -33,10 +42,20 @@ struct EditProfileView: View {
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "edit-profile")
 
-    private struct Loaded: Equatable {
+    struct Loaded: Equatable {
         var nickname: String
         var bio: String
-        var pose: MascotPose
+        var avatar: String
+    }
+
+    struct ProfileSeed: Equatable {
+        var draft: Loaded
+        var saved: Loaded
+    }
+
+    private struct PendingCrop: Identifiable {
+        let id = UUID()
+        let data: Data
     }
 
     static let nicknameMax = 20
@@ -46,7 +65,6 @@ struct EditProfileView: View {
         ScrollView {
             VStack(spacing: Space.s6) {
                 self.heroAvatar
-                self.avatarPicker
                 self.nicknameField
                 self.bioField
                 self.uidField
@@ -77,47 +95,103 @@ struct EditProfileView: View {
             }
         }
         .task { await self.load() }
+        .onChange(of: self.pickerItem) { _, item in
+            guard let item else { return }
+            Task {
+                do {
+                    if let data = try await item.loadTransferable(type: Data.self) {
+                        self.pendingCrop = PendingCrop(data: data)
+                    }
+                } catch {
+                    self.error = error
+                }
+                self.pickerItem = nil
+            }
+        }
+        .confirmationDialog(
+            "更換頭像",
+            isPresented: self.$showAvatarSources,
+            titleVisibility: .visible
+        ) {
+            if CameraPicker.isAvailable {
+                Button("拍照") { self.showCamera = true }
+            }
+            Button("從相簿選擇") { self.showPhotoLibrary = true }
+            if self.hasCustomAvatar {
+                Button("使用預設黑貓頭像") {
+                    self.avatar = MascotPose.face.rawValue
+                    self.pendingAvatarData = nil
+                    self.pendingAvatarImage = nil
+                }
+            }
+            Button("取消", role: .cancel) {}
+        }
+        .photosPicker(
+            isPresented: self.$showPhotoLibrary,
+            selection: self.$pickerItem,
+            matching: .images
+        )
+        .fullScreenCover(isPresented: self.$showCamera) {
+            CameraPicker(
+                onCapture: { data in
+                    self.showCamera = false
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(350))
+                        self.pendingCrop = PendingCrop(data: data)
+                    }
+                },
+                onCancel: { self.showCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .fullScreenCover(item: self.$pendingCrop) { pending in
+            AvatarCropView(
+                imageData: pending.data,
+                onConfirm: { cropped in
+                    self.pendingCrop = nil
+                    self.selectPhoto(cropped)
+                },
+                onCancel: { self.pendingCrop = nil }
+            )
+        }
     }
 
     private var heroAvatar: some View {
-        MascotAvatar(pose: self.pose, size: 104, selected: true)
-            .frame(maxWidth: .infinity)
-    }
-
-    private var avatarPicker: some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            Text("選擇黑貓頭像")
-                .font(.tujiOverline)
-                .tracking(2)
-                .foregroundStyle(.tujiInk3)
-
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2), count: 3),
-                spacing: Space.s2
-            ) {
-                ForEach(MascotPose.allCases, id: \.self) { candidate in
-                    Button {
-                        self.pose = candidate
-                    } label: {
-                        MascotAvatar(
-                            pose: candidate,
-                            size: 68,
-                            selected: self.pose == candidate
-                        )
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Space.s2)
-                        .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Radius.md)
-                                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
-                        )
+        Button {
+            self.showAvatarSources = true
+        } label: {
+            VStack(spacing: Space.s2) {
+                ZStack(alignment: .bottomTrailing) {
+                    Group {
+                        if let pendingAvatarImage {
+                            Image(uiImage: pendingAvatarImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 104, height: 104)
+                                .clipShape(.circle)
+                                .overlay(Circle().stroke(.tujiTeal, lineWidth: 2))
+                                .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
+                        } else {
+                            ProfileAvatar(avatar: self.avatar, size: 104, selected: true)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("頭像 \(candidate.rawValue)")
-                    .accessibilityAddTraits(self.pose == candidate ? .isSelected : [])
+
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 34, height: 34)
+                        .background(.tujiTeal, in: .circle)
+                        .overlay(Circle().stroke(.tujiBg, lineWidth: 3))
                 }
+                Text("點一下更換頭像")
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiInk3)
             }
+            .frame(maxWidth: .infinity)
         }
+        .buttonStyle(.plain)
+        .disabled(self.saving || self.loading)
+        .accessibilityLabel("更換頭像")
     }
 
     private var nicknameField: some View {
@@ -231,11 +305,45 @@ struct EditProfileView: View {
 
     private var dirty: Bool {
         guard let loaded else { return false }
-        return Loaded(nickname: self.trimmedNickname, bio: self.trimmedBio, pose: self.pose) != loaded
+        if self.pendingAvatarData != nil { return true }
+        return Loaded(nickname: self.trimmedNickname, bio: self.trimmedBio, avatar: self.avatar) != loaded
     }
 
     private var canSave: Bool {
         self.dirty && !self.saving && !self.loading && self.nicknameIsValid && self.bioIsValid
+    }
+
+    private var hasCustomAvatar: Bool {
+        if self.pendingAvatarData != nil { return true }
+        return URL(string: self.avatar)?.scheme == "https"
+    }
+
+    /// Keeps the edit draft and server truth separate. A legacy auth-session
+    /// nickname may still be useful as a draft, but it is not public until the
+    /// profiles row contains it.
+    static func profileSeed(session: SessionUser?, server: UserMeUser?) -> ProfileSeed {
+        var seeded = Loaded(nickname: "", bio: "", avatar: MascotPose.face.rawValue)
+        if let session {
+            seeded.nickname = session.nickname ?? ""
+            if let avatar = session.avatar, URL(string: avatar)?.scheme == "https" {
+                seeded.avatar = avatar
+            }
+        }
+        var saved = seeded
+        if let server {
+            seeded.nickname = server.nickname ?? seeded.nickname
+            seeded.bio = server.bio ?? ""
+            if let avatar = server.avatar, URL(string: avatar)?.scheme == "https" {
+                seeded.avatar = avatar
+            }
+            saved = seeded
+            // A successful /users/me response is authoritative. Keep a stale
+            // session nickname in the field as a convenient draft, but compare
+            // it against the empty public value so Save becomes available and
+            // publishing still requires an explicit tap.
+            saved.nickname = server.nickname ?? ""
+        }
+        return ProfileSeed(draft: seeded, saved: saved)
     }
 
     /// The 簽名 has no other read path, so the screen loads its own copy rather
@@ -243,21 +351,32 @@ struct EditProfileView: View {
     private func load() async {
         guard self.loading else { return }
         defer { self.loading = false }
-        var seeded = Loaded(nickname: "", bio: "", pose: .face)
-        if case let .signedIn(user) = auth.state {
-            seeded.nickname = user.nickname ?? ""
-            seeded.pose = MascotPose(rawValue: user.avatar ?? "") ?? .face
-        }
-        if let me = try? await self.users.loadMe().user {
+        let session: SessionUser? = if case let .signedIn(user) = auth.state { user } else { nil }
+        var seed = Self.profileSeed(session: session, server: nil)
+        if let me = try? await self.profiles.load() {
             self.serverUid = me.username
-            seeded.nickname = me.nickname ?? seeded.nickname
-            seeded.bio = me.bio ?? ""
-            seeded.pose = MascotPose(rawValue: me.avatar ?? "") ?? seeded.pose
+            seed = Self.profileSeed(session: session, server: me)
         }
-        self.nickname = seeded.nickname
-        self.bio = seeded.bio
-        self.pose = seeded.pose
-        self.loaded = seeded
+        self.nickname = seed.draft.nickname
+        self.bio = seed.draft.bio
+        self.avatar = seed.draft.avatar
+        self.loaded = seed.saved
+    }
+
+    private func selectPhoto(_ data: Data) {
+        guard let encoded = ImageDownscale.jpeg(from: data, maxPixelSize: 1200, quality: 0.86),
+              let image = UIImage(data: encoded)
+        else {
+            self.error = NSError(
+                domain: "app.tuji.ios.avatar",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "無法讀取這張照片，請換一張再試。"]
+            )
+            return
+        }
+        self.error = nil
+        self.pendingAvatarData = encoded
+        self.pendingAvatarImage = image
     }
 
     private func save() async {
@@ -265,15 +384,19 @@ struct EditProfileView: View {
         self.error = nil
         defer { self.saving = false }
         let newNickname = self.trimmedNickname.isEmpty ? nil : self.trimmedNickname
-        let payload = ProfileUpdatePayload(
-            nickname: newNickname,
-            avatar: self.pose.rawValue,
-            bio: self.trimmedBio
-        )
         do {
-            _ = try await self.users.updateProfile(payload)
+            let avatarChange = self.pendingAvatarData == nil && self.avatar != self.loaded?.avatar
+                ? self.avatar
+                : nil
+            let change = ProfileEditChange(
+                nickname: newNickname,
+                avatar: avatarChange,
+                bio: self.trimmedBio
+            )
+            let author = try await self.profiles.edit(change, avatarData: self.pendingAvatarData)
             self.log.info("profile saved")
-            self.auth.applyProfile(nickname: newNickname, avatar: self.pose.rawValue)
+            let savedNickname = author.displayName == author.handle ? nil : author.displayName
+            self.auth.applyProfile(nickname: savedNickname, avatar: author.avatar)
             self.dismiss()
         } catch {
             self.error = error

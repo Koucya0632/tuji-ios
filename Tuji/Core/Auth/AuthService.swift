@@ -99,11 +99,10 @@ final class AuthService {
 
     // MARK: - Email
 
-    /// `nickname` is the display name the user typed on the signup form. It is
-    /// seeded into the profile by `handle_new_user()` — which is safe precisely
-    /// because they typed it. The UID is minted server-side and is not
-    /// influenced by anything sent here.
-    func signUp(email: String, password: String, nickname: String) async -> SignUpResult {
+    /// Registration creates only the server-minted UID and default avatar.
+    /// A public nickname is optional and goes through Profile edit moderation
+    /// only after authentication.
+    func signUp(email: String, password: String) async -> SignUpResult {
         loading = true
         error = nil
         defer { loading = false }
@@ -111,7 +110,6 @@ final class AuthService {
             let resp = try await supabase.auth.signUp(
                 email: email,
                 password: password,
-                data: ["nickname": .string(nickname)],
                 redirectTo: emailConfirmationRedirectURL
             )
             if let session = resp.session {
