@@ -156,7 +156,9 @@ struct AvatarCropView: View {
         baseSize: CGSize,
         diameter: CGFloat,
         zoom: CGFloat
-    ) -> CGSize {
+    )
+        -> CGSize
+    {
         let maxX = max(0, (baseSize.width * zoom - diameter) / 2)
         let maxY = max(0, (baseSize.height * zoom - diameter) / 2)
         return CGSize(
@@ -244,5 +246,4 @@ struct AvatarCropView: View {
             self.onConfirm(cropped ?? data)
         }
     }
-
 }
