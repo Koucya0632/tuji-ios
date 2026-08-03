@@ -45,7 +45,7 @@ struct AtlasMyCollectionsView: View {
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
             }
-            if self.vm.loading {
+            if self.vm.showsPlaceholder {
                 HStack {
                     Spacer()
                     ProgressView().tint(.tujiTeal)
@@ -61,6 +61,9 @@ struct AtlasMyCollectionsView: View {
             } else {
                 ForEach(self.visibleCollections) { collection in
                     NavigationLink {
+                        // Kept even though `.task` re-runs on pop: that is
+                        // SwiftUI's teardown behaviour, not a contract. The VM
+                        // coalesces whichever of the two arrives second.
                         AtlasCollectionEditView(collectionId: collection.id)
                             .onDisappear { Task { await self.vm.load() } }
                     } label: {
@@ -660,42 +663,47 @@ private struct AtlasCollectionItemPicker: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                if self.model.loading {
-                    ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
-                } else if self.model.available.isEmpty {
-                    VStack(spacing: Space.s3) {
-                        Image(systemName: "photo.on.rectangle.angled")
-                            .font(.system(size: 36)).foregroundStyle(.tujiInk4)
-                        Text(self.model.loadError == nil
-                            ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入集合。")
-                            : tujiLocalized("載入失敗，請稍後再試"))
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk3)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, Space.s12)
-                    .padding(.horizontal, Space.s6)
-                } else {
-                    VStack(spacing: Space.s3) {
-                        if let addError = self.model.addError {
-                            Text(addError)
+                Group {
+                    if self.model.loading {
+                        ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
+                    } else if self.model.available.isEmpty {
+                        VStack(spacing: Space.s3) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 36)).foregroundStyle(.tujiInk4)
+                            Text(self.model.loadError == nil
+                                ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入集合。")
+                                : tujiLocalized("載入失敗，請稍後再試"))
                                 .font(.tujiCaption)
-                                .foregroundStyle(.tujiCoral)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.tujiInk3)
+                                .multilineTextAlignment(.center)
                         }
-                        LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
-                            spacing: Space.s3
-                        ) {
-                            ForEach(self.model.available) { item in
-                                self.cell(item)
+                        .padding(.top, Space.s12)
+                        .padding(.horizontal, Space.s6)
+                    } else {
+                        VStack(spacing: Space.s3) {
+                            if let addError = self.model.addError {
+                                Text(addError)
+                                    .font(.tujiCaption)
+                                    .foregroundStyle(.tujiCoral)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            LazyVGrid(
+                                columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
+                                spacing: Space.s3
+                            ) {
+                                ForEach(self.model.available) { item in
+                                    self.cell(item)
+                                }
                             }
                         }
+                        .padding(Space.s4)
                     }
-                    .padding(Space.s4)
                 }
+                // Without this the ScrollView shrinks to the spinner's width and
+                // .tujiBg only paints a strip down the middle of the sheet.
+                .frame(maxWidth: .infinity)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(.tujiBg)
             .navigationTitle("加入項目")
             .navigationBarTitleDisplayMode(.inline)

@@ -107,7 +107,10 @@ struct SetupView: View {
             Divider().background(.tujiInk4.opacity(0.2))
 
             BBtn(
-                title: saving ? "儲存中..." : "開始今天的 \(dailyGoal) 題",
+                // Not 「開始使用」: that is already the last onboarding page's
+                // button and the tour's closing card, and this is a third tap
+                // in the same run-in.
+                title: saving ? "儲存中..." : "完成設定",
                 bg: .tujiTeal,
                 fg: .white,
                 fullWidth: true,
@@ -229,12 +232,12 @@ struct SetupView: View {
                 // Today's theme grid read SettingsStore.current, which would
                 // otherwise stay at defaults until the next server load.
                 settingsStore.adoptPersisted(settings)
+                // Flips RootView to MainTabsView, which lands on 主頁 and lets
+                // the first-run tour take it from here. Setup used to park a
+                // study deep link and push straight into a session — that shut
+                // the tour out entirely, since startTourIfNeeded() bails while
+                // StudyLauncherView holds studyFocus.
                 onboarding.markSetupDone(for: userId)
-                // The CTA promises 開始今天的 N 題 — keep it. markSetupDone flips
-                // RootView to MainTabsView; parking a study deep link makes the
-                // freshly-mounted tab shell push straight into the new-words
-                // session instead of dropping the user on Today to re-find it.
-                DeepLinkCoordinator.shared.receive(.study(mode: .new))
                 onDone()
             } catch APIError.unauthorized {
                 error = tujiLocalized("後端不認這次登入。可能要重新登入一次。")

@@ -230,9 +230,11 @@ final class AuthService {
         // The atlas store is an app-lifetime singleton whose sync merge is
         // additive, so without an explicit wipe the next account would still
         // see this account's 自製圖鑑; the capture queue likewise persists its
-        // jobs and would resume them under the next account's session.
+        // jobs and would resume them under the next account's session, and the
+        // 合集 cache would hand the next account this one's 合集 list.
         AtlasStore.shared.reset()
         AtlasCaptureQueue.shared.reset()
+        MyCollectionsCache.shared.reset()
 
         state = .signedOut
         cameFromGuest = false
