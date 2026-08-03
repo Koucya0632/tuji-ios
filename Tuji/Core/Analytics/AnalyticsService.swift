@@ -19,6 +19,9 @@ enum AnalyticsEvent: String, CaseIterable {
     case paywallView = "paywall_view"
     case shareApp = "share_app"
     case atlasCaptureOpen = "atlas_capture_open"
+    /// Legacy API-contract value retained for older clients and historical
+    /// analytics. The current app has no per-item publish action and emits none.
+    case atlasPublishSubmitted = "atlas_publish_submitted"
     /// Authors pulling previously public content back without deleting it.
     case atlasPublishWithdrawn = "atlas_publish_withdrawn"
     case atlasPublicItemViewed = "atlas_public_item_viewed"
