@@ -171,12 +171,18 @@ final class CollectionEditVM {
 
     // MARK: - Members
 
-    func addMember(_ publicItemId: String) async {
+    /// Returns whether the server took the item, so the picker can un-tick a
+    /// tile it optimistically ticked. Swallowing the failure into `actionError`
+    /// alone left the picker showing a ✓ for an item that was never added.
+    @discardableResult
+    func addMember(_ publicItemId: String) async -> Bool {
         do {
             try await self.repo.addCollectionItem(id: self.collectionId, publicItemId: publicItemId)
             await self.reloadMembers()
+            return true
         } catch {
             self.actionError = error.localizedDescription
+            return false
         }
     }
 

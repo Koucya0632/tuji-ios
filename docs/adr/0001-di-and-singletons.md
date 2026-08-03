@@ -62,3 +62,21 @@ no test or preview substitutes a store today regardless.
 - A future reviewer who proposes "delete the singletons" should read this ADR
   first: the answer is "by attrition, behind seams — and never the lifecycle
   glue in decision 4 until its trigger fires."
+
+## Amendment — 2026-08-03 (圖鑑管理 review)
+
+Decision 3's trigger fired for the two screens it had left view-injected.
+`AtlasCollectionCreateSheet` and `AtlasCollectionItemPicker` were "a single
+fetch" when the rule was written; they had since grown validation, a
+re-entrancy guard, and an optimistic mutation set — and the proof that nothing
+could reach them was `FakeCollectionManaging.createCollection` throwing
+`NotImplemented` in the tests. Both now sit behind `CollectionCreateModel` /
+`CollectionCandidatesModel`. The rule is unchanged: split when a test needs the
+narrower slice. `WordCommunityAtlasSection` is still genuinely one fetch and
+stays view-injected.
+
+The same review made `AtlasStore.init(repository:)` non-private. This is not a
+retreat from decision 4 — `AtlasStore.shared` remains the lifecycle singleton
+and `AuthService.signOut` still resets it. It is decision 1 applied honestly: a
+seam defaulted to `.shared` that no test can construct is not a seam, and the
+`AtlasAuthoring` protocol had been carved for exactly that purpose.

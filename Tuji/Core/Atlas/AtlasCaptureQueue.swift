@@ -82,7 +82,12 @@ final class AtlasCaptureQueue {
         return dir
     }()
 
-    private init() {
+    /// What a finished capture refreshes is not this queue's decision — it
+    /// belongs to `AtlasMutationRefresh`, shared with the manage screen's delete.
+    private let mutations: AtlasMutationRefreshing
+
+    private init(mutations: AtlasMutationRefreshing = LiveAtlasMutationRefresher()) {
+        self.mutations = mutations
         self.restore()
     }
 
@@ -158,16 +163,10 @@ final class AtlasCaptureQueue {
             }
             try? await AtlasStore.shared.enrich(itemId: itemId)
             self.update(id) { $0.progress = 0.9 }
-            // One reconciling sync for the atlas list, plus in-place store
-            // refresh. reload() only — invalidate() would bounce to Splash.
-            // WordsStore matters: atlas items surface in the 圖鑑 grid as custom
-            // words (/api/users/custom-words → id "atlas:…"), so reloading it is
-            // what makes the new card appear there.
-            await AtlasStore.shared.sync(since: nil)
-            async let words: Void = WordsStore.shared.reload()
-            async let progress: Void = ProgressStore.shared.reload()
-            async let stats: Void = StudyStatsStore.shared.reload()
-            _ = await (words, progress, stats)
+            // One reconciling sync for the atlas list, then the shared policy for
+            // everything else a finished capture touches (AtlasMutationRefresh).
+            await AtlasStore.shared.sync(.full)
+            await self.mutations.refresh(after: .captureCompleted)
             self.update(id) { $0.stage = .done
                 $0.progress = 1
             }
