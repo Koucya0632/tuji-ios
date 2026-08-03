@@ -1,11 +1,13 @@
-// 作者端「我的合集」：列出自己的合集 + 建立，並在編輯頁挑選成員、選封面、送審。
+// 作者端「我的合集」：列出自己的合集 + 建立，並在編輯頁更換公開頭像、挑選成員、送審。
 //
-// 成員只能來自作者自己「已通過」的公開項目（後端強制），封面用選定成員的既有公開圖，
-// 送審只審標題 + 簡介的文字（lib/atlas/collection-submit-pipeline.ts）。
+// 成員只能來自作者自己「已通過」的公開項目（後端強制）；集合背景圖不再顯示，
+// 集合頭像照片則用於列表與詳情。送審只審標題 + 簡介的文字。
 
 import Nuke
 import NukeUI
+import PhotosUI
 import SwiftUI
+import UIKit
 
 // MARK: - 我的合集列表
 
@@ -168,22 +170,12 @@ private struct AtlasMyCollectionRow: View {
 
     var body: some View {
         HStack(spacing: Space.s3) {
-            ZStack {
-                Rectangle().fill(.tujiBg)
-                LazyImage(url: self.collection.coverURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Image(systemName: "square.stack.3d.up")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.tujiInk4)
-                    }
-                }
-                .pipeline(.shared)
-            }
-            .frame(width: 64, height: 64)
-            .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+            CollectionIdentityTile(
+                collectionID: self.collection.id,
+                avatarColor: self.collection.avatarColor,
+                avatarImageURL: self.collection.avatarURL,
+                size: 64
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(self.collection.title)
@@ -255,7 +247,7 @@ private struct AtlasCollectionCreateSheet: View {
                         Text(self.language == .ja ? "日文" : "英文").foregroundStyle(.tujiInk3)
                     }
                 } footer: {
-                    Text("合集只能收錄你這個語言、且已通過審核的公開項目。")
+                    Text("合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。")
                 }
                 if let error {
                     Text(error).foregroundStyle(.tujiCoral)
@@ -302,30 +294,49 @@ private struct AtlasCollectionCreateSheet: View {
 
 struct AtlasCollectionEditView: View {
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
+    @Environment(CollectionIdentityStore.self) private var identities
 
     @State private var vm: CollectionEditVM
     @State private var showConfirm = false
     @State private var showWithdrawConfirm = false
     @State private var showPicker = false
+    @State private var showAvatarSources = false
+    @State private var showPhotoLibrary = false
+    @State private var showCamera = false
+    @State private var avatarPickerItem: PhotosPickerItem?
+    @State private var pendingAvatarCrop: PendingAvatarCrop?
+    @State private var retryAvatarData: Data?
+    @State private var avatarSelectionError: String?
+
+    private struct PendingAvatarCrop: Identifiable {
+        let id = UUID()
+        let data: Data
+    }
+
     init(collectionId: String) {
         _vm = State(initialValue: CollectionEditVM(collectionId: collectionId))
     }
 
     var body: some View {
         ScrollView {
-            if let collection = self.vm.collection {
-                VStack(alignment: .leading, spacing: Space.s5) {
-                    self.metaSection
-                    self.membersSection
-                    self.submitSection(collection)
+            Group {
+                if let collection = self.vm.collection {
+                    VStack(alignment: .leading, spacing: Space.s5) {
+                        self.avatarSection
+                        self.metaSection
+                        self.membersSection
+                        self.submitSection(collection)
+                    }
+                    .padding(Space.s6)
+                } else if case .loading = self.vm.phase {
+                    ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
+                } else {
+                    self.errorState
                 }
-                .padding(Space.s6)
-            } else if case .loading = self.vm.phase {
-                ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
-            } else {
-                self.errorState
             }
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiBg)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("編輯合集"))
         .navigationBarTitleDisplayMode(.inline)
@@ -338,12 +349,75 @@ struct AtlasCollectionEditView: View {
                 await self.vm.addMember(publicItemId)
             }
         }
+        .onChange(of: self.avatarPickerItem) { _, item in
+            guard let item else { return }
+            Task {
+                do {
+                    if let data = try await item.loadTransferable(type: Data.self) {
+                        self.avatarSelectionError = nil
+                        self.pendingAvatarCrop = PendingAvatarCrop(data: data)
+                    }
+                } catch {
+                    self.avatarSelectionError = error.localizedDescription
+                }
+                self.avatarPickerItem = nil
+            }
+        }
+        .confirmationDialog(
+            "更換集合頭像",
+            isPresented: self.$showAvatarSources,
+            titleVisibility: .visible
+        ) {
+            if CameraPicker.isAvailable {
+                Button("拍照") { self.showCamera = true }
+            }
+            Button("從相簿選擇") { self.showPhotoLibrary = true }
+            Button("取消", role: .cancel) {}
+        }
+        .photosPicker(
+            isPresented: self.$showPhotoLibrary,
+            selection: self.$avatarPickerItem,
+            matching: .images
+        )
+        .fullScreenCover(isPresented: self.$showCamera) {
+            CameraPicker(
+                onCapture: { data in
+                    self.showCamera = false
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(350))
+                        self.pendingAvatarCrop = PendingAvatarCrop(data: data)
+                    }
+                },
+                onCancel: { self.showCamera = false }
+            )
+            .ignoresSafeArea()
+        }
+        .fullScreenCover(item: self.$pendingAvatarCrop) { pending in
+            AvatarCropView(
+                imageData: pending.data,
+                onConfirm: { cropped in
+                    self.pendingAvatarCrop = nil
+                    Task {
+                        let encoded = ImageDownscale.jpeg(
+                            from: cropped,
+                            maxPixelSize: 1600,
+                            quality: 0.82
+                        ) ?? cropped
+                        await self.uploadAvatar(encoded)
+                    }
+                },
+                onCancel: { self.pendingAvatarCrop = nil },
+                cropFrame: .square
+            )
+        }
         .tujiPrompt(
             isPresented: self.$showConfirm,
             style: .confirmation,
             title: "要公開這個合集嗎？",
-            message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
-            detail: "公開後其他人可以看到合集裡的所有項目。",
+            message: self.vm.unpublishedMemberCount > 0
+                ? "將同時送審 \(self.vm.unpublishedMemberCount) 個尚未公開的項目。"
+                : "送出後會先經過審核，通過才會出現在公開圖鑑。",
+            detail: "集合與所有項目全部通過後，才會一起公開。",
             // The VM owns the publish; the view decides whether the public feed
             // needs a cache-busting reload — keeping the VM free of the shared
             // refresh signal (and unit-testable).
@@ -376,6 +450,90 @@ struct AtlasCollectionEditView: View {
     }
 
     // MARK: Meta
+
+    private var avatarSection: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("集合頭像")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.tujiInk)
+            HStack(spacing: Space.s5) {
+                Button {
+                    self.showAvatarSources = true
+                } label: {
+                    VStack(spacing: Space.s2) {
+                        ZStack(alignment: .bottomTrailing) {
+                            LazyImage(url: self.vm.avatarPreviewURL) { state in
+                                if let image = state.image {
+                                    image.resizable().aspectRatio(contentMode: .fill)
+                                } else {
+                                    RoundedRectangle(cornerRadius: Radius.md)
+                                        .fill(.tujiCard)
+                                        .overlay {
+                                            Image(systemName: "camera.fill")
+                                                .foregroundStyle(.tujiInk4)
+                                        }
+                                }
+                            }
+                            .pipeline(.shared)
+                            .frame(width: 92, height: 92)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+
+                            if self.vm.uploadingAvatar {
+                                ProgressView()
+                                    .tint(.white)
+                                    .frame(width: 30, height: 30)
+                                    .background(.black.opacity(0.45), in: .circle)
+                                    .padding(5)
+                            }
+                        }
+                        Text(self.vm.avatarPreviewURL == nil ? "選擇照片" : "更換照片")
+                            .font(.tujiCaption)
+                            .foregroundStyle(.tujiTeal)
+                    }
+                }
+                .buttonStyle(.plain)
+                .disabled(self.vm.uploadingAvatar)
+
+                Spacer(minLength: 0)
+            }
+            Text("這張照片會作為集合頭像顯示在公開列表與集合詳情。")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk3)
+            if let retryAvatarData {
+                HStack(spacing: Space.s2) {
+                    Text(self.vm.errorMessage ?? tujiLocalized("上傳失敗，請再試一次。"))
+                        .font(.tujiCaption)
+                        .foregroundStyle(.tujiCoral)
+                    Spacer(minLength: 0)
+                    Button("重試上傳") {
+                        Task { await self.uploadAvatar(retryAvatarData) }
+                    }
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.tujiTeal)
+                    .disabled(self.vm.uploadingAvatar)
+                }
+            } else if let avatarSelectionError {
+                Text(avatarSelectionError)
+                    .font(.tujiCaption)
+                    .foregroundStyle(.tujiCoral)
+            }
+        }
+        .padding(Space.s4)
+        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+    }
+
+    private func uploadAvatar(_ data: Data) async {
+        self.retryAvatarData = data
+        guard let color = await self.vm.updateAvatar(data) else { return }
+        self.retryAvatarData = nil
+        self.identities.publish(
+            collectionID: self.vm.collectionId,
+            avatarColor: color,
+            avatarImageURL: self.vm.avatarPreviewURL
+        )
+        self.feedRefresh.markNeedsReload()
+    }
 
     private var metaSection: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
@@ -419,13 +577,10 @@ struct AtlasCollectionEditView: View {
                 .buttonStyle(.plain)
             }
             if self.vm.members.isEmpty {
-                Text("還沒有項目。點「新增」把你已通過的公開項目加進來。")
+                Text("還沒有項目。點「新增」加入你已確認完成的圖鑑。")
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiInk3)
             } else {
-                Text("點縮圖設為封面")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tujiInk4)
                 LazyVGrid(
                     columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
                     spacing: Space.s3
@@ -439,8 +594,7 @@ struct AtlasCollectionEditView: View {
     }
 
     private func memberCell(_ item: AtlasPublicItem) -> some View {
-        let isCover = self.vm.coverId == item.id
-        return VStack(spacing: 2) {
+        VStack(spacing: 2) {
             ZStack(alignment: .topTrailing) {
                 ZStack {
                     Rectangle().fill(.tujiBg)
@@ -456,12 +610,17 @@ struct AtlasCollectionEditView: View {
                 .frame(height: 84)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(isCover ? Color.tujiTeal : .clear, lineWidth: 2)
-                )
-                .contentShape(Rectangle())
-                .onTapGesture { Task { await self.vm.setCover(item.id) } }
+
+                if let label = item.collectionPublicationLabel {
+                    Text(label)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 3)
+                        .background(.black.opacity(0.65), in: .capsule)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                        .padding(4)
+                }
 
                 Button {
                     Task { await self.vm.removeMember(item.id) }
@@ -472,16 +631,6 @@ struct AtlasCollectionEditView: View {
                         .padding(4)
                 }
                 .buttonStyle(.plain)
-            }
-            .overlay(alignment: .bottomLeading) {
-                if isCover {
-                    Text("封面")
-                        .font(.system(size: 9, weight: .heavy))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 5).padding(.vertical, 2)
-                        .background(.tujiTeal, in: .capsule)
-                        .padding(4)
-                }
             }
             Text(item.lemma)
                 .font(.system(size: 11, weight: .semibold))
@@ -604,7 +753,7 @@ private struct AtlasCollectionItemPicker: View {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: 36)).foregroundStyle(.tujiInk4)
                         Text(self.loadError == nil
-                            ? tujiLocalized("沒有可加入的項目。先把你的圖鑑公開並通過審核。")
+                            ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入集合。")
                             : tujiLocalized("載入失敗，請稍後再試"))
                             .font(.tujiCaption)
                             .foregroundStyle(.tujiInk3)
@@ -659,6 +808,17 @@ private struct AtlasCollectionItemPicker: View {
                 .frame(height: 84)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                .overlay(alignment: .bottomLeading) {
+                    if let label = item.collectionPublicationLabel {
+                        Text(label)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 3)
+                            .background(.black.opacity(0.65), in: .capsule)
+                            .padding(4)
+                    }
+                }
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
                         .font(.system(size: 18))

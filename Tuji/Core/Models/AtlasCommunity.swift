@@ -25,6 +25,11 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
     /// Full stored learning content. Feed and collection-preview payloads omit
     /// it; the single-item detail endpoint supplies it without invoking AI.
     var learningWord: Word?
+    /// Present only on owner collection endpoints. Public feeds omit them.
+    var publicItemId: String? = nil
+    var reviewStatus: String? = nil
+    var publicationState: String? = nil
+    var eligible: Bool? = nil
 
     var imageURL: URL? {
         self.imageUrl.flatMap(URL.init(string:))
@@ -32,6 +37,14 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
 
     var langBadge: String {
         self.targetLanguage.rawValue.uppercased()
+    }
+
+    var collectionPublicationLabel: String? {
+        switch self.publicationState {
+        case "private": tujiLocalized("將隨集合送審")
+        case "pending": tujiLocalized("審核中")
+        default: nil
+        }
     }
 }
 
@@ -195,13 +208,6 @@ extension AtlasItem {
     }
 }
 
-/// Server's answer to a submit. `moderation.published` is true only when the
-/// machine gate cleared it outright.
-struct AtlasPublishResponse: Decodable {
-    let item: AtlasItem
-    let moderation: AtlasPublishModeration?
-}
-
 /// POST /api/atlas/items/{id}/withdraw. The server owns the resulting state;
 /// the client re-syncs rather than guessing it.
 struct AtlasWithdrawResponse: Decodable, Hashable {
@@ -241,11 +247,17 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
     let author: AtlasAuthorRef?
     let itemCount: Int
     let saveCount: Int
+    let avatarColor: String?
+    let avatarImageUrl: String?
     let coverImageUrl: String?
     let publishedAt: String?
 
     var coverURL: URL? {
         self.coverImageUrl.flatMap(URL.init(string:))
+    }
+
+    var avatarURL: URL? {
+        self.avatarImageUrl.flatMap(URL.init(string:))
     }
 
     var langBadge: String {
@@ -262,6 +274,25 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
             author: self.author,
             itemCount: self.itemCount,
             saveCount: saveCount,
+            avatarColor: self.avatarColor,
+            avatarImageUrl: self.avatarImageUrl,
+            coverImageUrl: self.coverImageUrl,
+            publishedAt: self.publishedAt
+        )
+    }
+
+    func withAuthor(_ author: AtlasAuthorRef?) -> AtlasCollection {
+        AtlasCollection(
+            id: self.id,
+            slug: self.slug,
+            title: self.title,
+            description: self.description,
+            targetLanguage: self.targetLanguage,
+            author: author,
+            itemCount: self.itemCount,
+            saveCount: self.saveCount,
+            avatarColor: self.avatarColor,
+            avatarImageUrl: self.avatarImageUrl,
             coverImageUrl: self.coverImageUrl,
             publishedAt: self.publishedAt
         )
@@ -304,12 +335,18 @@ struct AtlasMyCollection: Decodable, Identifiable, Hashable {
     let targetLanguage: TargetLanguage
     let reviewStatus: String
     let itemCount: Int
+    let avatarColor: String?
+    let avatarImageUrl: String?
     let coverImageUrl: String?
     let publishedAt: String?
     let updatedAt: String?
 
     var coverURL: URL? {
         self.coverImageUrl.flatMap(URL.init(string:))
+    }
+
+    var avatarURL: URL? {
+        self.avatarImageUrl.flatMap(URL.init(string:))
     }
 
     var review: AtlasReviewStatus {
@@ -339,6 +376,8 @@ struct AtlasCollectionEdit: Decodable, Hashable {
     let description: String?
     let targetLanguage: TargetLanguage
     let reviewStatus: String
+    let avatarColor: String?
+    let avatarPreviewUrl: String?
     let coverPublicItemId: String?
     let coverImageUrl: String?
     let publishedAt: String?
@@ -347,6 +386,19 @@ struct AtlasCollectionEdit: Decodable, Hashable {
     var review: AtlasReviewStatus {
         AtlasReviewStatus(rawValue: self.reviewStatus) ?? .draft
     }
+
+    var avatarPreviewURL: URL? {
+        self.avatarPreviewUrl.flatMap(URL.init(string:))
+    }
+}
+
+/// POST /api/atlas/collections/{id}/avatar — the public collection avatar and
+/// its fallback color are committed as one change.
+struct AtlasCollectionAvatarResponse: Decodable, Equatable {
+    let ok: Bool
+    let avatarColor: String
+    let avatarImageUrl: String
+    let avatarPreviewUrl: String?
 }
 
 /// POST /api/atlas/collections/{id}/publish
@@ -367,5 +419,5 @@ struct AtlasCollectionUpdatePayload: Encodable {
 }
 
 struct AtlasCollectionAddItemPayload: Encodable {
-    let publicItemId: String
+    let sourceItemId: String
 }

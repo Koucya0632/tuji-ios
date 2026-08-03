@@ -42,7 +42,6 @@ enum Endpoint {
     case atlasItemCards(id: String)
     case atlasItemEnrich(id: String)
     case atlasItemDetail(id: String)
-    case atlasItemPublish(id: String)
     case atlasItemWithdraw(id: String)
     case atlasSync(since: String?, limit: Int)
     case atlasFriends(limit: Int)
@@ -54,7 +53,9 @@ enum Endpoint {
     case atlasCollections
     /// GET (edit view) / PATCH / DELETE a single owned collection.
     case atlasCollection(id: String)
-    /// POST to add a member (the owner's own approved public item).
+    /// POST a private, square collection avatar and receive its public color.
+    case atlasCollectionAvatar(id: String)
+    /// POST to add one of the owner's confirmed source items.
     case atlasCollectionItems(id: String)
     /// DELETE a member from a collection.
     case atlasCollectionItem(id: String, publicItemId: String)
@@ -62,7 +63,7 @@ enum Endpoint {
     case atlasCollectionPublish(id: String)
     /// POST to take an approved collection back off the browse feed.
     case atlasCollectionWithdraw(id: String)
-    /// GET the pool of the user's own approved public items (add-member picker).
+    /// GET the user's confirmed public, pending and private items (add-member picker).
     case atlasCollectionCandidates(lang: String)
 
     // MARK: - Public 圖鑑 (community; no auth)
@@ -143,13 +144,13 @@ enum Endpoint {
         case let .atlasItemCards(id): "/api/atlas/items/\(id)/cards"
         case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
         case let .atlasItemDetail(id): "/api/atlas/items/\(id)/detail"
-        case let .atlasItemPublish(id): "/api/atlas/items/\(id)/publish"
         case let .atlasItemWithdraw(id): "/api/atlas/items/\(id)/withdraw"
         case .atlasSync: "/api/atlas/sync"
         case .atlasFriends: "/api/atlas/friends"
         case .atlasEntitlement: "/api/atlas/entitlement"
         case .atlasCollections: "/api/atlas/collections"
         case let .atlasCollection(id): "/api/atlas/collections/\(id)"
+        case let .atlasCollectionAvatar(id): "/api/atlas/collections/\(id)/avatar"
         case let .atlasCollectionItems(id): "/api/atlas/collections/\(id)/items"
         case let .atlasCollectionItem(id, publicItemId): "/api/atlas/collections/\(id)/items/\(publicItemId)"
         case let .atlasCollectionPublish(id): "/api/atlas/collections/\(id)/publish"
@@ -282,8 +283,8 @@ enum Endpoint {
              .usersFeedback, .usersCustomWords, .usersSavedWords,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
-             .atlasItemPublish, .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
-             .atlasCollections, .atlasCollection, .atlasCollectionItems,
+             .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
+             .atlasCollections, .atlasCollection, .atlasCollectionAvatar, .atlasCollectionItems,
              .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
              .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
@@ -325,7 +326,8 @@ enum Endpoint {
     /// a normal call, so they override the short default upward.
     var timeout: TimeInterval {
         switch self {
-        case .atlasImages, .atlasImageRecognize, .atlasItemEnrich, .atlasItemDetail:
+        case .atlasImages, .atlasCollectionAvatar, .atlasImageRecognize,
+             .atlasItemEnrich, .atlasItemDetail:
             60
         default:
             15

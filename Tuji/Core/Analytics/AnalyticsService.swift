@@ -19,13 +19,7 @@ enum AnalyticsEvent: String, CaseIterable {
     case paywallView = "paywall_view"
     case shareApp = "share_app"
     case atlasCaptureOpen = "atlas_capture_open"
-    /// Community 圖鑑 funnel (docs/COMMUNITY_ATLAS_PLAN.md §6). Measures whether
-    /// publishing correlates with upgrading — the question that decides whether
-    /// community features earn more investment.
-    case atlasPublishSubmitted = "atlas_publish_submitted"
-    /// Authors pulling their own content back. Read against the line above: a
-    /// rising withdraw rate says the publish flow is promising something the
-    /// result doesn't deliver.
+    /// Authors pulling previously public content back without deleting it.
     case atlasPublishWithdrawn = "atlas_publish_withdrawn"
     case atlasPublicItemViewed = "atlas_public_item_viewed"
     case atlasPublicSaved = "atlas_public_saved"

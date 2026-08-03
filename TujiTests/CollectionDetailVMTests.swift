@@ -18,6 +18,8 @@ struct CollectionDetailVMTests {
             author: AtlasAuthorRef(handle: "u", displayName: "U", avatar: "face"),
             itemCount: 2,
             saveCount: 0,
+            avatarColor: nil,
+            avatarImageUrl: nil,
             coverImageUrl: nil,
             publishedAt: nil
         )
@@ -395,6 +397,8 @@ private final class FakeCollectionDetailReading: CollectionDetailReading {
                 author: AtlasAuthorRef(handle: "u", displayName: "U", avatar: "face"),
                 itemCount: 0,
                 saveCount: 0,
+                avatarColor: nil,
+                avatarImageUrl: nil,
                 coverImageUrl: nil,
                 publishedAt: nil
             ),

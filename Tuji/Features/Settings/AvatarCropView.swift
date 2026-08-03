@@ -1,12 +1,19 @@
 import SwiftUI
 import UIKit
 
-/// Fixed circular avatar cropper. The saved image remains square; every profile
-/// surface clips that square to a circle, so the preview exactly matches usage.
+enum ImageCropFrame {
+    case circle
+    case square
+}
+
+/// Shared fixed-aspect cropper. The saved image is always square; the frame only
+/// changes the preview mask so personal avatars remain circular while collection
+/// source photos use the full rounded square.
 struct AvatarCropView: View {
     let imageData: Data
     let onConfirm: (Data) -> Void
     let onCancel: () -> Void
+    var cropFrame: ImageCropFrame = .circle
 
     @State private var proxy: UIImage?
     @State private var loadFailed = false
@@ -71,16 +78,31 @@ struct AvatarCropView: View {
 
                 Path { path in
                     path.addRect(CGRect(origin: .zero, size: geo.size))
-                    path.addEllipse(in: viewport)
+                    switch self.cropFrame {
+                    case .circle:
+                        path.addEllipse(in: viewport)
+                    case .square:
+                        path.addRoundedRect(
+                            in: viewport,
+                            cornerSize: CGSize(width: 18, height: 18)
+                        )
+                    }
                 }
                 .fill(.black.opacity(0.58), style: FillStyle(eoFill: true))
                 .allowsHitTesting(false)
 
-                Circle()
-                    .stroke(.white, lineWidth: 2)
-                    .frame(width: diameter, height: diameter)
-                    .position(x: viewport.midX, y: viewport.midY)
-                    .allowsHitTesting(false)
+                Group {
+                    switch self.cropFrame {
+                    case .circle:
+                        Circle().stroke(.white, lineWidth: 2)
+                    case .square:
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(.white, lineWidth: 2)
+                    }
+                }
+                .frame(width: diameter, height: diameter)
+                .position(x: viewport.midX, y: viewport.midY)
+                .allowsHitTesting(false)
 
                 Text("拖曳移動・雙指縮放")
                     .font(.tujiCaption)

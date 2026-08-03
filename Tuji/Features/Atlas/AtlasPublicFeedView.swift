@@ -55,6 +55,13 @@ struct AtlasPublicFeedView: View {
                 isSignedIn: self.isSignedIn,
                 pendingExploreRefresh: self.feedRefresh.consume()
             )
+            if let identity = self.currentAuthorIdentity {
+                self.browsing.applyAuthorIdentity(identity)
+            }
+        }
+        .onChange(of: self.currentAuthorIdentity) { _, identity in
+            guard let identity else { return }
+            self.browsing.applyAuthorIdentity(identity)
         }
         .onChange(of: self.bookmarks.revision) { _, _ in
             guard let change = self.bookmarks.lastChange else { return }
@@ -224,6 +231,22 @@ struct AtlasPublicFeedView: View {
         return false
     }
 
+    private var currentAuthorIdentity: AtlasAuthorRef? {
+        guard case let .signedIn(user) = self.auth.state,
+              let handle = user.username,
+              !handle.isEmpty
+        else {
+            return nil
+        }
+        let nickname = user.nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = nickname.flatMap { $0.isEmpty ? nil : $0 } ?? handle
+        return AtlasAuthorRef(
+            handle: handle,
+            displayName: displayName,
+            avatar: user.avatar ?? "face"
+        )
+    }
+
     private var browsingLoadKey: String {
         "\(self.section.rawValue)-\(self.targetLanguage.rawValue)-\(self.isSignedIn)"
     }
@@ -331,33 +354,12 @@ struct AtlasCollectionCard: View {
     }
 
     private var cover: some View {
-        ZStack {
-            Rectangle().fill(.tujiBg)
-            LazyImage(url: self.collection.coverURL) { state in
-                if let image = state.image {
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } else if state.error != nil {
-                    Image(systemName: "square.stack.3d.up")
-                        .font(.system(size: 22))
-                        .foregroundStyle(.tujiInk4)
-                } else {
-                    ProgressView().tint(.tujiTeal)
-                }
-            }
-            .pipeline(.shared)
-        }
-        .frame(width: 84, height: 84)
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-        .overlay(alignment: .topTrailing) {
-            Text(self.collection.langBadge)
-                .font(.system(size: 9, weight: .heavy))
-                .foregroundStyle(.tujiTeal)
-                .padding(.horizontal, 5)
-                .padding(.vertical, 2)
-                .background(.tujiTealSoft, in: .capsule)
-                .padding(4)
-        }
+        CollectionIdentityTile(
+            collectionID: self.collection.id,
+            avatarColor: self.collection.avatarColor,
+            avatarImageURL: self.collection.avatarURL,
+            size: 84
+        )
     }
 }
 

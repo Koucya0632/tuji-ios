@@ -36,6 +36,7 @@ struct TujiApp: App {
     @State private var network = NetworkMonitor.shared
     @State private var feedRefresh = CommunityFeedRefresh()
     @State private var collectionBookmarks = CollectionBookmarkStore()
+    @State private var collectionIdentities = CollectionIdentityStore()
 
     var body: some Scene {
         WindowGroup {
@@ -55,6 +56,7 @@ struct TujiApp: App {
                 .environment(network)
                 .environment(feedRefresh)
                 .environment(collectionBookmarks)
+                .environment(collectionIdentities)
                 .environment(\.locale, settings.current.uiLanguage.locale)
                 .task {
                     await words.loadIfNeeded()

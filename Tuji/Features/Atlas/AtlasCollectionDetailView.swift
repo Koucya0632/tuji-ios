@@ -124,76 +124,56 @@ struct AtlasCollectionDetailView: View {
     // MARK: Header
 
     private func header(_ collection: AtlasCollection) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            // Cover as a darkened backdrop so overlaid white text stays legible.
-            LazyImage(url: collection.coverURL) { state in
-                if let image = state.image {
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } else {
-                    LinearGradient(
-                        colors: [.tujiTeal, .tujiTealSoft],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                }
-            }
-            .pipeline(.shared)
-            .frame(height: 190)
-            .frame(maxWidth: .infinity)
-            .clipped()
-            .overlay(Color.black.opacity(0.32))
+        HStack(alignment: .top, spacing: Space.s4) {
+            CollectionIdentityTile(
+                collectionID: collection.id,
+                avatarColor: collection.avatarColor,
+                avatarImageURL: collection.avatarURL,
+                size: 104
+            )
 
-            HStack(alignment: .bottom, spacing: Space.s3) {
-                LazyImage(url: collection.coverURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else {
-                        Color.tujiTealSoft
-                    }
-                }
-                .pipeline(.shared)
-                .frame(width: 84, height: 84)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(.white.opacity(0.5), lineWidth: 1)
-                )
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(collection.title)
-                        .font(.tujiH2)
-                        .foregroundStyle(.white)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                    // No author line at all when the author never accepted a
-                    // public identity — the header must not fall back to a
-                    // handle, which is what used to leak an email prefix.
-                    if let author = collection.author {
-                        Button {
-                            self.selectedAuthorHandle = author.handle
-                        } label: {
-                            HStack(spacing: 6) {
-                                ProfileAvatar(avatar: author.avatar, size: 22)
-                                Text(author.displayName)
-                                    .font(.tujiCaption)
-                                    .foregroundStyle(.white.opacity(0.95))
-                                    .lineLimit(1)
-                            }
+            VStack(alignment: .leading, spacing: Space.s2) {
+                Text(collection.title)
+                    .font(.tujiH2)
+                    .foregroundStyle(.tujiInk)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                if let author = collection.author {
+                    Button {
+                        self.selectedAuthorHandle = author.handle
+                    } label: {
+                        HStack(spacing: 6) {
+                            ProfileAvatar(avatar: author.avatar, size: 22)
+                            Text(author.displayName)
+                                .font(.tujiCaption)
+                                .foregroundStyle(.tujiInk2)
+                                .lineLimit(1)
                         }
-                        .buttonStyle(.plain)
                     }
-                    HStack(spacing: Space.s3) {
-                        self.stat(icon: "square.stack", title: "內容", value: collection.itemCount)
-                        self.stat(icon: "bookmark", title: "收藏", value: collection.saveCount)
-                        Spacer(minLength: Space.s2)
-                        self.bookmarkPill
-                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: Space.s2) {
+                    Text(collection.langBadge)
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(.tujiTeal)
+                        .padding(.horizontal, Space.s2)
+                        .frame(height: 22)
+                        .background(.tujiTealSoft, in: .capsule)
+                    self.stat(icon: "square.stack", title: "內容", value: collection.itemCount)
+                    self.stat(icon: "bookmark", title: "收藏", value: collection.saveCount)
+                }
+                self.bookmarkPill
             }
-            .padding(Space.s4)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(Space.s4)
+        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .overlay {
+            RoundedRectangle(cornerRadius: Radius.lg)
+                .stroke(.tujiInk4.opacity(0.22), lineWidth: 1)
+        }
+        .padding(.horizontal, Space.s6)
+        .padding(.top, Space.s4)
     }
 
     private func stat(icon: String, title: LocalizedStringKey, value: Int) -> some View {
@@ -202,7 +182,7 @@ struct AtlasCollectionDetailView: View {
             Text(title).font(.system(size: 12, weight: .semibold))
             Text("\(value)").font(.system(size: 12, weight: .heavy))
         }
-        .foregroundStyle(.white.opacity(0.95))
+        .foregroundStyle(.tujiInk3)
     }
 
     @ViewBuilder
@@ -214,7 +194,7 @@ struct AtlasCollectionDetailView: View {
                 if self.vm.bookmarkBusy || (self.isSignedIn && !self.vm.bookmarkLoaded) {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(.white)
+                        .tint(.tujiTeal)
                         .frame(minWidth: 88)
                 } else {
                     self.pillLabel(
@@ -238,11 +218,11 @@ struct AtlasCollectionDetailView: View {
             Text(title)
                 .font(.system(size: 12, weight: .bold))
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.tujiTeal)
         .padding(.horizontal, Space.s3)
         .frame(height: 30)
         .frame(minWidth: 88)
-        .background(.black.opacity(0.42), in: .capsule)
+        .background(.tujiTealSoft, in: .capsule)
     }
 
     private func bookmarkTapped() {

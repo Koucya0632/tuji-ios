@@ -109,6 +109,21 @@ final class PublicAtlasBrowsingModel {
         }
     }
 
+    /// Profile editing returns the authoritative public identity before the
+    /// public shelves are fetched again. Replace matching author snapshots in
+    /// place so visible cards do not keep an old name or avatar until a pull to
+    /// refresh.
+    func applyAuthorIdentity(_ identity: AtlasAuthorRef) {
+        self.explore.collections = Self.replacingAuthor(
+            in: self.explore.collections,
+            with: identity
+        )
+        self.saved.collections = Self.replacingAuthor(
+            in: self.saved.collections,
+            with: identity
+        )
+    }
+
     /// A plain appearance load re-triggers on every return from a detail. Skip it
     /// when a non-empty list for this language is already held and the load is not
     /// deliberate. This preserves the "don't clobber a good list on back" fix.
@@ -157,6 +172,18 @@ final class PublicAtlasBrowsingModel {
         } catch {
             self.saved.loadedLanguage = language
             self.saved.phase = .failed(error.localizedDescription)
+        }
+    }
+
+    private static func replacingAuthor(
+        in collections: [AtlasCollection],
+        with identity: AtlasAuthorRef
+    )
+        -> [AtlasCollection]
+    {
+        collections.map { collection in
+            guard collection.author?.handle == identity.handle else { return collection }
+            return collection.withAuthor(identity)
         }
     }
 }

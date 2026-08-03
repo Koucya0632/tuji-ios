@@ -13,7 +13,7 @@ struct CollectionEditVMTests {
     // MARK: - Fixtures
 
     private func item(id: String, lemma: String = "cat") -> AtlasPublicItem {
-        AtlasPublicItem(
+        var item = AtlasPublicItem(
             id: id,
             slug: "slug-\(id)",
             lemma: lemma,
@@ -24,13 +24,18 @@ struct CollectionEditVMTests {
             author: nil,
             publishedAt: nil
         )
+        item.publicItemId = id
+        item.publicationState = "public"
+        return item
     }
 
     private func edit(
         cover: String? = nil,
         title: String = "My Collection",
         description: String? = nil,
-        status: String = "draft"
+        status: String = "draft",
+        avatarColor: String? = nil,
+        avatarPreviewUrl: String? = nil
     )
         -> AtlasCollectionEdit
     {
@@ -41,6 +46,8 @@ struct CollectionEditVMTests {
             description: description,
             targetLanguage: .ja,
             reviewStatus: status,
+            avatarColor: avatarColor,
+            avatarPreviewUrl: avatarPreviewUrl,
             coverPublicItemId: cover,
             coverImageUrl: nil,
             publishedAt: nil,
@@ -56,6 +63,73 @@ struct CollectionEditVMTests {
     }
 
     // MARK: - Tests
+
+    @Test
+    func ownerItemStatusDecodesAndCountsUnpublishedMembers() async throws {
+        let data = Data(
+            #"{"id":"private-1","slug":"private-1","lemma":"cat","displayZhHant":"貓","targetLanguage":"ja","category":null,"imageUrl":"https://example.test/thumb","author":null,"publishedAt":null,"publicItemId":null,"reviewStatus":"draft","publicationState":"private"}"#
+                .utf8
+        )
+        let privateItem = try JSONDecoder().decode(AtlasPublicItem.self, from: data)
+        #expect(privateItem.collectionPublicationLabel != nil)
+
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(), items: [privateItem])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        #expect(vm.unpublishedMemberCount == 1)
+    }
+
+    @Test
+    func avatarUploadReplacesThePublicImageAndFallbackColorTogether() async {
+        let fake = FakeCollectionEditing(
+            response: .init(
+                collection: self.edit(
+                    avatarColor: "#335577",
+                    avatarPreviewUrl: "https://private.example/old"
+                ),
+                items: []
+            )
+        )
+        fake.avatarResponse = AtlasCollectionAvatarResponse(
+            ok: true,
+            avatarColor: "#cc7733",
+            avatarImageUrl: "https://public.example/new",
+            avatarPreviewUrl: "https://public.example/new"
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        let color = await vm.updateAvatar(Data([1, 2, 3]))
+
+        #expect(color == "#cc7733")
+        #expect(vm.avatarColor == "#cc7733")
+        #expect(vm.avatarPreviewURL?.absoluteString == "https://public.example/new")
+        #expect(!vm.uploadingAvatar)
+    }
+
+    @Test
+    func failedAvatarUploadKeepsTheAcceptedIdentity() async {
+        let fake = FakeCollectionEditing(
+            response: .init(
+                collection: self.edit(
+                    avatarColor: "#335577",
+                    avatarPreviewUrl: "https://private.example/old"
+                ),
+                items: []
+            )
+        )
+        fake.avatarError = FakeError.boom
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        #expect(await vm.updateAvatar(Data([1, 2, 3])) == nil)
+        #expect(vm.avatarColor == "#335577")
+        #expect(vm.avatarPreviewURL?.absoluteString == "https://private.example/old")
+        #expect(vm.errorMessage != nil)
+        #expect(!vm.uploadingAvatar)
+    }
 
     @Test
     func loadSeedsFormAndFallsBackToFirstItemAsCover() async {
@@ -231,6 +305,8 @@ private final class FakeCollectionEditing: CollectionEditing {
     var moderation: AtlasPublishModeration?
     var publishError: Error?
     var withdrawError: Error?
+    var avatarResponse: AtlasCollectionAvatarResponse?
+    var avatarError: Error?
 
     init(response: AtlasCollectionEditResponse, moderation: AtlasPublishModeration? = nil) {
         self.response = response
@@ -249,6 +325,19 @@ private final class FakeCollectionEditing: CollectionEditing {
         coverPublicItemId _: String?
     ) async throws {
         self.callLog.append("update")
+    }
+
+    func updateCollectionAvatar(id _: String, imageData _: Data) async throws
+        -> AtlasCollectionAvatarResponse
+    {
+        self.callLog.append("avatar")
+        if let avatarError { throw avatarError }
+        return self.avatarResponse ?? AtlasCollectionAvatarResponse(
+            ok: true,
+            avatarColor: "#5f7f9f",
+            avatarImageUrl: "https://public.example/default",
+            avatarPreviewUrl: nil
+        )
     }
 
     func addCollectionItem(id _: String, publicItemId _: String) async throws {
@@ -278,6 +367,8 @@ private final class FakeCollectionEditing: CollectionEditing {
                 description: current.description,
                 targetLanguage: current.targetLanguage,
                 reviewStatus: "withdrawn",
+                avatarColor: current.avatarColor,
+                avatarPreviewUrl: current.avatarPreviewUrl,
                 coverPublicItemId: current.coverPublicItemId,
                 coverImageUrl: current.coverImageUrl,
                 publishedAt: current.publishedAt,
