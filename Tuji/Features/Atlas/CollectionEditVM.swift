@@ -32,6 +32,9 @@ final class CollectionEditVM {
     private(set) var collection: AtlasCollectionEdit?
     private(set) var members: [AtlasPublicItem] = []
     private(set) var coverId: String?
+    private(set) var avatarColor: String?
+    private(set) var avatarPreviewURL: URL?
+    private(set) var uploadingAvatar = false
     private(set) var phase: Phase = .loading
     private(set) var savingMeta = false
     private(set) var metaSaved = false
@@ -71,6 +74,10 @@ final class CollectionEditVM {
         return false
     }
 
+    var unpublishedMemberCount: Int {
+        self.members.count { $0.publicationState != "public" }
+    }
+
     /// 儲存 is enabled when not mid-save and the title isn't blank.
     var canSaveMeta: Bool {
         !self.savingMeta && !self.trimmedTitle.isEmpty
@@ -107,7 +114,9 @@ final class CollectionEditVM {
             self.members = response.items
             self.title = response.collection.title
             self.description = response.collection.description ?? ""
-            self.coverId = response.collection.coverPublicItemId ?? response.items.first?.id
+            self.coverId = response.collection.coverPublicItemId ?? response.items.first?.publicItemId
+            self.avatarColor = response.collection.avatarColor
+            self.avatarPreviewURL = response.collection.avatarPreviewURL
             self.phase = .ready
         } catch {
             // Keep any already-loaded collection on screen; only a first load with
@@ -137,9 +146,27 @@ final class CollectionEditVM {
         self.savingMeta = false
     }
 
-    func setCover(_ id: String) async {
-        self.coverId = id
-        await self.saveMeta()
+    /// Uploads one already-confirmed square crop. The public avatar image and
+    /// its fallback color move together; any error deliberately leaves
+    /// the previously loaded identity untouched.
+    @discardableResult
+    func updateAvatar(_ imageData: Data) async -> String? {
+        guard !self.uploadingAvatar else { return nil }
+        self.uploadingAvatar = true
+        self.actionError = nil
+        defer { self.uploadingAvatar = false }
+        do {
+            let response = try await self.repo.updateCollectionAvatar(
+                id: self.collectionId,
+                imageData: imageData
+            )
+            self.avatarColor = response.avatarColor
+            self.avatarPreviewURL = URL(string: response.avatarPreviewUrl ?? response.avatarImageUrl)
+            return response.avatarColor
+        } catch {
+            self.actionError = error.localizedDescription
+            return nil
+        }
     }
 
     // MARK: - Members
@@ -156,7 +183,9 @@ final class CollectionEditVM {
     func removeMember(_ publicItemId: String) async {
         do {
             try await self.repo.removeCollectionItem(id: self.collectionId, publicItemId: publicItemId)
-            if self.coverId == publicItemId { self.coverId = nil }
+            if self.members.first(where: { $0.id == publicItemId })?.publicItemId == self.coverId {
+                self.coverId = nil
+            }
             await self.reloadMembers()
         } catch {
             self.actionError = error.localizedDescription
@@ -167,7 +196,7 @@ final class CollectionEditVM {
         do {
             let response = try await self.repo.collectionEdit(id: self.collectionId)
             self.members = response.items
-            if self.coverId == nil { self.coverId = response.items.first?.id }
+            if self.coverId == nil { self.coverId = response.items.first?.publicItemId }
         } catch {
             self.actionError = error.localizedDescription
         }

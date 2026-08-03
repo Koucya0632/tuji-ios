@@ -33,6 +33,8 @@ struct AuthorProfileVMTests {
             author: nil,
             itemCount: 8,
             saveCount: 3,
+            avatarColor: nil,
+            avatarImageUrl: nil,
             coverImageUrl: nil,
             publishedAt: nil
         )

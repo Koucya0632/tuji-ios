@@ -147,20 +147,6 @@ final class AtlasStore {
         try await self.repository.detail(itemId: itemId)
     }
 
-    /// Submits an item for public review and folds the returned item (carrying
-    /// its new review_status) back into `items`, so the detail screen reflects
-    /// the outcome without waiting for the next /api/atlas/sync. The server
-    /// stays authoritative — the following sync re-confirms it.
-    @discardableResult
-    func publish(itemId: String) async throws -> AtlasPublishResponse {
-        let generation = self.generation
-        let response = try await self.repository.publish(itemId: itemId)
-        guard generation == self.generation else { return response }
-        self.items = Self.merged(self.items, [response.item])
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        return response
-    }
-
     /// 取消公開. The withdraw response carries no item (the row is the server's
     /// to describe), so refresh from sync rather than patching a status in
     /// locally and risking a stale 已公開 badge on a card that is no longer up.

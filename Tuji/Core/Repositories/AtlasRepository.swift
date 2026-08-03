@@ -97,13 +97,6 @@ struct LiveAtlasRepository {
         try await self.api.get(.atlasEntitlement)
     }
 
-    /// Submits an item for public review. This is a *submission*, not a publish:
-    /// the server runs a machine gate that may publish it, queue it for a human,
-    /// or reject it — see `AtlasPublishResponse.moderation`.
-    func publish(itemId: String) async throws -> AtlasPublishResponse {
-        try await self.api.post(.atlasItemPublish(id: itemId), body: Empty())
-    }
-
     /// 取消公開 — pulls the item back off the community wall. Not a delete: the
     /// card, its study history and other people's saves all survive, and the
     /// item can be submitted again.
@@ -284,6 +277,18 @@ struct LiveAtlasRepository {
         )
     }
 
+    func updateCollectionAvatar(id: String, imageData: Data) async throws
+        -> AtlasCollectionAvatarResponse
+    {
+        try await self.api.upload(
+            .atlasCollectionAvatar(id: id),
+            fileField: "image",
+            filename: "collection-avatar.jpg",
+            mimeType: "image/jpeg",
+            data: imageData
+        )
+    }
+
     func deleteCollection(id: String) async throws {
         try await self.api.delete(.atlasCollection(id: id))
     }
@@ -291,7 +296,7 @@ struct LiveAtlasRepository {
     func addCollectionItem(id: String, publicItemId: String) async throws {
         let _: Empty = try await self.api.post(
             .atlasCollectionItems(id: id),
-            body: AtlasCollectionAddItemPayload(publicItemId: publicItemId)
+            body: AtlasCollectionAddItemPayload(sourceItemId: publicItemId)
         )
     }
 
@@ -309,7 +314,7 @@ struct LiveAtlasRepository {
         try await self.api.post(.atlasCollectionPublish(id: id), body: Empty())
     }
 
-    /// The user's own approved public items in a language — the add-member pool.
+    /// The user's confirmed public, pending and private items in a language.
     func collectionCandidates(lang: TargetLanguage) async throws -> [AtlasPublicItem] {
         let response: AtlasPublicFeedResponse = try await self.api.get(
             .atlasCollectionCandidates(lang: lang.rawValue)

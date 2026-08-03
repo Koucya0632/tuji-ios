@@ -397,12 +397,9 @@ private struct AtlasManageDetailView: View {
     let onDelete: () -> Void
 
     @State private var store = AtlasStore.shared
-    @State private var submitting = false
-    @State private var showSubmitConfirm = false
     @State private var withdrawing = false
     @State private var showWithdrawConfirm = false
-    @State private var submitError: String?
-    @State private var submitResult: AtlasPublishModeration?
+    @State private var actionError: String?
     @Environment(\.dismiss) private var dismiss
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
@@ -444,7 +441,7 @@ private struct AtlasManageDetailView: View {
                 self.detailRow("狀態", atlasImageStatusLabel(self.image.status))
 
                 if let item {
-                    self.shareSection(item)
+                    self.publicationSection(item)
                 }
 
                 BBtn(title: "刪除這張卡片", bg: .tujiCoral, fg: .white, fullWidth: true, icon: "trash") {
@@ -460,17 +457,6 @@ private struct AtlasManageDetailView: View {
         .navigationTitle(self.item?.lemma ?? tujiLocalized("圖片詳情"))
         .navigationBarTitleDisplayMode(.inline)
         .tujiPrompt(
-            isPresented: self.$showSubmitConfirm,
-            style: .confirmation,
-            title: "要公開這張卡片嗎？",
-            message: "送出後會先經過審核，通過才會出現在公開圖鑑。",
-            detail: "公開後其他人可以看到這張照片，也可以檢舉。",
-            primary: TujiPromptAction("送出審核") {
-                self.submit()
-            },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
-        )
-        .tujiPrompt(
             isPresented: self.$showWithdrawConfirm,
             style: .confirmation,
             title: "要取消公開嗎？",
@@ -483,41 +469,18 @@ private struct AtlasManageDetailView: View {
         )
     }
 
-    // MARK: - 公開 / 送審
+    // MARK: - 公開狀態
 
-    /// Public-sharing state + the submit action. Wording is deliberately
-    /// 「送審」 — approval is not automatic (docs/COMMUNITY_ATLAS_PLAN.md §5),
-    /// so nothing here may imply the card is already public.
-    private func shareSection(_ item: AtlasItem) -> some View {
+    /// Individual submission is intentionally absent. Private items enter
+    /// review with their collection; existing public items can still be withdrawn.
+    private func publicationSection(_ item: AtlasItem) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             self.detailRow("公開狀態", item.review.label)
 
-            if let submitError {
-                Text(submitError)
+            if let actionError {
+                Text(actionError)
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiCoral)
-            }
-
-            if let submitResult {
-                Text(submitResult.published
-                    ? tujiLocalized("已通過審核，現在出現在公開圖鑑了。")
-                    : tujiLocalized("已送出，審核通過後就會出現在公開圖鑑。"))
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-            }
-
-            if item.review.canSubmit {
-                BBtn(
-                    title: self.submitting ? "送出中…" : "公開到圖鑑",
-                    bg: .tujiTeal,
-                    fg: .white,
-                    fullWidth: true,
-                    icon: "square.and.arrow.up"
-                ) {
-                    self.showSubmitConfirm = true
-                }
-                .disabled(self.submitting)
-                .opacity(self.submitting ? 0.6 : 1)
             }
 
             // The counterpart to publishing. Without it the only way off the
@@ -540,36 +503,13 @@ private struct AtlasManageDetailView: View {
         .padding(.top, Space.s2)
     }
 
-    private func submit() {
-        guard let item, !self.submitting else { return }
-        self.submitting = true
-        self.submitError = nil
-        self.submitResult = nil
-        Task {
-            do {
-                let response = try await self.store.publish(itemId: item.id)
-                self.submitResult = response.moderation
-                // Auto-approved items go live now; force the community feed to
-                // bypass its URLCache so this item appears there immediately.
-                if response.moderation?.published == true {
-                    self.feedRefresh.markNeedsReload()
-                }
-                AnalyticsService.shared.track(.atlasPublishSubmitted)
-            } catch {
-                self.submitError = error.localizedDescription
-            }
-            self.submitting = false
-        }
-    }
-
     /// The item stays, its cards stay, savers keep their progress — only the
     /// public row is retired. `AtlasStore.withdraw` re-syncs, so the 公開狀態
     /// row above reflects the server rather than a locally guessed status.
     private func withdraw() {
         guard let item, !self.withdrawing else { return }
         self.withdrawing = true
-        self.submitError = nil
-        self.submitResult = nil
+        self.actionError = nil
         Task {
             do {
                 try await self.store.withdraw(itemId: item.id)
@@ -578,7 +518,7 @@ private struct AtlasManageDetailView: View {
                 self.feedRefresh.markNeedsReload()
                 AnalyticsService.shared.track(.atlasPublishWithdrawn)
             } catch {
-                self.submitError = error.localizedDescription
+                self.actionError = error.localizedDescription
             }
             self.withdrawing = false
         }

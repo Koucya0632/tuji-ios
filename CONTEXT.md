@@ -7,13 +7,18 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 - **自製圖鑑 (custom atlas)** — a user's own captured items. Created via the capture
   pipeline (photo → AI 識別 → 校正 → confirm). Capacity is quota-gated per tier.
-- **公開圖鑑 (public atlas)** — items a user has submitted and that passed the
-  moderation gate, visible to everyone. A *submission* is not a publish: the server
-  gate may auto-publish, queue for a human, or reject (`AtlasPublishResponse.moderation`).
-- **合集 (collection)** — an author's **named, curated set** of their own approved
-  public items, scoped to one learning language. Browsed in 公開圖鑑, authored in 我的合集.
-  Members can only be the author's already-approved public items (server-enforced).
-  Publishing a collection re-runs the text gate on its title + 簡介.
+- **公開圖鑑 (public atlas)** — items that entered review with a collection and passed
+  the moderation gate, visible to everyone. The app has no separate per-item submission
+  action; publishing a collection submits its private members as one batch.
+- **合集 (collection)** — an author's **named, curated set** of their own confirmed
+  atlas items, scoped to one learning language. Browsed in 公開圖鑑, authored in 我的合集.
+  Approved, pending, and private members can be added; rejected, taken-down, unfinished,
+  and deleted items cannot. Publishing submits unpublished members with the collection,
+  and the set becomes public only after every member and the collection content pass review.
+  Its square avatar
+  photo is public and separate from the legacy member-derived cover/background image,
+  which new screens do not render. The derived safe color is only the avatar's loading
+  and legacy fallback.
 - **Author profile** — a public page for every registered account: identity + their
   public items + cumulative save count (the altruistic signal). It exists independently
   of published work and is created as soon as registration completes, so an account with
@@ -48,9 +53,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **Role seams** — narrow protocols, one per consumer, so each consumer (and its test
   fake) depends only on the slice it uses.
   - **AtlasAuthoring** — 10-method authoring/sync pipeline used by `AtlasStore`
-    (sync/upload/recognize/confirm/createCards/deleteImage/enrich/detail/entitlement/publish).
-  - **CollectionEditing** — 5-method seam for the collection-edit screen
-    (`collectionEdit`, `updateCollection`, `add/removeCollectionItem`, `publishCollection`).
+    (sync/upload/recognize/confirm/createCards/deleteImage/enrich/detail/entitlement/withdraw).
+  - **CollectionEditing** — 7-method seam for the collection-edit screen
+    (`collectionEdit`, `updateCollection`, `updateCollectionAvatar`,
+    `add/removeCollectionItem`, `publishCollection`, `withdrawCollection`).
   - **CollectionsBrowsing** — 1-method public-shelf seam used by
     `PublicAtlasBrowsingModel` (`publicCollections`).
   - **CollectionBookmarking** — private saved-shelf reads plus collection bookmark
@@ -83,6 +89,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
   `consume()`s it once. Replaces the former `AtlasFeedRefreshCenter` global singleton — the
   cross-view coupling is now an explicit environment dependency, not a hidden global.
+- **CollectionIdentityStore** — an app-root `@Observable` overlay for the last accepted
+  collection avatar URL and fallback color. `CollectionIdentityTile` resolves the latest
+  uploaded photo → server photo → derived/stable color fallback, so list, saved shelf,
+  author profile and detail update immediately. It never reads the separate legacy cover.
 - **CommunityLearningRefreshing** — one injected policy for a confirmed community-item
   save/unsave or collection batch-learn: invalidate `StudyQueueStore`, then await the
   best-effort `WordsStore.reload()`. The stateless live adapter is the only place that

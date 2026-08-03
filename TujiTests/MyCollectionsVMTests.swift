@@ -17,6 +17,8 @@ struct MyCollectionsVMTests {
             targetLanguage: language,
             reviewStatus: "draft",
             itemCount: 0,
+            avatarColor: nil,
+            avatarImageUrl: nil,
             coverImageUrl: nil,
             publishedAt: nil,
             updatedAt: nil

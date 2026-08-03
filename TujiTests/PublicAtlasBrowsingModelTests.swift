@@ -178,6 +178,27 @@ struct PublicAtlasBrowsingModelTests {
         #expect(model.saved.collections.isEmpty)
     }
 
+    @Test
+    func profileEditReplacesTheAuthorsIconAlreadyShownOnThePublicShelf() async {
+        let explore = FakeCollectionsBrowsing()
+        explore.result = .success([self.collection("a")])
+        let model = self.model(explore: explore)
+        await model.update(shelf: .explore, language: .ja, isSignedIn: true)
+
+        model.applyAuthorIdentity(
+            AtlasAuthorRef(
+                handle: "other",
+                displayName: "Other",
+                avatar: "https://example.com/new-avatar.webp"
+            )
+        )
+
+        #expect(
+            model.explore.collections.first?.author?.avatar
+                == "https://example.com/new-avatar.webp"
+        )
+    }
+
     private func model(
         explore: FakeCollectionsBrowsing = FakeCollectionsBrowsing(),
         saved: FakeCollectionBookmarking = FakeCollectionBookmarking()
@@ -203,9 +224,59 @@ struct PublicAtlasBrowsingModelTests {
             author: AtlasAuthorRef(handle: "other", displayName: "Other", avatar: "face"),
             itemCount: 1,
             saveCount: saveCount,
+            avatarColor: nil,
+            avatarImageUrl: nil,
             coverImageUrl: nil,
             publishedAt: nil
         )
+    }
+}
+
+@MainActor
+struct CollectionIdentityStoreTests {
+    @Test
+    func acceptedServerColorIsSharedUntilAnUploadReplacesIt() {
+        let store = CollectionIdentityStore()
+
+        #expect(store.colorHex(collectionID: "collection-a", serverColor: "#336699") == "#336699")
+
+        store.publish(collectionID: "collection-a", avatarColor: "#cc7733")
+
+        #expect(store.colorHex(collectionID: "collection-a", serverColor: "#336699") == "#cc7733")
+        #expect(store.revision == 1)
+    }
+
+    @Test
+    func acceptedUploadImageReplacesTheServerCollectionAvatarImmediately() {
+        let store = CollectionIdentityStore()
+        let old = URL(string: "https://public.example/old.webp")
+        let new = URL(string: "https://public.example/new.webp")
+
+        #expect(store.imageURL(collectionID: "collection-a", serverURL: old) == old)
+
+        store.publish(
+            collectionID: "collection-a",
+            avatarColor: "#cc7733",
+            avatarImageURL: new
+        )
+
+        #expect(store.imageURL(collectionID: "collection-a", serverURL: old) == new)
+    }
+
+    @Test
+    func invalidWhiteAndBlackColorsUseOneStableSafeFallback() {
+        let store = CollectionIdentityStore()
+        let invalid = store.colorHex(collectionID: "legacy-1", serverColor: "not-a-color")
+        let white = store.colorHex(collectionID: "legacy-1", serverColor: "#ffffff")
+        let black = store.colorHex(collectionID: "legacy-1", serverColor: "#000000")
+
+        #expect(invalid == white)
+        #expect(white == black)
+        #expect(invalid.hasPrefix("#"))
+        #expect(invalid.count == 7)
+        #expect(invalid != "#ffffff")
+        #expect(invalid != "#000000")
+        #expect(store.colorHex(collectionID: "legacy-1", serverColor: nil) == invalid)
     }
 }
 
