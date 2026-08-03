@@ -5,9 +5,7 @@
 
 import Nuke
 import NukeUI
-import PhotosUI
 import SwiftUI
-import UIKit
 
 // MARK: - 我的合集列表
 
@@ -155,9 +153,8 @@ struct AtlasMyCollectionsView: View {
         defer { self.deleting = false }
         do {
             try await self.vm.delete(id: collection.id)
-            if collection.review == .approved {
-                self.feedRefresh.markNeedsReload()
-            }
+            await LiveAtlasMutationRefresher(feed: self.feedRefresh)
+                .refresh(after: .collectionDeleted(wasPublic: collection.review == .approved))
             self.pendingDelete = nil
         } catch {
             self.deleteError = error.localizedDescription
@@ -210,23 +207,17 @@ private struct AtlasMyCollectionRow: View {
 // MARK: - 建立合集
 
 private struct AtlasCollectionCreateSheet: View {
-    let language: TargetLanguage
     let onCreated: (AtlasMyCollection) -> Void
-    private let repo: CollectionManaging
 
     @Environment(\.dismiss) private var dismiss
-    @State private var title = ""
-    @State private var description = ""
-    @State private var creating = false
-    @State private var error: String?
+    @State private var model: CollectionCreateModel
 
     init(
         language: TargetLanguage,
         repo: CollectionManaging = LiveAtlasRepository.shared,
         onCreated: @escaping (AtlasMyCollection) -> Void
     ) {
-        self.language = language
-        self.repo = repo
+        _model = State(initialValue: CollectionCreateModel(language: language, repo: repo))
         self.onCreated = onCreated
     }
 
@@ -234,22 +225,22 @@ private struct AtlasCollectionCreateSheet: View {
         NavigationStack {
             Form {
                 Section("標題") {
-                    TextField("例如：生活日常", text: self.$title)
+                    TextField("例如：生活日常", text: self.$model.title)
                 }
                 Section("簡介（選填）") {
-                    TextField("簡單描述這個合集", text: self.$description, axis: .vertical)
+                    TextField("簡單描述這個合集", text: self.$model.description, axis: .vertical)
                         .lineLimit(2...4)
                 }
                 Section {
                     HStack {
                         Text("語言")
                         Spacer()
-                        Text(self.language == .ja ? "日文" : "英文").foregroundStyle(.tujiInk3)
+                        Text(self.model.language == .ja ? "日文" : "英文").foregroundStyle(.tujiInk3)
                     }
                 } footer: {
                     Text("合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。")
                 }
-                if let error {
+                if let error = self.model.errorMessage {
                     Text(error).foregroundStyle(.tujiCoral)
                 }
             }
@@ -260,32 +251,16 @@ private struct AtlasCollectionCreateSheet: View {
                     Button("取消") { self.dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(self.creating ? "建立中…" : "建立") { self.create() }
-                        .disabled(self.creating || self.title.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Button(self.model.creating ? "建立中…" : "建立") {
+                        Task {
+                            guard let collection = await self.model.create() else { return }
+                            self.onCreated(collection)
+                            self.dismiss()
+                        }
+                    }
+                    .disabled(!self.model.canCreate)
                 }
             }
-        }
-    }
-
-    private func create() {
-        let trimmed = self.title.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, !self.creating else { return }
-        self.creating = true
-        self.error = nil
-        Task {
-            do {
-                let collection = try await self.repo.createCollection(
-                    title: trimmed,
-                    description: self.description.trimmingCharacters(in: .whitespaces).isEmpty
-                        ? nil : self.description,
-                    targetLanguage: self.language
-                )
-                self.onCreated(collection)
-                self.dismiss()
-            } catch {
-                self.error = error.localizedDescription
-            }
-            self.creating = false
         }
     }
 }
@@ -300,18 +275,7 @@ struct AtlasCollectionEditView: View {
     @State private var showConfirm = false
     @State private var showWithdrawConfirm = false
     @State private var showPicker = false
-    @State private var showAvatarSources = false
-    @State private var showPhotoLibrary = false
-    @State private var showCamera = false
-    @State private var avatarPickerItem: PhotosPickerItem?
-    @State private var pendingAvatarCrop: PendingAvatarCrop?
-    @State private var retryAvatarData: Data?
-    @State private var avatarSelectionError: String?
-
-    private struct PendingAvatarCrop: Identifiable {
-        let id = UUID()
-        let data: Data
-    }
+    @State private var avatar = AvatarPicker(encoding: .collection, cropFrame: .square)
 
     init(collectionId: String) {
         _vm = State(initialValue: CollectionEditVM(collectionId: collectionId))
@@ -340,7 +304,10 @@ struct AtlasCollectionEditView: View {
         .background(.tujiBg)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("編輯合集"))
         .navigationBarTitleDisplayMode(.inline)
-        .task { await self.vm.load() }
+        .task {
+            self.connectAvatarUpload()
+            await self.vm.load()
+        }
         .sheet(isPresented: self.$showPicker) {
             AtlasCollectionItemPicker(
                 language: self.vm.language,
@@ -349,67 +316,7 @@ struct AtlasCollectionEditView: View {
                 await self.vm.addMember(publicItemId)
             }
         }
-        .onChange(of: self.avatarPickerItem) { _, item in
-            guard let item else { return }
-            Task {
-                do {
-                    if let data = try await item.loadTransferable(type: Data.self) {
-                        self.avatarSelectionError = nil
-                        self.pendingAvatarCrop = PendingAvatarCrop(data: data)
-                    }
-                } catch {
-                    self.avatarSelectionError = error.localizedDescription
-                }
-                self.avatarPickerItem = nil
-            }
-        }
-        .confirmationDialog(
-            "更換集合頭像",
-            isPresented: self.$showAvatarSources,
-            titleVisibility: .visible
-        ) {
-            if CameraPicker.isAvailable {
-                Button("拍照") { self.showCamera = true }
-            }
-            Button("從相簿選擇") { self.showPhotoLibrary = true }
-            Button("取消", role: .cancel) {}
-        }
-        .photosPicker(
-            isPresented: self.$showPhotoLibrary,
-            selection: self.$avatarPickerItem,
-            matching: .images
-        )
-        .fullScreenCover(isPresented: self.$showCamera) {
-            CameraPicker(
-                onCapture: { data in
-                    self.showCamera = false
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(350))
-                        self.pendingAvatarCrop = PendingAvatarCrop(data: data)
-                    }
-                },
-                onCancel: { self.showCamera = false }
-            )
-            .ignoresSafeArea()
-        }
-        .fullScreenCover(item: self.$pendingAvatarCrop) { pending in
-            AvatarCropView(
-                imageData: pending.data,
-                onConfirm: { cropped in
-                    self.pendingAvatarCrop = nil
-                    Task {
-                        let encoded = ImageDownscale.jpeg(
-                            from: cropped,
-                            maxPixelSize: 1600,
-                            quality: 0.82
-                        ) ?? cropped
-                        await self.uploadAvatar(encoded)
-                    }
-                },
-                onCancel: { self.pendingAvatarCrop = nil },
-                cropFrame: .square
-            )
-        }
+        .avatarPicker(self.avatar, title: "更換集合頭像")
         .tujiPrompt(
             isPresented: self.$showConfirm,
             style: .confirmation,
@@ -418,9 +325,9 @@ struct AtlasCollectionEditView: View {
                 ? "將同時送審 \(self.vm.unpublishedMemberCount) 個尚未公開的項目。"
                 : "送出後會先經過審核，通過才會出現在公開圖鑑。",
             detail: "集合與所有項目全部通過後，才會一起公開。",
-            // The VM owns the publish; the view decides whether the public feed
-            // needs a cache-busting reload — keeping the VM free of the shared
-            // refresh signal (and unit-testable).
+            // The VM owns the publish; what a publish refreshes is
+            // AtlasMutationRefresh's call. The view only hands over the
+            // environment's feed signal, so the VM stays unit-testable.
             primary: TujiPromptAction("送出審核") {
                 Task { await self.publish() }
             },
@@ -434,19 +341,22 @@ struct AtlasCollectionEditView: View {
             detail: "之後隨時可以再公開一次。",
             primary: TujiPromptAction("取消公開") {
                 Task {
-                    if await self.vm.withdraw() {
-                        self.feedRefresh.markNeedsReload()
-                    }
+                    guard await self.vm.withdraw() else { return }
+                    await self.mutations.refresh(after: .collectionWithdrawn)
                 }
             },
             secondary: TujiPromptAction("先不要", role: .cancel) {}
         )
     }
 
+    /// Stateless — the view's only contribution is the environment's feed signal.
+    private var mutations: AtlasMutationRefreshing {
+        LiveAtlasMutationRefresher(feed: self.feedRefresh)
+    }
+
     private func publish() async {
-        if await self.vm.submit() {
-            self.feedRefresh.markNeedsReload()
-        }
+        guard await self.vm.submit() else { return }
+        await self.mutations.refresh(after: .collectionPublished)
     }
 
     // MARK: Meta
@@ -458,7 +368,7 @@ struct AtlasCollectionEditView: View {
                 .foregroundStyle(.tujiInk)
             HStack(spacing: Space.s5) {
                 Button {
-                    self.showAvatarSources = true
+                    self.avatar.begin()
                 } label: {
                     VStack(spacing: Space.s2) {
                         ZStack(alignment: .bottomTrailing) {
@@ -479,7 +389,7 @@ struct AtlasCollectionEditView: View {
                             .clipped()
                             .clipShape(RoundedRectangle(cornerRadius: Radius.md))
 
-                            if self.vm.uploadingAvatar {
+                            if self.avatar.isBusy {
                                 ProgressView()
                                     .tint(.white)
                                     .frame(width: 30, height: 30)
@@ -493,46 +403,58 @@ struct AtlasCollectionEditView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .disabled(self.vm.uploadingAvatar)
+                .disabled(self.avatar.isBusy)
 
                 Spacer(minLength: 0)
             }
             Text("這張照片會作為集合頭像顯示在公開列表與集合詳情。")
                 .font(.tujiCaption)
                 .foregroundStyle(.tujiInk3)
-            if let retryAvatarData {
+            // One error line for the whole avatar flow. It used to render the
+            // VM's shared errorMessage, which is defined as "a failed publish
+            // wins" — so a stale meta-save failure showed up here as an upload
+            // failure.
+            if let errorMessage = self.avatar.errorMessage {
                 HStack(spacing: Space.s2) {
-                    Text(self.vm.errorMessage ?? tujiLocalized("上傳失敗，請再試一次。"))
+                    Text(errorMessage)
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
                     Spacer(minLength: 0)
-                    Button("重試上傳") {
-                        Task { await self.uploadAvatar(retryAvatarData) }
+                    if self.avatar.canRetry {
+                        Button("重試上傳") {
+                            Task { await self.avatar.retry() }
+                        }
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.tujiTeal)
                     }
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.tujiTeal)
-                    .disabled(self.vm.uploadingAvatar)
                 }
-            } else if let avatarSelectionError {
-                Text(avatarSelectionError)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
             }
         }
         .padding(Space.s4)
         .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
     }
 
-    private func uploadAvatar(_ data: Data) async {
-        self.retryAvatarData = data
-        guard let color = await self.vm.updateAvatar(data) else { return }
-        self.retryAvatarData = nil
-        self.identities.publish(
-            collectionID: self.vm.collectionId,
-            avatarColor: color,
-            avatarImageURL: self.vm.avatarPreviewURL
-        )
-        self.feedRefresh.markNeedsReload()
+    /// The upload needs the VM plus two environment values, none of which a
+    /// `@State` initializer can see — so it is connected from `.task`, where
+    /// they are reachable, and captured as plain references.
+    private func connectAvatarUpload() {
+        let vm = self.vm
+        let identities = self.identities
+        let feed = self.feedRefresh
+        self.avatar.onDeliver { data in
+            guard let color = await vm.updateAvatar(data) else { return false }
+            identities.publish(
+                collectionID: vm.collectionId,
+                avatarColor: color,
+                avatarImageURL: vm.avatarPreviewURL
+            )
+            // Only a 合集 that is actually on the wall needs the wall's cache
+            // busted; this used to fire unconditionally, for drafts too.
+            await LiveAtlasMutationRefresher(feed: feed).refresh(
+                after: .collectionAvatarChanged(isPublic: vm.collection?.review == .approved)
+            )
+            return true
+        }
     }
 
     private var metaSection: some View {
@@ -716,43 +638,35 @@ struct AtlasCollectionEditView: View {
 // MARK: - 成員挑選
 
 private struct AtlasCollectionItemPicker: View {
-    let language: TargetLanguage
-    let existingIds: Set<String>
-    let onAdd: (String) async -> Void
-    private let repo: CollectionManaging
+    let onAdd: (String) async -> Bool
 
     @Environment(\.dismiss) private var dismiss
-    @State private var candidates: [AtlasPublicItem] = []
-    @State private var loading = true
-    @State private var loadError: String?
-    @State private var added: Set<String> = []
+    @State private var model: CollectionCandidatesModel
 
     init(
         language: TargetLanguage,
         existingIds: Set<String>,
         repo: CollectionManaging = LiveAtlasRepository.shared,
-        onAdd: @escaping (String) async -> Void
+        onAdd: @escaping (String) async -> Bool
     ) {
-        self.language = language
-        self.existingIds = existingIds
-        self.repo = repo
+        _model = State(initialValue: CollectionCandidatesModel(
+            language: language,
+            existingIds: existingIds,
+            repo: repo
+        ))
         self.onAdd = onAdd
-    }
-
-    private var available: [AtlasPublicItem] {
-        self.candidates.filter { !self.existingIds.contains($0.id) }
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                if self.loading {
+                if self.model.loading {
                     ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
-                } else if self.available.isEmpty {
+                } else if self.model.available.isEmpty {
                     VStack(spacing: Space.s3) {
                         Image(systemName: "photo.on.rectangle.angled")
                             .font(.system(size: 36)).foregroundStyle(.tujiInk4)
-                        Text(self.loadError == nil
+                        Text(self.model.loadError == nil
                             ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入集合。")
                             : tujiLocalized("載入失敗，請稍後再試"))
                             .font(.tujiCaption)
@@ -763,12 +677,20 @@ private struct AtlasCollectionItemPicker: View {
                     .padding(.top, Space.s12)
                     .padding(.horizontal, Space.s6)
                 } else {
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
-                        spacing: Space.s3
-                    ) {
-                        ForEach(self.available) { item in
-                            self.cell(item)
+                    VStack(spacing: Space.s3) {
+                        if let addError = self.model.addError {
+                            Text(addError)
+                                .font(.tujiCaption)
+                                .foregroundStyle(.tujiCoral)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
+                            spacing: Space.s3
+                        ) {
+                            ForEach(self.model.available) { item in
+                                self.cell(item)
+                            }
                         }
                     }
                     .padding(Space.s4)
@@ -782,16 +704,14 @@ private struct AtlasCollectionItemPicker: View {
                     Button("完成") { self.dismiss() }
                 }
             }
-            .task { await self.load() }
+            .task { await self.model.load() }
         }
     }
 
     private func cell(_ item: AtlasPublicItem) -> some View {
-        let isAdded = self.added.contains(item.id)
+        let isAdded = self.model.isAdded(item.id)
         return Button {
-            guard !isAdded else { return }
-            self.added.insert(item.id)
-            Task { await self.onAdd(item.id) }
+            Task { await self.model.add(item.id, using: self.onAdd) }
         } label: {
             VStack(spacing: 2) {
                 ZStack {
@@ -833,16 +753,6 @@ private struct AtlasCollectionItemPicker: View {
             .opacity(isAdded ? 0.6 : 1)
         }
         .buttonStyle(.plain)
-    }
-
-    private func load() async {
-        self.loading = true
-        self.loadError = nil
-        do {
-            self.candidates = try await self.repo.collectionCandidates(lang: self.language)
-        } catch {
-            self.loadError = error.localizedDescription
-        }
-        self.loading = false
+        .disabled(isAdded)
     }
 }

@@ -3843,6 +3843,28 @@
         }
       }
     },
+    "加入失敗，請再試一次。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't add it. Please try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入失败，请再试一次。"
+          }
+        }
+      }
+    },
     "加入學習" : {
       "localizations" : {
         "en" : {
@@ -5616,6 +5638,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "少"
+          }
+        }
+      }
+    },
+    "尚未同步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not synced yet"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未同期"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未同步"
           }
         }
       }
@@ -9353,6 +9397,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除进度"
+          }
+        }
+      }
+    },
+    "無法讀取這張照片，請換一張再試。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read this photo. Please try a different one."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この写真を読み込めませんでした。別の写真をお試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取这张照片，请换一张再试。"
           }
         }
       }

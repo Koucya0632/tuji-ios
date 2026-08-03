@@ -2,6 +2,18 @@ import Foundation
 import Observation
 import OSLog
 
+/// How much of the server's atlas a sync asks for. `since: nil` used to be the
+/// only way to say "everything", but it fell through to the stored cursor, so
+/// every caller that wanted a full reconcile silently got an incremental one.
+enum AtlasSyncScope {
+    /// Rows changed since the last successful sync. Cheap; the default.
+    case incremental
+    /// Every row the account owns, ignoring the stored cursor. What a caller
+    /// wants after a mutation whose server-side effects reach rows the cursor
+    /// would skip (a fresh capture, a manage-screen appearance).
+    case full
+}
+
 @MainActor
 @Observable
 final class AtlasStore {
@@ -9,14 +21,15 @@ final class AtlasStore {
 
     private(set) var images: [AtlasImageSummary] = []
     private(set) var items: [AtlasItem] = []
-    private(set) var cards: [AtlasCard] = []
-    private(set) var cardStates: [String: AtlasCardState] = [:]
-    private(set) var masteryByItemId: [String: AtlasMasteryEntry] = [:]
+    /// `items` keyed by the image that produced them. The manage shelf joins on
+    /// this once per row; the three view structs that used to do it each ran a
+    /// linear scan inside `body`, making the list render O(n²).
+    private(set) var itemsByImageId: [String: AtlasItem] = [:]
     private(set) var entitlement: AtlasEntitlement?
-    private(set) var lastSyncAt: String?
     private(set) var loading = false
     private(set) var lastError: Error?
 
+    private var lastSyncAt: String?
     private let repository: AtlasAuthoring
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-store")
 
@@ -25,34 +38,36 @@ final class AtlasStore {
     /// the store with the previous account's data.
     private var generation = 0
 
-    private init(repository: AtlasAuthoring = LiveAtlasRepository.shared) {
+    /// Not private: the `AtlasAuthoring` seam only pays for itself if a test can
+    /// stand this store up over a fake. Production still goes through `.shared`
+    /// (ADR-0001 — the lifecycle singletons stay).
+    init(repository: AtlasAuthoring = LiveAtlasRepository.shared) {
         self.repository = repository
     }
 
     /// Wipe all account-scoped state. Called on sign-out: this singleton lives
     /// for the app's lifetime and `merge` is additive, so without this the
-    /// previous account's 自製圖鑑 (and its stale incremental `lastSyncAt`)
+    /// previous account's 自製圖鑑 (and its stale incremental cursor)
     /// would survive into the next account's session.
     func reset() {
         self.generation += 1
         self.images = []
         self.items = []
-        self.cards = []
-        self.cardStates = [:]
-        self.masteryByItemId = [:]
+        self.itemsByImageId = [:]
         self.entitlement = nil
         self.lastSyncAt = nil
         self.lastError = nil
     }
 
-    func sync(since: String? = nil, limit: Int = 500) async {
+    func sync(_ scope: AtlasSyncScope = .incremental, limit: Int = 500) async {
         self.loading = true
         self.lastError = nil
         defer { self.loading = false }
 
         let generation = self.generation
         do {
-            let response = try await self.repository.sync(since: since ?? self.lastSyncAt, limit: limit)
+            let since = scope == .full ? nil : self.lastSyncAt
+            let response = try await self.repository.sync(since: since, limit: limit)
             guard generation == self.generation else { return }
             self.merge(response)
             self.lastSyncAt = response.serverTime
@@ -100,8 +115,7 @@ final class AtlasStore {
         guard generation == self.generation else { return response }
         // Foreground updates local state only; the full reconciling sync is
         // deferred to AtlasCaptureQueue's background job.
-        self.images = Self.merged(self.images, [response.image])
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
+        self.images = Self.sortedByRecency(Self.merged(self.images, [response.image]))
         return response
     }
 
@@ -113,25 +127,24 @@ final class AtlasStore {
         let generation = self.generation
         let item = try await self.repository.confirm(imageId: imageId, payload: payload)
         guard generation == self.generation else { return item }
-        self.items = Self.merged(self.items, [item])
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
+        self.setItems(Self.merged(self.items, [item]))
         return item
     }
 
+    /// The created cards are the server's receipt, not state this store keeps —
+    /// nothing in the app reads a card list, and the queue discards the return.
     func createCards(itemId: String, cardTypes: [String] = ["image_recall", "flashcard"]) async throws -> [AtlasCard] {
-        let generation = self.generation
-        let cards = try await self.repository.createCards(itemId: itemId, cardTypes: cardTypes)
-        guard generation == self.generation else { return cards }
-        self.cards = Self.merged(self.cards, cards)
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        return cards
+        try await self.repository.createCards(itemId: itemId, cardTypes: cardTypes)
     }
 
     func deleteImage(id: String) async throws {
+        let generation = self.generation
         try await self.repository.deleteImage(id: id)
+        // Same sign-out fence as every other mutation: without it a delete that
+        // lands after `reset()` mutates the next account's (empty) shelf.
+        guard generation == self.generation else { return }
         self.images.removeAll { $0.id == id }
-        self.items.removeAll { $0.imageId == id }
-        self.cards.removeAll { $0.imageId == id }
+        self.setItems(self.items.filter { $0.imageId != id })
     }
 
     /// Kick off (or re-run) AI enrichment for a custom item — fills
@@ -156,21 +169,21 @@ final class AtlasStore {
     }
 
     private func merge(_ response: AtlasSyncResponse) {
-        self.images = Self.merged(self.images, response.images)
+        self.images = Self.sortedByRecency(Self.merged(self.images, response.images))
             .filter { $0.deletedAt == nil }
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        self.items = Self.merged(self.items, response.items)
-            .filter { $0.deletedAt == nil }
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        self.cards = Self.merged(self.cards, response.cards)
-            .filter { $0.deletedAt == nil }
-            .sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
-        for state in response.cardStates {
-            self.cardStates[state.cardId] = state
-        }
-        for mastery in response.mastery {
-            self.masteryByItemId[mastery.itemId] = mastery
-        }
+        self.setItems(Self.merged(self.items, response.items).filter { $0.deletedAt == nil })
+    }
+
+    /// The single place `items` and its by-image index move together.
+    private func setItems(_ items: [AtlasItem]) {
+        self.items = Self.sortedByRecency(items)
+        // Sorted newest-first, so on the (server-side impossible) chance two
+        // items claim one image, the newer one wins the row.
+        self.itemsByImageId = Dictionary(self.items.map { ($0.imageId, $0) }) { newer, _ in newer }
+    }
+
+    private static func sortedByRecency<T: HasUpdatedAt>(_ values: [T]) -> [T] {
+        values.sorted { ($0.updatedAt ?? "") > ($1.updatedAt ?? "") }
     }
 
     private static func merged<T: Identifiable>(_ current: [T], _ incoming: [T]) -> [T] where T.ID == String {
@@ -181,3 +194,12 @@ final class AtlasStore {
         return Array(byId.values)
     }
 }
+
+/// Lets the store sort images and items through one helper instead of repeating
+/// the `updatedAt` comparator at every merge site.
+protocol HasUpdatedAt {
+    var updatedAt: String? { get }
+}
+
+extension AtlasImageSummary: HasUpdatedAt {}
+extension AtlasItem: HasUpdatedAt {}

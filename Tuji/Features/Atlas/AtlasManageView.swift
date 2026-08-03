@@ -4,9 +4,9 @@
 // Creating new cards lives in the camera quick-add flow (AtlasCaptureView);
 // editing (改) is a future addition that needs a backend PATCH endpoint.
 //
-// The list is keyed on uploaded images and joined to their confirmed item (if
-// any) for the answer/中文 labels; deleting an image cascades to its item +
-// cards via AtlasStore.deleteImage.
+// Everything the shelf decides — the image→item join, the learning-direction
+// filter, the loading/failed/empty/hidden state, the selection set, delete and
+// 取消公開 — lives in AtlasShelfModel. These views are presentation only.
 
 import NukeUI
 import SwiftUI
@@ -19,10 +19,9 @@ enum AtlasManagementSection: Hashable {
 struct AtlasManageView: View {
     @Environment(SettingsStore.self) private var settings
 
-    @State private var store = AtlasStore.shared
+    @State private var shelf = AtlasShelfModel()
     @State private var section: AtlasManagementSection
     @State private var didVisitCollections: Bool
-    @State private var isSelectingCards = false
     @State private var showCreateCollection = false
 
     init(initialSection: AtlasManagementSection = .cards) {
@@ -30,14 +29,8 @@ struct AtlasManageView: View {
         _didVisitCollections = State(initialValue: initialSection == .collections)
     }
 
-    private var canSelectCards: Bool {
-        let language = self.settings.current.learningDirection.targetLanguage
-        return self.store.images.contains { image in
-            guard let item = self.store.items.first(where: { $0.imageId == image.id }) else {
-                return true
-            }
-            return item.targetLanguage == language
-        }
+    private var currentLanguage: TargetLanguage {
+        self.settings.current.learningDirection.targetLanguage
     }
 
     var body: some View {
@@ -53,7 +46,7 @@ struct AtlasManageView: View {
             .background(.tujiBg)
 
             ZStack {
-                AtlasCardsManagementPane(isSelecting: self.$isSelectingCards)
+                AtlasCardsManagementPane(shelf: self.shelf)
                     .opacity(self.section == .cards ? 1 : 0)
                     .allowsHitTesting(self.section == .cards)
                     .accessibilityHidden(self.section != .cards)
@@ -74,9 +67,9 @@ struct AtlasManageView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 switch self.section {
                 case .cards:
-                    if self.canSelectCards {
-                        Button(self.isSelectingCards ? "完成" : "選取") {
-                            self.isSelectingCards.toggle()
+                    if self.shelf.canSelect {
+                        Button(self.shelf.isSelecting ? "完成" : "選取") {
+                            self.shelf.setSelecting(!self.shelf.isSelecting)
                         }
                         .font(.system(size: 15, weight: .semibold))
                         .tint(.tujiTeal)
@@ -91,53 +84,34 @@ struct AtlasManageView: View {
                 }
             }
         }
-        .onChange(of: self.section) { previous, current in
-            if current == .collections {
+        // The environment's learning direction is an explicit model input, not
+        // something the shelf reaches for. Setting it re-scopes the rows and
+        // drops any selection that just went off-screen.
+        .onAppear { self.shelf.targetLanguage = self.currentLanguage }
+        .onChange(of: self.currentLanguage) { _, language in
+            self.shelf.targetLanguage = language
+        }
+        .onChange(of: self.section) { previous, _ in
+            if self.section == .collections {
                 self.didVisitCollections = true
             }
             if previous == .cards {
-                self.isSelectingCards = false
+                self.shelf.setSelecting(false)
             }
         }
     }
 }
 
 private struct AtlasCardsManagementPane: View {
-    @State private var store = AtlasStore.shared
-    @State private var pendingDelete: AtlasImageSummary?
-    @State private var selectedIds: Set<String> = []
+    let shelf: AtlasShelfModel
+
+    @State private var pendingDelete: AtlasShelfRow?
     @State private var showBatchDeleteConfirm = false
-    @State private var errorMessage: String?
-    @State private var deleting = false
-
-    @Binding var isSelecting: Bool
-    @Environment(SettingsStore.self) private var settings
-
-    /// The manage list follows the learning direction, same as the 圖鑑 grid
-    /// and the study queue: only captures whose confirmed item teaches the
-    /// current target language. Images still waiting for an item (未完成 /
-    /// 生成中 / 失敗) carry no language yet, so they stay visible in both.
-    /// The sync itself stays full-fidelity — this is display-only, so the
-    /// incremental `since` cursor keeps covering every capture.
-    private var visibleImages: [AtlasImageSummary] {
-        let lang = self.settings.current.learningDirection.targetLanguage
-        return self.store.images.filter { image in
-            guard let item = self.item(for: image) else { return true }
-            return item.targetLanguage == lang
-        }
-    }
-
-    /// Captures hidden by the direction filter — surfaced as a count so
-    /// cards don't read as deleted after a direction switch.
-    private var hiddenCount: Int {
-        self.store.images.count - self.visibleImages.count
-    }
 
     /// 「英文圖鑑」/「日文圖鑑」 for the hidden-cards hint — the *other*
     /// direction, i.e. where the hidden cards live.
     private var otherDirectionTitle: String {
-        let current = self.settings.current.learningDirection
-        return (current == .zhJa ? LearningDirection.zhEn : .zhJa).title
+        self.shelf.targetLanguage == .ja ? LearningDirection.zhEn.title : LearningDirection.zhJa.title
     }
 
     var body: some View {
@@ -145,33 +119,29 @@ private struct AtlasCardsManagementPane: View {
         // sets isPresented = false first (which nils the backing state), so
         // reading it inside the action is always empty — the "刪除沒反應" bug.
         let target = self.pendingDelete
-        let batch = Array(self.selectedIds)
+        let batch = Array(self.shelf.selectedIds)
         return List {
             Section("我的圖鑑卡片") {
-                if let errorMessage {
+                if let errorMessage = self.shelf.errorMessage {
                     Text(errorMessage)
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
                 }
-                if self.visibleImages.isEmpty {
-                    // Distinguish "still syncing" from "genuinely empty" so the
-                    // first cold open doesn't flash 「還沒有卡片」 over a user who
-                    // actually has cards still loading from /api/atlas/sync.
-                    if self.store.loading {
-                        self.loadingRow
-                    } else if self.hiddenCount > 0 {
-                        // Everything the user owns lives in the other
-                        // direction — 還沒有卡片 here would read as data loss.
-                        self.hiddenHintRow
-                    } else {
-                        self.emptyRow
+                switch self.shelf.state {
+                case .loading:
+                    self.loadingRow
+                case .failed:
+                    self.failedRow
+                case let .hiddenElsewhere(count):
+                    self.hiddenHintRow(count)
+                case .empty:
+                    self.emptyRow
+                case .loaded:
+                    ForEach(self.shelf.rows) { row in
+                        self.imageRow(row)
                     }
-                } else {
-                    ForEach(self.visibleImages) { image in
-                        self.imageRow(image)
-                    }
-                    if self.hiddenCount > 0 {
-                        self.hiddenHintRow
+                    if self.shelf.hiddenCount > 0 {
+                        self.hiddenHintRow(self.shelf.hiddenCount)
                     }
                 }
             }
@@ -179,11 +149,11 @@ private struct AtlasCardsManagementPane: View {
         .scrollContentBackground(.hidden)
         .background(.tujiBg)
         .safeAreaInset(edge: .bottom) {
-            if self.isSelecting, !self.selectedIds.isEmpty {
+            if self.shelf.isSelecting, !self.shelf.selectedIds.isEmpty {
                 self.deleteBar
             }
         }
-        .task { await self.store.sync(since: nil) }
+        .task { await self.shelf.load() }
         .tujiPrompt(
             isPresented: Binding(
                 get: { self.pendingDelete != nil },
@@ -193,7 +163,7 @@ private struct AtlasCardsManagementPane: View {
             title: "刪除這張卡片？",
             message: "圖片與它生成的卡片都會一起刪除，無法復原。",
             primary: TujiPromptAction("刪除", role: .destructive) {
-                if let target { Task { await self.delete([target.id]) } }
+                if let target { Task { await self.shelf.delete([target.id]) } }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
@@ -203,44 +173,43 @@ private struct AtlasCardsManagementPane: View {
             title: "刪除所選卡片？",
             message: "圖片與它們生成的卡片都會一起刪除，無法復原。",
             primary: TujiPromptAction("刪除", role: .destructive) {
-                Task { await self.delete(batch) }
+                Task { await self.shelf.delete(batch) }
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
-        .tujiStatusToast(isPresented: self.deleting, style: .deleting)
-        .onChange(of: self.isSelecting) { _, isSelecting in
-            if !isSelecting {
-                self.selectedIds.removeAll()
-            }
-        }
+        .tujiStatusToast(isPresented: self.shelf.deleting, style: .deleting)
     }
 
     /// One card row. In selection mode it's a tappable checkbox row; otherwise
     /// it keeps the push-to-detail + swipe-to-delete behaviour.
     @ViewBuilder
-    private func imageRow(_ image: AtlasImageSummary) -> some View {
-        if self.isSelecting {
-            let selected = self.selectedIds.contains(image.id)
+    private func imageRow(_ row: AtlasShelfRow) -> some View {
+        if self.shelf.isSelecting {
+            let selected = self.shelf.isSelected(row.id)
             Button {
-                self.toggleSelection(image.id)
+                self.shelf.toggleSelection(row.id)
             } label: {
                 HStack(spacing: Space.s3) {
                     Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(selected ? .tujiTeal : .tujiInk4)
-                    self.row(image)
+                    self.rowBody(row)
                 }
             }
             .buttonStyle(.plain)
         } else {
             NavigationLink {
-                AtlasManageDetailView(image: image, onDelete: { self.pendingDelete = image })
+                AtlasManageDetailView(
+                    shelf: self.shelf,
+                    image: row.image,
+                    onDelete: { self.pendingDelete = row }
+                )
             } label: {
-                self.row(image)
+                self.rowBody(row)
             }
             .swipeActions(edge: .trailing) {
                 Button(role: .destructive) {
-                    self.pendingDelete = image
+                    self.pendingDelete = row
                 } label: {
                     Label("刪除", systemImage: "trash")
                 }
@@ -250,7 +219,7 @@ private struct AtlasCardsManagementPane: View {
 
     private var deleteBar: some View {
         BBtn(
-            title: "刪除 \(self.selectedIds.count) 張卡片",
+            title: "刪除 \(self.shelf.selectedIds.count) 張卡片",
             bg: .tujiCoral,
             fg: .white,
             fullWidth: true,
@@ -261,14 +230,6 @@ private struct AtlasCardsManagementPane: View {
         .padding(.horizontal, Space.s6)
         .padding(.vertical, Space.s3)
         .background(.tujiBg)
-    }
-
-    private func toggleSelection(_ id: String) {
-        if self.selectedIds.contains(id) {
-            self.selectedIds.remove(id)
-        } else {
-            self.selectedIds.insert(id)
-        }
     }
 
     private var loadingRow: some View {
@@ -282,11 +243,25 @@ private struct AtlasCardsManagementPane: View {
         .padding(.vertical, Space.s4)
     }
 
+    /// A failed sync used to fall through to 「還沒有卡片」, telling a user who
+    /// owns cards that they own none.
+    private var failedRow: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("載入失敗，請稍後再試")
+                .font(.tujiCaption)
+                .foregroundStyle(.tujiInk3)
+            BBtn(title: "重試", fullWidth: false) {
+                Task { await self.shelf.load() }
+            }
+        }
+        .padding(.vertical, Space.s2)
+    }
+
     /// Shown whenever the direction filter is hiding cards, so a user who
     /// switched EN↔JA knows where their captures went (and that nothing was
     /// deleted).
-    private var hiddenHintRow: some View {
-        Text("另有 \(self.hiddenCount) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
+    private func hiddenHintRow(_ count: Int) -> some View {
+        Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
             .font(.tujiCaption)
             .foregroundStyle(.tujiInk3)
             .padding(.vertical, Space.s2)
@@ -304,12 +279,11 @@ private struct AtlasCardsManagementPane: View {
         .padding(.vertical, Space.s2)
     }
 
-    private func row(_ image: AtlasImageSummary) -> some View {
-        let item = self.item(for: image)
-        return HStack(spacing: Space.s3) {
+    private func rowBody(_ row: AtlasShelfRow) -> some View {
+        HStack(spacing: Space.s3) {
             ZStack {
                 Rectangle().fill(.tujiBg)
-                LazyImage(url: image.thumbURL) { state in
+                LazyImage(url: row.image.thumbURL) { state in
                     if let img = state.image {
                         img.resizable().aspectRatio(contentMode: .fill)
                     } else if state.error != nil {
@@ -323,88 +297,39 @@ private struct AtlasCardsManagementPane: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.md))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(item?.lemma ?? tujiLocalized("未完成"))
+                Text(row.title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
-                if let zh = item?.displayZhHant, !zh.isEmpty {
-                    Text(zh)
+                if let subtitle = row.subtitle {
+                    Text(subtitle)
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
             }
             Spacer()
-            Text(atlasImageStatusLabel(image.status))
+            Text(row.statusLabel)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tujiInk4)
         }
         .padding(.vertical, 2)
-    }
-
-    private func item(for image: AtlasImageSummary) -> AtlasItem? {
-        self.store.items.first { $0.imageId == image.id }
-    }
-
-    private func delete(_ ids: [String]) async {
-        guard !ids.isEmpty else { return }
-        self.errorMessage = nil
-        self.deleting = true
-        defer { self.deleting = false }
-        do {
-            // AtlasStore.deleteImage already updates the atlas list state.
-            // Don't invalidate() the main stores here — clearing
-            // WordsStore.loaded trips RootView's splash gate and bounces the
-            // app back to Splash. Refresh the home counters in place instead.
-            for id in ids {
-                try await self.store.deleteImage(id: id)
-            }
-            // Atlas cards show in the 圖鑑 grid as custom words — reload so the
-            // deleted ones disappear there too. reload() not invalidate().
-            async let words: Void = WordsStore.shared.reload()
-            async let progress: Void = ProgressStore.shared.reload()
-            async let stats: Void = StudyStatsStore.shared.reload()
-            _ = await (words, progress, stats)
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
-        self.pendingDelete = nil
-        self.selectedIds.removeAll()
-        self.isSelecting = false
-    }
-}
-
-/// Server pipeline status → user-facing label. The raw enum ("cards_ready")
-/// used to leak straight into the list + detail rows. Unknown values fall
-/// through untranslated so a new backend status is at least visible.
-private func atlasImageStatusLabel(_ status: String) -> String {
-    switch status {
-    case "uploaded": tujiLocalized("已上傳")
-    case "processing": tujiLocalized("生成中")
-    case "needs_review": tujiLocalized("待確認")
-    case "confirmed": tujiLocalized("已確認")
-    case "cards_ready": tujiLocalized("已完成")
-    case "failed": tujiLocalized("生成失敗")
-    case "deleted": tujiLocalized("已刪除")
-    default: status
     }
 }
 
 // MARK: - Read-only detail
 
 private struct AtlasManageDetailView: View {
+    let shelf: AtlasShelfModel
     let image: AtlasImageSummary
     let onDelete: () -> Void
 
-    @State private var store = AtlasStore.shared
-    @State private var withdrawing = false
     @State private var showWithdrawConfirm = false
-    @State private var actionError: String?
     @Environment(\.dismiss) private var dismiss
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     private var item: AtlasItem? {
-        self.store.items.first { $0.imageId == self.image.id }
+        self.shelf.item(forImage: self.image.id)
     }
 
     var body: some View {
@@ -438,7 +363,7 @@ private struct AtlasManageDetailView: View {
                         .font(.tujiBody)
                         .foregroundStyle(.tujiInk3)
                 }
-                self.detailRow("狀態", atlasImageStatusLabel(self.image.status))
+                self.detailRow("狀態", self.image.statusLabel)
 
                 if let item {
                     self.publicationSection(item)
@@ -477,8 +402,8 @@ private struct AtlasManageDetailView: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             self.detailRow("公開狀態", item.review.label)
 
-            if let actionError {
-                Text(actionError)
+            if let errorMessage = self.shelf.errorMessage {
+                Text(errorMessage)
                     .font(.tujiCaption)
                     .foregroundStyle(.tujiCoral)
             }
@@ -488,7 +413,7 @@ private struct AtlasManageDetailView: View {
             // history and every saver's review progress.
             if item.review.canWithdraw {
                 BBtn(
-                    title: self.withdrawing ? "收回中…" : "取消公開",
+                    title: self.shelf.withdrawing ? "收回中…" : "取消公開",
                     bg: .tujiCard,
                     fg: .tujiInk,
                     fullWidth: true,
@@ -496,31 +421,25 @@ private struct AtlasManageDetailView: View {
                 ) {
                     self.showWithdrawConfirm = true
                 }
-                .disabled(self.withdrawing)
-                .opacity(self.withdrawing ? 0.6 : 1)
+                .disabled(self.shelf.withdrawing)
+                .opacity(self.shelf.withdrawing ? 0.6 : 1)
             }
         }
         .padding(.top, Space.s2)
     }
 
-    /// The item stays, its cards stay, savers keep their progress — only the
-    /// public row is retired. `AtlasStore.withdraw` re-syncs, so the 公開狀態
-    /// row above reflects the server rather than a locally guessed status.
     private func withdraw() {
-        guard let item, !self.withdrawing else { return }
-        self.withdrawing = true
-        self.actionError = nil
+        guard let item else { return }
         Task {
-            do {
-                try await self.store.withdraw(itemId: item.id)
-                // The wall still has a CDN copy of the old list; force the next
-                // read past it so the item disappears immediately.
-                self.feedRefresh.markNeedsReload()
+            // The View's only job here is to hand over the environment's feed
+            // signal; what a withdrawal refreshes is AtlasMutationRefresh's call.
+            let ok = await self.shelf.withdraw(
+                itemId: item.id,
+                refreshing: LiveAtlasMutationRefresher(feed: self.feedRefresh)
+            )
+            if ok {
                 AnalyticsService.shared.track(.atlasPublishWithdrawn)
-            } catch {
-                self.actionError = error.localizedDescription
             }
-            self.withdrawing = false
         }
     }
 

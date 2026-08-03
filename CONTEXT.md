@@ -7,6 +7,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 - **自製圖鑑 (custom atlas)** — a user's own captured items. Created via the capture
   pipeline (photo → AI 識別 → 校正 → confirm). Capacity is quota-gated per tier.
+- **Pipeline status (`AtlasImageStatus`)** — where an uploaded capture sits in card
+  generation: uploaded / processing / needs_review / confirmed / cards_ready / failed /
+  deleted. Distinct from the **review status** (`AtlasReviewStatus`), which is about the
+  public moderation gate. `confirmed` and `cards_ready` imply a confirmed item exists;
+  a row in one of those states with no joined item is a *sync* gap, not an unfinished
+  capture — the two must never be conflated (未完成 used to sit next to 已完成).
+- **Shelf** — what 圖鑑管理's 卡片 tab shows: the account's captures joined to their
+  confirmed items, scoped to the current learning direction. Its state is one of
+  loading / loaded / failed / hiddenElsewhere / empty; `failed` and `empty` are
+  deliberately different, because a failed sync claiming 「還沒有卡片」 reads as data loss.
 - **公開圖鑑 (public atlas)** — items that entered review with a collection and passed
   the moderation gate, visible to everyone. The app has no separate per-item submission
   action; publishing a collection submits its private members as one batch.
@@ -66,8 +76,38 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   - **PublicItemsReading** — 1-method seam (`publicItems`) for `WordCommunityAtlasSection`
     (injected into the view; the trivial fetch stays there, no VM).
   - **AtlasItemConsuming** — save/unsave/report for one public item, used by `AtlasPublicDetailVM`.
-  - **CollectionManaging** — myCollections/createCollection/collectionCandidates, one method
-    each for `MyCollectionsVM`, `AtlasCollectionCreateSheet`, `AtlasCollectionItemPicker`.
+  - **CollectionManaging** — myCollections/createCollection/deleteCollection/
+    collectionCandidates, used by `MyCollectionsVM`, `CollectionCreateModel` and
+    `CollectionCandidatesModel`.
+- **AtlasStore is substitutable.** Its `init(repository: AtlasAuthoring)` is *not*
+  private — the `AtlasAuthoring` seam only pays for itself if a test can stand a store
+  up over a fake, and while `init` was private `AtlasStore.shared` was the only instance
+  that could exist, so the seam bought nothing and the store had no tests. Production
+  still goes through `.shared` (ADR-0001). The store owns `itemsByImageId` (the join the
+  manage screen does per row) and keeps no card/card-state/mastery arrays — nothing read
+  them. `sync(_:)` takes an explicit **`AtlasSyncScope`** (`.incremental` / `.full`);
+  `since: nil` used to fall through to the stored cursor, so callers that asked for a
+  full reconcile silently got an incremental one.
+- **AtlasShelfModel** — the 圖鑑管理 卡片 screen's model: the image→item join, the
+  learning-direction filter, `hiddenCount`, the `AtlasShelfState`, the selection set
+  (reconciled against visible rows when the direction changes), the batch delete, and
+  取消公開. The three View structs that used to hold this each kept their own
+  `@State AtlasStore.shared` and re-derived the same values.
+- **AtlasMutationRefresh** — one policy home for what a 圖鑑管理 mutation refreshes.
+  Producers name what the user did (`AtlasMutation`: itemsDeleted / captureCompleted /
+  itemWithdrawn / collectionPublished / collectionWithdrawn / collectionDeleted /
+  collectionAvatarChanged); the module decides the consequences via two predicates —
+  `changesOwnAtlas` (words + progress + stats reload, then `refreshEntitlement`) and
+  `invalidatesPublicFeed`. `LiveAtlasMutationRefresher(feed:)` takes `CommunityFeedRefresh`
+  because that signal is a root-constructed environment value a model cannot reach; the
+  View supplies it and names nothing else. The authoring-side counterpart to
+  `CommunityLearningRefreshing` (consumption) and `SessionRefresh` (study).
+- **AvatarPicker** — the shared 頭像 flow (source dialog → PhotosPicker/camera → crop →
+  encode → deliver → retry), applied by the `.avatarPicker(_:title:)` modifier. Two
+  adapters justify the seam: 合集 and 個人資料 differ only in `AvatarEncoding` (1600/0.82
+  vs 1200/0.86), the crop mask, and what "deliver" means. It carries one error line —
+  the two screens used to run two parallel error channels, and 合集 rendered
+  `CollectionEditVM.errorMessage` (defined as "a failed publish wins") as an upload error.
 - **Screen view model convention** — non-trivial screen logic (fetch / paginate / save /
   publish / form + async state) lives in an `@Observable @MainActor` view model,
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
@@ -80,10 +120,12 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   translates environment state into explicit model inputs. `CollectionDetailVM` exposes
   one `open(context:)` workflow for detail → owner → bookmark state → optional auto-save;
   confirmed bookmark mutations return a plain `BookmarkChange` for the View to broadcast,
-  without refetching the detail. A
-  screen whose only logic is a single fetch keeps the seam injected into the View instead
-  (`WordCommunityAtlasSection`, `AtlasCollectionCreateSheet`, `AtlasCollectionItemPicker`) —
-  ADR-0001 lazy-narrowing.
+  without refetching the detail. The 圖鑑管理 screens are on the pattern too
+  (`AtlasShelfModel`, `CollectionCreateModel`, `CollectionCandidatesModel`). A
+  screen whose only logic is a single fetch still keeps the seam injected into the View
+  instead (`WordCommunityAtlasSection`) — ADR-0001 lazy-narrowing. `AtlasCollectionCreateSheet`
+  and `AtlasCollectionItemPicker` used to qualify and no longer do: see
+  [ADR-0001](docs/adr/0001-di-and-singletons.md) → amendment.
 - **CommunityFeedRefresh** — an `@Observable` injected at the app root (`TujiApp`) that
   signals a just-published item/collection went live, so 公開圖鑑 bypasses its URLCache on
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed

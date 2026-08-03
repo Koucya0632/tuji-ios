@@ -11,7 +11,6 @@
 // everything on it is public, and there is nothing left to consent to.
 
 import OSLog
-import PhotosUI
 import SwiftUI
 import UIKit
 
@@ -25,11 +24,7 @@ struct EditProfileView: View {
     @State private var avatar: String = MascotPose.face.rawValue
     @State private var pendingAvatarData: Data?
     @State private var pendingAvatarImage: UIImage?
-    @State private var pickerItem: PhotosPickerItem?
-    @State private var pendingCrop: PendingCrop?
-    @State private var showAvatarSources = false
-    @State private var showPhotoLibrary = false
-    @State private var showCamera = false
+    @State private var avatarPicker = AvatarPicker(encoding: .profile, cropFrame: .circle)
     @State private var saving = false
     @State private var loading = true
     @State private var error: Error?
@@ -53,11 +48,6 @@ struct EditProfileView: View {
         var saved: Loaded
     }
 
-    private struct PendingCrop: Identifiable {
-        let id = UUID()
-        let data: Data
-    }
-
     static let nicknameMax = 20
     static let bioMax = 80
 
@@ -68,8 +58,8 @@ struct EditProfileView: View {
                 self.nicknameField
                 self.bioField
                 self.uidField
-                if let error {
-                    Text(error.localizedDescription)
+                if let message = self.error?.localizedDescription ?? self.avatarPicker.errorMessage {
+                    Text(message)
                         .font(.tujiCaption)
                         .foregroundStyle(.tujiCoral)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -94,29 +84,11 @@ struct EditProfileView: View {
                 .disabled(!self.canSave)
             }
         }
-        .task { await self.load() }
-        .onChange(of: self.pickerItem) { _, item in
-            guard let item else { return }
-            Task {
-                do {
-                    if let data = try await item.loadTransferable(type: Data.self) {
-                        self.pendingCrop = PendingCrop(data: data)
-                    }
-                } catch {
-                    self.error = error
-                }
-                self.pickerItem = nil
-            }
+        .task {
+            self.connectAvatarPicker()
+            await self.load()
         }
-        .confirmationDialog(
-            "更換頭像",
-            isPresented: self.$showAvatarSources,
-            titleVisibility: .visible
-        ) {
-            if CameraPicker.isAvailable {
-                Button("拍照") { self.showCamera = true }
-            }
-            Button("從相簿選擇") { self.showPhotoLibrary = true }
+        .avatarPicker(self.avatarPicker, title: "更換頭像") {
             if self.hasCustomAvatar {
                 Button("使用預設黑貓頭像") {
                     self.avatar = MascotPose.face.rawValue
@@ -124,41 +96,25 @@ struct EditProfileView: View {
                     self.pendingAvatarImage = nil
                 }
             }
-            Button("取消", role: .cancel) {}
         }
-        .photosPicker(
-            isPresented: self.$showPhotoLibrary,
-            selection: self.$pickerItem,
-            matching: .images
-        )
-        .fullScreenCover(isPresented: self.$showCamera) {
-            CameraPicker(
-                onCapture: { data in
-                    self.showCamera = false
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(350))
-                        self.pendingCrop = PendingCrop(data: data)
-                    }
-                },
-                onCancel: { self.showCamera = false }
-            )
-            .ignoresSafeArea()
-        }
-        .fullScreenCover(item: self.$pendingCrop) { pending in
-            AvatarCropView(
-                imageData: pending.data,
-                onConfirm: { cropped in
-                    self.pendingCrop = nil
-                    self.selectPhoto(cropped)
-                },
-                onCancel: { self.pendingCrop = nil }
-            )
+    }
+
+    /// 個人資料 doesn't upload on pick — the encoded photo is stashed and sent
+    /// with 儲存 — so delivery is a local decode that only fails on an
+    /// unreadable image.
+    private func connectAvatarPicker() {
+        self.avatarPicker.onDeliver { data in
+            guard let image = UIImage(data: data) else { return false }
+            self.error = nil
+            self.pendingAvatarData = data
+            self.pendingAvatarImage = image
+            return true
         }
     }
 
     private var heroAvatar: some View {
         Button {
-            self.showAvatarSources = true
+            self.avatarPicker.begin()
         } label: {
             VStack(spacing: Space.s2) {
                 ZStack(alignment: .bottomTrailing) {
@@ -361,22 +317,6 @@ struct EditProfileView: View {
         self.bio = seed.draft.bio
         self.avatar = seed.draft.avatar
         self.loaded = seed.saved
-    }
-
-    private func selectPhoto(_ data: Data) {
-        guard let encoded = ImageDownscale.jpeg(from: data, maxPixelSize: 1200, quality: 0.86),
-              let image = UIImage(data: encoded)
-        else {
-            self.error = NSError(
-                domain: "app.tuji.ios.avatar",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "無法讀取這張照片，請換一張再試。"]
-            )
-            return
-        }
-        self.error = nil
-        self.pendingAvatarData = encoded
-        self.pendingAvatarImage = image
     }
 
     private func save() async {

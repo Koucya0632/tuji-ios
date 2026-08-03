@@ -10,6 +10,42 @@
 
 import Foundation
 
+/// Where an uploaded capture sits in the server's card-generation pipeline.
+/// `AtlasImageSummary.status` stays a raw String on the wire so an unknown
+/// future status never fails decoding; compare through `statusKind`, never
+/// against string literals.
+enum AtlasImageStatus: String, Hashable, CaseIterable {
+    case uploaded
+    case processing
+    case needsReview = "needs_review"
+    case confirmed
+    case cardsReady = "cards_ready"
+    case failed
+    case deleted
+
+    var label: String {
+        switch self {
+        case .uploaded: tujiLocalized("已上傳")
+        case .processing: tujiLocalized("生成中")
+        case .needsReview: tujiLocalized("待確認")
+        case .confirmed: tujiLocalized("已確認")
+        case .cardsReady: tujiLocalized("已完成")
+        case .failed: tujiLocalized("生成失敗")
+        case .deleted: tujiLocalized("已刪除")
+        }
+    }
+
+    /// True once the pipeline has produced the confirmed item behind the image.
+    /// A row in one of these states with no joined item is a *sync* gap, not an
+    /// unfinished capture — the distinction the old fixed 未完成 fallback lost.
+    var impliesConfirmedItem: Bool {
+        switch self {
+        case .confirmed, .cardsReady: true
+        case .uploaded, .processing, .needsReview, .failed, .deleted: false
+        }
+    }
+}
+
 struct AtlasImageSummary: Decodable, Hashable, Identifiable {
     let id: String
     let status: String
@@ -27,6 +63,26 @@ struct AtlasImageSummary: Decodable, Hashable, Identifiable {
 
     var thumbURL: URL? {
         self.thumbUrl.flatMap(URL.init(string:))
+    }
+
+    /// Parsed `status`; nil for a value this build doesn't know about.
+    var statusKind: AtlasImageStatus? {
+        AtlasImageStatus(rawValue: self.status)
+    }
+
+    /// User-facing pipeline status. An unrecognised value falls through raw so a
+    /// new backend status is at least visible rather than silently blank.
+    var statusLabel: String {
+        self.statusKind?.label ?? self.status
+    }
+
+    /// Row title when no confirmed item has joined this image yet. Derived from
+    /// the status so it can never contradict the status shown beside it — the
+    /// old fixed 未完成 sat next to 已完成 whenever a truncated sync dropped the
+    /// item.
+    var placeholderTitle: String {
+        guard let kind = self.statusKind else { return tujiLocalized("未完成") }
+        return kind.impliesConfirmedItem ? tujiLocalized("尚未同步") : kind.label
     }
 }
 
