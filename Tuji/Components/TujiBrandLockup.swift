@@ -54,7 +54,7 @@ struct TujiBrandLockup: View {
         Ellipse()
             .fill(
                 LinearGradient(
-                    colors: [.tujiTeal, .tujiTealDark],
+                    colors: [.tujiTeal, .tujiTealDeep],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -64,13 +64,13 @@ struct TujiBrandLockup: View {
                 Ellipse()
                     .stroke(.tujiTealSoft.opacity(0.72), lineWidth: 3)
             )
-            .shadow(color: .tujiTealDark.opacity(0.28), radius: 7, y: 5)
+            .shadow(color: .tujiTealDeep.opacity(0.28), radius: 7, y: 5)
     }
 
     private var wordmarkCard: some View {
         ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 24)
-                .fill(.tujiTealDark)
+                .fill(.tujiTealDeep)
                 .frame(width: 220, height: 76)
                 .offset(y: 5)
 
@@ -78,12 +78,12 @@ struct TujiBrandLockup: View {
                 Text("Tuji")
                     .foregroundStyle(.tujiInk)
                 Text(".")
-                    .foregroundStyle(.tujiCoral)
+                    .foregroundStyle(.tujiAlert)
             }
             .font(.system(size: 54, weight: .black, design: .rounded))
             .tracking(-2.5)
             .frame(width: 224, height: 78)
-            .background(.tujiCard, in: .rect(cornerRadius: 24))
+            .background(.tujiPaper, in: .rect(cornerRadius: 24))
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
                     .stroke(.tujiInk.opacity(0.08), lineWidth: 1)
@@ -126,10 +126,10 @@ struct TujiBrandLockup: View {
 }
 
 #Preview {
-    VStack(spacing: Space.s8) {
+    VStack(spacing: Space.s5) {
         TujiBrandLockup(animateEntrance: true)
         TujiBrandLockup(scale: 0.78)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(.tujiBg)
+    .background(.tujiPaper)
 }

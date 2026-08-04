@@ -25,7 +25,7 @@ struct CardsListView: View {
             self.chipRow
             self.content
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
         // multitasking window title) — `header` below is the visible title,
         // so the system nav bar itself stays hidden.
@@ -74,8 +74,8 @@ struct CardsListView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
         .padding(.bottom, Space.s3)
     }
 
@@ -87,7 +87,7 @@ struct CardsListView: View {
                     self.chip(label: c.nameZh, value: c.id)
                 }
             }
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         }
         .padding(.bottom, Space.s3)
     }
@@ -99,7 +99,7 @@ struct CardsListView: View {
                 Spacer()
                 ProgressView().tint(.tujiTeal)
                 Text("載入中…")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .padding(.top, Space.s3)
                 Spacer()
@@ -116,7 +116,7 @@ struct CardsListView: View {
                 })
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         } else {
             ScrollView {
                 LazyVGrid(
@@ -142,7 +142,7 @@ struct CardsListView: View {
                         }
                     }
                 }
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
 
                 if self.canShowMore {
                     Button {
@@ -151,14 +151,14 @@ struct CardsListView: View {
                         Text("顯示更多")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.tujiInk3)
-                            .padding(.vertical, Space.s4)
+                            .padding(.vertical, Space.s3)
                     }
-                    .padding(.top, Space.s4)
+                    .padding(.top, Space.s3)
                 } else if self.filtered.isEmpty {
                     Text("這個分類還沒有字")
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
-                        .padding(.top, Space.s12)
+                        .padding(.top, Space.s5)
                 }
             }
         }
@@ -173,14 +173,14 @@ struct CardsListView: View {
             Text(label)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(selected ? .white : .tujiInk2)
-                .padding(.horizontal, Space.s4)
+                .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s2)
                 .background(
-                    selected ? .tujiInk : .tujiCard,
+                    selected ? .tujiInk : .tujiPaper,
                     in: .capsule
                 )
                 .overlay(
-                    Capsule().stroke(.tujiInk4.opacity(selected ? 0 : 0.3), lineWidth: 1)
+                    Capsule().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
                 )
         }
     }

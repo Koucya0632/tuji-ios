@@ -134,7 +134,7 @@ private struct AdSnapshotRoot: View {
                 }
             }
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
     }
 
     private static var reviewQueue: [StudyQueueItem] {
@@ -170,17 +170,17 @@ private struct AdSnapshotRoot: View {
 private struct AdCaptureSnapshotView: View {
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: Space.s4) {
+            VStack(alignment: .leading, spacing: Space.s3) {
                 VStack(alignment: .leading, spacing: Space.s2) {
                     Text("拍下身邊的東西")
                         .font(.tujiH2)
                         .foregroundStyle(.tujiInk)
                     Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                     Text("免費版：本月 AI 辨識剩 24／30 次")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk4)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
                 }
 
                 Button {} label: {
@@ -191,8 +191,8 @@ private struct AdCaptureSnapshotView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, Space.s4)
-                    .background(.tujiTeal, in: .rect(cornerRadius: Radius.lg))
+                    .padding(.vertical, Space.s3)
+                    .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
                 }
                 .buttonStyle(.plain)
 
@@ -203,14 +203,14 @@ private struct AdCaptureSnapshotView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s4)
-                .background(.tujiYellow, in: .rect(cornerRadius: Radius.lg))
+                .padding(.vertical, Space.s3)
+                .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
 
                 Spacer()
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.vertical, Space.s4)
-            .background(.tujiBg)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s3)
+            .background(.tujiPaper)
             .navigationTitle("拍照新增")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -277,11 +277,11 @@ private struct AdCardsSnapshotView: View {
                         )
                     }
                 }
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s1)
             }
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
     }
 
     private var header: some View {
@@ -297,8 +297,8 @@ private struct AdCardsSnapshotView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(.tujiInk2)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
         .padding(.bottom, Space.s3)
     }
 
@@ -312,15 +312,15 @@ private struct AdCardsSnapshotView: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.tujiInk)
                 Text("剛新增 3 張：咖啡、雨傘、車站")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
             Spacer()
         }
-        .padding(.horizontal, Space.s4)
+        .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
-        .padding(.horizontal, Space.s6)
+        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+        .padding(.horizontal, Space.s4)
         .padding(.bottom, Space.s3)
     }
 
@@ -331,7 +331,7 @@ private struct AdCardsSnapshotView: View {
                 self.chip("自製圖鑑")
                 self.chip("生活")
             }
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         }
         .padding(.bottom, Space.s3)
     }
@@ -340,11 +340,11 @@ private struct AdCardsSnapshotView: View {
         Text(label)
             .font(.system(size: 13, weight: .bold))
             .foregroundStyle(selected ? .white : .tujiInk2)
-            .padding(.horizontal, Space.s4)
+            .padding(.horizontal, Space.s3)
             .padding(.vertical, Space.s2)
-            .background(selected ? .tujiInk : .tujiCard, in: .capsule)
+            .background(selected ? .tujiInk : .tujiPaper, in: .capsule)
             .overlay(
-                Capsule().stroke(.tujiInk4.opacity(selected ? 0 : 0.3), lineWidth: 1)
+                Capsule().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
             )
     }
 }

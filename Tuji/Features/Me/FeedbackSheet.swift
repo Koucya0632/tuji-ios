@@ -36,7 +36,7 @@ struct FeedbackSheet: View {
                     self.formContent
                 }
             }
-            .background(.tujiBg)
+            .background(.tujiPaper)
             .navigationTitle("意見收集")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -50,7 +50,7 @@ struct FeedbackSheet: View {
     }
 
     private var formContent: some View {
-        VStack(alignment: .leading, spacing: Space.s6) {
+        VStack(alignment: .leading, spacing: Space.s4) {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("想告訴我們什麼呢？")
                     .font(.system(size: 15, weight: .bold))
@@ -62,22 +62,22 @@ struct FeedbackSheet: View {
                     } label: {
                         HStack(spacing: Space.s3) {
                             Image(systemName: self.feedbackType == type ? "largecircle.fill.circle" : "circle")
-                                .foregroundStyle(self.feedbackType == type ? .tujiTeal : .tujiInk4)
+                                .foregroundStyle(self.feedbackType == type ? .tujiTeal : .tujiInk3)
                             Text(self.title(for: type))
-                                .font(.tujiBody)
+                                .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk)
                             Spacer()
                         }
-                        .padding(.horizontal, Space.s4)
+                        .padding(.horizontal, Space.s3)
                         .padding(.vertical, Space.s3)
                         .background(
-                            self.feedbackType == type ? Color.tujiTealSoft : Color.tujiCard,
-                            in: .rect(cornerRadius: Radius.md)
+                            self.feedbackType == type ? Color.tujiTealSoft : Color.tujiPaper,
+                            in: .rect(cornerRadius: Radius.r0)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: Radius.md)
+                            RoundedRectangle(cornerRadius: Radius.r0)
                                 .stroke(
-                                    self.feedbackType == type ? Color.tujiTeal : Color.tujiInk4.opacity(0.2),
+                                    self.feedbackType == type ? Color.tujiTeal : Color.tujiRule,
                                     lineWidth: 1
                                 )
                         )
@@ -98,17 +98,17 @@ struct FeedbackSheet: View {
                         .padding(Space.s2)
                     if self.detail.isEmpty {
                         Text("請描述你的建議或遇到的狀況…")
-                            .font(.tujiBody)
-                            .foregroundStyle(.tujiInk4)
-                            .padding(.horizontal, Space.s4)
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk3)
+                            .padding(.horizontal, Space.s3)
                             .padding(.vertical, Space.s3)
                             .allowsHitTesting(false)
                     }
                 }
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.r0)
+                        .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                 )
                 .onChange(of: self.detail) { _, value in
                     if value.count > 1000 {
@@ -117,15 +117,15 @@ struct FeedbackSheet: View {
                 }
 
                 Text("\(self.detail.count)/1000")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiAlert)
             }
 
             BBtn(title: "\(self.submitTitle)", fullWidth: true) {
@@ -133,15 +133,15 @@ struct FeedbackSheet: View {
             }
             .disabled(!self.canSubmit)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.vertical, Space.s6)
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s4)
     }
 
     private var successContent: some View {
-        VStack(spacing: Space.s5) {
+        VStack(spacing: Space.s4) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.tujiGreen)
+                .foregroundStyle(.tujiTeal)
             Text("謝謝你的意見！我們會參考並持續改進。")
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)
@@ -149,8 +149,8 @@ struct FeedbackSheet: View {
             BBtn(title: "\(tujiLocalized("完成"))", fullWidth: true) { self.dismiss() }
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s12)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s5)
     }
 
     private func title(for type: FeedbackType) -> LocalizedStringKey {

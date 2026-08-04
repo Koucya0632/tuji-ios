@@ -30,10 +30,10 @@ struct AtlasCaptureProgressStrip: View {
                         }
                     }
                 }
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
                 .padding(.vertical, Space.s3)
             }
-            .background(.tujiBg)
+            .background(.tujiPaper)
         }
     }
 }
@@ -59,13 +59,13 @@ private struct AtlasCaptureJobCard: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } else {
-                    Rectangle().fill(.tujiCard)
+                    Rectangle().fill(.tujiPaper)
                 }
                 Rectangle().fill(.black.opacity(self.job.stage == .done ? 0.12 : 0.32))
                 self.overlayIcon
             }
             .frame(width: 116, height: 116)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
 
             Text(self.job.lemma)
                 .font(.system(size: 12, weight: .semibold))
@@ -73,11 +73,11 @@ private struct AtlasCaptureJobCard: View {
                 .lineLimit(1)
             Text(self.statusText)
                 .font(.system(size: 10, weight: .bold))
-                .foregroundStyle(self.job.stage == .failed ? .tujiCoral : .tujiInk3)
+                .foregroundStyle(self.job.stage == .failed ? .tujiAlert : .tujiInk3)
                 .lineLimit(1)
             if self.job.stage != .failed {
                 ProgressView(value: self.job.progress)
-                    .tint(self.job.stage == .done ? .tujiGreen : .tujiTeal)
+                    .tint(self.job.stage == .done ? .tujiTeal : .tujiTeal)
             }
         }
         .frame(width: 116)

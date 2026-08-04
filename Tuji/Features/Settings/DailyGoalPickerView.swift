@@ -36,7 +36,7 @@ struct DailyGoalPickerView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("每日目標題數")
         .navigationBarTitleDisplayMode(.inline)
     }

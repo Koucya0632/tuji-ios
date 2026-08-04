@@ -36,7 +36,7 @@ struct LangPickerView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("語言")
         .navigationBarTitleDisplayMode(.inline)
     }

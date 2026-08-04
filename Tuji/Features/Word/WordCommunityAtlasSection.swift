@@ -83,14 +83,14 @@ struct WordCommunityAtlasSection: View {
     private func card(_ item: AtlasPublicItem) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: item.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fill)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 18))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
                         ProgressView().tint(.tujiTeal)
                     }
@@ -119,11 +119,11 @@ struct WordCommunityAtlasSection: View {
             .padding(.vertical, Space.s2)
             .frame(width: 132, alignment: .leading)
         }
-        .background(.tujiCard)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .background(.tujiPaper)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 

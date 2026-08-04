@@ -7,7 +7,7 @@ struct SplashView: View {
     @State private var loaderVisible = false
 
     var body: some View {
-        VStack(spacing: Space.s6) {
+        VStack(spacing: Space.s4) {
             TujiBrandLockup(animateEntrance: true)
 
             ProgressView()
@@ -17,7 +17,7 @@ struct SplashView: View {
                 .offset(y: self.loaderVisible ? 0 : 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .task {
             if self.reduceMotion {
                 self.loaderVisible = true

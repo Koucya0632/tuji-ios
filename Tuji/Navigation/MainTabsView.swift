@@ -44,14 +44,14 @@ struct MainTabsView: View {
             if self.tabBarVisible {
                 TujiTabBar(selected: self.$selected)
                     .tourAnchor(.tabBar)
-                    .padding(.horizontal, Space.s4)
+                    .padding(.horizontal, Space.s3)
                     .padding(.top, Space.s2)
                     .padding(.bottom, Space.s2)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.easeInOut(duration: 0.2), value: self.tabBarVisible)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .allowsHitTesting(self.tourIndex == nil)
         .accessibilityHidden(self.tourIndex != nil)
         .overlayPreferenceValue(TourAnchorKey.self) { anchors in
@@ -299,10 +299,10 @@ private struct TujiTabBar: View {
         }
         .padding(.horizontal, Space.s2)
         .padding(.vertical, Space.s2)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.pill))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.rPill))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.pill)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.rPill)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
     }
@@ -331,7 +331,7 @@ private struct TabBarButton: View {
                 Text(self.tab.titleZh)
                     .font(.system(size: 10, weight: .heavy))
             }
-            .foregroundStyle(self.isSelected ? .tujiTeal : .tujiInk4)
+            .foregroundStyle(self.isSelected ? .tujiTeal : .tujiInk3)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Space.s2)
         }

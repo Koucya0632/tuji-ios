@@ -28,7 +28,7 @@ enum TujiStatusToastStyle {
     var tint: Color {
         switch self {
         case .recognizing: .tujiTeal
-        case .deleting: .tujiCoral
+        case .deleting: .tujiAlert
         }
     }
 }
@@ -45,7 +45,7 @@ private struct TujiStatusToastModifier: ViewModifier {
                 .allowsHitTesting(!self.isPresented)
 
             if self.isPresented {
-                Color.tujiBgInk
+                Color.tujiInk
                     .opacity(0.16)
                     .ignoresSafeArea()
                     .transition(.opacity)
@@ -101,7 +101,7 @@ private struct TujiStatusToast: View {
                 self.animatedIcon
 
                 Circle()
-                    .fill(.tujiYellow)
+                    .fill(.tujiEye)
                     .frame(width: 7, height: 7)
                     .offset(x: 18, y: -15)
             }
@@ -115,7 +115,7 @@ private struct TujiStatusToast: View {
                     .minimumScaleFactor(0.82)
 
                 Text(self.style.detail)
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .lineLimit(1)
             }
@@ -124,13 +124,12 @@ private struct TujiStatusToast: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .background {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(.tujiCard.opacity(0.86))
+                .fill(.tujiPaper.opacity(0.86))
         }
         .overlay {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(.white.opacity(0.74), lineWidth: 1)
         }
-        .tujiCardShadow()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(self.style.title)
         .accessibilityAddTraits(.updatesFrequently)

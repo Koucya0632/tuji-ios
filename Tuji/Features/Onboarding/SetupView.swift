@@ -34,23 +34,23 @@ struct SetupView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s6) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     Text("先幫你排一份\n學習節奏")
                         .font(.tujiH2)
                         .foregroundStyle(.tujiInk)
-                        .padding(.top, Space.s5)
-                        .padding(.horizontal, Space.s6)
+                        .padding(.top, Space.s4)
+                        .padding(.horizontal, Space.s4)
 
                     section(title: "你對學習什麼主題有興趣？") {
                         if categories.categories.isEmpty {
                             HStack {
                                 ProgressView().tint(.tujiTeal)
                                 Text("載入主題中…")
-                                    .font(.tujiCaption)
+                                    .font(.tujiLabel)
                                     .foregroundStyle(.tujiInk3)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, Space.s5)
+                            .padding(.vertical, Space.s4)
                         } else {
                             LazyVGrid(
                                 columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2), count: 3),
@@ -82,8 +82,8 @@ struct SetupView: View {
                     if let error {
                         VStack(alignment: .leading, spacing: Space.s2) {
                             Text(error)
-                                .font(.tujiCaption)
-                                .foregroundStyle(.tujiCoral)
+                                .font(.tujiLabel)
+                                .foregroundStyle(.tujiAlert)
                             if showReSignIn {
                                 Button {
                                     Task { await auth.signOut() }
@@ -92,35 +92,35 @@ struct SetupView: View {
                                         .font(.system(size: 14, weight: .semibold))
                                         .foregroundStyle(.tujiTeal)
                                         .padding(.vertical, Space.s2)
-                                        .padding(.horizontal, Space.s4)
+                                        .padding(.horizontal, Space.s3)
                                         .background(.tujiTealSoft, in: .capsule)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.horizontal, Space.s6)
+                        .padding(.horizontal, Space.s4)
                     }
                 }
-                .padding(.bottom, Space.s5)
+                .padding(.bottom, Space.s4)
             }
 
-            Divider().background(.tujiInk4.opacity(0.2))
+            Divider().background(.tujiRule.opacity(0.2))
 
             BBtn(
                 // Not 「開始使用」: that is already the last onboarding page's
                 // button and the tour's closing card, and this is a third tap
                 // in the same run-in.
                 title: saving ? "儲存中..." : "完成設定",
-                bg: .tujiTeal,
-                fg: .white,
+                bg: .tujiEye,
+                fg: .tujiInk,
                 fullWidth: true,
                 action: save
             )
             .disabled(saving || topicIds.isEmpty)
-            .padding(.horizontal, Space.s6)
-            .padding(.vertical, Space.s5)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s4)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .task {
             await categories.loadIfNeeded()
             seedDefaults()
@@ -135,11 +135,11 @@ struct SetupView: View {
     private func section(title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text(title)
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
             content()
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
         }
     }
 
@@ -148,16 +148,16 @@ struct SetupView: View {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
-                .padding(.vertical, Space.s4)
+                .padding(.vertical, Space.s3)
                 .frame(maxWidth: .infinity)
                 .background(
-                    selected ? Color.tujiTealSoft : .tujiCard,
-                    in: .rect(cornerRadius: Radius.md)
+                    selected ? Color.tujiTealSoft : .tujiPaper,
+                    in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            selected ? Color.tujiTeal : .tujiInk4.opacity(0.25),
+                            selected ? Color.tujiTeal : .tujiRule,
                             lineWidth: selected ? 1.5 : 1
                         )
                 )
@@ -171,16 +171,16 @@ struct SetupView: View {
                 .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .padding(.vertical, Space.s5)
+                .padding(.vertical, Space.s4)
                 .frame(maxWidth: .infinity)
                 .background(
-                    selected ? Color.tujiTealSoft : .tujiCard,
-                    in: .rect(cornerRadius: Radius.md)
+                    selected ? Color.tujiTealSoft : .tujiPaper,
+                    in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            selected ? Color.tujiTeal : .tujiInk4.opacity(0.25),
+                            selected ? Color.tujiTeal : .tujiRule,
                             lineWidth: selected ? 1.5 : 1
                         )
                 )

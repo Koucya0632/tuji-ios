@@ -22,7 +22,7 @@ struct CategoryView: View {
                 self.content(width: geo.size.width)
             }
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .task {
             await self.categories.loadIfNeeded()
             await self.words.loadIfNeeded()
@@ -41,7 +41,7 @@ struct CategoryView: View {
     }
 
     private func content(width: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: Space.s5) {
+        VStack(alignment: .leading, spacing: Space.s4) {
             self.hero
             Section {
                 self.grid(width: width)
@@ -49,10 +49,10 @@ struct CategoryView: View {
                 self.gridHeader
             }
         }
-        .frame(width: width - Space.s6 * 2, alignment: .leading)
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s5)
-        .padding(.bottom, Space.s12)
+        .frame(width: width - Space.s4 * 2, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s4)
+        .padding(.bottom, Space.s5)
         .frame(width: width, alignment: .leading)
     }
 
@@ -74,7 +74,7 @@ struct CategoryView: View {
 
                 VStack(alignment: .leading, spacing: Space.s3) {
                     Text("主題分類")
-                        .font(.tujiOverline)
+                        .font(.tujiLabel)
                         .tracking(2)
                         .foregroundStyle(.tujiTeal)
 
@@ -83,7 +83,7 @@ struct CategoryView: View {
                         .foregroundStyle(.tujiInk)
 
                     Text(c.name)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .tracking(2)
 
@@ -93,19 +93,19 @@ struct CategoryView: View {
                             .foregroundStyle(.tujiInk3)
 
                         Text(self.categoryDescription(c))
-                            .font(.tujiBody)
+                            .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk2)
                             .lineLimit(3)
                     }
                     .padding(.top, Space.s2)
                 }
-                .padding(Space.s5)
+                .padding(Space.s4)
                 .frame(maxWidth: 220, alignment: .leading)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 260)
             .background(.tujiTealSoft)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         } else {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Image(systemName: "square.grid.2x2.fill")
@@ -118,12 +118,12 @@ struct CategoryView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
                 Text("探索這個主題的常用單字")
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk2)
             }
-            .padding(Space.s5)
+            .padding(Space.s4)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.xl))
+            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
         }
     }
 
@@ -159,7 +159,7 @@ struct CategoryView: View {
     private var gridHeader: some View {
         HStack(alignment: .firstTextBaseline) {
             Text("單字")
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiTeal)
             Spacer()
@@ -180,7 +180,7 @@ struct CategoryView: View {
                 compact: true
             )
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Space.s8)
+            .padding(.vertical, Space.s5)
         } else {
             LazyVGrid(
                 columns: [

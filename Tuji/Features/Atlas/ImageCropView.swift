@@ -262,7 +262,7 @@ struct ImageCropView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .padding(.vertical, Space.s3)
-                    .padding(.horizontal, Space.s4)
+                    .padding(.horizontal, Space.s3)
             }
             .disabled(self.working)
 
@@ -274,7 +274,7 @@ struct ImageCropView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.85))
                         .padding(.vertical, Space.s3)
-                        .padding(.horizontal, Space.s4)
+                        .padding(.horizontal, Space.s3)
                 }
                 .disabled(self.working)
             }
@@ -283,32 +283,32 @@ struct ImageCropView: View {
 
             BBtn(
                 title: self.working ? "處理中…" : "使用裁切",
-                bg: .tujiTeal,
-                fg: .white,
+                bg: .tujiEye,
+                fg: .tujiInk,
                 icon: "checkmark"
             ) {
                 self.confirm()
             }
             .disabled(self.working || self.proxy == nil)
         }
-        .padding(.horizontal, Space.s5)
+        .padding(.horizontal, Space.s4)
         .padding(.top, Space.s3)
         .padding(.bottom, Space.s2)
     }
 
     private var failureView: some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 32, weight: .bold))
                 .foregroundStyle(.white.opacity(0.8))
             Text("無法載入這張照片")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
-            BBtn(title: "繼續上傳原圖", bg: .tujiTeal, fg: .white, icon: "arrow.up") {
+            BBtn(title: "繼續上傳原圖", bg: .tujiEye, fg: .tujiInk, icon: "arrow.up") {
                 self.onConfirm(self.imageData)
             }
         }
-        .padding(Space.s6)
+        .padding(Space.s4)
     }
 
     private func confirm() {

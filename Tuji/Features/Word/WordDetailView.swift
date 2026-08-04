@@ -45,7 +45,7 @@ struct WordDetailView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .toolbar(.hidden, for: .navigationBar)
         // Hide the custom TujiTabBar on this full-screen detail page by
         // entering study-focus (MainTabsView watches this flag). While the
@@ -90,7 +90,7 @@ struct WordDetailPage: View {
                 } else {
                     ProgressView()
                         .tint(.tujiTeal)
-                        .padding(.top, Space.s16)
+                        .padding(.top, Space.s6)
                         .frame(width: geo.size.width)
                 }
             }
@@ -104,7 +104,7 @@ struct WordDetailPage: View {
     // MARK: - States
 
     private func content(_ w: Word, width: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: Space.s5) {
+        VStack(alignment: .leading, spacing: Space.s4) {
             self.hero(w)
             self.titleRow(w)
             WordDetailSections(word: w)
@@ -112,9 +112,9 @@ struct WordDetailPage: View {
             // published one, so untouched words look exactly as before.
             WordCommunityAtlasSection(word: w)
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
         .padding(.top, Space.s2)
-        .padding(.bottom, Space.s8)
+        .padding(.bottom, Space.s5)
         .frame(width: width, alignment: .leading)
     }
 }
@@ -122,7 +122,7 @@ struct WordDetailPage: View {
 extension WordDetailPage {
     private func errorState(_ err: Error) -> some View {
         VStack {
-            Spacer(minLength: Space.s12)
+            Spacer(minLength: Space.s5)
             MascotEmptyState(
                 pose: .think,
                 title: "找不到這個字",
@@ -130,9 +130,9 @@ extension WordDetailPage {
             ) {
                 BBtn(title: "返回", fullWidth: false, action: { self.dismiss() })
             }
-            Spacer(minLength: Space.s12)
+            Spacer(minLength: Space.s5)
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
     }
 
     // MARK: - Sections
@@ -143,7 +143,7 @@ extension WordDetailPage {
     private static let imageCardHeight: CGFloat = 220
 
     private func hero(_ w: Word) -> some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             // Controls live in their own row above the image so the back
             // button and favourite toggle are always fully visible, never
             // clipped by the notch or overlapping the artwork.
@@ -163,16 +163,16 @@ extension WordDetailPage {
             // padding, so the whole subject is visible regardless of its
             // aspect ratio or baked-in background.
             ZStack {
-                RoundedRectangle(cornerRadius: Radius.xl)
-                    .fill(.tujiBg)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .fill(.tujiPaper)
                 LazyImage(url: w.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fit)
-                            .padding(Space.s4)
+                            .padding(Space.s3)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 28))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
                         ProgressView().tint(.tujiTeal)
                     }
@@ -181,16 +181,16 @@ extension WordDetailPage {
             }
             .frame(maxWidth: .infinity)
             .frame(height: Self.imageCardHeight)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.xl)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
             )
         }
     }
 
     private func titleRow(_ w: Word) -> some View {
-        HStack(alignment: .top, spacing: Space.s4) {
+        HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text(w.word)
                     .font(.tujiH1)
@@ -205,7 +205,7 @@ extension WordDetailPage {
                     }
                     if let pos = w.partOfSpeech, !pos.isEmpty {
                         Text(localizedPartOfSpeech(pos, language: self.settings.current.uiLanguage))
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .italic()
                             .foregroundStyle(.tujiInk3)
                     }
@@ -234,8 +234,8 @@ extension WordDetailPage {
         Button(action: action) {
             ZStack {
                 Circle()
-                    .fill(.tujiCard)
-                    .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1.5))
+                    .fill(.tujiPaper)
+                    .overlay(Circle().stroke(.tujiRule.opacity(0.3), lineWidth: 1.5))
                 Image(systemName: systemImage)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk)

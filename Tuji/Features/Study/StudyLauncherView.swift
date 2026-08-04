@@ -29,11 +29,11 @@ struct StudyLauncherView: View {
 
     var body: some View {
         ZStack {
-            Color.tujiBg.ignoresSafeArea()
+            Color.tujiPaper.ignoresSafeArea()
             VStack(spacing: Space.s3) {
                 ProgressView().tint(.tujiTeal)
                 Text("載入練習中…")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk2)
             }
         }

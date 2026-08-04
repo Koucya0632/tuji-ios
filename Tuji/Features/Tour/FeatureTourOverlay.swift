@@ -30,7 +30,7 @@ struct FeatureTourOverlay: View {
                 self.dim(cutout: cutout, shape: step.shape)
                 if let cutout {
                     RoundedRectangle(cornerRadius: self.cornerRadius(for: step.shape, rect: cutout))
-                        .stroke(.tujiYellow, lineWidth: 2)
+                        .stroke(.tujiEye, lineWidth: 2)
                         .frame(width: cutout.width, height: cutout.height)
                         .position(x: cutout.midX, y: cutout.midY)
                         .accessibilityHidden(true)
@@ -53,7 +53,7 @@ struct FeatureTourOverlay: View {
 
     private func dim(cutout: CGRect?, shape: TourCutoutShape) -> some View {
         ZStack {
-            Color.tujiBgInk.opacity(0.55)
+            Color.tujiInk.opacity(0.55)
             if let cutout {
                 RoundedRectangle(cornerRadius: self.cornerRadius(for: shape, rect: cutout))
                     .frame(width: cutout.width, height: cutout.height)
@@ -88,41 +88,41 @@ struct FeatureTourOverlay: View {
         let insets = proxy.safeAreaInsets
         if step.target == nil {
             self.closingCard(for: step)
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let cutout {
             let placeBelow = cutout.midY < proxy.size.height * 0.55
             self.tipCard(for: step)
-                .padding(.horizontal, Space.s5)
+                .padding(.horizontal, Space.s4)
                 .frame(
                     maxWidth: .infinity,
                     maxHeight: .infinity,
                     alignment: placeBelow ? .top : .bottom
                 )
-                .padding(.top, placeBelow ? cutout.maxY + Space.s4 : insets.top + Space.s4)
+                .padding(.top, placeBelow ? cutout.maxY + Space.s3 : insets.top + Space.s3)
                 .padding(
                     .bottom,
                     placeBelow
-                        ? insets.bottom + Space.s4
-                        : proxy.size.height - cutout.minY + Space.s4
+                        ? insets.bottom + Space.s3
+                        : proxy.size.height - cutout.minY + Space.s3
                 )
         } else {
             self.tipCard(for: step)
-                .padding(.horizontal, Space.s5)
+                .padding(.horizontal, Space.s4)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
     private func tipCard(for step: TourStep) -> some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: Space.s3) {
             HStack(alignment: .top, spacing: Space.s3) {
                 MascotFigure(pose: step.pose, size: 64)
                 VStack(alignment: .leading, spacing: Space.s1) {
                     Text(step.title)
-                        .font(.tujiH4)
+                        .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
                     Text(step.text)
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -138,12 +138,11 @@ struct FeatureTourOverlay: View {
                         .padding(.horizontal, Space.s2)
                 }
                 .buttonStyle(.plain)
-                BBtn(title: "下一步", bg: .tujiTeal, fg: .white, action: self.onNext)
+                BBtn(title: "下一步", bg: .tujiEye, fg: .tujiInk, action: self.onNext)
             }
         }
-        .padding(Space.s5)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
-        .tujiCardShadow()
+        .padding(Space.s4)
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .frame(maxWidth: 440)
         .accessibilityAddTraits(.isModal)
     }
@@ -152,12 +151,12 @@ struct FeatureTourOverlay: View {
         // dark: the light variant's accent.opacity(0.32) card lets the
         // dimmed grid underneath bleed through the text.
         MascotCelebrationCard(pose: step.pose, title: step.title, dark: true) {
-            VStack(spacing: Space.s4) {
+            VStack(spacing: Space.s3) {
                 Text(step.text)
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.white.opacity(0.75))
                     .multilineTextAlignment(.center)
-                BBtn(title: "開始使用", bg: .tujiTeal, fg: .white, fullWidth: true, action: self.onNext)
+                BBtn(title: "開始使用", bg: .tujiEye, fg: .tujiInk, fullWidth: true, action: self.onNext)
             }
         }
         .accessibilityAddTraits(.isModal)
@@ -167,7 +166,7 @@ struct FeatureTourOverlay: View {
         HStack(spacing: Space.s2) {
             ForEach(self.steps) { step in
                 Capsule()
-                    .fill(step.id == self.index ? Color.tujiTeal : .tujiInk4.opacity(0.4))
+                    .fill(step.id == self.index ? Color.tujiTeal : .tujiPaper2.opacity(0.4))
                     .frame(width: step.id == self.index ? 22 : 7, height: 7)
             }
         }
@@ -176,7 +175,7 @@ struct FeatureTourOverlay: View {
 
 #Preview {
     ZStack {
-        Color.tujiBg.ignoresSafeArea()
+        Color.tujiPaper.ignoresSafeArea()
         VStack {
             Text("App content")
                 .font(.tujiH2)

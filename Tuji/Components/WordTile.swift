@@ -29,7 +29,7 @@ struct WordTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
 
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
@@ -40,7 +40,7 @@ struct WordTile: View {
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 24))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
                         ProgressView()
                             .tint(.tujiTeal)
@@ -67,14 +67,14 @@ struct WordTile: View {
 
                     if let reading = self.word.reading, !reading.isEmpty {
                         Text(reading)
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                     }
 
                     if self.settings.current.showZh {
                         Text(self.word.chinese)
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                     }
@@ -83,11 +83,11 @@ struct WordTile: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .background(.tujiCard)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .background(.tujiPaper)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
         // Bottom-right corner of the whole card (below the label).
         .overlay(alignment: .bottomTrailing) {
@@ -111,8 +111,8 @@ struct WordTile: View {
         .lineLimit(1)
         .padding(.horizontal, Space.s2)
         .padding(.vertical, 3)
-        .background(.tujiCard.opacity(0.95), in: .capsule)
-        .overlay(Capsule().stroke(.tujiInk4.opacity(0.4), lineWidth: 1))
+        .background(.tujiPaper.opacity(0.95), in: .capsule)
+        .overlay(Capsule().stroke(.tujiRule.opacity(0.4), lineWidth: 1))
         .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
     }
 }
@@ -134,6 +134,6 @@ struct WordTile: View {
         }
         .padding()
     }
-    .background(.tujiBg)
+    .background(.tujiPaper)
     .environment(SettingsStore.shared)
 }

@@ -63,7 +63,7 @@ struct AtlasCaptureView: View {
         @Bindable var vm = self.vm
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s5) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     self.statusMessage
                     self.uploadRetry
                     if let uploadedImage = self.vm.uploadedImage {
@@ -72,10 +72,10 @@ struct AtlasCaptureView: View {
                         self.sourcePanel
                     }
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.vertical, Space.s4)
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s3)
             }
-            .background(.tujiBg)
+            .background(.tujiPaper)
             .navigationTitle("拍照新增")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -181,13 +181,13 @@ struct AtlasCaptureView: View {
     // MARK: - Source chooser
 
     private var sourcePanel: some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text("拍下身邊的東西")
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk3)
                 // Free and Pro allowances differ (30 vs 500), so the hint names
                 // the plan and its own limit instead of a shared count.
@@ -196,12 +196,12 @@ struct AtlasCaptureView: View {
                 {
                     if self.vm.isPro {
                         Text("Pro：本月 AI 辨識剩 \(remaining)／\(limit) 次")
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk4)
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk3)
                     } else {
                         Text("免費版：本月 AI 辨識剩 \(remaining)／\(limit) 次")
-                            .font(.tujiCaption)
-                            .foregroundStyle(.tujiInk4)
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk3)
                     }
                 }
             }
@@ -209,8 +209,8 @@ struct AtlasCaptureView: View {
             if self.vm.atCapacity {
                 VStack(alignment: .leading, spacing: Space.s2) {
                     Text(self.vm.capacityMessage)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiAlert)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     if !self.vm.isPro {
                         Button {
@@ -224,7 +224,7 @@ struct AtlasCaptureView: View {
                     }
                 }
                 .padding(Space.s3)
-                .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+                .background(Color.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
             }
 
             if CameraPicker.isAvailable {
@@ -238,8 +238,8 @@ struct AtlasCaptureView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, Space.s4)
-                    .background(.tujiTeal, in: .rect(cornerRadius: Radius.lg))
+                    .padding(.vertical, Space.s3)
+                    .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
                 }
                 .buttonStyle(.plain)
                 .disabled(self.vm.busy != nil || self.vm.atCapacity)
@@ -255,17 +255,17 @@ struct AtlasCaptureView: View {
     // MARK: - Correction (recognize + manual fields + confirm)
 
     private func correctionPanel(_ image: AtlasImageSummary) -> some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: Space.s3) {
             self.imagePreview(image)
             self.actionRow
             self.candidateSection
             self.correctionForm
         }
-        .padding(Space.s4)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+        .padding(Space.s3)
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.xl)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 
@@ -290,21 +290,21 @@ struct AtlasCaptureView: View {
                 .disabled(self.vm.busy != nil)
             }
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: image.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fit)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
                         ProgressView().tint(.tujiTeal)
                     }
                 }
             }
             .frame(height: 240)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         }
     }
 
@@ -367,10 +367,10 @@ struct AtlasCaptureView: View {
         .foregroundStyle(selected ? Color.white : .tujiInk)
         .frame(maxWidth: .infinity)
         .padding(.vertical, Space.s3)
-        .background(selected ? Color.tujiTeal : .tujiBg, in: .rect(cornerRadius: Radius.md))
+        .background(selected ? Color.tujiTeal : .tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.md)
-                .stroke(selected ? Color.clear : Color.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(selected ? Color.clear : Color.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 
@@ -393,9 +393,9 @@ struct AtlasCaptureView: View {
             .foregroundStyle(.tujiTeal)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Space.s3)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
+            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.md)
+                RoundedRectangle(cornerRadius: Radius.r0)
                     .stroke(.tujiTeal.opacity(0.55), lineWidth: 1.5)
             )
         }
@@ -434,7 +434,7 @@ struct AtlasCaptureView: View {
                                 .padding(.horizontal, Space.s3)
                                 .padding(.vertical, Space.s2)
                                 .background(
-                                    self.vm.selectedCandidateId == candidate.id ? .tujiTeal : .tujiBg,
+                                    self.vm.selectedCandidateId == candidate.id ? .tujiTeal : .tujiPaper,
                                     in: .capsule
                                 )
                         }
@@ -454,8 +454,8 @@ struct AtlasCaptureView: View {
             self.field("圖片名稱", text: $vm.lemma)
             if let warning = self.vm.duplicateLemmaWarning {
                 Text(warning)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiAmber)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiTeal)
             }
             // "中文名稱" localizes to Meaning/意味 for ja/en. displayZhHant
             // always rides through as the Chinese base column (prefilled from
@@ -471,8 +471,8 @@ struct AtlasCaptureView: View {
 
             BBtn(
                 title: "確認並生成卡片",
-                bg: .tujiTeal,
-                fg: .white,
+                bg: .tujiEye,
+                fg: .tujiInk,
                 fullWidth: true,
                 icon: "checkmark"
             ) {
@@ -490,7 +490,7 @@ struct AtlasCaptureView: View {
     private func field(_ title: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             TextField("", text: text)
                 .font(.system(size: 15, weight: .bold))
@@ -498,7 +498,7 @@ struct AtlasCaptureView: View {
                 .textInputAutocapitalization(.never)
                 .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s3)
-                .background(.tujiBg, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         }
     }
 
@@ -518,7 +518,7 @@ struct AtlasCaptureView: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
-                .background(.tujiTeal, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
             }
             .buttonStyle(.plain)
             .disabled(self.vm.busy != nil)
@@ -529,18 +529,18 @@ struct AtlasCaptureView: View {
     private var statusMessage: some View {
         if let errorMessage = self.vm.errorMessage {
             Text(errorMessage)
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiCoral)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiAlert)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Space.s3)
-                .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+                .background(Color.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
         } else if let successMessage = self.vm.successMessage {
             Text(successMessage)
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiTeal)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Space.s3)
-                .background(Color.tujiTeal.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+                .background(Color.tujiTeal.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
         }
     }
 }
@@ -560,8 +560,8 @@ private nonisolated struct AtlasPickerPillLabel: View {
         .font(.system(size: 15, weight: .semibold))
         .foregroundStyle(.tujiInk)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Space.s4)
-        .background(.tujiYellow, in: .rect(cornerRadius: Radius.lg))
+        .padding(.vertical, Space.s3)
+        .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
     }
 }
 

@@ -17,15 +17,15 @@ enum TujiPromptStyle {
 
     fileprivate var cardColor: Color {
         switch self {
-        case .success: .tujiYellow
-        default: .tujiCard
+        case .success: .tujiEye
+        default: .tujiPaper
         }
     }
 
     fileprivate var shadowColor: Color {
         switch self {
-        case .error, .destructive: .tujiCoral
-        default: .tujiTealDark
+        case .error, .destructive: .tujiAlert
+        default: .tujiTealDeep
         }
     }
 }
@@ -70,14 +70,14 @@ private struct TujiPromptModifier: ViewModifier {
                 .accessibilityHidden(self.isPresented)
 
             if self.isPresented {
-                Color.tujiBgInk
+                Color.tujiInk
                     .opacity(0.42)
                     .ignoresSafeArea()
                     .transition(.opacity)
                     .accessibilityHidden(true)
 
                 prompt
-                    .padding(.horizontal, Space.s6)
+                    .padding(.horizontal, Space.s4)
                     .transition(
                         self.reduceMotion
                             ? .opacity
@@ -103,7 +103,7 @@ private struct TujiPromptModifier: ViewModifier {
                     size: self.style == .success ? 112 : 96,
                     grounding: .none
                 )
-                .padding(.horizontal, self.style == .success ? 0 : Space.s4)
+                .padding(.horizontal, self.style == .success ? 0 : Space.s3)
                 .offset(x: mascotOffset.width, y: mascotOffset.height)
                 .accessibilityHidden(true)
             }
@@ -132,12 +132,12 @@ private struct TujiPromptModifier: ViewModifier {
     }
 
     private var card: some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             header
 
             if let message {
                 Text(message)
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -150,13 +150,13 @@ private struct TujiPromptModifier: ViewModifier {
             buttons
                 .padding(.top, Space.s1)
         }
-        .padding(.horizontal, Space.s5)
-        .padding(.top, self.style.mascotPose == nil ? Space.s5 : Space.s10)
-        .padding(.bottom, Space.s5)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, self.style.mascotPose == nil ? Space.s4 : Space.s5)
+        .padding(.bottom, Space.s4)
         .frame(maxWidth: .infinity)
-        .background(self.style.cardColor, in: .rect(cornerRadius: Radius.xl))
+        .background(self.style.cardColor, in: .rect(cornerRadius: Radius.r0))
         .background {
-            RoundedRectangle(cornerRadius: Radius.xl)
+            RoundedRectangle(cornerRadius: Radius.r0)
                 .fill(self.style.shadowColor)
                 .offset(y: 6)
         }
@@ -168,11 +168,11 @@ private struct TujiPromptModifier: ViewModifier {
             if self.style == .destructive {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(.tujiCoral)
+                    .foregroundStyle(.tujiAlert)
             } else if self.style == .error {
                 Image(systemName: "wifi.exclamationmark")
                     .font(.system(size: 23, weight: .heavy))
-                    .foregroundStyle(.tujiCoral)
+                    .foregroundStyle(.tujiAlert)
             }
 
             Text(self.title)
@@ -185,10 +185,10 @@ private struct TujiPromptModifier: ViewModifier {
 
     @ViewBuilder
     private var cardOverlay: some View {
-        RoundedRectangle(cornerRadius: Radius.xl)
+        RoundedRectangle(cornerRadius: Radius.r0)
             .stroke(
                 self.style == .destructive
-                    ? Color.tujiCoral.opacity(0.72)
+                    ? Color.tujiAlert.opacity(0.72)
                     : Color.tujiInk.opacity(0.08),
                 lineWidth: self.style == .destructive ? 1.5 : 1
             )
@@ -196,7 +196,7 @@ private struct TujiPromptModifier: ViewModifier {
         if self.style == .error {
             VStack {
                 Capsule()
-                    .fill(.tujiCoral)
+                    .fill(.tujiAlert)
                     .frame(width: 72, height: 5)
                     .padding(.top, Space.s2)
                 Spacer()
@@ -209,13 +209,13 @@ private struct TujiPromptModifier: ViewModifier {
             Image(systemName: "info.circle.fill")
                 .foregroundStyle(.tujiTeal)
             Text(text)
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .padding(Space.s3)
-        .background(.tujiBg, in: .rect(cornerRadius: Radius.md))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
     }
 
     @ViewBuilder
@@ -256,10 +256,10 @@ private struct TujiPromptModifier: ViewModifier {
                 .padding(.horizontal, Space.s3)
                 .background(buttonBackground(for: item.role))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.lg)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(buttonBorder(for: item.role), lineWidth: 1.5)
                 )
-                .clipShape(.rect(cornerRadius: Radius.lg))
+                .clipShape(.rect(cornerRadius: Radius.r0))
         }
         .buttonStyle(.plain)
     }
@@ -274,14 +274,14 @@ private struct TujiPromptModifier: ViewModifier {
     private func buttonBackground(for role: TujiPromptButtonRole) -> Color {
         switch role {
         case .primary: .tujiTeal
-        case .destructive: .tujiCoral
-        case .cancel: .tujiBg
+        case .destructive: .tujiAlert
+        case .cancel: .tujiPaper
         }
     }
 
     private func buttonBorder(for role: TujiPromptButtonRole) -> Color {
         switch role {
-        case .cancel: .tujiInk4.opacity(0.55)
+        case .cancel: .tujiInk3
         case .primary, .destructive: .clear
         }
     }
@@ -316,7 +316,7 @@ extension View {
 #Preview {
     @Previewable @State var presented = true
 
-    Color.tujiBg
+    Color.tujiPaper
         .ignoresSafeArea()
         .tujiPrompt(
             isPresented: $presented,

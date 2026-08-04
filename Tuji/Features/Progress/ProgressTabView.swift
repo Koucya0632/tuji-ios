@@ -68,7 +68,7 @@ struct ProgressTabView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s5) {
+            VStack(alignment: .leading, spacing: Space.s4) {
                 Text("進度")
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
@@ -81,11 +81,11 @@ struct ProgressTabView: View {
                 self.sectionHeader("明細")
                 self.categoryBreakdownCard
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s4)
-            .padding(.bottom, Space.s24)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
+            .padding(.bottom, Space.s6)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
         // multitasking window title) — the "進度" Text above is the visible
         // title, so the system nav bar itself stays hidden.
@@ -133,7 +133,7 @@ struct ProgressTabView: View {
         let scoped = !self.settings.current.studyCategories.isEmpty
         return VStack(alignment: .leading, spacing: Space.s3) {
             Text(scoped ? LocalizedStringKey("所選主題完成度") : LocalizedStringKey("圖鑑完成度"))
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             HStack(alignment: .firstTextBaseline) {
@@ -149,15 +149,15 @@ struct ProgressTabView: View {
                     ? LocalizedStringKey("已學 \(learned) / 所選主題共 \(total) 字")
                     : LocalizedStringKey("已學 \(learned) / 共 \(total) 字")
             )
-            .font(.tujiCaption)
+            .font(.tujiLabel)
             .foregroundStyle(.tujiInk3)
         }
-        .padding(Space.s5)
+        .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -165,7 +165,7 @@ struct ProgressTabView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(.tujiInk4.opacity(0.15))
+                    .fill(.tujiPaper2.opacity(0.15))
                 RoundedRectangle(cornerRadius: 4)
                     .fill(.tujiTeal)
                     .frame(width: geo.size.width * min(1.0, max(0, ratio)))
@@ -184,7 +184,7 @@ struct ProgressTabView: View {
                 value: self.progress.streak?.current ?? 0,
                 unit: tujiLocalized("天"),
                 icon: "flame.fill",
-                tint: .tujiAmber
+                tint: .tujiTeal
             )
             self.statTile(
                 label: "最長連勝",
@@ -201,7 +201,7 @@ struct ProgressTabView: View {
             HStack(spacing: 6) {
                 Image(systemName: icon).foregroundStyle(tint)
                 Text(label)
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
                     .foregroundStyle(.tujiInk3)
             }
@@ -216,11 +216,11 @@ struct ProgressTabView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.s4)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .padding(Space.s3)
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -230,12 +230,12 @@ struct ProgressTabView: View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
                 Text("最近 6 週")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 Spacer()
                 Text("\(self.activeDayCount) 個活躍日")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
             if self.progress.heatmap.isEmpty {
@@ -244,12 +244,12 @@ struct ProgressTabView: View {
                 HeatmapGrid(cells: self.progress.heatmap)
             }
         }
-        .padding(Space.s5)
+        .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -270,7 +270,7 @@ struct ProgressTabView: View {
 
     private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .font(.tujiOverline)
+            .font(.tujiLabel)
             .tracking(2)
             .foregroundStyle(.tujiInk3)
             .padding(.top, Space.s2)
@@ -328,25 +328,25 @@ struct ProgressTabView: View {
     }
 
     private var categoryBreakdownCard: some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: Space.s3) {
             if self.categoryStats.isEmpty {
                 Text(self.emptyBreakdownMessage)
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, Space.s4)
+                    .padding(.vertical, Space.s3)
             } else {
                 ForEach(self.categoryStats) { stat in
                     self.categoryRow(stat)
                 }
             }
         }
-        .padding(Space.s5)
+        .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -358,7 +358,7 @@ struct ProgressTabView: View {
                     .foregroundStyle(.tujiInk)
                 Spacer()
                 Text("\(stat.learned) / \(stat.total)")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .contentTransition(.numericText())
             }
@@ -384,7 +384,7 @@ struct HeatmapGrid: View {
                         .fill(self.color(for: cell))
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
-                                .stroke(cell.future ? .tujiInk4.opacity(0.15) : .clear, lineWidth: 1)
+                                .stroke(cell.future ? .tujiRule.opacity(0.15) : .clear, lineWidth: 1)
                         )
                         .aspectRatio(1, contentMode: .fit)
                 }
@@ -403,7 +403,7 @@ struct HeatmapGrid: View {
             ForEach(labels.indices, id: \.self) { i in
                 Text(labels[i])
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.tujiInk4)
+                    .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -413,7 +413,7 @@ struct HeatmapGrid: View {
         HStack(spacing: 6) {
             Text("少")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             ForEach(0..<4, id: \.self) { lvl in
                 RoundedRectangle(cornerRadius: 3)
                     .fill(self.tintForLevel(lvl))
@@ -421,13 +421,13 @@ struct HeatmapGrid: View {
             }
             Text("多")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Spacer()
         }
     }
 
     private func color(for cell: HeatmapCell) -> Color {
-        if cell.future { return .tujiCard }
+        if cell.future { return .tujiPaper }
         return self.tintForLevel(self.strength(for: cell.count))
     }
 
@@ -442,9 +442,9 @@ struct HeatmapGrid: View {
 
     private func tintForLevel(_ level: Int) -> Color {
         switch level {
-        case 0: Color.tujiInk4.opacity(0.15)
+        case 0: Color.tujiPaper3
         case 1: .tujiTealSoft
-        case 2: Color(red: 0.48, green: 0.69, blue: 0.69)
+        case 2: Color.tujiTeal
         default: .tujiTeal
         }
     }

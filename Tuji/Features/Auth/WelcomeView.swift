@@ -35,13 +35,13 @@ struct WelcomeView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                             .padding(Space.s3)
-                            .background(.tujiCard, in: .circle)
-                            .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+                            .background(.tujiPaper, in: .circle)
+                            .overlay(Circle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     Spacer()
                 }
-                .padding(.horizontal, Space.s5)
+                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s3)
             }
             Spacer()
@@ -61,22 +61,22 @@ struct WelcomeView: View {
                             .foregroundStyle(.tujiInk)
                     }
                     .font(.system(size: 15, weight: .heavy))
-                    .padding(.vertical, Space.s4)
+                    .padding(.vertical, Space.s3)
                     .frame(maxWidth: .infinity)
-                    .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+                    .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                     .overlay(
-                        RoundedRectangle(cornerRadius: Radius.lg)
-                            .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: Radius.r0)
+                            .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                     )
                 }
                 .disabled(auth.loading)
 
                 if let err = auth.error {
                     Text(err)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiAlert)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, Space.s4)
+                        .padding(.horizontal, Space.s3)
                 }
 
                 Button {
@@ -85,9 +85,9 @@ struct WelcomeView: View {
                     Text("使用 Email")
                         .font(.system(size: 15, weight: .heavy))
                         .foregroundStyle(.tujiTeal)
-                        .padding(.vertical, Space.s4)
+                        .padding(.vertical, Space.s3)
                         .frame(maxWidth: .infinity)
-                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
+                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                 }
 
                 Button {
@@ -106,7 +106,7 @@ struct WelcomeView: View {
                     // a mode — they're going back.
                     Text(auth.cameFromGuest ? LocalizedStringKey("返回訪客模式") : LocalizedStringKey("先逛逛 → 訪客模式"))
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.tujiInk4)
+                        .foregroundStyle(.tujiInk3)
                 }
             }
             // Cap the auth button column so all buttons share one width and
@@ -114,11 +114,11 @@ struct WelcomeView: View {
             // otherwise on large phones (e.g. 16 Pro Max: 440 − 48 padding =
             // 392 > 375) the Apple button logs an Auto Layout conflict.
             .frame(maxWidth: 360)
-            .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s8)
+            .padding(.horizontal, Space.s4)
+            .padding(.bottom, Space.s5)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
     }
 }
 

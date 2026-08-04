@@ -49,7 +49,7 @@ struct AtlasCollectionDetailView: View {
                 } else if case .loading = self.vm.phase {
                     ProgressView()
                         .tint(.tujiTeal)
-                        .padding(.top, Space.s12)
+                        .padding(.top, Space.s5)
                 } else {
                     self.errorState
                 }
@@ -57,7 +57,7 @@ struct AtlasCollectionDetailView: View {
             .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("合集"))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: self.$selectedItem) { item in
@@ -124,7 +124,7 @@ struct AtlasCollectionDetailView: View {
     // MARK: Header
 
     private func header(_ collection: AtlasCollection) -> some View {
-        HStack(alignment: .top, spacing: Space.s4) {
+        HStack(alignment: .top, spacing: Space.s3) {
             CollectionIdentityTile(
                 collectionID: collection.id,
                 avatarColor: collection.avatarColor,
@@ -145,7 +145,7 @@ struct AtlasCollectionDetailView: View {
                         HStack(spacing: 6) {
                             ProfileAvatar(avatar: author.avatar, size: 22)
                             Text(author.displayName)
-                                .font(.tujiCaption)
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiInk2)
                                 .lineLimit(1)
                         }
@@ -166,14 +166,14 @@ struct AtlasCollectionDetailView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(Space.s4)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .padding(Space.s3)
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay {
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.22), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.22), lineWidth: 1)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
     }
 
     private func stat(icon: String, title: LocalizedStringKey, value: Int) -> some View {
@@ -293,7 +293,7 @@ struct AtlasCollectionDetailView: View {
     // MARK: Tabs
 
     private var tabBar: some View {
-        HStack(spacing: Space.s5) {
+        HStack(spacing: Space.s4) {
             self.tabButton("目錄", .catalog)
             self.tabButton("簡介", .about)
             Spacer()
@@ -301,8 +301,8 @@ struct AtlasCollectionDetailView: View {
                 self.learningPill
             }
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
         .padding(.bottom, Space.s2)
     }
 
@@ -331,7 +331,7 @@ struct AtlasCollectionDetailView: View {
                 .padding(.horizontal, Space.s3)
                 .frame(height: 30)
                 .background(
-                    remaining == 0 ? Color.tujiInk4.opacity(0.18) : Color.tujiTealSoft,
+                    remaining == 0 ? Color.tujiPaper3 : Color.tujiTealSoft,
                     in: .capsule
                 )
             }
@@ -362,13 +362,13 @@ struct AtlasCollectionDetailView: View {
         switch self.tab {
         case .catalog:
             if self.vm.items.isEmpty, case .loading = self.vm.phase {
-                ProgressView().tint(.tujiTeal).padding(.vertical, Space.s8)
+                ProgressView().tint(.tujiTeal).padding(.vertical, Space.s5)
             } else if self.vm.items.isEmpty {
                 Text("這個合集還沒有項目")
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, Space.s8)
+                    .padding(.vertical, Space.s5)
             } else {
                 VStack(spacing: 0) {
                     LazyVGrid(
@@ -391,29 +391,29 @@ struct AtlasCollectionDetailView: View {
                             .allowsHitTesting(self.vm.unlocked)
                         }
                     }
-                    .padding(.horizontal, Space.s6)
+                    .padding(.horizontal, Space.s4)
                     if !self.vm.unlocked {
                         HStack(spacing: Space.s2) {
                             Image(systemName: "lock.fill")
                             Text("收藏合集後查看全部 \(self.vm.totalCount) 個內容")
                         }
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .frame(maxWidth: .infinity)
-                        .padding(.top, Space.s4)
+                        .padding(.top, Space.s3)
                     }
                 }
-                .padding(.bottom, Space.s8)
+                .padding(.bottom, Space.s5)
             }
         case .about:
             let about = collection.description.flatMap { $0.isEmpty ? nil : $0 }
             Text(about ?? tujiLocalized("作者還沒有填寫簡介。"))
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(about == nil ? .tujiInk3 : .tujiInk2)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s2)
-                .padding(.bottom, Space.s8)
+                .padding(.bottom, Space.s5)
         }
     }
 
@@ -421,16 +421,16 @@ struct AtlasCollectionDetailView: View {
         VStack(spacing: Space.s3) {
             Image(systemName: "square.stack.3d.up.slash")
                 .font(.system(size: 40))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Text(self.vm.isUnavailable
                 ? tujiLocalized("找不到這個合集")
                 : tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
             BBtn(title: "重試", fullWidth: false) {
                 Task { await self.openCollection() }
             }
         }
-        .padding(.top, Space.s12)
+        .padding(.top, Space.s5)
     }
 }

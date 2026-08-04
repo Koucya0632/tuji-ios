@@ -18,7 +18,7 @@ struct PullUpHint: View {
             Text("向上拉看完整詳情")
                 .font(.system(size: 13, weight: .semibold))
         }
-        .foregroundStyle(.tujiInk4)
+        .foregroundStyle(.tujiInk3)
         .frame(maxWidth: .infinity)
     }
 }
@@ -42,15 +42,15 @@ struct ExpandableWordDetail: View {
                     WordDetailSections(word: fullWord)
                 } else if self.error != nil {
                     Text("詳情載入失敗")
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, Space.s6)
+                        .padding(.vertical, Space.s4)
                 } else {
                     ProgressView()
                         .tint(.tujiTeal)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, Space.s6)
+                        .padding(.vertical, Space.s4)
                 }
             } else {
                 PullUpHint()

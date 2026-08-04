@@ -63,20 +63,20 @@ struct CompleteView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: Space.s5) {
+                VStack(spacing: Space.s4) {
                     self.hero
                     self.streakCapsule
                     self.unsyncedNotice
                     self.changeSection
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.top, Space.s12)
-                .padding(.bottom, Space.s5)
+                .padding(.horizontal, Space.s4)
+                .padding(.top, Space.s5)
+                .padding(.bottom, Space.s4)
             }
             self.footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .task { await self.refresh() }
     }
 
@@ -85,7 +85,7 @@ struct CompleteView: View {
     private var hero: some View {
         MascotCelebrationCard(
             title: self.hasMoreDue ? "這一輪完成" : "複習完成！",
-            accent: .tujiYellow
+            accent: .tujiEye
         ) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(self.done)")
@@ -102,7 +102,7 @@ struct CompleteView: View {
     private var streakCapsule: some View {
         HStack(spacing: Space.s2) {
             Image(systemName: "flame.fill")
-                .foregroundStyle(.tujiAmber)
+                .foregroundStyle(.tujiTeal)
             if let streak = self.progress.streak?.current {
                 Text("連勝 \(streak) 天")
                     .font(.system(size: 15, weight: .semibold))
@@ -110,14 +110,14 @@ struct CompleteView: View {
                     .contentTransition(.numericText())
             } else {
                 Text("讀取連勝中…")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
         }
-        .padding(.horizontal, Space.s4)
+        .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
-        .background(.tujiAmber.opacity(0.12), in: .capsule)
-        .overlay(Capsule().stroke(.tujiAmber.opacity(0.5), lineWidth: 1))
+        .background(.tujiTeal.opacity(0.12), in: .capsule)
+        .overlay(Capsule().stroke(.tujiTeal.opacity(0.5), lineWidth: 1))
     }
 
     private var unsyncedNotice: some View {
@@ -129,7 +129,7 @@ struct CompleteView: View {
         if !self.answered.isEmpty {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("今天複習")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 VStack(spacing: Space.s2) {
@@ -160,15 +160,15 @@ struct CompleteView: View {
                     if self.wrongIds.contains(item.word.id) {
                         Text("答錯過")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.tujiCoral)
+                            .foregroundStyle(.tujiAlert)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
-                            .background(.tujiCoral.opacity(0.12), in: .capsule)
+                            .background(.tujiAlert.opacity(0.12), in: .capsule)
                     }
                 }
                 if self.settings.current.showZh {
                     Text(item.word.chinese)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
@@ -180,13 +180,13 @@ struct CompleteView: View {
                         if leveledUp {
                             Image(systemName: "arrow.up")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundStyle(.tujiGreen)
+                                .foregroundStyle(.tujiTeal)
                         }
                         self.levelPill(afterLevel)
                     }
                     HStack(spacing: 4) {
                         Text("\(change.before)→\(change.after)")
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .contentTransition(.numericText())
                         Text(self.deltaText(change.delta))
@@ -198,21 +198,21 @@ struct CompleteView: View {
         }
         .padding(Space.s2)
         .frame(maxWidth: .infinity)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.md)
-                .stroke(.tujiInk4.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
         )
     }
 
     private func thumb(_ word: StudyQueueWord) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: Radius.sm).fill(.tujiBg)
+            RoundedRectangle(cornerRadius: Radius.r0).fill(.tujiPaper)
             LazyImage(url: word.imageURL) { state in
                 if let image = state.image {
                     image.resizable().aspectRatio(contentMode: .fit).padding(4)
                 } else if state.error != nil {
-                    Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk4)
+                    Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk3)
                 } else {
                     ProgressView().tint(.tujiTeal)
                 }
@@ -221,18 +221,19 @@ struct CompleteView: View {
         }
         .frame(width: 44, height: 44)
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.sm)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
     private func levelPill(_ level: MasteryLevel) -> some View {
         Text(level.name)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(level.color)
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .foregroundStyle(level.foreground)
             .padding(.horizontal, Space.s2)
             .padding(.vertical, 2)
-            .background(level.color.opacity(0.14), in: .capsule)
+            .background(level.background, in: .rect(cornerRadius: Radius.r0))
     }
 
     private func deltaText(_ d: Int) -> String {
@@ -240,8 +241,8 @@ struct CompleteView: View {
     }
 
     private func deltaColor(_ d: Int) -> Color {
-        if d > 0 { return .tujiGreen }
-        if d < 0 { return .tujiCoral }
+        if d > 0 { return .tujiTeal }
+        if d < 0 { return .tujiAlert }
         return .tujiInk3
     }
 
@@ -255,8 +256,8 @@ struct CompleteView: View {
                     title: self.startingNextRound
                         ? "載入下一輪…"
                         : "再來一輪（還有 \(self.remainingDue) 字）",
-                    bg: .tujiTeal,
-                    fg: .white,
+                    bg: .tujiEye,
+                    fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.clockwise"
                 ) {
@@ -278,17 +279,17 @@ struct CompleteView: View {
             } else {
                 BBtn(
                     title: "回首頁",
-                    bg: .tujiTeal,
-                    fg: .white,
+                    bg: .tujiEye,
+                    fg: .tujiInk,
                     fullWidth: true,
                     icon: "house.fill",
                     action: self.onFinish
                 )
             }
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.vertical, Space.s4)
-        .background(.tujiBg)
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
+        .background(.tujiPaper)
     }
 
     private func refresh() async {

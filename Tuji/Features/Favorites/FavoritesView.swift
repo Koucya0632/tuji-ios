@@ -39,7 +39,7 @@ struct FavoritesView: View {
             self.header
             self.content
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("我的收藏")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -76,14 +76,14 @@ struct FavoritesView: View {
             Image(systemName: "icloud.slash")
                 .foregroundStyle(.tujiInk3)
             Text("訪客模式 · 收藏只存在這台裝置")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
             Spacer()
         }
-        .padding(.horizontal, Space.s4)
+        .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
-        .padding(.horizontal, Space.s6)
+        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+        .padding(.horizontal, Space.s4)
         .padding(.top, Space.s3)
     }
 
@@ -95,7 +95,7 @@ struct FavoritesView: View {
                     self.chip(label: c.nameZh, value: c.id)
                 }
             }
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         }
         .padding(.top, Space.s3)
     }
@@ -108,11 +108,11 @@ struct FavoritesView: View {
             Text(label)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(selected ? .white : .tujiInk2)
-                .padding(.horizontal, Space.s4)
+                .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s2)
-                .background(selected ? .tujiInk : .tujiCard, in: .capsule)
+                .background(selected ? .tujiInk : .tujiPaper, in: .capsule)
                 .overlay(
-                    Capsule().stroke(.tujiInk4.opacity(selected ? 0 : 0.3), lineWidth: 1)
+                    Capsule().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
                 )
         }
     }
@@ -120,7 +120,7 @@ struct FavoritesView: View {
     private var toolbar: some View {
         HStack {
             Text("\(self.filtered.count) 個收藏")
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             Spacer()
@@ -145,7 +145,7 @@ struct FavoritesView: View {
                 .foregroundStyle(.tujiTeal)
             }
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s2)
     }
 
@@ -160,7 +160,7 @@ struct FavoritesView: View {
 
     private var emptyState: some View {
         VStack {
-            Spacer(minLength: Space.s8)
+            Spacer(minLength: Space.s5)
             MascotEmptyState(
                 pose: .sleep,
                 title: "還沒有收藏的單字",
@@ -171,15 +171,15 @@ struct FavoritesView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.tujiInk)
                         .padding(.vertical, Space.s3)
-                        .padding(.horizontal, Space.s6)
-                        .background(.tujiYellow, in: .capsule)
+                        .padding(.horizontal, Space.s4)
+                        .background(.tujiEye, in: .capsule)
                 }
                 .buttonStyle(.plain)
             }
-            Spacer(minLength: Space.s8)
+            Spacer(minLength: Space.s5)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
     }
 
     private var grid: some View {
@@ -208,9 +208,9 @@ struct FavoritesView: View {
                     }
                 }
             }
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
             .padding(.top, Space.s3)
-            .padding(.bottom, Space.s8)
+            .padding(.bottom, Space.s5)
         }
     }
 

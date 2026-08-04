@@ -150,7 +150,7 @@ struct ReviewFlowView: View {
             // Keep the MCQ option recolour on pick smooth (previously carried
             // by the footer's ZStack animation).
             .animation(.spring(duration: 0.35), value: self.coord.phase)
-            .background(.tujiBg)
+            .background(.tujiPaper)
             // MainTabsView normally reserves 78pt for the custom TujiTabBar;
             // that ancestor inset doesn't propagate into pushed views, so we
             // mirror it. In study mode (StudyFocus.active) both the bar and
@@ -163,7 +163,7 @@ struct ReviewFlowView: View {
             .overlay(alignment: .bottom) {
                 if let flash = self.coord.flash {
                     ReviewFlashCapsule(flash: flash)
-                        .padding(.bottom, Space.s10)
+                        .padding(.bottom, Space.s5)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
@@ -217,7 +217,7 @@ struct ReviewFlowView: View {
         VStack(spacing: Space.s3) {
             HStack {
                 Text("複習")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 Spacer()
@@ -228,7 +228,7 @@ struct ReviewFlowView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(.tujiInk4.opacity(0.2))
+                        .fill(.tujiPaper2.opacity(0.2))
                     RoundedRectangle(cornerRadius: 3)
                         .fill(.tujiTeal)
                         .frame(width: geo.size.width * self.coord.progress)
@@ -237,7 +237,7 @@ struct ReviewFlowView: View {
             }
             .frame(height: 6)
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
         .padding(.top, Space.s1)
         .padding(.bottom, Space.s3)
     }
@@ -257,15 +257,15 @@ private struct ReviewQuestionView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Space.s4) {
+            VStack(spacing: Space.s3) {
                 self.bubble
                 self.hero
                 self.choicesList
             }
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
             // PR #46: in study mode the tab bar is gone so we can trim the
             // big s24 scroll buffer that previously kept the footer clear.
-            .padding(.bottom, self.studyFocus.active ? Space.s4 : Space.s24)
+            .padding(.bottom, self.studyFocus.active ? Space.s3 : Space.s6)
         }
     }
 
@@ -277,18 +277,18 @@ private struct ReviewQuestionView: View {
         ZStack(alignment: .bottomTrailing) {
             GeometryReader { proxy in
                 ZStack {
-                    Rectangle().fill(.tujiBg)
+                    Rectangle().fill(.tujiPaper)
                     LazyImage(url: self.item.word.imageURL) { state in
                         if let image = state.image {
                             image.resizable()
                                 .scaledToFit()
                                 .frame(
-                                    width: max(0, proxy.size.width - Space.s4),
-                                    height: max(0, proxy.size.height - Space.s4)
+                                    width: max(0, proxy.size.width - Space.s3),
+                                    height: max(0, proxy.size.height - Space.s3)
                                 )
                         } else if state.error != nil {
                             Image(systemName: "photo")
-                                .foregroundStyle(.tujiInk4)
+                                .foregroundStyle(.tujiInk3)
                         } else {
                             ProgressView().tint(.tujiTeal)
                         }
@@ -298,7 +298,7 @@ private struct ReviewQuestionView: View {
             }
             .frame(height: self.heroHeight)
             .clipped()
-            .clipShape(.rect(cornerRadius: Radius.lg))
+            .clipShape(.rect(cornerRadius: Radius.r0))
 
             PronunciationButton(
                 text: self.item.word.word,
@@ -358,7 +358,7 @@ private struct ReviewFlashCapsule: View {
                 .font(.system(size: 15, weight: .semibold))
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, Space.s5)
+        .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
         .background(self.tint, in: .capsule)
         .shadow(color: .black.opacity(0.15), radius: 8, y: 3)
@@ -375,12 +375,12 @@ private struct ReviewFlashCapsule: View {
         switch self.flash {
         case let .autoRated(rating):
             switch rating {
-            case .again: .tujiCoral
-            case .hard: .tujiYellow
+            case .again: .tujiAlert
+            case .hard: .tujiEye
             case .good: .tujiTeal
-            case .easy: .tujiGreen
+            case .easy: .tujiTeal
             }
-        case .retestPassed: .tujiGreen
+        case .retestPassed: .tujiTeal
         }
     }
 }

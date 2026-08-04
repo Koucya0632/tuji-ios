@@ -17,13 +17,13 @@ struct LearningDirectionOnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color.tujiBg.ignoresSafeArea()
+            Color.tujiPaper.ignoresSafeArea()
             // Wrapped in a scroll view so large Dynamic Type sizes on small
             // screens (e.g. iPhone SE) can scroll to see the full content
             // instead of the two Spacers squeezing it off-screen.
             GeometryReader { geo in
                 ScrollView {
-                    VStack(alignment: .leading, spacing: Space.s6) {
+                    VStack(alignment: .leading, spacing: Space.s4) {
                         Spacer()
                         MascotFigure(pose: .wave, size: 112)
                             .frame(maxWidth: .infinity)
@@ -32,7 +32,7 @@ struct LearningDirectionOnboardingView: View {
                                 .font(.tujiH2)
                                 .foregroundStyle(.tujiInk)
                             Text("之後可以隨時在設定中切換，兩種語言的學習進度會分開保留。")
-                                .font(.tujiBody)
+                                .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk3)
                         }
                         VStack(spacing: Space.s3) {
@@ -41,8 +41,8 @@ struct LearningDirectionOnboardingView: View {
                         }
                         Spacer()
                     }
-                    .padding(.horizontal, Space.s6)
-                    .padding(.vertical, Space.s8)
+                    .padding(.horizontal, Space.s4)
+                    .padding(.vertical, Space.s5)
                     .frame(minHeight: geo.size.height)
                 }
             }
@@ -66,7 +66,7 @@ struct LearningDirectionOnboardingView: View {
                 _ = await (wordsLoad, categoriesLoad)
             }
         } label: {
-            HStack(spacing: Space.s4) {
+            HStack(spacing: Space.s3) {
                 Text(direction == .zhJa ? "日" : "EN")
                     .font(.system(size: 18, weight: .heavy))
                     .foregroundStyle(.tujiTeal)
@@ -74,21 +74,21 @@ struct LearningDirectionOnboardingView: View {
                     .background(.tujiTealSoft, in: .circle)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(direction.title)
-                        .font(.tujiH4)
+                        .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
                     Text(subtitle)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(.tujiInk4)
+                    .foregroundStyle(.tujiInk3)
             }
-            .padding(Space.s4)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+            .padding(Space.s3)
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.xl)
-                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -123,7 +123,7 @@ struct OnboardingFlow: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.tujiBg.ignoresSafeArea()
+            Color.tujiPaper.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBar
@@ -140,14 +140,14 @@ struct OnboardingFlow: View {
 
                 BBtn(
                     title: page == pages.count - 1 ? "開始使用" : "下一步",
-                    bg: .tujiTeal,
-                    fg: .white,
+                    bg: .tujiEye,
+                    fg: .tujiInk,
                     fullWidth: true,
                     action: advance
                 )
-                .padding(.horizontal, Space.s6)
-                .padding(.bottom, Space.s8)
-                .padding(.top, Space.s4)
+                .padding(.horizontal, Space.s4)
+                .padding(.bottom, Space.s5)
+                .padding(.top, Space.s3)
             }
         }
     }
@@ -165,24 +165,24 @@ struct OnboardingFlow: View {
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.tujiInk3)
                         .padding(.vertical, Space.s2)
-                        .padding(.horizontal, Space.s4)
+                        .padding(.horizontal, Space.s3)
                 }
             }
         }
-        .padding(.top, Space.s4)
-        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
+        .padding(.horizontal, Space.s3)
     }
 
     private var indicator: some View {
         HStack(spacing: Space.s2) {
             ForEach(0..<pages.count, id: \.self) { i in
                 Capsule()
-                    .fill(i == page ? Color.tujiTeal : .tujiInk4.opacity(0.4))
+                    .fill(i == page ? Color.tujiTeal : .tujiPaper2.opacity(0.4))
                     .frame(width: i == page ? 22 : 7, height: 7)
                     .animation(.easeOut(duration: 0.25), value: page)
             }
         }
-        .padding(.vertical, Space.s4)
+        .padding(.vertical, Space.s3)
     }
 
     private func advance() {
@@ -214,32 +214,31 @@ private struct PageView: View {
             ZStack(alignment: .topTrailing) {
                 artwork
                     .frame(maxWidth: .infinity)
-                    .padding(Space.s6)
-                    .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+                    .padding(Space.s4)
+                    .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                     .overlay(
-                        RoundedRectangle(cornerRadius: Radius.xl)
-                            .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: Radius.r0)
+                            .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                     )
-                    .tujiCardShadow()
 
                 if let mascot = page.mascot {
                     MascotFigure(pose: mascot, size: 96)
                         .offset(x: 14, y: -20)
                 }
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s8)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s5)
 
             VStack(spacing: Space.s2) {
                 Text(page.title)
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
-                    .padding(.top, Space.s6)
+                    .padding(.top, Space.s4)
 
                 VStack(spacing: 2) {
                     ForEach(Array(page.lines.enumerated()), id: \.offset) { _, line in
                         Text(line)
-                            .font(.tujiBodyLg)
+                            .font(.tujiBody)
                             .foregroundStyle(.tujiInk2)
                     }
                 }
@@ -275,12 +274,12 @@ private struct PageView: View {
         case .streak:
             VStack(alignment: .leading, spacing: Space.s3) {
                 HStack(spacing: 6) {
-                    Image(systemName: "flame.fill").foregroundStyle(.tujiAmber)
-                    Text("連勝").font(.tujiCaption).foregroundStyle(.white.opacity(0.7))
+                    Image(systemName: "flame.fill").foregroundStyle(.tujiTeal)
+                    Text("連勝").font(.tujiLabel).foregroundStyle(.white.opacity(0.7))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: Space.s2) {
                     Text("23").font(.system(size: 52, weight: .heavy)).foregroundStyle(.white)
-                    Text("天").font(.tujiH4).foregroundStyle(.white.opacity(0.7))
+                    Text("天").font(.tujiH3).foregroundStyle(.white.opacity(0.7))
                 }
                 LazyVGrid(
                     columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 7),
@@ -295,9 +294,9 @@ private struct PageView: View {
                 }
                 .padding(.top, Space.s2)
             }
-            .padding(Space.s5)
+            .padding(Space.s4)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiInk, in: .rect(cornerRadius: Radius.xl))
+            .background(.tujiInk, in: .rect(cornerRadius: Radius.r0))
         }
     }
 }
@@ -306,7 +305,7 @@ private struct TileStub: View {
     let systemImage: String
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: Radius.lg)
+            RoundedRectangle(cornerRadius: Radius.r0)
                 .fill(.tujiTealSoft)
             Image(systemName: systemImage)
                 .font(.system(size: 40, weight: .bold))
@@ -332,14 +331,14 @@ private struct OptionRow: View {
             }
         }
         .padding(.vertical, Space.s3)
-        .padding(.horizontal, Space.s4)
+        .padding(.horizontal, Space.s3)
         .background(
-            state == .selected ? Color.tujiTealSoft : Color.tujiCard,
-            in: .rect(cornerRadius: Radius.md)
+            state == .selected ? Color.tujiTealSoft : Color.tujiPaper,
+            in: .rect(cornerRadius: Radius.r0)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.md)
-                .stroke(.tujiInk4.opacity(state == .selected ? 0 : 0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(state == .selected ? 0 : 0.25), lineWidth: 1)
         )
     }
 }

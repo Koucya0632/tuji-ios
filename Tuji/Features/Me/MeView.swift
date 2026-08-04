@@ -82,7 +82,7 @@ struct MeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Space.s6) {
+            VStack(spacing: Space.s4) {
                 self.profileHeader
                 self.statsRow
                 self.weakSection
@@ -105,11 +105,11 @@ struct MeView: View {
                 #endif
                 self.signOutButton
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s4)
-            .padding(.bottom, Space.s24)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
+            .padding(.bottom, Space.s6)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
         // multitasking window title) — `profileHeader` above is the visible
         // title, so the system nav bar itself stays hidden.
@@ -168,7 +168,7 @@ struct MeView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, Space.s5)
+        .padding(.top, Space.s4)
     }
 
     // MARK: - Stats row
@@ -181,16 +181,16 @@ struct MeView: View {
                 value: "\(self.progress.streak?.current ?? 0)",
                 label: "連勝天",
                 icon: "flame.fill",
-                iconTint: .tujiAmber
+                iconTint: .tujiTeal
             )
             Divider().frame(height: 36)
             self.statCell(value: "\(self.cache.favoriteIds.count)", label: "收藏")
         }
         .padding(.vertical, Space.s3)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -215,7 +215,7 @@ struct MeView: View {
                     .contentTransition(.numericText())
             }
             Text(label)
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .frame(maxWidth: .infinity)
@@ -229,7 +229,7 @@ struct MeView: View {
             self.wordSection(
                 title: "需要加強",
                 words: self.vm.weakWords,
-                accent: .tujiCoral,
+                accent: .tujiAlert,
                 emptyText: nil
             )
         }
@@ -245,7 +245,7 @@ struct MeView: View {
     {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text(title)
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(accent)
             VStack(spacing: 0) {
@@ -260,14 +260,14 @@ struct MeView: View {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     })
                     if idx < words.count - 1 {
-                        Divider().background(.tujiInk4.opacity(0.15))
+                        Divider().background(.tujiRule.opacity(0.15))
                     }
                 }
             }
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
             )
         }
     }
@@ -280,13 +280,13 @@ struct MeView: View {
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fill)
                     } else {
-                        Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                        Image(systemName: "photo").foregroundStyle(.tujiInk3)
                     }
                 }
                 .pipeline(.shared)
             }
             .frame(width: 44, height: 44)
-            .clipShape(.rect(cornerRadius: Radius.md))
+            .clipShape(.rect(cornerRadius: Radius.r0))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
@@ -294,7 +294,7 @@ struct MeView: View {
                     .foregroundStyle(.tujiInk)
                 if self.settings.current.showZh {
                     Text(word.chinese)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
@@ -305,9 +305,9 @@ struct MeView: View {
                 .foregroundStyle(accent)
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
         }
-        .padding(.horizontal, Space.s4)
+        .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
     }
 
@@ -320,7 +320,7 @@ struct MeView: View {
             self.proEntry
         }
         .buttonStyle(.plain)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
     }
 
     private var proEntry: some View {
@@ -330,7 +330,7 @@ struct MeView: View {
                     .fill(.white.opacity(0.22))
                 Image(systemName: "crown.fill")
                     .font(.system(size: 18, weight: .heavy))
-                    .foregroundStyle(.tujiYellow)
+                    .foregroundStyle(.tujiEye)
             }
             .frame(width: 42, height: 42)
 
@@ -339,7 +339,7 @@ struct MeView: View {
                     .font(.system(size: 17, weight: .heavy))
                     .foregroundStyle(.white)
                 Text("擴充自製圖鑑容量，解鎖高精度 AI 辨識")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.white.opacity(0.82))
                     .lineLimit(2)
             }
@@ -351,18 +351,18 @@ struct MeView: View {
                 .foregroundStyle(.tujiInk)
                 .padding(.horizontal, Space.s3)
                 .padding(.vertical, 7)
-                .background(.tujiYellow, in: .capsule)
+                .background(.tujiEye, in: .capsule)
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .heavy))
                 .foregroundStyle(.white.opacity(0.72))
         }
-        .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s4)
+        .padding(.horizontal, Space.s3)
+        .padding(.vertical, Space.s3)
         .frame(minHeight: 82)
         .background(
             LinearGradient(
-                colors: [.tujiTeal, .tujiGreen],
+                colors: [.tujiTeal, .tujiTeal],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -380,12 +380,12 @@ struct MeView: View {
         } label: {
             Text(self.isGuest ? LocalizedStringKey("登入 / 註冊") : LocalizedStringKey("登出"))
                 .font(.system(size: 15, weight: .heavy))
-                .foregroundStyle(self.isGuest ? .tujiTeal : .tujiCoral)
+                .foregroundStyle(self.isGuest ? .tujiTeal : .tujiAlert)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s4)
+                .padding(.vertical, Space.s3)
                 .background(
-                    self.isGuest ? Color.tujiTealSoft : .tujiCoral.opacity(0.08),
-                    in: .rect(cornerRadius: Radius.lg)
+                    self.isGuest ? Color.tujiTealSoft : .tujiAlert.opacity(0.08),
+                    in: .rect(cornerRadius: Radius.r0)
                 )
         }
         .buttonStyle(.plain)
@@ -428,13 +428,13 @@ private struct DebugSmokeSection: View {
             } label: {
                 HStack {
                     Text("除錯工具")
-                        .font(.tujiOverline)
+                        .font(.tujiLabel)
                         .tracking(2)
                         .foregroundStyle(.tujiInk3)
                     Spacer()
                     Image(systemName: self.open ? "chevron.up" : "chevron.down")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.tujiInk4)
+                        .foregroundStyle(.tujiInk3)
                 }
             }
             .buttonStyle(.plain)
@@ -450,8 +450,8 @@ private struct DebugSmokeSection: View {
                     self.resultCard(ping)
                 } else if self.isGuest {
                     Text("登入後可驗證 Bearer 鏈")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk4)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
                 }
             }
         }
@@ -463,9 +463,9 @@ private struct DebugSmokeSection: View {
         case let .success(r):
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiGreen)
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiTeal)
                     Text("HTTP 200 · source: \(r.source.rawValue)")
-                        .font(.tujiOverline)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                 }
                 if let uid = r.userId {
@@ -474,22 +474,22 @@ private struct DebugSmokeSection: View {
                     Text("userId: nil").font(.tujiMono).foregroundStyle(.tujiInk3)
                 }
             }
-            .padding(Space.s4)
+            .padding(Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         case let .failure(e):
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
-                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.tujiCoral)
-                    Text("FAILED").font(.tujiOverline).foregroundStyle(.tujiCoral)
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.tujiAlert)
+                    Text("FAILED").font(.tujiLabel).foregroundStyle(.tujiAlert)
                 }
                 Text(e.localizedDescription)
                     .font(.tujiMono)
                     .foregroundStyle(.tujiInk2)
             }
-            .padding(Space.s4)
+            .padding(Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCoral.opacity(0.08), in: .rect(cornerRadius: Radius.lg))
+            .background(.tujiAlert.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
         }
     }
 

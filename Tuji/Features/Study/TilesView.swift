@@ -56,15 +56,15 @@ struct TilesView: View {
     }
 
     var body: some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             self.bubble
             self.card
             Spacer(minLength: 0)
             self.slotsRow
             self.tilePool
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.bottom, Space.s5)
+        .padding(.horizontal, Space.s4)
+        .padding(.bottom, Space.s4)
     }
 
     @ViewBuilder
@@ -110,19 +110,19 @@ struct TilesView: View {
                     size: 36
                 )
             }
-            .padding(.horizontal, Space.s4)
+            .padding(.horizontal, Space.s3)
             .padding(.bottom, Space.s3)
         }
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.xl)
-                .stroke(.tujiInk4.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
         )
     }
 
     private var hero: some View {
         ZStack {
-            Rectangle().fill(.tujiBg)
+            Rectangle().fill(.tujiPaper)
             LazyImage(url: self.item.word.imageURL) { state in
                 if let image = state.image {
                     image.resizable()
@@ -131,7 +131,7 @@ struct TilesView: View {
                 } else if state.error != nil {
                     Image(systemName: "photo")
                         .font(.system(size: 28))
-                        .foregroundStyle(.tujiInk4)
+                        .foregroundStyle(.tujiInk3)
                 } else {
                     ProgressView().tint(.tujiTeal)
                 }
@@ -140,7 +140,7 @@ struct TilesView: View {
         }
         .frame(height: 168)
         .clipped()
-        .clipShape(.rect(topLeadingRadius: Radius.xl, topTrailingRadius: Radius.xl))
+        .clipShape(.rect(topLeadingRadius: Radius.r0, topTrailingRadius: Radius.r0))
     }
 
     /// Answer slots — one box per unit, one row per token (the visual stand-in
@@ -161,7 +161,7 @@ struct TilesView: View {
         .overlay(alignment: .bottom) {
             if self.showResult, !self.isCorrect {
                 Text("正解 \(self.subject)")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .offset(y: 22)
             }
@@ -189,9 +189,9 @@ struct TilesView: View {
                 .foregroundStyle(self.slotFg)
                 .frame(maxWidth: 52)
                 .frame(height: 46)
-                .background(self.slotBg(filled: unit != nil), in: .rect(cornerRadius: Radius.md))
+                .background(self.slotBg(filled: unit != nil), in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(self.slotBorder(filled: unit != nil), lineWidth: 1.5)
                 )
         }
@@ -201,21 +201,21 @@ struct TilesView: View {
 
     private var slotFg: Color {
         guard self.showResult else { return .tujiInk }
-        return self.isCorrect ? .tujiGreen : .tujiCoral
+        return self.isCorrect ? .tujiTeal : .tujiAlert
     }
 
     private func slotBg(filled: Bool) -> Color {
         if self.showResult {
-            return (self.isCorrect ? Color.tujiGreen : .tujiCoral).opacity(0.12)
+            return (self.isCorrect ? Color.tujiTeal : .tujiAlert).opacity(0.12)
         }
-        return filled ? .tujiTealSoft : .tujiCard
+        return filled ? .tujiTealSoft : .tujiPaper
     }
 
     private func slotBorder(filled: Bool) -> Color {
         if self.showResult {
-            return self.isCorrect ? .tujiGreen : .tujiCoral
+            return self.isCorrect ? .tujiTeal : .tujiAlert
         }
-        return filled ? .tujiTeal.opacity(0.5) : .tujiInk4.opacity(0.3)
+        return filled ? .tujiTeal.opacity(0.5) : .tujiPaper3
     }
 
     /// The scrambled tiles. A used tile stays in place but dims, so the board
@@ -250,13 +250,13 @@ struct TilesView: View {
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-                .foregroundStyle(used ? .tujiInk4 : .tujiInk)
+                .foregroundStyle(used ? .tujiInk3 : .tujiInk)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .background(used ? Color.tujiBg : .tujiCard, in: .rect(cornerRadius: Radius.md))
+                .background(used ? Color.tujiPaper : .tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(used ? Color.tujiInk4.opacity(0.15) : .tujiInk4.opacity(0.35), lineWidth: 1.5)
+                    RoundedRectangle(cornerRadius: Radius.r0)
+                        .stroke(used ? Color.tujiRule.opacity(0.15) : .tujiRule.opacity(0.35), lineWidth: 1.5)
                 )
                 .opacity(used ? 0.45 : 1)
         }

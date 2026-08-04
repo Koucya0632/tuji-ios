@@ -35,7 +35,7 @@ struct SettingsView: View {
 
     var body: some View {
         self.list
-            .background(.tujiBg)
+            .background(.tujiPaper)
             .navigationTitle("設定")
             .navigationBarTitleDisplayMode(.inline)
             .task { await self.store.loadIfNeeded() }
@@ -185,7 +185,7 @@ struct SettingsView: View {
                         self.showSignOutConfirm = true
                     } label: {
                         Text("登出")
-                            .foregroundStyle(.tujiCoral)
+                            .foregroundStyle(.tujiAlert)
                     }
                 }
                 Section {
@@ -194,10 +194,10 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             if self.progressVM.clearing {
-                                ProgressView().tint(.tujiCoral)
+                                ProgressView().tint(.tujiAlert)
                             }
                             Text(self.progressVM.clearing ? LocalizedStringKey("清除中…") : LocalizedStringKey("清除學習進度"))
-                                .foregroundStyle(.tujiCoral)
+                                .foregroundStyle(.tujiAlert)
                         }
                     }
                     .disabled(self.progressVM.clearing)
@@ -206,10 +206,10 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             if self.deleting {
-                                ProgressView().tint(.tujiCoral)
+                                ProgressView().tint(.tujiAlert)
                             }
                             Text(self.deleting ? LocalizedStringKey("刪除中…") : LocalizedStringKey("刪除帳號"))
-                                .foregroundStyle(.tujiCoral)
+                                .foregroundStyle(.tujiAlert)
                         }
                     }
                     .disabled(self.deleting)
@@ -219,14 +219,14 @@ struct SettingsView: View {
             }
             Section {
                 Text("Tuji v1.0.0 · 圖記")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .listRowBackground(Color.clear)
             }
         }
         .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
     }
 
     private func row(label: LocalizedStringKey, value: String?, subtitle: LocalizedStringKey? = nil) -> some View {
@@ -236,8 +236,8 @@ struct SettingsView: View {
                     .foregroundStyle(.tujiInk)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk4)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
                 }
             }
             Spacer()
@@ -305,7 +305,7 @@ private struct LearningDirectionPickerView: View {
                                 Text(direction.title)
                                     .foregroundStyle(.tujiInk)
                                 Text(direction == .zhJa ? "日文詞條、假名與日文發音" : "英文詞條與美式／英式發音")
-                                    .font(.tujiCaption)
+                                    .font(.tujiLabel)
                                     .foregroundStyle(.tujiInk3)
                             }
                             Spacer()
@@ -321,7 +321,7 @@ private struct LearningDirectionPickerView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("學習語言")
         .navigationBarTitleDisplayMode(.inline)
     }

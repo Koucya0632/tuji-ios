@@ -20,16 +20,16 @@ struct FavoriteButton: View {
         Button(action: self.toggle) {
             ZStack {
                 Circle()
-                    .fill(self.isFavorite ? .tujiCoral.opacity(0.12) : .tujiCard)
+                    .fill(self.isFavorite ? .tujiAlert.opacity(0.12) : .tujiPaper)
                     .overlay(
                         Circle().stroke(
-                            self.isFavorite ? Color.tujiCoral : .tujiInk4.opacity(0.3),
+                            self.isFavorite ? Color.tujiAlert : .tujiInk3,
                             lineWidth: 1.5
                         )
                     )
                 Image(systemName: self.isFavorite ? "heart.fill" : "heart")
                     .font(.system(size: self.size * 0.4, weight: .heavy))
-                    .foregroundStyle(self.isFavorite ? .tujiCoral : .tujiInk3)
+                    .foregroundStyle(self.isFavorite ? .tujiAlert : .tujiInk3)
                     .contentTransition(.symbolEffect(.replace))
             }
             .frame(width: self.size, height: self.size)

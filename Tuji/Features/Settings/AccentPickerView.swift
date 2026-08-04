@@ -31,7 +31,7 @@ struct AccentPickerView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(opt.label).foregroundStyle(.tujiInk)
                                 Text(opt.detail)
-                                    .font(.tujiCaption)
+                                    .font(.tujiLabel)
                                     .foregroundStyle(.tujiInk3)
                             }
                             Spacer()
@@ -47,7 +47,7 @@ struct AccentPickerView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("發音口音")
         .navigationBarTitleDisplayMode(.inline)
     }

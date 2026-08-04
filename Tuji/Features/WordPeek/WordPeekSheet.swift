@@ -55,11 +55,11 @@ struct WordPeekSheet: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .presentationDetents([self.restDetent, .large], selection: self.$detent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(24)
-        .presentationBackground(.tujiBg)
+        .presentationBackground(.tujiPaper)
         .presentationBackgroundInteraction(.enabled(upThrough: self.restDetent))
     }
 
@@ -67,14 +67,14 @@ struct WordPeekSheet: View {
 
     /// Cards / Favorites: hero + header, CTA pinned under a Spacer.
     private var compactBody: some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: Space.s3) {
             self.heroImage
             self.headerRow
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
             Spacer(minLength: 0)
             self.ctaButton
-                .padding(.horizontal, Space.s6)
-                .padding(.bottom, Space.s5)
+                .padding(.horizontal, Space.s4)
+                .padding(.bottom, Space.s4)
         }
         .padding(.top, Space.s2)
     }
@@ -84,33 +84,33 @@ struct WordPeekSheet: View {
     /// "下一題" stays reachable at both detents.
     private var expandableBody: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
+            VStack(alignment: .leading, spacing: Space.s3) {
                 // No hero image here: the word's picture is already on screen
                 // in the Identify / Spell question behind the sheet, so a
                 // second copy would be redundant.
                 self.headerRow
-                    .padding(.horizontal, Space.s6)
+                    .padding(.horizontal, Space.s4)
                 ExpandableWordDetail(wordId: self.word.id, expanded: self.detent == .large)
-                    .padding(.horizontal, Space.s6)
-                    .padding(.top, self.detent == .large ? 0 : Space.s6)
+                    .padding(.horizontal, Space.s4)
+                    .padding(.top, self.detent == .large ? 0 : Space.s4)
             }
-            .padding(.top, Space.s5)
-            .padding(.bottom, Space.s4)
+            .padding(.top, Space.s4)
+            .padding(.bottom, Space.s3)
         }
         .safeAreaInset(edge: .bottom) {
             self.ctaButton
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s2)
-                .padding(.bottom, Space.s5)
-                .background(.tujiBg)
+                .padding(.bottom, Space.s4)
+                .background(.tujiPaper)
         }
     }
 
     private var ctaButton: some View {
         BBtn(
             title: self.ctaTitle,
-            bg: .tujiTeal,
-            fg: .white,
+            bg: .tujiEye,
+            fg: .tujiInk,
             fullWidth: true,
             icon: "arrow.right",
             action: self.onSeeMore
@@ -122,19 +122,19 @@ struct WordPeekSheet: View {
     private var heroImage: some View {
         GeometryReader { proxy in
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable()
                             .scaledToFit()
                             .frame(
-                                width: max(0, proxy.size.width - Space.s4),
-                                height: max(0, proxy.size.height - Space.s4)
+                                width: max(0, proxy.size.width - Space.s3),
+                                height: max(0, proxy.size.height - Space.s3)
                             )
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 32))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
                         ProgressView().tint(.tujiTeal)
                     }
@@ -144,8 +144,8 @@ struct WordPeekSheet: View {
         }
         .frame(height: 188)
         .clipped()
-        .clipShape(.rect(cornerRadius: Radius.lg))
-        .padding(.horizontal, Space.s5)
+        .clipShape(.rect(cornerRadius: Radius.r0))
+        .padding(.horizontal, Space.s4)
     }
 
     private var headerRow: some View {
@@ -163,7 +163,7 @@ struct WordPeekSheet: View {
                 }
                 if self.settings.current.showZh {
                     Text(self.word.chinese)
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk2)
                         .padding(.top, 2)
                 }

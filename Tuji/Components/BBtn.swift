@@ -1,10 +1,19 @@
-// Pop Cards signature button — solid 4px drop (not blur), press flattens it.
+// The app's primary button.
+//
+// The 4pt solid drop it used to carry is gone. That drop was a fake third
+// dimension, and the system now has no shadow of any kind — but more than that,
+// the personality it carried has been promoted from one component's decoration
+// into a global rule: **press = change of ground, nothing moves.** Every tappable
+// surface in the app now says it the same way.
+//
+// Haptics are unchanged. Removing the visual displacement would leave the button
+// feeling dead without them.
 
 import SwiftUI
 
 struct BBtn: View {
     let title: LocalizedStringKey
-    var bg: Color = .tujiYellow
+    var bg: Color = .tujiEye
     var fg: Color = .tujiInk
     var fullWidth: Bool = false
     var icon: String?
@@ -18,23 +27,20 @@ struct BBtn: View {
             HStack(spacing: Space.s2) {
                 if let icon { Image(systemName: icon) }
                 Text(title)
-                    .font(.system(size: 16, weight: .heavy))
+                    .font(.tujiH3)
             }
             .foregroundStyle(fg)
             .frame(maxWidth: fullWidth ? .infinity : nil)
-            .padding(.vertical, Space.s4)
-            .padding(.horizontal, Space.s6)
+            .padding(.vertical, Space.s3)
+            .padding(.horizontal, Space.s4)
             .background {
-                ZStack(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: Radius.lg)
-                        .fill(bg.darker())
-                        // Flatten the 4px drop when disabled — at 0.5 opacity the
-                        // offset back-layer otherwise shows as a misaligned ghost.
-                        .offset(y: (pressed || !isEnabled) ? 0 : 4)
-                    RoundedRectangle(cornerRadius: Radius.lg)
-                        .fill(bg)
-                        .offset(y: pressed ? 4 : 0)
-                }
+                Rectangle()
+                    .fill(bg)
+                    // An ink wash works against any caller-supplied `bg`. The
+                    // four fixed levels of the spec (primary/secondary/text/
+                    // destructive) need BBtn to become a style enum, which is
+                    // the chrome pass — not this one.
+                    .overlay(Color.tujiInk.opacity(pressed ? 0.12 : 0))
             }
             .opacity(isEnabled ? 1 : 0.5)
         }
@@ -53,18 +59,18 @@ private struct PressTracker: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .onChange(of: configuration.isPressed) { _, new in
-                withAnimation(.spring(duration: 0.12)) { pressed = new }
+                withAnimation(Motion.ease(Motion.d1)) { pressed = new }
             }
     }
 }
 
 #Preview {
-    VStack(spacing: Space.s4) {
+    VStack(spacing: Space.s3) {
         BBtn(title: "認識了", action: {})
-        BBtn(title: "繼續", bg: .tujiTeal, fg: .white, fullWidth: true, action: {})
-        BBtn(title: "完成", bg: .tujiTeal, fg: .white, icon: "checkmark", action: {})
+        BBtn(title: "繼續", bg: .tujiEye, fg: .tujiInk, fullWidth: true, action: {})
+        BBtn(title: "完成", bg: .tujiEye, fg: .tujiInk, icon: "checkmark", action: {})
         BBtn(title: "Disabled", action: {}).disabled(true)
     }
     .padding()
-    .background(.tujiBg)
+    .background(.tujiPaper)
 }

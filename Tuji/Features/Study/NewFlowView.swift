@@ -38,7 +38,7 @@ struct NewFlowView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -149,7 +149,7 @@ struct NewFlowView: View {
     private var preview: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: Space.s5) {
+                VStack(spacing: Space.s4) {
                     MascotSpeechBubble(
                         pose: .think,
                         text: "先看一眼這些字，準備好就開始"
@@ -159,20 +159,20 @@ struct NewFlowView: View {
                         .foregroundStyle(.tujiInk)
                     StudyWordGrid(items: self.queue)
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.top, Space.s4)
-                .padding(.bottom, Space.s6)
+                .padding(.horizontal, Space.s4)
+                .padding(.top, Space.s3)
+                .padding(.bottom, Space.s4)
             }
             BBtn(
                 title: "開始學習",
-                bg: .tujiTeal,
-                fg: .white,
+                bg: .tujiEye,
+                fg: .tujiInk,
                 fullWidth: true,
                 icon: "play.fill",
                 action: { self.started = true }
             )
-            .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s5)
+            .padding(.horizontal, Space.s4)
+            .padding(.bottom, Space.s4)
         }
     }
 
@@ -180,7 +180,7 @@ struct NewFlowView: View {
         VStack(spacing: Space.s3) {
             HStack {
                 Text("學新字")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
                     .foregroundStyle(.tujiTeal)
                 Spacer()
@@ -194,7 +194,7 @@ struct NewFlowView: View {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(.tujiInk4.opacity(0.2))
+                        .fill(.tujiPaper2.opacity(0.2))
                     RoundedRectangle(cornerRadius: 3)
                         .fill(.tujiTeal)
                         .frame(width: geo.size.width * self.coord.progress)
@@ -208,9 +208,9 @@ struct NewFlowView: View {
                 NewStagePips(steps: self.coord.stagePlan(for: task.item))
             }
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
         .padding(.top, Space.s2)
-        .padding(.bottom, Space.s4)
+        .padding(.bottom, Space.s3)
     }
 
     @ViewBuilder
@@ -252,7 +252,7 @@ private struct NewStagePips: View {
             ForEach(Array(self.steps.enumerated()), id: \.element.kind) { idx, step in
                 if idx > 0 {
                     RoundedRectangle(cornerRadius: 1)
-                        .fill(.tujiInk4.opacity(0.3))
+                        .fill(.tujiPaper2.opacity(0.3))
                         .frame(width: 14, height: 2)
                 }
                 self.pip(step)
@@ -303,16 +303,16 @@ private struct NewStagePips: View {
         case .done: .tujiTeal
         case .skipped: .tujiTeal.opacity(0.35)
         case .active: .tujiTealSoft
-        case .pending: .tujiInk4.opacity(0.25)
+        case .pending: .tujiPaper3
         }
     }
 
     private func labelColor(_ state: NewStageStep.State) -> Color {
         switch state {
         case .done: .tujiInk3
-        case .skipped: .tujiInk4
+        case .skipped: .tujiInk3
         case .active: .tujiTeal
-        case .pending: .tujiInk4
+        case .pending: .tujiPaper3
         }
     }
 }
