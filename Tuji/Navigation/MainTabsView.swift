@@ -44,13 +44,10 @@ struct MainTabsView: View {
             if self.tabBarVisible {
                 TujiTabBar(selected: self.$selected)
                     .tourAnchor(.tabBar)
-                    .padding(.horizontal, Space.s3)
-                    .padding(.top, Space.s2)
-                    .padding(.bottom, Space.s2)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(.move(edge: .bottom))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: self.tabBarVisible)
+        .animation(Motion.ease(Motion.d2), value: self.tabBarVisible)
         .background(.tujiPaper)
         .allowsHitTesting(self.tourIndex == nil)
         .accessibilityHidden(self.tourIndex != nil)
@@ -284,6 +281,16 @@ private extension View {
     }
 }
 
+/// The tab bar — flush to the bottom, full width, ink.
+///
+/// The floating white capsule it replaces needed a shadow to read as floating,
+/// and the system has no shadow any more. More usefully: a strip of ink along
+/// the bottom of every screen presses the whole page onto the paper, and is the
+/// anchor for the two-layer rule — every screen ends in the same language.
+///
+/// Selection is a 3pt 瞳黃 bar on the item's top edge, not a pill and not a dot.
+/// Both of those are rounded vocabulary, and 瞳黃 is exactly the right meaning
+/// here: it answers "where are you" continuously.
 private struct TujiTabBar: View {
     @Binding var selected: MainTab
 
@@ -297,14 +304,10 @@ private struct TujiTabBar: View {
                 }
             }
         }
-        .padding(.horizontal, Space.s2)
-        .padding(.vertical, Space.s2)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.rPill))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.rPill)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .background(.tujiInk)
+        // The ink runs on past the home indicator; without this the bar stops at
+        // the safe-area line and leaves a strip of paper under it.
+        .background(Color.tujiInk.ignoresSafeArea(edges: .bottom))
     }
 
     private func select(_ tab: MainTab) {
@@ -312,7 +315,7 @@ private struct TujiTabBar: View {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         // Animating the mutation animates the programmatic page scroll so
         // tapping the bar slides to the tab the same way swiping does.
-        withAnimation(.easeInOut(duration: 0.25)) {
+        withAnimation(Motion.ease(Motion.d2)) {
             self.selected = tab
         }
     }
@@ -325,17 +328,32 @@ private struct TabBarButton: View {
 
     var body: some View {
         Button(action: self.action) {
-            VStack(spacing: 2) {
+            VStack(spacing: Space.s1) {
                 Image(systemName: self.tab.iconName)
-                    .font(.system(size: 18, weight: .heavy))
+                    .font(.system(size: 20, weight: .semibold))
                 Text(self.tab.titleZh)
-                    .font(.system(size: 10, weight: .heavy))
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    // Five equal columns leave ~78pt each, and 13pt CJK labels
+                    // do not fit ("コミュニティ" wrapped and "マイページ" clipped).
+                    // Scaling down beats wrapping; the real fix is the four-tab
+                    // IA, which is a later milestone.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
-            .foregroundStyle(self.isSelected ? .tujiTeal : .tujiInk3)
+            .foregroundStyle(.tujiPaper.opacity(self.isSelected ? 1 : 0.6))
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Space.s2)
+            .frame(height: 64)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(.tujiEye)
+                    .frame(height: Border.bw3)
+                    .opacity(self.isSelected ? 1 : 0)
+            }
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(self.isSelected ? [.isSelected] : [])
     }
 }
 

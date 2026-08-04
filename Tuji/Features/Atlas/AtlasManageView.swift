@@ -120,16 +120,19 @@ private struct AtlasCardsManagementPane: View {
         // reading it inside the action is always empty — the "刪除沒反應" bug.
         let target = self.pendingDelete
         let batch = Array(self.shelf.selectedIds)
-        return List {
-            Section("我的圖鑑卡片") {
+        return ScrollView {
+            TujiSection(title: "我的圖鑑卡片") {
                 if let errorMessage = self.shelf.errorMessage {
                     Text(errorMessage)
-                        .font(.tujiLabel)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiAlert)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Space.s4)
+                        .padding(.vertical, Space.s3)
                 }
                 switch self.shelf.state {
                 case .loading:
-                    self.loadingRow
+                    TujiSkeletonRows(count: 4, height: 88)
                 case .failed:
                     self.failedRow
                 case let .hiddenElsewhere(count):
@@ -145,8 +148,8 @@ private struct AtlasCardsManagementPane: View {
                     }
                 }
             }
+            .padding(.bottom, Space.s6)
         }
-        .scrollContentBackground(.hidden)
         .background(.tujiPaper)
         .safeAreaInset(edge: .bottom) {
             if self.shelf.isSelecting, !self.shelf.selectedIds.isEmpty {
@@ -189,30 +192,38 @@ private struct AtlasCardsManagementPane: View {
             Button {
                 self.shelf.toggleSelection(row.id)
             } label: {
-                HStack(spacing: Space.s3) {
-                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(selected ? .tujiTeal : .tujiInk3)
+                HStack(spacing: 0) {
+                    // Selection is a 3pt leading edge, not a circle — circles are
+                    // the system's checkbox and the one shape this design keeps
+                    // for things that "speak" (avatars, dots, the cat's bubble).
+                    Rectangle()
+                        .fill(selected ? Color.tujiEye : .clear)
+                        .frame(width: Border.bw3)
                     self.rowBody(row)
+                        .padding(.horizontal, Space.s4)
                 }
+                .background(selected ? Color.tujiPaper2 : .tujiPaper)
+                .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .accessibilityAddTraits(selected ? [.isSelected] : [])
         } else {
-            NavigationLink {
-                AtlasManageDetailView(
-                    shelf: self.shelf,
-                    image: row.image,
-                    onDelete: { self.pendingDelete = row }
-                )
-            } label: {
-                self.rowBody(row)
-            }
-            .swipeActions(edge: .trailing) {
-                Button(role: .destructive) {
-                    self.pendingDelete = row
+            TujiSwipeRow(
+                actionLabel: "刪除",
+                systemImage: "trash",
+                action: { self.pendingDelete = row }
+            ) {
+                NavigationLink {
+                    AtlasManageDetailView(
+                        shelf: self.shelf,
+                        image: row.image,
+                        onDelete: { self.pendingDelete = row }
+                    )
                 } label: {
-                    Label("刪除", systemImage: "trash")
+                    self.rowBody(row)
+                        .padding(.horizontal, Space.s4)
                 }
+                .tujiRowStyle()
             }
         }
     }
@@ -221,7 +232,7 @@ private struct AtlasCardsManagementPane: View {
         BBtn(
             title: "刪除 \(self.shelf.selectedIds.count) 張卡片",
             bg: .tujiAlert,
-            fg: .white,
+            fg: .tujiPaper,
             fullWidth: true,
             icon: "trash"
         ) {
@@ -230,17 +241,6 @@ private struct AtlasCardsManagementPane: View {
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
         .background(.tujiPaper)
-    }
-
-    private var loadingRow: some View {
-        HStack(spacing: Space.s3) {
-            ProgressView().tint(.tujiTeal)
-            Text("載入中…")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.vertical, Space.s3)
     }
 
     /// A failed sync used to fall through to 「還沒有卡片」, telling a user who
@@ -254,7 +254,9 @@ private struct AtlasCardsManagementPane: View {
                 Task { await self.shelf.load() }
             }
         }
-        .padding(.vertical, Space.s2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
     }
 
     /// Shown whenever the direction filter is hiding cards, so a user who
@@ -262,9 +264,11 @@ private struct AtlasCardsManagementPane: View {
     /// deleted).
     private func hiddenHintRow(_ count: Int) -> some View {
         Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
-            .font(.tujiLabel)
+            .font(.tujiBodySm)
             .foregroundStyle(.tujiInk3)
-            .padding(.vertical, Space.s2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s3)
     }
 
     private var emptyRow: some View {

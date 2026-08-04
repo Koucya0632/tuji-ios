@@ -37,61 +37,53 @@ struct AtlasMyCollectionsView: View {
 
     var body: some View {
         let target = self.pendingDelete
-        return List {
-            if let deleteError {
-                Text(deleteError)
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiAlert)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
-            if self.vm.showsPlaceholder {
-                HStack {
-                    Spacer()
-                    ProgressView().tint(.tujiTeal)
-                    Spacer()
+        return ScrollView {
+            VStack(spacing: 0) {
+                if let deleteError {
+                    Text(deleteError)
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiAlert)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Space.s4)
+                        .padding(.vertical, Space.s3)
                 }
-                .padding(.top, Space.s5)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            } else if self.visibleCollections.isEmpty {
-                self.emptyState
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            } else {
-                ForEach(self.visibleCollections) { collection in
-                    NavigationLink {
-                        // Kept even though `.task` re-runs on pop: that is
-                        // SwiftUI's teardown behaviour, not a contract. The VM
-                        // coalesces whichever of the two arrives second.
-                        AtlasCollectionEditView(collectionId: collection.id)
-                            .onDisappear { Task { await self.vm.load() } }
-                    } label: {
-                        AtlasMyCollectionRow(collection: collection)
-                    }
-                    .buttonStyle(.plain)
-                    .listRowInsets(
-                        EdgeInsets(
-                            top: Space.s2,
-                            leading: Space.s4,
-                            bottom: Space.s2,
-                            trailing: Space.s4
-                        )
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            self.pendingDelete = collection
-                        } label: {
-                            Label("刪除", systemImage: "trash")
+                if self.vm.showsPlaceholder {
+                    TujiSkeletonRows(count: 3, height: 88)
+                        .padding(.top, Space.s3)
+                } else if self.visibleCollections.isEmpty {
+                    self.emptyState
+                        .padding(.top, Space.s5)
+                } else {
+                    ForEach(Array(self.visibleCollections.enumerated()), id: \.element.id) { index, collection in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(.tujiRule)
+                                .frame(height: Border.bw1)
+                                .padding(.horizontal, Space.s4)
+                        }
+                        TujiSwipeRow(
+                            actionLabel: "刪除",
+                            systemImage: "trash",
+                            action: { self.pendingDelete = collection }
+                        ) {
+                            NavigationLink {
+                                // Kept even though `.task` re-runs on pop: that is
+                                // SwiftUI's teardown behaviour, not a contract. The VM
+                                // coalesces whichever of the two arrives second.
+                                AtlasCollectionEditView(collectionId: collection.id)
+                                    .onDisappear { Task { await self.vm.load() } }
+                            } label: {
+                                AtlasMyCollectionRow(collection: collection)
+                                    .padding(.horizontal, Space.s4)
+                                    .padding(.vertical, Space.s3)
+                            }
+                            .tujiRowStyle()
                         }
                     }
                 }
             }
+            .padding(.bottom, Space.s6)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(.tujiPaper)
         .task { await self.vm.load() }
         .refreshable { await self.vm.load() }
@@ -225,36 +217,33 @@ private struct AtlasCollectionCreateSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("標題") {
-                    TextField("例如：生活日常", text: self.$model.title)
-                }
-                Section("簡介（選填）") {
-                    TextField("簡單描述這個合集", text: self.$model.description, axis: .vertical)
-                        .lineLimit(2...4)
-                }
-                Section {
-                    HStack {
-                        Text("語言")
-                        Spacer()
-                        Text(self.model.language == .ja ? "日文" : "英文").foregroundStyle(.tujiInk3)
+        TujiSheetShell(title: "建立合集") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.s5) {
+                    TujiField(label: "標題") {
+                        TujiTextField(placeholder: "例如：生活日常", text: self.$model.title)
                     }
-                } footer: {
-                    Text("合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。")
-                }
-                if let error = self.model.errorMessage {
-                    Text(error).foregroundStyle(.tujiAlert)
-                }
-            }
-            .navigationTitle("建立合集")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { self.dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(self.model.creating ? "建立中…" : "建立") {
+                    TujiField(
+                        label: "簡介（選填）",
+                        footer: "合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。"
+                    ) {
+                        TujiTextField(
+                            placeholder: "簡單描述這個合集",
+                            text: self.$model.description,
+                            lineLimit: 2...4,
+                            errorMessage: self.model.errorMessage
+                        )
+                    }
+                    TujiField(label: "語言") {
+                        Text(self.model.language == .ja ? "日文" : "英文")
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk2)
+                    }
+
+                    BBtn(
+                        title: self.model.creating ? "建立中…" : "建立",
+                        fullWidth: true
+                    ) {
                         Task {
                             guard let collection = await self.model.create() else { return }
                             self.onCreated(collection)
@@ -262,7 +251,10 @@ private struct AtlasCollectionCreateSheet: View {
                         }
                     }
                     .disabled(!self.model.canCreate)
+                    .padding(.horizontal, Space.s4)
                 }
+                .padding(.top, Space.s4)
+                .padding(.bottom, Space.s6)
             }
         }
     }
