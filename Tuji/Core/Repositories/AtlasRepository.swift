@@ -154,7 +154,7 @@ struct LiveAtlasRepository {
     }
 
     /// Saving is the CONSUMPTION path — it does not touch the user's 自製圖鑑
-    /// capacity (docs/COMMUNITY_ATLAS_PLAN.md §4.1).
+    /// capacity (../docs/COMMUNITY_ATLAS_PLAN.md §4.1 — FEATURES.md §12.1).
     func saveState(slug: String) async throws -> AtlasSaveResponse {
         try await self.api.get(
             .atlasPublicSave(slug: slug),

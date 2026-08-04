@@ -1,8 +1,8 @@
 // 「大家的圖鑑」 — other users' public 圖鑑 photos for the word being viewed.
 //
-// This is the core of the community plan (docs/COMMUNITY_ATLAS_PLAN.md §1
-// 原則 1): community content is injected into the page users already visit,
-// rather than living in a separate feed nobody browses.
+// This is the core of the community design (../docs/COMMUNITY_ATLAS_PLAN.md §1
+// 原則 1 — FEATURES.md §8, §12): community content is injected into the page
+// users already visit, rather than living in a separate feed nobody browses.
 //
 // Renders NOTHING when there is no content (or while loading). A word with no
 // public photos must look exactly as it did before this section existed — no
@@ -109,7 +109,8 @@ struct WordCommunityAtlasSection: View {
                 }
                 Spacer(minLength: 0)
                 // Saving here uses the consumption quota, not the user's 自製
-                // 圖鑑 capacity (docs/COMMUNITY_ATLAS_PLAN.md §4.1).
+                // 圖鑑 capacity (../docs/COMMUNITY_ATLAS_PLAN.md §4.1 —
+                // FEATURES.md §12.1).
                 Image(systemName: self.savedSlugs.contains(item.slug) ? "bookmark.fill" : "bookmark")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.tujiTeal)

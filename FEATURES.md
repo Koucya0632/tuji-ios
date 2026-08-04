@@ -18,9 +18,11 @@
 9. [搜尋](#9-搜尋)
 10. [收藏](#10-收藏)
 11. [自製圖鑑(Atlas 拍照新增)](#11-自製圖鑑atlas-拍照新增)
-12. [Tuji Pro 訂閱](#12-tuji-pro-訂閱)
-13. [設定](#13-設定)
-14. [基礎設施](#14-基礎設施)
+12. [社群(公開圖鑑與合集)](#12-社群公開圖鑑與合集)
+13. [我的(Me)](#13-我的me)
+14. [Tuji Pro 訂閱](#14-tuji-pro-訂閱)
+15. [設定](#15-設定)
+16. [基礎設施](#16-基礎設施)
 
 ---
 
@@ -29,10 +31,13 @@
 ### 進入點 — `Tuji/TujiApp.swift`
 
 - `@main TujiApp` 在 `init()` 先安裝自訂 Nuke 圖片管線(`TujiImagePipeline.install()`),必須在任何 `LazyImage` 渲染前完成。
-- 以 `@State` 建立所有單例 store,並注入 SwiftUI environment:`AuthService`、`PushNotificationService`、`OnboardingState`、`LocalCache`、`WordsStore`、`CategoriesStore`、`SettingsStore`、`ProgressStore`、`MasteryStore`、`StudyStatsStore`、`StudyFocus`、`DeepLinkCoordinator`。
+- 以 `@State` 建立共享狀態並注入 SwiftUI environment,分兩類:
+  - **單例 store**:`AuthService`、`PushNotificationService`、`OnboardingState`、`LocalCache`、`WordsStore`、`CategoriesStore`、`SettingsStore`、`ProgressStore`、`MasteryStore`、`StudyStatsStore`、`StudyFocus`、`DeepLinkCoordinator`、`NetworkMonitor`。
+  - **root 建構的社群協調物件**(不是單例,由這裡 own):`CommunityFeedRefresh`(剛公開的內容要繞過 URLCache)、`CollectionBookmarkStore`(合集收藏狀態)、`CollectionIdentityStore`(剛換的合集頭像要跨畫面立即生效)。
 - 啟動時的 `.task`:載入字典 + 分類 + 設定、刷新推播授權、重播離線答題 outbox(`StudyAnswerOutbox.replay()`);App 回到前景(`scenePhase == .active`)時再重播一次。
 - `.onOpenURL` 先交給 GoogleSignIn 處理 OAuth callback,再嘗試解析成 `TujiDeepLink`。
-- environment locale 由 `settings.uiLang` 決定(僅 `zh-Hant` / `zh-Hans`,未知值 fallback 到 zh-Hant)。
+- environment locale 由 `settings.current.uiLanguage.locale` 決定,支援四種介面語言,見 §16 本地化。
+- **DEBUG 限定**:啟動參數 `--ad-snapshot=home|capture|cards|review` 會把 root 換成一組固定資料的行銷截圖畫面(`AdSnapshotRoot`),release 編譯整段排除。
 
 ### 架構模式
 
@@ -65,21 +70,31 @@ App 啟動
 
 ## 2. 導航與 Deep Link
 
-### 四大分頁 — `Tuji/Navigation/MainTabsView.swift`, `MainTab.swift`
+### 五大分頁 — `Tuji/Navigation/MainTabsView.swift`, `MainTab.swift`
 
-- 分頁:主頁(today)/ 圖鑑(cards)/ 進度(progress)/ 我的(me)。
+- 分頁:主頁(today)/ 圖鑑(cards)/ 進度(progress)/ **社群(community)** / 我的(me)。
 - 自訂浮動膠囊 tab bar(非 SwiftUI TabView);每個分頁擁有獨立 `NavigationStack`,互不干擾。
 - 分頁以水平 paging ScrollView 呈現,可左右滑動切換;但學習中(`StudyFocus.active`)或當前分頁已 push 詳情(path depth > 0)時停用滑動,避免與返回手勢衝突。
-- `StudyFocus.active` 時隱藏 tab bar,釋放垂直空間。
+- **tab bar 何時消失**:學習中一律隱藏;另外 我的 與 社群 兩個分頁,只要離開分頁根畫面就隱藏 —— 這兩個分頁是入口集散地,從它們開出去的畫面獨佔視窗直到使用者返回。判斷依據是**分頁根畫面自己的可見性**(`meAtRoot` / `communityAtRoot`),不是 `NavigationPath` 深度:設定頁的 picker 是 view-based link、社群的合集卡片是 `navigationDestination(item:)`(要帶 preview model,沒有 route value 能表達),兩者都不會讓 path 變深。
 
 ### 路由 — `Tuji/Navigation/NavRoute.swift`, `TujiNavRoutes.swift`
 
-`NavRoute` enum 集中定義所有可 push 的目的地(cards / today / search / favorites / settings / atlasManage / studyCategories / studyLanding(mode) / wordDetail(id) / categoryDetail(id));每個 NavigationStack 掛 `tujiNavDestinations(user:)` 統一解析。
+`NavRoute` enum 集中定義所有可 push 的目的地;每個 NavigationStack 掛 `tujiNavDestinations(user:)` 統一解析。
+
+| 群組 | case |
+|---|---|
+| 基本 | `cards` / `today` / `search(query:)` / `favorites` / `settings` |
+| 學習 | `studyCategories` / `studyLanding(mode:)` / `wordDetail(id:)` / `categoryDetail(id:)` |
+| 自製圖鑑 | `atlasManage`(開在 圖鑑卡片)/ `atlasMyCollections`(開在 合集,deep link 相容用)/ `atlasCollectionEdit(id:)` |
+| 社群 | `atlasPublic` / `atlasCollectionDetail(slug:autoSave:)` / `authorProfile(handle:isSelf:)` |
+
+- `authorProfile` 的 `isSelf` 只多加一個編輯入口,其餘完全相同 —— 這頁的價值就在於它就是別人看到的那一頁(§12)。
+- `atlasCollectionDetail` 的 `autoSave` 只用來續接訪客被登入打斷的收藏動作。
 
 ### Deep Link — `Tuji/Navigation/DeepLink.swift`, `DeepLinkCoordinator.swift`
 
 - 同時接受 `tuji://…` scheme 與 `https://tuji.app/…` universal link,解析成 `(tab, route)`。
-- 支援:`today`、`cards`、`favorites`、`settings`、`search?q=`、`word/{id}`、`category/{id}`、`study?mode=new|review`。
+- 支援:`today`、`cards`、`favorites`、`settings`、`search?q=`、`word/{id}`、`category/{id}`、`study?mode=new|review`、`collection/{slug}`(落在 社群 分頁)。
 - `DeepLinkCoordinator` 暫存 pending link(啟動期間 link 可能先於 tab shell 掛載到達);`MainTabsView` 在 `onAppear` / `onChange` 消費:先切分頁,下一個 runloop 再 push route。Deep link 優先權高於功能導覽(會先跳過 tour)。
 
 ### 首次功能導覽 — `Tuji/Features/Tour/FeatureTour.swift`, `FeatureTourOverlay.swift`
@@ -114,6 +129,21 @@ App 啟動
 
 `validAccessToken()` 給 `APIClient` 用;supabase-swift 讀 session 時自動 refresh。
 
+### 身分模型 — UID / 暱稱 / 簽名 / 頭像
+
+註冊完成即建立一份公開身分,四個欄位權責分明(`Core/Models/UserMe.swift`):
+
+| 欄位 | 誰決定 | 可改 | 公開 |
+|---|---|---|---|
+| **UID**(`username`) | 系統指派,格式 `TJ` + 8 位數字 | **否** | 是,作者主頁的路由 handle |
+| **暱稱**(`nickname`) | 使用者自己打 | 是 | 是,需過內容審核 |
+| **簽名**(`bio`) | 使用者自己打 | 是 | 是,需過內容審核 |
+| **頭像**(`avatar`) | 使用者上傳照片,或預設黑貓 | 是 | 是 |
+
+- **顯示名 = 暱稱;沒有暱稱就是 UID。** UID 一律另外可見,**email 永遠不會成為 fallback**。
+- **Apple 提供的姓名不會被寫進任何欄位。** 早期 `username` 預設為 email local part、`nickname` 被 Apple 全名靜默 seed,所以曾經有一道「公開作者身分」同意閘門。UID 改為機器指派且不可改之後,App 不再持有使用者沒有主動輸入的名字,同意閘門與改名冷卻都已退役(2026-07-30)。
+- 修改走單一畫面 設定 → 編輯個人資料(§15),一次 multipart POST。UID 有兩個家:`profiles`(權威)與 session 的 `user_metadata`(鏡像);編輯後以伺服器回傳的權威身分為準,再鏡射回 session。
+
 ---
 
 ## 4. Onboarding(首次使用流程)
@@ -139,7 +169,8 @@ App 啟動
 
 - 每個新帳號一次:選學習主題(預設勾 kitchen / bathroom / living-room,若資料集沒有則取前三個)+ 每日目標(5/10/20 題)。
 - 主題必須至少選一個才能送出;寫入的是 canonical kebab-case id(後端會過濾非法值)。
-- 儲存成功後:`settingsStore.adoptPersisted()` 立即生效 → `markSetupDone` → 並塞一個 `.study(mode: .new)` deep link,讓 CTA「開始今天的 N 題」直接進入學新字,而不是丟在主頁。
+- 儲存成功後:`settingsStore.adoptPersisted()` 立即生效 → `markSetupDone` → **落回主頁**,交給功能導覽帶路;CTA 因此叫「完成設定」,不承諾一場它不會開的 session。
+  - 這裡曾經塞一個 `.study(mode: .new)` deep link 直接推進學新字,結果是**首次登入永遠看不到功能導覽** —— `startTourIfNeeded()` 只要 `StudyFocus` 被 `StudyLauncherView` 持有就直接 bail。導覽本來就是新使用者最需要的那一次,所以讓路給它。
 
 ---
 
@@ -299,12 +330,17 @@ App 啟動
 
 ### 資料來源
 
-- **`WordsStore`**(`Core/Words/WordsStore.swift`):啟動抓一次 GET `/api/words`(帶 uiLang + learningDirection),接著抓 `/api/users/custom-words`(自製字,id 為 `atlas:<uuid>`,內嵌完整 detail)合併 — 以 id last-wins,再按 分類→字母 排序。全 App 共讀這份記憶體字典。
+- **`WordsStore`**(`Core/Words/WordsStore.swift`):啟動抓一次 GET `/api/words`(帶 uiLang + learningDirection),再合併兩份使用者字 —— 以 id last-wins,最後按 分類→字母 排序。全 App 共讀這份記憶體字典。
+  1. `/api/users/custom-words` — 自己拍的自製字,id 為 `atlas:<uuid>`,內嵌完整 detail。
+  2. `/api/users/saved-words` — 從社群收藏來的字(§12)。
+  兩者都是 best-effort:任一支失敗只記 log,公開字典照常呈現。
 - **`CategoriesStore`**:GET `/api/categories`(本地化分類名)。
 
 ### 圖鑑列表 — `Features/Cards/CardsListView.swift`
 
 2 欄格 + 分類 chip 過濾 + 分頁載入(每頁 60);頂部相機鈕開自製圖鑑拍照流程,`AtlasCaptureProgressStrip` 顯示製作中的卡。點格開 WordPeek(輕量預覽),從 peek 再進完整詳情。
+
+分類 chip 只列出實際有字的分類,但 `custom`(自製圖鑑)與 `community`(社群圖鑑)兩個主題**恆常顯示** —— 它們是使用者自己創作與收藏的去處,即使目前是空的,格子也要看得到自己收藏了什麼。
 
 ### 分類頁 — `Features/Category/CategoryView.swift`
 
@@ -315,6 +351,7 @@ App 啟動
 - 進入後是**水平分頁 TabView**:可左右滑到圖鑑順序的前後字,不用退回格子。
 - 每頁按需抓 GET `/api/words/{id}` 完整資料;各區塊(定義/例句/搭配詞/詞形/字源)有資料才渲染。
 - 全螢幕模式:進入時 `StudyFocus.enter()` 隱藏 tab bar。
+- **「大家的圖鑑」**(`WordCommunityAtlasSection`):同一個字別人拍的公開照片,GET `/api/atlas/public/by-lemma`。社群內容注入使用者本來就會來的頁面,而不是另開一個沒人逛的 feed。**沒有內容(或還在載入)時完全不渲染** —— 一個沒有公開照片的字,長得必須跟這個區塊不存在時一模一樣:沒有空狀態、沒有 placeholder、沒有版面位移。
 
 ### WordPeek — `Features/WordPeek/WordPeekSheet.swift`
 
@@ -343,6 +380,8 @@ App 啟動
 ---
 
 ## 10. 收藏
+
+> 「收藏」在 App 裡有兩個意思,不要混淆:**本章**是把字典裡的字加進「我的收藏」(純本機事實來源);**§12** 的收藏是把別人公開的圖鑑項目或合集收進自己的學習內容(伺服器事實來源,會影響 `WordsStore` 與學習佇列)。
 
 - **來源**:`LocalCache.favoriteIds`(UserDefaults)是唯一事實來源;訪客純本機,登入者由 `FavoriteButton` 樂觀更新本機後 fire-and-forget POST `/api/users/favorites`,登入時再由 sync 統一 union。
 - **`Features/Favorites/FavoritesView.swift`**:favoriteIds × WordsStore 直接渲染,不打 GET;分類 chip 只顯示有收藏的分類;排序 A→Z / Z→A / 依主題;點格開 WordPeek,長按 contextMenu 移除收藏。
@@ -394,15 +433,141 @@ App 啟動
 
 ### 管理頁 — `Features/Atlas/AtlasManageView.swift`
 
-列表式查+刪(建立只在拍照流程;編輯待後端 PATCH):以 image 為 key join item 顯示;支援單刪與多選批刪;刪 image 級聯刪 item + cards。注意 `TujiPrompt` 會先把 backing state 設 nil 再跑 action,所以待刪目標要先抓 local copy。
+「圖鑑管理」是一個分頁式入口,一個 segmented picker 切兩個 pane:
+
+- **圖鑑卡片** — 列表式查 + 刪(建立只在拍照流程;編輯待後端 PATCH)。
+- **合集** — 見 §12 的作者端。第二個 pane 直到第一次被切到才掛載。
+
+卡片 pane 的所有決策集中在 **`AtlasShelfModel`**(`AtlasShelfModel.swift`):image→item 的 join、學習方向過濾、`hiddenCount`、選取集合、批次刪除、取消公開。View 只負責渲染。
+
+- **`AtlasShelfState` 五態**:`loading` / `loaded` / `failed` / `hiddenElsewhere(count:)` / `empty`。`failed` 與 `empty` 刻意分開 —— 同步失敗卻宣稱「還沒有卡片」,對一個確實擁有卡片的人來說讀起來就是資料遺失。`hiddenElsewhere` 是「這個學習方向沒有,但另一個方向有 N 張」。
+- **切換學習方向時會重新對帳選取集合**,否則會留下已經不在畫面上的選取列。
+- 每列的標題:有確認後的 lemma 就用它,否則用 pipeline 狀態推導的佔位標題 —— 標題永遠不會和旁邊的狀態自相矛盾。
+- 刪 image 級聯刪 item + cards。注意 `TujiPrompt` 會先把 backing state 設 nil 再跑 action,所以待刪目標要先抓 local copy。
+
+### 兩種狀態,不要混為一談
+
+- **Pipeline status**(`AtlasImageStatus`):卡片生成走到哪 — uploaded / processing / needs_review / confirmed / cards_ready / failed / deleted。
+- **Review status**(`AtlasReviewStatus`,§12):公開審核閘門走到哪。
+
+`confirmed` 與 `cards_ready` 蘊含「已存在一個確認過的 item」;處於這兩態卻 join 不到 item 的列是**同步落差**,不是未完成的拍照 —— 兩者一旦混淆,「未完成」就會出現在「已完成」旁邊。
+
+### 變更後刷新什麼 — `Core/Atlas/AtlasMutationRefresh.swift`
+
+生產端只說使用者做了什麼(`AtlasMutation`:itemsDeleted / captureCompleted / itemWithdrawn / collectionPublished / collectionWithdrawn / collectionDeleted / collectionAvatarChanged),由這個模組決定後果:`changesOwnAtlas` → reload words + progress + stats 再 `refreshEntitlement`;`invalidatesPublicFeed` → 標記 `CommunityFeedRefresh`。刷新策略只有這一個家。
 
 ### 學習整合
 
-自製字進統一學習流程(`/api/users/custom-words` → WordsStore,queue 內按 word.id 去重);mastery 在伺服器端獨立 namespace(`user_atlas_item_mastery`),由 `/api/users/mastery` 合併以 `atlas:<itemId>` 回傳。
+自製字進統一學習流程(`/api/users/custom-words` → WordsStore,queue 內按 word.id 去重);mastery 在伺服器端獨立 namespace(`user_atlas_item_mastery`),由 `/api/users/mastery` 合併以 `atlas:<itemId>` 回傳。從社群收藏來的字走同一條路(`/api/users/saved-words`,§12)。
+
+一個 item 會產出兩張卡(image_recall + flashcard),而佇列是按卡抓的,所以自製字會重複出現 —— `StudyQueueStore` 以 `word.id` 去重(§6.2)。
 
 ---
 
-## 12. Tuji Pro 訂閱
+## 12. 社群(公開圖鑑與合集)
+
+社群是自製圖鑑的公開面:§11 是你自己拍的東西,這一章是它怎麼變成大家的東西,以及你怎麼消費別人的。程式碼在 `Features/Atlas/`(社群半邊)與 `Core/Models/AtlasCommunity.swift`(wire model)。
+
+### 12.1 領域詞彙
+
+- **公開圖鑑(public atlas)** — 通過審核閘門、所有人都看得到的 item。含**無**私人資料。
+- **合集(collection)** — 作者自己已確認 item 的**具名策展集合**,綁定單一學習語言。這是公開的單位:**沒有單項送審動作**,公開一個合集就是把它的私有成員整批送審。
+- **作者主頁(author profile)** — 每個註冊帳號都有的公開頁:身分 + 已公開作品 + 累計被收藏數。
+- **收藏(saving)** — 消費路徑。**收藏公開項目不吃自製圖鑑的格數額度**(§11 的 quota 只算自己拍的)。
+
+### 12.2 瀏覽 — `AtlasPublicFeedView`
+
+社群分頁的根畫面。GET `/api/atlas/public/collections?lang=`(公開、吃 CDN 快取)。
+
+- **依當前學習語言自動過濾**:學日文只看日文合集。這頁**沒有手動語言切換**,是產品決定。
+- **兩個書架**(`PublicAtlasBrowsingModel.Shelf`):`explore`(探索)與 `saved`(已收藏)。兩者的語言化載入狀態機、refresh policy、未登入邊界、收藏狀態對帳全部在 `PublicAtlasBrowsingModel` 裡;這個 model 刻意不認得 `SettingsStore` / `AuthService` / `CommunityFeedRefresh` / `CollectionBookmarkStore`,由 View 把環境值翻譯成明確輸入。
+- 剛公開的內容會透過 `CommunityFeedRefresh` 標記,讓下一次進 feed 繞過 URLCache,不然使用者會看不到自己剛送出去的東西。
+
+### 12.3 合集詳情 — `AtlasCollectionDetailView` / `CollectionDetailVM`
+
+`CollectionDetailVM.open(context:)` 一個 workflow 收掉:抓詳情 → 判斷是否本人 → 讀收藏狀態 → 必要時 auto-save。從 feed 卡片帶 preview model 進來,標題區先畫出來,成員在後面載。
+
+- **未收藏前成員不可點**(`vm.unlocked`)。收藏這個合集之後才開放逐項閱讀,以及「**全部加入學習**」批次動作(`CollectionLearning.learnCollection` → POST `/api/atlas/collections/{slug}/learn`)。
+- 確認過的收藏變更回傳一個單純的 `BookmarkChange` 讓 View 廣播出去,**不重抓整份詳情**。
+
+### 12.4 單項消費 — `AtlasPublicDetailView` / `AtlasPublicDetailVM`
+
+- **收藏 / 取消收藏** — POST/DELETE `/api/atlas/public/{slug}/save`,回傳最新收藏數。有 in-flight guard;**失敗不翻轉開關**(取消收藏失敗了,開關就得留在「已收藏」)。
+- 成功後跑 `CommunityLearningRefreshing`:invalidate `StudyQueueStore` 再 best-effort `WordsStore.reload()`,讓佇列與圖鑑立刻反映這次變更。**收藏本身的成功與否,從不取決於刷新是否成功。**
+- **檢舉** — POST `/api/atlas/public/{slug}/report`,`AtlasReportReason` 五種:垃圾內容 / 不當內容 / 侵犯版權 / 內容有誤 / 其他,可附說明。
+- 分析事件留在 View(VM 不碰 `AnalyticsService`):`atlas_public_item_viewed`、`atlas_public_saved`、`author_profile_viewed`。
+
+### 12.5 作者主頁 — `AtlasAuthorProfileView` / `AuthorProfileVM`
+
+GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫面服務兩種讀者,`isSelf` 只多一個直接開編輯的入口 —— 看到問題能當場改,迴圈是閉的。
+
+- **註冊完成就存在**,不需要先發表任何東西,也沒有另外的「開通」或同意狀態。零公開作品時顯示合成的頁首 + 一條出路。
+- **可用 UID 或既有連結到達,但不進作者搜尋、推薦或公開目錄。**
+- 內容分兩段(有東西才顯示切換):已通過審核的**合集**與單獨的**公開項目**。`collections` 這個 key 在 1.0.4 之後才加,所以是 defaulted 解碼 —— 作者主頁不能因為前後端部署順序而整頁解不開。
+- 累計被收藏數(`saveCount`)是這頁的利他訊號:別人因為你的整理受益了幾次。
+
+### 12.6 作者端:我的合集 — `AtlasMyCollectionsView` / `MyCollectionsVM` / `CollectionEditVM`
+
+入口在 圖鑑管理 → 合集(§11)。
+
+- 列表存在 **app-lifetime 的 `MyCollectionsCache`**,不是畫面自己的 `@State` —— 圖鑑管理是一個會離開再回來的地方,而 `@State` VM 在 pop 時會被 SwiftUI 丟掉,每次回來都從空列表 + spinner 重新回答幾秒前才答過的問題。登出時與 `AtlasStore.reset()` 一起清,下一個帳號不會繼承。
+- **reload 時「已載入者勝」**:畫面上已經有列時,重新載入不得把它換成 spinner;從 編輯合集 回來時同一幀觸發的兩次刷新(list 的 `.task` 重啟 + 編輯頁的 `onDisappear`)會合併成一次請求。
+- **編輯合集**(`CollectionEditVM`):載入 → 校正標題/簡介 → 換公開頭像 → 挑選成員 → 送審。`submit()` 的順序是有意義的 —— **先存 meta,再打 publish**,因為公開閘門讀的是存下來的那一列。
+- **成員資格**:可加入已通過、審核中、私有的自己的項目;**不能**加入已否決、已下架、未完成、已刪除的項目。
+- **頭像**:合集的方形頭像照片是公開的,與早期由成員推導的封面/背景圖無關(新畫面不再渲染後者)。推導出的安全色只當頭像的載入中與舊資料 fallback。剛上傳的頭像透過 `CollectionIdentityStore` 立刻在列表、已收藏書架、作者主頁、詳情四處生效。
+
+### 12.7 審核閘門 — `AtlasReviewStatus`
+
+送審會跑一道機器閘門,結果是三選一:直接公開、轉人工、或退回。
+
+| 狀態 | 文案 | 可再送審 | 可收回 |
+|---|---|---|---|
+| `draft` | 未公開 | ✅ | — |
+| `pending` / `pending_auto` / `pending_review` | 審核中 | — | — |
+| `approved` | 已公開 | — | ✅ |
+| `rejected` | 未通過 | ✅ | — |
+| `takedown` | 已下架 | ❌ | — |
+| `withdrawn` | 已收回 | ✅ | — |
+
+- **`withdrawn` 可以再送審,`takedown` 不行。** 收回是作者自己的決定,可逆、不帶懲罰;下架是審核端移除的,收回不能拿來規避它。
+- 文案一律說「送審 / 審核中」,絕不暗示「已經公開了」—— 通過不是自動的。
+- `pending` 是舊的單一佇列,留給早期資料列。
+
+### 12.8 端點對照
+
+| 用途 | 端點 |
+|---|---|
+| 公開合集牆 / 單一合集 | GET `/api/atlas/public/collections`、`/api/atlas/public/collections/{slug}` |
+| 公開項目 | GET `/api/atlas/public`、`/api/atlas/public/{slug}`、`/api/atlas/public/by-lemma` |
+| 作者主頁 | GET `/api/atlas/public/authors/{handle}` |
+| 消費動作 | POST/DELETE `…/{slug}/save`、POST `…/{slug}/report`、POST `…/{slug}/learn` |
+| 作者端合集 | `/api/atlas/collections`(CRUD)、`…/{id}/avatar`、`…/{id}/items`、`…/{id}/publish`、`…/{id}/withdraw`、`…/candidates` |
+| 已收藏的字 | GET `/api/users/saved-words`(併入 `WordsStore`,§8) |
+
+完整定義見 `Core/Networking/Endpoint.swift`。
+
+---
+
+## 13. 我的(Me)
+
+檔案:`Features/Me/MeView.swift`, `MeMenu.swift`
+
+**我的 是私人中樞,作者主頁 是公開作品集**,兩者刻意分開:這頁只有你看得到,§12.5 那頁是別人看到的。
+
+- **頁首**:頭像 + 顯示名(暱稱 → UID)+ UID。
+- **三格統計**:連勝 / 已學字數 / 自製圖鑑數。連勝與已學字讀共用的 `ProgressStore`,主頁、進度、我的 共用同一份抓取結果。
+- **最弱三個字**:GET `/api/users/top-words?type=weak&limit=3`,點進 WordPeek。這是 我的 專屬的 payload,所以留在 `MeVM`。
+- **兩張選單卡**,分組本身就是重點:
+  - **創作** — 圖鑑管理(§11)、我的主頁(§12.5,帶 `isSelf`)。你做的東西,和它流向的公開頁。
+  - **帳號** — 我的收藏(§10)、設定(§15)、意見收集、分享 App。
+  - 拆開之前這八列擠在同一張卡裡,連同 Pro 與分享,讀起來像雜物抽屜而不是一個家。
+- **Pro 卡**:是否為 Pro 以**伺服器權威的 `AtlasStore.entitlement`** 為準,不是裝置端的 `store.isPro` —— 後者只反映這台裝置/Apple ID 上驗證過的交易,一個實際上是 Pro 的帳號(管理員授予、跨裝置購買)在 paywall 打開之前會被誤判為免費。
+- 掛載時 warm `AtlasStore`(§11 的 sync)。
+- **DEBUG 限定**:底部「除錯工具」可展開,內含 Bearer smoke test(GET `/api/test_smoke/whoami`),release 編譯排除。
+
+---
+
+## 14. Tuji Pro 訂閱
 
 ### StoreKit 2 — `Core/Billing/StoreKitService.swift`
 
@@ -414,21 +579,21 @@ App 啟動
 
 ### Paywall — `Features/Paywall/PaywallView.swift`
 
-- 入口:Me 頁 Pro 卡、設定、拍照流程的滿格橫幅與 AI 402、Free 點高精度。
+- 入口:我的 分頁的 Pro 卡(§13)、設定、拍照流程的滿格橫幅與 AI 402、Free 點高精度。
 - 權益文案:格數 300 / AI 每月 500 / 高精度每月 30 / 優先支援。
 - 處理「載入成功但商品是空陣列」的情況(loadingProducts 旗標 + 重新載入鈕),不會無限轉圈。
 - 購買成功或恢復後為 Pro 即自動 dismiss。
 
 ---
 
-## 13. 設定
+## 15. 設定
 
 檔案:`Features/Settings/SettingsView.swift`, `Core/Settings/SettingsStore.swift`
 
 ### 即時套用模型
 
 - 沒有儲存鈕:控制項直接改 `SettingsStore.current`(`update(_:)` / `binding(_:)`),記憶體立即生效,**400ms debounce** 合併連續修改成一次 POST `/api/users/settings`。
-- `uiLang` 變更:靜態 UI 隨 environment locale 即時切換;分類名與單字中文是伺服器端本地化,所以再 reload categories + words(不 invalidate — 資料集相同,只是繁簡差異,舊字留在畫面直到新資料到,不閃空白)。
+- `uiLang` 變更:靜態 UI 隨 environment locale 即時切換;分類名與單字釋義是伺服器端本地化,所以再 reload categories + words(不 invalidate — 資料集相同,只是釋義語言不同,舊字留在畫面直到新資料到,不閃空白)。
 - `uiLang` 同時鏡射到 UserDefaults(`tuji.ui.lang`)供 nonisolated 的 `tujiLocalized()` 讀取 — 這是把 zh-Hant 原文 key 查到使用者所選語言的 helper(直接找對應 .lproj bundle;`String(localized:locale:)` 的 locale 參數不會切換字表)。
 
 ### 設定項目
@@ -439,12 +604,25 @@ App 啟動
 | 學習 | 每日目標題數 | 影響新字額度(§6.1) |
 | 學習 | 學習主題 | 影響學新字出題範圍與主題進度統計 |
 | 學習 | 中文釋義 | showZh 開關,各列表/學習畫面條件渲染中文 |
-| 顯示 | 語言 | 繁體/简体(uiLang) |
+| 顯示 | 語言 | 介面語言四選一(§16 本地化) |
 | 顯示 | 發音口音 | 美式/英式(僅 zh-en 顯示) |
-| 帳號 | 編輯個人資料 | 暱稱/簽名/裁切後照片以單一 multipart POST `/api/users/profile` 儲存；回傳的權威 Author 直接更新主頁快取，再鏡射到 session |
+| 帳號 | 編輯個人資料 | 見下方 |
 | 帳號 | 登出 | 確認 prompt → `auth.signOut()` |
 | 危險 | 清除學習進度 | 二段確認,見 §7.3 |
 | 危險 | 刪除帳號 | **兩層確認** prompt → DELETE `/api/users/delete-account` → 自動登出 |
+
+### 編輯個人資料 — `Features/Settings/EditProfileView.swift`
+
+**擁有整份公開身分的唯一畫面**(§3)。暱稱 / 簽名 / 裁切後頭像照片以**單一 multipart POST** `/api/users/profile` 一次送出;伺服器回傳的權威 `AtlasAuthor` 直接更新作者主頁快取,再鏡射回 session。
+
+- 一次編輯就是一次 Author 身分變更:被否決時保留原本的完整身分,而不是露出改到一半的狀態。
+- UID 在這裡顯示但不可編輯,而且讀的是**伺服器真值** —— session 鏡像會落後,而這裡正是使用者來確認自己 UID 到底是什麼的地方。
+- `dirty` 比對的是畫面打開時伺服器的內容,不是可能過期的 session 副本。
+- 頭像走共用的 `AvatarPicker` 流程(來源對話框 → 相簿/相機 → 裁切 → 編碼 → 遞交 → 重試),個人資料用 1200px / 0.86 圓形遮罩(合集用 1600px / 0.82 方形)。
+
+### 意見收集 — `Features/Me/FeedbackSheet.swift`
+
+我的 → 意見收集:選類型(`FeedbackType`:功能建議 / 錯誤回報 / 內容問題 / 其他)+ 描述 → POST `/api/users/feedback`,附 requestId、平台、App 版本、uiLang。raw value 是 API 契約,必須與後端白名單和 `feedback_type` CHECK 一致。
 
 ### 啟動時的學習方向 seed
 
@@ -452,7 +630,7 @@ App 啟動
 
 ---
 
-## 14. 基礎設施
+## 16. 基礎設施
 
 ### HTTP — `Core/Networking/APIClient.swift`, `Endpoint.swift`, `APIError.swift`
 
@@ -467,6 +645,7 @@ App 啟動
 ### 圖片
 
 - **`TujiImagePipeline`**(Nuke):100MB 記憶體 + 500MB 磁碟 DataCache(關掉 URLCache 避免重複快取);Supabase Storage 的圖有一年 max-age + ETag。
+- **簽名 URL 的快取鍵**:自製圖鑑存在**私有** Supabase bucket,所以 API 每次回應都重新簽一個 URL — 同一個物件、每次不同的 `token=`。Nuke 兩層快取都以 URL 為鍵,結果是重進圖鑑管理等於一整面沒人看過的圖、每張縮圖重抓,500MB DataCache 對使用者自己的照片**永遠 miss**。簽章授權取用,但它不識別這張圖,所以 pipeline 改成以「簽章以外的一切」建鍵(`URL.signedStorageObjectID`);query 裡其他參數(例如轉檔尺寸)仍然決定你拿到哪張圖,所以保留。非簽名 URL 走 Nuke 預設鍵不受影響。
 - **`ImageDownscale`**:拍照上傳前用 ImageIO thumbnail(不整張解碼)縮到 ≤1600px JPEG(後端存 1600px、辨識只看 1024px,傳原圖是浪費)。
 - **`ImageCrop` / `ImageCropView`**:上傳前的手動裁切。
 
@@ -478,15 +657,30 @@ App 啟動
 
 ### 本地化
 
-- 原文 key 為 zh-Hant,字表在 `Resources/i18n/Localizable.xcstrings`(uiLang 只有 zh-Hant / zh-Hans)。
-- SwiftUI 內用 `LocalizedStringKey` 走 environment locale;String 型別的參數/模型層字串一律經 `tujiLocalized()`(否則不會跟隨 uiLang 切換)。
+- **四種介面語言**(`Core/Settings/UILanguage.swift`,宣告順序 = picker 顯示順序):`zh-Hant` 繁體中文 / `zh-Hans` 简体中文 / `ja` 日本語 / `en` English。raw value 就是與 tuji-web 共用的 wire code,值域由 `UILanguageTests` 釘住;**新增語言是前後端協同的變更**(伺服器會把不認得的 code 夾回 zh-Hant)。
+- **首次啟動的預設值**由 `UILanguage.deviceDefault` 從裝置偏好語言清單挑第一個支援的;無明確 script 的 `zh` 依地區判定(CN/SG 用簡體,其餘與裸 `zh` 用繁體)。
+- 介面語言與**學習方向**正交:不論介面是哪一種,學習內容的釋義都跟著介面語言走(`contentLanguageCode` 直接就是 wire code,由伺服器決定 ja/en 定義、zh-Hant 基準或 OpenCC 轉簡)。
+- 原文 key 為 zh-Hant,字表在 `Resources/i18n/Localizable.xcstrings`。
+- SwiftUI 內用 `LocalizedStringKey` 走 environment locale;String 型別的參數/模型層字串一律經 `tujiLocalized()`(否則不會跟隨 uiLang 切換)。它讀 UserDefaults 的 `tuji.ui.lang` 鏡像,直接查對應的 `.lproj` bundle。
 
 ### 診斷
 
 - `Core/Diagnostics/CrashReporting.swift`:Firebase Crashlytics(詳見 `CRASH_REPORTING.md`)。
 - 全 App 用 OSLog(subsystem `app.tuji.ios`)分 category 記錄;Atlas 佇列另有 OSSignposter 打點。
-- DEBUG 限定:Me 頁「除錯工具」的 Bearer smoke test(GET `/api/test_smoke/whoami`),release 編譯排除。
+- DEBUG 限定:我的 分頁「除錯工具」的 Bearer smoke test(GET `/api/test_smoke/whoami`)、以及 `--ad-snapshot=` 行銷截圖模式(§1),release 編譯皆排除。
 
 ### 測試 — `TujiTests/`
 
-單元測試覆蓋核心純邏輯:兩個學習 coordinator 的狀態機、SRS outbox、額度計算(Study + Atlas)、復習排程解析、搜尋排名、WordsStore 合併、AtlasCaptureVM、主頁提示文案。
+單元測試覆蓋純邏輯與畫面 model(共 40 個測試檔),不碰網路 —— 每個 model 都能站在自己的 role seam fake 上:
+
+| 範圍 | 代表測試 |
+|---|---|
+| 學習流程 | `NewFlowCoordinatorTests`、`ReviewFlowCoordinatorTests`、`StudyOptionStyleTests`、`StudyQueueStoreTests` |
+| SRS 寫入與刷新 | `DurableAnswerWriterTests`、`StudyAnswerOutboxTests`、`SessionRefreshTests` |
+| 額度與排程 | `StudyQuotasTests`、`AtlasQuotasTests`、`ReviewScheduleTests` |
+| 自製圖鑑 | `AtlasCaptureVMTests`、`AtlasStoreTests`、`AtlasShelfModelTests`、`AtlasImageStatusTests`、`AtlasMutationRefreshTests`、`ImageCropTests` |
+| 社群 | `PublicAtlasBrowsingModelTests`、`CollectionDetailVMTests`、`CollectionEditVMTests`、`MyCollectionsVMTests`、`AtlasPublicDetailVMTests`、`AuthorProfileVMTests`、`AtlasReviewStatusTests`、`CommunityLearningRefreshTests`、`SavedCommunityWordsTests` |
+| 身分與設定 | `AuthorProfileModuleTests`、`SessionUserMirrorTests`、`AvatarPickerTests`、`UILanguageTests` |
+| 其他 | `SearchVMTests`、`WordsStoreMergeTests`、`TodayViewHintTests`、`AnalyticsTests`、`SignedStorageObjectIDTests`、`FeedbackTests` |
+
+`AtlasTestSupport.swift` 提供共用 fake。`AnalyticsTests` 會把 `AnalyticsEvent` 的值域釘住,新增事件必須同步更新白名單。
