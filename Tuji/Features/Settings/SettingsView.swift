@@ -128,105 +128,110 @@ struct SettingsView: View {
     // MARK: - List
 
     private var list: some View {
-        List {
-            Section("學習") {
-                NavigationLink {
-                    LearningDirectionPickerView()
-                } label: {
-                    self.row(
-                        label: "學習語言",
-                        value: self.store.current.learningDirection.shortTitle,
-                        subtitle: "英文與日文的學習進度會分開保留"
+        ScrollView {
+            VStack(spacing: 0) {
+                TujiSection(title: "學習") {
+                    NavigationLink { LearningDirectionPickerView() } label: {
+                        TujiRow(
+                            "學習語言",
+                            subtitle: "英文與日文的學習進度會分開保留",
+                            value: self.store.current.learningDirection.shortTitle
+                        )
+                    }
+                    .tujiRowStyle()
+                    NavigationLink { DailyGoalPickerView() } label: {
+                        TujiRow(
+                            "每日目標題數",
+                            subtitle: "每天想新學的題數，複習多時會自動調降",
+                            value: tujiLocalized("\(self.store.current.dailyGoal) 題")
+                        )
+                    }
+                    .tujiRowStyle()
+                    NavigationLink { StudyCategoriesPickerView() } label: {
+                        TujiRow(
+                            "學習主題",
+                            subtitle: "學新字與主題進度只涵蓋你選的主題",
+                            value: self.studyCategoriesLabel
+                        )
+                    }
+                    .tujiRowStyle()
+                    TujiRow(
+                        leading: { TujiRowLabel(label: "中文釋義") },
+                        trailing: { TujiCheckbox(isOn: self.store.binding(\.showZh)) }
                     )
                 }
-                NavigationLink {
-                    DailyGoalPickerView()
-                } label: {
-                    self.row(
-                        label: "每日目標題數",
-                        value: tujiLocalized("\(self.store.current.dailyGoal) 題"),
-                        subtitle: "每天想新學的題數，複習多時會自動調降"
-                    )
-                }
-                NavigationLink {
-                    StudyCategoriesPickerView()
-                } label: {
-                    self.row(
-                        label: "學習主題",
-                        value: self.studyCategoriesLabel,
-                        subtitle: "學新字與主題進度只涵蓋你選的主題"
-                    )
-                }
-                Toggle("中文釋義", isOn: self.store.binding(\.showZh))
-                    .tint(.tujiTeal)
-            }
-            Section("顯示") {
-                NavigationLink {
-                    LangPickerView()
-                } label: {
-                    self.row(label: "語言", value: self.langLabel)
-                }
-                if self.store.current.learningDirection == .zhEn {
-                    NavigationLink {
-                        AccentPickerView()
-                    } label: {
-                        self.row(label: "發音口音", value: self.accentLabel)
+
+                TujiSection(title: "顯示") {
+                    NavigationLink { LangPickerView() } label: {
+                        TujiRow("語言", value: self.langLabel)
                     }
-                }
-            }
-            if !self.isGuest {
-                Section("帳號") {
-                    NavigationLink {
-                        EditProfileView()
-                    } label: {
-                        self.row(label: "編輯個人資料", value: nil)
-                    }
-                    Button(role: .destructive) {
-                        self.showSignOutConfirm = true
-                    } label: {
-                        Text("登出")
-                            .foregroundStyle(.tujiAlert)
-                    }
-                }
-                Section {
-                    Button(role: .destructive) {
-                        self.showClearConfirm = true
-                    } label: {
-                        HStack {
-                            if self.progressVM.clearing {
-                                ProgressView().tint(.tujiAlert)
-                            }
-                            Text(self.progressVM.clearing ? LocalizedStringKey("清除中…") : LocalizedStringKey("清除學習進度"))
-                                .foregroundStyle(.tujiAlert)
+                    .tujiRowStyle()
+                    if self.store.current.learningDirection == .zhEn {
+                        NavigationLink { AccentPickerView() } label: {
+                            TujiRow("發音口音", value: self.accentLabel)
                         }
+                        .tujiRowStyle()
                     }
-                    .disabled(self.progressVM.clearing)
-                    Button(role: .destructive) {
-                        self.showDeleteFirst = true
-                    } label: {
-                        HStack {
-                            if self.deleting {
-                                ProgressView().tint(.tujiAlert)
-                            }
-                            Text(self.deleting ? LocalizedStringKey("刪除中…") : LocalizedStringKey("刪除帳號"))
-                                .foregroundStyle(.tujiAlert)
-                        }
-                    }
-                    .disabled(self.deleting)
-                } footer: {
-                    Text("清除學習進度會刪除掌握度與答題紀錄，但保留收藏、設定與自制圖鑑。")
                 }
-            }
-            Section {
+
+                if !self.isGuest {
+                    TujiSection(title: "帳號") {
+                        NavigationLink { EditProfileView() } label: {
+                            TujiRow("編輯個人資料")
+                        }
+                        .tujiRowStyle()
+                        Button { self.showSignOutConfirm = true } label: {
+                            TujiRow("登出", showsArrow: false, destructive: true)
+                        }
+                        .tujiRowStyle(destructive: true)
+                    }
+
+                    TujiSection(
+                        footer: "清除學習進度會刪除掌握度與答題紀錄，但保留書籤、設定與自製圖鑑。"
+                    ) {
+                        Button { self.showClearConfirm = true } label: {
+                            self.dangerRow(
+                                title: self.progressVM.clearing ? "清除中…" : "清除學習進度",
+                                busy: self.progressVM.clearing
+                            )
+                        }
+                        .tujiRowStyle(destructive: true)
+                        .disabled(self.progressVM.clearing)
+                        Button { self.showDeleteFirst = true } label: {
+                            self.dangerRow(
+                                title: self.deleting ? "刪除中…" : "刪除帳號",
+                                busy: self.deleting
+                            )
+                        }
+                        .tujiRowStyle(destructive: true)
+                        .disabled(self.deleting)
+                    }
+                }
+
                 Text("Tuji v1.0.0 · 圖記")
                     .font(.tujiLabel)
+                    .tracking(0.5)
                     .foregroundStyle(.tujiInk3)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .listRowBackground(Color.clear)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, Space.s6)
+                    .padding(.bottom, Space.s5)
+            }
+            .padding(.bottom, Space.s6)
+        }
+        .background(.tujiPaper)
+    }
+
+    /// A destructive row whose work is in flight. The inline bar replaces the
+    /// spinner that used to sit beside the label.
+    private func dangerRow(title: LocalizedStringKey, busy: Bool) -> some View {
+        VStack(spacing: Space.s2) {
+            TujiRow(title, showsArrow: false, destructive: true)
+            if busy {
+                TujiProgressBar(progress: nil, fill: .tujiAlert)
+                    .padding(.horizontal, Space.s4)
+                    .padding(.bottom, Space.s3)
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(.tujiPaper)
     }
 
     private func row(label: LocalizedStringKey, value: String?, subtitle: LocalizedStringKey? = nil) -> some View {
@@ -294,33 +299,34 @@ private struct LearningDirectionPickerView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        List {
-            Section {
+        ScrollView {
+            TujiSection(
+                footer: "切換後會重新載入詞庫與進度，不會刪除另一種語言的學習紀錄。"
+            ) {
                 ForEach(LearningDirection.allCases, id: \.rawValue) { direction in
                     Button {
                         self.select(direction)
                     } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(direction.title)
-                                    .foregroundStyle(.tujiInk)
-                                Text(direction == .zhJa ? "日文詞條、假名與日文發音" : "英文詞條與美式／英式發音")
-                                    .font(.tujiLabel)
-                                    .foregroundStyle(.tujiInk3)
+                        TujiRow(
+                            leading: {
+                                TujiRowLabel(
+                                    localized: direction.title,
+                                    localizedSubtitle: direction == .zhJa
+                                        ? tujiLocalized("日文詞條、假名與日文發音")
+                                        : tujiLocalized("英文詞條與美式／英式發音")
+                                )
+                            },
+                            trailing: {
+                                TujiSelectionMark(
+                                    selected: self.settings.current.learningDirection == direction
+                                )
                             }
-                            Spacer()
-                            if self.settings.current.learningDirection == direction {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(.tujiTeal)
-                            }
-                        }
+                        )
                     }
+                    .tujiRowStyle()
                 }
-            } footer: {
-                Text("切換後會重新載入詞庫與進度，不會刪除另一種語言的學習紀錄。")
             }
         }
-        .scrollContentBackground(.hidden)
         .background(.tujiPaper)
         .navigationTitle("學習語言")
         .navigationBarTitleDisplayMode(.inline)
