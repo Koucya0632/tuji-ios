@@ -1,7 +1,8 @@
 // 公開圖鑑「作者主頁」（點公開項目的「by 作者」進來，或從 我的 看自己的那一份）。
 //
 // 資料來源：GET /api/atlas/public/authors/{handle} —— 作者身分 + 其已公開項目
-// + 累計被收藏數（docs/COMMUNITY_ATLAS_PLAN.md §3B/§3C）。公開、吃 CDN 快取。
+// + 累計被收藏數（../docs/COMMUNITY_ATLAS_PLAN.md §3B/§3C — FEATURES.md §12.5）。
+// 公開、吃 CDN 快取。
 //
 // 同一個畫面服務兩種讀者。`isSelf` 只加一個直接開公開身分 sheet 的編輯入口
 // ——看到問題能當場改，迴圈是閉的。
@@ -188,7 +189,7 @@ struct AtlasAuthorProfileView: View {
             HStack(spacing: Space.s6) {
                 self.stat(value: "\(author.publishedCount)", label: tujiLocalized("公開項目"))
                 // The altruistic signal: how much this author's work has helped
-                // others (docs/COMMUNITY_ATLAS_PLAN.md §3C).
+                // others (../docs/COMMUNITY_ATLAS_PLAN.md §3C — FEATURES.md §12.5).
                 self.stat(value: "\(author.saveCount)", label: tujiLocalized("被收藏"))
             }
             .padding(.top, Space.s1)

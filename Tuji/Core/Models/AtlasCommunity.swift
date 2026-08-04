@@ -80,7 +80,8 @@ struct AtlasAuthor: Decodable, Identifiable, Hashable {
     let joinedAt: String?
     let publishedCount: Int
     /// How many times this author's items have been saved by others — the
-    /// altruistic feedback signal (docs/COMMUNITY_ATLAS_PLAN.md §3C).
+    /// altruistic feedback signal (../docs/COMMUNITY_ATLAS_PLAN.md §3C —
+    /// FEATURES.md §12.5).
     let saveCount: Int
 
     var id: String {
@@ -154,7 +155,8 @@ struct AtlasReportPayload: Encodable {
 // MARK: - Publish / review (POST /api/atlas/items/{id}/publish)
 
 /// Where a 自製圖鑑 item sits in the public-review pipeline. Mirrors the
-/// server's `review_status` (docs/COMMUNITY_ATLAS_PLAN.md §5): submitting runs
+/// server's `review_status` (../docs/COMMUNITY_ATLAS_PLAN.md §5 —
+/// FEATURES.md §12.7): submitting runs
 /// a machine gate that either publishes immediately, routes to a human, or
 /// rejects. `pending` is the legacy single queue kept for older rows.
 enum AtlasReviewStatus: String, Decodable, Hashable {
