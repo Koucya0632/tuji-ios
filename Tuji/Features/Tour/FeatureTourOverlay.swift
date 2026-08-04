@@ -165,7 +165,7 @@ struct FeatureTourOverlay: View {
     private var dots: some View {
         HStack(spacing: Space.s2) {
             ForEach(self.steps) { step in
-                Capsule()
+                Rectangle()
                     .fill(step.id == self.index ? Color.tujiTeal : .tujiPaper2.opacity(0.4))
                     .frame(width: step.id == self.index ? 22 : 7, height: 7)
             }

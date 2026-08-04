@@ -195,7 +195,7 @@ private struct TujiPromptModifier: ViewModifier {
 
         if self.style == .error {
             VStack {
-                Capsule()
+                Rectangle()
                     .fill(.tujiAlert)
                     .frame(width: 72, height: 5)
                     .padding(.top, Space.s2)

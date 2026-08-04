@@ -133,7 +133,7 @@ struct TilesView: View {
                         .font(.system(size: 28))
                         .foregroundStyle(.tujiInk3)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)

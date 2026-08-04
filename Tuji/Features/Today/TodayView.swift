@@ -158,8 +158,8 @@ struct TodayView: View {
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, 6)
-        .background(.tujiPaper, in: .capsule)
-        .overlay(Capsule().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
         .tourAnchor(.streak)
     }
 
@@ -619,7 +619,7 @@ struct TodayView: View {
                         .foregroundStyle(.white)
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s4)
-                        .background(.tujiTeal, in: .capsule)
+                        .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
                 }
                 .buttonStyle(.plain)
             }
@@ -744,8 +744,8 @@ private struct ThemeStatusBadge: View {
         .foregroundStyle(tint)
         .padding(.horizontal, 5)
         .padding(.vertical, 2)
-        .background(.tujiPaper, in: .capsule)
-        .overlay(Capsule().stroke(tint.opacity(0.4), lineWidth: 1))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(tint.opacity(0.4), lineWidth: 1))
         .shadow(color: .black.opacity(0.1), radius: 1.5, y: 1)
     }
 }

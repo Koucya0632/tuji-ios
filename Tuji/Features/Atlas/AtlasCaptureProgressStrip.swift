@@ -72,12 +72,13 @@ private struct AtlasCaptureJobCard: View {
                 .foregroundStyle(.tujiInk)
                 .lineLimit(1)
             Text(self.statusText)
-                .font(.system(size: 10, weight: .bold))
+                .font(.tujiLabel)
                 .foregroundStyle(self.job.stage == .failed ? .tujiAlert : .tujiInk3)
                 .lineLimit(1)
             if self.job.stage != .failed {
-                ProgressView(value: self.job.progress)
-                    .tint(self.job.stage == .done ? .tujiTeal : .tujiTeal)
+                // A known-duration wait, so the bar shows the real fraction
+                // rather than sweeping (C.5).
+                TujiProgressBar(progress: self.job.progress)
             }
         }
         .frame(width: 116)
@@ -87,7 +88,7 @@ private struct AtlasCaptureJobCard: View {
     private var overlayIcon: some View {
         switch self.job.stage {
         case .confirming, .creating, .enriching:
-            ProgressView().tint(.white)
+            TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiEye).frame(width: 40)
         case .done:
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 30, weight: .heavy))

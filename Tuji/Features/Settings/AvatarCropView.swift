@@ -35,7 +35,7 @@ struct AvatarCropView: View {
                 } else if self.loadFailed {
                     self.failureView
                 } else {
-                    ProgressView().tint(.white)
+                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 120)
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -109,7 +109,7 @@ struct AvatarCropView: View {
                     .foregroundStyle(.white.opacity(0.88))
                     .padding(.horizontal, Space.s3)
                     .padding(.vertical, Space.s2)
-                    .background(.black.opacity(0.45), in: .capsule)
+                    .background(.black.opacity(0.45), in: .rect(cornerRadius: Radius.r0))
                     .position(x: viewport.midX, y: max(28, viewport.minY - 30))
                     .allowsHitTesting(false)
 

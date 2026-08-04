@@ -31,7 +31,7 @@ struct StudyLauncherView: View {
         ZStack {
             Color.tujiPaper.ignoresSafeArea()
             VStack(spacing: Space.s3) {
-                ProgressView().tint(.tujiTeal)
+                TujiPageLoading()
                 Text("載入練習中…")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk2)

@@ -47,7 +47,7 @@ struct AtlasCollectionDetailView: View {
                     self.tabBar
                     self.tabContent(collection)
                 } else if case .loading = self.vm.phase {
-                    ProgressView()
+                    TujiProgressBar(progress: nil).frame(width: 56)
                         .tint(.tujiTeal)
                         .padding(.top, Space.s5)
                 } else {
@@ -158,7 +158,7 @@ struct AtlasCollectionDetailView: View {
                         .foregroundStyle(.tujiTeal)
                         .padding(.horizontal, Space.s2)
                         .frame(height: 22)
-                        .background(.tujiTealSoft, in: .capsule)
+                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     self.stat(icon: "square.stack", title: "內容", value: collection.itemCount)
                     self.stat(icon: "bookmark", title: "收藏", value: collection.saveCount)
                 }
@@ -192,7 +192,7 @@ struct AtlasCollectionDetailView: View {
         } else {
             Button(action: self.bookmarkTapped) {
                 if self.vm.bookmarkBusy || (self.isSignedIn && !self.vm.bookmarkLoaded) {
-                    ProgressView()
+                    TujiProgressBar(progress: nil).frame(width: 56)
                         .controlSize(.small)
                         .tint(.tujiTeal)
                         .frame(minWidth: 88)
@@ -222,7 +222,7 @@ struct AtlasCollectionDetailView: View {
         .padding(.horizontal, Space.s3)
         .frame(height: 30)
         .frame(minWidth: 88)
-        .background(.tujiTealSoft, in: .capsule)
+        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
     }
 
     private func bookmarkTapped() {
@@ -309,7 +309,7 @@ struct AtlasCollectionDetailView: View {
     @ViewBuilder
     private var learningPill: some View {
         if self.vm.learningBusy {
-            ProgressView()
+            TujiProgressBar(progress: nil).frame(width: 56)
                 .controlSize(.small)
                 .tint(.tujiTeal)
                 .frame(minWidth: 98, minHeight: 30)
@@ -332,7 +332,7 @@ struct AtlasCollectionDetailView: View {
                 .frame(height: 30)
                 .background(
                     remaining == 0 ? Color.tujiPaper3 : Color.tujiTealSoft,
-                    in: .capsule
+                    in: .rect(cornerRadius: Radius.r0)
                 )
             }
             .buttonStyle(.plain)
@@ -349,7 +349,7 @@ struct AtlasCollectionDetailView: View {
                 Text(label)
                     .font(.system(size: 15, weight: selected ? .bold : .medium))
                     .foregroundStyle(selected ? .tujiInk : .tujiInk3)
-                Capsule()
+                Rectangle()
                     .fill(selected ? Color.tujiTeal : .clear)
                     .frame(width: 22, height: 3)
             }
@@ -362,7 +362,7 @@ struct AtlasCollectionDetailView: View {
         switch self.tab {
         case .catalog:
             if self.vm.items.isEmpty, case .loading = self.vm.phase {
-                ProgressView().tint(.tujiTeal).padding(.vertical, Space.s5)
+                TujiPageLoading()
             } else if self.vm.items.isEmpty {
                 Text("這個合集還沒有項目")
                     .font(.tujiBodySm)

@@ -43,7 +43,7 @@ struct ImageCropView: View {
                 } else if self.loadFailed {
                     self.failureView
                 } else {
-                    ProgressView().tint(.white)
+                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 120)
                 }
             }
             // Reserve the toolbar's height out of the crop area (instead of floating

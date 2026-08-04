@@ -167,7 +167,7 @@ struct RecognizeView: View {
                         .font(.system(size: 32))
                         .foregroundStyle(.tujiInk3)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)

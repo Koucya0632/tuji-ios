@@ -107,3 +107,50 @@ struct TujiProgressBar: View {
     .padding(.vertical, Space.s5)
     .background(.tujiPaper)
 }
+
+/// Placeholder for an image that has not arrived. Fills whatever container it
+/// is given, so a grid of tiles keeps its geometry while the pictures load —
+/// that stability is the whole reason a skeleton beats a spinner here.
+struct TujiImagePlaceholder: View {
+    var body: some View {
+        Rectangle()
+            .fill(.tujiPaper2)
+            .overlay(BreathingVeil())
+            .accessibilityHidden(true)
+    }
+}
+
+/// The shared breathing overlay. Kept separate so `TujiSkeleton` and
+/// `TujiImagePlaceholder` cannot drift apart in rhythm.
+private struct BreathingVeil: View {
+    @State private var dim = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Rectangle()
+            .fill(.tujiPaper3)
+            .opacity(self.dim ? 0.45 : 0)
+            .onAppear {
+                guard !self.reduceMotion else { return }
+                withAnimation(.easeOut(duration: Motion.d3).repeatForever(autoreverses: true)) {
+                    self.dim = true
+                }
+            }
+    }
+}
+
+/// Centred page-level loading for a screen whose content shape is not known
+/// ahead of time. Still a block, never a spinner.
+struct TujiPageLoading: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            TujiSkeleton(width: 180, height: 28)
+            TujiSkeleton(width: 260, height: 16)
+            TujiSkeleton(height: 16)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s5)
+        .accessibilityLabel(Text("載入中"))
+    }
+}

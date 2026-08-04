@@ -9,12 +9,6 @@ struct SplashView: View {
     var body: some View {
         VStack(spacing: Space.s4) {
             TujiBrandLockup(animateEntrance: true)
-
-            ProgressView()
-                .tint(.tujiTeal)
-                .controlSize(.small)
-                .opacity(self.loaderVisible ? 1 : 0)
-                .offset(y: self.loaderVisible ? 0 : 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiPaper)

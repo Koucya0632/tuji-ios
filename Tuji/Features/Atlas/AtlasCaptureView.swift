@@ -299,7 +299,7 @@ struct AtlasCaptureView: View {
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiProgressBar(progress: nil)
                     }
                 }
             }
@@ -435,7 +435,7 @@ struct AtlasCaptureView: View {
                                 .padding(.vertical, Space.s2)
                                 .background(
                                     self.vm.selectedCandidateId == candidate.id ? .tujiTeal : .tujiPaper,
-                                    in: .capsule
+                                    in: .rect(cornerRadius: Radius.r0)
                                 )
                         }
                         .buttonStyle(.plain)

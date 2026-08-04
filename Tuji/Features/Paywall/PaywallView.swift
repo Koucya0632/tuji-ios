@@ -109,7 +109,7 @@ struct PaywallView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else if self.store.products.isEmpty {
             if self.loadingProducts {
-                ProgressView().tint(.tujiTeal).frame(maxWidth: .infinity)
+                TujiPageLoading()
             } else {
                 VStack(spacing: Space.s3) {
                     Text("暫時無法載入方案，請檢查網路後再試一次。")
@@ -157,7 +157,7 @@ struct PaywallView: View {
                 }
                 Spacer()
                 if self.store.purchasing == product.id {
-                    ProgressView().tint(.white)
+                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 56)
                 } else {
                     Text(product.displayPrice)
                         .font(.system(size: 16, weight: .heavy))

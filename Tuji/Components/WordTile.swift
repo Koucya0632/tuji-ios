@@ -42,8 +42,7 @@ struct WordTile: View {
                             .font(.system(size: 24))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView()
-                            .tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
@@ -111,8 +110,8 @@ struct WordTile: View {
         .lineLimit(1)
         .padding(.horizontal, Space.s2)
         .padding(.vertical, 3)
-        .background(.tujiPaper.opacity(0.95), in: .capsule)
-        .overlay(Capsule().stroke(.tujiRule.opacity(0.4), lineWidth: 1))
+        .background(.tujiPaper.opacity(0.95), in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(.tujiRule.opacity(0.4), lineWidth: 1))
         .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
     }
 }

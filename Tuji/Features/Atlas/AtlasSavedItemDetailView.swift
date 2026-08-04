@@ -32,7 +32,7 @@ struct AtlasSavedItemDetailView: View {
             } else if let errorMessage {
                 self.errorState(errorMessage)
             } else {
-                ProgressView()
+                TujiImagePlaceholder()
                     .tint(.tujiTeal)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.tujiPaper)

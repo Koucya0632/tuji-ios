@@ -148,7 +148,7 @@ private struct OfflineBanner: View {
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s2)
-        .background(.tujiAlert, in: .capsule)
+        .background(.tujiAlert, in: .rect(cornerRadius: Radius.r0))
         .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
     }
 }

@@ -88,7 +88,7 @@ struct WordDetailPage: View {
                     self.errorState(error)
                         .frame(width: geo.size.width)
                 } else {
-                    ProgressView()
+                    TujiImagePlaceholder()
                         .tint(.tujiTeal)
                         .padding(.top, Space.s6)
                         .frame(width: geo.size.width)
@@ -174,7 +174,7 @@ extension WordDetailPage {
                             .font(.system(size: 28))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
@@ -215,7 +215,7 @@ extension WordDetailPage {
                             .foregroundStyle(.tujiTeal)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .capsule)
+                            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     }
                 }
             }

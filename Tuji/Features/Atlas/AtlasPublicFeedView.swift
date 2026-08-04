@@ -98,14 +98,14 @@ struct AtlasPublicFeedView: View {
     // MARK: Content
 
     private var segmentedControl: some View {
-        Picker("公開圖鑑區段", selection: self.$section) {
-            ForEach(PublicAtlasBrowsingModel.Shelf.allCases) { section in
-                Text(self.title(for: section)).tag(section)
-            }
-        }
-        .pickerStyle(.segmented)
-        .padding(.horizontal, Space.s4)
+        TujiSegmented(
+            options: PublicAtlasBrowsingModel.Shelf.allCases.map {
+                ($0, self.title(for: $0))
+            },
+            selection: self.$section
+        )
         .padding(.bottom, Space.s3)
+        .accessibilityLabel(Text("公開圖鑑區段"))
     }
 
     private var content: some View {
@@ -132,7 +132,7 @@ struct AtlasPublicFeedView: View {
         if case .loading = self.browsing.explore.phase {
             VStack {
                 Spacer()
-                ProgressView().tint(.tujiTeal)
+                TujiImagePlaceholder()
                 Text("載入中…")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
@@ -189,7 +189,7 @@ struct AtlasPublicFeedView: View {
         } else if case .loading = self.browsing.saved.phase,
                   self.browsing.saved.collections.isEmpty
         {
-            ProgressView()
+            TujiProgressBar(progress: nil).frame(width: 56)
                 .tint(.tujiTeal)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -382,7 +382,7 @@ struct AtlasPublicTile: View {
                     } else if state.error != nil {
                         self.placeholder
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
@@ -395,7 +395,7 @@ struct AtlasPublicTile: View {
                     .foregroundStyle(.tujiTeal)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
-                    .background(.tujiTealSoft, in: .capsule)
+                    .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     .padding(Space.s2)
             }
             // 卡片主體點擊區（圖）→ 詳情
@@ -571,7 +571,7 @@ struct AtlasPublicDetailView: View {
                         .font(.system(size: 28))
                         .foregroundStyle(.tujiInk3)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)
@@ -595,7 +595,7 @@ struct AtlasPublicDetailView: View {
                     .foregroundStyle(.tujiTeal)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
-                    .background(.tujiTealSoft, in: .capsule)
+                    .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
             }
             Text(self.vm.item.displayZhHant)
                 .font(.tujiBodySm)
@@ -632,7 +632,7 @@ struct AtlasPublicDetailView: View {
                             .foregroundStyle(.tujiTeal)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .capsule)
+                            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     }
                 }
             }
@@ -717,7 +717,7 @@ struct AtlasPublicDetailView: View {
         .frame(height: 30)
         .background(
             active ? Color.tujiInk.opacity(0.64) : Color.tujiTeal,
-            in: .capsule
+            in: .rect(cornerRadius: Radius.r0)
         )
     }
 

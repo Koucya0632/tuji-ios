@@ -238,7 +238,7 @@ struct ProfileAvatar: View {
                 } else if phase.error != nil {
                     MascotAvatar(pose: self.fallbackPose, size: self.size, selected: self.selected)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .frame(width: self.size, height: self.size)

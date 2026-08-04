@@ -44,7 +44,7 @@ struct SetupView: View {
                     section(title: "你對學習什麼主題有興趣？") {
                         if categories.categories.isEmpty {
                             HStack {
-                                ProgressView().tint(.tujiTeal)
+                                TujiProgressBar(progress: nil).frame(width: 56)
                                 Text("載入主題中…")
                                     .font(.tujiLabel)
                                     .foregroundStyle(.tujiInk3)
@@ -93,7 +93,7 @@ struct SetupView: View {
                                         .foregroundStyle(.tujiTeal)
                                         .padding(.vertical, Space.s2)
                                         .padding(.horizontal, Space.s3)
-                                        .background(.tujiTealSoft, in: .capsule)
+                                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                                 }
                                 .buttonStyle(.plain)
                             }

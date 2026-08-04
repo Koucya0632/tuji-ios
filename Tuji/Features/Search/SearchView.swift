@@ -217,8 +217,8 @@ struct SearchView: View {
             }
             .padding(.horizontal, Space.s3)
             .padding(.vertical, Space.s3)
-            .background(.tujiPaper, in: .capsule)
-            .overlay(Capsule().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+            .overlay(Rectangle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
 
             Button {
                 self.dismiss()
@@ -315,7 +315,7 @@ struct SearchView: View {
     private var loadingState: some View {
         VStack(spacing: Space.s3) {
             Spacer().frame(height: Space.s5)
-            ProgressView().tint(.tujiTeal)
+            TujiProgressBar(progress: nil).frame(width: 56).tint(.tujiTeal)
             Text("搜尋中…")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
@@ -364,7 +364,7 @@ struct SearchView: View {
                         .tracking(2)
                         .foregroundStyle(.tujiInk3)
                     if self.vm.loading {
-                        ProgressView()
+                        TujiProgressBar(progress: nil).frame(width: 56)
                             .controlSize(.mini)
                             .tint(.tujiTeal)
                     }
@@ -405,7 +405,7 @@ private struct SearchResultRow: View {
                             .font(.system(size: 16))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView()
+                        TujiProgressBar(progress: nil).frame(width: 56)
                             .controlSize(.small)
                             .tint(.tujiTeal)
                     }

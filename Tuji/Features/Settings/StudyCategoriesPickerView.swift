@@ -24,7 +24,7 @@ struct StudyCategoriesPickerView: View {
 
                 if self.categories.categories.isEmpty {
                     HStack {
-                        ProgressView().tint(.tujiTeal)
+                        TujiPageLoading()
                         Text("載入主題中…")
                             .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)

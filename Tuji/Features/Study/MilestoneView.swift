@@ -63,8 +63,8 @@ struct MilestoneView: View {
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-        .background(.white.opacity(0.08), in: .capsule)
-        .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+        .background(.white.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(.white.opacity(0.2), lineWidth: 1))
     }
 
     private var actions: some View {

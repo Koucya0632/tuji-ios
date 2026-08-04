@@ -115,12 +115,12 @@ struct WordDetailSections: View {
                     }
                 } label: {
                     Text(tab.label)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(active ? .white : .tujiTeal)
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(active ? Color.tujiPaper : .tujiInk2)
                         .padding(.horizontal, Space.s3)
-                        .padding(.vertical, Space.s2)
-                        .background(active ? Color.tujiTeal : Color.tujiTealSoft)
-                        .clipShape(.capsule)
+                        .frame(height: 36)
+                        .background(active ? Color.tujiInk : Color.tujiPaper2)
                 }
                 .buttonStyle(.plain)
             }

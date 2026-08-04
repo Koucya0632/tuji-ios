@@ -51,7 +51,7 @@ struct IdentifyView: View {
                             .font(.system(size: 28))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
@@ -66,7 +66,7 @@ struct IdentifyView: View {
                     .foregroundStyle(.tujiInk)
                     .padding(.horizontal, Space.s3)
                     .padding(.vertical, 6)
-                    .background(.tujiPaper, in: .capsule)
+                    .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 Spacer()
                 PronunciationButton(
                     text: self.item.word.word,

@@ -351,7 +351,7 @@ struct MeView: View {
                 .foregroundStyle(.tujiInk)
                 .padding(.horizontal, Space.s3)
                 .padding(.vertical, 7)
-                .background(.tujiEye, in: .capsule)
+                .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .heavy))

@@ -47,7 +47,7 @@ struct WordCommunityAtlasSection: View {
                             .foregroundStyle(.tujiTeal)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .capsule)
+                            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     }
 
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -92,7 +92,7 @@ struct WordCommunityAtlasSection: View {
                             .font(.system(size: 18))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)

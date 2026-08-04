@@ -290,7 +290,7 @@ private struct ReviewQuestionView: View {
                             Image(systemName: "photo")
                                 .foregroundStyle(.tujiInk3)
                         } else {
-                            ProgressView().tint(.tujiTeal)
+                            TujiImagePlaceholder()
                         }
                     }
                     .pipeline(.shared)
@@ -360,7 +360,7 @@ private struct ReviewFlashCapsule: View {
         .foregroundStyle(.white)
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-        .background(self.tint, in: .capsule)
+        .background(self.tint, in: .rect(cornerRadius: Radius.r0))
         .shadow(color: .black.opacity(0.15), radius: 8, y: 3)
     }
 

@@ -176,7 +176,7 @@ struct OnboardingFlow: View {
     private var indicator: some View {
         HStack(spacing: Space.s2) {
             ForEach(0..<pages.count, id: \.self) { i in
-                Capsule()
+                Rectangle()
                     .fill(i == page ? Color.tujiTeal : .tujiPaper2.opacity(0.4))
                     .frame(width: i == page ? 22 : 7, height: 7)
                     .animation(.easeOut(duration: 0.25), value: page)

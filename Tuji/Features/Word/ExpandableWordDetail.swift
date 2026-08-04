@@ -47,7 +47,7 @@ struct ExpandableWordDetail: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Space.s4)
                 } else {
-                    ProgressView()
+                    TujiImagePlaceholder()
                         .tint(.tujiTeal)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Space.s4)

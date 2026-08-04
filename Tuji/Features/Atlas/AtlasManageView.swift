@@ -35,15 +35,16 @@ struct AtlasManageView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("管理內容", selection: self.$section) {
-                Text("圖鑑卡片").tag(AtlasManagementSection.cards)
-                Text("合集").tag(AtlasManagementSection.collections)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .padding(.horizontal, Space.s4)
+            TujiSegmented(
+                options: [
+                    (AtlasManagementSection.cards, "圖鑑卡片"),
+                    (AtlasManagementSection.collections, "合集")
+                ],
+                selection: self.$section
+            )
             .padding(.vertical, Space.s3)
             .background(.tujiPaper)
+            .accessibilityLabel(Text("管理內容"))
 
             ZStack {
                 AtlasCardsManagementPane(shelf: self.shelf)
@@ -293,7 +294,7 @@ private struct AtlasCardsManagementPane: View {
                     } else if state.error != nil {
                         Image(systemName: "photo").foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
             }
@@ -349,7 +350,7 @@ private struct AtlasManageDetailView: View {
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundStyle(.tujiInk3)
                         } else {
-                            ProgressView().tint(.tujiTeal)
+                            TujiImagePlaceholder()
                         }
                     }
                 }

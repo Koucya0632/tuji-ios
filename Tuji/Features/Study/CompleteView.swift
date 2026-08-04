@@ -116,8 +116,8 @@ struct CompleteView: View {
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
-        .background(.tujiTeal.opacity(0.12), in: .capsule)
-        .overlay(Capsule().stroke(.tujiTeal.opacity(0.5), lineWidth: 1))
+        .background(.tujiTeal.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(.tujiTeal.opacity(0.5), lineWidth: 1))
     }
 
     private var unsyncedNotice: some View {
@@ -163,7 +163,7 @@ struct CompleteView: View {
                             .foregroundStyle(.tujiAlert)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
-                            .background(.tujiAlert.opacity(0.12), in: .capsule)
+                            .background(.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
                     }
                 }
                 if self.settings.current.showZh {
@@ -214,7 +214,7 @@ struct CompleteView: View {
                 } else if state.error != nil {
                     Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk3)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)

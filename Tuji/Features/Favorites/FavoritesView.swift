@@ -110,9 +110,9 @@ struct FavoritesView: View {
                 .foregroundStyle(selected ? .white : .tujiInk2)
                 .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s2)
-                .background(selected ? .tujiInk : .tujiPaper, in: .capsule)
+                .background(selected ? .tujiInk : .tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    Capsule().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
+                    Rectangle().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
                 )
         }
     }
@@ -172,7 +172,7 @@ struct FavoritesView: View {
                         .foregroundStyle(.tujiInk)
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s4)
-                        .background(.tujiEye, in: .capsule)
+                        .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
                 }
                 .buttonStyle(.plain)
             }

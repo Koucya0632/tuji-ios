@@ -45,9 +45,7 @@ struct AtlasAuthorProfileView: View {
                         }
                     }
                 } else if case .loading = self.vm.phase {
-                    ProgressView()
-                        .tint(.tujiTeal)
-                        .padding(.top, Space.s5)
+                    TujiPageLoading()
                 } else {
                     self.blankState
                 }
@@ -221,12 +219,13 @@ struct AtlasAuthorProfileView: View {
     /// `AuthorProfileVM.showsSegmentedControl`. An author with none gets exactly
     /// the page they had before: the language-grouped grid, no chrome.
     private var segmentPicker: some View {
-        Picker("", selection: self.$vm.segment) {
-            Text("合集").tag(AuthorProfileVM.Segment.collections)
-            Text("圖鑑").tag(AuthorProfileVM.Segment.items)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
+        TujiSegmented(
+            options: [
+                (AuthorProfileVM.Segment.collections, "合集"),
+                (AuthorProfileVM.Segment.items, "圖鑑")
+            ],
+            selection: self.$vm.segment
+        )
     }
 
     // MARK: Collections

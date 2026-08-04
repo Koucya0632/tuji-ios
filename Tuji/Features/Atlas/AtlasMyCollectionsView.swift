@@ -180,7 +180,7 @@ private struct AtlasMyCollectionRow: View {
                         .foregroundStyle(.tujiTeal)
                         .padding(.horizontal, Space.s2)
                         .padding(.vertical, 2)
-                        .background(.tujiTealSoft, in: .capsule)
+                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     Label("\(self.collection.itemCount)", systemImage: "square.stack")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.tujiInk3)
@@ -288,7 +288,7 @@ struct AtlasCollectionEditView: View {
                     }
                     .padding(Space.s4)
                 } else if case .loading = self.vm.phase {
-                    ProgressView().tint(.tujiTeal).padding(.top, Space.s5)
+                    TujiPageLoading()
                 } else {
                     self.errorState
                 }
@@ -385,7 +385,7 @@ struct AtlasCollectionEditView: View {
                             .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
 
                             if self.avatar.isBusy {
-                                ProgressView()
+                                TujiProgressBar(progress: nil).frame(width: 56)
                                     .tint(.white)
                                     .frame(width: 30, height: 30)
                                     .background(.black.opacity(0.45), in: .circle)
@@ -534,7 +534,7 @@ struct AtlasCollectionEditView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 3)
-                        .background(.black.opacity(0.65), in: .capsule)
+                        .background(.black.opacity(0.65), in: .rect(cornerRadius: Radius.r0))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .padding(4)
                 }
@@ -657,7 +657,7 @@ private struct AtlasCollectionItemPicker: View {
             ScrollView {
                 Group {
                     if self.model.loading {
-                        ProgressView().tint(.tujiTeal).padding(.top, Space.s5)
+                        TujiPageLoading()
                     } else if self.model.available.isEmpty {
                         VStack(spacing: Space.s3) {
                             Image(systemName: "photo.on.rectangle.angled")
@@ -735,7 +735,7 @@ private struct AtlasCollectionItemPicker: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 3)
-                            .background(.black.opacity(0.65), in: .capsule)
+                            .background(.black.opacity(0.65), in: .rect(cornerRadius: Radius.r0))
                             .padding(4)
                     }
                 }

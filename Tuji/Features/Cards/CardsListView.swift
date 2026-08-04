@@ -95,16 +95,27 @@ struct CardsListView: View {
     @ViewBuilder
     private var content: some View {
         if self.store.loading, self.store.words.isEmpty {
-            VStack {
-                Spacer()
-                ProgressView().tint(.tujiTeal)
-                Text("載入中…")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
-                    .padding(.top, Space.s3)
-                Spacer()
+            // Two-column skeleton in the shape of the grid that is coming —
+            // the point of a skeleton over a spinner is that the layout does
+            // not jump when the real tiles land.
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: Space.s2),
+                    GridItem(.flexible(), spacing: Space.s2)
+                ],
+                spacing: Space.s4
+            ) {
+                ForEach(0..<6, id: \.self) { _ in
+                    VStack(alignment: .leading, spacing: Space.s2) {
+                        TujiImagePlaceholder().aspectRatio(1, contentMode: .fit)
+                        TujiSkeleton(width: 72, height: 14)
+                    }
+                }
             }
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
+            .frame(maxWidth: .infinity, alignment: .top)
+            .accessibilityLabel(Text("載入中"))
         } else if let error = store.lastError, self.store.words.isEmpty {
             MascotEmptyState(
                 pose: .think,
@@ -177,10 +188,10 @@ struct CardsListView: View {
                 .padding(.vertical, Space.s2)
                 .background(
                     selected ? .tujiInk : .tujiPaper,
-                    in: .capsule
+                    in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
-                    Capsule().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
+                    Rectangle().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
                 )
         }
     }

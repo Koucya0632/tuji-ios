@@ -124,7 +124,7 @@ struct StudyWordGrid: View {
                         Image(systemName: "photo")
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
