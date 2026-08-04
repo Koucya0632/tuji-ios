@@ -17,6 +17,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   confirmed items, scoped to the current learning direction. Its state is one of
   loading / loaded / failed / hiddenElsewhere / empty; `failed` and `empty` are
   deliberately different, because a failed sync claiming 「還沒有卡片」 reads as data loss.
+  **Loaded wins**: once rows are on screen a reload must not swap them for a spinner —
+  the answer you already have beats the one you are re-fetching. `MyCollectionsVM` is on
+  the same rule (and coalesces the duplicate refresh that returning from 編輯合集 fires).
 - **公開圖鑑 (public atlas)** — items that entered review with a collection and passed
   the moderation gate, visible to everyone. The app has no separate per-item submission
   action; publishing a collection submits its private members as one batch.
@@ -46,8 +49,32 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   An accepted edit becomes visible as one Author identity change; a rejected edit leaves
   the previous Author profile intact rather than exposing a partial change. Acceptance is
   determined by the authoritative public profile, not by derived session mirrors or cleanup.
-- **Saving (收藏)** — the *consumption* path. Saving a public item does **not** consume
-  the user's 自製圖鑑 capacity.
+- **The four keeping actions.** The code has told these apart from the start
+  (`favorite` / `bookmark` / `save` / `learn`, four endpoints, no overlap); the *UI* still
+  calls all four 「收藏」, which is why the word means four things on screen. The names
+  below are the resolved vocabulary — adopt them as the UI is rewritten, and never widen
+  one to cover another. They differ along two axes: *what object* (a word or a collection)
+  and *what intent* (keep it, or learn it). The distinction is load-bearing, because only
+  the learning half changes what the user is asked to review tomorrow.
+  - **書籤 (bookmark a word)** — "I want to look at this word again." A dictionary word,
+    device-local truth, never reaches the study queue. Guests have it too.
+  - **收藏 (save a collection)** — "I want this collection." It is *not* merely a marker:
+    it unlocks browsing every member and counts toward the author's cumulative save count
+    (the altruistic signal on their Author profile). It creates no cards.
+  - **收進圖鑑 (take a public item into your atlas)** — "I want to learn this word." The
+    *consumption* path: it creates study cards and changes tomorrow's review queue.
+    It does **not** consume the user's 自製圖鑑 capacity — that quota only counts what
+    the user photographed.
+  - **全部收進圖鑑 (take a whole collection in)** — the same act, in bulk, over a
+    collection already 收藏'd. Available only once unlocked.
+- **取消公開 (withdraw)** — the author's own way to pull a public item back. It exists
+  because the alternative — deleting the card — destroys **every saver's review progress**,
+  not just the author's own history. Withdrawal is reversible and carries no penalty, which
+  is why it is not a moderation takedown and must never be presented as one.
+- **Streak (連勝)** — accumulated study days. It belongs to *accumulation*, alongside
+  mastery and completion — not to "what to do now" — even though its product purpose is to
+  pull the user back today. The distinction matters because the visual system assigns one
+  colour per meaning.
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 
@@ -131,6 +158,13 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
   `consume()`s it once. Replaces the former `AtlasFeedRefreshCenter` global singleton — the
   cross-view coupling is now an explicit environment dependency, not a hidden global.
+- **MyCollectionsCache** — an app-lifetime, account-scoped home for the 我的合集 rows. A
+  screen view model is `@State` on a View that SwiftUI throws away on pop, so a
+  view-scoped list meant every return to 圖鑑管理 started from an empty list and a
+  spinner, re-answering a question answered seconds ago — 圖鑑卡片 never did, because it
+  reads `AtlasStore`. The rule the two share: **state whose lifetime is the account
+  belongs to the account, not to the screen that happens to show it.** `reset()` runs on
+  sign-out beside `AtlasStore.reset()`, or the next account inherits the rows.
 - **CollectionIdentityStore** — an app-root `@Observable` overlay for the last accepted
   collection avatar URL and fallback color. `CollectionIdentityTile` resolves the latest
   uploaded photo → server photo → derived/stable color fallback, so list, saved shelf,
@@ -139,6 +173,12 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   save/unsave or collection batch-learn: invalidate `StudyQueueStore`, then await the
   best-effort `WordsStore.reload()`. The stateless live adapter is the only place that
   references those existing singletons; mutation success never depends on refresh success.
+- **Cache identity ≠ fetch authorisation** (`URL.signedStorageObjectID`). 自製圖鑑 lives in
+  a private Supabase bucket, so every API response signs a fresh URL: same object, new
+  `token=`. Nuke keys both cache tiers on the URL, so the 500 MB DataCache never scored a
+  hit on a user's own captures. The signature authorises the fetch; it does not identify
+  the picture — so `TujiImagePipeline` keys on everything *but* the signature, and leaves
+  Nuke's default key alone for anything that isn't a signed storage URL.
 
 ## Study — the SRS write path
 
