@@ -1,6 +1,14 @@
-// Heart toggle for a word. Optimistic — updates LocalCache immediately,
+// Bookmark toggle for a word. Optimistic — updates LocalCache immediately,
 // then fires the POST off in the background. Guests get LocalCache only;
 // signed-in users also sync to /api/users/favorites.
+//
+// A bookmark, not a heart: "書籤" is the passive half of the vocabulary split
+// (CONTEXT.md) — it means "I want to look at this word again" and never touches
+// the study queue. A heart reads as affection or as a like, and this app has a
+// separate, *active* action ("收進圖鑑") that does change what you review.
+//
+// Ink when set, not red: keeping it is not a warning, and `tujiAlert` is
+// reserved for errors and destructive actions.
 
 import SwiftUI
 
@@ -19,22 +27,18 @@ struct FavoriteButton: View {
     var body: some View {
         Button(action: self.toggle) {
             ZStack {
-                Circle()
-                    .fill(self.isFavorite ? .tujiAlert.opacity(0.12) : .tujiPaper)
-                    .overlay(
-                        Circle().stroke(
-                            self.isFavorite ? Color.tujiAlert : .tujiInk3,
-                            lineWidth: 1.5
-                        )
-                    )
-                Image(systemName: self.isFavorite ? "heart.fill" : "heart")
-                    .font(.system(size: self.size * 0.4, weight: .heavy))
-                    .foregroundStyle(self.isFavorite ? .tujiAlert : .tujiInk3)
+                Rectangle().fill(self.isFavorite ? Color.tujiInk : .tujiPaper2)
+                Image(systemName: self.isFavorite ? "bookmark.fill" : "bookmark")
+                    .font(.system(size: self.size * 0.38, weight: .semibold))
+                    .foregroundStyle(self.isFavorite ? .tujiPaper : .tujiInk2)
                     .contentTransition(.symbolEffect(.replace))
             }
             .frame(width: self.size, height: self.size)
+            .animation(Motion.ease(Motion.d1), value: self.isFavorite)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text(self.isFavorite ? "移除書籤" : "加入書籤"))
+        .accessibilityAddTraits(self.isFavorite ? [.isSelected] : [])
     }
 
     private func toggle() {

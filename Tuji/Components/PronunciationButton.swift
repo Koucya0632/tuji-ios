@@ -1,5 +1,14 @@
-// Circular speaker button that fires SpeechService. Light haptic so
-// taps feel responsive even before the synthesizer warms up.
+// Speaker button that fires SpeechService. Light haptic so taps feel
+// responsive even before the synthesizer warms up.
+//
+// Square, not circular: a circle is the platform's accent, and this system
+// reserves round shapes for the three things that "speak" as people (avatars,
+// status dots, the cat's bubble). It was also pale teal, which now means
+// accumulation — playing audio is not something you have accumulated. While a
+// The spec also wants the ground to turn 瞳黃 while a clip plays. Not done:
+// `SpeechService` is not `@Observable` and publishes no playing state, and
+// inventing a local timer here would show a lie whenever playback fails or the
+// audio is longer than the guess. It needs the service to say so.
 
 import SwiftUI
 
@@ -35,14 +44,15 @@ struct PronunciationButton: View {
             )
         } label: {
             ZStack {
-                Circle().fill(.tujiTealSoft)
+                Rectangle().fill(.tujiPaper2)
                 Image(systemName: "speaker.wave.2.fill")
-                    .font(.system(size: self.size * 0.4, weight: .heavy))
-                    .foregroundStyle(.tujiTeal)
+                    .font(.system(size: self.size * 0.38, weight: .semibold))
+                    .foregroundStyle(.tujiInk)
             }
             .frame(width: self.size, height: self.size)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text("發音"))
     }
 }
 

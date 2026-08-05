@@ -154,7 +154,7 @@ struct WordDetailSections: View {
         Text(text)
             .font(.tujiLabel)
             .tracking(2)
-            .foregroundStyle(.tujiTeal)
+            .foregroundStyle(.tujiInk3)
             .padding(.top, Space.s2)
     }
 
@@ -284,7 +284,7 @@ struct WordDetailSections: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(c)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.tujiTeal)
+                        .foregroundStyle(.tujiInk3)
                     if let zhText, !zhText.isEmpty {
                         Text(zhText)
                             .font(.system(size: 11, weight: .semibold))
