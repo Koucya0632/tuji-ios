@@ -53,6 +53,8 @@ struct AtlasCaptureView: View {
     @State private var confirmDismiss = false
     @State private var confirmRetake = false
     @State private var showPrecisionInfo = false
+    /// Set 3s into a recognition — see `recognizingPanel`.
+    @State private var slowRecognition = false
 
     private struct PendingCrop: Identifiable {
         let id = UUID()
@@ -74,11 +76,14 @@ struct AtlasCaptureView: View {
                 }
             }
         ) {
+            TujiStepIndicator(total: 5, current: self.step)
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.statusMessage
                     self.uploadRetry
-                    if let uploadedImage = self.vm.uploadedImage {
+                    if self.vm.busy == .recognize, let uploadedImage = self.vm.uploadedImage {
+                        self.recognizingPanel(uploadedImage)
+                    } else if let uploadedImage = self.vm.uploadedImage {
                         self.correctionPanel(uploadedImage)
                     } else {
                         self.sourcePanel
@@ -156,8 +161,11 @@ struct AtlasCaptureView: View {
             detail: "你隨時可以切換觀看「普通識別」「高精度識別」已識別的選項。",
             primary: TujiPromptAction("知道了", role: .cancel) {}
         )
+        // Upload keeps the toast; recognition does not — it has its own panel
+        // below, and a toast over a screen that is already saying "working"
+        // is the app talking twice.
         .tujiStatusToast(
-            isPresented: self.vm.busy != nil,
+            isPresented: self.vm.busy == .upload,
             style: .recognizing
         )
         .task {
@@ -166,6 +174,51 @@ struct AtlasCaptureView: View {
         }
         .sheet(isPresented: $vm.showPaywall) {
             PaywallView()
+        }
+    }
+
+    /// Which of D.10's five steps is on screen. 校正 and 生成 share the form —
+    /// the queue step happens after this sheet closes.
+    private var step: Int {
+        if self.vm.busy == .upload { return 1 }
+        if self.vm.busy == .recognize { return 2 }
+        if self.vm.uploadedImage != nil { return 3 }
+        return 0
+    }
+
+    /// AI 辨識中 (D.10). **No spinner** — a determinate-looking bar for work of
+    /// unknown length is a lie, and a spinner is the platform's own idle mark.
+    /// The cat only arrives after 3 seconds, which is C.11's "waiting > 3s"
+    /// clause: before that the wait is short enough that a character showing up
+    /// to acknowledge it would be the slower thing on screen.
+    private func recognizingPanel(_ image: AtlasImageSummary) -> some View {
+        VStack(alignment: .leading, spacing: Space.s4) {
+            Color.tujiPaper2
+                .frame(height: 240)
+                .overlay {
+                    LazyImage(url: image.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable().aspectRatio(contentMode: .fit)
+                        }
+                    }
+                }
+                .clipped()
+            TujiProgressBar(progress: nil)
+            Text("辨識中…")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            if self.slowRecognition {
+                MascotSpeechBubble(pose: .think, text: "這張比較費工，再等一下")
+                    .transition(.opacity)
+            }
+        }
+        .animation(Motion.ease(Motion.d2), value: self.slowRecognition)
+        .task(id: self.vm.busy) {
+            self.slowRecognition = false
+            guard self.vm.busy == .recognize else { return }
+            try? await Task.sleep(for: .seconds(3))
+            self.slowRecognition = true
         }
     }
 
@@ -222,20 +275,9 @@ struct AtlasCaptureView: View {
             }
 
             if CameraPicker.isAvailable {
-                Button {
+                BBtn(title: "拍照", fullWidth: true, icon: "camera.fill") {
                     self.showCamera = true
-                } label: {
-                    HStack {
-                        Image(systemName: "camera.fill")
-                        Text("拍照")
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Space.s3)
-                    .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
                 }
-                .buttonStyle(.plain)
                 .disabled(self.vm.busy != nil || self.vm.atCapacity)
             }
 
@@ -548,11 +590,14 @@ private nonisolated struct AtlasPickerPillLabel: View {
             Image(systemName: self.icon)
             Text(self.title)
         }
-        .font(.system(size: 15, weight: .semibold))
+        .font(.tujiH3)
         .foregroundStyle(.tujiInk)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Space.s3)
-        .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
+        .frame(height: 56)
+        // 瞳黃 belongs to the primary action, and 拍照 is it. The library is the
+        // *other* source, not a second primary — two solid buttons in two
+        // colours implied a ranking that isn't there.
+        .background(.tujiPaper2)
     }
 }
 
