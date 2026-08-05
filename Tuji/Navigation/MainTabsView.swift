@@ -333,9 +333,13 @@ private struct TabBarButton: View {
                     .font(.system(size: 20, weight: .semibold))
                 Text(self.tab.titleZh)
                     .font(.tujiLabel)
-                    .tracking(0.5)
+                    // No tracking, unlike every other tujiLabel: the +0.5pt is a
+                    // Latin adjustment, and on a full-width CJK glyph it only
+                    // buys width these five columns do not have. GenSenRounded
+                    // is wider than the system face, so the margin got thinner.
+                    //
                     // Five equal columns leave ~78pt each, and 13pt CJK labels
-                    // do not fit ("コミュニティ" wrapped and "マイページ" clipped).
+                    // barely fit ("コミュニティ" is six full-width glyphs).
                     // Scaling down beats wrapping; the real fix is the four-tab
                     // IA, which is a later milestone.
                     .lineLimit(1)

@@ -2,128 +2,109 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Identity / version (driven by Version.xcconfig + per-config xcconfig) -->
-    <key>CFBundleDevelopmentRegion</key>
-    <string>$(DEVELOPMENT_LANGUAGE)</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>$(PRODUCT_NAME)</string>
-    <key>CFBundleDisplayName</key>
-    <string>$(APP_DISPLAY_NAME)</string>
-    <key>CFBundlePackageType</key>
-    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$(MARKETING_VERSION)</string>
-    <key>CFBundleVersion</key>
-    <string>$(CURRENT_PROJECT_VERSION)</string>
-
-    <!-- App icon name pulled from xcconfig per build flavor -->
-    <key>CFBundleIcons</key>
-    <dict>
-        <key>CFBundlePrimaryIcon</key>
-        <dict>
-            <key>CFBundleIconName</key>
-            <string>$(ASSETCATALOG_COMPILER_APPICON_NAME)</string>
-        </dict>
-    </dict>
-
-    <!-- Launch + scene management (Xcode 16+ generates these automatically;
-         we replicate explicitly because GENERATE_INFOPLIST_FILE is now NO) -->
-    <key>UILaunchScreen</key>
-    <dict>
-        <key>UIColorName</key>
-        <string>LaunchBg</string>
-        <key>UIImageName</key>
-        <string>LaunchMarkV2</string>
-        <key>UIImageRespectsSafeAreaInsets</key>
-        <true/>
-    </dict>
-    <key>UIApplicationSceneManifest</key>
-    <dict>
-        <key>UIApplicationSupportsMultipleScenes</key>
-        <false/>
-    </dict>
-    <!-- Lock the whole app to light appearance so it never follows the
-         system's dark mode (the UI is designed light-first). This also
-         covers UIKit-presented system surfaces — alerts, action sheets,
-         the share sheet — which SwiftUI's .preferredColorScheme won't. -->
-    <key>UIUserInterfaceStyle</key>
-    <string>Light</string>
-    <key>UIApplicationSupportsIndirectInputEvents</key>
-    <true/>
-    <key>UIRequiredDeviceCapabilities</key>
-    <array>
-        <string>arm64</string>
-    </array>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-    </array>
-
-    <!-- Encryption / privacy -->
-    <key>ITSAppUsesNonExemptEncryption</key>
-    <false/>
-    <!-- Camera: used by the 自制圖鑑 capture flow to photograph an object and
-         turn it into a study card. -->
-    <key>NSCameraUsageDescription</key>
-    <string>用相機拍照，把身邊的東西做成自制圖鑑學習卡片。</string>
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <false/>
-    </dict>
-    <!-- Bundled fonts (W1 polish — Plus Jakarta Sans + JetBrains Mono) -->
-    <key>UIAppFonts</key>
-    <array>
-        <string>PlusJakartaSans-Regular.ttf</string>
-        <string>PlusJakartaSans-SemiBold.ttf</string>
-        <string>PlusJakartaSans-Bold.ttf</string>
-        <string>PlusJakartaSans-ExtraBold.ttf</string>
-        <string>JetBrainsMono-Regular.ttf</string>
-    </array>
-
-    <!-- Tuji custom keys exposed via Bundle.main.infoDictionary -->
-    <key>TUJI_BASE_URL</key>
-    <string>$(TUJI_BASE_URL)</string>
-    <key>TUJI_SUPABASE_URL</key>
-    <string>$(TUJI_SUPABASE_URL)</string>
-    <key>TUJI_SUPABASE_ANON_KEY</key>
-    <string>$(TUJI_SUPABASE_ANON_KEY)</string>
-
-    <!-- Google Sign-in.
-         GIDClientID is read by GoogleSignIn SDK at init.
-         CFBundleURLTypes registers the reversed client ID so Google's
-         consent screen can redirect back into the app. -->
-    <key>GIDClientID</key>
-    <string>$(TUJI_GOOGLE_CLIENT_ID)</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLName</key>
-            <string>google</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>$(TUJI_GOOGLE_REVERSED_CLIENT_ID)</string>
-            </array>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLName</key>
-            <string>app.tuji.deeplink</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>tuji</string>
-            </array>
-        </dict>
-    </array>
-
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(APP_DISPLAY_NAME)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconName</key>
+			<string>$(ASSETCATALOG_COMPILER_APPICON_NAME)</string>
+		</dict>
+	</dict>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(TUJI_GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>app.tuji.deeplink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tuji</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GIDClientID</key>
+	<string>$(TUJI_GOOGLE_CLIENT_ID)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>用相機拍照，把身邊的東西做成自制圖鑑學習卡片。</string>
+	<key>TUJI_BASE_URL</key>
+	<string>$(TUJI_BASE_URL)</string>
+	<key>TUJI_SUPABASE_ANON_KEY</key>
+	<string>$(TUJI_SUPABASE_ANON_KEY)</string>
+	<key>TUJI_SUPABASE_URL</key>
+	<string>$(TUJI_SUPABASE_URL)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>PlusJakartaSans-Regular.ttf</string>
+		<string>PlusJakartaSans-SemiBold.ttf</string>
+		<string>PlusJakartaSans-Bold.ttf</string>
+		<string>PlusJakartaSans-ExtraBold.ttf</string>
+		<string>JetBrainsMono-Regular.ttf</string>
+		<string>GenSenRounded2TW-R.otf</string>
+		<string>GenSenRounded2TW-B.otf</string>
+		<string>GenSenRounded2JP-R.otf</string>
+		<string>GenSenRounded2JP-B.otf</string>
+	</array>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBg</string>
+		<key>UIImageName</key>
+		<string>LaunchMarkV2</string>
+		<key>UIImageRespectsSafeAreaInsets</key>
+		<true/>
+	</dict>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 </dict>
 </plist>
