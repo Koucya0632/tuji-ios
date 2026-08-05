@@ -181,12 +181,16 @@ struct SearchView: View {
 
     // MARK: - Bits
 
+    /// The capsule search field is the single most recognisable iOS component
+    /// there is, so the field becomes a square-cornered block of `tujiPaper2` —
+    /// a hole in the paper rather than an outline drawn on it. The old hairline
+    /// border on a `tujiPaper` ground was invisible against the page anyway.
     private var searchBar: some View {
         HStack(spacing: Space.s3) {
             HStack(spacing: Space.s2) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.tujiInk3)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.tujiInk2)
                 TextField(
                     self.settings.current.learningDirection == .zhJa
                         ? "搜尋日文 / 假名 / 中文"
@@ -200,38 +204,42 @@ struct SearchView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.search)
-                .font(.tujiBodySm)
+                .font(.tujiBody)
                 .foregroundStyle(.tujiInk)
-                .tint(.tujiTeal)
+                .tint(.tujiInk)
                 if !self.vm.query.isEmpty {
                     Button {
                         self.vm.updateQuery("")
                         self.fieldFocused = true
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.tujiInk3)
+                        // A bare ✕, not `xmark.circle.fill` — the grey filled
+                        // disc is iOS's own clear button, and it is the second
+                        // thing that gave this field away as a system control.
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.tujiInk2)
+                            .frame(width: 44, height: 44)
+                            .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text("清除"))
                 }
             }
-            .padding(.horizontal, Space.s3)
-            .padding(.vertical, Space.s3)
-            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-            .overlay(Rectangle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
-
-            Button {
-                self.dismiss()
-            } label: {
-                Text("取消")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.tujiTeal)
+            .padding(.leading, Space.s3)
+            .padding(.trailing, Space.s1)
+            .frame(height: 52)
+            .background(.tujiPaper2)
+            .overlay {
+                if self.fieldFocused {
+                    Rectangle().stroke(.tujiEye, lineWidth: Border.bw2)
+                }
             }
-            .buttonStyle(.plain)
+            .animation(Motion.ease(Motion.d1), value: self.fieldFocused)
+
+            TujiNavTextAction(title: "取消") { self.dismiss() }
         }
         .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s3)
-        .padding(.bottom, Space.s3)
+        .padding(.vertical, Space.s2)
     }
 
     @ViewBuilder
@@ -253,88 +261,80 @@ struct SearchView: View {
     @ViewBuilder
     private var recentSection: some View {
         if self.cache.recentSearches.isEmpty {
-            VStack {
-                Spacer(minLength: Space.s5)
-                MascotEmptyState(
-                    pose: .think,
-                    title: "找個單字試試",
-                    message: "輸入英文或中文，即時顯示結果"
-                )
-                Spacer(minLength: Space.s5)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, Space.s4)
+            MascotEmptyState(
+                pose: .sleep,
+                title: "找個單字試試",
+                message: "輸入英文或中文，即時顯示結果"
+            )
+            .tujiEmptyStatePlacement()
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s2) {
+                VStack(alignment: .leading, spacing: 0) {
                     HStack {
+                        // Section labels are 墨3, not teal. Teal marks
+                        // accumulation; a heading accumulates nothing.
                         Text("最近搜尋")
                             .font(.tujiLabel)
-                            .tracking(2)
-                            .foregroundStyle(.tujiTeal)
+                            .tracking(0.5)
+                            .foregroundStyle(.tujiInk3)
                         Spacer()
-                        Button {
+                        TujiNavTextAction(title: "清除全部") {
                             self.cache.clearRecentSearches()
-                        } label: {
-                            Text("清除全部")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tujiInk3)
                         }
-                        .buttonStyle(.plain)
                     }
-                    .padding(.bottom, Space.s2)
-                    ForEach(self.cache.recentSearches, id: \.self) { q in
+                    .padding(.horizontal, Space.s4)
+
+                    ForEach(Array(self.cache.recentSearches.enumerated()), id: \.element) { index, q in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(.tujiRule)
+                                .frame(height: Border.bw1)
+                                .padding(.leading, Space.s4)
+                        }
                         Button {
                             self.vm.runImmediately(q)
                         } label: {
                             HStack(spacing: Space.s3) {
-                                Image(systemName: "clock.arrow.circlepath")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.tujiInk3)
                                 Text(q)
-                                    .font(.tujiBodySm)
+                                    .font(.tujiBody)
                                     .foregroundStyle(.tujiInk)
-                                Spacer()
+                                    .lineLimit(1)
+                                Spacer(minLength: Space.s2)
+                                // Points up-left into the field it will refill,
+                                // so it reads as "put this back" rather than as
+                                // another row that pushes a screen.
                                 Image(systemName: "arrow.up.left")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 17, weight: .semibold))
                                     .foregroundStyle(.tujiInk3)
                             }
-                            .frame(minHeight: 48)
-                            .contentShape(Rectangle())
+                            .padding(.horizontal, Space.s4)
+                            .frame(height: 56)
+                            .contentShape(.rect)
                         }
-                        .buttonStyle(.plain)
-                        Divider().background(.tujiRule.opacity(0.15))
+                        .tujiRowStyle()
                     }
                 }
-                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s3)
             }
         }
     }
 
+    /// Skeleton rows, not a spinner: results are about to occupy this space, and
+    /// showing their shape is more honest than a bar that says only "wait".
     private var loadingState: some View {
-        VStack(spacing: Space.s3) {
-            Spacer().frame(height: Space.s5)
-            TujiProgressBar(progress: nil).frame(width: 56).tint(.tujiTeal)
-            Text("搜尋中…")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-        }
-        .frame(maxWidth: .infinity)
+        TujiSkeletonRows(count: 3, height: 88)
+            .padding(.top, Space.s2)
     }
 
     private func emptyState(query: String) -> some View {
-        VStack {
-            Spacer(minLength: Space.s5)
-            MascotEmptyState(
-                pose: .think,
-                title: "找不到「\(query)」",
-                message: "換個關鍵字試試，或瀏覽圖鑑"
-            )
-            Spacer(minLength: Space.s5)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, Space.s4)
+        MascotEmptyState(
+            pose: .sleep,
+            title: "找不到「\(query)」",
+            // Names the one thing that most often works, rather than telling
+            // the user to go and think of a better word themselves.
+            message: "試試看用中文查"
+        )
+        .tujiEmptyStatePlacement()
     }
 
     private func errorState(_ error: Error) -> some View {
@@ -356,28 +356,33 @@ struct SearchView: View {
 
     private var resultsList: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: Space.s2) {
+            LazyVStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: Space.s2) {
                     Text("\(self.vm.results.count) 個結果")
                         .font(.tujiLabel)
-                        .tracking(2)
+                        .tracking(0.5)
                         .foregroundStyle(.tujiInk3)
                     if self.vm.loading {
-                        TujiProgressBar(progress: nil).frame(width: 56)
-                            .controlSize(.mini)
-                            .tint(.tujiTeal)
+                        TujiProgressBar(progress: nil).frame(width: 40)
                     }
                 }
+                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s2)
-                ForEach(self.vm.results) { word in
+                .padding(.bottom, Space.s3)
+
+                ForEach(Array(self.vm.results.enumerated()), id: \.element.id) { index, word in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(.tujiRule)
+                            .frame(height: Border.bw1)
+                            .padding(.leading, Space.s4)
+                    }
                     NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
                         SearchResultRow(word: word, query: self.vm.lastQuery)
                     }
-                    .buttonStyle(.plain)
-                    Divider().background(.tujiRule.opacity(0.15))
+                    .tujiRowStyle()
                 }
             }
-            .padding(.horizontal, Space.s4)
             .padding(.bottom, Space.s5)
         }
     }
@@ -391,66 +396,71 @@ private struct SearchResultRow: View {
 
     var body: some View {
         HStack(spacing: Space.s3) {
-            ZStack {
-                RoundedRectangle(cornerRadius: Radius.r0).fill(.tujiPaper)
+            self.thumbnail
+            VStack(alignment: .leading, spacing: 2) {
+                Text(self.highlighted(self.word.word))
+                    .font(.tujiH3)
+                    .foregroundStyle(.tujiInk)
+                    .lineLimit(1)
+                if self.settings.current.showZh {
+                    Text(self.highlighted(self.word.chinese))
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: Space.s2)
+            TujiRowAccessory()
+        }
+        .padding(.horizontal, Space.s4)
+        .frame(height: 88)
+        .contentShape(.rect)
+    }
+
+    /// The container holds the square and the picture fills it, so a portrait
+    /// cut-out cannot make its own row taller than its neighbours' — and the
+    /// `tujiPaper2` ground plus multiply dissolves the white backdrop these
+    /// dictionary cut-outs ship with, which used to sit on the page as a
+    /// visibly whiter rectangle.
+    private var thumbnail: some View {
+        Color.tujiPaper2
+            .frame(width: 56, height: 56)
+            .overlay {
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(Space.s1)
+                            .aspectRatio(
+                                contentMode: self.word.imageKind == .cutout ? .fit : .fill
+                            )
+                            .padding(self.word.imageKind == .cutout ? Space.s1 : 0)
+                            .blendMode(self.word.imageKind == .cutout ? .multiply : .normal)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 16))
                             .foregroundStyle(.tujiInk3)
                     } else {
-                        TujiProgressBar(progress: nil).frame(width: 56)
-                            .controlSize(.small)
-                            .tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
             }
-            .frame(width: 48, height: 48)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-            )
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(self.highlighted(self.word.word))
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(1)
-                if self.settings.current.showZh {
-                    Text(self.highlighted(self.word.chinese))
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.tujiInk3)
-        }
-        .padding(.vertical, Space.s2)
-        .frame(minHeight: 60)
-        .contentShape(Rectangle())
+            .clipped()
     }
 
-    /// Tints the matched substring teal so the user can see why a result
-    /// surfaced. Case-insensitive; no-op when nothing matches.
+    /// Marks the matched substring with a 瞳黃 ground rather than teal text.
+    /// Teal now means accumulation, and a recoloured glyph is hard to pick out
+    /// mid-sentence in CJK — a highlighter mark is the system's way of saying
+    /// "this is the part you asked for". Case-insensitive; no-op when nothing
+    /// matches (server hits often match a synonym that isn't in the label).
     private func highlighted(_ text: String) -> AttributedString {
         var attr = AttributedString(text)
         let needle = self.query.trimmingCharacters(in: .whitespaces)
         guard !needle.isEmpty,
               let range = attr.range(of: needle, options: .caseInsensitive)
         else { return attr }
-        attr[range].foregroundColor = .tujiTeal
+        attr[range].backgroundColor = .tujiEye
+        attr[range].foregroundColor = .tujiInk
         return attr
     }
 }
