@@ -9,8 +9,16 @@ struct CardsListView: View {
     @Environment(WordsStore.self) private var store
     @Environment(CategoriesStore.self) private var categories
     @Environment(MasteryStore.self) private var mastery
+    @Environment(LocalCache.self) private var cache
+    @Environment(AuthService.self) private var auth
+
+    private var isGuest: Bool {
+        if case .signedIn = self.auth.state { return false }
+        return true
+    }
 
     @State private var selectedCategory: String?
+    @State private var source: CardsSource = .all
     @State private var visibleCount: Int = 60
     @State private var peekWord: CardWord?
     @State private var pushAfterDismiss: String?
@@ -80,16 +88,80 @@ struct CardsListView: View {
     }
 
     private var chipRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Space.s2) {
-                self.chip(label: "全部", value: nil)
-                ForEach(self.chipCategories, id: \.id) { c in
-                    self.chip(label: c.nameZh, value: c.id)
+        VStack(alignment: .leading, spacing: Space.s2) {
+            // Row 1 — where the words came from.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Space.s2) {
+                    ForEach(CardsSource.available(isGuest: self.isGuest)) { value in
+                        self.sourceChip(value)
+                    }
+                }
+                .padding(.horizontal, Space.s4)
+            }
+
+            // Row 2 — theme. Only dictionary words have one.
+            if self.source.allowsCategoryFilter {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: Space.s2) {
+                        self.chip(label: tujiLocalized("全部"), value: nil)
+                        ForEach(self.chipCategories, id: \.id) { c in
+                            self.chip(label: c.nameZh, value: c.id)
+                        }
+                    }
+                    .padding(.horizontal, Space.s4)
                 }
             }
-            .padding(.horizontal, Space.s4)
+
+            self.countRow
         }
         .padding(.bottom, Space.s3)
+    }
+
+    /// Count on the left, actions on the right. 管理 appears only while the
+    /// user is looking at their own captures — it is the one moment that
+    /// entry point is relevant, and it keeps 圖鑑管理 out of the nav bar
+    /// (already full) and out of 我 (which is no longer a directory).
+    private var countRow: some View {
+        HStack {
+            // Reuses the existing `%lld 字` key rather than minting `%lld 個字`
+            // beside it — one concept, one string.
+            Text(tujiLocalized("\(self.filtered.count) 字"))
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            Spacer()
+            if self.source == .mine {
+                NavigationLink(value: NavRoute.atlasManage) {
+                    Text("管理 →")
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(.tujiInk)
+                        .underline()
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s1)
+    }
+
+    private func sourceChip(_ value: CardsSource) -> some View {
+        let selected = self.source == value
+        return Button {
+            self.source = value
+            if !value.allowsCategoryFilter { self.selectedCategory = nil }
+            self.visibleCount = self.pageSize
+        } label: {
+            Text(value.title)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(selected ? Color.tujiPaper : .tujiInk2)
+                .padding(.horizontal, Space.s3)
+                .frame(height: 36)
+                .background(selected ? Color.tujiInk : .tujiPaper2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     @ViewBuilder
@@ -181,17 +253,12 @@ struct CardsListView: View {
             self.visibleCount = self.pageSize
         } label: {
             Text(label)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(selected ? .white : .tujiInk2)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(selected ? Color.tujiPaper : .tujiInk2)
                 .padding(.horizontal, Space.s3)
-                .padding(.vertical, Space.s2)
-                .background(
-                    selected ? .tujiInk : .tujiPaper,
-                    in: .rect(cornerRadius: Radius.r0)
-                )
-                .overlay(
-                    Rectangle().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
-                )
+                .frame(height: 36)
+                .background(selected ? Color.tujiInk : .tujiPaper2)
         }
     }
 
@@ -212,6 +279,11 @@ struct CardsListView: View {
         return known
     }
 
+    /// Themes only. `custom` and `community` used to be pinned into this list so
+    /// they stayed reachable with no cards in them — but they are not themes,
+    /// they are *sources*, and they now live in their own row where they are
+    /// always offered regardless of content. Keeping them here as well would
+    /// present the same filter twice under two different meanings.
     static func visibleThemeCategories(
         from categories: [TujiCategory],
         presentIds: Set<String>
@@ -219,12 +291,13 @@ struct CardsListView: View {
         -> [TujiCategory]
     {
         categories.filter {
-            presentIds.contains($0.id) || $0.id == "custom" || $0.id == "community"
+            $0.id != "custom" && $0.id != "community" && presentIds.contains($0.id)
         }
     }
 
     private var filtered: [CardWord] {
         self.store.byCategory(self.selectedCategory)
+            .filter { self.source.matches($0, isBookmarked: self.cache.isFavorite) }
     }
 
     private var visibleWords: [CardWord] {
