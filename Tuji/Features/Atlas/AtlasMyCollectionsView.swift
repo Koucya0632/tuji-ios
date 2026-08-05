@@ -166,36 +166,23 @@ private struct AtlasMyCollectionRow: View {
                 collectionID: self.collection.id,
                 avatarColor: self.collection.avatarColor,
                 avatarImageURL: self.collection.avatarURL,
-                size: 64
+                size: 56
             )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(self.collection.title)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
-                HStack(spacing: Space.s2) {
-                    Text(self.collection.review.label)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.tujiTeal)
-                        .padding(.horizontal, Space.s2)
-                        .padding(.vertical, 2)
-                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
-                    Label("\(self.collection.itemCount)", systemImage: "square.stack")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.tujiInk3)
-                }
+                Text(tujiLocalized("\(self.collection.itemCount) 字"))
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
             }
-            Spacer(minLength: 0)
+            Spacer(minLength: Space.s2)
+            TujiStatusLabel(status: self.collection.review)
         }
-        .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
-        )
     }
 }
 

@@ -73,11 +73,13 @@ struct CollectionIdentityTile: View {
     let collectionID: String
     let avatarColor: String?
     let avatarImageURL: URL?
-    let size: CGFloat
+    /// `nil` fills whatever space it is given — the cover case, where the tile
+    /// is the screen's first event rather than a thumbnail beside a title.
+    var size: CGFloat?
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: self.size * 0.18, style: .continuous)
+            Rectangle()
                 .fill(Color(collectionIdentityHex: self.identities.colorHex(
                     collectionID: self.collectionID,
                     serverColor: self.avatarColor
@@ -94,11 +96,6 @@ struct CollectionIdentityTile: View {
         }
         .frame(width: self.size, height: self.size)
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: self.size * 0.18, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: self.size * 0.18, style: .continuous)
-                .stroke(.white.opacity(0.28), lineWidth: 1)
-        }
         .accessibilityHidden(true)
     }
 }

@@ -240,3 +240,37 @@ struct TujiSelectionMark: View {
             .accessibilityHidden(true)
     }
 }
+
+/// Review-state label (C.9). A 3pt leading edge carries the state's colour so
+/// the word itself stays neutral — a red-on-red "未通過" reads as an alarm, and
+/// a rejection is information, not an emergency.
+struct TujiStatusLabel: View {
+    let status: AtlasReviewStatus
+
+    var body: some View {
+        Text(verbatim: self.status.label)
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .foregroundStyle(.tujiInk2)
+            .padding(.horizontal, Space.s2)
+            .frame(height: 24)
+            .background(alignment: .leading) {
+                HStack(spacing: 0) {
+                    Rectangle().fill(self.edge).frame(width: Border.bw3)
+                    Rectangle().fill(.tujiPaper2)
+                }
+            }
+            .accessibilityLabel(Text(verbatim: self.status.label))
+    }
+
+    /// 已公開 is accumulation, 審核中 is "happening now", 未通過/已下架 is the one
+    /// state the user may need to act on.
+    private var edge: Color {
+        switch self.status {
+        case .approved: .tujiTeal
+        case .pending, .pendingAuto, .pendingReview: .tujiEye
+        case .rejected, .takedown: .tujiAlert
+        case .draft, .withdrawn: .tujiInk3
+        }
+    }
+}

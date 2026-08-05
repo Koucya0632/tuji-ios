@@ -26,42 +26,15 @@ struct AtlasAuthorProfileView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: Space.s4) {
-                if let author = self.vm.author {
-                    self.headerCard(author)
-                    // A synthesized header (own page, nothing published yet) has
-                    // no segments to show — the counts above already say zero, so
-                    // what is useful here is the way out.
-                    if case .notFound = self.vm.phase {
-                        self.nothingPublishedYet
-                    } else {
-                        if self.vm.showsSegmentedControl {
-                            self.segmentPicker
-                        }
-                        switch self.vm.visibleSegment {
-                        case .collections: self.collectionsSection
-                        case .items: self.itemsSection
-                        }
-                    }
-                } else if case .loading = self.vm.phase {
-                    TujiPageLoading()
-                } else {
-                    self.blankState
-                }
+        VStack(spacing: 0) {
+            TujiNavBar(leading: .back) {
+                if self.vm.isSelf { self.editButton }
             }
-            .padding(Space.s4)
+            self.scroll
         }
         .background(.tujiPaper)
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if self.vm.isSelf {
-                ToolbarItem(placement: .topBarTrailing) {
-                    self.editButton
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: self.$selectedItem) { item in
             AtlasPublicDetailView(item: item)
         }
@@ -85,19 +58,42 @@ struct AtlasAuthorProfileView: View {
         }
     }
 
+    private var scroll: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.s4) {
+                if let author = self.vm.author {
+                    self.headerCard(author)
+                    // A synthesized header (own page, nothing published yet) has
+                    // no segments to show — the counts above already say zero, so
+                    // what is useful here is the way out.
+                    if case .notFound = self.vm.phase {
+                        self.nothingPublishedYet
+                    } else {
+                        if self.vm.showsSegmentedControl {
+                            self.segmentPicker
+                        }
+                        switch self.vm.visibleSegment {
+                        case .collections: self.collectionsSection
+                        case .items: self.itemsSection
+                        }
+                    }
+                } else if case .loading = self.vm.phase {
+                    TujiPageLoading()
+                } else {
+                    self.blankState.padding(Space.s4)
+                }
+            }
+            .padding(.bottom, Space.s6)
+        }
+    }
+
     // MARK: Self-view chrome
 
     /// Pushes the profile editor rather than a sheet: 編輯個人資料 is now the
     /// single place the whole profile is edited, so the preview links to it
     /// instead of owning a second copy of the form.
     private var editButton: some View {
-        Button {
-            self.editing = true
-        } label: {
-            Text("編輯")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.tujiTeal)
-        }
+        TujiNavTextAction(title: "編輯") { self.editing = true }
     }
 
     // MARK: Blank states
@@ -157,34 +153,38 @@ struct AtlasAuthorProfileView: View {
 
     // MARK: Header
 
+    /// A full-bleed ink block rather than a white card. This page is about *a
+    /// person*, and the block gives it the weight that says so — it also mirrors
+    /// the ink block on 今天: one is "you", this one is "them".
     private func headerCard(_ author: AtlasAuthor) -> some View {
-        VStack(spacing: Space.s3) {
-            ProfileAvatar(avatar: author.avatar, size: 84)
-
-            VStack(spacing: 2) {
-                Text(author.displayName)
-                    .font(.tujiH2)
-                    .foregroundStyle(.tujiInk)
-                // "UID: " rather than "@": the @ form promises a handle you
-                // could type or mention, and this is a machine-assigned code
-                // nobody ever types.
-                Text(verbatim: "\(tujiLocalized("UID")): \(author.handle)")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
+        VStack(alignment: .leading, spacing: Space.s3) {
+            HStack(alignment: .top, spacing: Space.s3) {
+                ProfileAvatar(avatar: author.avatar, size: 72)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(author.displayName)
+                        .font(.tujiH2)
+                        .foregroundStyle(.tujiPaper)
+                    // "UID: " rather than "@": the @ form promises a handle you
+                    // could type or mention, and this is a machine-assigned code
+                    // nobody ever types.
+                    Text(verbatim: "\(tujiLocalized("UID")): \(author.handle)")
+                        .font(.tujiMono)
+                        .foregroundStyle(.tujiPaper.opacity(0.6))
+                }
+                Spacer(minLength: 0)
             }
 
             if let bio = author.bio?.trimmingCharacters(in: .whitespacesAndNewlines),
                !bio.isEmpty
             {
                 Text(bio)
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk2)
-                    .multilineTextAlignment(.center)
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiPaper.opacity(0.8))
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Space.s1)
             }
 
-            HStack(spacing: Space.s4) {
+            HStack(spacing: Space.s5) {
                 self.stat(value: "\(author.publishedCount)", label: tujiLocalized("公開項目"))
                 // The altruistic signal: how much this author's work has helped
                 // others (../docs/COMMUNITY_ATLAS_PLAN.md §3C — FEATURES.md §12.5).
@@ -192,24 +192,22 @@ struct AtlasAuthorProfileView: View {
             }
             .padding(.top, Space.s1)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Space.s4)
-        .background(.tujiPaper)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
+        .background(.tujiInk)
     }
 
     private func stat(value: String, label: String) -> some View {
-        VStack(spacing: 1) {
-            Text(value)
-                .font(.system(size: 18, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-            Text(label)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.tujiInk3)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: value)
+                .font(.tujiMono)
+                .foregroundStyle(.tujiPaper)
+            Text(verbatim: label)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiPaper.opacity(0.6))
+                .lineLimit(1)
+                .fixedSize()
         }
     }
 
