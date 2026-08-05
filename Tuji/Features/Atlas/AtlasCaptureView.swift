@@ -255,50 +255,38 @@ struct AtlasCaptureView: View {
             self.candidateSection
             self.correctionForm
         }
-        .padding(Space.s3)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
-        )
     }
 
     private func imagePreview(_ image: AtlasImageSummary) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
                 Text("校正資料")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
-                Spacer()
-                Button {
-                    self.confirmRetake = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.counterclockwise")
-                        Text("換一張")
-                    }
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.tujiLabel)
+                    .tracking(0.5)
                     .foregroundStyle(.tujiInk3)
+                Spacer()
+                TujiNavTextAction(title: "換一張", isEnabled: self.vm.busy == nil) {
+                    self.confirmRetake = true
                 }
-                .buttonStyle(.plain)
-                .disabled(self.vm.busy != nil)
             }
-            ZStack {
-                Rectangle().fill(.tujiPaper)
-                LazyImage(url: image.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fit)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiProgressBar(progress: nil)
+            // A user photograph, so no multiply — the ground is `tujiPaper2`
+            // only so a portrait shot's letterboxing reads as part of the page.
+            Color.tujiPaper2
+                .frame(height: 240)
+                .overlay {
+                    LazyImage(url: image.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable().aspectRatio(contentMode: .fit)
+                        } else if state.error != nil {
+                            Image(systemName: "photo")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(.tujiInk3)
+                        } else {
+                            TujiProgressBar(progress: nil)
+                        }
                     }
                 }
-            }
-            .frame(height: 240)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
+                .clipped()
         }
     }
 
@@ -357,15 +345,12 @@ struct AtlasCaptureView: View {
             Image(systemName: icon)
             Text(title)
         }
-        .font(.system(size: 13, weight: selected ? .bold : .semibold))
-        .foregroundStyle(selected ? Color.white : .tujiInk)
+        .font(.tujiLabel)
+        .tracking(0.5)
+        .foregroundStyle(selected ? Color.tujiPaper : .tujiInk)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, Space.s3)
-        .background(selected ? Color.tujiTeal : .tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(selected ? Color.clear : Color.tujiRule.opacity(0.25), lineWidth: 1)
-        )
+        .frame(height: 48)
+        .background(selected ? Color.tujiInk : .tujiPaper2)
     }
 
     /// 高精度識別. For Pro it's a selectable mode (filled when active); for Free
@@ -383,15 +368,15 @@ struct AtlasCaptureView: View {
                 Image(systemName: "lock.fill")
                 Text("高精度識別")
             }
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(.tujiTeal)
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .foregroundStyle(.tujiInk2)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Space.s3)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(.tujiTeal.opacity(0.55), lineWidth: 1.5)
-            )
+            .frame(height: 48)
+            // Locked, not sold: a Pro-only mode gets the same ground as the
+            // others plus a padlock, rather than a teal panel shouting at the
+            // user from inside a form they are trying to finish.
+            .background(.tujiPaper2)
         }
     }
 
@@ -400,8 +385,9 @@ struct AtlasCaptureView: View {
         if !self.vm.candidates.isEmpty {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("候選結果")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
                 let primary = self.vm.candidates.filter { $0.levelKind == .primary }
                 let fine = self.vm.candidates.filter { $0.levelKind == .fine }
                 self.candidateGroup(rows: primary)
@@ -423,13 +409,16 @@ struct AtlasCaptureView: View {
                             self.vm.apply(candidate, overwrite: true)
                         } label: {
                             Text(self.vm.candidateLabel(candidate))
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(self.vm.selectedCandidateId == candidate.id ? .white : .tujiInk)
+                                .font(.tujiBodySm)
+                                .foregroundStyle(
+                                    self.vm.selectedCandidateId == candidate.id
+                                        ? Color.tujiPaper : .tujiInk
+                                )
                                 .padding(.horizontal, Space.s3)
-                                .padding(.vertical, Space.s2)
+                                .frame(height: 40)
                                 .background(
-                                    self.vm.selectedCandidateId == candidate.id ? .tujiTeal : .tujiPaper,
-                                    in: .rect(cornerRadius: Radius.r0)
+                                    self.vm.selectedCandidateId == candidate.id
+                                        ? Color.tujiInk : .tujiPaper2
                                 )
                         }
                         .buttonStyle(.plain)
@@ -441,24 +430,25 @@ struct AtlasCaptureView: View {
 
     private var correctionForm: some View {
         @Bindable var vm = self.vm
-        return VStack(alignment: .leading, spacing: Space.s3) {
+        return VStack(alignment: .leading, spacing: Space.s4) {
             Text("人工校正")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.tujiInk)
-            self.field("圖片名稱", text: $vm.lemma)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            self.field("圖片名稱", text: $vm.lemma, suggested: .lemma)
             if let warning = self.vm.duplicateLemmaWarning {
                 Text(warning)
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiTeal)
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk2)
             }
             // "中文名稱" localizes to Meaning/意味 for ja/en. displayZhHant
             // always rides through as the Chinese base column (prefilled from
             // the candidate) even when the field is hidden or bound to the gloss.
             switch self.secondField {
             case .chineseName:
-                self.field("中文名稱", text: $vm.displayZhHant)
+                self.field("中文名稱", text: $vm.displayZhHant, suggested: .zhHant)
             case .gloss:
-                self.field("中文名稱", text: $vm.displayGloss)
+                self.field("中文名稱", text: $vm.displayGloss, suggested: .gloss)
             case .hidden:
                 EmptyView()
             }
@@ -481,19 +471,26 @@ struct AtlasCaptureView: View {
         }
     }
 
-    private func field(_ title: LocalizedStringKey, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-            TextField("", text: text)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.tujiInk)
-                .textInputAutocapitalization(.never)
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, Space.s3)
-                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+    /// A field the model filled carries an AI 建議 mark until the user types
+    /// over it (D.10). The point is not to rank the value — the model is right
+    /// most of the time — but to say plainly where it came from, so correcting
+    /// it feels like the expected next step rather than overruling the app.
+    private func field(
+        _ title: LocalizedStringKey,
+        text: Binding<String>,
+        suggested: AtlasCaptureVM.SuggestedField
+    )
+        -> some View
+    {
+        TujiField(
+            label: title,
+            badge: self.vm.isStillSuggested(suggested) ? "AI 建議" : nil
+        ) {
+            TujiTextField(placeholder: "", text: text)
         }
+        // TujiField carries the page margin itself; the panel around this form
+        // has its own, so cancel one out.
+        .padding(.horizontal, -Space.s4)
     }
 
     /// Shown when the initial upload failed (typically weak network): re-upload
