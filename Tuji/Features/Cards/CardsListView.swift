@@ -132,10 +132,10 @@ struct CardsListView: View {
             ScrollView {
                 LazyVGrid(
                     columns: [
-                        GridItem(.flexible(), spacing: Space.s3),
-                        GridItem(.flexible(), spacing: Space.s3)
+                        GridItem(.flexible(), spacing: Space.s2),
+                        GridItem(.flexible(), spacing: Space.s2)
                     ],
-                    spacing: Space.s3
+                    spacing: Space.s4
                 ) {
                     ForEach(self.visibleWords) { word in
                         NavigationLink(value: NavRoute.wordDetail(id: word.id)) {

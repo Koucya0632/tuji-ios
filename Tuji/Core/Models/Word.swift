@@ -67,6 +67,29 @@ struct CardWord: Codable, Identifiable, Hashable {
     var imageURL: URL? {
         URL(string: imageUrl)
     }
+
+    /// Which kind of picture this word carries.
+    ///
+    /// The dictionary's own artwork is a cut-out on a pure white backdrop; a
+    /// word the user photographed, or saved from someone else's atlas, is a
+    /// real scene. They cannot be presented the same way — multiplying a
+    /// photograph against the paper darkens the whole frame, while leaving a
+    /// cut-out unmultiplied leaves a white rectangle floating on the page.
+    var imageKind: WordImageKind {
+        switch self.category {
+        case "custom", "community": .photograph
+        default: .cutout
+        }
+    }
+}
+
+/// Distinguishes dictionary artwork from user photography. See
+/// `CardWord.imageKind`.
+nonisolated enum WordImageKind {
+    /// White-backdrop product shot. Blends into the paper.
+    case cutout
+    /// A real photograph. Rendered as-is.
+    case photograph
 }
 
 struct WordsListResponse: Decodable {

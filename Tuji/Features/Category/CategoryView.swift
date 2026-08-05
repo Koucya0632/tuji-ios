@@ -184,10 +184,10 @@ struct CategoryView: View {
         } else {
             LazyVGrid(
                 columns: [
-                    GridItem(.flexible(), spacing: Space.s3),
-                    GridItem(.flexible(), spacing: Space.s3)
+                    GridItem(.flexible(), spacing: Space.s2),
+                    GridItem(.flexible(), spacing: Space.s2)
                 ],
-                spacing: Space.s3
+                spacing: Space.s4
             ) {
                 ForEach(words) { word in
                     NavigationLink(value: NavRoute.wordDetail(id: word.id)) {

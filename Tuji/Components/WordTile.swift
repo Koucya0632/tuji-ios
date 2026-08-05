@@ -1,6 +1,17 @@
-// Image tile for a CardWord. Used in Cards grid, Today themes, Search
-// results, etc. Image loads via Nuke's LazyImage — cached on disk + in
+// Image tile for a CardWord. Used in the 圖鑑 grid, Today themes, Search
+// results, Favorites. Image loads via Nuke's LazyImage — cached on disk + in
 // memory automatically.
+//
+// The card is gone. The tile used to be a white rounded rectangle with a border,
+// which meant the most prominent thing in a grid of words was the *box*, not the
+// picture or the word. Content now sits directly on the paper.
+//
+// The white backdrop is gone too, and that was the app's most widespread visual
+// flaw: dictionary artwork is a cut-out on pure white, so on a warm page every
+// tile showed a white rectangle brighter than its surroundings. Multiplying the
+// image against a `tujiPaper2` container makes white → the container's colour
+// and leaves the object untouched, so the object sits on the page instead of on
+// a card. It is applied only to cut-outs — see `CardWord.imageKind`.
 
 import Nuke
 import NukeUI
@@ -8,10 +19,11 @@ import SwiftUI
 
 struct WordTile: View {
     let word: CardWord
-    var height: CGFloat = 120
+    /// Fixed image height. `nil` (the grid case) makes the image square.
+    var height: CGFloat?
     var showLabel: Bool = true
-    /// When true, overlays a mastery level badge + score (used by 圖鑑). Other
-    /// reuse sites (Today / Search / Favorites) leave this off.
+    /// When true, shows the mastery scale and the next-review countdown
+    /// (used by 圖鑑). Other reuse sites leave this off.
     var showMastery: Bool = false
     /// The word's 0–100 mastery score, or nil if never studied (→ 未學). Only
     /// consulted when `showMastery` is true.
@@ -28,91 +40,103 @@ struct WordTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                Rectangle().fill(.tujiPaper)
-
-                LazyImage(url: self.word.imageURL) { state in
-                    if let image = state.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(Space.s2)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .font(.system(size: 24))
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
-                    }
-                }
-                .pipeline(.shared)
-            }
-            .frame(height: self.height)
-            .clipped()
-            .overlay(alignment: .topTrailing) {
-                if self.showMastery {
-                    MasteryBadge(level: self.masteryLevel)
-                        .padding(Space.s2)
-                }
-            }
+            self.image
+                .overlay(alignment: .topTrailing) { self.sourceDot }
 
             if self.showLabel {
-                VStack(alignment: .leading, spacing: 2) {
-                    // 圖鑑 surfaces the mastery *level* via the badge overlay on
-                    // the image; the numeric score stays on the detail page only.
+                VStack(alignment: .leading, spacing: Space.s1) {
+                    if self.showMastery {
+                        MasteryBadge(level: self.masteryLevel, score: self.masteryScore)
+                            .padding(.top, Space.s2)
+                            .padding(.bottom, Space.s1)
+                    }
+
                     Text(self.word.word)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
 
                     if let reading = self.word.reading, !reading.isEmpty {
                         Text(reading)
-                            .font(.tujiLabel)
+                            .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                     }
 
                     if self.settings.current.showZh {
                         Text(self.word.chinese)
-                            .font(.tujiLabel)
+                            .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                     }
+
+                    if self.showMastery, let due = self.nextReviewDate {
+                        Text(ReviewSchedule.countdownLabel(until: due))
+                            .font(.tujiLabel)
+                            .tracking(0.5)
+                            .foregroundStyle(.tujiInk3)
+                            .lineLimit(1)
+                            .padding(.top, 2)
+                    }
                 }
-                .padding(Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .background(.tujiPaper)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
-        )
-        // Bottom-right corner of the whole card (below the label).
-        .overlay(alignment: .bottomTrailing) {
-            if self.showMastery, let due = self.nextReviewDate {
-                self.countdownPill(due)
-                    .padding(Space.s2)
             }
         }
     }
 
-    /// Next-review countdown pill for the tile's bottom-right corner. Neutral
-    /// grey on a white capsule (matches the de-emphasized badge palette and
-    /// stays legible over artwork).
-    private func countdownPill(_ date: Date) -> some View {
-        HStack(spacing: 3) {
-            Image(systemName: "clock")
-            Text(ReviewSchedule.countdownLabel(until: date))
+    /// The container is what holds the square, not the image. Putting
+    /// `.aspectRatio` on `LazyImage` lets each picture's own proportions leak
+    /// through, so a grid of tiles came out ragged — wide images sat short,
+    /// tall ones sat long, and the two columns stopped lining up.
+    private var image: some View {
+        Group {
+            if let height = self.height {
+                Color.tujiPaper2.frame(height: height)
+            } else {
+                Color.tujiPaper2.aspectRatio(1, contentMode: .fit)
+            }
         }
-        .font(.system(size: 10, weight: .semibold))
-        .foregroundStyle(.tujiInk3)
-        .lineLimit(1)
-        .padding(.horizontal, Space.s2)
-        .padding(.vertical, 3)
-        .background(.tujiPaper.opacity(0.95), in: .rect(cornerRadius: Radius.r0))
-        .overlay(Rectangle().stroke(.tujiRule.opacity(0.4), lineWidth: 1))
-        .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
+        .frame(maxWidth: .infinity)
+        .overlay { self.picture }
+        .clipped()
+    }
+
+    private var picture: some View {
+        LazyImage(url: self.word.imageURL) { state in
+            if let image = state.image {
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: self.word.imageKind == .cutout ? .fit : .fill)
+                    .padding(self.word.imageKind == .cutout ? Space.s3 : 0)
+                    // White × any ground = that ground, so the backdrop
+                    // disappears and the object keeps its own colour.
+                    .blendMode(self.word.imageKind == .cutout ? .multiply : .normal)
+            } else if state.error != nil {
+                Image(systemName: "photo")
+                    .font(.system(size: 24))
+                    .foregroundStyle(.tujiInk3)
+            } else {
+                TujiImagePlaceholder()
+            }
+        }
+        .pipeline(.shared)
+    }
+
+    /// An 8pt square marking where the word came from. Ink = you made it,
+    /// teal = you took it in from the community (teal means accumulation, and a
+    /// saved word is exactly that). Dictionary words carry no mark, because
+    /// "the dictionary" is the default and does not need saying.
+    @ViewBuilder
+    private var sourceDot: some View {
+        switch self.word.category {
+        case "custom":
+            Rectangle().fill(.tujiInk).frame(width: 8, height: 8).padding(Space.s2)
+        case "community":
+            Rectangle().fill(.tujiTeal).frame(width: 8, height: 8).padding(Space.s2)
+        default:
+            EmptyView()
+        }
     }
 }
 
@@ -126,12 +150,18 @@ struct WordTile: View {
         pronunciation: "/təˈmeɪtoʊ/"
     )
     ScrollView {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: Space.s2),
+                GridItem(.flexible(), spacing: Space.s2)
+            ],
+            spacing: Space.s4
+        ) {
             ForEach(0..<4, id: \.self) { _ in
-                WordTile(word: sample)
+                WordTile(word: sample, showMastery: true, masteryScore: 62)
             }
         }
-        .padding()
+        .padding(.horizontal, Space.s4)
     }
     .background(.tujiPaper)
     .environment(SettingsStore.shared)

@@ -23,7 +23,10 @@ struct MasteryBadge: View {
 
     private static let segments = 5
     private static let width: CGFloat = 40
-    private static let height: CGFloat = Border.bw2
+    /// C.9 writes "高 `bw2` 4" but B.6 defines `bw2` as 2 — the spec contradicts
+    /// itself. At 2pt the five segments are not readable at arm's length, so the
+    /// stated 4 wins; the bar's height is its own value, not a border width.
+    private static let height: CGFloat = 4
 
     var body: some View {
         HStack(spacing: 1) {
