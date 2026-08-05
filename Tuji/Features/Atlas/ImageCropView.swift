@@ -31,7 +31,7 @@ struct ImageCropView: View {
     private let handleSize: CGFloat = 26
     private let hitSlop: CGFloat = 44
 
-    private enum Corner { case topLeft, topRight, bottomLeft, bottomRight }
+    private enum Corner: CaseIterable { case topLeft, topRight, bottomLeft, bottomRight }
 
     var body: some View {
         ZStack {
@@ -95,16 +95,20 @@ struct ImageCropView: View {
                     path.addRect(CGRect(origin: .zero, size: geo.size))
                     path.addRect(window)
                 }
-                .fill(.black.opacity(0.55), style: FillStyle(eoFill: true))
+                .fill(.tujiScrim, style: FillStyle(eoFill: true))
                 .allowsHitTesting(false)
 
                 self.thirdsGrid(in: window)
 
+                // 2pt 瞳黃 frame with thickened corners (D.10). White was the
+                // platform's own crop chrome; 瞳黃 is what this app uses for
+                // "the thing you are working on right now".
                 Rectangle()
-                    .stroke(.white, lineWidth: 2)
+                    .stroke(.tujiEye, lineWidth: Border.bw2)
                     .frame(width: window.width, height: window.height)
                     .position(x: window.midX, y: window.midY)
                     .allowsHitTesting(false)
+                self.cornerMarks(in: window)
 
                 // Pan the whole window. Sits below the corner handles so the corners
                 // win their hit area.
@@ -133,17 +137,37 @@ struct ImageCropView: View {
                 path.addLine(to: CGPoint(x: window.maxX, y: y))
             }
         }
-        .stroke(.white.opacity(0.35), lineWidth: 0.5)
+        .stroke(.tujiPaper.opacity(0.3), lineWidth: 0.5)
         .allowsHitTesting(false)
     }
 
+    /// The corners are drawn, not handled: a 12pt thickening of the frame's own
+    /// stroke rather than four floating discs. The discs were the last circles
+    /// in the flow and they sat *on top of* the picture they were framing.
+    private func cornerMarks(in window: CGRect) -> some View {
+        let arm: CGFloat = 12
+        return ZStack {
+            ForEach(Array(Corner.allCases.enumerated()), id: \.offset) { _, corner in
+                let point = self.cornerPoint(corner, in: window)
+                let sx: CGFloat = (corner == .topLeft || corner == .bottomLeft) ? 1 : -1
+                let sy: CGFloat = (corner == .topLeft || corner == .topRight) ? 1 : -1
+                Path { path in
+                    path.move(to: CGPoint(x: point.x + sx * arm, y: point.y))
+                    path.addLine(to: point)
+                    path.addLine(to: CGPoint(x: point.x, y: point.y + sy * arm))
+                }
+                .stroke(.tujiEye, lineWidth: Border.bw3 + 1)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    /// Invisible: the corner *mark* is drawn by `cornerMarks`; this is only the
+    /// touch target, kept at 44 so the grab area survives the smaller mark.
     private func handle(_ corner: Corner, window: CGRect, frame: CGRect) -> some View {
         let point = self.cornerPoint(corner, in: window)
-        return Circle()
-            .fill(.white)
-            .overlay(Circle().stroke(.tujiTeal, lineWidth: 3))
-            .frame(width: self.handleSize, height: self.handleSize)
-            .frame(width: self.hitSlop, height: self.hitSlop) // larger touch target
+        return Color.clear
+            .frame(width: self.hitSlop, height: self.hitSlop)
             .contentShape(Rectangle())
             .position(x: point.x, y: point.y)
             .gesture(self.cornerGesture(corner, in: frame))
@@ -255,37 +279,27 @@ struct ImageCropView: View {
 
     private var toolbar: some View {
         HStack(spacing: Space.s3) {
+            // 重拍 / 使用 (D.10) — the two things you can do with a frame you
+            // just took. 重設 went: it undid a crop the user could redo by
+            // dragging, and three actions on a two-action screen is one too many.
             Button {
                 self.onCancel()
             } label: {
-                Text("取消")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(.vertical, Space.s3)
-                    .padding(.horizontal, Space.s3)
+                Text("重拍")
+                    .font(.tujiH3)
+                    .foregroundStyle(.tujiPaper)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(.tujiPaper.opacity(0.12))
             }
+            .buttonStyle(.plain)
             .disabled(self.working)
 
-            if self.proxy != nil {
-                Button {
-                    self.cropN = CGRect(x: 0, y: 0, width: 1, height: 1)
-                } label: {
-                    Text("重設")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.85))
-                        .padding(.vertical, Space.s3)
-                        .padding(.horizontal, Space.s3)
-                }
-                .disabled(self.working)
-            }
-
-            Spacer()
-
             BBtn(
-                title: self.working ? "處理中…" : "使用裁切",
+                title: self.working ? "處理中…" : "使用",
                 bg: .tujiEye,
                 fg: .tujiInk,
-                icon: "checkmark"
+                fullWidth: true
             ) {
                 self.confirm()
             }

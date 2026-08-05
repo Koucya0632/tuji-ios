@@ -187,28 +187,17 @@ private struct AdCaptureSnapshotView: View {
                         .foregroundStyle(.tujiInk3)
                 }
 
-                Button {} label: {
-                    HStack {
-                        Image(systemName: "camera.fill")
-                        Text("拍照")
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Space.s3)
-                    .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
-                }
-                .buttonStyle(.plain)
+                BBtn(title: "拍照", fullWidth: true, icon: "camera.fill") {}
 
                 HStack {
                     Image(systemName: "photo.on.rectangle")
                     Text("從相簿選")
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s3)
-                .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
+                .frame(height: 56)
+                .background(.tujiPaper2)
 
                 Spacer()
             }
