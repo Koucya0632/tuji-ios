@@ -7,6 +7,24 @@ import Nuke
 import NukeUI
 import SwiftUI
 
+/// The saved state is an ink-on-eye inversion like every other "this is the one
+/// you picked" surface; unsaved is the plain primary button.
+private struct CollectionSaveStyle: ButtonStyle {
+    let saved: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(self.saved ? Color.tujiPaper : .tujiInk)
+            .background(self.ground(pressed: configuration.isPressed))
+            .animation(Motion.ease(Motion.d1), value: configuration.isPressed)
+    }
+
+    private func ground(pressed: Bool) -> Color {
+        if self.saved { return pressed ? .tujiInk2 : .tujiPaper.opacity(0.2) }
+        return pressed ? .tujiEyeDeep : .tujiEye
+    }
+}
+
 private func collectionLearningPillTitle(remaining: Int, total: Int) -> String {
     if remaining == 0 { return tujiLocalized("全部學習中") }
     if remaining < total { return tujiLocalized("加入其餘 \(remaining) 個") }
@@ -47,19 +65,19 @@ struct AtlasCollectionDetailView: View {
                     self.tabBar
                     self.tabContent(collection)
                 } else if case .loading = self.vm.phase {
-                    TujiProgressBar(progress: nil).frame(width: 56)
-                        .tint(.tujiTeal)
-                        .padding(.top, Space.s5)
+                    TujiPageLoading()
                 } else {
                     self.errorState
                 }
             }
             .frame(maxWidth: .infinity)
         }
+        // Floats over the bleeding cover so the page opens with the photograph.
+        .overlay(alignment: .topLeading) { TujiNavBar(leading: .back) }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiPaper)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("合集"))
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: self.$selectedItem) { item in
             AtlasPublicDetailView(item: item)
         }
@@ -123,106 +141,139 @@ struct AtlasCollectionDetailView: View {
 
     // MARK: Header
 
+    /// Cover, then a full-width ink action bar. This is the screen §4 named as
+    /// "clean turned into empty": one white card holding an avatar, a title,
+    /// four small statistics and a pale teal button, then half a screen of
+    /// nothing. Every element was small and none of them was the point.
+    ///
+    /// A collection is made of photographs somebody took, which is the most
+    /// persuasive thing about it — so the cover becomes the first event at full
+    /// width, and the numbers and the action collect into one ink bar that acts
+    /// as the screen's centre of gravity.
     private func header(_ collection: AtlasCollection) -> some View {
-        HStack(alignment: .top, spacing: Space.s3) {
+        VStack(spacing: 0) {
+            self.cover(collection)
+            self.actionBar(collection)
+        }
+    }
+
+    private func cover(_ collection: AtlasCollection) -> some View {
+        ZStack(alignment: .bottomLeading) {
             CollectionIdentityTile(
                 collectionID: collection.id,
                 avatarColor: collection.avatarColor,
                 avatarImageURL: collection.avatarURL,
-                size: 104
+                size: nil
+            )
+
+            // One-way scrim: legibility, not decoration.
+            LinearGradient(
+                colors: [.clear, Color.tujiInk.opacity(0.7)],
+                startPoint: .top,
+                endPoint: .bottom
             )
 
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text(collection.title)
-                    .font(.tujiH2)
-                    .foregroundStyle(.tujiInk)
+                    .font(.tujiH1)
+                    .foregroundStyle(.tujiPaper)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                if let author = collection.author {
-                    Button {
-                        self.selectedAuthorHandle = author.handle
-                    } label: {
-                        HStack(spacing: 6) {
-                            ProfileAvatar(avatar: author.avatar, size: 22)
-                            Text(author.displayName)
-                                .font(.tujiLabel)
-                                .foregroundStyle(.tujiInk2)
-                                .lineLimit(1)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
+
                 HStack(spacing: Space.s2) {
+                    if let author = collection.author {
+                        Button {
+                            self.selectedAuthorHandle = author.handle
+                        } label: {
+                            HStack(spacing: 6) {
+                                ProfileAvatar(avatar: author.avatar, size: 24)
+                                Text(author.displayName)
+                                    .font(.tujiBodySm)
+                                    .foregroundStyle(.tujiPaper.opacity(0.8))
+                                    .lineLimit(1)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
                     Text(collection.langBadge)
-                        .font(.system(size: 10, weight: .heavy))
-                        .foregroundStyle(.tujiTeal)
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(.tujiPaper)
                         .padding(.horizontal, Space.s2)
                         .frame(height: 22)
-                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
-                    self.stat(icon: "square.stack", title: "內容", value: collection.itemCount)
-                    self.stat(icon: "bookmark", title: "收藏", value: collection.saveCount)
+                        .background(.tujiPaper.opacity(0.2))
                 }
-                self.bookmarkPill
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Space.s4)
         }
-        .padding(Space.s3)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay {
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.22), lineWidth: 1)
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s3)
+        .frame(maxWidth: .infinity)
+        .aspectRatio(4.0 / 3.0, contentMode: .fill)
+        .clipped()
     }
 
-    private func stat(icon: String, title: LocalizedStringKey, value: Int) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).font(.system(size: 11, weight: .bold))
-            Text(title).font(.system(size: 12, weight: .semibold))
-            Text("\(value)").font(.system(size: 12, weight: .heavy))
+    private func actionBar(_ collection: AtlasCollection) -> some View {
+        HStack(spacing: Space.s5) {
+            self.stat(title: "內容", value: collection.itemCount)
+            self.stat(title: "被收藏", value: collection.saveCount)
+            Spacer(minLength: Space.s3)
+            self.bookmarkAction
         }
-        .foregroundStyle(.tujiInk3)
+        .padding(.horizontal, Space.s4)
+        .frame(height: 72)
+        .frame(maxWidth: .infinity)
+        .background(.tujiInk)
+    }
+
+    private func stat(title: LocalizedStringKey, value: Int) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("\(value)")
+                .font(.tujiMono)
+                .foregroundStyle(.tujiPaper)
+            Text(title)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiPaper.opacity(0.6))
+                .lineLimit(1)
+                .fixedSize()
+        }
     }
 
     @ViewBuilder
-    private var bookmarkPill: some View {
+    private var bookmarkAction: some View {
         if self.isOwnCollection {
-            self.pillLabel(icon: nil, title: "你的合集")
+            Text("你的合集")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiPaper.opacity(0.6))
         } else {
             Button(action: self.bookmarkTapped) {
-                if self.vm.bookmarkBusy || (self.isSignedIn && !self.vm.bookmarkLoaded) {
-                    TujiProgressBar(progress: nil).frame(width: 56)
-                        .controlSize(.small)
-                        .tint(.tujiTeal)
-                        .frame(minWidth: 88)
-                } else {
-                    self.pillLabel(
-                        icon: self.vm.isSaved ? "bookmark.fill" : "bookmark",
-                        title: self.vm.isSaved ? "已收藏" : "收藏合集"
-                    )
+                Group {
+                    if self.vm.bookmarkBusy || (self.isSignedIn && !self.vm.bookmarkLoaded) {
+                        TujiProgressBar(
+                            progress: nil,
+                            track: .tujiPaper.opacity(0.2),
+                            fill: .tujiEye
+                        )
+                        .frame(width: 56)
+                    } else {
+                        // 「收藏」, not 「收進圖鑑」. Saving a collection unlocks
+                        // browsing and counts toward the author's total — it puts
+                        // nothing in your atlas. That is a separate, later action
+                        // (「全部收進圖鑑」), and naming this one after it would be
+                        // a button that lies. See CONTEXT.md.
+                        Text(self.vm.isSaved ? "已收藏" : "收藏")
+                            .font(.tujiH3)
+                    }
                 }
+                .frame(minWidth: 96)
+                .frame(height: 44)
+                .padding(.horizontal, Space.s3)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(CollectionSaveStyle(saved: self.vm.isSaved))
             .disabled(self.vm.bookmarkBusy)
-            .accessibilityLabel(self.vm.isSaved ? "已收藏" : "收藏合集")
+            .accessibilityLabel(self.vm.isSaved ? "已收藏" : "收藏")
+            .accessibilityAddTraits(self.vm.isSaved ? [.isSelected] : [])
         }
-    }
-
-    private func pillLabel(icon: String?, title: LocalizedStringKey) -> some View {
-        HStack(spacing: 5) {
-            if let icon {
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
-            }
-            Text(title)
-                .font(.system(size: 12, weight: .bold))
-        }
-        .foregroundStyle(.tujiTeal)
-        .padding(.horizontal, Space.s3)
-        .frame(height: 30)
-        .frame(minWidth: 88)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
     }
 
     private func bookmarkTapped() {
@@ -293,16 +344,16 @@ struct AtlasCollectionDetailView: View {
     // MARK: Tabs
 
     private var tabBar: some View {
-        HStack(spacing: Space.s4) {
-            self.tabButton("目錄", .catalog)
-            self.tabButton("簡介", .about)
-            Spacer()
+        VStack(alignment: .leading, spacing: Space.s2) {
+            TujiSegmented(
+                options: [(Tab.catalog, "目錄"), (Tab.about, "簡介")],
+                selection: self.$tab
+            )
             if self.tab == .catalog, self.vm.unlocked, self.vm.totalCount > 0 {
-                self.learningPill
+                self.learningPill.padding(.horizontal, Space.s4)
             }
         }
-        .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s3)
+        .padding(.top, Space.s4)
         .padding(.bottom, Space.s2)
     }
 
@@ -338,23 +389,6 @@ struct AtlasCollectionDetailView: View {
             .buttonStyle(.plain)
             .disabled(remaining == 0)
         }
-    }
-
-    private func tabButton(_ label: LocalizedStringKey, _ value: Tab) -> some View {
-        let selected = self.tab == value
-        return Button {
-            self.tab = value
-        } label: {
-            VStack(spacing: 4) {
-                Text(label)
-                    .font(.system(size: 15, weight: selected ? .bold : .medium))
-                    .foregroundStyle(selected ? .tujiInk : .tujiInk3)
-                Rectangle()
-                    .fill(selected ? Color.tujiTeal : .clear)
-                    .frame(width: 22, height: 3)
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder

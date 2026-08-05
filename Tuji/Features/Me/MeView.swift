@@ -184,7 +184,7 @@ struct MeView: View {
                 iconTint: .tujiTeal
             )
             Divider().frame(height: 36)
-            self.statCell(value: "\(self.cache.favoriteIds.count)", label: "收藏")
+            self.statCell(value: "\(self.cache.favoriteIds.count)", label: "書籤")
         }
         .padding(.vertical, Space.s3)
         .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
