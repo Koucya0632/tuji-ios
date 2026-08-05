@@ -61,7 +61,19 @@ struct AtlasCaptureView: View {
 
     var body: some View {
         @Bindable var vm = self.vm
-        NavigationStack {
+        TujiFormSheet(
+            title: "拍照新增",
+            closeDisabled: self.vm.busy != nil,
+            onClose: {
+                // Only warn when there's an in-progress capture to lose;
+                // on the bare source chooser just close.
+                if self.vm.uploadedImage != nil {
+                    self.confirmDismiss = true
+                } else {
+                    self.dismiss()
+                }
+            }
+        ) {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.statusMessage
@@ -74,27 +86,6 @@ struct AtlasCaptureView: View {
                 }
                 .padding(.horizontal, Space.s4)
                 .padding(.vertical, Space.s3)
-            }
-            .background(.tujiPaper)
-            .navigationTitle("拍照新增")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        // Only warn when there's an in-progress capture to lose;
-                        // on the bare source chooser just close.
-                        if self.vm.uploadedImage != nil {
-                            self.confirmDismiss = true
-                        } else {
-                            self.dismiss()
-                        }
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.tujiInk2)
-                    }
-                    .disabled(self.vm.busy != nil)
-                }
             }
         }
         .fullScreenCover(isPresented: self.$showCamera) {
@@ -183,8 +174,11 @@ struct AtlasCaptureView: View {
     private var sourcePanel: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
+                // H3, not H2: the sheet header above already carries a 34pt
+                // 拍照新增, and two headings of the same size stacked twelve
+                // points apart read as a mistake rather than as a hierarchy.
                 Text("拍下身邊的東西")
-                    .font(.tujiH2)
+                    .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
                 Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                     .font(.tujiBodySm)

@@ -52,6 +52,36 @@ struct EditProfileView: View {
     static let bioMax = 80
 
     var body: some View {
+        VStack(spacing: 0) {
+            TujiNavBar(leading: .back) {
+                TujiNavTextAction(
+                    title: self.saving ? "儲存中…" : "儲存",
+                    isEnabled: self.canSave
+                ) {
+                    Task { await self.save() }
+                }
+            }
+            self.form
+        }
+        .background(.tujiPaper)
+        .navigationTitle("編輯個人資料")
+        .toolbar(.hidden, for: .navigationBar)
+        .task {
+            self.connectAvatarPicker()
+            await self.load()
+        }
+        .avatarPicker(self.avatarPicker, title: "更換頭像") {
+            if self.hasCustomAvatar {
+                Button("使用預設黑貓頭像") {
+                    self.avatar = MascotPose.face.rawValue
+                    self.pendingAvatarData = nil
+                    self.pendingAvatarImage = nil
+                }
+            }
+        }
+    }
+
+    private var form: some View {
         ScrollView {
             VStack(spacing: Space.s4) {
                 self.heroAvatar
@@ -66,36 +96,7 @@ struct EditProfileView: View {
                 }
             }
             .padding(.horizontal, Space.s4)
-            .padding(.top, Space.s4)
             .padding(.bottom, Space.s5)
-        }
-        .background(.tujiPaper)
-        .navigationTitle("編輯個人資料")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await self.save() }
-                } label: {
-                    Text(self.saving ? LocalizedStringKey("儲存中…") : LocalizedStringKey("儲存"))
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(self.canSave ? .tujiTeal : .tujiInk3)
-                }
-                .disabled(!self.canSave)
-            }
-        }
-        .task {
-            self.connectAvatarPicker()
-            await self.load()
-        }
-        .avatarPicker(self.avatarPicker, title: "更換頭像") {
-            if self.hasCustomAvatar {
-                Button("使用預設黑貓頭像") {
-                    self.avatar = MascotPose.face.rawValue
-                    self.pendingAvatarData = nil
-                    self.pendingAvatarImage = nil
-                }
-            }
         }
     }
 

@@ -28,7 +28,7 @@ struct FeedbackSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        TujiFormSheet(title: "意見收集", closeDisabled: self.submitting) {
             ScrollView {
                 if self.submitted {
                     self.successContent
@@ -36,17 +36,7 @@ struct FeedbackSheet: View {
                     self.formContent
                 }
             }
-            .background(.tujiPaper)
-            .navigationTitle("意見收集")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("關閉") { self.dismiss() }
-                        .disabled(self.submitting)
-                }
-            }
         }
-        .interactiveDismissDisabled(self.submitting)
     }
 
     private var formContent: some View {

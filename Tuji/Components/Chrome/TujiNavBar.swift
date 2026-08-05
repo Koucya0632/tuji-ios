@@ -30,6 +30,9 @@ struct TujiNavBar<Trailing: View>: View {
     /// Shown only once the caller says the in-content title has scrolled away.
     var compactTitle: Text?
     var showsRule: Bool = false
+    /// Replaces plain dismissal — for a screen that must ask before it goes
+    /// (leaving a review mid-way) rather than just leaving.
+    var onLeading: (() -> Void)?
     @ViewBuilder var trailing: Trailing
 
     @Environment(\.dismiss) private var dismiss
@@ -74,7 +77,7 @@ struct TujiNavBar<Trailing: View>: View {
 
     private func iconButton(_ systemName: String, label: LocalizedStringKey) -> some View {
         Button {
-            self.dismiss()
+            if let onLeading = self.onLeading { onLeading() } else { self.dismiss() }
         } label: {
             Image(systemName: systemName)
                 .font(.system(size: 20, weight: .semibold))
@@ -91,11 +94,17 @@ struct TujiNavBar<Trailing: View>: View {
 }
 
 extension TujiNavBar where Trailing == EmptyView {
-    init(leading: TujiNavLeading = .back, compactTitle: Text? = nil, showsRule: Bool = false) {
+    init(
+        leading: TujiNavLeading = .back,
+        compactTitle: Text? = nil,
+        showsRule: Bool = false,
+        onLeading: (() -> Void)? = nil
+    ) {
         self.init(
             leading: leading,
             compactTitle: compactTitle,
             showsRule: showsRule,
+            onLeading: onLeading,
             trailing: { EmptyView() }
         )
     }
@@ -126,6 +135,9 @@ struct TujiNavIcon: View {
 /// demoted to "accumulation" the system has no colour that means "tappable".
 struct TujiNavTextAction: View {
     let title: LocalizedStringKey
+    /// Unavailable actions lose the underline as well as the ink: with teal gone
+    /// as the tappable signal, a grey *underlined* word still reads as a link.
+    var isEnabled: Bool = true
     let action: () -> Void
 
     var body: some View {
@@ -133,11 +145,12 @@ struct TujiNavTextAction: View {
             Text(self.title)
                 .font(.tujiLabel)
                 .tracking(0.5)
-                .foregroundStyle(.tujiInk)
-                .underline(true, pattern: .solid)
+                .foregroundStyle(self.isEnabled ? Color.tujiInk : .tujiInk3)
+                .underline(self.isEnabled, pattern: .solid)
                 .frame(height: 48)
                 .contentShape(.rect)
         }
+        .disabled(!self.isEnabled)
     }
 }
 

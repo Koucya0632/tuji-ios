@@ -76,20 +76,28 @@ struct CardWord: Codable, Identifiable, Hashable {
     /// photograph against the paper darkens the whole frame, while leaving a
     /// cut-out unmultiplied leaves a white rectangle floating on the page.
     var imageKind: WordImageKind {
-        switch self.category {
-        case "custom", "community": .photograph
-        default: .cutout
-        }
+        WordImageKind(category: self.category)
     }
 }
 
-/// Distinguishes dictionary artwork from user photography. See
-/// `CardWord.imageKind`.
+/// Distinguishes dictionary artwork from user photography.
 nonisolated enum WordImageKind {
     /// White-backdrop product shot. Blends into the paper.
     case cutout
     /// A real photograph. Rendered as-is.
     case photograph
+
+    /// `CardWord`, `StudyQueueWord` and `Word` all carry the same `category`
+    /// string and all three had their own copy of this two-line test. It is one
+    /// rule, so it lives with the type it produces — a fourth model asking the
+    /// question gets the answer for free, and a change to what counts as a
+    /// photograph happens once.
+    init(category: String) {
+        self = switch category {
+        case "custom", "community": .photograph
+        default: .cutout
+        }
+    }
 }
 
 struct WordsListResponse: Decodable {

@@ -139,7 +139,7 @@ extension WordDetailPage {
     /// Whether this word's picture is dictionary artwork (a cut-out that should
     /// blend into the paper) or a photograph the user took.
     private func isCutout(_ w: Word) -> Bool {
-        !(w.category == "custom" || w.category == "community")
+        WordImageKind(category: w.category) == .cutout
     }
 
     private func hero(_ w: Word) -> some View {

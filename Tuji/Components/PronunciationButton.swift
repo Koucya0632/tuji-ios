@@ -23,6 +23,10 @@ struct PronunciationButton: View {
     /// back to on-device synthesis of `text`.
     var audioUrls: [String: String]?
     var size: CGFloat = 40
+    /// The button's own ground. `tujiPaper2` reads against a plain paper page;
+    /// sitting on an image hero — which is itself `tujiPaper2` — it needs the
+    /// lighter step or it disappears into the picture's container.
+    var ground: Color = .tujiPaper2
     /// Analytics only — set at call sites where the word id is public and
     /// worth attributing (word detail); nil elsewhere.
     var wordId: String?
@@ -44,7 +48,7 @@ struct PronunciationButton: View {
             )
         } label: {
             ZStack {
-                Rectangle().fill(.tujiPaper2)
+                Rectangle().fill(self.ground)
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.system(size: self.size * 0.38, weight: .semibold))
                     .foregroundStyle(.tujiInk)

@@ -60,8 +60,15 @@ struct MascotSpeechBubble: View {
     }
 }
 
-/// A reusable empty/error panel. The mascot rests on the card edge rather
-/// than floating independently in the page.
+/// The empty state (C.6).
+///
+/// This used to be a white rounded card with the mascot resting on its top
+/// edge, floating in the middle of an otherwise blank screen. The card did no
+/// work — it framed the emptiness so the screen would look like it had
+/// something on it. Now the cat and the text sit directly on the paper, which
+/// is what an empty screen honestly is.
+///
+/// Copy rule: never "沒有資料" or "尚無內容". Say what *will* be here.
 struct MascotEmptyState<Actions: View>: View {
     let pose: MascotPose
     let title: LocalizedStringKey
@@ -84,39 +91,47 @@ struct MascotEmptyState<Actions: View>: View {
     }
 
     var body: some View {
-        let figureSize: CGFloat = self.compact ? 104 : 124
-        let overlap: CGFloat = self.compact ? 16 : 20
-        let lift = max(0, self.pose.visibleHeightRatio * figureSize - overlap)
-
-        ZStack(alignment: .top) {
-            VStack(spacing: Space.s3) {
-                Text(self.title)
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-                    .multilineTextAlignment(.center)
-                if let message {
-                    Text(message)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk3)
-                        .multilineTextAlignment(.center)
-                }
-                self.actions
-                    .padding(.top, Space.s1)
+        VStack(spacing: 0) {
+            MascotFigure(pose: self.pose, size: self.compact ? 64 : 88)
+                .accessibilityHidden(true)
+            Text(self.title)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+                .padding(.top, self.compact ? Space.s3 : Space.s4)
+            if let message {
+                Text(message)
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+                    .padding(.top, Space.s2)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal, self.compact ? Space.s3 : Space.s4)
-            .padding(.top, overlap + Space.s4)
-            .padding(.bottom, self.compact ? Space.s3 : Space.s4)
-            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(.tujiRule.opacity(0.22), lineWidth: 1)
-            )
-            .padding(.top, lift)
-
-            MascotFigure(pose: self.pose, size: figureSize)
+            // Compared at compile time: padding applied to an `EmptyView` still
+            // occupies a slot, so an action-less caller would get 24pt of air
+            // hanging off the bottom of its message.
+            if Actions.self != EmptyView.self {
+                self.actions
+                    .padding(.top, Space.s4)
+            }
         }
-        .frame(maxWidth: 420)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: 280)
+    }
+}
+
+extension View {
+    /// C.6 places the column's top at 35% of the viewport rather than centring
+    /// it: a vertically centred empty state sits under the thumb, and reads as
+    /// lower than centre because the eye weights the top of a page.
+    ///
+    /// Needs a container with a real height — inside a `ScrollView` the
+    /// `GeometryReader` measures nothing and the state collapses to the top.
+    func tujiEmptyStatePlacement() -> some View {
+        GeometryReader { proxy in
+            self
+                .frame(maxWidth: .infinity)
+                .padding(.top, max(Space.s5, proxy.size.height * 0.35))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
     }
 }
 
