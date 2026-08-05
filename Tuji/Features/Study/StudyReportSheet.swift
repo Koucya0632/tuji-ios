@@ -120,7 +120,7 @@ struct StudyReportSheet: View {
                     .foregroundStyle(.tujiAlert)
             }
 
-            BBtn(title: "\(self.submitTitle)", fullWidth: true) {
+            BBtn(localized: self.submitTitle, fullWidth: true) {
                 Task { await self.submit() }
             }
             .disabled(!self.canSubmit)
@@ -138,7 +138,7 @@ struct StudyReportSheet: View {
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.tujiInk)
-            BBtn(title: "\(self.localized("完成"))", fullWidth: true) { self.dismiss() }
+            BBtn(localized: self.localized("完成"), fullWidth: true) { self.dismiss() }
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, Space.s4)

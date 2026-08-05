@@ -18,7 +18,30 @@ struct StudyLauncherView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var pushQueue: QueuePush?
-    @State private var queueError: Error?
+    @State private var queueFailure: QueueFailure?
+
+    /// Why the launcher could not start a session.
+    ///
+    /// An empty queue used to be signalled with an `NSError` carrying a Chinese
+    /// literal in `NSLocalizedDescriptionKey`. `localizedDescription` performs no
+    /// catalogue lookup, so that literal shipped verbatim to every user — while
+    /// the same string sat in `Localizable.xcstrings` fully translated, one
+    /// mechanism away and unreachable. A transport error still has to render its
+    /// own (already-localised) description, so the two cases are separate.
+    enum QueueFailure {
+        /// Nothing is due. Not an error — a state the copy can speak to.
+        case empty
+        /// The fetch failed. Carries the URLSession/API description.
+        case transport(String)
+
+        var message: LocalizedStringKey {
+            switch self {
+            case .empty: "目前沒有可以練習的字"
+            case let .transport(detail): "\(detail)"
+            }
+        }
+    }
+
     /// Latched once a flow has been pushed. The launcher is single-shot: when
     /// the flow pops back (✕ or 回首頁 on the summary), re-running loadQueue
     /// would fetch a fresh queue and immediately re-push the flow — the user
@@ -58,18 +81,18 @@ struct StudyLauncherView: View {
         }
         .tujiPrompt(
             isPresented: Binding(
-                get: { self.queueError != nil },
-                set: { if !$0 { self.queueError = nil } }
+                get: { self.queueFailure != nil },
+                set: { if !$0 { self.queueFailure = nil } }
             ),
             style: .error,
             title: "載入失敗",
-            message: "\(self.queueError?.localizedDescription ?? "")",
+            message: self.queueFailure?.message ?? "",
             primary: TujiPromptAction("再試一次") {
-                self.queueError = nil
+                self.queueFailure = nil
                 Task { await self.loadQueue() }
             },
             secondary: TujiPromptAction("稍後再說", role: .cancel) {
-                self.queueError = nil
+                self.queueFailure = nil
                 self.dismiss()
             }
         )
@@ -103,11 +126,7 @@ struct StudyLauncherView: View {
                 try await StudyQueueStore.shared.fetch(mode: self.mode)
             }
             if queue.isEmpty {
-                self.queueError = NSError(
-                    domain: "tuji.study",
-                    code: 0,
-                    userInfo: [NSLocalizedDescriptionKey: "目前沒有可以練習的字"]
-                )
+                self.queueFailure = .empty
                 return
             }
             self.hasLaunched = true
@@ -115,7 +134,7 @@ struct StudyLauncherView: View {
         } catch {
             self.log
                 .error("queue load failed: \(error.localizedDescription, privacy: .public)")
-            self.queueError = error
+            self.queueFailure = .transport(error.localizedDescription)
         }
     }
 

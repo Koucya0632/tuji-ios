@@ -118,7 +118,7 @@ struct FeedbackSheet: View {
                     .foregroundStyle(.tujiAlert)
             }
 
-            BBtn(title: "\(self.submitTitle)", fullWidth: true) {
+            BBtn(localized: self.submitTitle, fullWidth: true) {
                 Task { await self.submit() }
             }
             .disabled(!self.canSubmit)
@@ -136,7 +136,7 @@ struct FeedbackSheet: View {
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.tujiInk)
-            BBtn(title: "\(tujiLocalized("完成"))", fullWidth: true) { self.dismiss() }
+            BBtn(localized: tujiLocalized("完成"), fullWidth: true) { self.dismiss() }
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, Space.s4)
