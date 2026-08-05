@@ -37,8 +37,11 @@ struct ReviewRevealSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
         .presentationDetents([Self.restDetent, .large], selection: self.$detent)
+        // The grabber stays, unlike every other sheet in the app: this one has
+        // two detents and pulling it up is how the full word detail is reached.
+        // There it is an affordance, not the system's signature.
         .presentationDragIndicator(.visible)
-        .presentationCornerRadius(24)
+        .presentationCornerRadius(Radius.r0)
         .presentationBackground(.tujiPaper)
         .presentationBackgroundInteraction(.enabled(upThrough: Self.restDetent))
         // Must rate to proceed — never swipe the sheet away (dragging between
@@ -51,11 +54,12 @@ struct ReviewRevealSheet: View {
     /// (no second SRS write), so it pins a single 下一題 instead.
     private var ratingSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            Divider().background(.tujiRule.opacity(0.15))
+            Rectangle().fill(.tujiRule).frame(height: Border.bw1)
             if self.coord.revealMode == .continueOnly {
                 Text("再看一眼，等等再遇到它")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.tujiInk2)
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
                 BBtn(
                     title: "下一題",
                     bg: .tujiEye,
@@ -67,8 +71,9 @@ struct ReviewRevealSheet: View {
                 }
             } else {
                 Text(self.coord.wasCorrect ? LocalizedStringKey("記得多牢？") : LocalizedStringKey("沒關係，標記一下"))
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.tujiInk2)
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
                 self.ratingRow
             }
         }
@@ -115,8 +120,20 @@ struct ReviewRevealSheet: View {
         }
     }
 
+    /// Stacked full width, not four boxes side by side.
+    ///
+    /// §6.4 asks whether anyone will honestly pick 困難. Laid out as a row, the
+    /// levels are read as a scale and the hand drifts rightward — the labels are
+    /// all you can fit, and "困難" beside "熟練" is just the worse-sounding one.
+    /// Stacked, each level gets a line explaining what it *means*, and picking
+    /// becomes a decision about yourself rather than a position on a slider.
+    ///
+    /// How many rows is the answer's business: 困難/穩定/熟練 when the answer was
+    /// right, 重來/困難 when it was wrong. Adding 重來 to a correct answer would
+    /// send a different rating and reschedule the card — which is exactly the
+    /// scoring behaviour this redesign is not allowed to touch.
     private var ratingRow: some View {
-        HStack(spacing: Space.s2) {
+        VStack(spacing: Space.s2) {
             ForEach(self.coord.availableRatings, id: \.self) { r in
                 self.rateButton(r)
             }
@@ -124,56 +141,35 @@ struct ReviewRevealSheet: View {
     }
 
     private func rateButton(_ r: SRSRating) -> some View {
-        let isSuggested = r == self.coord.suggested
-        let isRated = self.coord.rated == r
+        // The suggestion is pre-inverted rather than badged: the ink block is
+        // already this app's "this is the one", so a 建議 caption over the label
+        // was a second, weaker way of saying it.
+        let filled = self.coord.rated == r || (self.coord.rated == nil && r == self.coord.suggested)
         return Button {
             self.coord.rate(r)
         } label: {
-            VStack(spacing: 4) {
-                if isSuggested {
-                    Text("建議")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(.tujiTeal)
-                } else {
-                    Color.clear.frame(height: 11)
+            HStack(spacing: Space.s3) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(r.label)
+                        .font(.tujiH3)
+                        .foregroundStyle(filled ? .tujiPaper : .tujiInk)
+                    Text(r.explanation)
+                        .font(.tujiBodySm)
+                        .foregroundStyle(filled ? Color.tujiPaper.opacity(0.7) : .tujiInk3)
                 }
-                Text(r.label)
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundStyle(self.fg(for: r, rated: isRated))
-                    .padding(.vertical, Space.s3)
-                    .frame(maxWidth: .infinity)
-                    .background(self.bg(for: r, rated: isRated), in: .rect(cornerRadius: Radius.r0))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Radius.r0)
-                            .stroke(self.border(for: r, suggested: isSuggested), lineWidth: isSuggested ? 2 : 1)
-                    )
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, Space.s3)
+            .frame(minHeight: 56)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(alignment: .leading) {
+                HStack(spacing: 0) {
+                    Rectangle().fill(r.edge).frame(width: Border.bw3)
+                    Rectangle().fill(filled ? Color.tujiInk : .tujiPaper2)
+                }
             }
         }
         .buttonStyle(.plain)
         .disabled(self.coord.rated != nil)
-    }
-
-    private func fg(for r: SRSRating, rated: Bool) -> Color {
-        if rated { return .white }
-        return self.tint(for: r)
-    }
-
-    private func bg(for r: SRSRating, rated: Bool) -> Color {
-        if rated { return self.tint(for: r) }
-        return self.tint(for: r).opacity(0.08)
-    }
-
-    private func border(for r: SRSRating, suggested: Bool) -> Color {
-        if suggested { return .tujiTeal }
-        return self.tint(for: r).opacity(0.3)
-    }
-
-    private func tint(for r: SRSRating) -> Color {
-        switch r {
-        case .again: .tujiAlert
-        case .hard: .tujiEye
-        case .good: .tujiTeal
-        case .easy: .tujiTeal
-        }
     }
 }
