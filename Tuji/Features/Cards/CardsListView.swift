@@ -17,6 +17,10 @@ struct CardsListView: View {
         return true
     }
 
+    /// A source the navigation layer wants shown (a `tuji://favorites` link).
+    /// Consumed once and cleared, so it never fights a later manual pick.
+    @Binding var sourceRequest: CardsSource?
+
     @State private var selectedCategory: String?
     @State private var source: CardsSource = .all
     @State private var visibleCount: Int = 60
@@ -43,6 +47,11 @@ struct CardsListView: View {
             await self.store.loadIfNeeded()
             await self.categories.loadIfNeeded()
             await self.mastery.loadIfNeeded()
+        }
+        .onChange(of: self.sourceRequest, initial: true) { _, requested in
+            guard let requested else { return }
+            self.source = requested
+            self.sourceRequest = nil
         }
         .sheet(item: self.$peekWord) { word in
             WordPeekSheet(word: word) {
@@ -145,6 +154,24 @@ struct CardsListView: View {
         .padding(.top, Space.s1)
     }
 
+    private var emptyTitle: LocalizedStringKey {
+        switch self.source {
+        case .bookmarked: "還沒有書籤"
+        case .mine: "還沒有自製圖鑑"
+        case .taken: "還沒有收進的字"
+        case .all, .official: "這個分類還沒有字"
+        }
+    }
+
+    private var emptyHint: LocalizedStringKey? {
+        switch self.source {
+        case .bookmarked: "你加書籤的字會出現在這裡"
+        case .mine: "用右上角的相機拍一張，就會多一張卡片"
+        case .taken: "在社群收進的字會出現在這裡"
+        case .all, .official: nil
+        }
+    }
+
     private func sourceChip(_ value: CardsSource) -> some View {
         let selected = self.source == value
         return Button {
@@ -237,10 +264,13 @@ struct CardsListView: View {
                     }
                     .padding(.top, Space.s3)
                 } else if self.filtered.isEmpty {
-                    Text("這個分類還沒有字")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk3)
-                        .padding(.top, Space.s5)
+                    // The message has to name what is actually empty. With a
+                    // source filter on, "這個分類還沒有字" is simply wrong — the
+                    // user filtered by where words come from, not by theme —
+                    // and C.6 asks empty states to say what *will* be here.
+                    MascotEmptyState(pose: .sleep, title: self.emptyTitle, message: self.emptyHint)
+                        .tujiEmptyStatePlacement()
+                        .frame(minHeight: 320)
                 }
             }
         }
@@ -311,7 +341,7 @@ struct CardsListView: View {
 
 #Preview {
     NavigationStack {
-        CardsListView()
+        CardsListView(sourceRequest: .constant(nil))
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(MasteryStore.shared)
