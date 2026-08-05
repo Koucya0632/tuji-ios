@@ -19,6 +19,10 @@ struct StudyQueueWord: Decodable, Hashable, Identifiable {
     var imageURL: URL? {
         URL(string: self.imageUrl)
     }
+
+    var imageKind: WordImageKind {
+        WordImageKind(category: self.category)
+    }
 }
 
 /// Minimum identifying fields from the `cards` row. We only need the id

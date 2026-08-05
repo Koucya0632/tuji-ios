@@ -50,32 +50,10 @@ struct ReviewFlowView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationBarBackButtonHidden(true)
-        .toolbar(self.coord.finished ? .hidden : .visible, for: .navigationBar)
-        .toolbar {
-            if !self.coord.finished {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        self.showExitConfirm = true
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.tujiInk2)
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button("報錯", systemImage: "exclamationmark.bubble") {
-                            self.captureReport()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.tujiInk2)
-                            .frame(width: 36, height: 36)
-                    }
-                }
-            }
-        }
+        // The bar is drawn in the content (`flowSurface`), not by the system:
+        // on iOS 26 a toolbar item is a floating glass circle, and two white
+        // discs at the top of a study screen are the platform talking over it.
+        .toolbar(.hidden, for: .navigationBar)
         .tujiPrompt(
             isPresented: self.$showExitConfirm,
             style: .confirmation,
@@ -135,6 +113,20 @@ struct ReviewFlowView: View {
     private var flowSurface: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
+                TujiNavBar(leading: .close, onLeading: { self.showExitConfirm = true }) {
+                    Menu {
+                        Button("報錯", systemImage: "exclamationmark.bubble") {
+                            self.captureReport()
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 19, weight: .semibold))
+                            .foregroundStyle(.tujiInk)
+                            .frame(width: 44, height: 48)
+                            .contentShape(.rect)
+                    }
+                    .accessibilityLabel(Text("更多"))
+                }
                 self.header
                 if let item = coord.current {
                     ReviewQuestionView(
@@ -205,40 +197,36 @@ struct ReviewFlowView: View {
         let active = self.studyFocus.active
         let tabInset: CGFloat = active ? 0 : 78
         let scrollBottom: CGFloat = active ? 16 : 96
-        // toolbar 44 + header 50 + bubble 56 + 2× s4 spacing 32
-        // + 4 choices 216 + slack 20
-        let baseReserved: CGFloat = 418
+        // nav bar 56 + header 47 + s3 spacing 16 + 4 choices (4×64 + 3×8) 280
+        // + slack 20. The bar counts now: it is drawn inside this GeometryReader
+        // rather than taken out of the safe area by the system toolbar.
+        let baseReserved: CGFloat = 419
         let reserved = baseReserved + tabInset + scrollBottom
         let available = geo.size.height - reserved
         return min(active ? 360 : 280, max(200, available))
     }
 
+    /// 複習 in 墨3, not teal: teal means accumulation, and a mode label
+    /// accumulates nothing. The count is `tujiMono` so the digits hold their
+    /// width — a proportional 1 next to a 7 makes the number jitter as it
+    /// climbs, which reads as the layout moving rather than the count.
     private var header: some View {
-        VStack(spacing: Space.s3) {
+        VStack(spacing: Space.s2) {
             HStack {
                 Text("複習")
                     .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiTeal)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
                 Spacer()
                 Text("\(self.coord.passedCount) / \(self.coord.originalCount)")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.tujiInk3)
+                    .font(.tujiMono)
+                    .foregroundStyle(.tujiInk2)
+                    .contentTransition(.numericText())
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(.tujiPaper2.opacity(0.2))
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(.tujiTeal)
-                        .frame(width: geo.size.width * self.coord.progress)
-                        .animation(.spring(duration: 0.5), value: self.coord.progress)
-                }
-            }
-            .frame(height: 6)
+            .padding(.horizontal, Space.s4)
+
+            TujiProgressBar(progress: self.coord.progress)
         }
-        .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s1)
         .padding(.bottom, Space.s3)
     }
 }
@@ -255,36 +243,49 @@ private struct ReviewQuestionView: View {
 
     private static let abc = ["A", "B", "C", "D", "E"]
 
+    /// The cat used to sit here on *every* question asking 這個是什麼？, with its
+    /// pose switching to cheer once the combo hit three. C.11 allows the mascot
+    /// at four moments only, and "each of the thirty cards in a session" is not
+    /// one of them — a character who reacts to every tap is the reward loop this
+    /// design rules out, and the prompt was answering a question nobody had (an
+    /// image above four words is self-evident). The 56pt it occupied goes to the
+    /// picture. The question survives for VoiceOver as the image's label.
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s3) {
-                self.bubble
                 self.hero
                 self.choicesList
+                    .padding(.horizontal, Space.s4)
             }
-            .padding(.horizontal, Space.s4)
             // PR #46: in study mode the tab bar is gone so we can trim the
             // big s24 scroll buffer that previously kept the footer clear.
             .padding(.bottom, self.studyFocus.active ? Space.s3 : Space.s6)
         }
     }
 
-    private var bubble: some View {
-        MascotSpeechBubble(pose: self.coord.combo >= 3 ? .cheer : .think, text: "這個是什麼？")
-    }
-
+    /// Full-bleed, on `tujiPaper2`, with the picture multiplied into it. The
+    /// image used to be a `tujiPaper` rectangle inset inside the page margins,
+    /// which put a white square on warm paper and framed the one thing the whole
+    /// screen is asking about.
+    ///
+    /// The height stays adaptive rather than the square the spec asks for: a
+    /// full-width 1:1 image plus four 64pt options does not fit above the fold
+    /// on any phone, and pushing the answers off-screen to square the picture
+    /// would cost more than the shape is worth.
     private var hero: some View {
         ZStack(alignment: .bottomTrailing) {
-            GeometryReader { proxy in
-                ZStack {
-                    Rectangle().fill(.tujiPaper)
+            Color.tujiPaper2
+                .frame(height: self.heroHeight)
+                .overlay {
                     LazyImage(url: self.item.word.imageURL) { state in
                         if let image = state.image {
                             image.resizable()
-                                .scaledToFit()
-                                .frame(
-                                    width: max(0, proxy.size.width - Space.s3),
-                                    height: max(0, proxy.size.height - Space.s3)
+                                .aspectRatio(
+                                    contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
+                                )
+                                .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
+                                .blendMode(
+                                    self.item.word.imageKind == .cutout ? .multiply : .normal
                                 )
                         } else if state.error != nil {
                             Image(systemName: "photo")
@@ -295,16 +296,16 @@ private struct ReviewQuestionView: View {
                     }
                     .pipeline(.shared)
                 }
-            }
-            .frame(height: self.heroHeight)
-            .clipped()
-            .clipShape(.rect(cornerRadius: Radius.r0))
+                .clipped()
+                .accessibilityElement()
+                .accessibilityLabel(Text("這個是什麼？"))
 
             PronunciationButton(
                 text: self.item.word.word,
                 language: self.item.word.wordLanguage,
                 audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
-                size: 36
+                size: 48,
+                ground: .tujiPaper
             )
             .padding(Space.s3)
         }
@@ -317,7 +318,7 @@ private struct ReviewQuestionView: View {
                 StudyOptionRow(
                     letter: Self.abc[idx],
                     label: choice,
-                    style: StudyOptionStyle.forOption(
+                    state: StudyOptionState.forOption(
                         label: choice,
                         answer: self.item.word.word,
                         picked: self.coord.picked,

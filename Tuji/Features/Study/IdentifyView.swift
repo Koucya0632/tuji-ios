@@ -86,7 +86,7 @@ struct IdentifyView: View {
                 StudyOptionRow(
                     letter: Self.abc[idx],
                     label: choice,
-                    style: StudyOptionStyle.forOption(
+                    state: StudyOptionState.forOption(
                         label: choice,
                         answer: self.item.word.word,
                         picked: self.coord.idPicked,
