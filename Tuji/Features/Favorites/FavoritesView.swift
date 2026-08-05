@@ -36,12 +36,13 @@ struct FavoritesView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            TujiNavBar(leading: .back)
             self.header
             self.content
         }
         .background(.tujiPaper)
-        .navigationTitle("我的收藏")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("我的書籤")
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await self.words.loadIfNeeded()
             await self.categories.loadIfNeeded()

@@ -29,12 +29,36 @@ struct AtlasManageView: View {
         _didVisitCollections = State(initialValue: initialSection == .collections)
     }
 
+    /// The bar's one trailing action, and what it is depends on which pane is
+    /// showing — selecting cards, or creating a collection.
+    @ViewBuilder
+    private var trailingAction: some View {
+        switch self.section {
+        case .cards:
+            if self.shelf.canSelect {
+                TujiNavTextAction(
+                    title: self.shelf.isSelecting ? "完成" : "選取"
+                ) {
+                    self.shelf.setSelecting(!self.shelf.isSelecting)
+                }
+            }
+        case .collections:
+            TujiNavIcon(systemName: "plus", label: "建立合集") {
+                self.showCreateCollection = true
+            }
+        }
+    }
+
     private var currentLanguage: TargetLanguage {
         self.settings.current.learningDirection.targetLanguage
     }
 
     var body: some View {
         VStack(spacing: 0) {
+            TujiNavBar(leading: .back) {
+                self.trailingAction
+            }
+            TujiScreenTitle("圖鑑管理")
             TujiSegmented(
                 options: [
                     (AtlasManagementSection.cards, "圖鑑卡片"),
@@ -63,28 +87,7 @@ struct AtlasManageView: View {
         }
         .background(.tujiPaper)
         .navigationTitle("圖鑑管理")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                switch self.section {
-                case .cards:
-                    if self.shelf.canSelect {
-                        Button(self.shelf.isSelecting ? "完成" : "選取") {
-                            self.shelf.setSelecting(!self.shelf.isSelecting)
-                        }
-                        .font(.system(size: 15, weight: .semibold))
-                        .tint(.tujiTeal)
-                    }
-                case .collections:
-                    Button {
-                        self.showCreateCollection = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .tint(.tujiTeal)
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         // The environment's learning direction is an explicit model input, not
         // something the shelf reaches for. Setting it re-scopes the rows and
         // drops any selection that just went off-screen.

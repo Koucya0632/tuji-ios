@@ -21,8 +21,15 @@ struct CategoryView: View {
             ScrollView {
                 self.content(width: geo.size.width)
             }
+            // Floats over the bleeding hero rather than taking a row above it,
+            // so the page still opens with the picture.
+            .overlay(alignment: .topLeading) {
+                TujiNavBar(leading: .back)
+            }
         }
         .background(.tujiPaper)
+        .navigationTitle(self.category?.nameZh ?? self.id)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await self.categories.loadIfNeeded()
             await self.words.loadIfNeeded()
@@ -41,89 +48,79 @@ struct CategoryView: View {
     }
 
     private func content(width: CGFloat) -> some View {
+        // The hero bleeds, so no shared horizontal padding — each section below
+        // carries its own.
         VStack(alignment: .leading, spacing: Space.s4) {
             self.hero
             Section {
                 self.grid(width: width)
             } header: {
-                self.gridHeader
+                self.gridHeader.padding(.horizontal, Space.s4)
             }
         }
-        .frame(width: width - Space.s4 * 2, alignment: .leading)
-        .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s4)
-        .padding(.bottom, Space.s5)
+        .padding(.bottom, Space.s6)
         .frame(width: width, alignment: .leading)
     }
 
+    /// Full-bleed 16:9 photograph with the text laid over its lower edge.
+    ///
+    /// Before, the artwork sat in a rounded card under a near-opaque pale teal
+    /// wash, with the text crammed into the left 220pt — so the picture was
+    /// neither visible nor doing any work, and the card had no weight either.
+    /// Now the photo is actually seen, the copy has a readable band of its own,
+    /// and the top of the screen carries something that is not paper, which
+    /// echoes the ink block on 今天.
     @ViewBuilder
     private var hero: some View {
-        if let c = category {
-            ZStack(alignment: .leading) {
+        if let c = self.category {
+            ZStack(alignment: .bottomLeading) {
                 self.categoryArtwork(c)
 
+                // One-way scrim for legibility, not decoration: ink at the
+                // bottom fading to nothing by 60% height.
                 LinearGradient(
-                    colors: [
-                        Color.tujiTealSoft.opacity(0.98),
-                        Color.tujiTealSoft.opacity(0.82),
-                        Color.tujiTealSoft.opacity(0.08)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
+                    colors: [.clear, Color.tujiInk.opacity(0.7)],
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
 
-                VStack(alignment: .leading, spacing: Space.s3) {
+                VStack(alignment: .leading, spacing: Space.s1) {
                     Text("主題分類")
                         .font(.tujiLabel)
-                        .tracking(2)
-                        .foregroundStyle(.tujiTeal)
-
+                        .tracking(0.5)
+                        .foregroundStyle(.tujiPaper.opacity(0.6))
                     Text(c.nameZh)
-                        .font(.tujiH2)
-                        .foregroundStyle(.tujiInk)
-
+                        .font(.tujiH1)
+                        .foregroundStyle(.tujiPaper)
                     Text(c.name)
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                        .tracking(2)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("分類說明")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiInk3)
-
-                        Text(self.categoryDescription(c))
-                            .font(.tujiBodySm)
-                            .foregroundStyle(.tujiInk2)
-                            .lineLimit(3)
-                    }
-                    .padding(.top, Space.s2)
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiPaper.opacity(0.6))
                 }
                 .padding(Space.s4)
-                .frame(maxWidth: 220, alignment: .leading)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 260)
-            .background(.tujiTealSoft)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
+            .aspectRatio(16.0 / 9.0, contentMode: .fill)
+            .clipped()
+
+            if !self.categoryDescription(c).isEmpty {
+                Text(verbatim: self.categoryDescription(c))
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiInk2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, Space.s4)
+            }
         } else {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundStyle(.tujiTeal)
+            VStack(alignment: .leading, spacing: Space.s2) {
                 Text(self.id)
-                    .font(.tujiH2)
+                    .font(.tujiH1)
                     .foregroundStyle(.tujiInk)
-                Text("分類說明")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.tujiInk3)
                 Text("探索這個主題的常用單字")
-                    .font(.tujiBodySm)
+                    .font(.tujiBody)
                     .foregroundStyle(.tujiInk2)
             }
-            .padding(Space.s4)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s4)
         }
     }
 
@@ -138,12 +135,12 @@ struct CategoryView: View {
                 if let image = state.image {
                     image.resizable().scaledToFill()
                 } else {
-                    Color.tujiTealSoft
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)
         } else {
-            Color.tujiTealSoft
+            Color.tujiPaper2
         }
     }
 
