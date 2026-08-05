@@ -3,7 +3,16 @@
 // response — currently no-op on the server but wired client-side so
 // W5 server work can switch it on without a client release.
 //
-// Dark ink background, Mascot cheer, big streak number, and Share + 繼續.
+// Ink face, cheer pose, the streak number at display size, Share + 繼續.
+//
+// The number is teal, not 瞳黃. A streak is accumulated days — the same family
+// as mastery and completion — and 瞳黃 means "now". The pale step rather than the
+// deep one because deep teal only reaches 3.04:1 against ink while the pale
+// reaches 13.58:1.
+//
+// Nothing here bounces, sparkles or plays a sound. This screen appears three
+// times a year at most; its weight comes from that rarity, and the moment it
+// starts performing it becomes the reward-animation register the design rules out.
 
 import SwiftUI
 
@@ -27,13 +36,20 @@ struct MilestoneView: View {
                     accent: .tujiEye,
                     dark: true
                 ) {
-                    VStack(spacing: Space.s3) {
+                    VStack(spacing: Space.s4) {
+                        Text("\(self.milestone.streak)")
+                            .font(.tujiDisplay)
+                            .foregroundStyle(.tujiTealSoft)
+                            .contentTransition(.numericText())
+                        Text("連續學習天數")
+                            .font(.tujiLabel)
+                            .tracking(0.5)
+                            .foregroundStyle(.tujiPaper.opacity(0.6))
                         Text(self.subtitle)
-                            .font(.tujiBodySm)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiPaper)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, Space.s4)
-                        self.streakCapsule
                     }
                 }
                 Spacer()
@@ -53,20 +69,6 @@ struct MilestoneView: View {
         }
     }
 
-    private var streakCapsule: some View {
-        HStack(spacing: Space.s2) {
-            Image(systemName: "flame.fill")
-                .foregroundStyle(.tujiEye)
-            Text("\(self.milestone.streak) 天")
-                .font(.tujiH3)
-                .foregroundStyle(.white)
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s3)
-        .background(.white.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
-        .overlay(Rectangle().stroke(.white.opacity(0.2), lineWidth: 1))
-    }
-
     private var actions: some View {
         VStack(spacing: Space.s3) {
             ShareLink(item: self.shareText) {
@@ -83,7 +85,7 @@ struct MilestoneView: View {
             Button(action: self.onFinish) {
                 Text("繼續")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(.tujiPaper.opacity(0.85))
                     .padding(.vertical, Space.s3)
             }
             .buttonStyle(.plain)

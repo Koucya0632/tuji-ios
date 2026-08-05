@@ -100,8 +100,10 @@ struct TourStep: Identifiable {
                 fallback: nil,
                 shape: .pill,
                 pose: .face,
-                title: "四個分頁",
-                text: "主頁開始學習、圖鑑收集單字、進度查看成果、我的管理帳號。"
+                // Was "四個分頁" listing 主頁/圖鑑/進度/我的 — it missed 社群
+                // entirely, having never been updated when that tab shipped.
+                title: "五個分頁",
+                text: "主頁開始學習、圖鑑收集單字、進度查看成果、社群看大家的圖鑑、我的管理帳號。"
             ),
             TourStep(
                 id: 3,

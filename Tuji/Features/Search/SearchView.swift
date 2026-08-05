@@ -340,10 +340,9 @@ struct SearchView: View {
     private func errorState(_ error: Error) -> some View {
         VStack {
             Spacer(minLength: Space.s5)
-            MascotEmptyState(
-                pose: .think,
+            TujiErrorState(
                 title: "搜尋失敗",
-                message: "\(error.localizedDescription)"
+                message: error.localizedDescription
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     self.vm.runImmediately(self.vm.query)

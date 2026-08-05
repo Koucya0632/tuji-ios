@@ -214,7 +214,20 @@ struct SettingsView: View {
                     }
                 }
 
-                if !self.isGuest {
+                if self.isGuest {
+                    // Not an empty space where the account section would be: a
+                    // guest is not a blocked user, they are an undecided one, so
+                    // the gap becomes one statement and one way out.
+                    TujiSection(
+                        title: "帳號",
+                        footer: "訪客的書籤只存在這台裝置上。建立帳號後會同步，並且可以開始學習。"
+                    ) {
+                        Button { self.auth.exitGuestMode() } label: {
+                            TujiRow("建立帳號", showsArrow: false)
+                        }
+                        .tujiRowStyle()
+                    }
+                } else {
                     TujiSection(title: "帳號") {
                         NavigationLink { EditProfileView() } label: {
                             TujiRow("編輯個人資料")

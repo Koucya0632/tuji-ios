@@ -264,12 +264,25 @@ private struct AtlasCardsManagementPane: View {
     /// switched EN↔JA knows where their captures went (and that nothing was
     /// deleted).
     private func hiddenHintRow(_ count: Int) -> some View {
-        Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
-            .font(.tujiBodySm)
-            .foregroundStyle(.tujiInk3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, Space.s4)
-            .padding(.vertical, Space.s3)
+        // Deliberately not an empty state. "There is nothing here" and "your
+        // things are on the other side" are different sentences, and confusing
+        // them makes a user who switched EN↔JA think their cards were deleted.
+        HStack(spacing: Space.s3) {
+            Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk2)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: Space.s2)
+            Text("切換 →")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk)
+                .underline()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .frame(minHeight: 56)
+        .background(.tujiPaper2)
     }
 
     private var emptyRow: some View {
@@ -417,9 +430,14 @@ private struct AtlasManageDetailView: View {
             // wall is deleting the card — which also deletes this user's study
             // history and every saver's review progress.
             if item.review.canWithdraw {
+                // Secondary, not destructive. Withdrawing is reversible and
+                // carries no penalty — dressing it in red would make it read as
+                // a punishment, and it is the opposite: it is the path that
+                // *avoids* deleting a card, which would take every saver's
+                // review progress with it.
                 BBtn(
                     title: self.shelf.withdrawing ? "收回中…" : "取消公開",
-                    bg: .tujiPaper,
+                    bg: .tujiPaper2,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.uturn.backward"

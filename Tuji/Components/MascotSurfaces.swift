@@ -285,3 +285,46 @@ struct ProfileAvatar: View {
     }
     .background(.tujiPaper)
 }
+
+/// Error state — the mascot's counterpart, and deliberately without it.
+///
+/// C.6 gives the three states different visual weights so severity can be read
+/// from the screen rather than from the copy: empty is light and has a cat and a
+/// way forward; an error is still, has no cat, and names what happened. A cat
+/// waving over "connection failed" is flippant, in the same way one waving over
+/// "delete your account?" is.
+struct TujiErrorState<Actions: View>: View {
+    let title: LocalizedStringKey
+    var message: String?
+    @ViewBuilder let actions: Actions
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(.tujiAlert)
+                .frame(width: 32, height: 32)
+                .padding(.bottom, Space.s4)
+
+            Text(self.title)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+                .multilineTextAlignment(.center)
+
+            if let message = self.message {
+                Text(verbatim: message)
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, Space.s2)
+            }
+
+            self.actions
+                .padding(.top, Space.s4)
+        }
+        .frame(maxWidth: 280)
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Space.s4)
+        .accessibilityElement(children: .contain)
+    }
+}

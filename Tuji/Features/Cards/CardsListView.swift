@@ -117,10 +117,9 @@ struct CardsListView: View {
             .frame(maxWidth: .infinity, alignment: .top)
             .accessibilityLabel(Text("載入中"))
         } else if let error = store.lastError, self.store.words.isEmpty {
-            MascotEmptyState(
-                pose: .think,
+            TujiErrorState(
                 title: "載不到單字",
-                message: "\(error.localizedDescription)"
+                message: error.localizedDescription
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     Task { await self.store.reload() }
