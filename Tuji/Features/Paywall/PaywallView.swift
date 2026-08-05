@@ -20,7 +20,7 @@ struct PaywallView: View {
     @State private var loadingProducts = true
 
     var body: some View {
-        NavigationStack {
+        TujiFormSheet(title: "Tuji Pro") {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.header
@@ -32,18 +32,6 @@ struct PaywallView: View {
                 .padding(.horizontal, Space.s4)
                 .padding(.vertical, Space.s3)
             }
-            .background(.tujiPaper)
-            .navigationTitle("Tuji Pro")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { self.dismiss() } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.tujiInk2)
-                    }
-                }
-            }
             .task {
                 AnalyticsService.shared.track(.paywallView)
                 await self.store.loadProducts()
@@ -53,17 +41,17 @@ struct PaywallView: View {
         }
     }
 
+    /// The sheet header already says "Tuji Pro"; a 34pt 解鎖 Tuji Pro twelve
+    /// points under it was the same words twice. What is left is the sentence
+    /// that actually sells — promoted out of the caption size it was hiding in.
     private var header: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 34, weight: .heavy))
                 .foregroundStyle(.tujiEye)
-            Text("解鎖 Tuji Pro")
-                .font(.tujiH1)
-                .foregroundStyle(.tujiInk)
             Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
         }
     }
 

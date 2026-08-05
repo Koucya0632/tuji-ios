@@ -169,16 +169,20 @@ private struct AdSnapshotRoot: View {
 
 private struct AdCaptureSnapshotView: View {
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            TujiSheetHeader(title: Text("拍照新增"))
             VStack(alignment: .leading, spacing: Space.s3) {
                 VStack(alignment: .leading, spacing: Space.s2) {
                     Text("拍下身邊的東西")
-                        .font(.tujiH2)
+                        .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
                     Text("拍照後自動 AI 辨識，校正後一鍵生成學習卡片。")
                         .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
-                    Text("免費版：本月 AI 辨識剩 24／30 次")
+                    // Interpolated, not spelled out: "免費版：本月 AI 辨識剩 24／30 次"
+                    // is not a catalog key, so the English and Japanese App Store
+                    // screenshots carried a line of Traditional Chinese.
+                    Text("免費版：本月 AI 辨識剩 \(24)／\(30) 次")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }
@@ -210,17 +214,9 @@ private struct AdCaptureSnapshotView: View {
             }
             .padding(.horizontal, Space.s4)
             .padding(.vertical, Space.s3)
-            .background(.tujiPaper)
-            .navigationTitle("拍照新增")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.tujiInk2)
-                }
-            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(.tujiPaper)
     }
 }
 

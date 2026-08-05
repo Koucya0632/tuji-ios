@@ -264,28 +264,36 @@ struct AtlasCollectionEditView: View {
     }
 
     var body: some View {
-        ScrollView {
-            Group {
-                if let collection = self.vm.collection {
-                    VStack(alignment: .leading, spacing: Space.s4) {
-                        self.avatarSection
-                        self.metaSection
-                        self.membersSection
-                        self.submitSection(collection)
+        VStack(spacing: 0) {
+            TujiNavBar(leading: .back)
+            // The title shown is the screen's job, not the collection's name —
+            // the name is the first editable field a few points below, and the
+            // system bar was rendering it twice.
+            TujiScreenTitle("編輯合集")
+            ScrollView {
+                Group {
+                    if let collection = self.vm.collection {
+                        VStack(alignment: .leading, spacing: Space.s4) {
+                            self.avatarSection
+                            self.metaSection
+                            self.membersSection
+                            self.submitSection(collection)
+                        }
+                        .padding(.horizontal, Space.s4)
+                        .padding(.bottom, Space.s4)
+                    } else if case .loading = self.vm.phase {
+                        TujiPageLoading()
+                    } else {
+                        self.errorState
                     }
-                    .padding(Space.s4)
-                } else if case .loading = self.vm.phase {
-                    TujiPageLoading()
-                } else {
-                    self.errorState
                 }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiPaper)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("編輯合集"))
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             self.connectAvatarUpload()
             await self.vm.load()
@@ -622,7 +630,6 @@ struct AtlasCollectionEditView: View {
 private struct AtlasCollectionItemPicker: View {
     let onAdd: (String) async -> Bool
 
-    @Environment(\.dismiss) private var dismiss
     @State private var model: CollectionCandidatesModel
 
     init(
@@ -640,7 +647,9 @@ private struct AtlasCollectionItemPicker: View {
     }
 
     var body: some View {
-        NavigationStack {
+        // No 完成 button: every tap adds its item immediately, so there was never
+        // anything for 完成 to confirm — it only ever meant 關閉.
+        TujiFormSheet(title: "加入項目") {
             ScrollView {
                 Group {
                     if self.model.loading {
@@ -683,14 +692,6 @@ private struct AtlasCollectionItemPicker: View {
                 .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.tujiPaper)
-            .navigationTitle("加入項目")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") { self.dismiss() }
-                }
-            }
             .task { await self.model.load() }
         }
     }

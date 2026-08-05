@@ -32,6 +32,81 @@ extension View {
 struct TujiSheetShell<Content: View>: View {
     let title: LocalizedStringKey
     @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TujiSheetHeader(title: Text(self.title))
+            self.content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiPaper)
+        .presentationDetents([.height(self.estimatedHeight), .large])
+        .tujiSheetPresentation()
+    }
+
+    /// Sheets size to their content rather than to a fixed fraction; a settings
+    /// picker with four rows should not occupy half the screen.
+    private var estimatedHeight: CGFloat {
+        340
+    }
+}
+
+/// The full-height variant, for sheets that are a *task* rather than a choice:
+/// a form to fill in, a photo to correct, a catalogue to pick from.
+///
+/// These five screens each wrapped themselves in a `NavigationStack` purely to
+/// borrow its bar — a whole navigation container, holding one title and one close
+/// button, for a modal that never pushes anything. The stack is gone; the header
+/// is the one above, so a form sheet and a picker sheet open with the same mark.
+///
+/// `closeDisabled` drives the drag-to-dismiss too. A close button that refuses
+/// while the sheet still slides away on a swipe isn't protecting anything.
+struct TujiFormSheet<Content: View>: View {
+    let title: Text
+    var closeDisabled: Bool = false
+    /// Overrides plain dismissal — for a sheet that must ask before discarding.
+    var onClose: (() -> Void)?
+    @ViewBuilder var content: Content
+
+    init(
+        title: LocalizedStringKey,
+        closeDisabled: Bool = false,
+        onClose: (() -> Void)? = nil,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = Text(title)
+        self.closeDisabled = closeDisabled
+        self.onClose = onClose
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            TujiSheetHeader(
+                title: self.title,
+                closeDisabled: self.closeDisabled,
+                onClose: self.onClose
+            )
+            self.content
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(.tujiPaper)
+        .presentationDetents([.large])
+        .tujiSheetPresentation()
+        // A sheet that overrides close has something to ask before it goes, so
+        // the drag gesture must not be a way around the question — that was the
+        // 拍照新增 discard confirmation's one hole.
+        .interactiveDismissDisabled(self.closeDisabled || self.onClose != nil)
+    }
+}
+
+/// Not private: the App Store snapshot mock draws this screen too, and a mock
+/// that reimplements the chrome is a mock that quietly stops matching the app.
+struct TujiSheetHeader: View {
+    let title: Text
+    var closeDisabled: Bool = false
+    var onClose: (() -> Void)?
+
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -41,41 +116,40 @@ struct TujiSheetShell<Content: View>: View {
                 .frame(height: Border.bw3)
 
             HStack {
-                Text(self.title)
+                self.title
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
-                Spacer()
+                    .lineLimit(1)
+                Spacer(minLength: Space.s2)
                 // No centred title, no "完成" text button, no "取消" on the left —
                 // those three together are the system sheet's toolbar.
-                Button { self.dismiss() } label: {
+                Button {
+                    if let onClose = self.onClose { onClose() } else { self.dismiss() }
+                } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.tujiInk2)
+                        .foregroundStyle(self.closeDisabled ? .tujiInk3 : .tujiInk2)
                         .frame(width: 48, height: 48)
                         .contentShape(.rect)
                 }
+                .disabled(self.closeDisabled)
                 .accessibilityLabel(Text("關閉"))
                 .padding(.trailing, -Space.s3)
             }
             .padding(.horizontal, Space.s4)
             .padding(.top, Space.s3)
-
-            self.content
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper)
-        .presentationDetents([.height(self.estimatedHeight), .large])
-        .presentationDragIndicator(.hidden)
-        // Square corners. This is the whole point — the system's rounded sheet is
-        // the single most recognisable modal shape on the platform.
-        .presentationCornerRadius(Radius.r0)
-        .presentationBackground(.tujiPaper)
     }
+}
 
-    /// Sheets size to their content rather than to a fixed fraction; a settings
-    /// picker with four rows should not occupy half the screen.
-    private var estimatedHeight: CGFloat {
-        340
+private extension View {
+    func tujiSheetPresentation() -> some View {
+        self
+            .presentationDragIndicator(.hidden)
+            // Square corners. This is the whole point — the system's rounded sheet
+            // is the single most recognisable modal shape on the platform.
+            .presentationCornerRadius(Radius.r0)
+            .presentationBackground(.tujiPaper)
     }
 }
 

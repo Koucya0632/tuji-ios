@@ -126,6 +126,9 @@ struct TujiNavIcon: View {
 /// demoted to "accumulation" the system has no colour that means "tappable".
 struct TujiNavTextAction: View {
     let title: LocalizedStringKey
+    /// Unavailable actions lose the underline as well as the ink: with teal gone
+    /// as the tappable signal, a grey *underlined* word still reads as a link.
+    var isEnabled: Bool = true
     let action: () -> Void
 
     var body: some View {
@@ -133,11 +136,12 @@ struct TujiNavTextAction: View {
             Text(self.title)
                 .font(.tujiLabel)
                 .tracking(0.5)
-                .foregroundStyle(.tujiInk)
-                .underline(true, pattern: .solid)
+                .foregroundStyle(self.isEnabled ? Color.tujiInk : .tujiInk3)
+                .underline(self.isEnabled, pattern: .solid)
                 .frame(height: 48)
                 .contentShape(.rect)
         }
+        .disabled(!self.isEnabled)
     }
 }
 

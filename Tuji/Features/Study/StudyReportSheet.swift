@@ -26,7 +26,7 @@ struct StudyReportSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        TujiFormSheet(title: "回報學習問題", closeDisabled: self.submitting) {
             ScrollView {
                 if self.submitted {
                     self.successContent
@@ -34,17 +34,7 @@ struct StudyReportSheet: View {
                     self.formContent
                 }
             }
-            .background(.tujiPaper)
-            .navigationTitle("回報學習問題")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("關閉") { self.dismiss() }
-                        .disabled(self.submitting)
-                }
-            }
         }
-        .interactiveDismissDisabled(self.submitting)
     }
 
     private var formContent: some View {
