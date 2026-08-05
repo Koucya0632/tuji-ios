@@ -22,16 +22,16 @@ struct MeListCard<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text(self.title)
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             VStack(spacing: 0) {
                 self.content
             }
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
             )
         }
     }
@@ -55,17 +55,17 @@ struct MeListRow: View {
                     .foregroundStyle(.tujiInk)
                 if let subtitle = self.subtitle {
                     Text(subtitle)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiInk4)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
                 }
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
         }
-        .padding(.horizontal, Space.s4)
-        .padding(.vertical, Space.s4)
+        .padding(.horizontal, Space.s3)
+        .padding(.vertical, Space.s3)
         .frame(minHeight: 52)
         // Make the whole row (incl. the Spacer gap) tappable, not just the
         // text/icon glyphs.
@@ -74,7 +74,7 @@ struct MeListRow: View {
 }
 
 private var rowDivider: some View {
-    Divider().background(.tujiInk4.opacity(0.15))
+    Divider().background(.tujiRule.opacity(0.15))
 }
 
 // MARK: - 創作
@@ -141,7 +141,7 @@ struct MeAccountGroup: View {
     var body: some View {
         MeListCard(title: "帳號") {
             NavigationLink(value: NavRoute.favorites) {
-                MeListRow(icon: "heart.fill", title: "我的收藏", tint: .tujiCoral)
+                MeListRow(icon: "heart.fill", title: "我的收藏", tint: .tujiAlert)
             }
             .buttonStyle(.plain)
             rowDivider
@@ -157,7 +157,7 @@ struct MeAccountGroup: View {
                     MeListRow(
                         icon: "bubble.left.and.bubble.right.fill",
                         title: "意見收集",
-                        tint: .tujiAmber
+                        tint: .tujiTeal
                     )
                 }
                 .buttonStyle(.plain)

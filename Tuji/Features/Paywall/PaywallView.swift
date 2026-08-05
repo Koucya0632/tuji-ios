@@ -22,17 +22,17 @@ struct PaywallView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s5) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     self.header
                     self.benefits
                     self.plans
                     self.restoreButton
                     self.legal
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.vertical, Space.s4)
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s3)
             }
-            .background(.tujiBg)
+            .background(.tujiPaper)
             .navigationTitle("Tuji Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -57,12 +57,12 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 34, weight: .heavy))
-                .foregroundStyle(.tujiYellow)
+                .foregroundStyle(.tujiEye)
             Text("解鎖 Tuji Pro")
                 .font(.tujiH1)
                 .foregroundStyle(.tujiInk)
             Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
         }
     }
@@ -74,9 +74,9 @@ struct PaywallView: View {
             self.benefitRow(icon: "scope", text: "高精度 AI 辨識（每月 30 次）")
             self.benefitRow(icon: "bolt.fill", text: "優先支援與後續 Pro 功能")
         }
-        .padding(Space.s4)
+        .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
     }
 
     private func benefitRow(icon: String, text: LocalizedStringKey) -> some View {
@@ -95,30 +95,30 @@ struct PaywallView: View {
     private var plans: some View {
         if let errorMessage {
             Text(errorMessage)
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiCoral)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiAlert)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Space.s3)
-                .background(Color.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+                .background(Color.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
         }
 
         if self.store.isPro {
             Text("你已經是 Tuji Pro，感謝支持！")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.tujiGreen)
+                .foregroundStyle(.tujiTeal)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else if self.store.products.isEmpty {
             if self.loadingProducts {
-                ProgressView().tint(.tujiTeal).frame(maxWidth: .infinity)
+                TujiPageLoading()
             } else {
                 VStack(spacing: Space.s3) {
                     Text("暫時無法載入方案，請檢查網路後再試一次。")
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     BBtn(
                         title: "重新載入方案",
-                        bg: .tujiTealSoft,
+                        bg: .tujiPaper2,
                         fg: .tujiTeal,
                         fullWidth: true,
                         icon: "arrow.clockwise"
@@ -151,22 +151,22 @@ struct PaywallView: View {
                         .foregroundStyle(.white)
                     if let period = self.periodLabel(product) {
                         Text(period)
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.white.opacity(0.85))
                     }
                 }
                 Spacer()
                 if self.store.purchasing == product.id {
-                    ProgressView().tint(.white)
+                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 56)
                 } else {
                     Text(product.displayPrice)
                         .font(.system(size: 16, weight: .heavy))
                         .foregroundStyle(.white)
                 }
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.vertical, Space.s4)
-            .background(.tujiTeal, in: .rect(cornerRadius: Radius.lg))
+            .padding(.horizontal, Space.s3)
+            .padding(.vertical, Space.s3)
+            .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
         }
         .buttonStyle(.plain)
         .disabled(self.store.purchasing != nil)
@@ -188,15 +188,15 @@ struct PaywallView: View {
     private var legal: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("訂閱會自動續訂，可隨時在 App Store 帳號設定取消。付款於確認購買時向 Apple ID 收取。")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk4)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
             // App Review 3.1.2: auto-renewable subscriptions must link to the
             // Terms of Use (EULA) and privacy policy from inside the app.
-            HStack(spacing: Space.s4) {
+            HStack(spacing: Space.s3) {
                 Link("使用條款", destination: Self.termsURL)
                 Link("隱私權政策", destination: Self.privacyURL)
             }
-            .font(.tujiCaption)
+            .font(.tujiLabel)
             .foregroundStyle(.tujiTeal)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

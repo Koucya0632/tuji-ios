@@ -62,7 +62,7 @@ struct WordDetailSections: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.s5) {
+        VStack(alignment: .leading, spacing: Space.s4) {
             let tabs = self.currentTabs
             // Keep the shown tab valid when availability shifts (e.g. showZh
             // toggling the 譯義 tab) so the switch never renders a card whose
@@ -115,12 +115,12 @@ struct WordDetailSections: View {
                     }
                 } label: {
                     Text(tab.label)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(active ? .white : .tujiTeal)
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(active ? Color.tujiPaper : .tujiInk2)
                         .padding(.horizontal, Space.s3)
-                        .padding(.vertical, Space.s2)
-                        .background(active ? Color.tujiTeal : Color.tujiTealSoft)
-                        .clipShape(.capsule)
+                        .frame(height: 36)
+                        .background(active ? Color.tujiInk : Color.tujiPaper2)
                 }
                 .buttonStyle(.plain)
             }
@@ -152,9 +152,9 @@ struct WordDetailSections: View {
 
     private func sectionTitle(_ text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(.tujiOverline)
+            .font(.tujiLabel)
             .tracking(2)
-            .foregroundStyle(.tujiTeal)
+            .foregroundStyle(.tujiInk3)
             .padding(.top, Space.s2)
     }
 
@@ -172,14 +172,14 @@ struct WordDetailSections: View {
                 }
                 if let pos = w.partOfSpeech {
                     Text(localizedPartOfSpeech(pos, language: self.settings.current.uiLanguage))
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .italic()
                         .foregroundStyle(.tujiInk3)
                 }
             }
             if let targetDef, !targetDef.isEmpty {
                 Text(targetDef)
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk)
             }
             if self.settings.current.showZh,
@@ -187,16 +187,16 @@ struct WordDetailSections: View {
                !chineseDef.isEmpty
             {
                 Text(chineseDef)
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
         }
-        .padding(Space.s4)
+        .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 
@@ -207,7 +207,7 @@ struct WordDetailSections: View {
                     // Grammar labels (單數/複數/過去式…) come from the model as
                     // zh-Hant; localize the known set, pass anything else through.
                     Text(tujiLocalized(String.LocalizationValue(form.label)))
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk2)
                     Spacer()
                     Text(form.value)
@@ -215,16 +215,16 @@ struct WordDetailSections: View {
                         .foregroundStyle(.tujiInk)
                 }
                 .padding(.vertical, Space.s3)
-                .padding(.horizontal, Space.s4)
+                .padding(.horizontal, Space.s3)
                 if idx < forms.count - 1 {
-                    Divider().background(.tujiInk4.opacity(0.2))
+                    Divider().background(.tujiRule.opacity(0.2))
                 }
             }
         }
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 
@@ -234,14 +234,14 @@ struct WordDetailSections: View {
                 .fill(.tujiTeal)
                 .frame(width: 3)
             Text(etymology)
-                .font(.tujiBody)
-                .foregroundStyle(.tujiTealDark)
-                .padding(.vertical, Space.s4)
-                .padding(.leading, Space.s5)
-                .padding(.trailing, Space.s4)
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiTealDeep)
+                .padding(.vertical, Space.s3)
+                .padding(.leading, Space.s4)
+                .padding(.trailing, Space.s3)
         }
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.lg))
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
     }
 
     private func examplesCard(_ examples: [WordExample]) -> some View {
@@ -251,7 +251,7 @@ struct WordDetailSections: View {
                 VStack(alignment: .leading, spacing: Space.s1) {
                     HStack(alignment: .top, spacing: Space.s2) {
                         Text(sentence)
-                            .font(.tujiBodyLg)
+                            .font(.tujiBody)
                             .foregroundStyle(.tujiInk)
                         Spacer(minLength: Space.s2)
                         PronunciationButton(
@@ -262,16 +262,16 @@ struct WordDetailSections: View {
                     }
                     if let zh = ex.zh, !zh.isEmpty {
                         Text(zh)
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                     }
                 }
-                .padding(Space.s4)
+                .padding(Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.lg)
-                        .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.r0)
+                        .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                 )
             }
         }
@@ -284,16 +284,16 @@ struct WordDetailSections: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(c)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.tujiTeal)
+                        .foregroundStyle(.tujiInk3)
                     if let zhText, !zhText.isEmpty {
                         Text(zhText)
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiTealDark)
+                            .foregroundStyle(.tujiTealDeep)
                     }
                 }
                 .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s2)
-                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
             }
         }
     }

@@ -17,7 +17,7 @@ struct SigninView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s5) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     Text("登入")
                         .font(.tujiH2)
                         .foregroundStyle(.tujiInk)
@@ -31,11 +31,11 @@ struct SigninView: View {
                             .textContentType(.emailAddress)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
-                            .padding(Space.s4)
-                            .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                            .padding(Space.s3)
+                            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                             .overlay(
-                                RoundedRectangle(cornerRadius: Radius.md)
-                                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: Radius.r0)
+                                    .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                             )
                     }
 
@@ -60,35 +60,35 @@ struct SigninView: View {
                                     .foregroundStyle(.tujiInk3)
                             }
                         }
-                        .padding(Space.s4)
-                        .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                        .padding(Space.s3)
+                        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                         .overlay(
-                            RoundedRectangle(cornerRadius: Radius.md)
-                                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: Radius.r0)
+                                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                         )
                     }
 
                     if let err = auth.error {
                         HStack(alignment: .top, spacing: Space.s2) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.tujiCoral)
+                                .foregroundStyle(.tujiAlert)
                             Text(err)
-                                .font(.tujiBody)
+                                .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk2)
                         }
-                        .padding(Space.s4)
+                        .padding(Space.s3)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.tujiCoral.opacity(0.08), in: .rect(cornerRadius: Radius.md))
+                        .background(.tujiAlert.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
                     }
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.top, Space.s5)
+                .padding(.horizontal, Space.s4)
+                .padding(.top, Space.s4)
             }
 
             VStack(spacing: Space.s3) {
                 BBtn(
                     title: auth.loading ? "登入中..." : "登入",
-                    bg: canSubmit ? .tujiTeal : .tujiInk4,
+                    bg: canSubmit ? .tujiEye : .tujiPaper3,
                     fg: .white,
                     fullWidth: true,
                     action: submit
@@ -104,15 +104,15 @@ struct SigninView: View {
                         Text("註冊")
                             .foregroundStyle(.tujiTeal)
                     }
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                 }
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.vertical, Space.s5)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s4)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.tujiBg, for: .navigationBar)
+        .toolbarBackground(.tujiPaper, for: .navigationBar)
     }
 
     private func submit() {

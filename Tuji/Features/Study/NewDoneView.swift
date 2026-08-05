@@ -16,14 +16,14 @@ struct NewDoneView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Space.s5) {
+            VStack(spacing: Space.s4) {
                 self.hero
                 UnsyncedAnswersNotice(unsyncedCount: self.coord.parkedCount)
                 StudyWordGrid(items: self.queue, mistakeCounts: self.coord.mistakeCounts)
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s4)
-            .padding(.bottom, Space.s8)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
+            .padding(.bottom, Space.s5)
         }
         // Learning new words writes mastery + creates user_cards + study_logs
         // (the deferred recognize POSTs fired as each word cleared Spell).
@@ -40,14 +40,14 @@ struct NewDoneView: View {
         .safeAreaInset(edge: .bottom) {
             BBtn(
                 title: "完成",
-                bg: .tujiTeal,
-                fg: .white,
+                bg: .tujiEye,
+                fg: .tujiInk,
                 fullWidth: true,
                 icon: "checkmark",
                 action: self.onFinish
             )
-            .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s4)
+            .padding(.horizontal, Space.s4)
+            .padding(.bottom, Space.s3)
         }
     }
 
@@ -57,10 +57,10 @@ struct NewDoneView: View {
             accent: .tujiTeal
         ) {
             Text("它們已加入你的圖鑑")
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
         }
-        .padding(.top, Space.s8)
+        .padding(.top, Space.s5)
     }
 }
 
@@ -75,14 +75,14 @@ struct UnsyncedAnswersNotice: View {
         if self.unsyncedCount > 0 {
             HStack(spacing: Space.s2) {
                 Image(systemName: "icloud.slash")
-                    .foregroundStyle(.tujiCoral)
+                    .foregroundStyle(.tujiAlert)
                 Text("有 \(self.unsyncedCount) 筆評分還沒送出，已排入待同步，連上網路後會自動補送。")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(Space.s3)
-            .background(.tujiCoral.opacity(0.12), in: .rect(cornerRadius: Radius.md))
+            .background(.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
         }
     }
 }
@@ -114,7 +114,7 @@ struct StudyWordGrid: View {
     private func tile(for item: StudyQueueItem) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: item.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable()
@@ -122,9 +122,9 @@ struct StudyWordGrid: View {
                             .padding(Space.s2)
                     } else if state.error != nil {
                         Image(systemName: "photo")
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
@@ -140,25 +140,25 @@ struct StudyWordGrid: View {
                     if let wrongs = self.mistakeCounts[item.word.id], wrongs > 0 {
                         Text("答錯 \(wrongs) 次")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiCoral)
+                            .foregroundStyle(.tujiAlert)
                             .lineLimit(1)
                     }
                 }
                 if self.settings.current.showZh {
                     Text(item.word.chinese)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
             }
             .padding(Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCard)
+            .background(.tujiPaper)
         }
-        .clipShape(.rect(cornerRadius: Radius.lg))
+        .clipShape(.rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
         )
     }
 }

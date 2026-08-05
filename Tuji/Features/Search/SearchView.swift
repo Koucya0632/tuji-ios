@@ -157,7 +157,7 @@ struct SearchView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.tujiBg.ignoresSafeArea()
+            Color.tujiPaper.ignoresSafeArea()
             VStack(spacing: 0) {
                 self.searchBar
                 self.content
@@ -200,7 +200,7 @@ struct SearchView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.search)
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk)
                 .tint(.tujiTeal)
                 if !self.vm.query.isEmpty {
@@ -210,15 +210,15 @@ struct SearchView: View {
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, Space.s4)
+            .padding(.horizontal, Space.s3)
             .padding(.vertical, Space.s3)
-            .background(.tujiCard, in: .capsule)
-            .overlay(Capsule().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+            .overlay(Rectangle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
 
             Button {
                 self.dismiss()
@@ -229,8 +229,8 @@ struct SearchView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
         .padding(.bottom, Space.s3)
     }
 
@@ -254,22 +254,22 @@ struct SearchView: View {
     private var recentSection: some View {
         if self.cache.recentSearches.isEmpty {
             VStack {
-                Spacer(minLength: Space.s8)
+                Spacer(minLength: Space.s5)
                 MascotEmptyState(
                     pose: .think,
                     title: "找個單字試試",
                     message: "輸入英文或中文，即時顯示結果"
                 )
-                Spacer(minLength: Space.s8)
+                Spacer(minLength: Space.s5)
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s2) {
                     HStack {
                         Text("最近搜尋")
-                            .font(.tujiOverline)
+                            .font(.tujiLabel)
                             .tracking(2)
                             .foregroundStyle(.tujiTeal)
                         Spacer()
@@ -290,34 +290,34 @@ struct SearchView: View {
                             HStack(spacing: Space.s3) {
                                 Image(systemName: "clock.arrow.circlepath")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.tujiInk4)
+                                    .foregroundStyle(.tujiInk3)
                                 Text(q)
-                                    .font(.tujiBody)
+                                    .font(.tujiBodySm)
                                     .foregroundStyle(.tujiInk)
                                 Spacer()
                                 Image(systemName: "arrow.up.left")
                                     .font(.system(size: 12, weight: .semibold))
-                                    .foregroundStyle(.tujiInk4)
+                                    .foregroundStyle(.tujiInk3)
                             }
                             .frame(minHeight: 48)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        Divider().background(.tujiInk4.opacity(0.15))
+                        Divider().background(.tujiRule.opacity(0.15))
                     }
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.top, Space.s4)
+                .padding(.horizontal, Space.s4)
+                .padding(.top, Space.s3)
             }
         }
     }
 
     private var loadingState: some View {
         VStack(spacing: Space.s3) {
-            Spacer().frame(height: Space.s12)
-            ProgressView().tint(.tujiTeal)
+            Spacer().frame(height: Space.s5)
+            TujiProgressBar(progress: nil).frame(width: 56).tint(.tujiTeal)
             Text("搜尋中…")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .frame(maxWidth: .infinity)
@@ -325,21 +325,21 @@ struct SearchView: View {
 
     private func emptyState(query: String) -> some View {
         VStack {
-            Spacer(minLength: Space.s8)
+            Spacer(minLength: Space.s5)
             MascotEmptyState(
                 pose: .think,
                 title: "找不到「\(query)」",
                 message: "換個關鍵字試試，或瀏覽圖鑑"
             )
-            Spacer(minLength: Space.s8)
+            Spacer(minLength: Space.s5)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
     }
 
     private func errorState(_ error: Error) -> some View {
         VStack {
-            Spacer(minLength: Space.s8)
+            Spacer(minLength: Space.s5)
             MascotEmptyState(
                 pose: .think,
                 title: "搜尋失敗",
@@ -349,10 +349,10 @@ struct SearchView: View {
                     self.vm.runImmediately(self.vm.query)
                 })
             }
-            Spacer(minLength: Space.s8)
+            Spacer(minLength: Space.s5)
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
     }
 
     private var resultsList: some View {
@@ -360,11 +360,11 @@ struct SearchView: View {
             LazyVStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
                     Text("\(self.vm.results.count) 個結果")
-                        .font(.tujiOverline)
+                        .font(.tujiLabel)
                         .tracking(2)
                         .foregroundStyle(.tujiInk3)
                     if self.vm.loading {
-                        ProgressView()
+                        TujiProgressBar(progress: nil).frame(width: 56)
                             .controlSize(.mini)
                             .tint(.tujiTeal)
                     }
@@ -375,11 +375,11 @@ struct SearchView: View {
                         SearchResultRow(word: word, query: self.vm.lastQuery)
                     }
                     .buttonStyle(.plain)
-                    Divider().background(.tujiInk4.opacity(0.15))
+                    Divider().background(.tujiRule.opacity(0.15))
                 }
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s8)
+            .padding(.horizontal, Space.s4)
+            .padding(.bottom, Space.s5)
         }
     }
 }
@@ -393,7 +393,7 @@ private struct SearchResultRow: View {
     var body: some View {
         HStack(spacing: Space.s3) {
             ZStack {
-                RoundedRectangle(cornerRadius: Radius.md).fill(.tujiBg)
+                RoundedRectangle(cornerRadius: Radius.r0).fill(.tujiPaper)
                 LazyImage(url: self.word.imageURL) { state in
                     if let image = state.image {
                         image
@@ -403,9 +403,9 @@ private struct SearchResultRow: View {
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 16))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView()
+                        TujiProgressBar(progress: nil).frame(width: 56)
                             .controlSize(.small)
                             .tint(.tujiTeal)
                     }
@@ -413,10 +413,10 @@ private struct SearchResultRow: View {
                 .pipeline(.shared)
             }
             .frame(width: 48, height: 48)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.md)
-                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
             )
 
             VStack(alignment: .leading, spacing: 2) {
@@ -426,7 +426,7 @@ private struct SearchResultRow: View {
                     .lineLimit(1)
                 if self.settings.current.showZh {
                     Text(self.highlighted(self.word.chinese))
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
@@ -436,7 +436,7 @@ private struct SearchResultRow: View {
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, Space.s2)
         .frame(minHeight: 60)

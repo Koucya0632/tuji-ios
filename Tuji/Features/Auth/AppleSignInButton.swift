@@ -23,7 +23,7 @@ struct AppleSignInButton: View {
         }
         .signInWithAppleButtonStyle(.black)
         .frame(height: 52)
-        .clipShape(.rect(cornerRadius: Radius.lg))
+        .clipShape(.rect(cornerRadius: Radius.r0))
         // The system control labels itself from the *device* language, so on
         // a non-Chinese phone it reads "Continue with Apple" next to the zh
         // 繼續使用 Google — the one button that ignores the app's pinned
@@ -38,7 +38,7 @@ struct AppleSignInButton: View {
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.black, in: .rect(cornerRadius: Radius.lg))
+            .background(.black, in: .rect(cornerRadius: Radius.r0))
             .allowsHitTesting(false)
         }
         .disabled(auth.loading)

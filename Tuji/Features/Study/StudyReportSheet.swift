@@ -34,7 +34,7 @@ struct StudyReportSheet: View {
                     self.formContent
                 }
             }
-            .background(.tujiBg)
+            .background(.tujiPaper)
             .navigationTitle("回報學習問題")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -48,7 +48,7 @@ struct StudyReportSheet: View {
     }
 
     private var formContent: some View {
-        VStack(alignment: .leading, spacing: Space.s6) {
+        VStack(alignment: .leading, spacing: Space.s4) {
             Text(self.draft.item.word.word)
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
@@ -64,22 +64,22 @@ struct StudyReportSheet: View {
                     } label: {
                         HStack(spacing: Space.s3) {
                             Image(systemName: self.issueType == type ? "largecircle.fill.circle" : "circle")
-                                .foregroundStyle(self.issueType == type ? .tujiTeal : .tujiInk4)
+                                .foregroundStyle(self.issueType == type ? .tujiTeal : .tujiInk3)
                             Text(self.title(for: type))
-                                .font(.tujiBody)
+                                .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk)
                             Spacer()
                         }
-                        .padding(.horizontal, Space.s4)
+                        .padding(.horizontal, Space.s3)
                         .padding(.vertical, Space.s3)
                         .background(
-                            self.issueType == type ? Color.tujiTealSoft : Color.tujiCard,
-                            in: .rect(cornerRadius: Radius.md)
+                            self.issueType == type ? Color.tujiTealSoft : Color.tujiPaper,
+                            in: .rect(cornerRadius: Radius.r0)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: Radius.md)
+                            RoundedRectangle(cornerRadius: Radius.r0)
                                 .stroke(
-                                    self.issueType == type ? Color.tujiTeal : Color.tujiInk4.opacity(0.2),
+                                    self.issueType == type ? Color.tujiTeal : Color.tujiRule,
                                     lineWidth: 1
                                 )
                         )
@@ -100,17 +100,17 @@ struct StudyReportSheet: View {
                         .padding(Space.s2)
                     if self.detail.isEmpty {
                         Text("請描述你看到的問題與正確內容…")
-                            .font(.tujiBody)
-                            .foregroundStyle(.tujiInk4)
-                            .padding(.horizontal, Space.s4)
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk3)
+                            .padding(.horizontal, Space.s3)
                             .padding(.vertical, Space.s3)
                             .allowsHitTesting(false)
                     }
                 }
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.r0)
+                        .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                 )
                 .onChange(of: self.detail) { _, value in
                     if value.count > 1000 {
@@ -119,15 +119,15 @@ struct StudyReportSheet: View {
                 }
 
                 Text("\(self.detail.count)/1000")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiAlert)
             }
 
             BBtn(title: "\(self.submitTitle)", fullWidth: true) {
@@ -135,15 +135,15 @@ struct StudyReportSheet: View {
             }
             .disabled(!self.canSubmit)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.vertical, Space.s6)
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s4)
     }
 
     private var successContent: some View {
-        VStack(spacing: Space.s5) {
+        VStack(spacing: Space.s4) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.tujiGreen)
+                .foregroundStyle(.tujiTeal)
             Text("謝謝你的回報！我們會盡快確認並改進。")
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)
@@ -151,8 +151,8 @@ struct StudyReportSheet: View {
             BBtn(title: "\(self.localized("完成"))", fullWidth: true) { self.dismiss() }
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s12)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s5)
     }
 
     private func title(for type: StudyReportIssueType) -> LocalizedStringKey {

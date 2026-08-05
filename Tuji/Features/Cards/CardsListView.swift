@@ -25,7 +25,7 @@ struct CardsListView: View {
             self.chipRow
             self.content
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
         // multitasking window title) — `header` below is the visible title,
         // so the system nav bar itself stays hidden.
@@ -74,8 +74,8 @@ struct CardsListView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
         .padding(.bottom, Space.s3)
     }
 
@@ -87,7 +87,7 @@ struct CardsListView: View {
                     self.chip(label: c.nameZh, value: c.id)
                 }
             }
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         }
         .padding(.bottom, Space.s3)
     }
@@ -95,16 +95,27 @@ struct CardsListView: View {
     @ViewBuilder
     private var content: some View {
         if self.store.loading, self.store.words.isEmpty {
-            VStack {
-                Spacer()
-                ProgressView().tint(.tujiTeal)
-                Text("載入中…")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk3)
-                    .padding(.top, Space.s3)
-                Spacer()
+            // Two-column skeleton in the shape of the grid that is coming —
+            // the point of a skeleton over a spinner is that the layout does
+            // not jump when the real tiles land.
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: Space.s2),
+                    GridItem(.flexible(), spacing: Space.s2)
+                ],
+                spacing: Space.s4
+            ) {
+                ForEach(0..<6, id: \.self) { _ in
+                    VStack(alignment: .leading, spacing: Space.s2) {
+                        TujiImagePlaceholder().aspectRatio(1, contentMode: .fit)
+                        TujiSkeleton(width: 72, height: 14)
+                    }
+                }
             }
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
+            .frame(maxWidth: .infinity, alignment: .top)
+            .accessibilityLabel(Text("載入中"))
         } else if let error = store.lastError, self.store.words.isEmpty {
             MascotEmptyState(
                 pose: .think,
@@ -116,15 +127,15 @@ struct CardsListView: View {
                 })
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, Space.s6)
+            .padding(.horizontal, Space.s4)
         } else {
             ScrollView {
                 LazyVGrid(
                     columns: [
-                        GridItem(.flexible(), spacing: Space.s3),
-                        GridItem(.flexible(), spacing: Space.s3)
+                        GridItem(.flexible(), spacing: Space.s2),
+                        GridItem(.flexible(), spacing: Space.s2)
                     ],
-                    spacing: Space.s3
+                    spacing: Space.s4
                 ) {
                     ForEach(self.visibleWords) { word in
                         NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
@@ -142,7 +153,7 @@ struct CardsListView: View {
                         }
                     }
                 }
-                .padding(.horizontal, Space.s6)
+                .padding(.horizontal, Space.s4)
 
                 if self.canShowMore {
                     Button {
@@ -151,14 +162,14 @@ struct CardsListView: View {
                         Text("顯示更多")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.tujiInk3)
-                            .padding(.vertical, Space.s4)
+                            .padding(.vertical, Space.s3)
                     }
-                    .padding(.top, Space.s4)
+                    .padding(.top, Space.s3)
                 } else if self.filtered.isEmpty {
                     Text("這個分類還沒有字")
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
-                        .padding(.top, Space.s12)
+                        .padding(.top, Space.s5)
                 }
             }
         }
@@ -173,14 +184,14 @@ struct CardsListView: View {
             Text(label)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(selected ? .white : .tujiInk2)
-                .padding(.horizontal, Space.s4)
+                .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s2)
                 .background(
-                    selected ? .tujiInk : .tujiCard,
-                    in: .capsule
+                    selected ? .tujiInk : .tujiPaper,
+                    in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
-                    Capsule().stroke(.tujiInk4.opacity(selected ? 0 : 0.3), lineWidth: 1)
+                    Rectangle().stroke(.tujiRule.opacity(selected ? 0 : 0.3), lineWidth: 1)
                 )
         }
     }

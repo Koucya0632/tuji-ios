@@ -35,7 +35,7 @@ struct AvatarCropView: View {
                 } else if self.loadFailed {
                     self.failureView
                 } else {
-                    ProgressView().tint(.white)
+                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 120)
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -105,11 +105,11 @@ struct AvatarCropView: View {
                 .allowsHitTesting(false)
 
                 Text("拖曳移動・雙指縮放")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.white.opacity(0.88))
                     .padding(.horizontal, Space.s3)
                     .padding(.vertical, Space.s2)
-                    .background(.black.opacity(0.45), in: .capsule)
+                    .background(.black.opacity(0.45), in: .rect(cornerRadius: Radius.r0))
                     .position(x: viewport.midX, y: max(28, viewport.minY - 30))
                     .allowsHitTesting(false)
 
@@ -212,20 +212,20 @@ struct AvatarCropView: View {
 
             BBtn(
                 title: self.working ? "處理中…" : "使用照片",
-                bg: .tujiTeal,
-                fg: .white,
+                bg: .tujiEye,
+                fg: .tujiInk,
                 icon: "checkmark"
             ) {
                 self.confirm()
             }
             .disabled(self.working || self.proxy == nil)
         }
-        .padding(.horizontal, Space.s5)
+        .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
     }
 
     private var failureView: some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 32, weight: .bold))
                 .foregroundStyle(.white.opacity(0.8))
@@ -236,7 +236,7 @@ struct AvatarCropView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.tujiTeal)
         }
-        .padding(Space.s6)
+        .padding(Space.s4)
     }
 
     private func confirm() {

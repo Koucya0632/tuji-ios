@@ -22,24 +22,24 @@ struct ReviewRevealSheet: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
+            VStack(alignment: .leading, spacing: Space.s3) {
                 self.summary
                 ExpandableWordDetail(wordId: self.item.word.id, expanded: self.detent == .large)
-                    .padding(.top, self.detent == .large ? 0 : Space.s4)
+                    .padding(.top, self.detent == .large ? 0 : Space.s3)
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s5)
-            .padding(.bottom, Space.s4)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s4)
+            .padding(.bottom, Space.s3)
         }
         .safeAreaInset(edge: .bottom) {
             self.ratingSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .presentationDetents([Self.restDetent, .large], selection: self.$detent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(24)
-        .presentationBackground(.tujiBg)
+        .presentationBackground(.tujiPaper)
         .presentationBackgroundInteraction(.enabled(upThrough: Self.restDetent))
         // Must rate to proceed — never swipe the sheet away (dragging between
         // detents to peek at details is still allowed).
@@ -51,15 +51,15 @@ struct ReviewRevealSheet: View {
     /// (no second SRS write), so it pins a single 下一題 instead.
     private var ratingSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            Divider().background(.tujiInk4.opacity(0.15))
+            Divider().background(.tujiRule.opacity(0.15))
             if self.coord.revealMode == .continueOnly {
                 Text("再看一眼，等等再遇到它")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.tujiInk2)
                 BBtn(
                     title: "下一題",
-                    bg: .tujiTeal,
-                    fg: .white,
+                    bg: .tujiEye,
+                    fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.right"
                 ) {
@@ -72,11 +72,11 @@ struct ReviewRevealSheet: View {
                 self.ratingRow
             }
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
         .padding(.top, Space.s3)
-        .padding(.bottom, Space.s5)
+        .padding(.bottom, Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiBg)
+        .background(.tujiPaper)
     }
 
     /// Header laid out like the new-word peek sheet: no image (it's already on
@@ -97,7 +97,7 @@ struct ReviewRevealSheet: View {
                 }
                 if self.settings.current.showZh {
                     Text(self.item.word.chinese)
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk2)
                         .padding(.top, 2)
                 }
@@ -142,9 +142,9 @@ struct ReviewRevealSheet: View {
                     .foregroundStyle(self.fg(for: r, rated: isRated))
                     .padding(.vertical, Space.s3)
                     .frame(maxWidth: .infinity)
-                    .background(self.bg(for: r, rated: isRated), in: .rect(cornerRadius: Radius.md))
+                    .background(self.bg(for: r, rated: isRated), in: .rect(cornerRadius: Radius.r0))
                     .overlay(
-                        RoundedRectangle(cornerRadius: Radius.md)
+                        RoundedRectangle(cornerRadius: Radius.r0)
                             .stroke(self.border(for: r, suggested: isSuggested), lineWidth: isSuggested ? 2 : 1)
                     )
             }
@@ -170,10 +170,10 @@ struct ReviewRevealSheet: View {
 
     private func tint(for r: SRSRating) -> Color {
         switch r {
-        case .again: .tujiCoral
-        case .hard: .tujiYellow
+        case .again: .tujiAlert
+        case .hard: .tujiEye
         case .good: .tujiTeal
-        case .easy: .tujiGreen
+        case .easy: .tujiTeal
         }
     }
 }

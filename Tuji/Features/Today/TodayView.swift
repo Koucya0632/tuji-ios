@@ -68,17 +68,20 @@ struct TodayView: View {
 
     var body: some View {
         ScrollView {
+            // No shared horizontal padding: the ink block bleeds to the screen
+            // edges, so each section owns its own margin. A block with 24pt of
+            // paper on either side is "a card"; one that reaches the edges is
+            // "this part of the screen", and the difference in weight is large.
             VStack(alignment: .leading, spacing: Space.s5) {
-                self.topBar
-                self.greeting
+                self.topBar.padding(.horizontal, Space.s4)
+                self.greeting.padding(.horizontal, Space.s4)
                 self.hero
                 self.themesSection
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s4)
-            .padding(.bottom, Space.s12)
+            .padding(.top, Space.s3)
+            .padding(.bottom, Space.s6)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
         // multitasking window title) — the custom `topBar` above is the
         // visible header, so the system nav bar itself stays hidden.
@@ -136,8 +139,8 @@ struct TodayView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.tujiInk2)
                     .padding(Space.s2)
-                    .background(.tujiCard, in: .circle)
-                    .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+                    .background(.tujiPaper, in: .circle)
+                    .overlay(Circle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
             }
             .buttonStyle(.plain)
             self.streakChip
@@ -150,7 +153,7 @@ struct TodayView: View {
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(n > 0 ? .tujiAmber : .tujiInk4)
+                .foregroundStyle(n > 0 ? .tujiTeal : .tujiInk3)
             Text("\(n)")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.tujiInk)
@@ -158,8 +161,8 @@ struct TodayView: View {
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, 6)
-        .background(.tujiCard, in: .capsule)
-        .overlay(Capsule().stroke(.tujiInk4.opacity(0.3), lineWidth: 1))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
         .tourAnchor(.streak)
     }
 
@@ -168,18 +171,18 @@ struct TodayView: View {
     private var greeting: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text(self.dateLabel)
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             // Concatenated so long localizations (en/ja) wrap as one flowing
             // line instead of an HStack pushing the name off to the side.
             (Text(self.greetingPrefix)
-                + Text(self.displayName).foregroundStyle(.tujiTeal)
+                + Text(self.displayName).foregroundStyle(.tujiInk)
                 + Text("。"))
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             Text(self.subtitle)
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
         }
     }
@@ -249,8 +252,8 @@ struct TodayView: View {
 
     private var hero: some View {
         ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: Space.s4) {
-                VStack(alignment: .leading, spacing: Space.s4) {
+            VStack(alignment: .leading, spacing: Space.s3) {
+                VStack(alignment: .leading, spacing: Space.s3) {
                     if !self.isGuest {
                         self.dailyGoalProgress
                     }
@@ -268,11 +271,11 @@ struct TodayView: View {
                         Text("建立帳號，開始學習")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
+                    .buttonStyle(HeroPillStyle(role: .primary))
 
                     Text("免費註冊就能學新字、排復習，進度存在雲端")
-                        .font(.tujiCaption)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiPaper.opacity(0.6))
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     HStack(spacing: Space.s3) {
@@ -280,42 +283,51 @@ struct TodayView: View {
                             Text("復習")
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(HeroPillStyle(fg: .tujiInk, bg: .tujiYellow))
+                        .buttonStyle(HeroPillStyle(role: self.reviewDisabled ? .secondary : .primary))
                         .disabled(self.reviewDisabled)
 
                         NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
                             Text("學新字")
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(HeroPillStyle(fg: .white, bg: .tujiTeal))
+                        .buttonStyle(HeroPillStyle(role: self.reviewDisabled && !self
+                                .newDisabled ? .primary : .secondary))
                         .disabled(self.newDisabled)
                     }
                     .tourAnchor(.heroCTAs)
 
                     if let hint = self.heroHint {
                         Text(hint)
-                            .font(.tujiCaption)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiPaper.opacity(0.6))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
-
+        }
+        .padding(Space.s4)
+        .padding(.top, Space.s5)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiInk)
+        // Applied over the background rather than inside it, so the cat can
+        // straddle the top edge instead of sitting within the block. Its body is
+        // ink, so the half that overlaps reads as a silhouette and only the
+        // yellow eyes come forward — the gesture the logo already uses.
+        .overlay(alignment: .topTrailing) {
             MascotFigure(
                 pose: self.dailyGoalReached ? .cheer : .wave,
-                size: 104,
-                grounding: .glow
+                size: 96,
+                grounding: .none
             )
             .id(self.dailyGoalReached)
-            .transition(.scale(scale: 0.92).combined(with: .opacity))
-            .offset(x: 12, y: -22)
+            .transition(.opacity)
+            .offset(x: -Space.s4, y: -44)
         }
-        .padding(Space.s5)
-        .padding(.top, Space.s2)
-        .background(.tujiBgInk, in: .rect(cornerRadius: Radius.xl))
         .tourAnchor(.hero)
         .animation(
-            self.reduceMotion ? nil : .spring(duration: 0.32, bounce: 0.18),
+            // B.7 allows one curve. A spring here was the last bounce left in
+            // the app.
+            self.reduceMotion ? nil : Motion.ease(Motion.d3),
             value: self.dailyGoalReached
         )
     }
@@ -338,9 +350,9 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
                 Text("今日目標")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.tujiPaper.opacity(0.6))
                 Spacer()
                 if reached {
                     HStack(spacing: 3) {
@@ -349,23 +361,26 @@ struct TodayView: View {
                         Text("達成")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundStyle(.tujiYellow)
+                    .foregroundStyle(.tujiEye)
                 } else {
                     Text("\(done) / \(goal)")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
+                        .foregroundStyle(.tujiPaper.opacity(0.7))
                 }
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(.white.opacity(0.08))
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(reached ? Color.tujiYellow : .tujiCoral)
+                    Rectangle().fill(.tujiPaper.opacity(0.2))
+                    // Always 瞳黃. The unreached state used to be `tujiAlert`,
+                    // which said "you are failing" — not hitting today's goal at
+                    // 10am is not an error, it is the thing in progress, and
+                    // 瞳黃 is exactly the colour for that.
+                    Rectangle()
+                        .fill(.tujiEye)
                         .frame(width: geo.size.width * ratio)
                 }
             }
-            .frame(height: 8)
+            .frame(height: Border.bw3)
         }
         .tourAnchor(.dailyGoal)
     }
@@ -378,24 +393,26 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
                 Text("主題進度")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.tujiPaper.opacity(0.6))
                 Spacer()
                 Text("\(learned) / \(total)")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.tujiPaper.opacity(0.7))
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(.white.opacity(0.08))
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(.tujiTeal)
+                    Rectangle().fill(.tujiPaper.opacity(0.2))
+                    // Deep teal only reaches 3.04:1 against ink; the pale step
+                    // reaches 13.58:1 and carries the same "accumulation"
+                    // meaning. On ink surfaces it is always the pale one.
+                    Rectangle()
+                        .fill(.tujiTealSoft)
                         .frame(width: geo.size.width * ratio)
                 }
             }
-            .frame(height: 8)
+            .frame(height: Border.bw3)
         }
     }
 
@@ -557,34 +574,39 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: Space.s3) {
                     HStack(alignment: .firstTextBaseline) {
                         Text("主題")
-                            .font(.tujiOverline)
-                            .tracking(2)
-                            .foregroundStyle(.tujiTeal)
+                            .font(.tujiLabel)
+                            .tracking(0.5)
+                            .foregroundStyle(.tujiInk3)
                         Spacer()
                         NavigationLink(value: NavRoute.studyCategories) {
                             Text("全部 →")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tujiInk3)
+                                .font(.tujiLabel)
+                                .tracking(0.5)
+                                .foregroundStyle(.tujiInk)
+                                .underline()
                         }
                         .buttonStyle(.plain)
                     }
-                    LazyVGrid(
-                        columns: Array(
-                            repeating: GridItem(.flexible(), spacing: Space.s2),
-                            count: 3
-                        ),
-                        spacing: Space.s2
-                    ) {
-                        ForEach(tiles, id: \.id) { c in
-                            NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
-                                CategoryTile(
-                                    category: c,
-                                    wordCount: self.words.byCategory(c.id).count,
-                                    status: self.themeStatus(for: c.id)
-                                )
+                    .padding(.horizontal, Space.s4)
+
+                    // Horizontal, not a 3-up grid. Three tiles filled the row and
+                    // the screen simply stopped; scrolling says "there is more"
+                    // and hands the vertical space back to the ink block.
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: Space.s2) {
+                            ForEach(tiles, id: \.id) { c in
+                                NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
+                                    CategoryTile(
+                                        category: c,
+                                        wordCount: self.words.byCategory(c.id).count,
+                                        status: self.themeStatus(for: c.id)
+                                    )
+                                    .frame(width: 160)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
+                        .padding(.horizontal, Space.s4)
                     }
                 }
             }
@@ -602,32 +624,32 @@ struct TodayView: View {
     private var themePrompt: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text("主題")
-                .font(.tujiOverline)
-                .tracking(2)
-                .foregroundStyle(.tujiTeal)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("還沒選學習主題")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.tujiInk)
                 Text("選幾個你想學的主題，這裡會顯示它們，學新字也會從中出題。")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                 NavigationLink(value: NavRoute.studyCategories) {
                     Text("選擇主題")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.tujiInk)
                         .padding(.vertical, Space.s3)
-                        .padding(.horizontal, Space.s5)
-                        .background(.tujiTeal, in: .capsule)
+                        .padding(.horizontal, Space.s4)
+                        .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
                 }
                 .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Space.s5)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+            .padding(Space.s4)
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule, lineWidth: 1)
             )
         }
     }
@@ -685,9 +707,9 @@ private struct CategoryTile: View {
 
     private var accent: Color {
         switch self.status {
-        case .mastered: .tujiPurple
+        case .mastered: .tujiInk
         case .completed: .tujiTeal
-        case .none: .tujiInk4.opacity(0.2)
+        case .none: .tujiPaper3
         }
     }
 
@@ -699,15 +721,15 @@ private struct CategoryTile: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
             Text("\(self.wordCount) 字")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, Space.s2)
         .padding(.vertical, Space.s3)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
+            RoundedRectangle(cornerRadius: Radius.r0)
                 .stroke(self.accent, lineWidth: self.status == .none ? 1 : 1.5)
         )
         .overlay(alignment: .topTrailing) {
@@ -729,7 +751,7 @@ private struct ThemeStatusBadge: View {
         case .completed:
             self.pill(text: "完成", icon: "checkmark.seal.fill", tint: .tujiTeal)
         case .mastered:
-            self.pill(text: "全精通", icon: "crown.fill", tint: .tujiPurple)
+            self.pill(text: "全精通", icon: "crown.fill", tint: .tujiInk)
         }
     }
 
@@ -743,37 +765,51 @@ private struct ThemeStatusBadge: View {
         .foregroundStyle(tint)
         .padding(.horizontal, 5)
         .padding(.vertical, 2)
-        .background(.tujiCard, in: .capsule)
-        .overlay(Capsule().stroke(tint.opacity(0.4), lineWidth: 1))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(tint.opacity(0.4), lineWidth: 1))
         .shadow(color: .black.opacity(0.1), radius: 1.5, y: 1)
     }
 }
 
+/// The two buttons on the ink block. Only one of them is primary at a time, and
+/// which one depends on what the user can actually do right now.
+///
+/// 復習 is disabled whenever nothing is due. Hard-coding it as the primary meant
+/// that on a day with no reviews the screen showed a *disabled* primary button
+/// beside an enabled secondary one — the only available action drawn as the
+/// lesser of the two.
+private enum HeroPillRole {
+    case primary
+    case secondary
+}
+
 private struct HeroPillStyle: ButtonStyle {
-    let fg: Color
-    let bg: Color
+    let role: HeroPillRole
     @Environment(\.isEnabled) private var isEnabled
 
-    /// Disabled = ghost (faint fill + hairline + dim label). Dropping the
-    /// whole pill to 0.4 opacity turned the yellow 復習 into a muddy olive
-    /// blob on the deep-ink hero card.
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 15, weight: .heavy))
-            .foregroundStyle(self.isEnabled ? self.fg : .white.opacity(0.4))
+            .font(.tujiH3)
+            .foregroundStyle(self.foreground)
             .padding(.vertical, Space.s3)
-            .padding(.horizontal, Space.s4)
-            .background(
-                self.isEnabled ? self.bg : Color.white.opacity(0.06),
-                in: .rect(cornerRadius: Radius.md)
-            )
-            .overlay {
-                if !self.isEnabled {
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(.white.opacity(0.2), lineWidth: 1.5)
-                }
-            }
-            .opacity(configuration.isPressed && self.isEnabled ? 0.85 : 1)
+            .padding(.horizontal, Space.s3)
+            .background(self.background(pressed: configuration.isPressed))
+    }
+
+    private var foreground: Color {
+        guard self.isEnabled else { return .tujiPaper.opacity(0.4) }
+        return self.role == .primary ? .tujiInk : .tujiPaper
+    }
+
+    /// Disabled buttons sit on the ink block, so C.10's `tujiPaper3` ground is
+    /// the wrong tool — a paper-toned fill reads as a bright patch on ink rather
+    /// than as something switched off.
+    private func background(pressed: Bool) -> Color {
+        guard self.isEnabled else { return .tujiPaper.opacity(0.08) }
+        switch self.role {
+        case .primary: return pressed ? .tujiEyeDeep : .tujiEye
+        case .secondary: return .tujiPaper.opacity(pressed ? 0.32 : 0.2)
+        }
     }
 }
 

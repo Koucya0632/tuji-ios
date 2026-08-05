@@ -32,10 +32,10 @@ struct AtlasSavedItemDetailView: View {
             } else if let errorMessage {
                 self.errorState(errorMessage)
             } else {
-                ProgressView()
+                TujiImagePlaceholder()
                     .tint(.tujiTeal)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.tujiBg)
+                    .background(.tujiPaper)
             }
         }
         .task(id: self.slug) { await self.load() }
@@ -58,17 +58,17 @@ struct AtlasSavedItemDetailView: View {
         VStack(spacing: Space.s3) {
             Image(systemName: "eye.slash")
                 .font(.system(size: 36))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Text("這張卡片已經不公開了")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(.tujiInk)
             Text(message)
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
                 .multilineTextAlignment(.center)
         }
-        .padding(Space.s6)
+        .padding(Space.s4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
     }
 }

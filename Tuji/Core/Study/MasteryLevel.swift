@@ -45,22 +45,46 @@ enum MasteryLevel: Int, CaseIterable {
         }
     }
 
-    /// Tier accent. Grey for 未學, then the backend's rose→amber→sky→emerald
-    /// progression mapped onto Tuji's palette.
-    var color: Color {
+    /// Ground colour for the tier. This is the one place a colour is allowed to
+    /// act as a *category* rather than a meaning — mastery is the most important
+    /// data in the app, so it gets a ladder of its own.
+    ///
+    /// The ladder climbs through teal because mastery **is** 積累. The old ladder
+    /// ran grey → rose → amber → sky → emerald, which borrowed the error colour
+    /// for 知道 and the "now" colour for 熟悉 — two tiers of ordinary progress
+    /// wearing signals that mean something else entirely.
+    var background: Color {
         switch self {
-        case .notLearned: .tujiInk4
-        case .know: .tujiCoral
-        case .familiar: .tujiYellow
-        case .proficient: .tujiTeal
-        case .expert: .tujiGreen
+        case .notLearned: .tujiPaper3
+        case .know: .tujiTealSoft
+        case .familiar: .tujiTeal
+        case .proficient: .tujiTealDeep
+        case .expert: .tujiInk
         }
     }
 
-    /// De-emphasized colour for the 圖鑑 tile badge: only 精通 stands out in
-    /// green, every other tier is neutral grey. (The detail page keeps the
-    /// full-colour `color`.)
-    var tileBadgeColor: Color {
-        self == .expert ? .tujiGreen : .tujiInk3
+    /// Text/mark colour to sit on `background`.
+    ///
+    /// 全精通 is the only 墨底 + 瞳字 pairing in the whole system. That
+    /// combination appears nowhere else, which is what gives it weight — it does
+    /// not need a purple of its own.
+    var foreground: Color {
+        switch self {
+        case .notLearned: .tujiInk3
+        case .know: .tujiTealDeep
+        case .familiar, .proficient: .tujiPaper
+        case .expert: .tujiEye
+        }
+    }
+
+    /// How many of the five scale segments are filled. Drives `MasteryBadge`.
+    var filledSegments: Int {
+        switch self {
+        case .notLearned: 0
+        case .know: 1
+        case .familiar: 2
+        case .proficient: 3
+        case .expert: 5
+        }
     }
 }

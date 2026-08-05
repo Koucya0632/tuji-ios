@@ -1,35 +1,60 @@
 // Mastery display widgets driven by MasteryLevel.
 //
-// - `MasteryBadge`: compact dot + tier-name pill on a white capsule, legible
-//   over arbitrary tile artwork. Used in the 圖鑑 grid corner.
-// - `MasteryBar`: tier pill + score% + thin progress bar. Used on the word
-//   detail page, mirroring the web word page's mastery row.
+// - `MasteryBadge`: a 5-segment scale bar. Used in the 圖鑑 grid and list rows.
+// - `MasteryBar`: tier name + score + progress bar. Used on the word detail page,
+//   which is the only place mastery appears as words rather than as a shape.
+//
+// Why the badge lost its text: every tile in the grid repeated the same sentence
+// ("未學", "未學", "未學"…), and the pill sat on top of the artwork it was
+// describing. A bar under the image lets a whole screenful of tiles be read at a
+// glance — the amount of teal *is* the answer.
+//
+// Because the shape carries meaning that used to be carried by a `Text`, and a
+// bare shape is invisible to VoiceOver, the accessibility label here is not
+// decoration — it is the only thing keeping the information available.
 
 import SwiftUI
 
-/// Small pill (colored dot + tier name) for overlaying on word tiles.
+/// 5-segment mastery scale for word tiles and list rows.
 struct MasteryBadge: View {
     let level: MasteryLevel
+    /// Raw 0–100 score, when known. Only used for the spoken value.
+    var score: Int?
+
+    private static let segments = 5
+    private static let width: CGFloat = 40
+    /// C.9 writes "高 `bw2` 4" but B.6 defines `bw2` as 2 — the spec contradicts
+    /// itself. At 2pt the five segments are not readable at arm's length, so the
+    /// stated 4 wins; the bar's height is its own value, not a border width.
+    private static let height: CGFloat = 4
 
     var body: some View {
-        let tint = self.level.tileBadgeColor
-        return HStack(spacing: 3) {
-            Circle()
-                .fill(tint)
-                .frame(width: 6, height: 6)
-            Text(self.level.name)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(tint)
+        HStack(spacing: 1) {
+            ForEach(0..<Self.segments, id: \.self) { index in
+                Rectangle()
+                    .fill(self.fill(at: index))
+            }
         }
-        .padding(.horizontal, Space.s2)
-        .padding(.vertical, 3)
-        .background(.tujiCard.opacity(0.95), in: .capsule)
-        .overlay(Capsule().stroke(tint.opacity(0.35), lineWidth: 1))
-        .shadow(color: .black.opacity(0.12), radius: 2, y: 1)
+        .frame(width: Self.width, height: Self.height)
+        .accessibilityElement()
+        .accessibilityLabel(Text(self.level.name))
+        .accessibilityValue(self.spokenValue)
+    }
+
+    /// 全精通 fills the whole bar in ink rather than teal — the same "this one is
+    /// complete" inversion the rest of the system uses for a selected state.
+    private func fill(at index: Int) -> Color {
+        guard index < self.level.filledSegments else { return .tujiPaper3 }
+        return self.level == .expert ? .tujiInk : .tujiTeal
+    }
+
+    private var spokenValue: Text {
+        if let score { return Text("\(score) 分") }
+        return Text("尚無紀錄")
     }
 }
 
-/// Tier pill + score + progress bar for the word detail page. A nil score
+/// Tier name + score + progress bar for the word detail page. A nil score
 /// (no user_words row) renders as 未學 with a "尚無紀錄" note and empty bar.
 struct MasteryBar: View {
     let score: Int?
@@ -47,40 +72,43 @@ struct MasteryBar: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(spacing: Space.s2) {
                 Text(self.level.name)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(self.level.color)
-                    .padding(.horizontal, Space.s3)
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(self.level.foreground)
+                    .padding(.horizontal, Space.s2)
                     .padding(.vertical, 4)
-                    .background(self.level.color.opacity(0.14), in: .capsule)
+                    .background(self.level.background, in: .rect(cornerRadius: Radius.r0))
                 Spacer()
                 if let s = self.score {
-                    Text("\(s)%")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(self.level.color)
+                    Text("\(s)")
+                        .font(.tujiMono)
+                        .foregroundStyle(.tujiInk2)
                         .contentTransition(.numericText())
                 } else {
                     Text("尚無紀錄")
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
+                        .tracking(0.5)
                         .foregroundStyle(.tujiInk3)
                 }
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(.tujiInk4.opacity(0.2))
-                    Capsule()
-                        .fill(self.level.color)
+                    Rectangle()
+                        .fill(.tujiPaper3)
+                    Rectangle()
+                        .fill(.tujiTeal)
                         .frame(width: geo.size.width * self.ratio)
-                        .animation(.spring(duration: 0.5), value: self.ratio)
+                        .animation(Motion.ease(Motion.d3), value: self.ratio)
                 }
             }
-            .frame(height: 8)
+            .frame(height: Border.bw3)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 
 #Preview {
-    VStack(spacing: Space.s5) {
+    VStack(alignment: .leading, spacing: Space.s4) {
         HStack(spacing: Space.s3) {
             ForEach(MasteryLevel.allCases, id: \.self) { MasteryBadge(level: $0) }
         }
@@ -90,6 +118,6 @@ struct MasteryBar: View {
         MasteryBar(score: 73)
         MasteryBar(score: 91)
     }
-    .padding()
-    .background(.tujiBg)
+    .padding(Space.s4)
+    .background(.tujiPaper)
 }

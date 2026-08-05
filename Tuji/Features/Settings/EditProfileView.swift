@@ -53,23 +53,23 @@ struct EditProfileView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Space.s6) {
+            VStack(spacing: Space.s4) {
                 self.heroAvatar
                 self.nicknameField
                 self.bioField
                 self.uidField
                 if let message = self.error?.localizedDescription ?? self.avatarPicker.errorMessage {
                     Text(message)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiAlert)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s5)
-            .padding(.bottom, Space.s12)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s4)
+            .padding(.bottom, Space.s5)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("編輯個人資料")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -79,7 +79,7 @@ struct EditProfileView: View {
                 } label: {
                     Text(self.saving ? LocalizedStringKey("儲存中…") : LocalizedStringKey("儲存"))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(self.canSave ? .tujiTeal : .tujiInk4)
+                        .foregroundStyle(self.canSave ? .tujiTeal : .tujiInk3)
                 }
                 .disabled(!self.canSave)
             }
@@ -137,10 +137,10 @@ struct EditProfileView: View {
                         .foregroundStyle(.white)
                         .frame(width: 34, height: 34)
                         .background(.tujiTeal, in: .circle)
-                        .overlay(Circle().stroke(.tujiBg, lineWidth: 3))
+                        .overlay(Circle().stroke(.tujiPaper, lineWidth: 3))
                 }
                 Text("點一下更換頭像")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
             .frame(maxWidth: .infinity)
@@ -153,60 +153,60 @@ struct EditProfileView: View {
     private var nicknameField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("暱稱")
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             TextField("大家會怎麼稱呼你", text: self.$nickname)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .font(.tujiBody)
-                .padding(.horizontal, Space.s4)
+                .font(.tujiBodySm)
+                .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s3)
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            self.nicknameIsValid ? .tujiInk4.opacity(0.25) : Color.tujiCoral,
+                            self.nicknameIsValid ? .tujiRule : Color.tujiAlert,
                             lineWidth: 1
                         )
                 )
             // Not required: an empty 暱稱 falls back to the UID, which is a
             // valid public identity rather than an error state.
             Text("最長 20 字，留空就顯示你的 UID")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk4)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
         }
     }
 
     private var bioField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("簽名")
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             TextField("介紹一下你自己", text: self.$bio, axis: .vertical)
                 .lineLimit(2...4)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .font(.tujiBody)
-                .padding(.horizontal, Space.s4)
+                .font(.tujiBodySm)
+                .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s3)
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            self.bioIsValid ? .tujiInk4.opacity(0.25) : Color.tujiCoral,
+                            self.bioIsValid ? .tujiRule : Color.tujiAlert,
                             lineWidth: 1
                         )
                 )
             HStack {
                 Text("不能放網址或個人資訊")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
                 Spacer()
                 Text(verbatim: "\(Self.bioMax - self.trimmedBio.count)")
-                    .font(.tujiCaption)
-                    .foregroundStyle(self.bioIsValid ? .tujiInk4 : .tujiCoral)
+                    .font(.tujiLabel)
+                    .foregroundStyle(self.bioIsValid ? .tujiInk3 : .tujiAlert)
                     .monospacedDigit()
             }
         }
@@ -217,19 +217,19 @@ struct EditProfileView: View {
     private var uidField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("UID")
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
             Text(self.uid)
                 .font(.tujiMono)
                 .foregroundStyle(.tujiInk3)
-                .padding(.horizontal, Space.s4)
+                .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s3)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.tujiInk4.opacity(0.06), in: .rect(cornerRadius: Radius.md))
+                .background(.tujiPaper2.opacity(0.06), in: .rect(cornerRadius: Radius.r0))
             Text("系統自動配發，不能修改")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk4)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
         }
     }
 

@@ -17,30 +17,30 @@ struct StudyCategoriesPickerView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s5) {
+            VStack(alignment: .leading, spacing: Space.s4) {
                 Text("選你想學的主題。學新字與主題進度只會算這些主題；複習不分主題，所有學過的字都會排進來。")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
 
                 if self.categories.categories.isEmpty {
                     HStack {
-                        ProgressView().tint(.tujiTeal)
+                        TujiPageLoading()
                         Text("載入主題中…")
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, Space.s5)
+                    .padding(.vertical, Space.s4)
                 } else {
                     self.actions
                     self.grid
                 }
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.top, Space.s4)
-            .padding(.bottom, Space.s24)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
+            .padding(.bottom, Space.s6)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("學習主題")
         .navigationBarTitleDisplayMode(.inline)
         .task { await self.categories.loadIfNeeded() }
@@ -51,12 +51,12 @@ struct StudyCategoriesPickerView: View {
     }
 
     private var actions: some View {
-        HStack(spacing: Space.s4) {
+        HStack(spacing: Space.s3) {
             Button("全選") { self.setSelection(self.categories.categories.map(\.id)) }
             Button("清除") { self.setSelection([]) }
             Spacer()
             Text("已選 \(self.selectedIds.count) 個")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .font(.system(size: 14, weight: .semibold))
@@ -89,16 +89,16 @@ struct StudyCategoriesPickerView: View {
                 .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .padding(.vertical, Space.s5)
+                .padding(.vertical, Space.s4)
                 .frame(maxWidth: .infinity)
                 .background(
-                    selected ? Color.tujiTealSoft : .tujiCard,
-                    in: .rect(cornerRadius: Radius.md)
+                    selected ? Color.tujiTealSoft : .tujiPaper,
+                    in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
+                    RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            selected ? Color.tujiTeal : .tujiInk4.opacity(0.25),
+                            selected ? Color.tujiTeal : .tujiRule,
                             lineWidth: selected ? 1.5 : 1
                         )
                 )

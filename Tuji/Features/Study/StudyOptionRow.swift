@@ -29,11 +29,11 @@ struct StudyOptionRow: View {
                     Image(systemName: icon).foregroundStyle(self.style.iconColor)
                 }
             }
-            .padding(.horizontal, Space.s4)
+            .padding(.horizontal, Space.s3)
             .padding(.vertical, Space.s3)
-            .background(self.style.bg, in: .rect(cornerRadius: Radius.lg))
+            .background(self.style.bg, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
+                RoundedRectangle(cornerRadius: Radius.r0)
                     .stroke(self.style.border, lineWidth: 1.5)
             )
         }
@@ -54,28 +54,28 @@ struct StudyOptionStyle {
     let opacity: Double
 
     static let idle = StudyOptionStyle(
-        bg: .tujiCard, border: .tujiInk4.opacity(0.25),
+        bg: .tujiPaper, border: .tujiRule.opacity(0.25),
         fg: .tujiInk, letterFg: .tujiInk3, letterBg: .tujiTealSoft,
         icon: nil, iconColor: .clear, opacity: 1
     )
     static let right = StudyOptionStyle(
-        bg: .tujiGreen.opacity(0.12), border: .tujiGreen,
-        fg: .tujiInk, letterFg: .white, letterBg: .tujiGreen,
-        icon: "checkmark.circle.fill", iconColor: .tujiGreen, opacity: 1
+        bg: .tujiEye.opacity(0.12), border: .tujiTeal,
+        fg: .tujiInk, letterFg: .white, letterBg: .tujiTeal,
+        icon: "checkmark.circle.fill", iconColor: .tujiTeal, opacity: 1
     )
     static let wrong = StudyOptionStyle(
-        bg: .tujiCoral.opacity(0.12), border: .tujiCoral,
-        fg: .tujiInk, letterFg: .white, letterBg: .tujiCoral,
-        icon: "xmark.circle.fill", iconColor: .tujiCoral, opacity: 1
+        bg: .tujiAlert.opacity(0.12), border: .tujiAlert,
+        fg: .tujiInk, letterFg: .white, letterBg: .tujiAlert,
+        icon: "xmark.circle.fill", iconColor: .tujiAlert, opacity: 1
     )
     static let answer = StudyOptionStyle(
-        bg: .tujiGreen.opacity(0.08), border: .tujiGreen.opacity(0.7),
-        fg: .tujiInk, letterFg: .white, letterBg: .tujiGreen,
-        icon: "arrow.left.circle.fill", iconColor: .tujiGreen, opacity: 1
+        bg: .tujiEye.opacity(0.08), border: .tujiTeal.opacity(0.7),
+        fg: .tujiInk, letterFg: .white, letterBg: .tujiTeal,
+        icon: "arrow.left.circle.fill", iconColor: .tujiTeal, opacity: 1
     )
     static let dim = StudyOptionStyle(
-        bg: .tujiCard, border: .tujiInk4.opacity(0.15),
-        fg: .tujiInk3, letterFg: .tujiInk4, letterBg: .tujiInk4.opacity(0.15),
+        bg: .tujiPaper, border: .tujiRule.opacity(0.15),
+        fg: .tujiInk3, letterFg: .tujiInk3, letterBg: .tujiPaper2,
         icon: nil, iconColor: .clear, opacity: 0.5
     )
 

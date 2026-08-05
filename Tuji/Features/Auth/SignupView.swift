@@ -36,14 +36,14 @@ struct SignupView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(alignment: .leading, spacing: Space.s5) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     VStack(alignment: .leading, spacing: Space.s2) {
                         Text("建立帳號")
                             .font(.tujiH2)
                             .foregroundStyle(.tujiInk)
 
                         Text("填入登入信箱和密碼，開始建立你的單字卡。")
-                            .font(.tujiBody)
+                            .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -63,24 +63,24 @@ struct SignupView: View {
                     if let err = auth.error {
                         HStack(alignment: .top, spacing: Space.s2) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.tujiCoral)
+                                .foregroundStyle(.tujiAlert)
                             Text(err)
-                                .font(.tujiBody)
+                                .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk2)
                         }
-                        .padding(Space.s4)
+                        .padding(Space.s3)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.tujiCoral.opacity(0.08), in: .rect(cornerRadius: Radius.md))
+                        .background(.tujiAlert.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
                     }
                 }
-                .padding(.horizontal, Space.s6)
-                .padding(.top, Space.s5)
+                .padding(.horizontal, Space.s4)
+                .padding(.top, Space.s4)
             }
 
             VStack(spacing: Space.s3) {
                 BBtn(
                     title: auth.loading ? "建立中..." : "建立帳號",
-                    bg: canSubmit ? .tujiTeal : .tujiInk4,
+                    bg: canSubmit ? .tujiEye : .tujiPaper3,
                     fg: .white,
                     fullWidth: true,
                     action: submit
@@ -96,15 +96,15 @@ struct SignupView: View {
                         Text("登入")
                             .foregroundStyle(.tujiTeal)
                     }
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                 }
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.vertical, Space.s5)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s4)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.tujiBg, for: .navigationBar)
+        .toolbarBackground(.tujiPaper, for: .navigationBar)
         .alert("確認信已寄出", isPresented: $showEmailConfirmation) {
             Button("前往登入") {
                 path = [.signin]
@@ -137,27 +137,27 @@ struct SignupView: View {
                         .foregroundStyle(.tujiInk3)
                 }
             }
-            .padding(Space.s4)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+            .padding(Space.s3)
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.md)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
             )
 
             if password
                 .contains(where: { !$0.unicodeScalars.allSatisfy { scalar in (33...126).contains(scalar.value) } })
             {
                 Text("密碼只能使用英文、數字或符號")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiAlert)
             } else if password.isEmpty {
                 Text("至少 8 個字元，英文、數字或符號皆可")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
             } else if password.count < 8 {
                 Text("還差 \(8 - password.count) 個字元")
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
             }
         }
     }
@@ -183,17 +183,17 @@ struct SignupView: View {
                 .textContentType(contentType)
                 .textInputAutocapitalization(capitalize ? .words : .never)
                 .autocorrectionDisabled(!capitalize)
-                .padding(Space.s4)
-                .background(.tujiCard, in: .rect(cornerRadius: Radius.md))
+                .padding(Space.s3)
+                .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.md)
-                        .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Radius.r0)
+                        .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
                 )
 
             if let helper {
                 Text(helper)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiInk4)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
             }
         }
     }

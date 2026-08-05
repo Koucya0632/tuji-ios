@@ -74,7 +74,7 @@ struct TourStep: Identifiable {
                 tab: .today,
                 target: isGuest ? .hero : .heroCTAs,
                 fallback: .hero,
-                shape: isGuest ? .rounded(Radius.xl + 8) : .pill,
+                shape: isGuest ? .rounded(Radius.r0 + 8) : .pill,
                 pose: .wave,
                 title: "每天從這裡開始",
                 text: isGuest
@@ -86,7 +86,7 @@ struct TourStep: Identifiable {
                 tab: .today,
                 target: isGuest ? .streak : .dailyGoal,
                 fallback: .streak,
-                shape: isGuest ? .pill : .rounded(Radius.lg),
+                shape: isGuest ? .pill : .rounded(Radius.r0),
                 pose: .think,
                 title: "每日目標與連續天數",
                 text: isGuest
@@ -118,7 +118,7 @@ struct TourStep: Identifiable {
                 tab: .cards,
                 target: nil,
                 fallback: nil,
-                shape: .rounded(Radius.xl),
+                shape: .rounded(Radius.r0),
                 pose: .cheer,
                 title: "開始你的第一課吧",
                 text: "都準備好了，現在就開始今天的學習！"

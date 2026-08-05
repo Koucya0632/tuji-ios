@@ -35,15 +35,16 @@ struct AtlasManageView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("管理內容", selection: self.$section) {
-                Text("圖鑑卡片").tag(AtlasManagementSection.cards)
-                Text("合集").tag(AtlasManagementSection.collections)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .padding(.horizontal, Space.s6)
+            TujiSegmented(
+                options: [
+                    (AtlasManagementSection.cards, "圖鑑卡片"),
+                    (AtlasManagementSection.collections, "合集")
+                ],
+                selection: self.$section
+            )
             .padding(.vertical, Space.s3)
-            .background(.tujiBg)
+            .background(.tujiPaper)
+            .accessibilityLabel(Text("管理內容"))
 
             ZStack {
                 AtlasCardsManagementPane(shelf: self.shelf)
@@ -60,7 +61,7 @@ struct AtlasManageView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle("圖鑑管理")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -120,16 +121,19 @@ private struct AtlasCardsManagementPane: View {
         // reading it inside the action is always empty — the "刪除沒反應" bug.
         let target = self.pendingDelete
         let batch = Array(self.shelf.selectedIds)
-        return List {
-            Section("我的圖鑑卡片") {
+        return ScrollView {
+            TujiSection(title: "我的圖鑑卡片") {
                 if let errorMessage = self.shelf.errorMessage {
                     Text(errorMessage)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiAlert)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Space.s4)
+                        .padding(.vertical, Space.s3)
                 }
                 switch self.shelf.state {
                 case .loading:
-                    self.loadingRow
+                    TujiSkeletonRows(count: 4, height: 88)
                 case .failed:
                     self.failedRow
                 case let .hiddenElsewhere(count):
@@ -145,9 +149,9 @@ private struct AtlasCardsManagementPane: View {
                     }
                 }
             }
+            .padding(.bottom, Space.s6)
         }
-        .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .safeAreaInset(edge: .bottom) {
             if self.shelf.isSelecting, !self.shelf.selectedIds.isEmpty {
                 self.deleteBar
@@ -189,30 +193,38 @@ private struct AtlasCardsManagementPane: View {
             Button {
                 self.shelf.toggleSelection(row.id)
             } label: {
-                HStack(spacing: Space.s3) {
-                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(selected ? .tujiTeal : .tujiInk4)
+                HStack(spacing: 0) {
+                    // Selection is a 3pt leading edge, not a circle — circles are
+                    // the system's checkbox and the one shape this design keeps
+                    // for things that "speak" (avatars, dots, the cat's bubble).
+                    Rectangle()
+                        .fill(selected ? Color.tujiEye : .clear)
+                        .frame(width: Border.bw3)
                     self.rowBody(row)
+                        .padding(.horizontal, Space.s4)
                 }
+                .background(selected ? Color.tujiPaper2 : .tujiPaper)
+                .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .accessibilityAddTraits(selected ? [.isSelected] : [])
         } else {
-            NavigationLink {
-                AtlasManageDetailView(
-                    shelf: self.shelf,
-                    image: row.image,
-                    onDelete: { self.pendingDelete = row }
-                )
-            } label: {
-                self.rowBody(row)
-            }
-            .swipeActions(edge: .trailing) {
-                Button(role: .destructive) {
-                    self.pendingDelete = row
+            TujiSwipeRow(
+                actionLabel: "刪除",
+                systemImage: "trash",
+                action: { self.pendingDelete = row }
+            ) {
+                NavigationLink {
+                    AtlasManageDetailView(
+                        shelf: self.shelf,
+                        image: row.image,
+                        onDelete: { self.pendingDelete = row }
+                    )
                 } label: {
-                    Label("刪除", systemImage: "trash")
+                    self.rowBody(row)
+                        .padding(.horizontal, Space.s4)
                 }
+                .tujiRowStyle()
             }
         }
     }
@@ -220,27 +232,16 @@ private struct AtlasCardsManagementPane: View {
     private var deleteBar: some View {
         BBtn(
             title: "刪除 \(self.shelf.selectedIds.count) 張卡片",
-            bg: .tujiCoral,
-            fg: .white,
+            bg: .tujiAlert,
+            fg: .tujiPaper,
             fullWidth: true,
             icon: "trash"
         ) {
             self.showBatchDeleteConfirm = true
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-        .background(.tujiBg)
-    }
-
-    private var loadingRow: some View {
-        HStack(spacing: Space.s3) {
-            ProgressView().tint(.tujiTeal)
-            Text("載入中…")
-                .font(.tujiCaption)
-                .foregroundStyle(.tujiInk3)
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.vertical, Space.s4)
+        .background(.tujiPaper)
     }
 
     /// A failed sync used to fall through to 「還沒有卡片」, telling a user who
@@ -248,13 +249,15 @@ private struct AtlasCardsManagementPane: View {
     private var failedRow: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("載入失敗，請稍後再試")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             BBtn(title: "重試", fullWidth: false) {
                 Task { await self.shelf.load() }
             }
         }
-        .padding(.vertical, Space.s2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
     }
 
     /// Shown whenever the direction filter is hiding cards, so a user who
@@ -262,9 +265,11 @@ private struct AtlasCardsManagementPane: View {
     /// deleted).
     private func hiddenHintRow(_ count: Int) -> some View {
         Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
-            .font(.tujiCaption)
+            .font(.tujiBodySm)
             .foregroundStyle(.tujiInk3)
-            .padding(.vertical, Space.s2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s3)
     }
 
     private var emptyRow: some View {
@@ -273,7 +278,7 @@ private struct AtlasCardsManagementPane: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.tujiInk)
             Text("回圖鑑頁點右上角相機，拍一張就能做卡片。")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, Space.s2)
@@ -282,19 +287,19 @@ private struct AtlasCardsManagementPane: View {
     private func rowBody(_ row: AtlasShelfRow) -> some View {
         HStack(spacing: Space.s3) {
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: row.image.thumbURL) { state in
                     if let img = state.image {
                         img.resizable().aspectRatio(contentMode: .fill)
                     } else if state.error != nil {
-                        Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                        Image(systemName: "photo").foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
             }
             .frame(width: 52, height: 52)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title)
@@ -303,7 +308,7 @@ private struct AtlasCardsManagementPane: View {
                     .lineLimit(1)
                 if let subtitle = row.subtitle {
                     Text(subtitle)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
@@ -311,7 +316,7 @@ private struct AtlasCardsManagementPane: View {
             Spacer()
             Text(row.statusLabel)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, 2)
     }
@@ -334,23 +339,23 @@ private struct AtlasManageDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
+            VStack(alignment: .leading, spacing: Space.s3) {
                 ZStack {
-                    Rectangle().fill(.tujiBg)
+                    Rectangle().fill(.tujiPaper)
                     LazyImage(url: self.image.imageURL) { state in
                         if let img = state.image {
                             img.resizable().aspectRatio(contentMode: .fit)
                         } else if state.error != nil {
                             Image(systemName: "photo")
                                 .font(.system(size: 28, weight: .bold))
-                                .foregroundStyle(.tujiInk4)
+                                .foregroundStyle(.tujiInk3)
                         } else {
-                            ProgressView().tint(.tujiTeal)
+                            TujiImagePlaceholder()
                         }
                     }
                 }
                 .frame(height: 260)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
 
                 if let item {
                     self.detailRow("圖片名稱", item.lemma)
@@ -360,7 +365,7 @@ private struct AtlasManageDetailView: View {
                     if let cat = item.category, !cat.isEmpty { self.detailRow("分類", cat) }
                 } else {
                     Text("這張圖片還沒生成卡片。")
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                 }
                 self.detailRow("狀態", self.image.statusLabel)
@@ -369,16 +374,16 @@ private struct AtlasManageDetailView: View {
                     self.publicationSection(item)
                 }
 
-                BBtn(title: "刪除這張卡片", bg: .tujiCoral, fg: .white, fullWidth: true, icon: "trash") {
+                BBtn(title: "刪除這張卡片", bg: .tujiAlert, fg: .white, fullWidth: true, icon: "trash") {
                     self.onDelete()
                     self.dismiss()
                 }
                 .padding(.top, Space.s2)
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.vertical, Space.s4)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s3)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle(self.item?.lemma ?? tujiLocalized("圖片詳情"))
         .navigationBarTitleDisplayMode(.inline)
         .tujiPrompt(
@@ -404,8 +409,8 @@ private struct AtlasManageDetailView: View {
 
             if let errorMessage = self.shelf.errorMessage {
                 Text(errorMessage)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiAlert)
             }
 
             // The counterpart to publishing. Without it the only way off the
@@ -414,7 +419,7 @@ private struct AtlasManageDetailView: View {
             if item.review.canWithdraw {
                 BBtn(
                     title: self.shelf.withdrawing ? "收回中…" : "取消公開",
-                    bg: .tujiCard,
+                    bg: .tujiPaper,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.uturn.backward"
@@ -446,7 +451,7 @@ private struct AtlasManageDetailView: View {
     private func detailRow(_ title: LocalizedStringKey, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             Text(value)
                 .font(.system(size: 15, weight: .bold))

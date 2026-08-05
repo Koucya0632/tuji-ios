@@ -19,28 +19,28 @@ struct MilestoneView: View {
 
     var body: some View {
         ZStack {
-            Color.tujiBgInk.ignoresSafeArea()
-            VStack(spacing: Space.s5) {
+            Color.tujiInk.ignoresSafeArea()
+            VStack(spacing: Space.s4) {
                 Spacer()
                 MascotCelebrationCard(
                     title: "連勝 \(self.milestone.streak) 天！",
-                    accent: .tujiYellow,
+                    accent: .tujiEye,
                     dark: true
                 ) {
                     VStack(spacing: Space.s3) {
                         Text(self.subtitle)
-                            .font(.tujiBody)
+                            .font(.tujiBodySm)
                             .foregroundStyle(.white.opacity(0.7))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, Space.s6)
+                            .padding(.horizontal, Space.s4)
                         self.streakCapsule
                     }
                 }
                 Spacer()
                 self.actions
             }
-            .padding(.horizontal, Space.s6)
-            .padding(.bottom, Space.s8)
+            .padding(.horizontal, Space.s4)
+            .padding(.bottom, Space.s5)
         }
     }
 
@@ -56,15 +56,15 @@ struct MilestoneView: View {
     private var streakCapsule: some View {
         HStack(spacing: Space.s2) {
             Image(systemName: "flame.fill")
-                .foregroundStyle(.tujiYellow)
+                .foregroundStyle(.tujiEye)
             Text("\(self.milestone.streak) 天")
                 .font(.tujiH3)
                 .foregroundStyle(.white)
         }
-        .padding(.horizontal, Space.s5)
+        .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-        .background(.white.opacity(0.08), in: .capsule)
-        .overlay(Capsule().stroke(.white.opacity(0.2), lineWidth: 1))
+        .background(.white.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
+        .overlay(Rectangle().stroke(.white.opacity(0.2), lineWidth: 1))
     }
 
     private var actions: some View {
@@ -77,8 +77,8 @@ struct MilestoneView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s4)
-                .background(.tujiYellow, in: .rect(cornerRadius: Radius.lg))
+                .padding(.vertical, Space.s3)
+                .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
             }
             Button(action: self.onFinish) {
                 Text("繼續")

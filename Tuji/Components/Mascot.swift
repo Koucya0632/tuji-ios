@@ -136,30 +136,30 @@ struct MascotFigure: View {
         ForEach(MascotPose.allCases, id: \.self) { pose in
             VStack {
                 Mascot(pose: pose)
-                Text(pose.rawValue).font(.tujiCaption)
+                Text(pose.rawValue).font(.tujiLabel)
             }
         }
     }
     .padding()
-    .background(.tujiBg)
+    .background(.tujiPaper)
 }
 
 #Preview("Figures seated on a baseline") {
-    VStack(spacing: Space.s8) {
-        HStack(alignment: .bottom, spacing: Space.s4) {
+    VStack(spacing: Space.s5) {
+        HStack(alignment: .bottom, spacing: Space.s3) {
             ForEach(MascotPose.allCases, id: \.self) { pose in
                 MascotFigure(pose: pose, size: 80)
             }
         }
-        HStack(alignment: .bottom, spacing: Space.s4) {
+        HStack(alignment: .bottom, spacing: Space.s3) {
             MascotFigure(pose: .wave, size: 96, grounding: .glow)
             MascotFigure(pose: .cheer, size: 96, grounding: .glow)
             MascotFigure(pose: .peek, size: 96, grounding: .glow)
         }
-        .padding(Space.s5)
-        .background(.tujiBgInk, in: .rect(cornerRadius: Radius.xl))
+        .padding(Space.s4)
+        .background(.tujiInk, in: .rect(cornerRadius: Radius.r0))
     }
     .padding()
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(.tujiBg)
+    .background(.tujiPaper)
 }

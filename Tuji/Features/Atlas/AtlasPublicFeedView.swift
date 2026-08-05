@@ -37,7 +37,7 @@ struct AtlasPublicFeedView: View {
             self.segmentedControl
             self.content
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         // Tab root (社群), so the visible title is the in-view header below and
         // the system nav bar stays hidden — same pattern as CardsListView.
         .navigationTitle("公開圖鑑")
@@ -80,32 +80,32 @@ struct AtlasPublicFeedView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("PUBLIC ATLAS")
-                .font(.tujiOverline)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             Text("公開圖鑑")
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
             Text("看看大家整理的單字合集")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s4)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s3)
         .padding(.bottom, Space.s3)
     }
 
     // MARK: Content
 
     private var segmentedControl: some View {
-        Picker("公開圖鑑區段", selection: self.$section) {
-            ForEach(PublicAtlasBrowsingModel.Shelf.allCases) { section in
-                Text(self.title(for: section)).tag(section)
-            }
-        }
-        .pickerStyle(.segmented)
-        .padding(.horizontal, Space.s6)
+        TujiSegmented(
+            options: PublicAtlasBrowsingModel.Shelf.allCases.map {
+                ($0, self.title(for: $0))
+            },
+            selection: self.$section
+        )
         .padding(.bottom, Space.s3)
+        .accessibilityLabel(Text("公開圖鑑區段"))
     }
 
     private var content: some View {
@@ -132,9 +132,9 @@ struct AtlasPublicFeedView: View {
         if case .loading = self.browsing.explore.phase {
             VStack {
                 Spacer()
-                ProgressView().tint(.tujiTeal)
+                TujiImagePlaceholder()
                 Text("載入中…")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .padding(.top, Space.s3)
                 Spacer()
@@ -155,9 +155,9 @@ struct AtlasPublicFeedView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, Space.s6)
+                    .padding(.horizontal, Space.s4)
                     .padding(.top, Space.s1)
-                    .padding(.bottom, Space.s8)
+                    .padding(.bottom, Space.s5)
                 }
             }
             // Allow the pull gesture even when the content is shorter than the viewport.
@@ -175,10 +175,10 @@ struct AtlasPublicFeedView: View {
     @ViewBuilder
     private var savedContent: some View {
         if !self.isSignedIn {
-            VStack(spacing: Space.s4) {
+            VStack(spacing: Space.s3) {
                 Spacer()
                 Text("登入後才能查看已收藏的合集")
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk3)
                 BBtn(title: "登入", fullWidth: false) {
                     self.auth.exitGuestMode()
@@ -189,7 +189,7 @@ struct AtlasPublicFeedView: View {
         } else if case .loading = self.browsing.saved.phase,
                   self.browsing.saved.collections.isEmpty
         {
-            ProgressView()
+            TujiProgressBar(progress: nil).frame(width: 56)
                 .tint(.tujiTeal)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -198,7 +198,7 @@ struct AtlasPublicFeedView: View {
                     Text(self.browsing.saved.errorMessage == nil
                         ? self.savedEmptyText
                         : tujiLocalized("載入失敗，請稍後再試"))
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                         .frame(maxWidth: .infinity)
                         .containerRelativeFrame(.vertical)
@@ -210,9 +210,9 @@ struct AtlasPublicFeedView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, Space.s6)
+                    .padding(.horizontal, Space.s4)
                     .padding(.top, Space.s1)
-                    .padding(.bottom, Space.s8)
+                    .padding(.bottom, Space.s5)
                 }
             }
             .scrollBounceBehavior(.always, axes: .vertical)
@@ -270,11 +270,11 @@ struct AtlasPublicFeedView: View {
             Spacer()
             Image(systemName: "square.stack.3d.up.slash")
                 .font(.system(size: 40))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Text(self.browsing.explore.errorMessage == nil
                 ? tujiLocalized("這個語言還沒有公開合集")
                 : tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
             if self.browsing.explore.errorMessage != nil {
                 BBtn(title: "重試", fullWidth: false) {
@@ -319,7 +319,7 @@ struct AtlasCollectionCard: View {
                         HStack(spacing: Space.s2) {
                             ProfileAvatar(avatar: author.avatar, size: 22)
                             Text(author.displayName)
-                                .font(.tujiCaption)
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiInk2)
                                 .lineLimit(1)
                         }
@@ -334,7 +334,7 @@ struct AtlasCollectionCard: View {
                     .foregroundStyle(.tujiInk3)
                     if let desc = self.collection.description, !desc.isEmpty {
                         Text(desc)
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                     }
@@ -343,11 +343,11 @@ struct AtlasCollectionCard: View {
             }
             .padding(Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiCard)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+            .background(.tujiPaper)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -375,14 +375,14 @@ struct AtlasPublicTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: self.item.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fill)
                     } else if state.error != nil {
                         self.placeholder
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
@@ -395,7 +395,7 @@ struct AtlasPublicTile: View {
                     .foregroundStyle(.tujiTeal)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
-                    .background(.tujiTealSoft, in: .capsule)
+                    .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     .padding(Space.s2)
             }
             // 卡片主體點擊區（圖）→ 詳情
@@ -408,7 +408,7 @@ struct AtlasPublicTile: View {
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                 Text(self.item.displayZhHant)
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -427,7 +427,7 @@ struct AtlasPublicTile: View {
                     } else {
                         Text("by \(author.displayName)")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                             .padding(.top, 1)
                     }
@@ -436,24 +436,24 @@ struct AtlasPublicTile: View {
             .padding(Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(.tujiCard)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .background(.tujiPaper)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 
     private var placeholder: some View {
         ZStack {
             LinearGradient(
-                colors: [.tujiTealSoft, .tujiBg],
+                colors: [.tujiTealSoft, .tujiPaper],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             Image(systemName: "photo")
                 .font(.system(size: 22))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
         }
     }
 }
@@ -485,7 +485,7 @@ struct AtlasPublicDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
+            VStack(alignment: .leading, spacing: Space.s3) {
                 if self.vm.saved {
                     MasteryBar(score: self.mastery.score(for: "saved:\(self.vm.item.slug)"))
                 }
@@ -506,8 +506,8 @@ struct AtlasPublicDetailView: View {
 
                 if let actionError = self.vm.actionError {
                     Text(actionError)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiAlert)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
 
@@ -516,16 +516,16 @@ struct AtlasPublicDetailView: View {
                 } label: {
                     Text(self.vm.reportSent ? "已收到檢舉" : "檢舉這個項目")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(self.vm.reportSent ? .tujiInk4 : .tujiCoral)
+                        .foregroundStyle(self.vm.reportSent ? .tujiInk3 : .tujiAlert)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Space.s2)
                 }
                 .buttonStyle(.plain)
                 .disabled(self.vm.reportSent)
             }
-            .padding(Space.s6)
+            .padding(Space.s4)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle(self.vm.item.lemma)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: self.$selectedAuthorHandle) { handle in
@@ -559,19 +559,19 @@ struct AtlasPublicDetailView: View {
 
     private var imageCard: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: Radius.xl)
-                .fill(.tujiBg)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .fill(.tujiPaper)
             LazyImage(url: self.vm.item.imageURL) { state in
                 if let image = state.image {
                     image.resizable()
                         .aspectRatio(contentMode: .fit)
-                        .padding(Space.s4)
+                        .padding(Space.s3)
                 } else if state.error != nil {
                     Image(systemName: "photo")
                         .font(.system(size: 28))
-                        .foregroundStyle(.tujiInk4)
+                        .foregroundStyle(.tujiInk3)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)
@@ -579,8 +579,8 @@ struct AtlasPublicDetailView: View {
         .frame(height: 220)
         .frame(maxWidth: .infinity)
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.xl)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -595,16 +595,16 @@ struct AtlasPublicDetailView: View {
                     .foregroundStyle(.tujiTeal)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
-                    .background(.tujiTealSoft, in: .capsule)
+                    .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
             }
             Text(self.vm.item.displayZhHant)
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk2)
         }
     }
 
     private func titleRow(_ word: Word) -> some View {
-        HStack(alignment: .top, spacing: Space.s4) {
+        HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text(word.word)
                     .font(.tujiH1)
@@ -622,7 +622,7 @@ struct AtlasPublicDetailView: View {
                             partOfSpeech,
                             language: self.settings.current.uiLanguage
                         ))
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .italic()
                         .foregroundStyle(.tujiInk3)
                     }
@@ -632,7 +632,7 @@ struct AtlasPublicDetailView: View {
                             .foregroundStyle(.tujiTeal)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .capsule)
+                            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     }
                 }
             }
@@ -655,7 +655,7 @@ struct AtlasPublicDetailView: View {
                     HStack(spacing: 6) {
                         ProfileAvatar(avatar: author.avatar, size: 24)
                         Text(author.displayName)
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiTeal)
                             .lineLimit(1)
                     }
@@ -664,7 +664,7 @@ struct AtlasPublicDetailView: View {
             }
 
             Text("\(self.vm.saveCount ?? 0) 人學習中")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
                 .lineLimit(1)
 
@@ -717,7 +717,7 @@ struct AtlasPublicDetailView: View {
         .frame(height: 30)
         .background(
             active ? Color.tujiInk.opacity(0.64) : Color.tujiTeal,
-            in: .capsule
+            in: .rect(cornerRadius: Radius.r0)
         )
     }
 

@@ -14,14 +14,14 @@ struct IdentifyView: View {
     @Environment(WordsStore.self) private var words
 
     var body: some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             self.bubble
             self.hero
             self.choicesList
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.bottom, Space.s5)
+        .padding(.horizontal, Space.s4)
+        .padding(.bottom, Space.s4)
     }
 
     private var bubble: some View {
@@ -40,7 +40,7 @@ struct IdentifyView: View {
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
             ZStack {
-                Rectangle().fill(.tujiBg)
+                Rectangle().fill(.tujiPaper)
                 LazyImage(url: self.item.word.imageURL) { state in
                     if let image = state.image {
                         image.resizable()
@@ -49,16 +49,16 @@ struct IdentifyView: View {
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 28))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
             }
             .frame(height: 158)
             .clipped()
-            .clipShape(.rect(cornerRadius: Radius.lg))
+            .clipShape(.rect(cornerRadius: Radius.r0))
 
             HStack {
                 Text(self.item.word.chinese)
@@ -66,7 +66,7 @@ struct IdentifyView: View {
                     .foregroundStyle(.tujiInk)
                     .padding(.horizontal, Space.s3)
                     .padding(.vertical, 6)
-                    .background(.tujiBg, in: .capsule)
+                    .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 Spacer()
                 PronunciationButton(
                     text: self.item.word.word,

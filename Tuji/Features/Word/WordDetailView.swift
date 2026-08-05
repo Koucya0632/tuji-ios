@@ -45,7 +45,7 @@ struct WordDetailView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .toolbar(.hidden, for: .navigationBar)
         // Hide the custom TujiTabBar on this full-screen detail page by
         // entering study-focus (MainTabsView watches this flag). While the
@@ -88,9 +88,9 @@ struct WordDetailPage: View {
                     self.errorState(error)
                         .frame(width: geo.size.width)
                 } else {
-                    ProgressView()
+                    TujiImagePlaceholder()
                         .tint(.tujiTeal)
-                        .padding(.top, Space.s16)
+                        .padding(.top, Space.s6)
                         .frame(width: geo.size.width)
                 }
             }
@@ -104,17 +104,17 @@ struct WordDetailPage: View {
     // MARK: - States
 
     private func content(_ w: Word, width: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: Space.s5) {
+        // This is a picture dictionary, so the picture is the first event on
+        // the page — full-bleed, not an attachment inside a card. That means no
+        // shared horizontal padding; every other section carries its own.
+        VStack(alignment: .leading, spacing: Space.s4) {
             self.hero(w)
-            self.titleRow(w)
-            WordDetailSections(word: w)
-            // Community photos for this word. Renders nothing when nobody has
-            // published one, so untouched words look exactly as before.
-            WordCommunityAtlasSection(word: w)
+            self.titleRow(w).padding(.horizontal, Space.s4)
+            MasteryBar(score: self.mastery.score(for: w.id)).padding(.horizontal, Space.s4)
+            WordDetailSections(word: w).padding(.horizontal, Space.s4)
+            WordCommunityAtlasSection(word: w).padding(.horizontal, Space.s4)
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.top, Space.s2)
-        .padding(.bottom, Space.s8)
+        .padding(.bottom, Space.s6)
         .frame(width: width, alignment: .leading)
     }
 }
@@ -122,7 +122,7 @@ struct WordDetailPage: View {
 extension WordDetailPage {
     private func errorState(_ err: Error) -> some View {
         VStack {
-            Spacer(minLength: Space.s12)
+            Spacer(minLength: Space.s5)
             MascotEmptyState(
                 pose: .think,
                 title: "找不到這個字",
@@ -130,70 +130,62 @@ extension WordDetailPage {
             ) {
                 BBtn(title: "返回", fullWidth: false, action: { self.dismiss() })
             }
-            Spacer(minLength: Space.s12)
+            Spacer(minLength: Space.s5)
         }
-        .padding(.horizontal, Space.s6)
+        .padding(.horizontal, Space.s4)
     }
 
     // MARK: - Sections
 
-    /// Fixed image-card height so every word — wide, tall, square — gets an
-    /// identically sized hero. The image always fits inside (never cropped),
-    /// so layout stays neat and consistent across the dictionary.
-    private static let imageCardHeight: CGFloat = 220
+    /// Whether this word's picture is dictionary artwork (a cut-out that should
+    /// blend into the paper) or a photograph the user took.
+    private func isCutout(_ w: Word) -> Bool {
+        !(w.category == "custom" || w.category == "community")
+    }
 
     private func hero(_ w: Word) -> some View {
-        VStack(spacing: Space.s4) {
-            // Controls live in their own row above the image so the back
-            // button and favourite toggle are always fully visible, never
-            // clipped by the notch or overlapping the artwork.
-            HStack {
-                self.circleControl(systemImage: "chevron.left") { self.dismiss() }
-                Spacer()
-                if !w.id.hasPrefix("atlas:") {
-                    FavoriteButton(wordId: w.id)
-                }
-            }
-
-            // Mastery + level badge sit above the artwork here, in full colour
-            // (unlike the de-emphasized grey 圖鑑 tile badge).
-            MasteryBar(score: self.mastery.score(for: w.id))
-
-            // Consistent white image card. The picture is shown .fit with
-            // padding, so the whole subject is visible regardless of its
-            // aspect ratio or baked-in background.
-            ZStack {
-                RoundedRectangle(cornerRadius: Radius.xl)
-                    .fill(.tujiBg)
+        Color.tujiPaper2
+            .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+            .overlay {
                 LazyImage(url: w.imageURL) { state in
                     if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fit)
-                            .padding(Space.s4)
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: self.isCutout(w) ? .fit : .fill)
+                            .padding(self.isCutout(w) ? Space.s5 : 0)
+                            .blendMode(self.isCutout(w) ? .multiply : .normal)
                     } else if state.error != nil {
                         Image(systemName: "photo")
                             .font(.system(size: 28))
-                            .foregroundStyle(.tujiInk4)
+                            .foregroundStyle(.tujiInk3)
                     } else {
-                        ProgressView().tint(.tujiTeal)
+                        TujiImagePlaceholder()
                     }
                 }
                 .pipeline(.shared)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: Self.imageCardHeight)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.xl)
-                    .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
-            )
-        }
+            .clipped()
+            // Controls float over the artwork rather than taking a row of their
+            // own. The bar is transparent, so the page starts with the picture.
+            .overlay(alignment: .top) {
+                HStack {
+                    self.barControl(systemImage: "arrow.left", label: "返回") { self.dismiss() }
+                    Spacer()
+                    if !w.id.hasPrefix("atlas:") {
+                        FavoriteButton(wordId: w.id)
+                    }
+                }
+                .padding(.horizontal, Space.s4)
+                .frame(height: 56)
+            }
     }
 
     private func titleRow(_ w: Word) -> some View {
-        HStack(alignment: .top, spacing: Space.s4) {
+        HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text(w.word)
-                    .font(.tujiH1)
+                    .font(.tujiDisplay)
                     .foregroundStyle(.tujiInk)
                     .lineLimit(2)
                     .minimumScaleFactor(0.6)
@@ -205,17 +197,17 @@ extension WordDetailPage {
                     }
                     if let pos = w.partOfSpeech, !pos.isEmpty {
                         Text(localizedPartOfSpeech(pos, language: self.settings.current.uiLanguage))
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .italic()
                             .foregroundStyle(.tujiInk3)
                     }
                     if let cefr = w.cefrLevel {
                         Text(cefr)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiTeal)
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk2)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .capsule)
+                            .background(.tujiPaper2, in: .rect(cornerRadius: Radius.r0))
                     }
                 }
             }
@@ -230,19 +222,22 @@ extension WordDetailPage {
         }
     }
 
-    private func circleControl(systemImage: String, action: @escaping () -> Void) -> some View {
+    private func barControl(
+        systemImage: String,
+        label: LocalizedStringKey,
+        action: @escaping () -> Void
+    )
+        -> some View
+    {
         Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(.tujiCard)
-                    .overlay(Circle().stroke(.tujiInk4.opacity(0.3), lineWidth: 1.5))
-                Image(systemName: systemImage)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
-            }
-            .frame(width: 40, height: 40)
+            Image(systemName: systemImage)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.tujiInk)
+                .frame(width: 48, height: 48)
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text(label))
     }
 
     // MARK: - Load

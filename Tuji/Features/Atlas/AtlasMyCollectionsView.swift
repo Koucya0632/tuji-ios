@@ -37,62 +37,54 @@ struct AtlasMyCollectionsView: View {
 
     var body: some View {
         let target = self.pendingDelete
-        return List {
-            if let deleteError {
-                Text(deleteError)
-                    .font(.tujiCaption)
-                    .foregroundStyle(.tujiCoral)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
-            if self.vm.showsPlaceholder {
-                HStack {
-                    Spacer()
-                    ProgressView().tint(.tujiTeal)
-                    Spacer()
+        return ScrollView {
+            VStack(spacing: 0) {
+                if let deleteError {
+                    Text(deleteError)
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiAlert)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, Space.s4)
+                        .padding(.vertical, Space.s3)
                 }
-                .padding(.top, Space.s12)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            } else if self.visibleCollections.isEmpty {
-                self.emptyState
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            } else {
-                ForEach(self.visibleCollections) { collection in
-                    NavigationLink {
-                        // Kept even though `.task` re-runs on pop: that is
-                        // SwiftUI's teardown behaviour, not a contract. The VM
-                        // coalesces whichever of the two arrives second.
-                        AtlasCollectionEditView(collectionId: collection.id)
-                            .onDisappear { Task { await self.vm.load() } }
-                    } label: {
-                        AtlasMyCollectionRow(collection: collection)
-                    }
-                    .buttonStyle(.plain)
-                    .listRowInsets(
-                        EdgeInsets(
-                            top: Space.s2,
-                            leading: Space.s6,
-                            bottom: Space.s2,
-                            trailing: Space.s6
-                        )
-                    )
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            self.pendingDelete = collection
-                        } label: {
-                            Label("刪除", systemImage: "trash")
+                if self.vm.showsPlaceholder {
+                    TujiSkeletonRows(count: 3, height: 88)
+                        .padding(.top, Space.s3)
+                } else if self.visibleCollections.isEmpty {
+                    self.emptyState
+                        .padding(.top, Space.s5)
+                } else {
+                    ForEach(Array(self.visibleCollections.enumerated()), id: \.element.id) { index, collection in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(.tujiRule)
+                                .frame(height: Border.bw1)
+                                .padding(.horizontal, Space.s4)
+                        }
+                        TujiSwipeRow(
+                            actionLabel: "刪除",
+                            systemImage: "trash",
+                            action: { self.pendingDelete = collection }
+                        ) {
+                            NavigationLink {
+                                // Kept even though `.task` re-runs on pop: that is
+                                // SwiftUI's teardown behaviour, not a contract. The VM
+                                // coalesces whichever of the two arrives second.
+                                AtlasCollectionEditView(collectionId: collection.id)
+                                    .onDisappear { Task { await self.vm.load() } }
+                            } label: {
+                                AtlasMyCollectionRow(collection: collection)
+                                    .padding(.horizontal, Space.s4)
+                                    .padding(.vertical, Space.s3)
+                            }
+                            .tujiRowStyle()
                         }
                     }
                 }
             }
+            .padding(.bottom, Space.s6)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .task { await self.vm.load() }
         .refreshable { await self.vm.load() }
         .sheet(isPresented: self.$showCreate) {
@@ -122,11 +114,11 @@ struct AtlasMyCollectionsView: View {
         VStack(spacing: Space.s3) {
             Image(systemName: "square.stack.3d.up")
                 .font(.system(size: 40))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Text(self.vm.loadError == nil
                 ? self.emptyTitle
                 : tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
                 .multilineTextAlignment(.center)
             if self.vm.loadError != nil {
@@ -134,8 +126,8 @@ struct AtlasMyCollectionsView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, Space.s12)
-        .padding(.horizontal, Space.s6)
+        .padding(.top, Space.s5)
+        .padding(.horizontal, Space.s4)
     }
 
     private func deleteMessage(for collection: AtlasMyCollection) -> String {
@@ -188,7 +180,7 @@ private struct AtlasMyCollectionRow: View {
                         .foregroundStyle(.tujiTeal)
                         .padding(.horizontal, Space.s2)
                         .padding(.vertical, 2)
-                        .background(.tujiTealSoft, in: .capsule)
+                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
                     Label("\(self.collection.itemCount)", systemImage: "square.stack")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.tujiInk3)
@@ -198,11 +190,11 @@ private struct AtlasMyCollectionRow: View {
         }
         .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiCard)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.lg))
+        .background(.tujiPaper)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.lg)
-                .stroke(.tujiInk4.opacity(0.25), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
         )
     }
 }
@@ -225,36 +217,33 @@ private struct AtlasCollectionCreateSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("標題") {
-                    TextField("例如：生活日常", text: self.$model.title)
-                }
-                Section("簡介（選填）") {
-                    TextField("簡單描述這個合集", text: self.$model.description, axis: .vertical)
-                        .lineLimit(2...4)
-                }
-                Section {
-                    HStack {
-                        Text("語言")
-                        Spacer()
-                        Text(self.model.language == .ja ? "日文" : "英文").foregroundStyle(.tujiInk3)
+        TujiSheetShell(title: "建立合集") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.s5) {
+                    TujiField(label: "標題") {
+                        TujiTextField(placeholder: "例如：生活日常", text: self.$model.title)
                     }
-                } footer: {
-                    Text("合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。")
-                }
-                if let error = self.model.errorMessage {
-                    Text(error).foregroundStyle(.tujiCoral)
-                }
-            }
-            .navigationTitle("建立合集")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { self.dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(self.model.creating ? "建立中…" : "建立") {
+                    TujiField(
+                        label: "簡介（選填）",
+                        footer: "合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。"
+                    ) {
+                        TujiTextField(
+                            placeholder: "簡單描述這個合集",
+                            text: self.$model.description,
+                            lineLimit: 2...4,
+                            errorMessage: self.model.errorMessage
+                        )
+                    }
+                    TujiField(label: "語言") {
+                        Text(self.model.language == .ja ? "日文" : "英文")
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk2)
+                    }
+
+                    BBtn(
+                        title: self.model.creating ? "建立中…" : "建立",
+                        fullWidth: true
+                    ) {
                         Task {
                             guard let collection = await self.model.create() else { return }
                             self.onCreated(collection)
@@ -262,7 +251,10 @@ private struct AtlasCollectionCreateSheet: View {
                         }
                     }
                     .disabled(!self.model.canCreate)
+                    .padding(.horizontal, Space.s4)
                 }
+                .padding(.top, Space.s4)
+                .padding(.bottom, Space.s6)
             }
         }
     }
@@ -288,15 +280,15 @@ struct AtlasCollectionEditView: View {
         ScrollView {
             Group {
                 if let collection = self.vm.collection {
-                    VStack(alignment: .leading, spacing: Space.s5) {
+                    VStack(alignment: .leading, spacing: Space.s4) {
                         self.avatarSection
                         self.metaSection
                         self.membersSection
                         self.submitSection(collection)
                     }
-                    .padding(Space.s6)
+                    .padding(Space.s4)
                 } else if case .loading = self.vm.phase {
-                    ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
+                    TujiPageLoading()
                 } else {
                     self.errorState
                 }
@@ -304,7 +296,7 @@ struct AtlasCollectionEditView: View {
             .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("編輯合集"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -369,7 +361,7 @@ struct AtlasCollectionEditView: View {
             Text("集合頭像")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(.tujiInk)
-            HStack(spacing: Space.s5) {
+            HStack(spacing: Space.s4) {
                 Button {
                     self.avatar.begin()
                 } label: {
@@ -379,21 +371,21 @@ struct AtlasCollectionEditView: View {
                                 if let image = state.image {
                                     image.resizable().aspectRatio(contentMode: .fill)
                                 } else {
-                                    RoundedRectangle(cornerRadius: Radius.md)
-                                        .fill(.tujiCard)
+                                    RoundedRectangle(cornerRadius: Radius.r0)
+                                        .fill(.tujiPaper)
                                         .overlay {
                                             Image(systemName: "camera.fill")
-                                                .foregroundStyle(.tujiInk4)
+                                                .foregroundStyle(.tujiInk3)
                                         }
                                 }
                             }
                             .pipeline(.shared)
                             .frame(width: 92, height: 92)
                             .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
 
                             if self.avatar.isBusy {
-                                ProgressView()
+                                TujiProgressBar(progress: nil).frame(width: 56)
                                     .tint(.white)
                                     .frame(width: 30, height: 30)
                                     .background(.black.opacity(0.45), in: .circle)
@@ -401,7 +393,7 @@ struct AtlasCollectionEditView: View {
                             }
                         }
                         Text(self.vm.avatarPreviewURL == nil ? "選擇照片" : "更換照片")
-                            .font(.tujiCaption)
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiTeal)
                     }
                 }
@@ -411,7 +403,7 @@ struct AtlasCollectionEditView: View {
                 Spacer(minLength: 0)
             }
             Text("這張照片會作為集合頭像顯示在公開列表與集合詳情。")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             // One error line for the whole avatar flow. It used to render the
             // VM's shared errorMessage, which is defined as "a failed publish
@@ -420,8 +412,8 @@ struct AtlasCollectionEditView: View {
             if let errorMessage = self.avatar.errorMessage {
                 HStack(spacing: Space.s2) {
                     Text(errorMessage)
-                        .font(.tujiCaption)
-                        .foregroundStyle(.tujiCoral)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiAlert)
                     Spacer(minLength: 0)
                     if self.avatar.canRetry {
                         Button("重試上傳") {
@@ -433,8 +425,8 @@ struct AtlasCollectionEditView: View {
                 }
             }
         }
-        .padding(Space.s4)
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.lg))
+        .padding(Space.s3)
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
     }
 
     /// The upload needs the VM plus two environment values, none of which a
@@ -462,16 +454,16 @@ struct AtlasCollectionEditView: View {
 
     private var metaSection: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text("標題").font(.tujiCaption).foregroundStyle(.tujiInk3)
+            Text("標題").font(.tujiLabel).foregroundStyle(.tujiInk3)
             TextField("標題", text: self.$vm.title)
                 .textFieldStyle(.roundedBorder)
-            Text("簡介").font(.tujiCaption).foregroundStyle(.tujiInk3).padding(.top, Space.s2)
+            Text("簡介").font(.tujiLabel).foregroundStyle(.tujiInk3).padding(.top, Space.s2)
             TextField("簡介（選填）", text: self.$vm.description, axis: .vertical)
                 .lineLimit(2...5)
                 .textFieldStyle(.roundedBorder)
             HStack {
                 if self.vm.metaSaved {
-                    Text("已儲存").font(.tujiCaption).foregroundStyle(.tujiInk3)
+                    Text("已儲存").font(.tujiLabel).foregroundStyle(.tujiInk3)
                 }
                 Spacer()
                 BBtn(title: self.vm.savingMeta ? "儲存中…" : "儲存", fullWidth: false) {
@@ -503,7 +495,7 @@ struct AtlasCollectionEditView: View {
             }
             if self.vm.members.isEmpty {
                 Text("還沒有項目。點「新增」加入你已確認完成的圖鑑。")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             } else {
                 LazyVGrid(
@@ -522,19 +514,19 @@ struct AtlasCollectionEditView: View {
         VStack(spacing: 2) {
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    Rectangle().fill(.tujiBg)
+                    Rectangle().fill(.tujiPaper)
                     LazyImage(url: item.imageURL) { state in
                         if let image = state.image {
                             image.resizable().aspectRatio(contentMode: .fill)
                         } else {
-                            Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                            Image(systemName: "photo").foregroundStyle(.tujiInk3)
                         }
                     }
                     .pipeline(.shared)
                 }
                 .frame(height: 84)
                 .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
 
                 if let label = item.collectionPublicationLabel {
                     Text(label)
@@ -542,7 +534,7 @@ struct AtlasCollectionEditView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 3)
-                        .background(.black.opacity(0.65), in: .capsule)
+                        .background(.black.opacity(0.65), in: .rect(cornerRadius: Radius.r0))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .padding(4)
                 }
@@ -569,27 +561,27 @@ struct AtlasCollectionEditView: View {
     private func submitSection(_ collection: AtlasCollectionEdit) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack {
-                Text("公開狀態").font(.tujiCaption).foregroundStyle(.tujiInk3)
+                Text("公開狀態").font(.tujiLabel).foregroundStyle(.tujiInk3)
                 Spacer()
                 Text(collection.review.label)
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.tujiInk)
             }
             if let errorMessage = self.vm.errorMessage {
-                Text(errorMessage).font(.tujiCaption).foregroundStyle(.tujiCoral)
+                Text(errorMessage).font(.tujiLabel).foregroundStyle(.tujiAlert)
             }
             if case let .done(moderation) = self.vm.submitState {
                 Text(moderation?.published == true
                     ? tujiLocalized("已通過審核，合集現在出現在公開圖鑑了。")
                     : tujiLocalized("已送出，審核通過後就會出現在公開圖鑑。"))
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
             if collection.review.canSubmit {
                 BBtn(
                     title: self.vm.isSubmitting ? "送出中…" : "公開合集",
-                    bg: .tujiTeal,
-                    fg: .white,
+                    bg: .tujiEye,
+                    fg: .tujiInk,
                     fullWidth: true,
                     icon: "square.and.arrow.up"
                 ) {
@@ -600,7 +592,7 @@ struct AtlasCollectionEditView: View {
                 if self.vm.members.isEmpty {
                     Text("合集至少要有一個項目才能公開。")
                         .font(.system(size: 11))
-                        .foregroundStyle(.tujiInk4)
+                        .foregroundStyle(.tujiInk3)
                 }
             }
 
@@ -609,7 +601,7 @@ struct AtlasCollectionEditView: View {
             if self.vm.canWithdraw {
                 BBtn(
                     title: self.vm.withdrawing ? "收回中…" : "取消公開",
-                    bg: .tujiCard,
+                    bg: .tujiPaper,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.uturn.backward"
@@ -627,14 +619,14 @@ struct AtlasCollectionEditView: View {
         VStack(spacing: Space.s3) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 36))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Text(tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
             BBtn(title: "重試", fullWidth: false) { Task { await self.vm.load() } }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, Space.s12)
+        .padding(.top, Space.s5)
     }
 }
 
@@ -665,26 +657,26 @@ private struct AtlasCollectionItemPicker: View {
             ScrollView {
                 Group {
                     if self.model.loading {
-                        ProgressView().tint(.tujiTeal).padding(.top, Space.s12)
+                        TujiPageLoading()
                     } else if self.model.available.isEmpty {
                         VStack(spacing: Space.s3) {
                             Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 36)).foregroundStyle(.tujiInk4)
+                                .font(.system(size: 36)).foregroundStyle(.tujiInk3)
                             Text(self.model.loadError == nil
                                 ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入集合。")
                                 : tujiLocalized("載入失敗，請稍後再試"))
-                                .font(.tujiCaption)
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiInk3)
                                 .multilineTextAlignment(.center)
                         }
-                        .padding(.top, Space.s12)
-                        .padding(.horizontal, Space.s6)
+                        .padding(.top, Space.s5)
+                        .padding(.horizontal, Space.s4)
                     } else {
                         VStack(spacing: Space.s3) {
                             if let addError = self.model.addError {
                                 Text(addError)
-                                    .font(.tujiCaption)
-                                    .foregroundStyle(.tujiCoral)
+                                    .font(.tujiLabel)
+                                    .foregroundStyle(.tujiAlert)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             LazyVGrid(
@@ -696,15 +688,15 @@ private struct AtlasCollectionItemPicker: View {
                                 }
                             }
                         }
-                        .padding(Space.s4)
+                        .padding(Space.s3)
                     }
                 }
                 // Without this the ScrollView shrinks to the spinner's width and
-                // .tujiBg only paints a strip down the middle of the sheet.
+                // .tujiPaper only paints a strip down the middle of the sheet.
                 .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.tujiBg)
+            .background(.tujiPaper)
             .navigationTitle("加入項目")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -723,19 +715,19 @@ private struct AtlasCollectionItemPicker: View {
         } label: {
             VStack(spacing: 2) {
                 ZStack {
-                    Rectangle().fill(.tujiBg)
+                    Rectangle().fill(.tujiPaper)
                     LazyImage(url: item.imageURL) { state in
                         if let image = state.image {
                             image.resizable().aspectRatio(contentMode: .fill)
                         } else {
-                            Image(systemName: "photo").foregroundStyle(.tujiInk4)
+                            Image(systemName: "photo").foregroundStyle(.tujiInk3)
                         }
                     }
                     .pipeline(.shared)
                 }
                 .frame(height: 84)
                 .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: Radius.md))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
                 .overlay(alignment: .bottomLeading) {
                     if let label = item.collectionPublicationLabel {
                         Text(label)
@@ -743,7 +735,7 @@ private struct AtlasCollectionItemPicker: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 3)
-                            .background(.black.opacity(0.65), in: .capsule)
+                            .background(.black.opacity(0.65), in: .rect(cornerRadius: Radius.r0))
                             .padding(4)
                     }
                 }

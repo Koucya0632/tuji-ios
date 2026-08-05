@@ -27,7 +27,7 @@ struct AtlasAuthorProfileView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Space.s5) {
+            VStack(spacing: Space.s4) {
                 if let author = self.vm.author {
                     self.headerCard(author)
                     // A synthesized header (own page, nothing published yet) has
@@ -45,16 +45,14 @@ struct AtlasAuthorProfileView: View {
                         }
                     }
                 } else if case .loading = self.vm.phase {
-                    ProgressView()
-                        .tint(.tujiTeal)
-                        .padding(.top, Space.s12)
+                    TujiPageLoading()
                 } else {
                     self.blankState
                 }
             }
-            .padding(Space.s6)
+            .padding(Space.s4)
         }
-        .background(.tujiBg)
+        .background(.tujiPaper)
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -114,7 +112,7 @@ struct AtlasAuthorProfileView: View {
             title: "你還沒有公開任何圖鑑",
             message: "公開之後，這裡就是別人看到的你。"
         )
-        .padding(.top, Space.s4)
+        .padding(.top, Space.s3)
     }
 
     @ViewBuilder
@@ -124,7 +122,7 @@ struct AtlasAuthorProfileView: View {
         // Falls back to the same card without a header above it.
         case .notFound where self.vm.isSelf:
             self.nothingPublishedYet
-                .padding(.top, Space.s8)
+                .padding(.top, Space.s5)
         case .notFound:
             self.plainBlank(
                 icon: "person.crop.circle.badge.questionmark",
@@ -144,9 +142,9 @@ struct AtlasAuthorProfileView: View {
         VStack(spacing: Space.s3) {
             Image(systemName: icon)
                 .font(.system(size: 40))
-                .foregroundStyle(.tujiInk4)
+                .foregroundStyle(.tujiInk3)
             Text(text)
-                .font(.tujiBody)
+                .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
             if retry {
                 BBtn(title: "重試", fullWidth: false) {
@@ -154,7 +152,7 @@ struct AtlasAuthorProfileView: View {
                 }
             }
         }
-        .padding(.top, Space.s12)
+        .padding(.top, Space.s5)
     }
 
     // MARK: Header
@@ -171,7 +169,7 @@ struct AtlasAuthorProfileView: View {
                 // could type or mention, and this is a machine-assigned code
                 // nobody ever types.
                 Text(verbatim: "\(tujiLocalized("UID")): \(author.handle)")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
 
@@ -179,14 +177,14 @@ struct AtlasAuthorProfileView: View {
                !bio.isEmpty
             {
                 Text(bio)
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, Space.s1)
             }
 
-            HStack(spacing: Space.s6) {
+            HStack(spacing: Space.s4) {
                 self.stat(value: "\(author.publishedCount)", label: tujiLocalized("公開項目"))
                 // The altruistic signal: how much this author's work has helped
                 // others (../docs/COMMUNITY_ATLAS_PLAN.md §3C — FEATURES.md §12.5).
@@ -195,12 +193,12 @@ struct AtlasAuthorProfileView: View {
             .padding(.top, Space.s1)
         }
         .frame(maxWidth: .infinity)
-        .padding(Space.s6)
-        .background(.tujiCard)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.xl))
+        .padding(Space.s4)
+        .background(.tujiPaper)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.xl)
-                .stroke(.tujiInk4.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -221,12 +219,13 @@ struct AtlasAuthorProfileView: View {
     /// `AuthorProfileVM.showsSegmentedControl`. An author with none gets exactly
     /// the page they had before: the language-grouped grid, no chrome.
     private var segmentPicker: some View {
-        Picker("", selection: self.$vm.segment) {
-            Text("合集").tag(AuthorProfileVM.Segment.collections)
-            Text("圖鑑").tag(AuthorProfileVM.Segment.items)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
+        TujiSegmented(
+            options: [
+                (AuthorProfileVM.Segment.collections, "合集"),
+                (AuthorProfileVM.Segment.items, "圖鑑")
+            ],
+            selection: self.$vm.segment
+        )
     }
 
     // MARK: Collections
@@ -249,7 +248,7 @@ struct AtlasAuthorProfileView: View {
     // MARK: Items
 
     private var itemsSection: some View {
-        VStack(alignment: .leading, spacing: Space.s4) {
+        VStack(alignment: .leading, spacing: Space.s3) {
             // The heading is redundant once the segmented control is naming the
             // section directly above it.
             if !self.vm.showsSegmentedControl {
@@ -261,7 +260,7 @@ struct AtlasAuthorProfileView: View {
 
             if self.vm.groups.isEmpty {
                 Text(self.vm.isSelf ? "你還沒有公開任何圖鑑" : "還沒有公開項目")
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -281,7 +280,7 @@ struct AtlasAuthorProfileView: View {
                 // tujiLocalized, the count a number), so this must not become a
                 // "%@ (%lld)" catalog key.
                 Text(verbatim: "\(group.language.label) (\(group.count))")
-                    .font(.tujiOverline)
+                    .font(.tujiLabel)
                     .tracking(2)
                     .foregroundStyle(.tujiInk3)
             }

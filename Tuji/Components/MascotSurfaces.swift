@@ -6,8 +6,8 @@ enum MascotBubbleTone {
     var background: Color {
         switch self {
         case .neutral: .tujiTealSoft
-        case .success: .tujiGreen
-        case .error: .tujiCoral
+        case .success: .tujiTeal
+        case .error: .tujiAlert
         }
     }
 
@@ -44,12 +44,12 @@ struct MascotSpeechBubble: View {
             }
             .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(self.tone.foreground)
-            .padding(.leading, Space.s4)
-            .padding(.trailing, Space.s4)
+            .padding(.leading, Space.s3)
+            .padding(.trailing, Space.s3)
             .frame(minHeight: 40)
-            .background(self.tone.background, in: .rect(cornerRadius: Radius.lg))
+            .background(self.tone.background, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.lg)
+                RoundedRectangle(cornerRadius: Radius.r0)
                     .stroke(.tujiInk.opacity(self.tone == .neutral ? 0.08 : 0), lineWidth: 1)
             )
             .offset(x: -8)
@@ -96,7 +96,7 @@ struct MascotEmptyState<Actions: View>: View {
                     .multilineTextAlignment(.center)
                 if let message {
                     Text(message)
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                         .multilineTextAlignment(.center)
                 }
@@ -104,15 +104,14 @@ struct MascotEmptyState<Actions: View>: View {
                     .padding(.top, Space.s1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, self.compact ? Space.s4 : Space.s5)
-            .padding(.top, overlap + Space.s5)
-            .padding(.bottom, self.compact ? Space.s4 : Space.s5)
-            .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+            .padding(.horizontal, self.compact ? Space.s3 : Space.s4)
+            .padding(.top, overlap + Space.s4)
+            .padding(.bottom, self.compact ? Space.s3 : Space.s4)
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.xl)
-                    .stroke(.tujiInk4.opacity(0.22), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(.tujiRule.opacity(0.22), lineWidth: 1)
             )
-            .tujiCardShadow()
             .padding(.top, lift)
 
             MascotFigure(pose: self.pose, size: figureSize)
@@ -133,14 +132,14 @@ extension MascotEmptyState where Actions == EmptyView {
 struct MascotCelebrationCard<Detail: View>: View {
     let pose: MascotPose
     let title: LocalizedStringKey
-    var accent: Color = .tujiYellow
+    var accent: Color = .tujiEye
     var dark = false
     let detail: Detail
 
     init(
         pose: MascotPose = .cheer,
         title: LocalizedStringKey,
-        accent: Color = .tujiYellow,
+        accent: Color = .tujiEye,
         dark: Bool = false,
         @ViewBuilder detail: () -> Detail
     ) {
@@ -165,15 +164,15 @@ struct MascotCelebrationCard<Detail: View>: View {
                 self.detail
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, Space.s5)
-            .padding(.top, overlap + Space.s6)
-            .padding(.bottom, Space.s5)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, overlap + Space.s4)
+            .padding(.bottom, Space.s4)
             .background(
-                self.dark ? Color.tujiBgInk : self.accent.opacity(0.32),
-                in: .rect(cornerRadius: Radius.xl)
+                self.dark ? Color.tujiInk : self.accent.opacity(0.32),
+                in: .rect(cornerRadius: Radius.r0)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.xl)
+                RoundedRectangle(cornerRadius: Radius.r0)
                     .stroke(
                         self.dark ? Color.white.opacity(0.16) : self.accent.opacity(0.72),
                         lineWidth: 1
@@ -198,7 +197,7 @@ struct MascotAvatar: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [.tujiTealSoft, .tujiYellow.opacity(0.26)],
+                        colors: [.tujiTealSoft, .tujiEye.opacity(0.26)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -239,7 +238,7 @@ struct ProfileAvatar: View {
                 } else if phase.error != nil {
                     MascotAvatar(pose: self.fallbackPose, size: self.size, selected: self.selected)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .frame(width: self.size, height: self.size)
@@ -265,7 +264,7 @@ struct ProfileAvatar: View {
 
 #Preview {
     ScrollView {
-        VStack(spacing: Space.s8) {
+        VStack(spacing: Space.s5) {
             MascotSpeechBubble(pose: .think, text: "這個是什麼？")
             MascotSpeechBubble(
                 pose: .cheer,
@@ -284,5 +283,5 @@ struct ProfileAvatar: View {
         }
         .padding()
     }
-    .background(.tujiBg)
+    .background(.tujiPaper)
 }

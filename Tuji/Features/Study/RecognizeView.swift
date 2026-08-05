@@ -23,15 +23,15 @@ struct RecognizeView: View {
     @Environment(WordsStore.self) private var words
 
     var body: some View {
-        VStack(spacing: Space.s4) {
+        VStack(spacing: Space.s3) {
             ScrollView {
                 self.card
             }
             .scrollBounceBehavior(.basedOnSize)
             self.buttons
         }
-        .padding(.horizontal, Space.s6)
-        .padding(.bottom, Space.s5)
+        .padding(.horizontal, Space.s4)
+        .padding(.bottom, Space.s4)
         // The flow view keys this view per presentation, so the task fires
         // once per card — recognize never requeues, so once per word.
         .task { await self.autoPlay() }
@@ -96,7 +96,7 @@ struct RecognizeView: View {
                    reading != self.item.word.pronunciation
                 {
                     Text(reading)
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                 }
                 // In monolingual mode (UI language == target) the gloss equals
@@ -106,12 +106,12 @@ struct RecognizeView: View {
                    self.item.word.chinese != self.detail?.targetDefinition
                 {
                     Text(self.item.word.chinese)
-                        .font(.tujiBody)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk2)
                 }
                 if let definition = self.detail?.targetDefinition, !definition.isEmpty {
                     Text(definition)
-                        .font(.tujiCaption)
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(2)
                 }
@@ -119,13 +119,13 @@ struct RecognizeView: View {
                     self.exampleBlock(example)
                 }
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.bottom, Space.s4)
+            .padding(.horizontal, Space.s3)
+            .padding(.bottom, Space.s3)
         }
-        .background(.tujiCard, in: .rect(cornerRadius: Radius.xl))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
-            RoundedRectangle(cornerRadius: Radius.xl)
-                .stroke(.tujiInk4.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
         )
     }
 
@@ -133,7 +133,7 @@ struct RecognizeView: View {
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack(alignment: .top, spacing: Space.s2) {
                 Text(example.sentence)
-                    .font(.tujiBody)
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: Space.s2)
@@ -145,18 +145,18 @@ struct RecognizeView: View {
             }
             if self.settings.current.showZh, let zh = example.zh, !zh.isEmpty {
                 Text(zh)
-                    .font(.tujiCaption)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
         }
         .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiBg, in: .rect(cornerRadius: Radius.lg))
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
     }
 
     private var hero: some View {
         ZStack {
-            Rectangle().fill(.tujiBg)
+            Rectangle().fill(.tujiPaper)
             LazyImage(url: self.item.word.imageURL) { state in
                 if let image = state.image {
                     image.resizable()
@@ -165,35 +165,35 @@ struct RecognizeView: View {
                 } else if state.error != nil {
                     Image(systemName: "photo")
                         .font(.system(size: 32))
-                        .foregroundStyle(.tujiInk4)
+                        .foregroundStyle(.tujiInk3)
                 } else {
-                    ProgressView().tint(.tujiTeal)
+                    TujiImagePlaceholder()
                 }
             }
             .pipeline(.shared)
         }
         .frame(height: 190)
         .clipped()
-        .clipShape(.rect(topLeadingRadius: Radius.xl, topTrailingRadius: Radius.xl))
+        .clipShape(.rect(topLeadingRadius: Radius.r0, topTrailingRadius: Radius.r0))
     }
 
     private var buttons: some View {
         VStack(spacing: Space.s2) {
             Text("這個字你認識嗎？")
-                .font(.tujiCaption)
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             HStack(spacing: Space.s3) {
                 BBtn(
                     title: "沒見過",
-                    bg: .tujiCoral.opacity(0.12),
-                    fg: .tujiCoral,
+                    bg: .tujiAlert.opacity(0.12),
+                    fg: .tujiAlert,
                     fullWidth: true,
                     action: { self.rate(.again) }
                 )
                 .disabled(self.coord.recLocked)
                 BBtn(
                     title: "有印象",
-                    bg: .tujiTealSoft,
+                    bg: .tujiPaper2,
                     fg: .tujiTeal,
                     fullWidth: true,
                     action: { self.rate(.hard) }
