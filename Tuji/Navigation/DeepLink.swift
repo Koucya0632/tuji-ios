@@ -5,6 +5,7 @@
 //   tuji://today                        →  Today tab root
 //   tuji://cards                        →  Cards tab root
 //   tuji://me                           →  Me tab root
+//   tuji://community                    →  Community tab root
 //   tuji://favorites                    →  Cards tab, 書籤 source filter
 //   tuji://settings                     →  Me tab → Settings
 //   tuji://search?q=word                →  Cards tab → Search (auto-fills q)
@@ -21,6 +22,7 @@ enum TujiDeepLink: Hashable {
     case today
     case cards
     case me
+    case community
     case favorites
     case settings
     case search(query: String?)
@@ -35,7 +37,7 @@ enum TujiDeepLink: Hashable {
         case .today, .study: .today
         case .me: .me
         case .cards, .search, .word, .category: .cards
-        case .collection: .community
+        case .collection, .community: .community
         case .settings: .me
         // 我的收藏 stopped being a screen: bookmarks are a *source* of words,
         // so they are a filter value on 圖鑑 (D.6). The public link still has to
@@ -49,7 +51,7 @@ enum TujiDeepLink: Hashable {
     /// switching. nil = just switch tabs to the root.
     var route: NavRoute? {
         switch self {
-        case .today, .cards, .me, .favorites: nil
+        case .today, .cards, .me, .community, .favorites: nil
         case .settings: .settings
         case let .search(q): .search(query: q)
         case let .word(id): .wordDetail(id: id)
@@ -91,6 +93,7 @@ enum TujiDeepLink: Hashable {
         case "today": return .today
         case "cards": return .cards
         case "me": return .me
+        case "community": return .community
         case "favorites": return .favorites
         case "settings": return .settings
         case "search": return .search(query: q("q"))
