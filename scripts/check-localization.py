@@ -37,6 +37,22 @@ SOURCES = [ROOT / "Tuji"]
 # `Text(verbatim:)` and the `init(localized:)` family are the *escape hatches* —
 # they mean "already resolved, do not look this up" — so they are absent by
 # design, not by omission.
+# Opens a declaration whose *return type* is a key, so every bare literal inside
+# it is one:
+#
+#     var label: LocalizedStringKey {
+#         switch self { case .again: "重來" … }
+#     }
+#
+# This is the dominant idiom in this codebase (SRSRating.label, CardsSource.title,
+# MasteryLevel.name, AtlasReviewStatus.label …) and the call-site patterns below
+# cannot see it — the literal never appears next to `Text(` or a labelled
+# argument. Missing it let two strings ship uncaught the first time this script
+# was trusted.
+KEY_RETURNING = re.compile(r"(?:var|func)\s+\w+[^{}\n]*->?\s*:?\s*LocalizedStringKey\??\s*\{|"
+                           r"(?:var|let)\s+\w+\s*:\s*LocalizedStringKey\??\s*\{")
+BARE_LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
+
 PATTERNS = [
     re.compile(r'\bText\(\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\btujiLocalized\(\s*"((?:[^"\\]|\\.)*)"'),
@@ -96,6 +112,8 @@ def main() -> int:
             # `#Preview` bodies are developer scaffolding — never shipped, and
             # deliberately full of throwaway sample copy.
             preview_depth: int | None = None
+            # Brace depth inside a key-returning declaration, or None.
+            key_depth: int | None = None
             for number, line in enumerate(lines, start=1):
                 if preview_depth is None and line.lstrip().startswith("#Preview"):
                     preview_depth = 0
@@ -107,7 +125,23 @@ def main() -> int:
                 stripped = line.lstrip()
                 if stripped.startswith("//") or stripped.startswith("///"):
                     continue
-                for pattern in PATTERNS:
+
+                if key_depth is None and KEY_RETURNING.search(line):
+                    key_depth = 0
+                found = list(PATTERNS)
+                if key_depth is not None:
+                    key_depth += line.count("{") - line.count("}")
+                    # Not on an interpolated line: a nested literal inside
+                    # `\(x, specifier: "%.1f")` cuts the scan in half and the
+                    # tail reads as its own key. The call-site patterns do not
+                    # cover interpolation here either — a miss beats a false
+                    # positive, which is the whole posture of this check.
+                    if "\\(" not in line:
+                        found = found + [BARE_LITERAL]
+                    if key_depth <= 0:
+                        key_depth = None
+
+                for pattern in found:
                     for literal in pattern.findall(line):
                         if not literal or NOT_PROSE.match(literal):
                             continue

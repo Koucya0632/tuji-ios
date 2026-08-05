@@ -33,7 +33,6 @@ struct CardsListView: View {
     var body: some View {
         VStack(spacing: 0) {
             self.header
-            AtlasCaptureProgressStrip()
             self.chipRow
             self.content
         }
@@ -235,6 +234,11 @@ struct CardsListView: View {
                     ],
                     spacing: Space.s4
                 ) {
+                    // Cards still being made sit at the head of the grid, in the
+                    // same columns as the finished ones — they *are* cards, and
+                    // the horizontal strip that used to announce them above the
+                    // grid cost a permanent band at the top of the tab.
+                    AtlasCaptureQueueTiles()
                     ForEach(self.visibleWords) { word in
                         NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
                             WordTile(

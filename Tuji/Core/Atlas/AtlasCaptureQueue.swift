@@ -1,7 +1,7 @@
 // Background queue for the 自制圖鑑 capture flow. Once the user confirms a name
 // in AtlasCaptureView, the heavy tail — confirm → createCards → enrich → one
 // reconciling sync — runs here instead of blocking the sheet. The 圖鑑 page
-// renders these jobs as "製作中" placeholder cards (AtlasCaptureProgressStrip).
+// renders these jobs as 生成中 tiles at the head of its own grid
 //
 // Jobs are owned by this @MainActor singleton, so they keep running after the
 // capture cover is dismissed. Completion refreshes counters in place via
