@@ -31,11 +31,7 @@ struct MilestoneView: View {
             Color.tujiInk.ignoresSafeArea()
             VStack(spacing: Space.s4) {
                 Spacer()
-                MascotCelebrationCard(
-                    title: "連勝 \(self.milestone.streak) 天！",
-                    accent: .tujiEye,
-                    dark: true
-                ) {
+                MascotCelebrationCard(title: "連勝 \(self.milestone.streak) 天！") {
                     VStack(spacing: Space.s4) {
                         Text("\(self.milestone.streak)")
                             .font(.tujiDisplay)

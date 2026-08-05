@@ -241,17 +241,19 @@ struct TujiSelectionMark: View {
     }
 }
 
-/// Review-state label (C.9). A 3pt leading edge carries the state's colour so
-/// the word itself stays neutral — a red-on-red "未通過" reads as an alarm, and
-/// a rejection is information, not an emergency.
-struct TujiStatusLabel: View {
-    let status: AtlasReviewStatus
+/// A small label whose 3pt leading edge carries the colour, so the word itself
+/// stays neutral (C.9). A red-on-red 未通過 reads as an alarm; a rejection — or
+/// having missed a word twice — is information, not an emergency.
+struct TujiStatusEdgeLabel: View {
+    let text: Text
+    let edge: Color
 
     var body: some View {
-        Text(verbatim: self.status.label)
+        self.text
             .font(.tujiLabel)
             .tracking(0.5)
             .foregroundStyle(.tujiInk2)
+            .lineLimit(1)
             .padding(.horizontal, Space.s2)
             .frame(height: 24)
             .background(alignment: .leading) {
@@ -260,6 +262,15 @@ struct TujiStatusLabel: View {
                     Rectangle().fill(.tujiPaper2)
                 }
             }
+    }
+}
+
+/// Review-state label (C.9).
+struct TujiStatusLabel: View {
+    let status: AtlasReviewStatus
+
+    var body: some View {
+        TujiStatusEdgeLabel(text: Text(verbatim: self.status.label), edge: self.edge)
             .accessibilityLabel(Text(verbatim: self.status.label))
     }
 

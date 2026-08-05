@@ -1,62 +1,44 @@
 import SwiftUI
 
-enum MascotBubbleTone {
-    case neutral, success, error
-
-    var background: Color {
-        switch self {
-        case .neutral: .tujiTealSoft
-        case .success: .tujiTeal
-        case .error: .tujiAlert
-        }
-    }
-
-    var foreground: Color {
-        switch self {
-        case .neutral: .tujiInk
-        case .success, .error: .white
-        }
-    }
-}
-
-/// A compact study prompt where the mascot visibly leans out of the bubble.
+/// The cat, saying something (C.11).
+///
+/// **The one rounded container in the whole app** — everything else is square,
+/// and the exception is granted here because only this thing is speaking.
+///
+/// It used to come in three tones: pale teal normally, solid teal with a white
+/// ✓ when you got it right, solid red with a white ✗ when you didn't. A red
+/// bubble makes a wrong answer an alarm, and the green-tick-and-cheer pairing
+/// is the reward loop this design removes. There is one bubble now, on paper,
+/// and what it says carries the whole message.
 struct MascotSpeechBubble: View {
     let pose: MascotPose
     let text: LocalizedStringKey
-    var tone: MascotBubbleTone = .neutral
-    var systemImage: String?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 0) {
-            MascotFigure(pose: self.pose, size: 56)
+            MascotFigure(pose: self.pose, size: 64)
                 .id(self.pose)
-                .transition(.scale(scale: 0.92).combined(with: .opacity))
-                .frame(width: 50, alignment: .center)
+                .transition(.opacity)
+                .frame(width: 56, alignment: .center)
                 .zIndex(1)
 
-            HStack(spacing: 6) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                }
-                Text(self.text)
-            }
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(self.tone.foreground)
-            .padding(.leading, Space.s3)
-            .padding(.trailing, Space.s3)
-            .frame(minHeight: 40)
-            .background(self.tone.background, in: .rect(cornerRadius: Radius.r0))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(.tujiInk.opacity(self.tone == .neutral ? 0.08 : 0), lineWidth: 1)
-            )
-            .offset(x: -8)
+            Text(self.text)
+                .font(.tujiBody)
+                .foregroundStyle(.tujiInk)
+                .padding(.leading, Space.s4)
+                .padding(.trailing, Space.s3)
+                .padding(.vertical, Space.s2)
+                .frame(minHeight: 44)
+                .background(.tujiPaper2, in: .rect(cornerRadius: Radius.rPill))
+                // No drawn tail: the bubble tucks under the cat instead, which
+                // is the same "this one is talking" read with one shape fewer.
+                .offset(x: -12)
 
             Spacer(minLength: 0)
         }
-        .animation(self.reduceMotion ? nil : .spring(duration: 0.28, bounce: 0.18), value: self.pose)
+        .animation(self.reduceMotion ? nil : Motion.ease(Motion.d2), value: self.pose)
     }
 }
 
@@ -147,34 +129,34 @@ extension MascotEmptyState where Actions == EmptyView {
 struct MascotCelebrationCard<Detail: View>: View {
     let pose: MascotPose
     let title: LocalizedStringKey
-    var accent: Color = .tujiEye
-    var dark = false
     let detail: Detail
 
     init(
         pose: MascotPose = .cheer,
         title: LocalizedStringKey,
-        accent: Color = .tujiEye,
-        dark: Bool = false,
         @ViewBuilder detail: () -> Detail
     ) {
         self.pose = pose
         self.title = title
-        self.accent = accent
-        self.dark = dark
         self.detail = detail()
     }
 
+    /// The surface the cat lies on is always ink — that is the point of C.11's
+    /// rule, and it used to be optional. With `dark: false` the block was a
+    /// 32%-alpha wash of the accent with a matching border, and a black cat on
+    /// pale yellow is just a cat on a card: the silhouette collapses and only
+    /// the eyes were ever meant to survive. Two callers passed `dark: true` and
+    /// two didn't, so the app had both versions of its most recognisable image.
     var body: some View {
-        let figureSize: CGFloat = 132
-        let overlap: CGFloat = 24
+        let figureSize: CGFloat = 88
+        let overlap: CGFloat = 20
         let lift = max(0, self.pose.visibleHeightRatio * figureSize - overlap)
 
         ZStack(alignment: .top) {
             VStack(spacing: Space.s3) {
                 Text(self.title)
                     .font(.tujiH2)
-                    .foregroundStyle(self.dark ? .white : .tujiInk)
+                    .foregroundStyle(.tujiPaper)
                     .multilineTextAlignment(.center)
                 self.detail
             }
@@ -182,22 +164,11 @@ struct MascotCelebrationCard<Detail: View>: View {
             .padding(.horizontal, Space.s4)
             .padding(.top, overlap + Space.s4)
             .padding(.bottom, Space.s4)
-            .background(
-                self.dark ? Color.tujiInk : self.accent.opacity(0.32),
-                in: .rect(cornerRadius: Radius.r0)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(
-                        self.dark ? Color.white.opacity(0.16) : self.accent.opacity(0.72),
-                        lineWidth: 1
-                    )
-            )
+            .background(.tujiInk)
             .padding(.top, lift)
 
-            MascotFigure(pose: self.pose, size: figureSize, grounding: self.dark ? .glow : .shadow)
+            MascotFigure(pose: self.pose, size: figureSize, grounding: .glow)
         }
-        .frame(maxWidth: 440)
     }
 }
 
@@ -280,13 +251,8 @@ struct ProfileAvatar: View {
 #Preview {
     ScrollView {
         VStack(spacing: Space.s5) {
-            MascotSpeechBubble(pose: .think, text: "這個是什麼？")
-            MascotSpeechBubble(
-                pose: .cheer,
-                text: "答對了！",
-                tone: .success,
-                systemImage: "checkmark.circle.fill"
-            )
+            MascotSpeechBubble(pose: .wave, text: "先看一眼這些字，準備好就開始")
+            MascotSpeechBubble(pose: .peek, text: "差一點，看看正解")
             MascotEmptyState(pose: .sleep, title: "今天沒有待複習", message: "休息一下，明天再來")
             MascotCelebrationCard(title: "複習完成！") {
                 Text("8 個字").font(.tujiH3)

@@ -163,7 +163,7 @@ struct FeatureTourOverlay: View {
     private func closingCard(for step: TourStep) -> some View {
         // dark: the light variant's accent.opacity(0.32) card lets the
         // dimmed grid underneath bleed through the text.
-        MascotCelebrationCard(pose: step.pose, title: step.title, dark: true) {
+        MascotCelebrationCard(pose: step.pose, title: step.title) {
             VStack(spacing: Space.s3) {
                 Text(step.text)
                     .font(.tujiBodySm)

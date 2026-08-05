@@ -19,10 +19,9 @@ struct NewDoneView: View {
             VStack(spacing: Space.s4) {
                 self.hero
                 UnsyncedAnswersNotice(unsyncedCount: self.coord.parkedCount)
+                    .padding(.horizontal, Space.s4)
                 StudyWordGrid(items: self.queue, mistakeCounts: self.coord.mistakeCounts)
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.top, Space.s3)
             .padding(.bottom, Space.s5)
         }
         // Learning new words writes mastery + creates user_cards + study_logs
@@ -52,13 +51,10 @@ struct NewDoneView: View {
     }
 
     private var hero: some View {
-        MascotCelebrationCard(
-            title: "這節學了 \(self.queue.count) 個新字",
-            accent: .tujiTeal
-        ) {
+        MascotCelebrationCard(title: "這節學了 \(self.queue.count) 個新字") {
             Text("它們已加入你的圖鑑")
                 .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
+                .foregroundStyle(.tujiPaper.opacity(0.7))
         }
         .padding(.top, Space.s5)
     }
@@ -100,65 +96,63 @@ struct StudyWordGrid: View {
     var body: some View {
         LazyVGrid(
             columns: [
-                GridItem(.flexible(), spacing: Space.s3),
-                GridItem(.flexible(), spacing: Space.s3)
+                GridItem(.flexible(), spacing: Space.s2),
+                GridItem(.flexible(), spacing: Space.s2)
             ],
-            spacing: Space.s3
+            spacing: Space.s4
         ) {
             ForEach(self.items) { item in
                 self.tile(for: item)
             }
         }
+        .padding(.horizontal, Space.s4)
     }
 
+    /// No card and no border (D.2). The tile used to be a bordered white box
+    /// around a white-backdrop cut-out — two nested rectangles, both lighter
+    /// than the page, framing a picture that was already the only thing there.
+    /// The `tujiPaper2` square is the container now, and the picture multiplies
+    /// into it, so what you see is the object and its name.
     private func tile(for item: StudyQueueItem) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                Rectangle().fill(.tujiPaper)
-                LazyImage(url: item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(Space.s2)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
+            Color.tujiPaper2
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    LazyImage(url: item.word.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable()
+                                .aspectRatio(
+                                    contentMode: item.word.imageKind == .cutout ? .fit : .fill
+                                )
+                                .padding(item.word.imageKind == .cutout ? Space.s3 : 0)
+                                .blendMode(item.word.imageKind == .cutout ? .multiply : .normal)
+                        } else if state.error != nil {
+                            Image(systemName: "photo")
+                                .foregroundStyle(.tujiInk3)
+                        } else {
+                            TujiImagePlaceholder()
+                        }
                     }
+                    .pipeline(.shared)
                 }
-                .pipeline(.shared)
+                .clipped()
+
+            Text(item.word.word)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+                .lineLimit(1)
+                .padding(.top, Space.s2)
+            if let wrongs = self.mistakeCounts[item.word.id], wrongs > 0 {
+                TujiStatusEdgeLabel(text: Text("答錯 \(wrongs) 次"), edge: .tujiAlert)
+                    .padding(.top, Space.s1)
+            } else if self.settings.current.showZh {
+                Text(item.word.chinese)
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+                    .lineLimit(1)
+                    .padding(.top, 2)
             }
-            .frame(height: 100)
-            .clipped()
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(item.word.word)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.tujiInk)
-                    Spacer(minLength: Space.s1)
-                    if let wrongs = self.mistakeCounts[item.word.id], wrongs > 0 {
-                        Text("答錯 \(wrongs) 次")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiAlert)
-                            .lineLimit(1)
-                    }
-                }
-                if self.settings.current.showZh {
-                    Text(item.word.chinese)
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                        .lineLimit(1)
-                }
-            }
-            .padding(Space.s3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiPaper)
         }
-        .clipShape(.rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

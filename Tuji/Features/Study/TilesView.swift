@@ -67,29 +67,29 @@ struct TilesView: View {
         .padding(.bottom, Space.s4)
     }
 
+    /// The cat appears here for exactly one reason: the answer was wrong
+    /// (C.11's 答錯後). It used to be on screen the whole time — combo-driven
+    /// pose while typing, then a cheering hop and a green ✓ when the word came
+    /// out right. Getting a word right is the expected outcome of a spelling
+    /// task, and celebrating the expected is what turns study into a slot
+    /// machine; the filled slots already say it landed.
+    ///
+    /// The instruction is not decoration — 拼出這個字 and 排出這個字的讀音 are
+    /// different tasks — so it stays, as a line rather than as a character.
     @ViewBuilder
     private var bubble: some View {
-        if self.showResult {
-            MascotSpeechBubble(
-                pose: self.isCorrect ? .cheer : .think,
-                text: self.isCorrect ? "拼對了！" : "差一點，看看正解",
-                tone: self.isCorrect ? .success : .error,
-                systemImage: self.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill"
+        if self.showResult, !self.isCorrect {
+            MascotSpeechBubble(pose: .peek, text: "差一點，看看正解")
+        } else if !self.showResult {
+            Text(
+                self.coord.spellUsesReading(for: self.item)
+                    ? LocalizedStringKey("排出這個字的讀音")
+                    : LocalizedStringKey("拼出這個字")
             )
-            // A little hop when the word comes out right — the reward moment
-            // of the production task deserves more than a colour swap.
-            .scaleEffect(self.isCorrect && !self.reduceMotion ? 1.05 : 1.0)
-            .animation(
-                self.reduceMotion ? nil : .spring(duration: 0.35, bounce: 0.55),
-                value: self.showResult
-            )
-        } else {
-            MascotSpeechBubble(
-                pose: self.coord.combo >= 3 ? .cheer : .think,
-                text: self.coord.spellUsesReading(for: self.item)
-                    ? "排出這個字的讀音"
-                    : "拼出這個字"
-            )
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .foregroundStyle(.tujiInk3)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
