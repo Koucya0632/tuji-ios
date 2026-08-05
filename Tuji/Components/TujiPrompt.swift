@@ -1,3 +1,13 @@
+// Confirmation dialogs — replaces the system `alert` / `confirmationDialog`.
+//
+// Centred, not a bottom sheet: this asks for a *decision*, and a sheet is the
+// shape the app uses for choosing among options. The 3pt edge along the top is
+// the same mark the tab bar, sheets and selected states use.
+//
+// The mascot does not appear on destructive prompts. Asking someone to confirm
+// something irreversible while a cat waves at them is flippant — the same reason
+// C.6 keeps it out of error states.
+
 import SwiftUI
 
 enum TujiPromptStyle {
@@ -6,26 +16,20 @@ enum TujiPromptStyle {
     case error
     case destructive
 
+    /// `nil` = no mascot. Destructive and error prompts are deliberately bare.
     fileprivate var mascotPose: MascotPose? {
         switch self {
         case .confirmation: .think
         case .success: .cheer
-        case .error: .peek
-        case .destructive: nil
+        case .error, .destructive: nil
         }
     }
 
-    fileprivate var cardColor: Color {
-        switch self {
-        case .success: .tujiEye
-        default: .tujiPaper
-        }
-    }
-
-    fileprivate var shadowColor: Color {
+    /// The 3pt top edge. Alert for anything the user might regret.
+    fileprivate var edgeColor: Color {
         switch self {
         case .error, .destructive: .tujiAlert
-        default: .tujiTealDeep
+        default: .tujiInk
         }
     }
 }
@@ -70,220 +74,149 @@ private struct TujiPromptModifier: ViewModifier {
                 .accessibilityHidden(self.isPresented)
 
             if self.isPresented {
-                Color.tujiInk
-                    .opacity(0.42)
+                Color.tujiScrim
                     .ignoresSafeArea()
                     .transition(.opacity)
                     .accessibilityHidden(true)
 
-                prompt
+                self.prompt
                     .padding(.horizontal, Space.s4)
                     .transition(
                         self.reduceMotion
                             ? .opacity
-                            : .scale(scale: 0.92).combined(with: .opacity)
+                            : .scale(scale: 0.98).combined(with: .opacity)
                     )
                     .zIndex(1)
             }
         }
         .animation(
-            self.reduceMotion ? nil : .spring(duration: 0.28, bounce: 0.16),
+            self.reduceMotion ? nil : Motion.ease(Motion.d2),
             value: self.isPresented
         )
     }
 
     private var prompt: some View {
-        ZStack(alignment: mascotAlignment) {
-            card
-                .padding(.top, self.style.mascotPose == nil ? 0 : 38)
-
-            if let pose = self.style.mascotPose {
-                MascotFigure(
-                    pose: pose,
-                    size: self.style == .success ? 112 : 96,
-                    grounding: .none
-                )
-                .padding(.horizontal, self.style == .success ? 0 : Space.s3)
-                .offset(x: mascotOffset.width, y: mascotOffset.height)
-                .accessibilityHidden(true)
-            }
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(self.style.edgeColor)
+                .frame(height: Border.bw3)
+            self.card
         }
-        .frame(maxWidth: 390)
+        .frame(maxWidth: 340)
+        .background(.tujiPaper)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
     }
 
-    private var mascotAlignment: Alignment {
-        switch self.style {
-        case .confirmation: .topLeading
-        case .success: .top
-        case .error: .topTrailing
-        case .destructive: .top
-        }
-    }
-
-    private var mascotOffset: CGSize {
-        switch self.style {
-        case .confirmation: CGSize(width: 4, height: -5)
-        case .success: CGSize(width: 0, height: -14)
-        case .error: CGSize(width: -2, height: -5)
-        case .destructive: .zero
-        }
-    }
-
     private var card: some View {
-        VStack(spacing: Space.s3) {
-            header
-
-            if let message {
-                Text(message)
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let detail {
-                detailRow(detail)
-            }
-
-            buttons
-                .padding(.top, Space.s1)
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.top, self.style.mascotPose == nil ? Space.s4 : Space.s5)
-        .padding(.bottom, Space.s4)
-        .frame(maxWidth: .infinity)
-        .background(self.style.cardColor, in: .rect(cornerRadius: Radius.r0))
-        .background {
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .fill(self.style.shadowColor)
-                .offset(y: 6)
-        }
-        .overlay(cardOverlay)
-    }
-
-    private var header: some View {
-        VStack(spacing: Space.s3) {
-            if self.style == .destructive {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(.tujiAlert)
-            } else if self.style == .error {
-                Image(systemName: "wifi.exclamationmark")
-                    .font(.system(size: 23, weight: .heavy))
-                    .foregroundStyle(.tujiAlert)
+        VStack(spacing: 0) {
+            if let pose = self.style.mascotPose {
+                MascotFigure(pose: pose, size: 64, grounding: .none)
+                    .accessibilityHidden(true)
+                    .padding(.bottom, Space.s3)
             }
 
             Text(self.title)
-                .font(.tujiH3)
+                .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 
-    @ViewBuilder
-    private var cardOverlay: some View {
-        RoundedRectangle(cornerRadius: Radius.r0)
-            .stroke(
-                self.style == .destructive
-                    ? Color.tujiAlert.opacity(0.72)
-                    : Color.tujiInk.opacity(0.08),
-                lineWidth: self.style == .destructive ? 1.5 : 1
-            )
-
-        if self.style == .error {
-            VStack {
-                Rectangle()
-                    .fill(.tujiAlert)
-                    .frame(width: 72, height: 5)
+            if let message {
+                Text(message)
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiInk2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, Space.s2)
-                Spacer()
             }
+
+            if let detail {
+                self.detailRow(detail)
+                    .padding(.top, Space.s3)
+            }
+
+            self.buttons
+                .padding(.top, Space.s4)
         }
+        .padding(Space.s4)
+        .frame(maxWidth: .infinity)
     }
 
     private func detailRow(_ text: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: Space.s3) {
-            Image(systemName: "info.circle.fill")
-                .foregroundStyle(.tujiTeal)
-            Text(text)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk2)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 0)
-        }
-        .padding(Space.s3)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        Text(text)
+            .font(.tujiBodySm)
+            .foregroundStyle(.tujiInk2)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Space.s3)
+            .background(.tujiPaper2)
     }
 
-    @ViewBuilder
+    /// Stacked, not side by side. Two buttons of equal width read as equally
+    /// weighted choices; the decision here has a primary and a way out.
     private var buttons: some View {
-        switch self.style {
-        case .success:
-            promptButton(self.primary)
-
-        case .error:
-            VStack(spacing: Space.s3) {
-                promptButton(self.primary)
-                if let secondary {
-                    promptButton(secondary)
-                }
-            }
-
-        case .confirmation, .destructive:
-            HStack(spacing: Space.s3) {
-                if let secondary {
-                    promptButton(secondary)
-                }
-                promptButton(self.primary)
+        VStack(spacing: Space.s2) {
+            self.actionButton(self.primary)
+            if let secondary {
+                self.textButton(secondary)
             }
         }
     }
 
-    private func promptButton(_ item: TujiPromptAction) -> some View {
+    private func actionButton(_ item: TujiPromptAction) -> some View {
         Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             self.isPresented = false
             item.action()
         } label: {
             Text(item.title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(buttonForeground(for: item.role))
+                .font(.tujiH3)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s3)
-                .padding(.horizontal, Space.s3)
-                .background(buttonBackground(for: item.role))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.r0)
-                        .stroke(buttonBorder(for: item.role), lineWidth: 1.5)
-                )
-                .clipShape(.rect(cornerRadius: Radius.r0))
+                .frame(height: 56)
+        }
+        .buttonStyle(PromptActionStyle(destructive: item.role == .destructive))
+    }
+
+    private func textButton(_ item: TujiPromptAction) -> some View {
+        Button {
+            self.isPresented = false
+            item.action()
+        } label: {
+            Text(item.title)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk2)
+                .frame(maxWidth: .infinity)
+                .frame(height: 44)
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
     }
+}
 
-    private func buttonForeground(for role: TujiPromptButtonRole) -> Color {
-        switch role {
-        case .primary, .destructive: .white
-        case .cancel: .tujiInk
-        }
+/// Destructive actions invert on press instead of just changing ground — that
+/// tap has weight, and the colour arriving under the finger says so.
+private struct PromptActionStyle: ButtonStyle {
+    let destructive: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(self.foreground(pressed: configuration.isPressed))
+            .background(self.ground(pressed: configuration.isPressed))
+            .animation(Motion.ease(Motion.d1), value: configuration.isPressed)
     }
 
-    private func buttonBackground(for role: TujiPromptButtonRole) -> Color {
-        switch role {
-        case .primary: .tujiTeal
-        case .destructive: .tujiAlert
-        case .cancel: .tujiPaper
-        }
+    private func foreground(pressed: Bool) -> Color {
+        guard self.destructive else { return .tujiInk }
+        return pressed ? .tujiPaper : .tujiAlert
     }
 
-    private func buttonBorder(for role: TujiPromptButtonRole) -> Color {
-        switch role {
-        case .cancel: .tujiInk3
-        case .primary, .destructive: .clear
+    private func ground(pressed: Bool) -> Color {
+        if self.destructive {
+            return pressed ? .tujiAlert : .tujiPaper2
         }
+        return pressed ? .tujiEyeDeep : .tujiEye
     }
 }
 

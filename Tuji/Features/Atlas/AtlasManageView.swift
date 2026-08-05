@@ -29,12 +29,36 @@ struct AtlasManageView: View {
         _didVisitCollections = State(initialValue: initialSection == .collections)
     }
 
+    /// The bar's one trailing action, and what it is depends on which pane is
+    /// showing — selecting cards, or creating a collection.
+    @ViewBuilder
+    private var trailingAction: some View {
+        switch self.section {
+        case .cards:
+            if self.shelf.canSelect {
+                TujiNavTextAction(
+                    title: self.shelf.isSelecting ? "完成" : "選取"
+                ) {
+                    self.shelf.setSelecting(!self.shelf.isSelecting)
+                }
+            }
+        case .collections:
+            TujiNavIcon(systemName: "plus", label: "建立合集") {
+                self.showCreateCollection = true
+            }
+        }
+    }
+
     private var currentLanguage: TargetLanguage {
         self.settings.current.learningDirection.targetLanguage
     }
 
     var body: some View {
         VStack(spacing: 0) {
+            TujiNavBar(leading: .back) {
+                self.trailingAction
+            }
+            TujiScreenTitle("圖鑑管理")
             TujiSegmented(
                 options: [
                     (AtlasManagementSection.cards, "圖鑑卡片"),
@@ -63,28 +87,7 @@ struct AtlasManageView: View {
         }
         .background(.tujiPaper)
         .navigationTitle("圖鑑管理")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                switch self.section {
-                case .cards:
-                    if self.shelf.canSelect {
-                        Button(self.shelf.isSelecting ? "完成" : "選取") {
-                            self.shelf.setSelecting(!self.shelf.isSelecting)
-                        }
-                        .font(.system(size: 15, weight: .semibold))
-                        .tint(.tujiTeal)
-                    }
-                case .collections:
-                    Button {
-                        self.showCreateCollection = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .tint(.tujiTeal)
-                }
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         // The environment's learning direction is an explicit model input, not
         // something the shelf reaches for. Setting it re-scopes the rows and
         // drops any selection that just went off-screen.
@@ -264,12 +267,25 @@ private struct AtlasCardsManagementPane: View {
     /// switched EN↔JA knows where their captures went (and that nothing was
     /// deleted).
     private func hiddenHintRow(_ count: Int) -> some View {
-        Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)，切換學習方向後即可查看與管理。")
-            .font(.tujiBodySm)
-            .foregroundStyle(.tujiInk3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, Space.s4)
-            .padding(.vertical, Space.s3)
+        // Deliberately not an empty state. "There is nothing here" and "your
+        // things are on the other side" are different sentences, and confusing
+        // them makes a user who switched EN↔JA think their cards were deleted.
+        HStack(spacing: Space.s3) {
+            Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk2)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: Space.s2)
+            Text("切換 →")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk)
+                .underline()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .frame(minHeight: 56)
+        .background(.tujiPaper2)
     }
 
     private var emptyRow: some View {
@@ -417,9 +433,14 @@ private struct AtlasManageDetailView: View {
             // wall is deleting the card — which also deletes this user's study
             // history and every saver's review progress.
             if item.review.canWithdraw {
+                // Secondary, not destructive. Withdrawing is reversible and
+                // carries no penalty — dressing it in red would make it read as
+                // a punishment, and it is the opposite: it is the path that
+                // *avoids* deleting a card, which would take every saver's
+                // review progress with it.
                 BBtn(
                     title: self.shelf.withdrawing ? "收回中…" : "取消公開",
-                    bg: .tujiPaper,
+                    bg: .tujiPaper2,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.uturn.backward"

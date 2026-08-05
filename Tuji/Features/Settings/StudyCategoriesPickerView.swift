@@ -16,6 +16,17 @@ struct StudyCategoriesPickerView: View {
     @Environment(CategoriesStore.self) private var categories
 
     var body: some View {
+        VStack(spacing: 0) {
+            TujiNavBar(leading: .back)
+            self.list
+        }
+        .background(.tujiPaper)
+        .navigationTitle("學習主題")
+        .toolbar(.hidden, for: .navigationBar)
+        .task { await self.categories.loadIfNeeded() }
+    }
+
+    private var list: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.s4) {
                 Text("選你想學的主題。學新字與主題進度只會算這些主題；複習不分主題，所有學過的字都會排進來。")
@@ -41,8 +52,6 @@ struct StudyCategoriesPickerView: View {
             .padding(.bottom, Space.s6)
         }
         .background(.tujiPaper)
-        .navigationTitle("學習主題")
-        .navigationBarTitleDisplayMode(.inline)
         .task { await self.categories.loadIfNeeded() }
     }
 

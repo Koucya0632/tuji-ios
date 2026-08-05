@@ -123,10 +123,9 @@ extension WordDetailPage {
     private func errorState(_ err: Error) -> some View {
         VStack {
             Spacer(minLength: Space.s5)
-            MascotEmptyState(
-                pose: .think,
+            TujiErrorState(
                 title: "找不到這個字",
-                message: "\(err.localizedDescription)"
+                message: err.localizedDescription
             ) {
                 BBtn(title: "返回", fullWidth: false, action: { self.dismiss() })
             }

@@ -53,7 +53,7 @@ struct FeatureTourOverlay: View {
 
     private func dim(cutout: CGRect?, shape: TourCutoutShape) -> some View {
         ZStack {
-            Color.tujiInk.opacity(0.55)
+            Color.tujiScrim
             if let cutout {
                 RoundedRectangle(cornerRadius: self.cornerRadius(for: shape, rect: cutout))
                     .frame(width: cutout.width, height: cutout.height)
@@ -74,10 +74,13 @@ struct FeatureTourOverlay: View {
         return proxy[anchor].insetBy(dx: -Self.cutoutPadding, dy: -Self.cutoutPadding)
     }
 
+    /// Cutouts are square, like everything else. The one exception is a target
+    /// that is itself round (an avatar) — the frame follows the shape it is
+    /// framing, otherwise the outline fights its own content.
     private func cornerRadius(for shape: TourCutoutShape, rect: CGRect) -> CGFloat {
         switch shape {
-        case let .rounded(radius): radius
         case .pill: rect.height / 2
+        case .rounded: Radius.r0
         }
     }
 
@@ -113,37 +116,47 @@ struct FeatureTourOverlay: View {
         }
     }
 
+    /// An ink block, not a card. Every other "this is the important thing right
+    /// now" surface in the app is ink, and the cat lying on its top edge is the
+    /// same gesture the logo and the Today hero use.
     private func tipCard(for step: TourStep) -> some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            HStack(alignment: .top, spacing: Space.s3) {
-                MascotFigure(pose: step.pose, size: 64)
-                VStack(alignment: .leading, spacing: Space.s1) {
-                    Text(step.title)
-                        .font(.tujiH3)
-                        .foregroundStyle(.tujiInk)
-                    Text(step.text)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            Text(step.title)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiPaper)
+            Text(step.text)
+                .font(.tujiBody)
+                .foregroundStyle(.tujiPaper.opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, Space.s2)
+
             HStack(spacing: Space.s3) {
-                self.dots
-                Spacer()
                 Button(action: self.onSkip) {
                     Text("跳過")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.tujiInk3)
-                        .padding(.vertical, Space.s2)
-                        .padding(.horizontal, Space.s2)
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(.tujiPaper.opacity(0.6))
+                        .underline()
+                        .frame(height: 44)
+                        .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
+                Spacer()
                 BBtn(title: "下一步", bg: .tujiEye, fg: .tujiInk, action: self.onNext)
             }
+            .padding(.top, Space.s4)
+
+            self.dots.padding(.top, Space.s3)
         }
         .padding(Space.s4)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .frame(maxWidth: 440)
+        .padding(.top, Space.s5)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiInk)
+        .overlay(alignment: .topTrailing) {
+            MascotFigure(pose: step.pose, size: 64, grounding: .none)
+                .offset(x: -Space.s4, y: -30)
+                .accessibilityHidden(true)
+        }
         .accessibilityAddTraits(.isModal)
     }
 
@@ -154,7 +167,7 @@ struct FeatureTourOverlay: View {
             VStack(spacing: Space.s3) {
                 Text(step.text)
                     .font(.tujiBodySm)
-                    .foregroundStyle(.white.opacity(0.75))
+                    .foregroundStyle(.tujiPaper.opacity(0.8))
                     .multilineTextAlignment(.center)
                 BBtn(title: "開始使用", bg: .tujiEye, fg: .tujiInk, fullWidth: true, action: self.onNext)
             }

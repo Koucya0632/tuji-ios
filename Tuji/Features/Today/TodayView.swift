@@ -220,7 +220,7 @@ struct TodayView: View {
             let learned = self.cache.learnedIds.count
             return learned > 0
                 ? "訪客模式 · 已認得 \(learned) 個字"
-                : "訪客模式 · 先逛逛圖鑑，喜歡的字按愛心收藏"
+                : "訪客模式 · 先逛逛圖鑑，想再看的字加書籤"
         }
         if self.showThemePrompt {
             return "先選學習主題，開始學新字"
