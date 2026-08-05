@@ -11,22 +11,41 @@
 // must not cost the user the collection list below, and a row that renders an
 // error where a person's name should be is worse than no row.
 
+import OSLog
 import SwiftUI
 
 struct CommunityMyPageRow: View {
     let uid: String
 
     private let authors: AuthorReading = LiveAtlasRepository.shared
+    private let log = Logger(subsystem: "app.tuji.ios", category: "community")
 
-    @State private var author: AtlasAuthor?
+    /// Three states, not one optional. `author == nil` used to mean both "still
+    /// loading" and "the fetch failed", so the row rendered nothing in either —
+    /// and a view that renders nothing until it has loaded also pops in late and
+    /// shoves the list under it down.
+    private enum Phase {
+        case loading
+        case loaded(AtlasAuthor)
+        case failed
+    }
+
+    @State private var phase: Phase = .loading
 
     var body: some View {
         Group {
-            if let author {
+            switch self.phase {
+            case .loading:
+                // The shape is known — 72 high with a 40pt avatar — so showing
+                // it is honest and the layout does not move when it fills in.
+                TujiSkeletonRows(count: 1, height: 72)
+            case let .loaded(author):
                 NavigationLink(value: NavRoute.authorProfile(handle: author.handle, isSelf: true)) {
                     self.content(author)
                 }
                 .tujiRowStyle()
+            case .failed:
+                EmptyView()
             }
         }
         .task { await self.load() }
@@ -59,7 +78,17 @@ struct CommunityMyPageRow: View {
     }
 
     private func load() async {
-        guard self.author == nil else { return }
-        self.author = try? await self.authors.author(handle: self.uid, forceReload: false).author
+        if case .loaded = self.phase { return }
+        do {
+            let author = try await self.authors.author(handle: self.uid, forceReload: false).author
+            self.phase = .loaded(author)
+        } catch {
+            // Still silent to the user: a network problem here must not cost
+            // them the collection list below, and an error where a person's
+            // name should be is worse than no row. But it is now a *state*, so
+            // the row is not indistinguishable from one that never loaded.
+            self.log.error("my-page row failed: \(error.localizedDescription, privacy: .public)")
+            self.phase = .failed
+        }
     }
 }
