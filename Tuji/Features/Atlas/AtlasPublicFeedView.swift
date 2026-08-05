@@ -78,21 +78,10 @@ struct AtlasPublicFeedView: View {
     /// This tab is other people's work — 我的合集 lives in 我的, with the rest of
     /// what the user makes.
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("PUBLIC ATLAS")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-            Text("公開圖鑑")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-            Text("看看大家整理的單字合集")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s3)
-        .padding(.bottom, Space.s3)
+        // One title, not three stacked lines. The English overline said nothing
+        // a reader of this app needs, and the subtitle repeated what the list
+        // below already shows.
+        TujiScreenTitle("公開圖鑑")
     }
 
     // MARK: Content
@@ -148,14 +137,22 @@ struct AtlasPublicFeedView: View {
                     self.emptyState
                         .containerRelativeFrame(.vertical)
                 } else {
-                    LazyVStack(spacing: Space.s3) {
-                        ForEach(self.browsing.explore.collections) { collection in
+                    LazyVStack(spacing: 0) {
+                        ForEach(
+                            Array(self.browsing.explore.collections.enumerated()),
+                            id: \.element.id
+                        ) { index, collection in
+                            if index > 0 {
+                                Rectangle()
+                                    .fill(.tujiRule)
+                                    .frame(height: Border.bw1)
+                                    .padding(.horizontal, Space.s4)
+                            }
                             AtlasCollectionCard(collection: collection) {
                                 self.selectedCollection = collection
                             }
                         }
                     }
-                    .padding(.horizontal, Space.s4)
                     .padding(.top, Space.s1)
                     .padding(.bottom, Space.s5)
                 }
@@ -203,14 +200,22 @@ struct AtlasPublicFeedView: View {
                         .frame(maxWidth: .infinity)
                         .containerRelativeFrame(.vertical)
                 } else {
-                    LazyVStack(spacing: Space.s3) {
-                        ForEach(self.browsing.saved.collections) { collection in
+                    LazyVStack(spacing: 0) {
+                        ForEach(
+                            Array(self.browsing.saved.collections.enumerated()),
+                            id: \.element.id
+                        ) { index, collection in
+                            if index > 0 {
+                                Rectangle()
+                                    .fill(.tujiRule)
+                                    .frame(height: Border.bw1)
+                                    .padding(.horizontal, Space.s4)
+                            }
                             AtlasCollectionCard(collection: collection) {
                                 self.selectedCollection = collection
                             }
                         }
                     }
-                    .padding(.horizontal, Space.s4)
                     .padding(.top, Space.s1)
                     .padding(.bottom, Space.s5)
                 }
@@ -307,50 +312,46 @@ struct AtlasCollectionCard: View {
         Button(action: self.onOpen) {
             HStack(spacing: Space.s3) {
                 self.cover
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(self.collection.title)
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                     // Nothing at all when the author has no confirmed public
-                    // identity — the card must not fall back to a handle.
+                    // identity — the row must not fall back to a handle.
                     if self.showsAuthor, let author = self.collection.author {
-                        HStack(spacing: Space.s2) {
-                            ProfileAvatar(avatar: author.avatar, size: 22)
-                            Text(author.displayName)
-                                .font(.tujiLabel)
-                                .foregroundStyle(.tujiInk2)
-                                .lineLimit(1)
-                        }
-                    }
-                    HStack(spacing: Space.s3) {
-                        Label("\(self.collection.itemCount)", systemImage: "square.stack")
-                        if self.collection.saveCount > 0 {
-                            Label("\(self.collection.saveCount)", systemImage: "bookmark")
-                        }
-                    }
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.tujiInk3)
-                    if let desc = self.collection.description, !desc.isEmpty {
-                        Text(desc)
-                            .font(.tujiLabel)
-                            .foregroundStyle(.tujiInk3)
+                        Text(author.displayName)
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk2)
                             .lineLimit(1)
                     }
+                    Text(self.counts)
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(.tujiInk3)
                 }
-                Spacer(minLength: 0)
+                Spacer(minLength: Space.s2)
+                Text(self.collection.langBadge)
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk2)
+                    .padding(.horizontal, Space.s2)
+                    .frame(height: 24)
+                    .background(.tujiPaper2)
             }
-            .padding(Space.s3)
+            .padding(.horizontal, Space.s4)
+            .padding(.vertical, Space.s3)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiPaper)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(.tujiRule.opacity(0.25), lineWidth: 1)
-            )
+            .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .tujiRowStyle()
+    }
+
+    private var counts: String {
+        let items = tujiLocalized("\(self.collection.itemCount) 字")
+        guard self.collection.saveCount > 0 else { return items }
+        return items + " · " + tujiLocalized("被收藏") + " \(self.collection.saveCount)"
     }
 
     private var cover: some View {
@@ -358,7 +359,7 @@ struct AtlasCollectionCard: View {
             collectionID: self.collection.id,
             avatarColor: self.collection.avatarColor,
             avatarImageURL: self.collection.avatarURL,
-            size: 84
+            size: 56
         )
     }
 }
