@@ -49,7 +49,13 @@ struct NewFlowView: View {
             style: .confirmation,
             title: "要離開這次學習嗎？",
             message: "完成全部步驟的字會保留，其餘下次重新開始。",
-            primary: TujiPromptAction("先離開") { self.dismiss() },
+            // Cancel first, then leave. An answer given moments before ✕ still
+            // had a beat in flight; without this it resolved — and posted its
+            // SRS write — after the screen was gone.
+            primary: TujiPromptAction("先離開") {
+                self.coord.cancelPendingBeats()
+                self.dismiss()
+            },
             secondary: TujiPromptAction("繼續學習", role: .cancel) {}
         )
         .tujiPrompt(

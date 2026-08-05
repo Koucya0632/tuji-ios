@@ -374,7 +374,46 @@ struct NewFlowCoordinatorTests {
         #expect(c.clearedWords == 1)
         await c.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["困難"])
+    }
+
+    @Test
+    func theAnswerPathTheAppCallsRecordsLatency() async throws {
+        // This used to be unreachable. The app calls `identifyPick`, which locks
+        // and then resolves after a 500 ms beat inside an escaping Task; the
+        // tests called `resolveIdentify` directly, which the app never does. So
+        // the latency the scheduler actually learns from had no coverage, and
+        // `resolveIdentify` grew a second capture whose only caller was a test.
+        //
+        // With the beat injected, the tested surface is the shipped one.
+        let queue = try self.makeMultiWordQueue()
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy, beat: { _ in })
+        c.resolveRecognize(rating: .hard)
+        try c.identifyPick(#require(c.current).item.word.word)
+        // Let the (now instant) beat run.
+        await Task.yield()
+        c.resolveTiles(correct: true)
+        await c.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.first?.responseMs != nil)
+    }
+
+    @Test
+    func leavingMidAnswerStopsTheResolution() async throws {
+        // ✕ → 先離開 within the beat used to still resolve the answer and post
+        // its SRS write, on a coordinator whose screen was already gone.
+        let queue = try self.makeMultiWordQueue()
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy, beat: { _ in
+            // Long enough that cancellation lands first.
+            try? await Task.sleep(for: .milliseconds(200))
+        })
+        c.resolveRecognize(rating: .hard)
+        let before = c.clearedWords
+        try c.identifyPick(#require(c.current).item.word.word)
+        c.cancelPendingBeats()
+        try? await Task.sleep(for: .milliseconds(300))
+        #expect(c.clearedWords == before)
+        #expect(spy.answers.isEmpty)
     }
 
     @Test

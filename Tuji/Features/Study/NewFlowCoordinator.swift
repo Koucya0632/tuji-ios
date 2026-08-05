@@ -102,11 +102,31 @@ final class NewFlowCoordinator {
 
     private let writer: DurableAnswerWriting
 
+    /// How long the app pauses on a locked answer before resolving it.
+    ///
+    /// Injected so the tested surface is the one the app calls. Before this,
+    /// tests drove `resolveRecognize` / `resolveIdentify` / `resolveTiles`
+    /// directly — which the app never calls — so the beats, the locks and
+    /// everything between a tap and an SRS write had no coverage at all. It had
+    /// already cost a duplicate: `resolveIdentify` carried a second latency
+    /// capture whose only caller was the test suite.
+    private let beat: @Sendable (Duration) async -> Void
+
+    /// The answer resolutions in flight. Unstructured `Task`s that outlive the
+    /// view: leaving mid-answer used to still fire the resolution — and its SRS
+    /// write — on a coordinator whose screen was gone.
+    private var pendingBeats: [Task<Void, Never>] = []
+
     /// How many tasks sit between a wrong answer and its retry.
     private static let requeueGap = 3
 
-    init(queue: [StudyQueueItem], writer: DurableAnswerWriting = DurableAnswerWriter()) {
+    init(
+        queue: [StudyQueueItem],
+        writer: DurableAnswerWriting = DurableAnswerWriter(),
+        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+    ) {
         self.queue = queue
+        self.beat = beat
         let tasks = Self.initialSchedule(for: queue)
         self.tasks = tasks
         self.totalStages = tasks.count
@@ -320,10 +340,11 @@ final class NewFlowCoordinator {
                 Int(Date().timeIntervalSince(shownAt) * 1000)
         }
         let ok = choice == task.item.word.word
-        Task {
+        self.pendingBeats.append(Task {
             // Correct answers clear faster than wrong ones: momentum for the
             // fast-learning feel, while a miss keeps time to read the reveal.
-            try? await Task.sleep(for: .milliseconds(ok ? 500 : 800))
+            await self.beat(.milliseconds(ok ? 500 : 800))
+            guard !Task.isCancelled else { return }
             if ok {
                 self.idLocked = false
                 self.idPicked = nil
@@ -338,21 +359,13 @@ final class NewFlowCoordinator {
                 self.resolveIdentify(correct: false)
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
             }
-        }
+        })
     }
 
     /// Synchronous core: correct clears the stage; wrong records the mistake
     /// and raises the peek (requeue happens on advanceFromPeek()).
     func resolveIdentify(correct: Bool) {
         guard let task = current, task.kind == .identify else { return }
-        // Fallback latency capture for callers that skip identifyPick (tests);
-        // the app path already recorded a more accurate value at pick time.
-        if let shownAt = self.identifyShownAt[task.item.word.id],
-           self.identifyResponseMs[task.item.word.id] == nil
-        {
-            self.identifyResponseMs[task.item.word.id] =
-                Int(Date().timeIntervalSince(shownAt) * 1000)
-        }
         if correct {
             self.identifyCleared.insert(task.item.word.id)
             self.completeCurrentTask()
@@ -467,12 +480,13 @@ final class NewFlowCoordinator {
     }
 
     /// Locks the board and, after a beat, resolves. Called by pickTile when the
-    /// last slot fills; kept internal so tests can drive `resolveTiles` directly.
+    /// last slot fills.
     func tilesAnswer(correct: Bool) {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles else { return }
         self.tiLocked = true
-        Task {
-            try? await Task.sleep(for: .milliseconds(correct ? 450 : 800))
+        self.pendingBeats.append(Task {
+            await self.beat(.milliseconds(correct ? 450 : 800))
+            guard !Task.isCancelled else { return }
             if correct {
                 self.tiLocked = false
                 self.resolveTiles(correct: true)
@@ -483,10 +497,10 @@ final class NewFlowCoordinator {
                 self.resolveTiles(correct: false)
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
             }
-        }
+        })
     }
 
-    /// Synchronous core for tests.
+    /// Synchronous core, also reachable from tests.
     func resolveTiles(correct: Bool) {
         guard let task = current, task.kind == .spellTiles else { return }
         if correct {
@@ -564,6 +578,16 @@ final class NewFlowCoordinator {
 
     /// Give the optimistic recognize writes a bounded window to land before the
     /// completion screen reloads mastery/stats. Mirrors ReviewFlowCoordinator.
+    /// Drop the answer resolutions still waiting on their beat. Called when the
+    /// user leaves the session: without it, an answer given moments before ✕
+    /// still resolved — and still posted to the SRS — after the screen was gone.
+    func cancelPendingBeats() {
+        for task in self.pendingBeats {
+            task.cancel()
+        }
+        self.pendingBeats.removeAll()
+    }
+
     func drainPendingWrites(within timeout: Duration) async {
         // Module-qualified: unqualified would resolve to this instance method
         // (member lookup wins over the global), recursing forever.

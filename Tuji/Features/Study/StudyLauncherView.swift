@@ -17,6 +17,10 @@ struct StudyLauncherView: View {
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(\.dismiss) private var dismiss
 
+    /// The queue source. Injected rather than reached for, so the four branches
+    /// below — warm cache, live fetch, empty, throw — can be driven by a test.
+    var queues: StudyQueueProviding = StudyQueueStore.shared
+
     @State private var pushQueue: QueuePush?
     @State private var queueFailure: QueueFailure?
 
@@ -120,10 +124,10 @@ struct StudyLauncherView: View {
             // take() returns instantly and the spinner only flashes for a frame.
             // Cache miss → live fetch (the old behaviour). Both share the param
             // computation + dedupe inside StudyQueueStore.
-            let queue: [StudyQueueItem] = if let cached = StudyQueueStore.shared.take(mode: self.mode) {
+            let queue: [StudyQueueItem] = if let cached = self.queues.take(mode: self.mode) {
                 cached
             } else {
-                try await StudyQueueStore.shared.fetch(mode: self.mode)
+                try await self.queues.fetch(mode: self.mode)
             }
             if queue.isEmpty {
                 self.queueFailure = .empty
