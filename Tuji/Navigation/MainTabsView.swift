@@ -29,11 +29,14 @@ struct MainTabsView: View {
     /// by the grid once applied, so a later manual filter change sticks.
     @State private var cardsSourceRequest: CardsSource?
 
-    /// Whether 我的 / 社群 are showing their own root rather than something
-    /// pushed over it. Both start true so a tab that never fires `onAppear`
-    /// (off-screen page) keeps its bar — only a real push takes it away.
-    @State private var meAtRoot = true
-    @State private var communityAtRoot = true
+    /// Whether each tab is showing its own root rather than something pushed
+    /// over it. All start true so a tab that never fires `onAppear` (an
+    /// off-screen page) reads as un-pushed — only a real push takes it away.
+    ///
+    /// This is the *one* signal for "is something on top of this tab". There
+    /// used to be two: this, and `NavigationPath.count`. They answered
+    /// differently, and the wrong one drove the pager — see `currentTabAtRoot`.
+    @State private var atRoot: [MainTab: Bool] = [:]
 
     @State private var tourIndex: Int?
     @State private var tourTransitioning = false
@@ -73,8 +76,6 @@ struct MainTabsView: View {
         .task { await self.startTourIfNeeded() }
     }
 
-    private let tabs: [MainTab] = [.today, .cards, .community, .me]
-
     /// Horizontally-paged container so the four tabs can be switched by
     /// swiping left/right, not only by tapping the bar. Each page still owns
     /// its NavigationStack, and `selected` stays in sync with the scroll
@@ -89,7 +90,7 @@ struct MainTabsView: View {
         GeometryReader { geo in
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
-                    ForEach(self.tabs, id: \.self) { tab in
+                    ForEach(MainTab.allCases, id: \.self) { tab in
                         self.page(for: tab)
                             .frame(width: geo.size.width, height: geo.size.height)
                             .id(tab)
@@ -99,7 +100,7 @@ struct MainTabsView: View {
             }
             .scrollTargetBehavior(.paging)
             .scrollPosition(id: self.selectedScrollBinding, anchor: .center)
-            .scrollDisabled(self.studyFocus.active || self.currentPathDepth > 0)
+            .scrollDisabled(self.studyFocus.active || !self.currentTabAtRoot)
             .scrollIndicators(.hidden)
         }
     }
@@ -111,25 +112,34 @@ struct MainTabsView: View {
             NavigationStack(path: self.$todayPath) {
                 TodayView(user: self.user)
                     .tujiNavDestinations(user: self.user)
+                    .tracksStackRoot(self.binding(for: .today))
             }
         case .cards:
             NavigationStack(path: self.$cardsPath) {
                 CardsListView(sourceRequest: self.$cardsSourceRequest)
                     .tujiNavDestinations(user: self.user)
+                    .tracksStackRoot(self.binding(for: .cards))
             }
         case .community:
             NavigationStack(path: self.$communityPath) {
                 AtlasPublicFeedView()
                     .tujiNavDestinations(user: self.user)
-                    .tracksStackRoot(self.$communityAtRoot)
+                    .tracksStackRoot(self.binding(for: .community))
             }
         case .me:
             NavigationStack(path: self.$mePath) {
                 MeView(user: self.user)
                     .tujiNavDestinations(user: self.user)
-                    .tracksStackRoot(self.$meAtRoot)
+                    .tracksStackRoot(self.binding(for: .me))
             }
         }
+    }
+
+    private func binding(for tab: MainTab) -> Binding<Bool> {
+        Binding(
+            get: { self.atRoot[tab] ?? true },
+            set: { self.atRoot[tab] = $0 }
+        )
     }
 
     /// Bridges the page scroll offset to `selected` and back: reads as the
@@ -145,32 +155,36 @@ struct MainTabsView: View {
         )
     }
 
-    /// The floating bar steps aside for a focused study session, and for
-    /// anything opened from 我的 or 社群: both tabs are hubs of entry points,
-    /// and a screen opened from one owns the window until the user comes back.
+    /// Is the selected tab showing its own root?
     ///
-    /// Keyed on the tab root's own visibility rather than its `NavigationPath`,
-    /// because that is the one signal that holds however a screen was pushed —
-    /// a path value, a view-based link (設定's pickers), or a
+    /// Root visibility is the only signal that holds however a screen was
+    /// pushed — a path value, a view-based link (設定's pickers), or a
     /// `navigationDestination(item:)` (社群's collection cards, which carry a
-    /// preview model no route value could).
+    /// preview model no route value could). `NavigationPath.count` sees only
+    /// the first kind.
+    ///
+    /// The pager's swipe guard used to read the count, and the bug was
+    /// reproducible: 社群 → tap a collection card pushes via
+    /// `navigationDestination(item:)`, which never touches `communityPath`, so
+    /// the count stayed 0, the horizontal swipe stayed live *on top of* the
+    /// pushed detail, and it raced NavigationStack's own edge-swipe-to-pop —
+    /// the exact thing the guard exists to prevent.
+    private var currentTabAtRoot: Bool {
+        self.atRoot[self.selected] ?? true
+    }
+
+    /// The floating bar steps aside for a focused study session, and for
+    /// anything opened from 我 or 社群: both tabs are hubs of entry points, and
+    /// a screen opened from one owns the window until the user comes back.
+    ///
+    /// A different policy from the swipe guard, over the same signal — 今天 and
+    /// 圖鑑 keep their bar through a push, because a word detail is a place you
+    /// come back from, not a window you are handed.
     private var tabBarVisible: Bool {
         if self.studyFocus.active { return false }
         switch self.selected {
-        case .me: return self.meAtRoot
-        case .community: return self.communityAtRoot
+        case .me, .community: return self.currentTabAtRoot
         case .today, .cards: return true
-        }
-    }
-
-    /// Push depth of the currently-selected tab. >0 means a detail view is
-    /// on screen, so tab-swiping is suppressed in favour of back-swipe.
-    private var currentPathDepth: Int {
-        switch self.selected {
-        case .today: self.todayPath.count
-        case .cards: self.cardsPath.count
-        case .community: self.communityPath.count
-        case .me: self.mePath.count
         }
     }
 
@@ -290,11 +304,13 @@ private extension View {
 private struct TujiTabBar: View {
     @Binding var selected: MainTab
 
-    private let tabs: [MainTab] = [.today, .cards, .community, .me]
-
     var body: some View {
         HStack(spacing: 0) {
-            ForEach(self.tabs, id: \.self) { tab in
+            // `MainTab.allCases`, not a second hand-written list: the bar and
+            // the pager have to agree on order or `scrollPosition(id:)` desyncs
+            // from the highlighted tab, and nothing made a divergence fail to
+            // compile.
+            ForEach(MainTab.allCases, id: \.self) { tab in
                 TabBarButton(tab: tab, isSelected: self.selected == tab) {
                     self.select(tab)
                 }
@@ -331,13 +347,12 @@ private struct TabBarButton: View {
                     .font(.tujiLabel)
                     // No tracking, unlike every other tujiLabel: the +0.5pt is a
                     // Latin adjustment, and on a full-width CJK glyph it only
-                    // buys width these five columns do not have. GenSenRounded
-                    // is wider than the system face, so the margin got thinner.
+                    // buys width. GenSenRounded is wider than the system face.
                     //
-                    // Five equal columns leave ~78pt each, and 13pt CJK labels
-                    // barely fit ("コミュニティ" is six full-width glyphs).
-                    // Scaling down beats wrapping; the real fix is the four-tab
-                    // IA, which is a later milestone.
+                    // Four columns leave ~98pt each, which "コミュニティ" (six
+                    // full-width glyphs at 13pt) now clears. The scale factor
+                    // stays for the accessibility text sizes, where truncation
+                    // is the expected behaviour rather than a layout failure.
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }

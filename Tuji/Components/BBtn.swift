@@ -12,12 +12,59 @@
 import SwiftUI
 
 struct BBtn: View {
-    let title: LocalizedStringKey
+    /// Held as `Text`, not `LocalizedStringKey`, for the reason `TujiRowLabel`
+    /// documents: a caller with an already-resolved String had no way in, so it
+    /// wrote `BBtn(title: "\(submitTitle)")` — which asks the catalogue for the
+    /// key `%@`. That key is in `Localizable.xcstrings` with zero localizations,
+    /// so those buttons render correctly *only until someone translates it*.
+    let title: Text
     var bg: Color = .tujiEye
     var fg: Color = .tujiInk
     var fullWidth: Bool = false
     var icon: String?
     let action: () -> Void
+
+    init(
+        title: LocalizedStringKey,
+        bg: Color = .tujiEye,
+        fg: Color = .tujiInk,
+        fullWidth: Bool = false,
+        icon: String? = nil,
+        action: @escaping () -> Void
+    ) {
+        self.init(text: Text(title), bg: bg, fg: fg, fullWidth: fullWidth, icon: icon, action: action)
+    }
+
+    /// For a title already resolved by `tujiLocalized()`, or built from data.
+    init(
+        localized title: String,
+        bg: Color = .tujiEye,
+        fg: Color = .tujiInk,
+        fullWidth: Bool = false,
+        icon: String? = nil,
+        action: @escaping () -> Void
+    ) {
+        self.init(
+            text: Text(verbatim: title), bg: bg, fg: fg,
+            fullWidth: fullWidth, icon: icon, action: action
+        )
+    }
+
+    private init(
+        text: Text,
+        bg: Color,
+        fg: Color,
+        fullWidth: Bool,
+        icon: String?,
+        action: @escaping () -> Void
+    ) {
+        self.title = text
+        self.bg = bg
+        self.fg = fg
+        self.fullWidth = fullWidth
+        self.icon = icon
+        self.action = action
+    }
 
     @State private var pressed = false
     @Environment(\.isEnabled) private var isEnabled
@@ -26,7 +73,7 @@ struct BBtn: View {
         Button(action: triggered) {
             HStack(spacing: Space.s2) {
                 if let icon { Image(systemName: icon) }
-                Text(title)
+                self.title
                     .font(.tujiH3)
             }
             .foregroundStyle(fg)

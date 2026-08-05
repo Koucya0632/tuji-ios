@@ -169,6 +169,11 @@ jobs:
           # `git diff base...HEAD` 會直接 fatal，整個檢查等於沒跑。
           fetch-depth: 0
 
+      - name: Check localization coverage
+        # 介面字串與字表是兩次無關的編輯,而漏掉的那次只有在非中文介面下才看得出來
+        # ——編譯過、測試過、CI 綠。這一步就是那條接縫。
+        run: python3 scripts/check-localization.py
+
       - name: Check ARCHITECTURE links
         # 提醒：若 PR 改了 Endpoint enum / Models.swift，描述要連結 backend PR。
         # PR body 透過 env 傳入（不要內插進 script，否則描述裡的反引號/括號會被當成 shell）。

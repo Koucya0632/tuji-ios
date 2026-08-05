@@ -208,11 +208,20 @@ private enum RoundError: Error { case boom }
 @MainActor
 private final class FakeQueueProvider: StudyQueueProviding {
     var result: Result<[StudyQueueItem], Error> = .success([])
+    /// A queue already warm in the cache. nil = the caller must fetch.
+    var warm: [StudyQueueItem]?
     private(set) var fetched: [StudyMode] = []
+    private(set) var taken: [StudyMode] = []
 
     func fetch(mode: StudyMode) async throws -> [StudyQueueItem] {
         self.fetched.append(mode)
         return try self.result.get()
+    }
+
+    func take(mode: StudyMode) -> [StudyQueueItem]? {
+        self.taken.append(mode)
+        defer { self.warm = nil }
+        return self.warm
     }
 }
 

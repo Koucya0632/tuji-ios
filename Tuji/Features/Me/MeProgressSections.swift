@@ -215,16 +215,6 @@ struct MeProgressSections: View {
         )
     }
 
-    // MARK: - Section header
-
-    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
-        Text(title)
-            .font(.tujiLabel)
-            .tracking(2)
-            .foregroundStyle(.tujiInk3)
-            .padding(.top, Space.s2)
-    }
-
     // MARK: - Category breakdown (明細)
 
     private struct CategoryStat: Identifiable {

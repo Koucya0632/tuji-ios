@@ -3529,6 +3529,28 @@
         }
       }
     },
+    "剛新增 3 張：咖啡、雨傘、車站" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 just added: coffee, umbrella, station"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3枚追加：コーヒー・傘・駅"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刚新增 3 张：咖啡、雨伞、车站"
+          }
+        }
+      }
+    },
     "創作" : {
       "localizations" : {
         "en" : {
@@ -9162,6 +9184,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "生活中看到 → 立刻想起来"
+          }
+        }
+      }
+    },
+    "生活物品，自動變單字卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everyday things become flashcards"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身の回りの物が単語カードに"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "生活物品，自动变单字卡"
           }
         }
       }

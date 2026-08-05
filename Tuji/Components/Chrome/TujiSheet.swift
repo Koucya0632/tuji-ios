@@ -40,14 +40,13 @@ struct TujiSheetShell<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
-        .presentationDetents([.height(self.estimatedHeight), .large])
+        // 340, not a fraction of the screen: a settings picker with four rows
+        // should not occupy half a phone. This was a computed property whose
+        // body was the same literal, and whose doc claimed the sheet sized to
+        // its content — it never did. `.large` is still offered, so a caller
+        // with more rows than fit can be dragged up.
+        .presentationDetents([.height(340), .large])
         .tujiSheetPresentation()
-    }
-
-    /// Sheets size to their content rather than to a fixed fraction; a settings
-    /// picker with four rows should not occupy half the screen.
-    private var estimatedHeight: CGFloat {
-        340
     }
 }
 

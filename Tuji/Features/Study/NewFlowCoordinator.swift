@@ -34,11 +34,6 @@ final class NewFlowCoordinator {
     /// Words that fully cleared all three stages (drives the header count).
     private(set) var clearedWords = 0
 
-    /// Consecutive correct quiz answers (選字/拼字; resets on a miss). At 3+
-    /// the question bubbles swap the mascot to its cheer pose — a tiny
-    /// momentum reward that costs nothing but reuses existing art.
-    private(set) var combo = 0
-
     // Transient per-kind UI state (the task views read these).
     var recRating: SRSRating?
     var recLocked: Bool = false
@@ -107,11 +102,31 @@ final class NewFlowCoordinator {
 
     private let writer: DurableAnswerWriting
 
+    /// How long the app pauses on a locked answer before resolving it.
+    ///
+    /// Injected so the tested surface is the one the app calls. Before this,
+    /// tests drove `resolveRecognize` / `resolveIdentify` / `resolveTiles`
+    /// directly — which the app never calls — so the beats, the locks and
+    /// everything between a tap and an SRS write had no coverage at all. It had
+    /// already cost a duplicate: `resolveIdentify` carried a second latency
+    /// capture whose only caller was the test suite.
+    private let beat: @Sendable (Duration) async -> Void
+
+    /// The answer resolutions in flight. Unstructured `Task`s that outlive the
+    /// view: leaving mid-answer used to still fire the resolution — and its SRS
+    /// write — on a coordinator whose screen was gone.
+    private var pendingBeats: [Task<Void, Never>] = []
+
     /// How many tasks sit between a wrong answer and its retry.
     private static let requeueGap = 3
 
-    init(queue: [StudyQueueItem], writer: DurableAnswerWriting = DurableAnswerWriter()) {
+    init(
+        queue: [StudyQueueItem],
+        writer: DurableAnswerWriting = DurableAnswerWriter(),
+        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+    ) {
         self.queue = queue
+        self.beat = beat
         let tasks = Self.initialSchedule(for: queue)
         self.tasks = tasks
         self.totalStages = tasks.count
@@ -325,10 +340,11 @@ final class NewFlowCoordinator {
                 Int(Date().timeIntervalSince(shownAt) * 1000)
         }
         let ok = choice == task.item.word.word
-        Task {
+        self.pendingBeats.append(Task {
             // Correct answers clear faster than wrong ones: momentum for the
             // fast-learning feel, while a miss keeps time to read the reveal.
-            try? await Task.sleep(for: .milliseconds(ok ? 500 : 800))
+            await self.beat(.milliseconds(ok ? 500 : 800))
+            guard !Task.isCancelled else { return }
             if ok {
                 self.idLocked = false
                 self.idPicked = nil
@@ -343,27 +359,17 @@ final class NewFlowCoordinator {
                 self.resolveIdentify(correct: false)
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
             }
-        }
+        })
     }
 
     /// Synchronous core: correct clears the stage; wrong records the mistake
     /// and raises the peek (requeue happens on advanceFromPeek()).
     func resolveIdentify(correct: Bool) {
         guard let task = current, task.kind == .identify else { return }
-        // Fallback latency capture for callers that skip identifyPick (tests);
-        // the app path already recorded a more accurate value at pick time.
-        if let shownAt = self.identifyShownAt[task.item.word.id],
-           self.identifyResponseMs[task.item.word.id] == nil
-        {
-            self.identifyResponseMs[task.item.word.id] =
-                Int(Date().timeIntervalSince(shownAt) * 1000)
-        }
         if correct {
-            self.combo += 1
             self.identifyCleared.insert(task.item.word.id)
             self.completeCurrentTask()
         } else {
-            self.combo = 0
             self.mistakes[task.item.word.id, default: 0] += 1
             self.peek = task.item.word
         }
@@ -377,6 +383,67 @@ final class NewFlowCoordinator {
 
     // MARK: - 拼字塊 (letter tiles)
 
+    /// The spell board as the view should draw it.
+    ///
+    /// `tilePicked` is one flat `[Int]` shared across every word, indexing a
+    /// per-item, per-attempt unit list. Handing the view those two raw pieces
+    /// meant both sides had to subscript one with the other — and they disagreed
+    /// about what an out-of-range index means: `tilesMatch` bounds-checks and
+    /// returns `false`, `TilesView.slotBox` did not and would trap. One frame
+    /// during the `.id(currentPresentationId)` swap between a 7-tile board and a
+    /// 3-tile board hits both readers at once.
+    ///
+    /// The view also re-derived the verdict the coordinator had just computed
+    /// and thrown away. It is stored now, so "did they get it right" is answered
+    /// once, where the answer is made.
+    struct SpellBoard: Equatable {
+        struct Slot: Equatable {
+            /// nil = still empty.
+            var unit: String?
+        }
+
+        struct Tile: Equatable {
+            var unit: String
+            var used: Bool
+        }
+
+        var slots: [Slot]
+        var pool: [Tile]
+        /// The original subject, spaces intact — what the 正解 line reveals.
+        var subject: String
+        /// How the units group into rows (a multi-word subject spells one row
+        /// per word).
+        var tokenUnits: [[String]]
+        /// nil until the board fills and locks.
+        var verdict: Bool?
+
+        var isLocked: Bool {
+            self.verdict != nil
+        }
+    }
+
+    /// Latched when the board fills, cleared when it resets. Also what the view
+    /// used to reconstruct as `boardFull && tiLocked`.
+    private(set) var tilesVerdict: Bool?
+
+    var spellBoard: SpellBoard? {
+        guard let task = current, task.kind == .spellTiles else { return nil }
+        let item = task.item
+        let units = self.tileUnits(for: item)
+        let placed = self.tilePicked.filter { units.indices.contains($0) }
+        return SpellBoard(
+            slots: (0..<units.count).map { slot in
+                SpellBoard.Slot(unit: slot < placed.count ? units[placed[slot]] : nil)
+            },
+            pool: units.enumerated().map { index, unit in
+                SpellBoard.Tile(unit: unit, used: self.tilePicked.contains(index))
+            },
+            subject: self.spellSubject(for: item),
+            tokenUnits: Self.tileBoard(for: item).tokenUnits,
+            verdict: self.tilesVerdict
+        )
+    }
+
     /// Scrambled tiles, seeded per (item, attempt) — see the core in
     /// NewFlowTasks.swift.
     func tileUnits(for item: StudyQueueItem) -> [String] {
@@ -385,13 +452,16 @@ final class NewFlowCoordinator {
 
     /// Tap a pool tile into the next slot. Auto-checks when the board fills. A
     /// no-op once locked, off a non-spell task, or if the tile is already placed.
-    func pickTile(_ idx: Int, for item: StudyQueueItem) {
+    func pickTile(_ idx: Int) {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles,
               !self.tilePicked.contains(idx)
         else { return }
         self.tilePicked.append(idx)
-        if self.tilePicked.count == self.tileUnits(for: item).count {
-            self.tilesAnswer(correct: self.tilesMatch(self.tilePicked, for: item))
+        let units = self.tileUnits(for: task.item)
+        if self.tilePicked.count == units.count {
+            let correct = self.tilesMatch(self.tilePicked, for: task.item)
+            self.tilesVerdict = correct
+            self.tilesAnswer(correct: correct)
         }
     }
 
@@ -410,12 +480,13 @@ final class NewFlowCoordinator {
     }
 
     /// Locks the board and, after a beat, resolves. Called by pickTile when the
-    /// last slot fills; kept internal so tests can drive `resolveTiles` directly.
+    /// last slot fills.
     func tilesAnswer(correct: Bool) {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles else { return }
         self.tiLocked = true
-        Task {
-            try? await Task.sleep(for: .milliseconds(correct ? 450 : 800))
+        self.pendingBeats.append(Task {
+            await self.beat(.milliseconds(correct ? 450 : 800))
+            guard !Task.isCancelled else { return }
             if correct {
                 self.tiLocked = false
                 self.resolveTiles(correct: true)
@@ -426,21 +497,20 @@ final class NewFlowCoordinator {
                 self.resolveTiles(correct: false)
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
             }
-        }
+        })
     }
 
-    /// Synchronous core for tests.
+    /// Synchronous core, also reachable from tests.
     func resolveTiles(correct: Bool) {
         guard let task = current, task.kind == .spellTiles else { return }
         if correct {
-            self.combo += 1
             self.completeCurrentTask()
             // The next spell task (whenever it surfaces) starts from an empty
             // board. Wrong answers keep the picks so the red board stays until
             // advanceFromPeek() requeues + clears.
             self.tilePicked = []
+            self.tilesVerdict = nil
         } else {
-            self.combo = 0
             self.mistakes[task.item.word.id, default: 0] += 1
             self.peek = task.item.word
         }
@@ -464,6 +534,7 @@ final class NewFlowCoordinator {
         case .spellTiles:
             self.tiLocked = false
             self.tilePicked = []
+            self.tilesVerdict = nil
             self.spellAttempts[task.item.word.id, default: 0] += 1
             self.requeueCurrentTask()
         case .recognize:
@@ -507,6 +578,16 @@ final class NewFlowCoordinator {
 
     /// Give the optimistic recognize writes a bounded window to land before the
     /// completion screen reloads mastery/stats. Mirrors ReviewFlowCoordinator.
+    /// Drop the answer resolutions still waiting on their beat. Called when the
+    /// user leaves the session: without it, an answer given moments before ✕
+    /// still resolved — and still posted to the SRS — after the screen was gone.
+    func cancelPendingBeats() {
+        for task in self.pendingBeats {
+            task.cancel()
+        }
+        self.pendingBeats.removeAll()
+    }
+
     func drainPendingWrites(within timeout: Duration) async {
         // Module-qualified: unqualified would resolve to this instance method
         // (member lookup wins over the global), recursing forever.

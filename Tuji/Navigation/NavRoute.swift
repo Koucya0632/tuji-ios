@@ -4,17 +4,19 @@
 
 import Foundation
 
+// Four cases used to sit here — `cards`, `today`, `atlasPublic` and
+// `atlasMyCollections` — each with a live arm in the shared destination table
+// that stood up a whole screen. None was ever constructed. `cards` and `today`
+// are tab roots, not pushes; `atlasPublic` became one too; and
+// `atlasMyCollections` was documented as a deep-link target that no deep link
+// ever produced. A route nothing routes to is a destination that cannot be
+// reached and cannot be wrong.
+
 enum NavRoute: Hashable {
-    case cards
-    case today
     case search(query: String?)
     case settings
     /// 圖鑑管理 — opens on the current user's 圖鑑卡片.
     case atlasManage
-    /// 公開圖鑑 — other users' shared 圖鑑 (community).
-    case atlasPublic
-    /// Compatibility/deep-link route into 圖鑑管理's 合集 section.
-    case atlasMyCollections
     /// 編輯合集 — create/edit a single collection (add members, cover, submit).
     case atlasCollectionEdit(id: String)
     /// 公開合集詳情；autoSave is used only to resume a guest's interrupted save.
