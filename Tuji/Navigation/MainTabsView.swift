@@ -1,14 +1,14 @@
-// 5-tab post-login shell (§I.9.2): 主頁 / 圖鑑 / 進度 / 社群 / 我的.
+// 4-tab post-login shell: 今天 / 圖鑑 / 社群 / 我.
 //
-// Each tab owns its own NavigationStack so cross-tab pushes don't
-// interfere. Tab bar is custom (not SwiftUI TabView) to preserve the
-// floating pill treatment from the design system.
+// Each tab owns its own NavigationStack so cross-tab pushes don't interfere.
+// The bar is custom (not SwiftUI TabView) so it can be an ink block rather than
+// a translucent system bar.
 //
 // Tabs:
-//   today    → TodayView (user-aware)
-//   cards    → CardsListView
-//   progress → ProgressTabView
-//   me       → MeView (account, smoke test, sign-out)
+//   today     → TodayView (user-aware)
+//   cards     → CardsListView — all the words, filtered by source
+//   community → AtlasPublicFeedView — other people's collections
+//   me        → MeView — what you have accumulated (absorbed the 進度 tab)
 
 import SwiftUI
 
@@ -23,9 +23,11 @@ struct MainTabsView: View {
     @State private var selected: MainTab = .today
     @State private var todayPath = NavigationPath()
     @State private var cardsPath = NavigationPath()
-    @State private var progressPath = NavigationPath()
     @State private var communityPath = NavigationPath()
     @State private var mePath = NavigationPath()
+    /// Set by a `tuji://favorites` link so the 圖鑑 tab opens on 書籤. Cleared
+    /// by the grid once applied, so a later manual filter change sticks.
+    @State private var cardsSourceRequest: CardsSource?
 
     /// Whether 我的 / 社群 are showing their own root rather than something
     /// pushed over it. Both start true so a tab that never fires `onAppear`
@@ -71,7 +73,7 @@ struct MainTabsView: View {
         .task { await self.startTourIfNeeded() }
     }
 
-    private let tabs: [MainTab] = [.today, .cards, .progress, .community, .me]
+    private let tabs: [MainTab] = [.today, .cards, .community, .me]
 
     /// Horizontally-paged container so the four tabs can be switched by
     /// swiping left/right, not only by tapping the bar. Each page still owns
@@ -112,12 +114,7 @@ struct MainTabsView: View {
             }
         case .cards:
             NavigationStack(path: self.$cardsPath) {
-                CardsListView()
-                    .tujiNavDestinations(user: self.user)
-            }
-        case .progress:
-            NavigationStack(path: self.$progressPath) {
-                ProgressTabView()
+                CardsListView(sourceRequest: self.$cardsSourceRequest)
                     .tujiNavDestinations(user: self.user)
             }
         case .community:
@@ -162,7 +159,7 @@ struct MainTabsView: View {
         switch self.selected {
         case .me: return self.meAtRoot
         case .community: return self.communityAtRoot
-        case .today, .cards, .progress: return true
+        case .today, .cards: return true
         }
     }
 
@@ -172,7 +169,6 @@ struct MainTabsView: View {
         switch self.selected {
         case .today: self.todayPath.count
         case .cards: self.cardsPath.count
-        case .progress: self.progressPath.count
         case .community: self.communityPath.count
         case .me: self.mePath.count
         }
@@ -254,6 +250,7 @@ struct MainTabsView: View {
         // A deep link (e.g. push-notification tap) outranks the tour.
         if self.tourIndex != nil { self.skipTour() }
         self.selected = link.tab
+        if case .favorites = link { self.cardsSourceRequest = .bookmarked }
         guard let route = link.route else { return }
         // Append on the next runloop turn so the NavigationStack for the
         // newly-selected tab has time to mount.
@@ -261,7 +258,6 @@ struct MainTabsView: View {
             switch link.tab {
             case .today: self.todayPath.append(route)
             case .cards: self.cardsPath.append(route)
-            case .progress: self.progressPath.append(route)
             case .community: self.communityPath.append(route)
             case .me: self.mePath.append(route)
             }
@@ -294,7 +290,7 @@ private extension View {
 private struct TujiTabBar: View {
     @Binding var selected: MainTab
 
-    private let tabs: [MainTab] = [.today, .cards, .progress, .community, .me]
+    private let tabs: [MainTab] = [.today, .cards, .community, .me]
 
     var body: some View {
         HStack(spacing: 0) {
@@ -333,9 +329,13 @@ private struct TabBarButton: View {
                     .font(.system(size: 20, weight: .semibold))
                 Text(self.tab.titleZh)
                     .font(.tujiLabel)
-                    .tracking(0.5)
+                    // No tracking, unlike every other tujiLabel: the +0.5pt is a
+                    // Latin adjustment, and on a full-width CJK glyph it only
+                    // buys width these five columns do not have. GenSenRounded
+                    // is wider than the system face, so the margin got thinner.
+                    //
                     // Five equal columns leave ~78pt each, and 13pt CJK labels
-                    // do not fit ("コミュニティ" wrapped and "マイページ" clipped).
+                    // barely fit ("コミュニティ" is six full-width glyphs).
                     // Scaling down beats wrapping; the real fix is the four-tab
                     // IA, which is a later milestone.
                     .lineLimit(1)

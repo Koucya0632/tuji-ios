@@ -65,14 +65,24 @@ struct TujiTextField: View {
 struct TujiField<Content: View>: View {
     let label: LocalizedStringKey
     var footer: LocalizedStringKey?
+    /// A small mark beside the label — "AI 建議" on a field the model filled in.
+    /// Its job is to say *this value did not come from you*, so it uses the
+    /// neutral status treatment rather than a colour that would rank it.
+    var badge: LocalizedStringKey?
     @ViewBuilder var content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text(self.label)
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiInk3)
+            HStack(spacing: Space.s2) {
+                Text(self.label)
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
+                if let badge = self.badge {
+                    TujiStatusEdgeLabel(text: Text(badge), edge: .tujiEye)
+                }
+                Spacer(minLength: 0)
+            }
             self.content
             if let footer = self.footer {
                 Text(footer)

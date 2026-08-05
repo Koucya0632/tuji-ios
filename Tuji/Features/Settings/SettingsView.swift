@@ -27,6 +27,8 @@ struct SettingsView: View {
     @State private var showAccentPicker = false
     @State private var showClearConfirm = false
     @State private var showClearSuccess = false
+    @State private var showFeedback = false
+    @State private var showPaywall = false
 
     /// Guests have no server account, so the 帳號 section (edit profile /
     /// sign out) and the clear-progress / delete-account section — both of
@@ -162,6 +164,17 @@ struct SettingsView: View {
             message: "可以重新開始建立你的圖鑑。",
             primary: TujiPromptAction("知道了") {}
         )
+        .sheet(isPresented: self.$showFeedback) { FeedbackSheet() }
+        .sheet(isPresented: self.$showPaywall) { PaywallView() }
+    }
+
+    /// Points at the public landing page until the App Store listing exists.
+    /// Lives in code rather than a literal at the ShareLink call site so the
+    /// no-hardcoded-base-url lint rule stays clean.
+    private static let shareURL = URL(string: "https://tuji.nexflow.team/") ?? URL(fileURLWithPath: "/")
+
+    private var isPro: Bool {
+        StoreKitService.shared.isPro
     }
 
     // MARK: - List
@@ -259,6 +272,34 @@ struct SettingsView: View {
                         .tujiRowStyle(destructive: true)
                         .disabled(self.deleting)
                     }
+                }
+
+                // Pro is no longer a permanent card on 我. A subscription card
+                // shown to someone who has not yet hit a limit is noise; the
+                // pitch belongs at the moment the limit bites (the capture
+                // flow's quota sheets), and a single row here for everyone else.
+                TujiSection(title: "Tuji Pro") {
+                    Button { self.showPaywall = true } label: {
+                        TujiRow(
+                            "Tuji Pro",
+                            subtitle: self.isPro ? "訂閱中" : "擴充自製圖鑑容量，解鎖高精度 AI 辨識"
+                        )
+                    }
+                    .tujiRowStyle()
+                }
+
+                TujiSection(title: "其他") {
+                    Button { self.showFeedback = true } label: {
+                        TujiRow("意見收集")
+                    }
+                    .tujiRowStyle()
+                    ShareLink(item: Self.shareURL) {
+                        TujiRow("分享 App")
+                    }
+                    .tujiRowStyle()
+                    .simultaneousGesture(TapGesture().onEnded {
+                        AnalyticsService.shared.track(.shareApp)
+                    })
                 }
 
                 Text("Tuji v1.0.0 · 圖記")

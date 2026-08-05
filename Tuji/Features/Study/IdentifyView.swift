@@ -15,64 +15,81 @@ struct IdentifyView: View {
 
     var body: some View {
         VStack(spacing: Space.s3) {
-            self.bubble
+            self.prompt
+                .padding(.horizontal, Space.s4)
             self.hero
             self.choicesList
+                .padding(.horizontal, Space.s4)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, Space.s4)
         .padding(.bottom, Space.s4)
     }
 
-    private var bubble: some View {
-        // 3+ consecutive correct answers put the mascot in cheer — a small
-        // momentum reward wired straight to existing art.
+    /// A line, not a character. The cat used to sit here on every card with its
+    /// pose switching to cheer after three in a row — C.11 allows it at four
+    /// moments, and "every question" is not one. The words themselves stay: on
+    /// a JA card the options are Japanese and on an EN card they are English,
+    /// so which language is being asked for is information, not chatter.
+    private var prompt: some View {
         // The quizzed word's own language, so a JA custom word asks 日文 even
         // if the session direction disagrees; untagged words follow the session.
         let language = self.item.word.wordLanguage
             ?? self.settings.current.learningDirection.targetLanguage
-        return MascotSpeechBubble(
-            pose: self.coord.combo >= 3 ? .cheer : .think,
-            text: language == .ja ? "對應的日文是哪個？" : "對應的英文是哪個？"
+        return Text(
+            language == .ja
+                ? LocalizedStringKey("對應的日文是哪個？")
+                : LocalizedStringKey("對應的英文是哪個？")
         )
+        .font(.tujiLabel)
+        .tracking(0.5)
+        .foregroundStyle(.tujiInk3)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var hero: some View {
         ZStack(alignment: .bottomLeading) {
-            ZStack {
-                Rectangle().fill(.tujiPaper)
-                LazyImage(url: self.item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .padding(Space.s2)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
+            Color.tujiPaper2
+                .frame(height: 200)
+                .overlay {
+                    LazyImage(url: self.item.word.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable()
+                                .aspectRatio(
+                                    contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
+                                )
+                                .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
+                                .blendMode(
+                                    self.item.word.imageKind == .cutout ? .multiply : .normal
+                                )
+                        } else if state.error != nil {
+                            Image(systemName: "photo")
+                                .font(.system(size: 28))
+                                .foregroundStyle(.tujiInk3)
+                        } else {
+                            TujiImagePlaceholder()
+                        }
                     }
+                    .pipeline(.shared)
                 }
-                .pipeline(.shared)
-            }
-            .frame(height: 158)
-            .clipped()
-            .clipShape(.rect(cornerRadius: Radius.r0))
+                .clipped()
 
-            HStack {
-                Text(self.item.word.chinese)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
-                    .padding(.horizontal, Space.s3)
-                    .padding(.vertical, 6)
-                    .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-                Spacer()
+            HStack(alignment: .bottom) {
+                if self.settings.current.showZh {
+                    Text(self.item.word.chinese)
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk)
+                        .lineLimit(2)
+                        .padding(.horizontal, Space.s2)
+                        .padding(.vertical, Space.s1)
+                        .background(.tujiPaper)
+                }
+                Spacer(minLength: Space.s2)
                 PronunciationButton(
                     text: self.item.word.word,
                     language: self.item.word.wordLanguage,
                     audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
-                    size: 36
+                    size: 48,
+                    ground: .tujiPaper
                 )
             }
             .padding(Space.s3)

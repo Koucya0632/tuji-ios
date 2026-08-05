@@ -25,7 +25,7 @@ This is the first time a CJK font would enter the bundle, so the cost is new, no
 ## Decision
 
 Bundle **GenSenRounded 2** (SIL OFL 1.1, derived from Source Han Sans) in two faces,
-three weights each — Regular / Medium / Bold — registered through `UIAppFonts`:
+registered through `UIAppFonts`:
 
 | Interface language | Face |
 |---|---|
@@ -34,9 +34,27 @@ three weights each — Regular / Medium / Bold — registered through `UIAppFont
 | 简体中文 | **falls back to TW** |
 | English | no CJK face applies |
 
-Six files, **91.5 MB uncompressed**, roughly doubling the installed size.
+**Two weights per face, not three.** No token asks for Medium — `TujiFont` sets
+Regular for body copy and Bold for everything above it — so a Medium face would be
+31 MB of glyphs nothing draws. `tujiDisplay` is ExtraBold in Latin and takes Bold in
+CJK; GenSenRounded's Heavy would cost another 30 MB for one token.
 
-Two limits are accepted rather than worked around:
+Four files, **61 MB uncompressed**.
+
+**The CJK face is a cascade entry, not the font.** Setting `Font.custom("GenSenRounded2TW-R", …)`
+would hand *Latin* text to GenSenRounded's own Latin — a Source Sans derivative that is
+neither rounded nor Plus Jakarta — silently replacing the Latin face across the app as a
+side effect of fixing Chinese. Each token is instead a Plus Jakarta `UIFontDescriptor`
+with the CJK face in its `cascadeList`, so only glyphs Plus Jakarta cannot draw fall
+through.
+
+That has one cost worth naming: `Font.custom(_:size:)` scales with Dynamic Type on its
+own, and `Font(_: UIFont)` does not. The metric is therefore applied by hand
+(`UIFontMetrics.default.scaledFont(for:)`) and the content size category is part of the
+font cache key. Getting this wrong would have frozen every label in the app at the
+default text size — silently, and only for users who had changed it.
+
+Three limits are accepted rather than worked around:
 
 **Simplified Chinese gets Taiwan glyph forms.** GenSenRounded has no SC face. Glyph
 *coverage* is complete — a six-set probe (simplified common, simplified-only, traditional,
@@ -75,9 +93,12 @@ the platform default, which is the problem being solved.
 
 ## Consequences
 
-- Installed size roughly doubles. There is no measurement of how much a larger download
+- Installed size grows by 61 MB. There is no measurement of how much a larger download
   costs in installs, and none is planned — the redesign is being treated as a brand
   decision, not an optimisation (see the redesign package's D2 §D).
+- The repository grows by the same 61 MB, permanently: the files are committed directly,
+  not through Git LFS, which this repo does not use. Removing them later means rewriting
+  history.
 - Simplified-Chinese users are knowingly served non-native glyph forms. If that becomes a
   complaint, the fix is a fourth face from a different family, which would break visual
   consistency across languages — so it is a real, not nominal, cost.

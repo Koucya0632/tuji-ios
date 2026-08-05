@@ -7,10 +7,9 @@ extension View {
     func tujiNavDestinations(user: SessionUser?) -> some View {
         self.navigationDestination(for: NavRoute.self) { route in
             switch route {
-            case .cards: CardsListView()
+            case .cards: CardsListView(sourceRequest: .constant(nil))
             case .today: TodayView(user: user)
             case let .search(query): SearchView(initialQuery: query)
-            case .favorites: FavoritesView()
             case .settings: SettingsView()
             case .atlasManage: AtlasManageView(initialSection: .cards)
             case .atlasPublic: AtlasPublicFeedView()

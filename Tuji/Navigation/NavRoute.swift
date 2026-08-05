@@ -8,7 +8,6 @@ enum NavRoute: Hashable {
     case cards
     case today
     case search(query: String?)
-    case favorites
     case settings
     /// 圖鑑管理 — opens on the current user's 圖鑑卡片.
     case atlasManage

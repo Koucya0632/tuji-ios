@@ -54,7 +54,13 @@ final class ProgressVM {
     }
 }
 
-struct ProgressTabView: View {
+/// The 進度 tab's content, now a section stack inside 我 (D.8).
+///
+/// It stopped being a tab because it was never a *place* — it is a readout
+/// about the user, which is what 我 is for. Nothing about the numbers changed;
+/// the screen chrome (its own ScrollView, its own 進度 title, its own nav bar)
+/// belongs to the host now.
+struct MeProgressSections: View {
     @Environment(AuthService.self) private var auth
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
@@ -67,36 +73,14 @@ struct ProgressTabView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
-                Text("進度")
-                    .font(.tujiH2)
-                    .foregroundStyle(.tujiInk)
-
-                self.sectionHeader("總覽")
-                self.completionCard
-                self.streakRow
-                self.heatmapCard
-
-                self.sectionHeader("明細")
-                self.categoryBreakdownCard
-            }
-            .padding(.horizontal, Space.s4)
-            .padding(.top, Space.s3)
-            .padding(.bottom, Space.s6)
-        }
-        .background(.tujiPaper)
-        // Metadata only (VoiceOver, back-button label on pushed screens,
-        // multitasking window title) — the "進度" Text above is the visible
-        // title, so the system nav bar itself stays hidden.
-        .navigationTitle("進度")
-        .toolbar(.hidden, for: .navigationBar)
-        .refreshable {
-            if !self.isGuest {
-                self.progress.invalidate()
-                await self.progress.reload()
-            }
-            await self.words.loadIfNeeded()
+        VStack(alignment: .leading, spacing: Space.s5) {
+            self.completionCard
+            self.streakRow
+                .padding(.horizontal, Space.s4)
+            self.heatmapSection
+                .padding(.horizontal, Space.s4)
+            self.categoryBreakdownCard
+                .padding(.horizontal, Space.s4)
         }
         .task {
             await self.words.loadIfNeeded()
@@ -131,111 +115,82 @@ struct ProgressTabView: View {
         // 明細 breakdown below. Label it explicitly so it doesn't read as a
         // whole-catalog number next to Me tab's unscoped 已學字 total.
         let scoped = !self.settings.current.studyCategories.isEmpty
-        return VStack(alignment: .leading, spacing: Space.s3) {
+        // The one number on this tab that is *the* number, so it gets the ink
+        // block — the same weight the Today hero and the completion screen use.
+        return VStack(alignment: .leading, spacing: Space.s2) {
             Text(scoped ? LocalizedStringKey("所選主題完成度") : LocalizedStringKey("圖鑑完成度"))
                 .font(.tujiLabel)
-                .tracking(2)
-                .foregroundStyle(.tujiInk3)
-            HStack(alignment: .firstTextBaseline) {
-                Text("\(pct)%")
-                    .font(.system(size: 44, weight: .heavy))
-                    .foregroundStyle(.tujiInk)
-                    .contentTransition(.numericText())
-                Spacer()
-            }
-            self.progressBar(ratio: ratio)
+                .tracking(0.5)
+                .foregroundStyle(.tujiPaper.opacity(0.6))
+            Text("\(pct)%")
+                .font(.tujiDisplay)
+                .foregroundStyle(.tujiTealSoft)
+                .contentTransition(.numericText())
             Text(
                 scoped
                     ? LocalizedStringKey("已學 \(learned) / 所選主題共 \(total) 字")
                     : LocalizedStringKey("已學 \(learned) / 共 \(total) 字")
             )
-            .font(.tujiLabel)
-            .foregroundStyle(.tujiInk3)
+            .font(.tujiBodySm)
+            .foregroundStyle(.tujiPaper.opacity(0.7))
+            TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.15), fill: .tujiTealSoft)
+                .padding(.top, Space.s2)
         }
         .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
-    }
-
-    private func progressBar(ratio: Double) -> some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(.tujiPaper2.opacity(0.15))
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(.tujiTeal)
-                    .frame(width: geo.size.width * min(1.0, max(0, ratio)))
-                    .animation(.spring(duration: 0.5), value: ratio)
-            }
-        }
-        .frame(height: 8)
+        .background(.tujiInk)
     }
 
     // MARK: - Streak row (2 stat cards)
 
+    /// Two columns on paper, no tiles and no flame. A streak is a fact about
+    /// the account; the box, the border and the icon were three ways of
+    /// insisting on it. When it breaks the number is 0 and one line explains —
+    /// it does not turn red, animate, or send the cat out.
     private var streakRow: some View {
-        HStack(spacing: Space.s3) {
-            self.statTile(
-                label: "目前連勝",
-                value: self.progress.streak?.current ?? 0,
-                unit: tujiLocalized("天"),
-                icon: "flame.fill",
-                tint: .tujiTeal
-            )
-            self.statTile(
-                label: "最長連勝",
-                value: self.progress.streak?.longest ?? 0,
-                unit: tujiLocalized("天"),
-                icon: "trophy.fill",
-                tint: .tujiInk
-            )
+        HStack(alignment: .top, spacing: Space.s5) {
+            self.streakColumn("目前連勝", value: self.progress.streak?.current ?? 0)
+            self.streakColumn("最長連勝", value: self.progress.streak?.longest ?? 0)
+            Spacer(minLength: 0)
         }
     }
 
-    private func statTile(label: LocalizedStringKey, value: Int, unit: String, icon: String, tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Image(systemName: icon).foregroundStyle(tint)
-                Text(label)
-                    .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiInk3)
-            }
+    private func streakColumn(_ label: LocalizedStringKey, value: Int) -> some View {
+        VStack(alignment: .leading, spacing: Space.s1) {
+            Text(label)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("\(value)")
-                    .font(.system(size: 32, weight: .heavy))
+                    .font(.tujiDisplay)
                     .foregroundStyle(.tujiInk)
                     .contentTransition(.numericText())
-                Text(unit)
-                    .font(.system(size: 13, weight: .semibold))
+                Text(verbatim: tujiLocalized("天"))
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+            }
+            if value == 0 {
+                Text("從今天重新開始")
+                    .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk3)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Space.s3)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
     }
 
     // MARK: - Heatmap
 
-    private var heatmapCard: some View {
+    private var heatmapSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
                 Text("最近 6 週")
                     .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiTeal)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
                 Spacer()
                 Text("\(self.activeDayCount) 個活躍日")
                     .font(.tujiLabel)
+                    .tracking(0.5)
                     .foregroundStyle(.tujiInk3)
             }
             if self.progress.heatmap.isEmpty {
@@ -244,13 +199,7 @@ struct ProgressTabView: View {
                 HeatmapGrid(cells: self.progress.heatmap)
             }
         }
-        .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
     }
 
     private var activeDayCount: Int {
@@ -341,29 +290,24 @@ struct ProgressTabView: View {
                 }
             }
         }
-        .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
     }
 
     private func categoryRow(_ stat: CategoryStat) -> some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(spacing: Space.s2) {
                 Text(stat.nameZh)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
                 Spacer()
                 Text("\(stat.learned) / \(stat.total)")
-                    .font(.tujiLabel)
+                    .font(.tujiMono)
                     .foregroundStyle(.tujiInk3)
                     .contentTransition(.numericText())
             }
-            self.progressBar(ratio: stat.ratio)
+            TujiProgressBar(progress: stat.ratio, track: .tujiPaper3, fill: .tujiTeal)
         }
+        .frame(minHeight: 72)
     }
 }
 
@@ -373,19 +317,18 @@ struct HeatmapGrid: View {
     let cells: [HeatmapCell]
     @Environment(SettingsStore.self) private var settings
     /// 7 columns laid out top → bottom, then left → right by week.
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: Space.s1), count: 7)
 
     var body: some View {
         VStack(spacing: 8) {
             self.weekdayHeader
-            LazyVGrid(columns: self.columns, spacing: 5) {
+            LazyVGrid(columns: self.columns, spacing: Space.s1) {
                 ForEach(Array(self.cells.enumerated()), id: \.offset) { _, cell in
-                    RoundedRectangle(cornerRadius: 4)
+                    // Square, like everything else. A rounded heat cell is the
+                    // GitHub contribution graph's own signature, and this grid
+                    // was carrying it verbatim.
+                    Rectangle()
                         .fill(self.color(for: cell))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(cell.future ? .tujiRule.opacity(0.15) : .clear, lineWidth: 1)
-                        )
                         .aspectRatio(1, contentMode: .fit)
                 }
             }
@@ -452,7 +395,7 @@ struct HeatmapGrid: View {
 
 #Preview {
     NavigationStack {
-        ProgressTabView()
+        ScrollView { MeProgressSections() }
             .environment(LocalCache.shared)
             .environment(AuthService.shared)
             .environment(WordsStore.shared)

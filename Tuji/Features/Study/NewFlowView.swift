@@ -30,6 +30,7 @@ struct NewFlowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            self.navBar
             if self.started {
                 self.header
                 self.stepContent
@@ -40,37 +41,9 @@ struct NewFlowView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiPaper)
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    // Nothing is lost before the first task or after the last,
-                    // so only the mid-session exit needs a confirmation.
-                    if !self.started || self.coord.finished {
-                        self.dismiss()
-                    } else {
-                        self.showExitConfirm = true
-                    }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.tujiInk2)
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                if !self.coord.finished {
-                    Menu {
-                        Button("報錯", systemImage: "exclamationmark.bubble") {
-                            self.captureReport()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.tujiInk2)
-                            .frame(width: 36, height: 36)
-                    }
-                }
-            }
-        }
+        // Drawn in-content: on iOS 26 a system toolbar item is a floating glass
+        // circle, and two white discs are the platform talking over the lesson.
+        .toolbar(.hidden, for: .navigationBar)
         .tujiPrompt(
             isPresented: self.$showExitConfirm,
             style: .confirmation,
@@ -146,29 +119,74 @@ struct NewFlowView: View {
     /// Pre-session scan of today's words: reading the grid before the first
     /// card is itself a teach pass, and the explicit 開始學習 makes the
     /// lesson feel like a chosen unit instead of an ambush.
+    private var navBar: some View {
+        TujiNavBar(
+            leading: .close,
+            onLeading: {
+                // Nothing is lost before the first task or after the last,
+                // so only the mid-session exit needs a confirmation.
+                if !self.started || self.coord.finished {
+                    self.dismiss()
+                } else {
+                    self.showExitConfirm = true
+                }
+            }
+        ) {
+            if !self.coord.finished {
+                Menu {
+                    Button("報錯", systemImage: "exclamationmark.bubble") {
+                        self.captureReport()
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.tujiInk)
+                        .frame(width: 44, height: 48)
+                        .contentShape(.rect)
+                }
+                .accessibilityLabel(Text("更多"))
+            }
+        }
+    }
+
     private var preview: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: Space.s4) {
-                    MascotSpeechBubble(
-                        pose: .think,
-                        text: "先看一眼這些字，準備好就開始"
-                    )
+                VStack(alignment: .leading, spacing: Space.s4) {
+                    // 開始 is one of C.11's four mascot moments, and the pose it
+                    // asks for is wave — the cat greeting the session, not
+                    // thinking about it.
+                    MascotSpeechBubble(pose: .wave, text: "先看一眼這些字，準備好就開始")
+                        .padding(.horizontal, Space.s4)
+                    // Left, at the page margin, like every other screen title —
+                    // it was centred, which is the one place in the app where a
+                    // heading floated free of the vertical line everything else
+                    // aligns to.
                     Text("今天學這 \(self.queue.count) 個字")
-                        .font(.tujiH3)
+                        .font(.tujiH1)
                         .foregroundStyle(.tujiInk)
+                        .padding(.horizontal, Space.s4)
                     StudyWordGrid(items: self.queue)
                 }
-                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s3)
                 .padding(.bottom, Space.s4)
+            }
+            // A 24pt fade above the pinned button, so the grid runs out rather
+            // than being sliced off mid-row by an opaque bar.
+            .overlay(alignment: .bottom) {
+                LinearGradient(
+                    colors: [.tujiPaper.opacity(0), .tujiPaper],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: Space.s4)
+                .allowsHitTesting(false)
             }
             BBtn(
                 title: "開始學習",
                 bg: .tujiEye,
                 fg: .tujiInk,
                 fullWidth: true,
-                icon: "play.fill",
                 action: { self.started = true }
             )
             .padding(.horizontal, Space.s4)
@@ -177,39 +195,30 @@ struct NewFlowView: View {
     }
 
     private var header: some View {
-        VStack(spacing: Space.s3) {
+        VStack(spacing: Space.s2) {
             HStack {
                 Text("學新字")
                     .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiTeal)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
                 Spacer()
                 if !self.coord.finished {
                     Text("完成 \(self.coord.clearedWords) / \(self.coord.queue.count) 字")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.tujiInk3)
+                        .font(.tujiMono)
+                        .foregroundStyle(.tujiInk2)
                         .contentTransition(.numericText())
                 }
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(.tujiPaper2.opacity(0.2))
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(.tujiTeal)
-                        .frame(width: geo.size.width * self.coord.progress)
-                        .animation(.spring(duration: 0.5), value: self.coord.progress)
-                }
-            }
-            .frame(height: 6)
+            .padding(.horizontal, Space.s4)
+
+            TujiProgressBar(progress: self.coord.progress)
             // The interleave hides that every word walks the same ladder —
             // the pips make the current word's 認識→選字→拼字 position explicit.
             if let task = self.coord.current {
                 NewStagePips(steps: self.coord.stagePlan(for: task.item))
+                    .padding(.horizontal, Space.s4)
             }
         }
-        .padding(.horizontal, Space.s4)
-        .padding(.top, Space.s2)
         .padding(.bottom, Space.s3)
     }
 

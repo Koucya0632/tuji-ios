@@ -63,13 +63,14 @@ struct CompleteView: View {
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(spacing: Space.s4) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     self.hero
-                    self.streakCapsule
+                    self.streakLine
+                        .padding(.horizontal, Space.s4)
                     self.unsyncedNotice
+                        .padding(.horizontal, Space.s4)
                     self.changeSection
                 }
-                .padding(.horizontal, Space.s4)
                 .padding(.top, Space.s5)
                 .padding(.bottom, Space.s4)
             }
@@ -83,41 +84,47 @@ struct CompleteView: View {
     // MARK: - Bits
 
     private var hero: some View {
-        MascotCelebrationCard(
-            title: self.hasMoreDue ? "這一輪完成" : "複習完成！",
-            accent: .tujiEye
-        ) {
+        MascotCelebrationCard(title: self.hasMoreDue ? "這一輪完成" : "複習完成！") {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
+                // The pale teal step, not the deep one: 深 teal on ink is only
+                // 3.04:1, and this is the biggest number on the screen.
                 Text("\(self.done)")
                     .font(.tujiDisplay)
-                    .foregroundStyle(.tujiTeal)
+                    .foregroundStyle(.tujiTealSoft)
                     .contentTransition(.numericText())
                 Text("個字")
                     .font(.tujiH2)
-                    .foregroundStyle(.tujiInk3)
+                    .foregroundStyle(.tujiPaper.opacity(0.7))
             }
         }
     }
 
-    private var streakCapsule: some View {
-        HStack(spacing: Space.s2) {
-            Image(systemName: "flame.fill")
-                .foregroundStyle(.tujiTeal)
+    /// A line, not a badge. The streak used to sit in a teal-tinted box with a
+    /// teal border and a flame — three ways of shouting a number that is simply
+    /// a fact about the account. It is accumulation, so it is teal, and that is
+    /// the whole treatment.
+    private var streakLine: some View {
+        Group {
             if let streak = self.progress.streak?.current {
-                Text("連勝 \(streak) 天")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.tujiInk)
-                    .contentTransition(.numericText())
+                HStack(spacing: Space.s2) {
+                    Text("連勝")
+                        .font(.tujiLabel)
+                        .tracking(0.5)
+                        .foregroundStyle(.tujiInk3)
+                    Text("\(streak)")
+                        .font(.tujiMono)
+                        .foregroundStyle(.tujiTeal)
+                        .contentTransition(.numericText())
+                    Text("天")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                }
             } else {
                 Text("讀取連勝中…")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
         }
-        .padding(.horizontal, Space.s3)
-        .padding(.vertical, Space.s3)
-        .background(.tujiTeal.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
-        .overlay(Rectangle().stroke(.tujiTeal.opacity(0.5), lineWidth: 1))
     }
 
     private var unsyncedNotice: some View {
@@ -127,15 +134,21 @@ struct CompleteView: View {
     @ViewBuilder
     private var changeSection: some View {
         if !self.answered.isEmpty {
-            VStack(alignment: .leading, spacing: Space.s3) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("今天複習")
                     .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiTeal)
-                VStack(spacing: Space.s2) {
-                    ForEach(self.answered) { item in
-                        self.changeRow(item)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
+                    .padding(.horizontal, Space.s4)
+                    .padding(.bottom, Space.s3)
+                ForEach(Array(self.answered.enumerated()), id: \.element.id) { index, item in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(.tujiRule)
+                            .frame(height: Border.bw1)
+                            .padding(.leading, Space.s4)
                     }
+                    self.changeRow(item)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -152,78 +165,65 @@ struct CompleteView: View {
         return HStack(spacing: Space.s3) {
             self.thumb(item.word)
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: Space.s2) {
-                    Text(item.word.word)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.tujiInk)
-                        .lineLimit(1)
-                    if self.wrongIds.contains(item.word.id) {
-                        Text("答錯過")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.tujiAlert)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
-                    }
-                }
-                if self.settings.current.showZh {
+                Text(item.word.word)
+                    .font(.tujiH3)
+                    .foregroundStyle(.tujiInk)
+                    .lineLimit(1)
+                if self.wrongIds.contains(item.word.id) {
+                    TujiStatusEdgeLabel(text: Text("答錯過"), edge: .tujiAlert)
+                        .padding(.top, 2)
+                } else if self.settings.current.showZh {
                     Text(item.word.chinese)
-                        .font(.tujiLabel)
+                        .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }
             }
             Spacer(minLength: Space.s2)
             if let change {
-                VStack(alignment: .trailing, spacing: 3) {
+                VStack(alignment: .trailing, spacing: Space.s1) {
+                    self.levelPill(afterLevel)
                     HStack(spacing: 4) {
+                        // ↑ only, and only when the word actually crossed a
+                        // level. The before→after pair is the evidence; the
+                        // arrow says the crossing happened.
                         if leveledUp {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 10, weight: .black))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(.tujiTeal)
                         }
-                        self.levelPill(afterLevel)
-                    }
-                    HStack(spacing: 4) {
                         Text("\(change.before)→\(change.after)")
-                            .font(.tujiLabel)
+                            .font(.tujiMono)
                             .foregroundStyle(.tujiInk3)
                             .contentTransition(.numericText())
-                        Text(self.deltaText(change.delta))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(self.deltaColor(change.delta))
                     }
                 }
             }
         }
-        .padding(Space.s2)
+        .padding(.horizontal, Space.s4)
+        .frame(minHeight: 72)
         .frame(maxWidth: .infinity)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
-        )
     }
 
     private func thumb(_ word: StudyQueueWord) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: Radius.r0).fill(.tujiPaper)
-            LazyImage(url: word.imageURL) { state in
-                if let image = state.image {
-                    image.resizable().aspectRatio(contentMode: .fit).padding(4)
-                } else if state.error != nil {
-                    Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk3)
-                } else {
-                    TujiImagePlaceholder()
+        Color.tujiPaper2
+            .frame(width: 48, height: 48)
+            .overlay {
+                LazyImage(url: word.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable()
+                            .aspectRatio(contentMode: word.imageKind == .cutout ? .fit : .fill)
+                            .padding(word.imageKind == .cutout ? Space.s1 : 0)
+                            .blendMode(word.imageKind == .cutout ? .multiply : .normal)
+                    } else if state.error != nil {
+                        Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk3)
+                    } else {
+                        TujiImagePlaceholder()
+                    }
                 }
+                .pipeline(.shared)
             }
-            .pipeline(.shared)
-        }
-        .frame(width: 44, height: 44)
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
+            .clipped()
     }
 
     private func levelPill(_ level: MasteryLevel) -> some View {
@@ -234,16 +234,6 @@ struct CompleteView: View {
             .padding(.horizontal, Space.s2)
             .padding(.vertical, 2)
             .background(level.background, in: .rect(cornerRadius: Radius.r0))
-    }
-
-    private func deltaText(_ d: Int) -> String {
-        d > 0 ? "+\(d)" : "\(d)"
-    }
-
-    private func deltaColor(_ d: Int) -> Color {
-        if d > 0 { return .tujiTeal }
-        if d < 0 { return .tujiAlert }
-        return .tujiInk3
     }
 
     /// 回首頁 when the queue is clear; when words are still due, the primary

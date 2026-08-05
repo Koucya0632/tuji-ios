@@ -152,6 +152,38 @@ struct AtlasCaptureVMTests {
     }
 
     @Test
+    func aiSuggestionMarkClearsWhenTheUserTypesOverIt() throws {
+        let vm = AtlasCaptureVM()
+        // Nothing applied yet: nothing is the model's.
+        #expect(!vm.isStillSuggested(.lemma))
+
+        try vm.apply(self.candidate(label: "cat", zhHant: "貓"), overwrite: true)
+        #expect(vm.isStillSuggested(.lemma))
+        #expect(vm.isStillSuggested(.zhHant))
+        // No gloss on this candidate, so that field was never the model's.
+        #expect(!vm.isStillSuggested(.gloss))
+
+        vm.lemma = "kitten"
+        #expect(!vm.isStillSuggested(.lemma))
+        // Editing one field says nothing about the others.
+        #expect(vm.isStillSuggested(.zhHant))
+    }
+
+    @Test
+    func typingTheSuggestionBackRestoresTheMark() throws {
+        // The mark compares values rather than remembering that an edit
+        // happened: a field the user changed and changed back really does hold
+        // the model's suggestion, and claiming otherwise would be a lie about
+        // where the value came from.
+        let vm = AtlasCaptureVM()
+        try vm.apply(self.candidate(label: "cat", zhHant: "貓"), overwrite: true)
+        vm.lemma = "kitten"
+        #expect(!vm.isStillSuggested(.lemma))
+        vm.lemma = "cat"
+        #expect(vm.isStillSuggested(.lemma))
+    }
+
+    @Test
     func candidateLabelPrefersUiGlossAndFallsBackToChinese() throws {
         let vm = AtlasCaptureVM()
         let withGloss = try self.candidate(label: "猫", zhHant: "貓", gloss: "cat", confidence: "0.87")

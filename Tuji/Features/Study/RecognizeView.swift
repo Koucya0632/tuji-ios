@@ -29,8 +29,8 @@ struct RecognizeView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             self.buttons
+                .padding(.horizontal, Space.s4)
         }
-        .padding(.horizontal, Space.s4)
         .padding(.bottom, Space.s4)
         // The flow view keys this view per presentation, so the task fires
         // once per card — recognize never requeues, so once per word.
@@ -73,17 +73,20 @@ struct RecognizeView: View {
             self.hero
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(alignment: .firstTextBaseline) {
+                    // Display size: this is the one screen whose whole job is
+                    // "here is a new word", so the word is the largest thing
+                    // the app ever sets.
                     Text(self.item.word.word)
-                        .font(.tujiH1)
+                        .font(.tujiDisplay)
                         .foregroundStyle(.tujiInk)
                         .lineLimit(2)
-                        .minimumScaleFactor(0.6)
-                    Spacer()
+                        .minimumScaleFactor(0.5)
+                    Spacer(minLength: Space.s2)
                     PronunciationButton(
                         text: self.item.word.word,
                         language: self.wordLanguage,
                         audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
-                        size: 44
+                        size: 48
                     )
                 }
                 if !self.item.word.pronunciation.isEmpty {
@@ -119,14 +122,9 @@ struct RecognizeView: View {
                     self.exampleBlock(example)
                 }
             }
-            .padding(.horizontal, Space.s3)
+            .padding(.horizontal, Space.s4)
             .padding(.bottom, Space.s3)
         }
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
-        )
     }
 
     private func exampleBlock(_ example: (sentence: String, zh: String?)) -> some View {
@@ -151,64 +149,73 @@ struct RecognizeView: View {
         }
         .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        .background(.tujiPaper2)
     }
 
     private var hero: some View {
-        ZStack {
-            Rectangle().fill(.tujiPaper)
-            LazyImage(url: self.item.word.imageURL) { state in
-                if let image = state.image {
-                    image.resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .padding(Space.s2)
-                } else if state.error != nil {
-                    Image(systemName: "photo")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.tujiInk3)
-                } else {
-                    TujiImagePlaceholder()
+        Color.tujiPaper2
+            .frame(height: 220)
+            .overlay {
+                LazyImage(url: self.item.word.imageURL) { state in
+                    if let image = state.image {
+                        image.resizable()
+                            .aspectRatio(
+                                contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
+                            )
+                            .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
+                            .blendMode(self.item.word.imageKind == .cutout ? .multiply : .normal)
+                    } else if state.error != nil {
+                        Image(systemName: "photo")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.tujiInk3)
+                    } else {
+                        TujiImagePlaceholder()
+                    }
                 }
+                .pipeline(.shared)
             }
-            .pipeline(.shared)
-        }
-        .frame(height: 190)
-        .clipped()
-        .clipShape(.rect(topLeadingRadius: Radius.r0, topTrailingRadius: Radius.r0))
+            .clipped()
     }
 
+    /// Three buttons, not the one 知道了 the spec draws: these send three
+    /// different SRS ratings (again / hard / good), and collapsing them would
+    /// change what the server schedules — the one thing this redesign may not
+    /// touch. What changes is that they stop being three different *kinds* of
+    /// button (red tint, teal-on-paper, solid ink) sitting in a row pretending
+    /// to be a set. One ground, one text colour, and a 3pt edge that says which
+    /// end of the scale each one is — the same mark the rating panel uses.
     private var buttons: some View {
-        VStack(spacing: Space.s2) {
+        VStack(alignment: .leading, spacing: Space.s2) {
             Text("這個字你認識嗎？")
                 .font(.tujiLabel)
+                .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
-            HStack(spacing: Space.s3) {
-                BBtn(
-                    title: "沒見過",
-                    bg: .tujiAlert.opacity(0.12),
-                    fg: .tujiAlert,
-                    fullWidth: true,
-                    action: { self.rate(.again) }
-                )
-                .disabled(self.coord.recLocked)
-                BBtn(
-                    title: "有印象",
-                    bg: .tujiPaper2,
-                    fg: .tujiTeal,
-                    fullWidth: true,
-                    action: { self.rate(.hard) }
-                )
-                .disabled(self.coord.recLocked)
-                BBtn(
-                    title: "已認識",
-                    bg: .tujiInk,
-                    fg: .white,
-                    fullWidth: true,
-                    action: { self.rate(.good) }
-                )
-                .disabled(self.coord.recLocked)
+            HStack(spacing: Space.s2) {
+                self.rateButton("沒見過", rating: .again)
+                self.rateButton("有印象", rating: .hard)
+                self.rateButton("已認識", rating: .good)
             }
         }
+    }
+
+    private func rateButton(_ title: LocalizedStringKey, rating: SRSRating) -> some View {
+        Button { self.rate(rating) } label: {
+            Text(title)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(alignment: .leading) {
+                    HStack(spacing: 0) {
+                        Rectangle().fill(rating.edge).frame(width: Border.bw3)
+                        Rectangle().fill(.tujiPaper2)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .disabled(self.coord.recLocked)
     }
 
     private func rate(_ r: SRSRating) {

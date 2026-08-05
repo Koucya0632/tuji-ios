@@ -31,9 +31,27 @@ struct AtlasPublicFeedView: View {
         self.settings.current.learningDirection.targetLanguage
     }
 
+    /// nil for a guest, or for an account the server has not minted a UID for.
+    private var myUid: String? {
+        guard case let .signedIn(user) = self.auth.state,
+              let uid = user.username, !uid.isEmpty
+        else { return nil }
+        return uid
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             self.header
+            // Guests have no public page, and an account with no UID yet has
+            // nothing to link to — in both cases the row simply isn't there.
+            if let uid = self.myUid {
+                CommunityMyPageRow(uid: uid)
+                Rectangle()
+                    .fill(.tujiRule)
+                    .frame(height: Border.bw1)
+                    .padding(.leading, Space.s4)
+                    .padding(.bottom, Space.s3)
+            }
             self.segmentedControl
             self.content
         }

@@ -255,6 +255,38 @@ final class AtlasCaptureVM {
         if let gloss = candidate.gloss, overwrite || self.displayGloss.isEmpty {
             self.displayGloss = gloss
         }
+        self.suggestion = Suggestion(
+            lemma: self.lemma,
+            zhHant: self.displayZhHant,
+            gloss: self.displayGloss
+        )
+    }
+
+    /// What the last applied candidate left in each field, so the correction
+    /// form can mark a value as the model's guess rather than the user's.
+    ///
+    /// Held as values and compared, not as "has the user typed here" flags: a
+    /// field the user edited and then changed back really is the model's
+    /// suggestion again, and an edit-event flag would keep claiming otherwise.
+    struct Suggestion: Equatable {
+        var lemma: String
+        var zhHant: String
+        var gloss: String
+    }
+
+    private(set) var suggestion: Suggestion?
+
+    enum SuggestedField {
+        case lemma, zhHant, gloss
+    }
+
+    func isStillSuggested(_ field: SuggestedField) -> Bool {
+        guard let s = self.suggestion else { return false }
+        return switch field {
+        case .lemma: !s.lemma.isEmpty && s.lemma == self.lemma
+        case .zhHant: !s.zhHant.isEmpty && s.zhHant == self.displayZhHant
+        case .gloss: !s.gloss.isEmpty && s.gloss == self.displayGloss
+        }
     }
 
     /// Payload assembled from the correction form. Split from submit() so the

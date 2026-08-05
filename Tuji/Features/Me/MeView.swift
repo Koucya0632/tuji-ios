@@ -49,9 +49,6 @@ struct MeView: View {
     @State private var vm = MeVM()
     @State private var store = StoreKitService.shared
     @State private var atlas = AtlasStore.shared
-    @State private var showPaywall = false
-    @State private var showFeedback = false
-    @State private var showSignOutConfirm = false
 
     /// Prefer the server-authoritative Atlas entitlement (kept warm by the
     /// `.task` sync below) over the device-local StoreKit flag: `store.isPro`
@@ -75,45 +72,33 @@ struct MeView: View {
         return self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
     }
 
-    /// Points at the public landing page until the App Store listing
-    /// exists. Lives in code rather than a literal at the ShareLink call
-    /// site so the no-hardcoded-base-url lint rule stays clean.
-    private static let shareURL = URL(string: "https://tuji.nexflow.team/") ?? URL(fileURLWithPath: "/")
-
+    /// 我 is no longer a directory of six entry points — it *is* your progress
+    /// (D.8). The two menu cards are gone and their entries went where the thing
+    /// they open actually lives: 圖鑑管理 to the 圖鑑 tab's 管理 → (only when the
+    /// source filter is 我做的), 我的主頁 to the top of 社群, 我的收藏 to the
+    /// 書籤 source filter, and 設定 to the gear in this screen's bar.
+    ///
+    /// The information order is: who you are (lightest) → what you have built up
+    /// (the body) → where you are weakest (actionable) → settings (a corner).
     var body: some View {
-        ScrollView {
-            VStack(spacing: Space.s4) {
-                self.profileHeader
-                self.statsRow
-                self.weakSection
-                self.proCard
-                // Everything under 創作 is account-scoped (圖鑑管理 and the
-                // public page both live on the server), so guests get the
-                // whole group hidden rather than a row that can only fail.
-                if !self.isGuest {
-                    MeCreationGroup(uid: self.user?.username)
+        VStack(spacing: 0) {
+            TujiNavBar(leading: .none) {
+                NavigationLink(value: NavRoute.settings) {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 19, weight: .semibold))
+                        .foregroundStyle(.tujiInk)
+                        .frame(width: 44, height: 48)
+                        .contentShape(.rect)
                 }
-                MeAccountGroup(
-                    isGuest: self.isGuest,
-                    shareURL: Self.shareURL,
-                    onFeedback: { self.showFeedback = true }
-                )
-                #if DEBUG
-                // Dev-only Bearer smoke test. Compiled out of release /
-                // App Store builds so end users never see it.
-                DebugSmokeSection(isGuest: self.isGuest)
-                #endif
-                self.signOutButton
+                .accessibilityLabel(Text("設定"))
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.top, Space.s3)
-            .padding(.bottom, Space.s6)
+            self.scroller
         }
         .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
-        // multitasking window title) — `profileHeader` above is the visible
-        // title, so the system nav bar itself stays hidden.
-        .navigationTitle("我的")
+        // multitasking window title) — the identity row is the visible title,
+        // so the system nav bar itself stays hidden.
+        .navigationTitle("我")
         .toolbar(.hidden, for: .navigationBar)
         .refreshable {
             if !self.isGuest {
@@ -131,94 +116,53 @@ struct MeView: View {
                 await self.vm.load(progress: self.progress)
             }
         }
-        .sheet(isPresented: self.$showPaywall) {
-            PaywallView()
-        }
-        .sheet(isPresented: self.$showFeedback) {
-            FeedbackSheet()
-        }
-        .tujiPrompt(
-            isPresented: self.$showSignOutConfirm,
-            style: .confirmation,
-            title: "要登出 Tuji 嗎？",
-            message: "收藏與設定會保留在伺服器。",
-            primary: TujiPromptAction("登出") {
-                Task { await self.auth.signOut() }
-            },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
-        )
     }
 
-    // MARK: - Profile header
+    private var scroller: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.s5) {
+                self.identityRow
+                MeProgressSections()
+                self.weakSection
+                    .padding(.horizontal, Space.s4)
+                #if DEBUG
+                // Dev-only Bearer smoke test. Compiled out of release /
+                // App Store builds so end users never see it.
+                DebugSmokeSection(isGuest: self.isGuest)
+                    .padding(.horizontal, Space.s4)
+                #endif
+            }
+            .padding(.bottom, Space.s6)
+        }
+    }
 
-    private var profileHeader: some View {
-        VStack(spacing: Space.s3) {
+    // MARK: - Identity
+
+    /// A row, not a hero. Who you are is the *lightest* thing on this screen —
+    /// a 92pt centred avatar over your own name was the app telling you about
+    /// yourself, which you already know. What you came for is below it.
+    private var identityRow: some View {
+        HStack(spacing: Space.s3) {
             ProfileAvatar(
                 avatar: self.isGuest ? nil : self.user?.avatar,
                 fallbackPose: .face,
-                size: 92
+                size: 48
             )
-            Text(self.displayName)
-                .font(.tujiH3)
-                .foregroundStyle(.tujiInk)
-            if let handle = self.handle {
-                Text("@\(handle)")
-                    .font(.tujiMono)
-                    .foregroundStyle(.tujiInk3)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, Space.s4)
-    }
-
-    // MARK: - Stats row
-
-    private var statsRow: some View {
-        HStack(spacing: 0) {
-            self.statCell(value: "\(self.learnedCount)", label: "已學字")
-            Divider().frame(height: 36)
-            self.statCell(
-                value: "\(self.progress.streak?.current ?? 0)",
-                label: "連勝天",
-                icon: "flame.fill",
-                iconTint: .tujiTeal
-            )
-            Divider().frame(height: 36)
-            self.statCell(value: "\(self.cache.favoriteIds.count)", label: "書籤")
-        }
-        .padding(.vertical, Space.s3)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.2), lineWidth: 1)
-        )
-    }
-
-    private func statCell(
-        value: String,
-        label: LocalizedStringKey,
-        icon: String? = nil,
-        iconTint: Color = .clear
-    )
-        -> some View
-    {
-        VStack(spacing: 4) {
-            HStack(spacing: 4) {
-                if let icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(iconTint)
-                }
-                Text(value)
-                    .font(.system(size: 22, weight: .heavy))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(self.displayName)
+                    .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
-                    .contentTransition(.numericText())
+                    .lineLimit(1)
+                if let handle = self.handle {
+                    Text(verbatim: "\(tujiLocalized("UID")): \(handle)")
+                        .font(.tujiMono)
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                }
             }
-            Text(label)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity)
+        .padding(.horizontal, Space.s4)
     }
 
     // MARK: - Weak section
@@ -313,16 +257,6 @@ struct MeView: View {
 
     // MARK: - List group
 
-    private var proCard: some View {
-        Button {
-            self.showPaywall = true
-        } label: {
-            self.proEntry
-        }
-        .buttonStyle(.plain)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-    }
-
     private var proEntry: some View {
         HStack(spacing: Space.s3) {
             ZStack {
@@ -368,27 +302,6 @@ struct MeView: View {
             )
         )
         .contentShape(Rectangle())
-    }
-
-    private var signOutButton: some View {
-        Button {
-            if self.isGuest {
-                self.auth.exitGuestMode()
-            } else {
-                self.showSignOutConfirm = true
-            }
-        } label: {
-            Text(self.isGuest ? LocalizedStringKey("登入 / 註冊") : LocalizedStringKey("登出"))
-                .font(.system(size: 15, weight: .heavy))
-                .foregroundStyle(self.isGuest ? .tujiTeal : .tujiAlert)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s3)
-                .background(
-                    self.isGuest ? Color.tujiTealSoft : .tujiAlert.opacity(0.08),
-                    in: .rect(cornerRadius: Radius.r0)
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Helpers
