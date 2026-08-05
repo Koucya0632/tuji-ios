@@ -433,6 +433,69 @@ struct NewFlowCoordinatorTests {
 
     // MARK: - Tile spell-check (the production step's correctness decision)
 
+    /// Advance past whatever stage is on screen, without answering wrongly —
+    /// enough to walk the interleaved queue to the first 拼字 task.
+    private func clearCurrentStage(_ c: NewFlowCoordinator) {
+        switch c.current?.kind {
+        case .recognize: c.resolveRecognize(rating: .hard)
+        case .identify: c.resolveIdentify(correct: true)
+        case .spellTiles, .none: break
+        }
+    }
+
+    @Test
+    func pickingTilesFillsSlotsAndDimsThePool() throws {
+        // The board the view draws had no value to assert on: it was six
+        // computed properties over `tilePicked` × `tileUnits(for:)`, private to
+        // TilesView. `pickTile` and `unpickTile` had no tests at all.
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        // Walk to the first spell task.
+        while c.current?.kind != .spellTiles, c.current != nil {
+            self.clearCurrentStage(c)
+        }
+        let board = try #require(c.spellBoard)
+        #expect(board.slots.allSatisfy { $0.unit == nil })
+        #expect(board.pool.allSatisfy { !$0.used })
+        #expect(board.verdict == nil)
+
+        c.pickTile(0)
+        let afterPick = try #require(c.spellBoard)
+        #expect(afterPick.slots[0].unit == board.pool[0].unit)
+        #expect(afterPick.pool[0].used)
+        // A tile already placed cannot be placed twice.
+        c.pickTile(0)
+        #expect(try #require(c.spellBoard).slots[1].unit == nil)
+
+        c.unpickTile(atSlot: 0)
+        let afterUnpick = try #require(c.spellBoard)
+        #expect(afterUnpick.slots[0].unit == nil)
+        #expect(!afterUnpick.pool[0].used)
+    }
+
+    @Test
+    func aWrongBoardFreezesWithItsVerdictAndTheAnswerUnderIt() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        while c.current?.kind != .spellTiles, c.current != nil {
+            self.clearCurrentStage(c)
+        }
+        let item = try #require(c.current).item
+        let units = c.tileUnits(for: item)
+        // The scramble's own order is never the answer (pinned above), so
+        // filling the board in index order is a guaranteed miss.
+        for index in units.indices {
+            c.pickTile(index)
+        }
+
+        let board = try #require(c.spellBoard)
+        #expect(board.verdict == false)
+        #expect(board.isLocked)
+        #expect(board.slots.allSatisfy { $0.unit != nil })
+        // 正解 renders from the board, spaces intact — not re-derived by the view.
+        #expect(board.subject == c.spellSubject(for: item))
+    }
+
     @Test
     func tilesMatchScoresTheSpelling() throws {
         let queue = try self.makeQueue()

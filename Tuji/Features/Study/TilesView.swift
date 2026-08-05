@@ -14,6 +14,8 @@ import Nuke
 import NukeUI
 import SwiftUI
 
+typealias SpellBoard = NewFlowCoordinator.SpellBoard
+
 struct TilesView: View {
     let coord: NewFlowCoordinator
     let item: StudyQueueItem
@@ -22,46 +24,32 @@ struct TilesView: View {
     @Environment(WordsStore.self) private var words
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var units: [String] {
-        self.coord.tileUnits(for: self.item)
-    }
-
-    private var board: TileBoard {
-        NewFlowCoordinator.tileBoard(for: self.item)
-    }
-
-    /// The original subject (spaces intact) — the 正解 reveal shows this.
-    private var subject: String {
-        self.coord.spellSubject(for: self.item)
-    }
-
-    /// Tiles tapped into slots, in tap order — owned by the coordinator so the
-    /// assemble-and-compare is a testable decision, not view state.
-    private var picked: [Int] {
-        self.coord.tilePicked
-    }
-
-    private var boardFull: Bool {
-        self.picked.count == self.units.count
-    }
-
-    private var isCorrect: Bool {
-        self.coord.tilesMatch(self.picked, for: self.item)
-    }
-
-    /// Result colours apply once the board is full (the coordinator locks at
-    /// that moment via tilesAnswer).
-    private var showResult: Bool {
-        self.boardFull && self.coord.tiLocked
+    /// One value from the coordinator, already resolved.
+    ///
+    /// This view used to hold six derived properties over `tilePicked` and
+    /// `tileUnits(for:)` — including the verdict, which the coordinator had
+    /// already computed and discarded. Two readers of the same index pair, and
+    /// they disagreed about bounds: the coordinator's was checked, this one's
+    /// was a trap.
+    private var board: NewFlowCoordinator.SpellBoard? {
+        self.coord.spellBoard
     }
 
     var body: some View {
+        // No board means the coordinator has moved off this task — one frame
+        // during a task swap. Draw nothing rather than index into a stale pair.
+        if let board = self.board {
+            self.content(board)
+        }
+    }
+
+    private func content(_ board: SpellBoard) -> some View {
         VStack(spacing: Space.s3) {
-            self.bubble
+            self.bubble(board)
             self.card
             Spacer(minLength: 0)
-            self.slotsRow
-            self.tilePool
+            self.slotsRow(board)
+            self.tilePool(board)
         }
         .padding(.horizontal, Space.s4)
         .padding(.bottom, Space.s4)
@@ -77,10 +65,10 @@ struct TilesView: View {
     /// The instruction is not decoration — 拼出這個字 and 排出這個字的讀音 are
     /// different tasks — so it stays, as a line rather than as a character.
     @ViewBuilder
-    private var bubble: some View {
-        if self.showResult, !self.isCorrect {
+    private func bubble(_ board: SpellBoard) -> some View {
+        if board.verdict == false {
             MascotSpeechBubble(pose: .peek, text: "差一點，看看正解")
-        } else if !self.showResult {
+        } else if board.verdict == nil {
             Text(
                 self.coord.spellUsesReading(for: self.item)
                     ? LocalizedStringKey("排出這個字的讀音")
@@ -146,12 +134,12 @@ struct TilesView: View {
     /// Answer slots — one box per unit, one row per token (the visual stand-in
     /// for the space, which is never a tile); tapping a filled box takes that
     /// unit back out (before the board locks).
-    private var slotsRow: some View {
+    private func slotsRow(_ board: SpellBoard) -> some View {
         VStack(spacing: Space.s2) {
-            ForEach(0..<self.board.tokenUnits.count, id: \.self) { row in
+            ForEach(0..<board.tokenUnits.count, id: \.self) { row in
                 HStack(spacing: Space.s1) {
-                    ForEach(self.slotRange(ofRow: row), id: \.self) { slot in
-                        self.slotBox(at: slot)
+                    ForEach(self.slotRange(ofRow: row, in: board), id: \.self) { slot in
+                        self.slotBox(board.slots[slot], at: slot, verdict: board.verdict)
                     }
                 }
             }
@@ -159,8 +147,8 @@ struct TilesView: View {
         // After the wrong-freeze, reveal the correct spelling under the red
         // board so the peek sheet isn't the only place carrying the answer.
         .overlay(alignment: .bottom) {
-            if self.showResult, !self.isCorrect {
-                Text("正解 \(self.subject)")
+            if board.verdict == false {
+                Text("正解 \(board.subject)")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .offset(y: 22)
@@ -169,51 +157,49 @@ struct TilesView: View {
         .padding(.bottom, Space.s2)
     }
 
-    /// Flat slot indices covered by a token row (picked stays one flat list).
-    private func slotRange(ofRow row: Int) -> Range<Int> {
-        let counts = self.board.tokenUnits.map(\.count)
+    /// Flat slot indices covered by a token row (slots stay one flat list).
+    private func slotRange(ofRow row: Int, in board: SpellBoard) -> Range<Int> {
+        let counts = board.tokenUnits.map(\.count)
         let start = counts.prefix(row).reduce(0, +)
         return start..<(start + counts[row])
     }
 
-    @ViewBuilder
-    private func slotBox(at slot: Int) -> some View {
-        let unit: String? = slot < self.picked.count ? self.units[self.picked[slot]] : nil
+    private func slotBox(_ slot: SpellBoard.Slot, at index: Int, verdict: Bool?) -> some View {
         Button {
-            self.coord.unpickTile(atSlot: slot)
+            self.coord.unpickTile(atSlot: index)
         } label: {
-            Text(unit ?? " ")
+            Text(slot.unit ?? " ")
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-                .foregroundStyle(self.slotFg)
+                .foregroundStyle(self.slotFg(verdict))
                 .frame(maxWidth: 52)
                 .frame(height: 46)
-                .background(self.slotBg(filled: unit != nil), in: .rect(cornerRadius: Radius.r0))
+                .background(self.slotBg(filled: slot.unit != nil, verdict: verdict))
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.r0)
-                        .stroke(self.slotBorder(filled: unit != nil), lineWidth: 1.5)
+                    Rectangle()
+                        .stroke(self.slotBorder(filled: slot.unit != nil, verdict: verdict), lineWidth: 1.5)
                 )
         }
         .buttonStyle(.plain)
-        .disabled(self.coord.tiLocked || unit == nil)
+        .disabled(verdict != nil || slot.unit == nil)
     }
 
-    private var slotFg: Color {
-        guard self.showResult else { return .tujiInk }
-        return self.isCorrect ? .tujiTeal : .tujiAlert
+    private func slotFg(_ verdict: Bool?) -> Color {
+        guard let verdict else { return .tujiInk }
+        return verdict ? .tujiTeal : .tujiAlert
     }
 
-    private func slotBg(filled: Bool) -> Color {
-        if self.showResult {
-            return (self.isCorrect ? Color.tujiTeal : .tujiAlert).opacity(0.12)
+    private func slotBg(filled: Bool, verdict: Bool?) -> Color {
+        if let verdict {
+            return (verdict ? Color.tujiTeal : .tujiAlert).opacity(0.12)
         }
         return filled ? .tujiTealSoft : .tujiPaper
     }
 
-    private func slotBorder(filled: Bool) -> Color {
-        if self.showResult {
-            return self.isCorrect ? .tujiTeal : .tujiAlert
+    private func slotBorder(filled: Bool, verdict: Bool?) -> Color {
+        if let verdict {
+            return verdict ? .tujiTeal : .tujiAlert
         }
         return filled ? .tujiTeal.opacity(0.5) : .tujiPaper3
     }
@@ -221,46 +207,45 @@ struct TilesView: View {
     /// The scrambled tiles. A used tile stays in place but dims, so the board
     /// doesn't reflow under the user's finger. Multi-unit tiles (chunked long
     /// words, merged yōon kana) get fewer, wider columns.
-    private var tilePool: some View {
-        let hasWideUnits = self.units.contains { $0.count > 1 }
+    private func tilePool(_ board: SpellBoard) -> some View {
+        let hasWideUnits = board.pool.contains { $0.unit.count > 1 }
         return LazyVGrid(
             columns: Array(
                 repeating: GridItem(.flexible(), spacing: Space.s2),
                 count: hasWideUnits
-                    ? max(3, min(5, self.units.count))
-                    : max(4, min(6, self.units.count))
+                    ? max(3, min(5, board.pool.count))
+                    : max(4, min(6, board.pool.count))
             ),
             spacing: Space.s2
         ) {
-            ForEach(0..<self.units.count, id: \.self) { idx in
-                self.tile(at: idx)
+            ForEach(Array(board.pool.enumerated()), id: \.offset) { index, tile in
+                self.tile(tile, at: index, locked: board.isLocked)
             }
         }
     }
 
-    @ViewBuilder
-    private func tile(at idx: Int) -> some View {
-        let used = self.picked.contains(idx)
-        Button {
-            guard !self.coord.tiLocked, !used else { return }
+    private func tile(_ tile: SpellBoard.Tile, at index: Int, locked: Bool) -> some View {
+        let used = tile.used
+        return Button {
+            guard !locked, !used else { return }
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            self.coord.pickTile(idx, for: self.item)
+            self.coord.pickTile(index)
         } label: {
-            Text(self.units[idx])
+            Text(tile.unit)
                 .font(.system(size: 22, weight: .heavy, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(used ? .tujiInk3 : .tujiInk)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .background(used ? Color.tujiPaper : .tujiPaper, in: .rect(cornerRadius: Radius.r0))
+                .background(.tujiPaper)
                 .overlay(
-                    RoundedRectangle(cornerRadius: Radius.r0)
+                    Rectangle()
                         .stroke(used ? Color.tujiRule.opacity(0.15) : .tujiRule.opacity(0.35), lineWidth: 1.5)
                 )
                 .opacity(used ? 0.45 : 1)
         }
         .buttonStyle(.plain)
-        .disabled(self.coord.tiLocked || used)
+        .disabled(locked || used)
     }
 }

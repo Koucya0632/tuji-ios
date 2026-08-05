@@ -370,6 +370,67 @@ final class NewFlowCoordinator {
 
     // MARK: - 拼字塊 (letter tiles)
 
+    /// The spell board as the view should draw it.
+    ///
+    /// `tilePicked` is one flat `[Int]` shared across every word, indexing a
+    /// per-item, per-attempt unit list. Handing the view those two raw pieces
+    /// meant both sides had to subscript one with the other — and they disagreed
+    /// about what an out-of-range index means: `tilesMatch` bounds-checks and
+    /// returns `false`, `TilesView.slotBox` did not and would trap. One frame
+    /// during the `.id(currentPresentationId)` swap between a 7-tile board and a
+    /// 3-tile board hits both readers at once.
+    ///
+    /// The view also re-derived the verdict the coordinator had just computed
+    /// and thrown away. It is stored now, so "did they get it right" is answered
+    /// once, where the answer is made.
+    struct SpellBoard: Equatable {
+        struct Slot: Equatable {
+            /// nil = still empty.
+            var unit: String?
+        }
+
+        struct Tile: Equatable {
+            var unit: String
+            var used: Bool
+        }
+
+        var slots: [Slot]
+        var pool: [Tile]
+        /// The original subject, spaces intact — what the 正解 line reveals.
+        var subject: String
+        /// How the units group into rows (a multi-word subject spells one row
+        /// per word).
+        var tokenUnits: [[String]]
+        /// nil until the board fills and locks.
+        var verdict: Bool?
+
+        var isLocked: Bool {
+            self.verdict != nil
+        }
+    }
+
+    /// Latched when the board fills, cleared when it resets. Also what the view
+    /// used to reconstruct as `boardFull && tiLocked`.
+    private(set) var tilesVerdict: Bool?
+
+    var spellBoard: SpellBoard? {
+        guard let task = current, task.kind == .spellTiles else { return nil }
+        let item = task.item
+        let units = self.tileUnits(for: item)
+        let placed = self.tilePicked.filter { units.indices.contains($0) }
+        return SpellBoard(
+            slots: (0..<units.count).map { slot in
+                SpellBoard.Slot(unit: slot < placed.count ? units[placed[slot]] : nil)
+            },
+            pool: units.enumerated().map { index, unit in
+                SpellBoard.Tile(unit: unit, used: self.tilePicked.contains(index))
+            },
+            subject: self.spellSubject(for: item),
+            tokenUnits: Self.tileBoard(for: item).tokenUnits,
+            verdict: self.tilesVerdict
+        )
+    }
+
     /// Scrambled tiles, seeded per (item, attempt) — see the core in
     /// NewFlowTasks.swift.
     func tileUnits(for item: StudyQueueItem) -> [String] {
@@ -378,13 +439,16 @@ final class NewFlowCoordinator {
 
     /// Tap a pool tile into the next slot. Auto-checks when the board fills. A
     /// no-op once locked, off a non-spell task, or if the tile is already placed.
-    func pickTile(_ idx: Int, for item: StudyQueueItem) {
+    func pickTile(_ idx: Int) {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles,
               !self.tilePicked.contains(idx)
         else { return }
         self.tilePicked.append(idx)
-        if self.tilePicked.count == self.tileUnits(for: item).count {
-            self.tilesAnswer(correct: self.tilesMatch(self.tilePicked, for: item))
+        let units = self.tileUnits(for: task.item)
+        if self.tilePicked.count == units.count {
+            let correct = self.tilesMatch(self.tilePicked, for: task.item)
+            self.tilesVerdict = correct
+            self.tilesAnswer(correct: correct)
         }
     }
 
@@ -431,6 +495,7 @@ final class NewFlowCoordinator {
             // board. Wrong answers keep the picks so the red board stays until
             // advanceFromPeek() requeues + clears.
             self.tilePicked = []
+            self.tilesVerdict = nil
         } else {
             self.mistakes[task.item.word.id, default: 0] += 1
             self.peek = task.item.word
@@ -455,6 +520,7 @@ final class NewFlowCoordinator {
         case .spellTiles:
             self.tiLocked = false
             self.tilePicked = []
+            self.tilesVerdict = nil
             self.spellAttempts[task.item.word.id, default: 0] += 1
             self.requeueCurrentTask()
         case .recognize:
