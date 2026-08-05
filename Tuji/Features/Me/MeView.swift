@@ -63,15 +63,6 @@ struct MeView: View {
         self.user == nil
     }
 
-    /// 已學字 = distinct words the account has studied at least once. The real
-    /// value is server-derived: it's the sum of per-category `seen` counts from
-    /// /api/users/progress (one user_cards row per studied word). Guests have no
-    /// server record, so they fall back to the on-device learned set.
-    private var learnedCount: Int {
-        if self.isGuest { return self.cache.learnedIds.count }
-        return self.progress.categoryProgress.reduce(0) { $0 + $1.seen }
-    }
-
     /// 我 is no longer a directory of six entry points — it *is* your progress
     /// (D.8). The two menu cards are gone and their entries went where the thing
     /// they open actually lives: 圖鑑管理 to the 圖鑑 tab's 管理 → (only when the
@@ -253,55 +244,6 @@ struct MeView: View {
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
-    }
-
-    // MARK: - List group
-
-    private var proEntry: some View {
-        HStack(spacing: Space.s3) {
-            ZStack {
-                Circle()
-                    .fill(.white.opacity(0.22))
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 18, weight: .heavy))
-                    .foregroundStyle(.tujiEye)
-            }
-            .frame(width: 42, height: 42)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Tuji Pro")
-                    .font(.system(size: 17, weight: .heavy))
-                    .foregroundStyle(.white)
-                Text("擴充自製圖鑑容量，解鎖高精度 AI 辨識")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.white.opacity(0.82))
-                    .lineLimit(2)
-            }
-
-            Spacer()
-
-            Text(self.isPro ? LocalizedStringKey("已啟用") : LocalizedStringKey("升級"))
-                .font(.system(size: 12, weight: .heavy))
-                .foregroundStyle(.tujiInk)
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, 7)
-                .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .heavy))
-                .foregroundStyle(.white.opacity(0.72))
-        }
-        .padding(.horizontal, Space.s3)
-        .padding(.vertical, Space.s3)
-        .frame(minHeight: 82)
-        .background(
-            LinearGradient(
-                colors: [.tujiTeal, .tujiTeal],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .contentShape(Rectangle())
     }
 
     // MARK: - Helpers

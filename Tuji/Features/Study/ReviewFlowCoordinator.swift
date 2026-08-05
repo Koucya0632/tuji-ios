@@ -73,9 +73,6 @@ final class ReviewFlowCoordinator {
     var retriedIds: Set<String> = []
     /// Distinct words fully done (won't reappear). Drives the progress bar.
     var passedCount: Int = 0
-    /// Consecutive correct answers (resets on a miss). At 3+ the question
-    /// bubble swaps the mascot to its cheer pose.
-    private(set) var combo = 0
     /// Times each word has been presented *and left* — folds into the MCQ
     /// option seed so a re-test reshuffles instead of letting "the answer was
     /// C" stand in for the word.
@@ -166,7 +163,6 @@ final class ReviewFlowCoordinator {
         self.suggested = self.computeSuggestion(correct: ok, elapsed: elapsed, mastery: curr.mastery)
         self.picked = choice
         self.wasCorrect = ok
-        self.combo = ok ? self.combo + 1 : 0
         UIImpactFeedbackGenerator(
             style: ok ? .light : .medium
         ).impactOccurred()

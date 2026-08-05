@@ -331,13 +331,12 @@ private struct TabBarButton: View {
                     .font(.tujiLabel)
                     // No tracking, unlike every other tujiLabel: the +0.5pt is a
                     // Latin adjustment, and on a full-width CJK glyph it only
-                    // buys width these five columns do not have. GenSenRounded
-                    // is wider than the system face, so the margin got thinner.
+                    // buys width. GenSenRounded is wider than the system face.
                     //
-                    // Five equal columns leave ~78pt each, and 13pt CJK labels
-                    // barely fit ("コミュニティ" is six full-width glyphs).
-                    // Scaling down beats wrapping; the real fix is the four-tab
-                    // IA, which is a later milestone.
+                    // Four columns leave ~98pt each, which "コミュニティ" (six
+                    // full-width glyphs at 13pt) now clears. The scale factor
+                    // stays for the accessibility text sizes, where truncation
+                    // is the expected behaviour rather than a layout failure.
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }

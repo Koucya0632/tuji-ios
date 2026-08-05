@@ -34,11 +34,6 @@ final class NewFlowCoordinator {
     /// Words that fully cleared all three stages (drives the header count).
     private(set) var clearedWords = 0
 
-    /// Consecutive correct quiz answers (選字/拼字; resets on a miss). At 3+
-    /// the question bubbles swap the mascot to its cheer pose — a tiny
-    /// momentum reward that costs nothing but reuses existing art.
-    private(set) var combo = 0
-
     // Transient per-kind UI state (the task views read these).
     var recRating: SRSRating?
     var recLocked: Bool = false
@@ -359,11 +354,9 @@ final class NewFlowCoordinator {
                 Int(Date().timeIntervalSince(shownAt) * 1000)
         }
         if correct {
-            self.combo += 1
             self.identifyCleared.insert(task.item.word.id)
             self.completeCurrentTask()
         } else {
-            self.combo = 0
             self.mistakes[task.item.word.id, default: 0] += 1
             self.peek = task.item.word
         }
@@ -433,14 +426,12 @@ final class NewFlowCoordinator {
     func resolveTiles(correct: Bool) {
         guard let task = current, task.kind == .spellTiles else { return }
         if correct {
-            self.combo += 1
             self.completeCurrentTask()
             // The next spell task (whenever it surfaces) starts from an empty
             // board. Wrong answers keep the picks so the red board stays until
             // advanceFromPeek() requeues + clears.
             self.tilePicked = []
         } else {
-            self.combo = 0
             self.mistakes[task.item.word.id, default: 0] += 1
             self.peek = task.item.word
         }
