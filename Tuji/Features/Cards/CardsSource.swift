@@ -1,6 +1,6 @@
 // Which batch of words the 圖鑑 grid is showing.
 //
-// The grid used to have one filter row — categories, with 自製圖鑑 and 社群圖鑑
+// The grid used to have one filter row — categories, with 自製圖鑑 and 物見
 // sitting in it as if they were themes like "kitchen". They are not themes, they
 // are *where a word came from*, and mixing the two axes into one row meant the
 // user could never ask "show me only the ones I made".

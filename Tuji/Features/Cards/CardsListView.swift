@@ -182,7 +182,7 @@ struct CardsListView: View {
         switch self.source {
         case .bookmarked: "你加書籤的字會出現在這裡"
         case .mine: "用右上角的相機拍一張，就會多一張卡片"
-        case .taken: "在社群收進的字會出現在這裡"
+        case .taken: "在物見收進的字會出現在這裡"
         case .official, nil: nil
         }
     }

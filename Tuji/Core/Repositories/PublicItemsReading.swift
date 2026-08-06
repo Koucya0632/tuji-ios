@@ -2,7 +2,7 @@ import Foundation
 
 /// Narrow role carved off `AtlasRepository` for reading other users' public 圖鑑
 /// items — by lemma for `WordCommunityAtlasSection`, by slug for the 圖鑑 page's
-/// 社群圖鑑 cards (see CONTEXT.md → architecture / role seams).
+/// 物見 cards (see CONTEXT.md → architecture / role seams).
 ///
 /// `LiveAtlasRepository` already implements it, so it conforms for free.
 @MainActor

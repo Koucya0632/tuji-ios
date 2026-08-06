@@ -13,7 +13,7 @@ enum StudyCategoryDefaults {
 }
 
 /// One-time, per-account migration for people whose settings predate the
-/// 社群圖鑑 study theme. Keeping the marker per account avoids one user's
+/// 物見 study theme. Keeping the marker per account avoids one user's
 /// migration suppressing it for another account on the same device.
 struct CommunityStudyCategoryMigration {
     private let defaults: UserDefaults

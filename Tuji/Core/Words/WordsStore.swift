@@ -55,7 +55,7 @@ final class WordsStore {
             )
             var merged = resp.words
             // The two personal sources are fetched independently and each is
-            // allowed to fail on its own: a 社群圖鑑 outage must not also cost
+            // allowed to fail on its own: a 物見 outage must not also cost
             // the user their 自製圖鑑, and neither may take down the catalog.
             let lang = settings.uiLanguage.contentLanguageCode
             let learning = settings.learningDirection.rawValue

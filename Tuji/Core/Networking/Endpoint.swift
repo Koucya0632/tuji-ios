@@ -17,7 +17,7 @@ enum Endpoint {
     case usersProgress
     case usersMastery
     case usersCustomWords(lang: String, learning: String)
-    /// Saved 公開圖鑑 items, shaped as words for the 圖鑑 page's 社群圖鑑 theme.
+    /// Saved 公開圖鑑 items, shaped as words for the 圖鑑 page's 物見 theme.
     case usersSavedWords(lang: String, learning: String)
     case usersTopWords(type: String, limit: Int)
     case usersDeleteAccount
@@ -78,7 +78,7 @@ enum Endpoint {
     /// so an author who just edited their public identity sees the new one
     /// instead of Vercel's 30-minute copy. Visitors send nil and keep the cache.
     case atlasPublicAuthor(handle: String, cacheBust: String?)
-    /// One public item by slug — the 圖鑑 page's 社群圖鑑 cards open through this.
+    /// One public item by slug — the 圖鑑 page's 物見 cards open through this.
     case atlasPublicItem(slug: String, lang: String)
     /// Save / unsave a community item (auth required; consumption quota).
     case atlasPublicSave(slug: String)

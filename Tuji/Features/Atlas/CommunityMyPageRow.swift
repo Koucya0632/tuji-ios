@@ -1,7 +1,7 @@
-// 「我的公開頁」 — the row at the top of 社群 that leads to your own author page.
+// 「我的公開頁」 — the row at the top of 物見 that leads to your own author page.
 //
 // This is the new home of the 我的主頁 entry that used to sit in a menu card on
-// 我的 (D.7.1). It looks like a contradiction — 社群 is other people's work, and
+// 我的 (D.7.1). It looks like a contradiction — 物見 is other people's work, and
 // the four-tab axis runs 時間 → 內容 → 他人 → 自己, so "you" belongs in the last
 // tab. The reason it lives here anyway: what this row opens is not *you*, it is
 // **the version of you other people see**. It only makes sense beside their

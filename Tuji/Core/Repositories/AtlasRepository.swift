@@ -130,7 +130,7 @@ struct LiveAtlasRepository {
         return response.items
     }
 
-    /// One public item by slug. The 圖鑑 page's 社群圖鑑 cards carry only the
+    /// One public item by slug. The 圖鑑 page's 物見 cards carry only the
     /// word shape, so opening one fetches the parts the detail screen needs and
     /// the word payload deliberately doesn't carry: author, save count, slug.
     func publicItem(slug: String) async throws -> AtlasPublicItem {

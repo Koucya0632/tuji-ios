@@ -10,7 +10,7 @@
 import Foundation
 
 extension String {
-    /// The public slug when this is a saved 社群圖鑑 word id (`saved:<slug>`),
+    /// The public slug when this is a saved 物見 word id (`saved:<slug>`),
     /// else nil. The prefix is the routing decision: these belong to someone
     /// else, so they open on the public detail rather than the word screen —
     /// the same way `atlas:` marks the user's own captures.

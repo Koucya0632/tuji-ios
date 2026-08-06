@@ -58,12 +58,13 @@ struct AtlasPublicFeedView: View {
         // the first row of content.
         .padding(.top, Space.s3)
         .background(.tujiPaper)
-        // Metadata only (VoiceOver, back-button label on pushed screens,
-        // multitasking window title) — nothing draws it. The 公開圖鑑 title that
-        // used to head this screen said what 探索/已收藏 and the collections
-        // themselves already say, and it was the one title on a tab root with no
-        // controls beside it, so it cost a full 73pt to repeat them.
-        .navigationTitle("公開圖鑑")
+        // Metadata only (VoiceOver, multitasking window title) — nothing draws
+        // it, and the pushed collection detail hides its bar too, so not even a
+        // back-button label borrows it. The title that used to head this screen
+        // said what 探索/已收藏 and the collections themselves already say, and
+        // it was the one title on a tab root with no controls beside it, so it
+        // cost a full 73pt to repeat them.
+        .navigationTitle("大家的物見")
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: self.$selectedCollection) { collection in
             AtlasCollectionDetailView(slug: collection.slug, preview: collection)
@@ -106,7 +107,7 @@ struct AtlasPublicFeedView: View {
             selection: self.$section
         )
         .padding(.bottom, Space.s3)
-        .accessibilityLabel(Text("公開圖鑑區段"))
+        .accessibilityLabel(Text("物見區段"))
     }
 
     private var content: some View {

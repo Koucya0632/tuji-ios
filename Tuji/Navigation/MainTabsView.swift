@@ -1,4 +1,4 @@
-// 4-tab post-login shell: 今天 / 圖鑑 / 社群 / 我.
+// 4-tab post-login shell: 今天 / 圖鑑 / 物見 / 我.
 //
 // Each tab owns its own NavigationStack so cross-tab pushes don't interfere.
 // The bar is custom (not SwiftUI TabView) so it can be an ink block rather than
@@ -159,12 +159,12 @@ struct MainTabsView: View {
     ///
     /// Root visibility is the only signal that holds however a screen was
     /// pushed — a path value, a view-based link (設定's pickers), or a
-    /// `navigationDestination(item:)` (社群's collection cards, which carry a
+    /// `navigationDestination(item:)` (物見's collection cards, which carry a
     /// preview model no route value could). `NavigationPath.count` sees only
     /// the first kind.
     ///
     /// The pager's swipe guard used to read the count, and the bug was
-    /// reproducible: 社群 → tap a collection card pushes via
+    /// reproducible: 物見 → tap a collection card pushes via
     /// `navigationDestination(item:)`, which never touches `communityPath`, so
     /// the count stayed 0, the horizontal swipe stayed live *on top of* the
     /// pushed detail, and it raced NavigationStack's own edge-swipe-to-pop —
@@ -174,7 +174,7 @@ struct MainTabsView: View {
     }
 
     /// The floating bar steps aside for a focused study session, and for
-    /// anything opened from 我 or 社群: both tabs are hubs of entry points, and
+    /// anything opened from 我 or 物見: both tabs are hubs of entry points, and
     /// a screen opened from one owns the window until the user comes back.
     ///
     /// A different policy from the swipe guard, over the same signal — 今天 and

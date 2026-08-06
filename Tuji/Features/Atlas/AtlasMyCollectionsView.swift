@@ -135,7 +135,7 @@ struct AtlasMyCollectionsView: View {
         case .pending, .pendingAuto, .pendingReview:
             tujiLocalized("這會取消送審並刪除合集，原始圖鑑卡片不受影響。")
         case .approved:
-            tujiLocalized("這會立即將合集從公開圖鑑下架並刪除，原始圖鑑卡片不受影響。")
+            tujiLocalized("這會立即將合集從物見下架並刪除，原始圖鑑卡片不受影響。")
         default:
             tujiLocalized("這個合集會被永久刪除，原始圖鑑卡片不受影響。")
         }
@@ -313,7 +313,7 @@ struct AtlasCollectionEditView: View {
             title: "要公開這個合集嗎？",
             message: self.vm.unpublishedMemberCount > 0
                 ? "將同時送審 \(self.vm.unpublishedMemberCount) 個尚未公開的項目。"
-                : "送出後會先經過審核，通過才會出現在公開圖鑑。",
+                : "送出後會先經過審核，通過才會出現在物見。",
             detail: "集合與所有項目全部通過後，才會一起公開。",
             // The VM owns the publish; what a publish refreshes is
             // AtlasMutationRefresh's call. The view only hands over the
@@ -327,7 +327,7 @@ struct AtlasCollectionEditView: View {
             isPresented: self.$showWithdrawConfirm,
             style: .confirmation,
             title: "要取消公開這個合集嗎？",
-            message: "合集會從公開圖鑑移除，裡面的項目仍然是公開的。",
+            message: "合集會從物見移除，裡面的項目仍然是公開的。",
             detail: "之後隨時可以再公開一次。",
             primary: TujiPromptAction("取消公開") {
                 Task {
@@ -567,8 +567,8 @@ struct AtlasCollectionEditView: View {
             }
             if case let .done(moderation) = self.vm.submitState {
                 Text(moderation?.published == true
-                    ? tujiLocalized("已通過審核，合集現在出現在公開圖鑑了。")
-                    : tujiLocalized("已送出，審核通過後就會出現在公開圖鑑。"))
+                    ? tujiLocalized("已通過審核，合集現在出現在物見了。")
+                    : tujiLocalized("已送出，審核通過後就會出現在物見。"))
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
             }
