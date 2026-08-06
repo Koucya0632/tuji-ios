@@ -51,10 +51,15 @@ struct WordTile: View {
                             .padding(.bottom, Space.s1)
                     }
 
+                    // Two lines are reserved whether or not the word needs
+                    // them, so the reading / 中文 / countdown under a short word
+                    // sit on the same line as the ones under a wrapped
+                    // neighbour. `reservesSpace` rather than a fixed `.frame`,
+                    // which would stop scaling with Dynamic Type.
                     Text(self.word.word)
                         .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
-                        .lineLimit(2)
+                        .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
 
                     if let reading = self.word.reading, !reading.isEmpty {
@@ -62,6 +67,12 @@ struct WordTile: View {
                             .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
+                            // A clipped reading is worthless — 「くれんじんぐうぉ…」
+                            // tells you nothing about how to say the word — so a
+                            // long one shrinks instead. The longest in the
+                            // dictionary (mrt（たいわんのちかてつ）) needs ~196pt
+                            // against a ~176pt tile.
+                            .minimumScaleFactor(0.8)
                     }
 
                     if self.settings.current.showZh {

@@ -41,7 +41,6 @@ struct AtlasPublicFeedView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            self.header
             // Guests have no public page, and an account with no UID yet has
             // nothing to link to — in both cases the row simply isn't there.
             if let uid = self.myUid {
@@ -55,9 +54,15 @@ struct AtlasPublicFeedView: View {
             self.segmentedControl
             self.content
         }
+        // The 16pt every tab root opens with, now that nothing is drawn above
+        // the first row of content.
+        .padding(.top, Space.s3)
         .background(.tujiPaper)
-        // Tab root (社群), so the visible title is the in-view header below and
-        // the system nav bar stays hidden — same pattern as CardsListView.
+        // Metadata only (VoiceOver, back-button label on pushed screens,
+        // multitasking window title) — nothing draws it. The 公開圖鑑 title that
+        // used to head this screen said what 探索/已收藏 and the collections
+        // themselves already say, and it was the one title on a tab root with no
+        // controls beside it, so it cost a full 73pt to repeat them.
         .navigationTitle("公開圖鑑")
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: self.$selectedCollection) { collection in
@@ -89,17 +94,6 @@ struct AtlasPublicFeedView: View {
                 language: self.targetLanguage
             )
         }
-    }
-
-    // MARK: Header
-
-    /// This tab is other people's work — 我的合集 lives in 我的, with the rest of
-    /// what the user makes.
-    private var header: some View {
-        // One title, not three stacked lines. The English overline said nothing
-        // a reader of this app needs, and the subtitle repeated what the list
-        // below already shows.
-        TujiScreenTitle("公開圖鑑")
     }
 
     // MARK: Content

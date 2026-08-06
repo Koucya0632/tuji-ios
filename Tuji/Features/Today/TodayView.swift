@@ -73,7 +73,6 @@ struct TodayView: View {
             // paper on either side is "a card"; one that reaches the edges is
             // "this part of the screen", and the difference in weight is large.
             VStack(alignment: .leading, spacing: Space.s5) {
-                self.topBar.padding(.horizontal, Space.s4)
                 self.greeting.padding(.horizontal, Space.s4)
                 self.hero
                 self.themesSection
@@ -83,8 +82,8 @@ struct TodayView: View {
         }
         .background(.tujiPaper)
         // Metadata only (VoiceOver, back-button label on pushed screens,
-        // multitasking window title) — the custom `topBar` above is the
-        // visible header, so the system nav bar itself stays hidden.
+        // multitasking window title) — the greeting is the visible title, so
+        // the system nav bar itself stays hidden.
         .navigationTitle("主頁")
         .toolbar(.hidden, for: .navigationBar)
         .refreshable {
@@ -128,23 +127,22 @@ struct TodayView: View {
 
     // MARK: - Top bar
 
-    private var topBar: some View {
-        HStack(spacing: Space.s3) {
-            Text("Tuji")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-            Spacer()
-            NavigationLink(value: NavRoute.search(query: nil)) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.tujiInk2)
-                    .padding(Space.s2)
-                    .background(.tujiPaper, in: .circle)
-                    .overlay(Circle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-            self.streakChip
+    /// The row this used to sit in is gone. It held the word "Tuji" beside these
+    /// two controls — the app's own name, told to someone already inside the app
+    /// — and the row's height came from the search button rather than from the
+    /// word, so deleting the word alone would have freed nothing. The controls
+    /// moved onto the greeting's date line and the whole row went with it,
+    /// worth about 56pt at the top of the tab.
+    private var searchButton: some View {
+        NavigationLink(value: NavRoute.search(query: nil)) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.tujiInk2)
+                .padding(Space.s2)
+                .background(.tujiPaper, in: .circle)
+                .overlay(Circle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
         }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -170,10 +168,19 @@ struct TodayView: View {
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text(self.dateLabel)
-                .font(.tujiLabel)
-                .tracking(2)
-                .foregroundStyle(.tujiInk3)
+            // Search and the streak ride the date rather than the headline
+            // below it: the headline is concatenated precisely so a long
+            // localization wraps as one flowing line, and taking ~90pt off its
+            // right edge would cost it an extra line — more than the row saved.
+            HStack(spacing: Space.s3) {
+                Text(self.dateLabel)
+                    .font(.tujiLabel)
+                    .tracking(2)
+                    .foregroundStyle(.tujiInk3)
+                Spacer(minLength: Space.s3)
+                self.searchButton
+                self.streakChip
+            }
             // Concatenated so long localizations (en/ja) wrap as one flowing
             // line instead of an HStack pushing the name off to the side.
             (Text(self.greetingPrefix)
@@ -578,8 +585,14 @@ struct TodayView: View {
                             .tracking(0.5)
                             .foregroundStyle(.tujiInk3)
                         Spacer()
+                        // Named for where it goes. The strip shows the themes
+                        // *you picked*, so the action beside it is changing
+                        // that pick — but it used to be labelled "全部 →",
+                        // which promises the whole catalogue and delivers a
+                        // settings multi-select. Browsing every theme is 主題's
+                        // job, on 圖鑑.
                         NavigationLink(value: NavRoute.studyCategories) {
-                            Text("全部 →")
+                            Text("學習主題 →")
                                 .font(.tujiLabel)
                                 .tracking(0.5)
                                 .foregroundStyle(.tujiInk)
@@ -667,109 +680,19 @@ struct TodayView: View {
         return known.filter { selected.contains($0.id) }
     }
 
-    /// Completion state for a theme tile. `.mastered` (全精通) wins over
-    /// `.completed` (完成) since all-精通 already implies every word was seen.
-    /// Guests have no mastery / progress data, so this stays `.none`.
+    /// Completion state for a theme tile. The rule itself lives on ThemeStatus
+    /// so 主題 (CategoryIndexView) asks the same question the same way.
     private func themeStatus(for id: String) -> ThemeStatus {
-        let wordsInCat = self.words.byCategory(id)
-        guard !wordsInCat.isEmpty else { return .none }
-        // 全精通: every word in the theme sits at the top tier (精通, score ≥ 80).
-        // An unstudied word reads as 未學, so all-精通 also means all-seen.
-        let allMastered = wordsInCat.allSatisfy {
-            MasteryLevel.from(score: self.mastery.score(for: $0.id)) == .expert
-        }
-        if allMastered { return .mastered }
-        // 完成: the server says every published card in the theme has been
-        // studied at least once (seen == total), even if some later decayed
-        // below 精通.
-        if let row = self.progress.categoryProgress.first(where: { $0.category == id }),
-           row.total > 0, row.seen == row.total
-        {
-            return .completed
-        }
-        return .none
+        ThemeStatus.of(
+            words: self.words.byCategory(id),
+            masteryScore: { self.mastery.score(for: $0) },
+            progress: self.progress.categoryProgress,
+            categoryId: id
+        )
     }
-}
-
-/// Theme-tile completion marker shown on the Today grid.
-enum ThemeStatus {
-    case none
-    case completed
-    case mastered
 }
 
 // MARK: - Subviews
-
-private struct CategoryTile: View {
-    let category: TujiCategory
-    let wordCount: Int
-    var status: ThemeStatus = .none
-
-    private var accent: Color {
-        switch self.status {
-        case .mastered: .tujiInk
-        case .completed: .tujiTeal
-        case .none: .tujiPaper3
-        }
-    }
-
-    var body: some View {
-        VStack(spacing: 3) {
-            Text(self.category.nameZh)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.tujiInk)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            Text("\(self.wordCount) 字")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, Space.s2)
-        .padding(.vertical, Space.s3)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(self.accent, lineWidth: self.status == .none ? 1 : 1.5)
-        )
-        .overlay(alignment: .topTrailing) {
-            ThemeStatusBadge(status: self.status)
-                .padding(5)
-        }
-    }
-}
-
-/// Corner marker on a Today theme tile: 完成 once every word has been seen,
-/// 全精通 once every word reaches 精通. Renders nothing for `.none`.
-private struct ThemeStatusBadge: View {
-    let status: ThemeStatus
-
-    var body: some View {
-        switch self.status {
-        case .none:
-            EmptyView()
-        case .completed:
-            self.pill(text: "完成", icon: "checkmark.seal.fill", tint: .tujiTeal)
-        case .mastered:
-            self.pill(text: "全精通", icon: "crown.fill", tint: .tujiInk)
-        }
-    }
-
-    private func pill(text: String, icon: String, tint: Color) -> some View {
-        HStack(spacing: 2) {
-            Image(systemName: icon)
-                .font(.system(size: 8, weight: .semibold))
-            Text(text)
-                .font(.system(size: 9, weight: .semibold))
-        }
-        .foregroundStyle(tint)
-        .padding(.horizontal, 5)
-        .padding(.vertical, 2)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(Rectangle().stroke(tint.opacity(0.4), lineWidth: 1))
-        .shadow(color: .black.opacity(0.1), radius: 1.5, y: 1)
-    }
-}
 
 /// The two buttons on the ink block. Only one of them is primary at a time, and
 /// which one depends on what the user can actually do right now.
@@ -798,17 +721,30 @@ private struct HeroPillStyle: ButtonStyle {
 
     private var foreground: Color {
         guard self.isEnabled else { return .tujiPaper.opacity(0.4) }
-        return self.role == .primary ? .tujiInk : .tujiPaper
+        return .tujiInk
     }
 
-    /// Disabled buttons sit on the ink block, so C.10's `tujiPaper3` ground is
-    /// the wrong tool — a paper-toned fill reads as a bright patch on ink rather
-    /// than as something switched off.
+    /// Enabled buttons get a *light* ground, disabled ones a translucent wash.
+    ///
+    /// The secondary used to be a 20%-paper fill on ink — a dark grey block on a
+    /// near-black block, which is what "switched off" looks like everywhere else
+    /// in the app. It sat two opacity steps from the genuinely disabled state and
+    /// read as the same thing, so 學新字 looked untappable on every day that had
+    /// reviews due, which is most days.
+    ///
+    /// Two grounds that are both clearly lit, then, with the hierarchy carried by
+    /// hue rather than by brightness: 瞳 means 現在 and marks the recommended
+    /// action, paper is the same "available but not selected" ground the 圖鑑
+    /// chips use. An outline was the other option and the system forbids it —
+    /// a resting element with a border is a bug (see Border.swift).
     private func background(pressed: Bool) -> Color {
         guard self.isEnabled else { return .tujiPaper.opacity(0.08) }
         switch self.role {
+        // Press changes the ground and nothing moves, the same rule BBtn
+        // follows. `tujiPaper3` rather than `tujiPaper2` so the step is as
+        // visible as 瞳's — paper2 → paper3 differ by too little to feel.
         case .primary: return pressed ? .tujiEyeDeep : .tujiEye
-        case .secondary: return .tujiPaper.opacity(pressed ? 0.32 : 0.2)
+        case .secondary: return pressed ? .tujiPaper3 : .tujiPaper2
         }
     }
 }

@@ -58,6 +58,11 @@ struct MasteryBadge: View {
 /// (no user_words row) renders as 未學 with a "尚無紀錄" note and empty bar.
 struct MasteryBar: View {
     let score: Int?
+    /// Soonest scheduled review, when the word has one. The 圖鑑 grid has shown
+    /// this since the countdown was written; the detail page — the one screen
+    /// devoted to a single word — could not answer "when do I see this again?"
+    /// at all.
+    var nextReview: Date?
 
     private var level: MasteryLevel {
         MasteryLevel.from(score: self.score)
@@ -102,6 +107,21 @@ struct MasteryBar: View {
                 }
             }
             .frame(height: Border.bw3)
+
+            // Two Texts, not one interpolated key: `countdownLabel` already
+            // returns a LocalizedStringKey whose values live in the catalogue,
+            // and folding it into "下次複習 · \(…)" would mint a second set of
+            // keys that say the same thing.
+            if let due = self.nextReview {
+                HStack(spacing: Space.s1) {
+                    Text("下次複習")
+                    Text(verbatim: "·")
+                    Text(ReviewSchedule.countdownLabel(until: due))
+                }
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            }
         }
         .accessibilityElement(children: .combine)
     }

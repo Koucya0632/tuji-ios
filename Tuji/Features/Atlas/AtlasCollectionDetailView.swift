@@ -407,8 +407,8 @@ struct AtlasCollectionDetailView: View {
                 VStack(spacing: 0) {
                     LazyVGrid(
                         columns: [
-                            GridItem(.flexible(), spacing: Space.s3),
-                            GridItem(.flexible(), spacing: Space.s3)
+                            GridItem(.flexible(), spacing: Space.s3, alignment: .top),
+                            GridItem(.flexible(), spacing: Space.s3, alignment: .top)
                         ],
                         spacing: Space.s3
                     ) {

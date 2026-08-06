@@ -27,5 +27,7 @@ enum NavRoute: Hashable {
     case studyCategories
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)
+    /// 主題 — the index of every theme. Replaced 圖鑑's theme chip row.
+    case categoryIndex
     case categoryDetail(id: String)
 }

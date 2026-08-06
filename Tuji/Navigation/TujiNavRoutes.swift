@@ -28,6 +28,7 @@ extension View {
                 } else {
                     WordDetailView(id: id)
                 }
+            case .categoryIndex: CategoryIndexView()
             case let .categoryDetail(id): CategoryView(id: id)
             }
         }

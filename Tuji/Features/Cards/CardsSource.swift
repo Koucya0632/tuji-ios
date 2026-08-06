@@ -3,15 +3,22 @@
 // The grid used to have one filter row — categories, with 自製圖鑑 and 社群圖鑑
 // sitting in it as if they were themes like "kitchen". They are not themes, they
 // are *where a word came from*, and mixing the two axes into one row meant the
-// user could never ask "show me only the ones I made, in the kitchen".
+// user could never ask "show me only the ones I made".
 //
-// Source is now its own row, and category is a second row that only applies to
-// dictionary words — a word you photographed has no theme to filter by.
+// Source is now the only row here. Theme moved out of 圖鑑 entirely — a
+// horizontal strip of chips cannot survive a catalogue of forty themes, and a
+// theme already has a page of its own (CategoryView). Browsing by theme is
+// CategoryIndexView's job.
+//
+// There is no `全部` case. "All" is the *absence* of a filter, not a filter, and
+// spelling it as a chip meant two rows each opened with a 全部 that meant
+// something different. Tapping the selected chip again clears it, and `nil` is
+// that unfiltered state — reachable, but not where the tab opens. 圖鑑 opens on
+// `official`, because the dictionary is what the tab is for.
 
 import SwiftUI
 
 enum CardsSource: String, CaseIterable, Identifiable {
-    case all
     /// The published dictionary.
     case official
     /// 自製圖鑑 — words the user photographed.
@@ -28,7 +35,6 @@ enum CardsSource: String, CaseIterable, Identifiable {
 
     var title: LocalizedStringKey {
         switch self {
-        case .all: "全部"
         case .official: "官方"
         case .mine: "我做的"
         case .taken: "已收進"
@@ -36,25 +42,15 @@ enum CardsSource: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Categories only describe dictionary words, so the second row is hidden
-    /// for the source values that cannot have one.
-    var allowsCategoryFilter: Bool {
-        switch self {
-        case .all, .official: true
-        case .mine, .taken, .bookmarked: false
-        }
-    }
-
     /// A guest has no account-scoped content, so two of the values would always
     /// come back empty. Offering a filter that can only ever say "nothing here"
     /// is worse than not offering it.
     static func available(isGuest: Bool) -> [CardsSource] {
-        isGuest ? [.all, .official, .bookmarked] : allCases
+        isGuest ? [.official, .bookmarked] : allCases
     }
 
     func matches(_ word: CardWord, isBookmarked: (String) -> Bool) -> Bool {
         switch self {
-        case .all: true
         case .official: word.category != "custom" && word.category != "community"
         case .mine: word.category == "custom"
         case .taken: word.category == "community"
