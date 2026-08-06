@@ -49,11 +49,13 @@ struct CategoryView: View {
 
     private func content(width: CGFloat) -> some View {
         // The hero bleeds, so no shared horizontal padding — each section below
-        // carries its own.
+        // carries its own. The grid was the one that never did: its tiles ran
+        // to both screen edges while the description and the 單字 count above
+        // them sat inset, so the page looked like it had lost its margin.
         VStack(alignment: .leading, spacing: Space.s4) {
             self.hero
             Section {
-                self.grid(width: width)
+                self.grid.padding(.horizontal, Space.s4)
             } header: {
                 self.gridHeader.padding(.horizontal, Space.s4)
             }
@@ -168,7 +170,7 @@ struct CategoryView: View {
     }
 
     @ViewBuilder
-    private func grid(width: CGFloat) -> some View {
+    private var grid: some View {
         let words = self.filteredWords
         if words.isEmpty {
             MascotEmptyState(
@@ -180,10 +182,7 @@ struct CategoryView: View {
             .padding(.vertical, Space.s5)
         } else {
             LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: Space.s2),
-                    GridItem(.flexible(), spacing: Space.s2)
-                ],
+                columns: CardsListView.gridColumns,
                 spacing: Space.s4
             ) {
                 ForEach(words) { word in

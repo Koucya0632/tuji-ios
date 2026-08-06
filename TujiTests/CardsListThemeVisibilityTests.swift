@@ -3,9 +3,11 @@ import Testing
 
 struct CardsListThemeVisibilityTests {
     /// `custom` and `community` are sources, not themes. They used to be pinned
-    /// into the theme row so they stayed reachable when empty; that job moved to
-    /// the source row, which offers them unconditionally. Leaving them in both
-    /// rows would show one filter twice under two different meanings.
+    /// into 圖鑑's theme chip row so they stayed reachable with no cards in them;
+    /// that job belongs to the source row, which offers them unconditionally.
+    /// The theme row is gone entirely now and this rule moved to 主題, where it
+    /// still has to hold: listing them there would present one filter twice
+    /// under two different meanings.
     @Test
     func sourceCategoriesAreNotThemes() {
         let categories = [
@@ -14,9 +16,25 @@ struct CardsListThemeVisibilityTests {
             self.category(id: "kitchen", nameZh: "廚房")
         ]
 
-        let visible = CardsListView.visibleThemeCategories(
+        let visible = CategoryIndexView.visibleThemeCategories(
             from: categories,
             presentIds: ["kitchen", "custom", "community"]
+        )
+
+        #expect(visible.map(\.id) == ["kitchen"])
+    }
+
+    /// A theme with nothing behind it is a dead end, so it stays off the index.
+    @Test
+    func themesWithoutWordsAreHidden() {
+        let categories = [
+            self.category(id: "kitchen", nameZh: "廚房"),
+            self.category(id: "zodiac", nameZh: "生肖")
+        ]
+
+        let visible = CategoryIndexView.visibleThemeCategories(
+            from: categories,
+            presentIds: ["kitchen"]
         )
 
         #expect(visible.map(\.id) == ["kitchen"])
@@ -34,7 +52,16 @@ struct CardsListThemeVisibilityTests {
     /// "nothing here" — worse than not offering them.
     @Test
     func guestsDoNotSeeAccountScopedSources() {
-        #expect(CardsSource.available(isGuest: true) == [.all, .official, .bookmarked])
+        #expect(CardsSource.available(isGuest: true) == [.official, .bookmarked])
+    }
+
+    /// There is no 全部 case: "everything" is the absence of a filter, which the
+    /// grid spells `nil`. A case for it would have put a second 全部 chip on
+    /// screen beside the theme row's, each meaning something different.
+    @Test
+    func thereIsNoAllCase() {
+        #expect(CardsSource(rawValue: "all") == nil)
+        #expect(CardsSource.allCases == [.official, .mine, .taken, .bookmarked])
     }
 
     private func category(id: String, nameZh: String) -> TujiCategory {

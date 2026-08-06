@@ -110,7 +110,11 @@ struct WordDetailPage: View {
         VStack(alignment: .leading, spacing: Space.s4) {
             self.hero(w)
             self.titleRow(w).padding(.horizontal, Space.s4)
-            MasteryBar(score: self.mastery.score(for: w.id)).padding(.horizontal, Space.s4)
+            MasteryBar(
+                score: self.mastery.score(for: w.id),
+                nextReview: self.mastery.nextReviewDate(for: w.id)
+            )
+            .padding(.horizontal, Space.s4)
             WordDetailSections(word: w).padding(.horizontal, Space.s4)
             WordCommunityAtlasSection(word: w).padding(.horizontal, Space.s4)
         }

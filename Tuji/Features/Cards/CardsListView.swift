@@ -1,13 +1,15 @@
-// 2-column grid of every word, filterable by category chip.
+// 2-column grid of every word, filterable by where the word came from.
 //
-// Chips show the localized zh name from CategoriesStore. Selecting a chip
-// filters the grid in place without adding a separate category-page CTA.
+// One filter row, not two. The theme row that used to sit under it is gone:
+// chips are a horizontal strip, and a strip cannot be browsed once the
+// catalogue has forty themes in it. Theme browsing moved to CategoryIndexView,
+// reachable from the count row — and picking a theme there lands on the theme's
+// own page, which is a better answer than filtering this grid in place.
 
 import SwiftUI
 
 struct CardsListView: View {
     @Environment(WordsStore.self) private var store
-    @Environment(CategoriesStore.self) private var categories
     @Environment(MasteryStore.self) private var mastery
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
@@ -21,14 +23,26 @@ struct CardsListView: View {
     /// Consumed once and cleared, so it never fights a later manual pick.
     @Binding var sourceRequest: CardsSource?
 
-    @State private var selectedCategory: String?
-    @State private var source: CardsSource = .all
+    /// Opens on 官方 rather than on nothing. The tab has to open *somewhere*,
+    /// and an unselected row reads as "no filter is available" — it also hides
+    /// 主題, which only appears under 官方. `nil` (everything) is still
+    /// reachable: tapping the lit chip clears it. See CardsSource.
+    @State private var source: CardsSource? = .official
     @State private var visibleCount: Int = 60
     @State private var peekWord: CardWord?
     @State private var pushAfterDismiss: String?
     @State private var showCapture = false
 
     private let pageSize: Int = 60
+
+    /// `alignment: .top` is the whole point. A GridItem with no alignment
+    /// centres its cell inside the row, so the moment one word wrapped to two
+    /// lines its shorter neighbour dropped by half the height difference and
+    /// the two columns of photographs stopped lining up.
+    static let gridColumns = [
+        GridItem(.flexible(), spacing: Space.s2, alignment: .top),
+        GridItem(.flexible(), spacing: Space.s2, alignment: .top)
+    ]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,7 +58,6 @@ struct CardsListView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await self.store.loadIfNeeded()
-            await self.categories.loadIfNeeded()
             await self.mastery.loadIfNeeded()
         }
         .onChange(of: self.sourceRequest, initial: true) { _, requested in
@@ -68,11 +81,13 @@ struct CardsListView: View {
 
     // MARK: - Bits
 
+    /// Actions only. The title used to sit on the left of this row and said
+    /// "圖鑑" — the same word the tab directly below it says, lit, at the moment
+    /// you are looking at it. 我 already works this way (`MeView`): the first
+    /// real content is the title, and the bar carries nothing but what you can
+    /// do from here.
     private var header: some View {
         HStack {
-            Text("圖鑑")
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
             Spacer()
             Button {
                 self.showCapture = true
@@ -97,7 +112,6 @@ struct CardsListView: View {
 
     private var chipRow: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            // Row 1 — where the words came from.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Space.s2) {
                     ForEach(CardsSource.available(isGuest: self.isGuest)) { value in
@@ -107,30 +121,20 @@ struct CardsListView: View {
                 .padding(.horizontal, Space.s4)
             }
 
-            // Row 2 — theme. Only dictionary words have one.
-            if self.source.allowsCategoryFilter {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: Space.s2) {
-                        self.chip(label: tujiLocalized("全部"), value: nil)
-                        ForEach(self.chipCategories, id: \.id) { c in
-                            self.chip(label: c.nameZh, value: c.id)
-                        }
-                    }
-                    .padding(.horizontal, Space.s4)
-                }
-            }
-
             self.countRow
         }
         .padding(.bottom, Space.s3)
     }
 
-    /// Count on the left, actions on the right. 管理 appears only while the
-    /// user is looking at their own captures — it is the one moment that
-    /// entry point is relevant, and it keeps 圖鑑管理 out of the nav bar
-    /// (already full) and out of 我 (which is no longer a directory).
+    /// Count on the left, one action on the right — whichever the current
+    /// source has. 主題 belongs to 官方 because a theme only ever describes a
+    /// dictionary word: the ones you photographed and the ones you took in from
+    /// the community have no theme to browse by. 管理 belongs to 我做的 for the
+    /// same reason, and it keeps 圖鑑管理 out of the nav bar (already full) and
+    /// out of 我 (which is no longer a directory). The two are mutually
+    /// exclusive, so the row never carries both.
     private var countRow: some View {
-        HStack {
+        HStack(spacing: Space.s3) {
             // Reuses the existing `%lld 字` key rather than minting `%lld 個字`
             // beside it — one concept, one string.
             Text(tujiLocalized("\(self.filtered.count) 字"))
@@ -138,19 +142,31 @@ struct CardsListView: View {
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
             Spacer()
-            if self.source == .mine {
+            switch self.source {
+            case .mine:
                 NavigationLink(value: NavRoute.atlasManage) {
-                    Text("管理 →")
-                        .font(.tujiLabel)
-                        .tracking(0.5)
-                        .foregroundStyle(.tujiInk)
-                        .underline()
+                    self.rowAction("管理 →")
                 }
                 .buttonStyle(.plain)
+            case .official:
+                NavigationLink(value: NavRoute.categoryIndex) {
+                    self.rowAction("主題 →")
+                }
+                .buttonStyle(.plain)
+            case .taken, .bookmarked, nil:
+                EmptyView()
             }
         }
         .padding(.horizontal, Space.s4)
         .padding(.top, Space.s1)
+    }
+
+    private func rowAction(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .foregroundStyle(.tujiInk)
+            .underline()
     }
 
     private var emptyTitle: LocalizedStringKey {
@@ -158,7 +174,7 @@ struct CardsListView: View {
         case .bookmarked: "還沒有書籤"
         case .mine: "還沒有自製圖鑑"
         case .taken: "還沒有收進的字"
-        case .all, .official: "這個分類還沒有字"
+        case .official, nil: "這個分類還沒有字"
         }
     }
 
@@ -167,15 +183,16 @@ struct CardsListView: View {
         case .bookmarked: "你加書籤的字會出現在這裡"
         case .mine: "用右上角的相機拍一張，就會多一張卡片"
         case .taken: "在社群收進的字會出現在這裡"
-        case .all, .official: nil
+        case .official, nil: nil
         }
     }
 
+    /// Tapping the chip that is already on clears it, which is how the grid
+    /// gets back to "everything" without a 全部 chip standing in for it.
     private func sourceChip(_ value: CardsSource) -> some View {
         let selected = self.source == value
         return Button {
-            self.source = value
-            if !value.allowsCategoryFilter { self.selectedCategory = nil }
+            self.source = selected ? nil : value
             self.visibleCount = self.pageSize
         } label: {
             Text(value.title)
@@ -197,10 +214,7 @@ struct CardsListView: View {
             // the point of a skeleton over a spinner is that the layout does
             // not jump when the real tiles land.
             LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: Space.s2),
-                    GridItem(.flexible(), spacing: Space.s2)
-                ],
+                columns: Self.gridColumns,
                 spacing: Space.s4
             ) {
                 ForEach(0..<6, id: \.self) { _ in
@@ -228,10 +242,7 @@ struct CardsListView: View {
         } else {
             ScrollView {
                 LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: Space.s2),
-                        GridItem(.flexible(), spacing: Space.s2)
-                    ],
+                    columns: Self.gridColumns,
                     spacing: Space.s4
                 ) {
                     // Cards still being made sit at the head of the grid, in the
@@ -280,58 +291,11 @@ struct CardsListView: View {
         }
     }
 
-    private func chip(label: String, value: String?) -> some View {
-        let selected = self.selectedCategory == value
-        return Button {
-            self.selectedCategory = value
-            self.visibleCount = self.pageSize
-        } label: {
-            Text(label)
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(selected ? Color.tujiPaper : .tujiInk2)
-                .padding(.horizontal, Space.s3)
-                .frame(height: 36)
-                .background(selected ? Color.tujiInk : .tujiPaper2)
-        }
-    }
-
-    /// Categories that have at least one word in the dataset. Falls back to
-    /// WordsStore-derived ids if CategoriesStore is still loading.
-    private var chipCategories: [TujiCategory] {
-        let presentIds = Set(self.store.categories)
-        let known = Self.visibleThemeCategories(
-            from: self.categories.categories,
-            presentIds: presentIds
-        )
-        if known.isEmpty {
-            // Fallback: synthesize bare metadata from word-derived ids
-            return self.store.categories.map {
-                TujiCategory(id: $0, name: $0, nameZh: $0, emoji: "", description: nil, color: nil, imageUrl: nil)
-            }
-        }
-        return known
-    }
-
-    /// Themes only. `custom` and `community` used to be pinned into this list so
-    /// they stayed reachable with no cards in them — but they are not themes,
-    /// they are *sources*, and they now live in their own row where they are
-    /// always offered regardless of content. Keeping them here as well would
-    /// present the same filter twice under two different meanings.
-    static func visibleThemeCategories(
-        from categories: [TujiCategory],
-        presentIds: Set<String>
-    )
-        -> [TujiCategory]
-    {
-        categories.filter {
-            $0.id != "custom" && $0.id != "community" && presentIds.contains($0.id)
-        }
-    }
-
     private var filtered: [CardWord] {
-        self.store.byCategory(self.selectedCategory)
-            .filter { self.source.matches($0, isBookmarked: self.cache.isFavorite) }
+        guard let source = self.source else { return self.store.words }
+        return self.store.words.filter {
+            source.matches($0, isBookmarked: self.cache.isFavorite)
+        }
     }
 
     private var visibleWords: [CardWord] {
@@ -347,7 +311,6 @@ struct CardsListView: View {
     NavigationStack {
         CardsListView(sourceRequest: .constant(nil))
             .environment(WordsStore.shared)
-            .environment(CategoriesStore.shared)
             .environment(MasteryStore.shared)
     }
 }
