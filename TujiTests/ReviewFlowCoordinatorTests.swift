@@ -131,6 +131,17 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.current?.word.id == "w-cup")
 
         // Item 2 (cup): fast correct → auto-rated (mastery 80 → 熟練).
+        //
+        // "Fast" is wall-clock — `pick()` reads `Date.now - startedAt` — so it
+        // has to be stated here, not assumed. The poll above returns some time
+        // *after* the advance beat reset `startedAt`, and on a loaded CI that
+        // gap runs past the slow-answer threshold: the answer then asks for a
+        // manual rating and every assertion below falls over. Worse, the next
+        // `waitUntil` would burn its full ceiling waiting for an advance that
+        // is never scheduled, which is why a starved run took 100s to fail.
+        // Symmetrical with `slowCorrectStillAsksForManualRating`, which
+        // backdates `startedAt` to force the other branch.
+        c.startedAt = .now
         c.pick("cup")
         #expect(c.flash == .autoRated(.easy))
         try await self.waitUntil { c.current?.word.id == "w-fork" } // 700ms advance beat
