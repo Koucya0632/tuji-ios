@@ -18,7 +18,7 @@
 9. [搜尋](#9-搜尋)
 10. [收藏](#10-收藏)
 11. [自製圖鑑(Atlas 拍照新增)](#11-自製圖鑑atlas-拍照新增)
-12. [社群(公開圖鑑與合集)](#12-社群公開圖鑑與合集)
+12. [物見(公開圖鑑與合集)](#12-物見公開圖鑑與合集)
 13. [我的(Me)](#13-我的me)
 14. [Tuji Pro 訂閱](#14-tuji-pro-訂閱)
 15. [設定](#15-設定)
@@ -33,7 +33,7 @@
 - `@main TujiApp` 在 `init()` 先安裝自訂 Nuke 圖片管線(`TujiImagePipeline.install()`),必須在任何 `LazyImage` 渲染前完成。
 - 以 `@State` 建立共享狀態並注入 SwiftUI environment,分兩類:
   - **單例 store**:`AuthService`、`PushNotificationService`、`OnboardingState`、`LocalCache`、`WordsStore`、`CategoriesStore`、`SettingsStore`、`ProgressStore`、`MasteryStore`、`StudyStatsStore`、`StudyFocus`、`DeepLinkCoordinator`、`NetworkMonitor`。
-  - **root 建構的社群協調物件**(不是單例,由這裡 own):`CommunityFeedRefresh`(剛公開的內容要繞過 URLCache)、`CollectionBookmarkStore`(合集收藏狀態)、`CollectionIdentityStore`(剛換的合集頭像要跨畫面立即生效)。
+  - **root 建構的公開側協調物件**(不是單例,由這裡 own):`CommunityFeedRefresh`(剛公開的內容要繞過 URLCache)、`CollectionBookmarkStore`(合集收藏狀態)、`CollectionIdentityStore`(剛換的合集頭像要跨畫面立即生效)。
 - 啟動時的 `.task`:載入字典 + 分類 + 設定、刷新推播授權、重播離線答題 outbox(`StudyAnswerOutbox.replay()`);App 回到前景(`scenePhase == .active`)時再重播一次。
 - `.onOpenURL` 先交給 GoogleSignIn 處理 OAuth callback,再嘗試解析成 `TujiDeepLink`。
 - environment locale 由 `settings.current.uiLanguage.locale` 決定,支援四種介面語言,見 §16 本地化。
@@ -70,12 +70,13 @@ App 啟動
 
 ## 2. 導航與 Deep Link
 
-### 五大分頁 — `Tuji/Navigation/MainTabsView.swift`, `MainTab.swift`
+### 四大分頁 — `Tuji/Navigation/MainTabsView.swift`, `MainTab.swift`
 
-- 分頁:主頁(today)/ 圖鑑(cards)/ 進度(progress)/ **社群(community)** / 我的(me)。
+- 分頁:今天(today)/ 圖鑑(cards)/ **物見(community)** / 我(me)。語意軸線是 時間 → 內容 → 他人 → 自己。
+- **物見** 是 UI 名字;程式碼與領域詞彙仍叫 `community` / 公開圖鑑(`"community"` 是分類 id 這個 wire value,改不動),見 CONTEXT.md。
 - 自訂浮動膠囊 tab bar(非 SwiftUI TabView);每個分頁擁有獨立 `NavigationStack`,互不干擾。
 - 分頁以水平 paging ScrollView 呈現,可左右滑動切換;但學習中(`StudyFocus.active`)或當前分頁已 push 詳情(path depth > 0)時停用滑動,避免與返回手勢衝突。
-- **tab bar 何時消失**:學習中一律隱藏;另外 我的 與 社群 兩個分頁,只要離開分頁根畫面就隱藏 —— 這兩個分頁是入口集散地,從它們開出去的畫面獨佔視窗直到使用者返回。判斷依據是**分頁根畫面自己的可見性**(`meAtRoot` / `communityAtRoot`),不是 `NavigationPath` 深度:設定頁的 picker 是 view-based link、社群的合集卡片是 `navigationDestination(item:)`(要帶 preview model,沒有 route value 能表達),兩者都不會讓 path 變深。
+- **tab bar 何時消失**:學習中一律隱藏;另外 我 與 物見 兩個分頁,只要離開分頁根畫面就隱藏 —— 這兩個分頁是入口集散地,從它們開出去的畫面獨佔視窗直到使用者返回。判斷依據是**分頁根畫面自己的可見性**(`meAtRoot` / `communityAtRoot`),不是 `NavigationPath` 深度:設定頁的 picker 是 view-based link、物見的合集卡片是 `navigationDestination(item:)`(要帶 preview model,沒有 route value 能表達),兩者都不會讓 path 變深。
 
 ### 路由 — `Tuji/Navigation/NavRoute.swift`, `TujiNavRoutes.swift`
 
@@ -86,7 +87,7 @@ App 啟動
 | 基本 | `cards` / `today` / `search(query:)` / `favorites` / `settings` |
 | 學習 | `studyCategories` / `studyLanding(mode:)` / `wordDetail(id:)` / `categoryDetail(id:)` |
 | 自製圖鑑 | `atlasManage`(開在 圖鑑卡片)/ `atlasMyCollections`(開在 合集,deep link 相容用)/ `atlasCollectionEdit(id:)` |
-| 社群 | `atlasPublic` / `atlasCollectionDetail(slug:autoSave:)` / `authorProfile(handle:isSelf:)` |
+| 物見 | `atlasPublic` / `atlasCollectionDetail(slug:autoSave:)` / `authorProfile(handle:isSelf:)` |
 
 - `authorProfile` 的 `isSelf` 只多加一個編輯入口,其餘完全相同 —— 這頁的價值就在於它就是別人看到的那一頁(§12)。
 - `atlasCollectionDetail` 的 `autoSave` 只用來續接訪客被登入打斷的收藏動作。
@@ -94,7 +95,7 @@ App 啟動
 ### Deep Link — `Tuji/Navigation/DeepLink.swift`, `DeepLinkCoordinator.swift`
 
 - 同時接受 `tuji://…` scheme 與 `https://tuji.app/…` universal link,解析成 `(tab, route)`。
-- 支援:`today`、`cards`、`favorites`、`settings`、`search?q=`、`word/{id}`、`category/{id}`、`study?mode=new|review`、`collection/{slug}`(落在 社群 分頁)。
+- 支援:`today`、`cards`、`favorites`、`settings`、`search?q=`、`word/{id}`、`category/{id}`、`study?mode=new|review`、`collection/{slug}`(落在 物見 分頁)。
 - `DeepLinkCoordinator` 暫存 pending link(啟動期間 link 可能先於 tab shell 掛載到達);`MainTabsView` 在 `onAppear` / `onChange` 消費:先切分頁,下一個 runloop 再 push route。Deep link 優先權高於功能導覽(會先跳過 tour)。
 
 ### 首次功能導覽 — `Tuji/Features/Tour/FeatureTour.swift`, `FeatureTourOverlay.swift`
@@ -332,7 +333,7 @@ App 啟動
 
 - **`WordsStore`**(`Core/Words/WordsStore.swift`):啟動抓一次 GET `/api/words`(帶 uiLang + learningDirection),再合併兩份使用者字 —— 以 id last-wins,最後按 分類→字母 排序。全 App 共讀這份記憶體字典。
   1. `/api/users/custom-words` — 自己拍的自製字,id 為 `atlas:<uuid>`,內嵌完整 detail。
-  2. `/api/users/saved-words` — 從社群收藏來的字(§12)。
+  2. `/api/users/saved-words` — 從物見收藏來的字(§12)。
   兩者都是 best-effort:任一支失敗只記 log,公開字典照常呈現。
 - **`CategoriesStore`**:GET `/api/categories`(本地化分類名)。
 
@@ -340,7 +341,7 @@ App 啟動
 
 2 欄格 + 分類 chip 過濾 + 分頁載入(每頁 60);頂部相機鈕開自製圖鑑拍照流程,`AtlasCaptureProgressStrip` 顯示製作中的卡。點格開 WordPeek(輕量預覽),從 peek 再進完整詳情。
 
-分類 chip 只列出實際有字的分類,但 `custom`(自製圖鑑)與 `community`(社群圖鑑)兩個主題**恆常顯示** —— 它們是使用者自己創作與收藏的去處,即使目前是空的,格子也要看得到自己收藏了什麼。
+分類 chip 只列出實際有字的分類,但 `custom`(自製圖鑑)與 `community`(物見)兩個主題**恆常顯示** —— 它們是使用者自己創作與收藏的去處,即使目前是空的,格子也要看得到自己收藏了什麼。
 
 ### 分類頁 — `Features/Category/CategoryView.swift`
 
@@ -351,7 +352,7 @@ App 啟動
 - 進入後是**水平分頁 TabView**:可左右滑到圖鑑順序的前後字,不用退回格子。
 - 每頁按需抓 GET `/api/words/{id}` 完整資料;各區塊(定義/例句/搭配詞/詞形/字源)有資料才渲染。
 - 全螢幕模式:進入時 `StudyFocus.enter()` 隱藏 tab bar。
-- **「大家的圖鑑」**(`WordCommunityAtlasSection`):同一個字別人拍的公開照片,GET `/api/atlas/public/by-lemma`。社群內容注入使用者本來就會來的頁面,而不是另開一個沒人逛的 feed。**沒有內容(或還在載入)時完全不渲染** —— 一個沒有公開照片的字,長得必須跟這個區塊不存在時一模一樣:沒有空狀態、沒有 placeholder、沒有版面位移。
+- **「大家的圖鑑」**(`WordCommunityAtlasSection`):同一個字別人拍的公開照片,GET `/api/atlas/public/by-lemma`。公開內容注入使用者本來就會來的頁面,而不是另開一個沒人逛的 feed。**沒有內容(或還在載入)時完全不渲染** —— 一個沒有公開照片的字,長得必須跟這個區塊不存在時一模一樣:沒有空狀態、沒有 placeholder、沒有版面位移。
 
 ### WordPeek — `Features/WordPeek/WordPeekSheet.swift`
 
@@ -458,15 +459,15 @@ App 啟動
 
 ### 學習整合
 
-自製字進統一學習流程(`/api/users/custom-words` → WordsStore,queue 內按 word.id 去重);mastery 在伺服器端獨立 namespace(`user_atlas_item_mastery`),由 `/api/users/mastery` 合併以 `atlas:<itemId>` 回傳。從社群收藏來的字走同一條路(`/api/users/saved-words`,§12)。
+自製字進統一學習流程(`/api/users/custom-words` → WordsStore,queue 內按 word.id 去重);mastery 在伺服器端獨立 namespace(`user_atlas_item_mastery`),由 `/api/users/mastery` 合併以 `atlas:<itemId>` 回傳。從物見收藏來的字走同一條路(`/api/users/saved-words`,§12)。
 
 一個 item 會產出兩張卡(image_recall + flashcard),而佇列是按卡抓的,所以自製字會重複出現 —— `StudyQueueStore` 以 `word.id` 去重(§6.2)。
 
 ---
 
-## 12. 社群(公開圖鑑與合集)
+## 12. 物見(公開圖鑑與合集)
 
-社群是自製圖鑑的公開面:§11 是你自己拍的東西,這一章是它怎麼變成大家的東西,以及你怎麼消費別人的。程式碼在 `Features/Atlas/`(社群半邊)與 `Core/Models/AtlasCommunity.swift`(wire model)。
+物見是自製圖鑑的公開面:§11 是你自己拍的東西,這一章是它怎麼變成大家的東西,以及你怎麼消費別人的。程式碼在 `Features/Atlas/`(公開半邊)與 `Core/Models/AtlasCommunity.swift`(wire model)。
 
 ### 12.1 領域詞彙
 
@@ -477,7 +478,7 @@ App 啟動
 
 ### 12.2 瀏覽 — `AtlasPublicFeedView`
 
-社群分頁的根畫面。GET `/api/atlas/public/collections?lang=`(公開、吃 CDN 快取)。
+物見分頁的根畫面。GET `/api/atlas/public/collections?lang=`(公開、吃 CDN 快取)。
 
 - **依當前學習語言自動過濾**:學日文只看日文合集。這頁**沒有手動語言切換**,是產品決定。
 - **兩個書架**(`PublicAtlasBrowsingModel.Shelf`):`explore`(探索)與 `saved`(已收藏)。兩者的語言化載入狀態機、refresh policy、未登入邊界、收藏狀態對帳全部在 `PublicAtlasBrowsingModel` 裡;這個 model 刻意不認得 `SettingsStore` / `AuthService` / `CommunityFeedRefresh` / `CollectionBookmarkStore`,由 View 把環境值翻譯成明確輸入。
@@ -679,7 +680,7 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 | SRS 寫入與刷新 | `DurableAnswerWriterTests`、`StudyAnswerOutboxTests`、`SessionRefreshTests` |
 | 額度與排程 | `StudyQuotasTests`、`AtlasQuotasTests`、`ReviewScheduleTests` |
 | 自製圖鑑 | `AtlasCaptureVMTests`、`AtlasStoreTests`、`AtlasShelfModelTests`、`AtlasImageStatusTests`、`AtlasMutationRefreshTests`、`ImageCropTests` |
-| 社群 | `PublicAtlasBrowsingModelTests`、`CollectionDetailVMTests`、`CollectionEditVMTests`、`MyCollectionsVMTests`、`AtlasPublicDetailVMTests`、`AuthorProfileVMTests`、`AtlasReviewStatusTests`、`CommunityLearningRefreshTests`、`SavedCommunityWordsTests` |
+| 物見 | `PublicAtlasBrowsingModelTests`、`CollectionDetailVMTests`、`CollectionEditVMTests`、`MyCollectionsVMTests`、`AtlasPublicDetailVMTests`、`AuthorProfileVMTests`、`AtlasReviewStatusTests`、`CommunityLearningRefreshTests`、`SavedCommunityWordsTests` |
 | 身分與設定 | `AuthorProfileModuleTests`、`SessionUserMirrorTests`、`AvatarPickerTests`、`UILanguageTests` |
 | 其他 | `SearchVMTests`、`WordsStoreMergeTests`、`TodayViewHintTests`、`AnalyticsTests`、`SignedStorageObjectIDTests`、`FeedbackTests` |
 

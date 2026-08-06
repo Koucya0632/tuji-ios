@@ -100,10 +100,15 @@ struct TourStep: Identifiable {
                 fallback: nil,
                 shape: .pill,
                 pose: .face,
-                // Was "四個分頁" listing 主頁/圖鑑/進度/我的 — it missed 社群
-                // entirely, having never been updated when that tab shipped.
-                title: "五個分頁",
-                text: "主頁開始學習、圖鑑收集單字、進度查看成果、社群看大家的圖鑑、我的管理帳號。"
+                // This step has been wrong twice. It first said "四個分頁"
+                // listing 主頁/圖鑑/進度/我的 and missed 社群 entirely; the fix
+                // added 社群 but kept three tab names that no longer exist, so
+                // the tour pointed at the bar and read out 主頁, 進度 and 我的
+                // to every new user. Whatever this says must match
+                // `MainTab.allCases` — there is nothing that makes a
+                // divergence fail to compile.
+                title: "四個分頁",
+                text: "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號。"
             ),
             TourStep(
                 id: 3,

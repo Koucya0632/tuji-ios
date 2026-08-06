@@ -1,4 +1,4 @@
-// Pins how saved 社群圖鑑 items reach the 圖鑑 page.
+// Pins how saved 物見 items reach the 圖鑑 page.
 //
 // They arrive already shaped as words under `category: "community"`, so the
 // theme chip, the list, the mastery badges and search all work through the
@@ -55,7 +55,7 @@ struct SavedCommunityWordsTests {
     }
 
     /// The atlas page derives its chips from the categories present in the
-    /// store, so a user who has saved nothing simply has no 社群圖鑑 chip —
+    /// store, so a user who has saved nothing simply has no 物見 chip —
     /// which is the whole reason the theme is opt-in for new cards too.
     @Test
     func noSavedItemsMeansNoCommunityCategory() {

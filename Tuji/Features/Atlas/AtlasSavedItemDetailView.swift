@@ -1,4 +1,4 @@
-// Opens a 社群圖鑑 card from the 圖鑑 page.
+// Opens a 物見 card from the 圖鑑 page.
 //
 // Saved community items live in WordsStore as ordinary words (so the theme
 // chip, list, badges and search work with no second implementation), but their

@@ -66,7 +66,7 @@ struct MeView: View {
     /// 我 is no longer a directory of six entry points — it *is* your progress
     /// (D.8). The two menu cards are gone and their entries went where the thing
     /// they open actually lives: 圖鑑管理 to the 圖鑑 tab's 管理 → (only when the
-    /// source filter is 我做的), 我的主頁 to the top of 社群, 我的收藏 to the
+    /// source filter is 我做的), 我的主頁 to the top of 物見, 我的收藏 to the
     /// 書籤 source filter, and 設定 to the gear in this screen's bar.
     ///
     /// The information order is: who you are (lightest) → what you have built up

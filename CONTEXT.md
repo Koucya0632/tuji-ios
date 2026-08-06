@@ -23,6 +23,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **公開圖鑑 (public atlas)** — items that entered review with a collection and passed
   the moderation gate, visible to everyone. The app has no separate per-item submission
   action; publishing a collection submits its private members as one batch.
+- **物見 (the UI name for the public half)** — what the third tab is called on screen,
+  and the only name for this area a user ever sees: the tab, the author-side publish and
+  withdraw copy, and the saved-cards theme all say 物見. 公開圖鑑 and `community` are the
+  *domain and code* names for the same thing and stay that way. This split is deliberate:
+  `"community"` is a wire value (the category id on the server and on stored user rows),
+  so renaming the identifiers could only ever be half done, and a half-renamed codebase
+  reads worse than a consistently old-named one. Anything a user reads says 物見;
+  anything a compiler or the database reads says `community`.
 - **合集 (collection)** — an author's **named, curated set** of their own confirmed
   atlas items, scoped to one learning language. Browsed in 公開圖鑑, authored in 我的合集.
   Approved, pending, and private members can be added; rejected, taken-down, unfinished,

@@ -12,7 +12,7 @@ struct CardsListThemeVisibilityTests {
     func sourceCategoriesAreNotThemes() {
         let categories = [
             self.category(id: "custom", nameZh: "自定義"),
-            self.category(id: "community", nameZh: "社群圖鑑"),
+            self.category(id: "community", nameZh: "物見"),
             self.category(id: "kitchen", nameZh: "廚房")
         ]
 

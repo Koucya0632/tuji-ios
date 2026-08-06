@@ -406,7 +406,7 @@ private struct AtlasManageDetailView: View {
             isPresented: self.$showWithdrawConfirm,
             style: .confirmation,
             title: "要取消公開嗎？",
-            message: "這張卡片會從公開圖鑑移除，你的卡片和學習紀錄都會保留。",
+            message: "這張卡片會從物見移除，你的卡片和學習紀錄都會保留。",
             detail: "之後隨時可以再公開一次。",
             primary: TujiPromptAction("取消公開") {
                 self.withdraw()

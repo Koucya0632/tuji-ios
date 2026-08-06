@@ -33,7 +33,7 @@ struct LiveCatalogRepository: CatalogRepository {
     }
 
     /// Saved 公開圖鑑 items, already shaped as words with `category: "community"`
-    /// so they merge into the same store and light up the 社群圖鑑 theme.
+    /// so they merge into the same store and light up the 物見 theme.
     func loadSavedWords(lang: String, learning: String) async throws -> WordsListResponse {
         try await self.api.get(.usersSavedWords(lang: lang, learning: learning))
     }
