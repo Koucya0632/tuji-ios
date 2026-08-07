@@ -12,10 +12,21 @@ because the failure is a *missing* entry: there is nothing in the binary to
 inspect.
 
 Deliberately conservative. It only reports a literal it is confident is a
-`LocalizedStringKey` — a `Text("…")`, a `tujiLocalized("…")`, or an argument to
-a parameter this project declares as one. Anything ambiguous is skipped: a false
-positive here blocks a merge, and a check people learn to override is worse than
-no check.
+`LocalizedStringKey`:
+
+  * `Text("…")` / `tujiLocalized("…")` / `LocalizedStringKey("…")`
+  * an argument to a parameter this project declares as one (`title:`, `detail:` …)
+  * the first positional argument of a type that takes a key there —
+    `Button("…")`, `TujiPromptAction("…")`, `TujiRow("…")` (see LEADING_KEY_CALLS)
+  * both branches of a ternary on a line that already contains one of the above,
+    which is how `Text(sent ? "已收到檢舉" : "檢舉這個合集")` is written
+
+The last two were added after two strings shipped uncaught: the literals sat
+next to nothing the earlier patterns looked for, which left `TujiPromptAction`
+— the most common key-taking call in this codebase — entirely unchecked.
+
+Anything ambiguous is skipped: a false positive here blocks a merge, and a check
+people learn to override is worse than no check.
 
     python3 scripts/check-localization.py            # report and exit non-zero
     python3 scripts/check-localization.py --list     # just print what it found
@@ -53,6 +64,28 @@ KEY_RETURNING = re.compile(r"(?:var|func)\s+\w+[^{}\n]*->?\s*:?\s*LocalizedStrin
                            r"(?:var|let)\s+\w+\s*:\s*LocalizedStringKey\??\s*\{")
 BARE_LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
 
+# Initialisers whose FIRST POSITIONAL argument is a `LocalizedStringKey`.
+#
+# This shape was the blind spot that let 檢舉這個合集 and 檢舉這位作者 ship
+# unnoticed: the literal sits next to nothing the patterns below look for — no
+# `Text(`, no `label:` — so a whole family of call sites was unchecked, including
+# `TujiPromptAction` (the single most common one in this codebase) and every
+# `Button("…")`.
+#
+# An explicit list rather than "any Capitalised(" on purpose: `Image("mascot")`
+# and `Set("…")` take the same shape and neither wants a translator, and a false
+# positive here blocks a merge. To extend it, check the type really declares
+# `init(_ x: LocalizedStringKey …)` — a labelled `title:` is already covered by
+# the argument-name pattern below.
+LEADING_KEY_CALLS = (
+    # SwiftUI
+    "Button", "Label", "Link", "Toggle", "Picker", "Menu", "Section",
+    "NavigationLink", "Stepper", "TextField", "SecureField", "TextEditor",
+    "confirmationDialog", "alert",
+    # This project
+    "TujiRow", "TujiScreenTitle", "TujiPromptAction", "TujiNavTextAction",
+)
+
 PATTERNS = [
     re.compile(r'\bText\(\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\btujiLocalized\(\s*"((?:[^"\\]|\\.)*)"'),
@@ -60,7 +93,20 @@ PATTERNS = [
                r'\s*:\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\bLocalizedStringKey\(\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\baccessibilityLabel\(\s*Text\(\s*"((?:[^"\\]|\\.)*)"'),
+    re.compile(r"\b(?:" + "|".join(LEADING_KEY_CALLS) + r')\(\s*"((?:[^"\\]|\\.)*)"'),
 ]
+
+# `Text(sent ? "已收到檢舉" : "檢舉這個合集")` — the branches are keys, but
+# neither sits where the patterns above look, so both were invisible. Only
+# trusted on a line that already contains a key-taking call, so an ordinary
+# `foo(a ? "x" : "y")` elsewhere is not dragged in.
+TERNARY = re.compile(r'\?\s*"((?:[^"\\]|\\.)*)"\s*:\s*"((?:[^"\\]|\\.)*)"')
+KEY_CALL_ON_LINE = re.compile(
+    r"\b(?:Text|tujiLocalized|LocalizedStringKey|accessibilityLabel|"
+    + "|".join(LEADING_KEY_CALLS)
+    + r")\(|"
+    + r"\b(?:title|label|subtitle|message|detail|placeholder|footer|badge)\s*:"
+)
 
 # A key that carries no meaning of its own. `Text("\(count)")` is a number, not
 # a sentence; `Text("→")` is a glyph. Neither wants a translation. Applied
@@ -141,27 +187,33 @@ def main() -> int:
                     if key_depth <= 0:
                         key_depth = None
 
+                candidates: list[str] = []
                 for pattern in found:
-                    for literal in pattern.findall(line):
-                        if not literal or NOT_PROSE.match(literal):
-                            continue
-                        collapsed = interpolations_to_specifiers(literal)
-                        # An interpolation left open means the literal runs onto
-                        # the next line and this scan only has a fragment of it.
-                        # Judging a fragment would produce a false positive, and
-                        # a check that cries wolf gets overridden.
-                        if "\\(" in collapsed:
-                            continue
-                        if SKIP.match(collapsed.replace("\x00", "")):
-                            continue
-                        if literal in catalog:
-                            continue
-                        if interpolations_to_specifiers(literal) in blind:
-                            continue
-                        if literal in seen:
-                            continue
-                        seen.add(literal)
-                        missing.append((str(path.relative_to(ROOT)), number, literal))
+                    candidates.extend(pattern.findall(line))
+                if KEY_CALL_ON_LINE.search(line):
+                    for branch in TERNARY.findall(line):
+                        candidates.extend(branch)
+
+                for literal in candidates:
+                    if not literal or NOT_PROSE.match(literal):
+                        continue
+                    collapsed = interpolations_to_specifiers(literal)
+                    # An interpolation left open means the literal runs onto
+                    # the next line and this scan only has a fragment of it.
+                    # Judging a fragment would produce a false positive, and
+                    # a check that cries wolf gets overridden.
+                    if "\\(" in collapsed:
+                        continue
+                    if SKIP.match(collapsed.replace("\x00", "")):
+                        continue
+                    if literal in catalog:
+                        continue
+                    if interpolations_to_specifiers(literal) in blind:
+                        continue
+                    if literal in seen:
+                        continue
+                    seen.add(literal)
+                    missing.append((str(path.relative_to(ROOT)), number, literal))
 
     if "--list" in sys.argv:
         print(f"scanned {len(catalog)} catalogue keys")
