@@ -34,6 +34,6 @@ struct ReviewScheduleTests {
     @Test
     func countdownShowsDueLabelWhenOverdue() {
         let now = Date(timeIntervalSince1970: 1_000_000)
-        #expect(ReviewSchedule.countdownLabel(until: now, now: now) == "復習期")
+        #expect(ReviewSchedule.countdownLabel(until: now, now: now) == "複習期")
     }
 }

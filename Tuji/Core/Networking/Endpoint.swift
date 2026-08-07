@@ -24,6 +24,12 @@ enum Endpoint {
     case usersPushToken
     case usersPushTokenDelete(deviceId: String)
     case usersFeedback
+    /// 封鎖名單 (GET) and 封鎖 (POST). Stored server-side so it follows the
+    /// account across devices; applied client-side so the public 物見 feeds keep
+    /// their shared CDN cache.
+    case usersBlocks
+    /// 解除封鎖 (DELETE).
+    case usersBlock(handle: String)
 
     // MARK: - Study (auth-protected)
 
@@ -84,6 +90,10 @@ enum Endpoint {
     case atlasPublicSave(slug: String)
     /// Report a community item (auth required).
     case atlasPublicReport(slug: String)
+    /// Report a public 合集 — its title / 簡介 / 頭像, not its members.
+    case atlasPublicCollectionReport(slug: String)
+    /// Report an author identity — 暱稱 / 簽名 / 頭像.
+    case atlasPublicAuthorReport(handle: String)
     /// Language-scoped public collection browse feed. `cacheBust` (a nonce on
     /// force-reload) makes the request a distinct edge-cache key so pull-to-refresh
     /// and post-publish bypass Vercel's CDN copy, not just the on-device cache.
@@ -129,6 +139,8 @@ enum Endpoint {
         case .usersSavedWords: "/api/users/saved-words"
         case .usersTopWords: "/api/users/top-words"
         case .usersDeleteAccount: "/api/users/delete-account"
+        case .usersBlocks: "/api/users/blocks"
+        case let .usersBlock(handle): "/api/users/blocks/\(handle)"
         case .usersPushToken,
              .usersPushTokenDelete: "/api/users/push-token"
         case .usersFeedback: "/api/users/feedback"
@@ -162,6 +174,10 @@ enum Endpoint {
         case let .atlasPublicItem(slug, _): "/api/atlas/public/\(slug)"
         case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
         case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
+        case let .atlasPublicCollectionReport(slug):
+            "/api/atlas/public/collections/\(slug)/report"
+        case let .atlasPublicAuthorReport(handle):
+            "/api/atlas/public/authors/\(handle)/report"
         case .atlasPublicCollections: "/api/atlas/public/collections"
         case let .atlasPublicCollection(slug): "/api/atlas/public/collections/\(slug)"
         case .atlasSavedCollections: "/api/atlas/public/collections/saved"
@@ -281,6 +297,7 @@ enum Endpoint {
         case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
              .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
              .usersFeedback, .usersCustomWords, .usersSavedWords,
+             .usersBlocks, .usersBlock,
              .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
              .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
              .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
@@ -288,6 +305,7 @@ enum Endpoint {
              .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
              .atlasCollectionCandidates,
              .atlasPublicSave, .atlasPublicReport,
+             .atlasPublicCollectionReport, .atlasPublicAuthorReport,
              .atlasPublicCollection, .atlasSavedCollections,
              .atlasPublicCollectionSave, .atlasPublicCollectionLearn,
              .billingVerify:

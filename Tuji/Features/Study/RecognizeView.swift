@@ -89,15 +89,18 @@ struct RecognizeView: View {
                         size: 48
                     )
                 }
-                if !self.item.word.pronunciation.isEmpty {
-                    Text(self.item.word.pronunciation)
+                if let pron = ReadingLine.shown(
+                    self.item.word.pronunciation,
+                    for: self.item.word.word
+                ) {
+                    Text(pron)
                         .font(.tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
-                if let reading = self.item.word.reading,
-                   !reading.isEmpty,
-                   reading != self.item.word.pronunciation
-                {
+                if let reading = ReadingLine.shown(
+                    self.item.word.reading,
+                    for: self.item.word.word
+                ), reading != self.item.word.pronunciation {
                     Text(reading)
                         .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)

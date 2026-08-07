@@ -100,6 +100,26 @@ nonisolated enum WordImageKind {
     }
 }
 
+/// The kana line under a headword, or nil when there is nothing to add.
+///
+/// A Japanese reading is furigana: kanji are spelled out, kana are copied as
+/// written. A headword already written in kana is therefore *its own* reading —
+/// バスマット reads バスマット — and printing that under itself tells the reader
+/// nothing. (It only ever looked informative while the catalogue was flattening
+/// katakana to hiragana, which is the bug that produced ばすまっと.)
+///
+/// `CardWord`, `StudyQueueWord` and `Word` all render this line, so the test
+/// lives once, beside the rule it enforces.
+enum ReadingLine {
+    static func shown(_ reading: String?, for headword: String) -> String? {
+        guard let reading = reading?.trimmingCharacters(in: .whitespaces),
+              !reading.isEmpty,
+              reading != headword
+        else { return nil }
+        return reading
+    }
+}
+
 struct WordsListResponse: Decodable {
     let words: [CardWord]
     let total: Int

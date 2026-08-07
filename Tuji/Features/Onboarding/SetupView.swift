@@ -28,7 +28,7 @@ struct SetupView: View {
     @State private var showReSignIn: Bool = false
     @State private var initializedDefaults = false
 
-    private static let defaultTopicIds: [String] = ["kitchen", "bathroom", "living-room"]
+    private static let defaultTopicIds: [String] = StudyCategoryDefaults.beginnerCategoryIDs
     private let goals = [5, 10, 20]
 
     var body: some View {
@@ -194,7 +194,7 @@ struct SetupView: View {
         guard !initializedDefaults, !categories.categories.isEmpty else { return }
         let allIds = Set(categories.categories.map(\.id))
         let preferred = Self.defaultTopicIds.filter { allIds.contains($0) }
-        let atlasDefaults = StudyCategoryDefaults.newUserCategoryIDs.filter {
+        let atlasDefaults = StudyCategoryDefaults.atlasCategoryIDs.filter {
             allIds.contains($0)
         }
         if preferred.count == Self.defaultTopicIds.count {

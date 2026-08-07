@@ -16,21 +16,36 @@ import SwiftUI
 
 extension View {
     /// Presents `content` as a square-cornered bottom sheet.
+    ///
+    /// `height` only needs passing when the content genuinely does not fit the
+    /// default — five options plus a footer, say. Leave it alone otherwise: the
+    /// point of one number is that these sheets look like each other.
     func tujiSheet(
         isPresented: Binding<Bool>,
         title: LocalizedStringKey,
+        height: CGFloat = TujiSheetShell<EmptyView>.defaultHeight,
         @ViewBuilder content: @escaping () -> some View
     )
         -> some View
     {
         self.sheet(isPresented: isPresented) {
-            TujiSheetShell(title: title, content: content)
+            TujiSheetShell(title: title, height: height, content: content)
         }
     }
 }
 
 struct TujiSheetShell<Content: View>: View {
+    /// 340, not a fraction of the screen: a settings picker with four rows
+    /// should not occupy half a phone. This was a computed property whose body
+    /// was the same literal, and whose doc claimed the sheet sized to its
+    /// content — it never did. `.large` is still offered, so a caller with more
+    /// rows than fit can be dragged up.
+    static var defaultHeight: CGFloat {
+        340
+    }
+
     let title: LocalizedStringKey
+    var height: CGFloat = TujiSheetShell<EmptyView>.defaultHeight
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -40,12 +55,7 @@ struct TujiSheetShell<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
-        // 340, not a fraction of the screen: a settings picker with four rows
-        // should not occupy half a phone. This was a computed property whose
-        // body was the same literal, and whose doc claimed the sheet sized to
-        // its content — it never did. `.large` is still offered, so a caller
-        // with more rows than fit can be dragged up.
-        .presentationDetents([.height(340), .large])
+        .presentationDetents([.height(self.height), .large])
         .tujiSheetPresentation()
     }
 }

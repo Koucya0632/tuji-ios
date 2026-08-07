@@ -36,8 +36,40 @@ final class PublicAtlasBrowsingModel {
         }
     }
 
-    private(set) var explore = ShelfState(phase: .loading)
-    private(set) var saved = ShelfState(phase: .idle)
+    // Raw is what the server sent; the published shelves are that minus the
+    // blocked authors. Kept apart so a block applied while this screen is open
+    // takes effect without a refetch, and so unblocking restores the rows the
+    // fetch already paid for.
+    private var exploreRaw = ShelfState(phase: .loading)
+    private var savedRaw = ShelfState(phase: .idle)
+
+    /// Blocked author handles, lowercased. An explicit input like every other
+    /// piece of environment this model refuses to reach for itself.
+    private var blockedAuthors: Set<String> = []
+
+    var explore: ShelfState {
+        self.hidingBlocked(self.exploreRaw)
+    }
+
+    var saved: ShelfState {
+        self.hidingBlocked(self.savedRaw)
+    }
+
+    /// Re-apply the block list without refetching — the user can block from a
+    /// pushed detail screen and pop straight back here.
+    func applyBlocks(_ handles: Set<String>) {
+        self.blockedAuthors = handles
+    }
+
+    private func hidingBlocked(_ state: ShelfState) -> ShelfState {
+        guard !self.blockedAuthors.isEmpty else { return state }
+        var copy = state
+        copy.collections = state.collections.filter {
+            guard let handle = $0.author?.handle else { return true }
+            return !self.blockedAuthors.contains(handle.lowercased())
+        }
+        return copy
+    }
 
     private let exploreRepo: CollectionsBrowsing
     private let savedRepo: CollectionBookmarking
@@ -56,10 +88,12 @@ final class PublicAtlasBrowsingModel {
         shelf: Shelf,
         language: TargetLanguage,
         isSignedIn: Bool,
+        blockedAuthors: Set<String> = [],
         pendingExploreRefresh: Bool = false
     ) async {
+        self.blockedAuthors = blockedAuthors
         if !isSignedIn {
-            self.saved = ShelfState(phase: .idle)
+            self.savedRaw = ShelfState(phase: .idle)
         }
 
         await self.loadExplore(
@@ -84,7 +118,7 @@ final class PublicAtlasBrowsingModel {
             await self.loadExplore(language: language, forceReload: true)
         case .saved:
             guard isSignedIn else {
-                self.saved = ShelfState(phase: .idle)
+                self.savedRaw = ShelfState(phase: .idle)
                 return
             }
             await self.loadSaved(language: language, force: true)
@@ -96,16 +130,16 @@ final class PublicAtlasBrowsingModel {
         isSaved: Bool,
         language: TargetLanguage
     ) {
-        if let index = self.explore.collections.firstIndex(where: {
+        if let index = self.exploreRaw.collections.firstIndex(where: {
             $0.id == collection.id
         }) {
-            self.explore.collections[index] = collection
+            self.exploreRaw.collections[index] = collection
         }
 
         guard collection.targetLanguage == language else { return }
-        self.saved.collections.removeAll { $0.id == collection.id }
+        self.savedRaw.collections.removeAll { $0.id == collection.id }
         if isSaved {
-            self.saved.collections.insert(collection, at: 0)
+            self.savedRaw.collections.insert(collection, at: 0)
         }
     }
 
@@ -114,12 +148,12 @@ final class PublicAtlasBrowsingModel {
     /// place so visible cards do not keep an old name or avatar until a pull to
     /// refresh.
     func applyAuthorIdentity(_ identity: AtlasAuthorRef) {
-        self.explore.collections = Self.replacingAuthor(
-            in: self.explore.collections,
+        self.exploreRaw.collections = Self.replacingAuthor(
+            in: self.exploreRaw.collections,
             with: identity
         )
-        self.saved.collections = Self.replacingAuthor(
-            in: self.saved.collections,
+        self.savedRaw.collections = Self.replacingAuthor(
+            in: self.savedRaw.collections,
             with: identity
         )
     }
@@ -129,8 +163,8 @@ final class PublicAtlasBrowsingModel {
     /// deliberate. This preserves the "don't clobber a good list on back" fix.
     func shouldSkipExploreLoad(language: TargetLanguage, force: Bool) -> Bool {
         !force
-            && self.explore.loadedLanguage == language
-            && !self.explore.collections.isEmpty
+            && self.exploreRaw.loadedLanguage == language
+            && !self.exploreRaw.collections.isEmpty
     }
 
     private func loadExplore(
@@ -140,38 +174,38 @@ final class PublicAtlasBrowsingModel {
     ) async {
         let force = forceReload || pendingForce
         if self.shouldSkipExploreLoad(language: language, force: force) { return }
-        if !forceReload { self.explore.phase = .loading }
+        if !forceReload { self.exploreRaw.phase = .loading }
         do {
-            self.explore.collections = try await self.exploreRepo.publicCollections(
+            self.exploreRaw.collections = try await self.exploreRepo.publicCollections(
                 lang: language,
                 forceReload: force
             )
-            self.explore.loadedLanguage = language
-            self.explore.phase = .ready
+            self.exploreRaw.loadedLanguage = language
+            self.exploreRaw.phase = .ready
         } catch {
-            if !forceReload { self.explore.collections = [] }
-            self.explore.phase = .failed(error.localizedDescription)
+            if !forceReload { self.exploreRaw.collections = [] }
+            self.exploreRaw.phase = .failed(error.localizedDescription)
         }
     }
 
     private func loadSaved(language: TargetLanguage, force: Bool = false) async {
         guard force
-            || self.saved.loadedLanguage != language
-            || self.saved.phase == .idle
+            || self.savedRaw.loadedLanguage != language
+            || self.savedRaw.phase == .idle
         else {
             return
         }
-        if self.saved.loadedLanguage != language {
-            self.saved.collections = []
+        if self.savedRaw.loadedLanguage != language {
+            self.savedRaw.collections = []
         }
-        self.saved.phase = .loading
+        self.savedRaw.phase = .loading
         do {
-            self.saved.collections = try await self.savedRepo.savedCollections(lang: language)
-            self.saved.loadedLanguage = language
-            self.saved.phase = .ready
+            self.savedRaw.collections = try await self.savedRepo.savedCollections(lang: language)
+            self.savedRaw.loadedLanguage = language
+            self.savedRaw.phase = .ready
         } catch {
-            self.saved.loadedLanguage = language
-            self.saved.phase = .failed(error.localizedDescription)
+            self.savedRaw.loadedLanguage = language
+            self.savedRaw.phase = .failed(error.localizedDescription)
         }
     }
 

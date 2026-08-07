@@ -62,7 +62,7 @@ struct WordTile: View {
                         .lineLimit(2, reservesSpace: true)
                         .multilineTextAlignment(.leading)
 
-                    if let reading = self.word.reading, !reading.isEmpty {
+                    if let reading = ReadingLine.shown(self.word.reading, for: self.word.word) {
                         Text(reading)
                             .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
