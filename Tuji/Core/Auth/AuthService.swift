@@ -231,10 +231,12 @@ final class AuthService {
         // additive, so without an explicit wipe the next account would still
         // see this account's 自製圖鑑; the capture queue likewise persists its
         // jobs and would resume them under the next account's session, and the
-        // 合集 cache would hand the next account this one's 合集 list.
+        // 合集 cache would hand the next account this one's 合集 list, and the
+        // block list would hide the next account's feed on this account's behalf.
         AtlasStore.shared.reset()
         AtlasCaptureQueue.shared.reset()
         MyCollectionsCache.shared.reset()
+        BlockStore.shared.reset()
 
         state = .signedOut
         cameFromGuest = false

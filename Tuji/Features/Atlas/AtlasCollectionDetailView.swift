@@ -45,6 +45,26 @@ struct AtlasCollectionDetailView: View {
     @State private var showBookmarkErrorPrompt = false
     @State private var showLearnAllPrompt = false
     @State private var showLearningErrorPrompt = false
+    @State private var showReport = false
+    @State private var reportSent = false
+
+    private let reporter: AtlasReporting = LiveAtlasRepository.shared
+
+    private var reportButton: some View {
+        Button {
+            self.showReport = true
+        } label: {
+            Text(self.reportSent ? "已收到檢舉" : "檢舉這個合集")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(self.reportSent ? .tujiInk3 : .tujiAlert)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Space.s3)
+        }
+        .buttonStyle(.plain)
+        .disabled(self.reportSent)
+        .padding(.top, Space.s4)
+        .padding(.bottom, Space.s6)
+    }
 
     private let autoSave: Bool
 
@@ -64,6 +84,11 @@ struct AtlasCollectionDetailView: View {
                     self.header(collection)
                     self.tabBar
                     self.tabContent(collection)
+                    // The 合集's own title / 簡介 / 頭像 are public UGC that the
+                    // per-item 檢舉 inside it can't reach.
+                    if !self.vm.isOwner {
+                        self.reportButton
+                    }
                 } else if case .loading = self.vm.phase {
                     TujiPageLoading()
                 } else {
@@ -86,6 +111,30 @@ struct AtlasCollectionDetailView: View {
         }
         .task(id: self.loadKey) {
             await self.openCollection()
+        }
+        // Five options plus the footer line; the default height clips the last.
+        .tujiSheet(isPresented: self.$showReport, title: "檢舉原因", height: 460) {
+            TujiOptionSheet(
+                options: AtlasReportReason.allCases.map {
+                    TujiOptionSheet<AtlasReportReason?>.Option(
+                        Optional($0),
+                        verbatim: $0.label
+                    )
+                },
+                selection: AtlasReportReason?.none,
+                footer: "檢舉會送給審核人員，對方不會知道是誰檢舉的。"
+            ) { picked in
+                guard let picked else { return }
+                let slug = self.vm.slug
+                Task {
+                    self.reportSent = true
+                    try? await self.reporter.reportCollection(
+                        slug: slug,
+                        reason: picked,
+                        detail: nil
+                    )
+                }
+            }
         }
         .tujiPrompt(
             isPresented: self.$showSignInPrompt,

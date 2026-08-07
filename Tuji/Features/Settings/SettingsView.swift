@@ -246,6 +246,13 @@ struct SettingsView: View {
                             TujiRow("編輯個人資料")
                         }
                         .tujiRowStyle()
+                        // A block has to be undoable somewhere that doesn't
+                        // require finding the person again — which is exactly
+                        // what blocking them made hard.
+                        NavigationLink { BlockedAuthorsView() } label: {
+                            TujiRow("已封鎖的人")
+                        }
+                        .tujiRowStyle()
                         Button { self.showSignOutConfirm = true } label: {
                             TujiRow("登出", showsArrow: false, destructive: true)
                         }
