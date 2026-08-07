@@ -1,5 +1,5 @@
 // Direct-entry launcher for the study flow. Replaces the old
-// StudyLandingView ("今天要學什麼" intermediate page). Tapping 復習 /
+// StudyLandingView ("今天要學什麼" intermediate page). Tapping 複習 /
 // 學新字 on Today (or via tuji://study?mode= deeplink) lands here
 // briefly while we fetch /api/study/queue, then auto-pushes into
 // ReviewFlowView or NewFlowView with the resulting queue.

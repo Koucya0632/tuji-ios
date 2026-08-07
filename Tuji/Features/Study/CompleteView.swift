@@ -3,7 +3,7 @@
 // per-word 熟練度變化 list (before → after, with ↑ when the word crossed into a
 // higher MasteryLevel). Reviews are deliberately NOT counted against the daily
 // goal (that target tracks new words only — see TodayView.dailyGoalProgress /
-// studyStats.todayNew), so this screen frames itself as "復習完成" rather than
+// studyStats.todayNew), so this screen frames itself as "複習完成" rather than
 // the daily-goal milestone.
 //
 // Streak comes from ProgressStore.shared; mastery scores from MasteryStore.
@@ -50,7 +50,7 @@ struct CompleteView: View {
 
     /// Words still due after this session (post-refresh). Drives the 再來一輪
     /// CTA — the full celebration is reserved for an actually-cleared queue,
-    /// so "complete" never contradicts a still-lit 復習 button on Today.
+    /// so "complete" never contradicts a still-lit 複習 button on Today.
     private var remainingDue: Int {
         guard self.refreshed else { return 0 }
         return self.studyStats.stats?.due ?? 0

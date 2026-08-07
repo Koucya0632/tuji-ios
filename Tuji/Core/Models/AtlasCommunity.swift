@@ -41,7 +41,7 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
 
     var collectionPublicationLabel: String? {
         switch self.publicationState {
-        case "private": tujiLocalized("將隨集合送審")
+        case "private": tujiLocalized("將隨合集送審")
         case "pending": tujiLocalized("審核中")
         default: nil
         }
