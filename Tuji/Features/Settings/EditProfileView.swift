@@ -70,15 +70,17 @@ struct EditProfileView: View {
             self.connectAvatarPicker()
             await self.load()
         }
-        .avatarPicker(self.avatarPicker, title: "更換頭像") {
-            if self.hasCustomAvatar {
-                Button("使用預設黑貓頭像") {
+        .avatarPicker(
+            self.avatarPicker,
+            title: "更換頭像",
+            extraSources: self.hasCustomAvatar
+                ? [AvatarSource("使用預設黑貓頭像") {
                     self.avatar = MascotPose.face.rawValue
                     self.pendingAvatarData = nil
                     self.pendingAvatarImage = nil
-                }
-            }
-        }
+                }]
+                : []
+        )
     }
 
     private var form: some View {

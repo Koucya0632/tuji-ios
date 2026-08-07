@@ -158,10 +158,37 @@ final class AvatarPicker {
 
 // MARK: - Presentation
 
-private struct AvatarPickerModifier<Extra: View>: ViewModifier {
+/// One row in the source chooser.
+///
+/// A value rather than a `@ViewBuilder`: the chooser is a list of choices, which
+/// this app draws as `TujiRow`s in a `tujiSheet`, and a caller handing over
+/// arbitrary `Button`s cannot be drawn that way. Screens describe *what* they
+/// offer; the sheet decides how it looks.
+struct AvatarSource: Identifiable {
+    let id = UUID()
+    let title: LocalizedStringKey
+    let action: () -> Void
+
+    init(_ title: LocalizedStringKey, action: @escaping () -> Void) {
+        self.title = title
+        self.action = action
+    }
+}
+
+private struct AvatarPickerModifier: ViewModifier {
     let picker: AvatarPicker
     let title: LocalizedStringKey
-    @ViewBuilder let extraSources: () -> Extra
+    let extraSources: [AvatarSource]
+
+    private var sources: [AvatarSource] {
+        var out: [AvatarSource] = []
+        if CameraPicker.isAvailable {
+            out.append(AvatarSource("拍照") { self.picker.showCamera = true })
+        }
+        out.append(AvatarSource("從相簿選擇") { self.picker.showPhotoLibrary = true })
+        out.append(contentsOf: self.extraSources)
+        return out
+    }
 
     func body(content: Content) -> some View {
         content
@@ -172,20 +199,14 @@ private struct AvatarPickerModifier<Extra: View>: ViewModifier {
                     self.picker.pickerItem = nil
                 }
             }
-            .confirmationDialog(
-                self.title,
+            .tujiSheet(
                 isPresented: Binding(
                     get: { self.picker.showSources },
                     set: { self.picker.showSources = $0 }
                 ),
-                titleVisibility: .visible
+                title: self.title
             ) {
-                if CameraPicker.isAvailable {
-                    Button("拍照") { self.picker.showCamera = true }
-                }
-                Button("從相簿選擇") { self.picker.showPhotoLibrary = true }
-                self.extraSources()
-                Button("取消", role: .cancel) {}
+                AvatarSourceList(sources: self.sources)
             }
             .photosPicker(
                 isPresented: Binding(
@@ -227,22 +248,54 @@ private struct AvatarPickerModifier<Extra: View>: ViewModifier {
     }
 }
 
+/// The rows themselves. Picking closes the sheet *before* the source opens: the
+/// camera and the photo library are each another presentation, and asking UIKit
+/// to put one up while this one is still sliding away drops it.
+private struct AvatarSourceList: View {
+    let sources: [AvatarSource]
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(self.sources.enumerated()), id: \.element.id) { index, source in
+                if index > 0 {
+                    Rectangle()
+                        .fill(.tujiRule)
+                        .frame(height: Border.bw1)
+                        .padding(.horizontal, Space.s4)
+                }
+                Button {
+                    self.dismiss()
+                    let action = source.action
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(350))
+                        action()
+                    }
+                } label: {
+                    TujiRow(source.title, showsArrow: false)
+                }
+                .tujiRowStyle()
+            }
+        }
+    }
+}
+
 extension View {
     /// Hosts the whole avatar flow's presentation. The screen keeps only the
     /// button that calls `picker.begin()` and whatever it renders from `phase`.
-    func avatarPicker(_ picker: AvatarPicker, title: LocalizedStringKey) -> some View {
-        self.modifier(AvatarPickerModifier(picker: picker, title: title, extraSources: { EmptyView() }))
-    }
-
-    /// Same, plus screen-specific rows in the source chooser (個人資料 offers
+    ///
+    /// `extraSources` are screen-specific rows in the chooser (個人資料 offers
     /// 使用預設黑貓頭像).
     func avatarPicker(
         _ picker: AvatarPicker,
         title: LocalizedStringKey,
-        @ViewBuilder extraSources: @escaping () -> some View
+        extraSources: [AvatarSource] = []
     )
         -> some View
     {
-        self.modifier(AvatarPickerModifier(picker: picker, title: title, extraSources: extraSources))
+        self.modifier(
+            AvatarPickerModifier(picker: picker, title: title, extraSources: extraSources)
+        )
     }
 }
