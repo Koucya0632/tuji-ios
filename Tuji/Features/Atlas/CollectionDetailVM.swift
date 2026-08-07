@@ -160,6 +160,7 @@ final class CollectionDetailVM {
             let response = try await self.bookmarkRepo.saveCollection(slug: self.slug)
             self.apply(response)
             self.bookmarkLoaded = true
+            await self.reloadAccessIfLockChanged(saved: response.saved)
             return self.collection.map {
                 BookmarkChange(collection: $0, isSaved: response.saved)
             }
@@ -181,6 +182,7 @@ final class CollectionDetailVM {
             let response = try await self.bookmarkRepo.unsaveCollection(slug: self.slug)
             self.apply(response)
             self.bookmarkLoaded = true
+            await self.reloadAccessIfLockChanged(saved: response.saved)
             return self.collection.map {
                 BookmarkChange(collection: $0, isSaved: response.saved)
             }
@@ -226,6 +228,29 @@ final class CollectionDetailVM {
     private func apply(_ response: AtlasSaveResponse) {
         self.isSaved = response.saved
         self.collection = self.collection?.withSaveCount(response.saveCount)
+    }
+
+    /// 收藏 is what unlocks the member list, so a bookmark change is the one
+    /// case where the detail *does* have to be re-read: `unlocked` only ever
+    /// came from the server's `access`, and while a collection is locked the
+    /// response carries a preview of the members rather than all of them — so
+    /// flipping a local flag would open a list the screen does not have.
+    /// Without this, saving left the screen showing 「收藏合集後查看全部 N 個內容」
+    /// until the user backed out and came in again.
+    ///
+    /// Deliberately narrow: an owner is unlocked whatever their bookmark says,
+    /// and a toggle that lands on the state we already have changes nothing, so
+    /// neither costs a request.
+    private func reloadAccessIfLockChanged(saved: Bool) async {
+        guard !self.isOwner, self.unlocked != saved else { return }
+        guard let response = try? await self.repo.collection(slug: self.slug) else { return }
+        self.collection = response.collection
+        self.items = response.items
+        if let access = response.access {
+            self.unlocked = access.unlocked
+            self.totalCount = access.totalCount
+            self.learningCount = access.learningCount
+        }
     }
 
     private func matchesOwner(

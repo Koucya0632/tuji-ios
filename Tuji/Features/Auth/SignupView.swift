@@ -8,6 +8,14 @@
 import SwiftUI
 
 struct SignupView: View {
+    /// See `SigninView` — same pinned-footer layout, same keyboard trap, and
+    /// worse here because this form is taller. Focus is modelled so Return
+    /// walks Email → 密碼 → submit instead of dismissing the keyboard.
+    private enum Field: Hashable {
+        case email
+        case password
+    }
+
     @Environment(AuthService.self) private var auth
     @Binding var path: [WelcomeView.Route]
 
@@ -15,6 +23,7 @@ struct SignupView: View {
     @State private var password = ""
     @State private var showPwd = false
     @State private var showEmailConfirmation = false
+    @FocusState private var focused: Field?
 
     private var trimmedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -35,46 +44,58 @@ struct SignupView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.s4) {
-                    VStack(alignment: .leading, spacing: Space.s2) {
-                        Text("建立帳號")
-                            .font(.tujiH2)
-                            .foregroundStyle(.tujiInk)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.s4) {
+                        VStack(alignment: .leading, spacing: Space.s2) {
+                            Text("建立帳號")
+                                .font(.tujiH2)
+                                .foregroundStyle(.tujiInk)
 
-                        Text("填入登入信箱和密碼，開始建立你的單字卡。")
-                            .font(.tujiBodySm)
-                            .foregroundStyle(.tujiInk3)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    field(
-                        label: "Email",
-                        text: $email,
-                        placeholder: "name@example.com",
-                        keyboard: .emailAddress,
-                        contentType: .emailAddress,
-                        capitalize: false,
-                        helper: "用來登入與接收驗證信"
-                    )
-
-                    passwordField
-
-                    if let err = auth.error {
-                        HStack(alignment: .top, spacing: Space.s2) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.tujiAlert)
-                            Text(err)
+                            Text("填入登入信箱和密碼，開始建立你的單字卡。")
                                 .font(.tujiBodySm)
-                                .foregroundStyle(.tujiInk2)
+                                .foregroundStyle(.tujiInk3)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(Space.s3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.tujiAlert.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
+
+                        field(
+                            label: "Email",
+                            text: $email,
+                            placeholder: "name@example.com",
+                            keyboard: .emailAddress,
+                            contentType: .emailAddress,
+                            capitalize: false,
+                            helper: "用來登入與接收驗證信"
+                        )
+                        .id(Field.email)
+
+                        passwordField
+                            .id(Field.password)
+
+                        if let err = auth.error {
+                            HStack(alignment: .top, spacing: Space.s2) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.tujiAlert)
+                                Text(err)
+                                    .font(.tujiBodySm)
+                                    .foregroundStyle(.tujiInk2)
+                            }
+                            .padding(Space.s3)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.tujiAlert.opacity(0.08), in: .rect(cornerRadius: Radius.r0))
+                        }
+                    }
+                    .padding(.horizontal, Space.s4)
+                    .padding(.top, Space.s4)
+                    .padding(.bottom, Space.s4)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: focused) { _, field in
+                    guard let field else { return }
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo(field, anchor: .center)
                     }
                 }
-                .padding(.horizontal, Space.s4)
-                .padding(.top, Space.s4)
             }
 
             VStack(spacing: Space.s3) {
@@ -105,13 +126,22 @@ struct SignupView: View {
         .background(.tujiPaper)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.tujiPaper, for: .navigationBar)
-        .alert("確認信已寄出", isPresented: $showEmailConfirmation) {
-            Button("前往登入") {
+        .onSubmit {
+            switch focused {
+            case .email: focused = .password
+            case .password where canSubmit: submit()
+            default: focused = nil
+            }
+        }
+        .tujiPrompt(
+            isPresented: $showEmailConfirmation,
+            style: .success,
+            title: "確認信已寄出",
+            message: "請開信箱點擊驗證連結，完成後再用這組 Email 和密碼登入。",
+            primary: TujiPromptAction("前往登入") {
                 path = [.signin]
             }
-        } message: {
-            Text("請開信箱點擊驗證連結，完成後再用這組 Email 和密碼登入。")
-        }
+        )
     }
 
     private var passwordField: some View {
@@ -131,6 +161,9 @@ struct SignupView: View {
                 .textContentType(.newPassword)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
+                .focused($focused, equals: .password)
+                .submitLabel(.go)
+                .accessibilityLabel(Text("密碼"))
 
                 Button { showPwd.toggle() } label: {
                     Image(systemName: showPwd ? "eye.slash" : "eye")
@@ -183,6 +216,9 @@ struct SignupView: View {
                 .textContentType(contentType)
                 .textInputAutocapitalization(capitalize ? .words : .never)
                 .autocorrectionDisabled(!capitalize)
+                .focused($focused, equals: .email)
+                .submitLabel(.next)
+                .accessibilityLabel(Text(label))
                 .padding(Space.s3)
                 .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
                 .overlay(
@@ -199,6 +235,7 @@ struct SignupView: View {
     }
 
     private func submit() {
+        focused = nil
         Task {
             let result = await auth.signUp(email: trimmedEmail, password: password)
             if result == .pendingEmailConfirmation {
