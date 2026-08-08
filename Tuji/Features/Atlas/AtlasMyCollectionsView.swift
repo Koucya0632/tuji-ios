@@ -1,7 +1,7 @@
 // 作者端「我的合集」：列出自己的合集 + 建立，並在編輯頁更換公開頭像、挑選成員、送審。
 //
-// 成員只能來自作者自己「已通過」的公開項目（後端強制）；集合背景圖不再顯示，
-// 集合頭像照片則用於列表與詳情。送審只審標題 + 簡介的文字。
+// 成員只能來自作者自己「已通過」的公開項目（後端強制）；合集背景圖不再顯示，
+// 合集頭像照片則用於列表與詳情。送審只審標題 + 簡介的文字。
 
 import Nuke
 import NukeUI
@@ -306,7 +306,7 @@ struct AtlasCollectionEditView: View {
                 await self.vm.addMember(publicItemId)
             }
         }
-        .avatarPicker(self.avatar, title: "更換集合頭像")
+        .avatarPicker(self.avatar, title: "更換合集頭像")
         .tujiPrompt(
             isPresented: self.$showConfirm,
             style: .confirmation,
@@ -314,7 +314,7 @@ struct AtlasCollectionEditView: View {
             message: self.vm.unpublishedMemberCount > 0
                 ? "將同時送審 \(self.vm.unpublishedMemberCount) 個尚未公開的項目。"
                 : "送出後會先經過審核，通過才會出現在物見。",
-            detail: "集合與所有項目全部通過後，才會一起公開。",
+            detail: "合集與所有項目全部通過後，才會一起公開。",
             // The VM owns the publish; what a publish refreshes is
             // AtlasMutationRefresh's call. The view only hands over the
             // environment's feed signal, so the VM stays unit-testable.
@@ -353,7 +353,7 @@ struct AtlasCollectionEditView: View {
 
     private var avatarSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            Text("集合頭像")
+            Text("合集頭像")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(.tujiInk)
             HStack(spacing: Space.s4) {
@@ -397,7 +397,7 @@ struct AtlasCollectionEditView: View {
 
                 Spacer(minLength: 0)
             }
-            Text("這張照片會作為集合頭像顯示在公開列表與集合詳情。")
+            Text("這張照片會作為合集頭像顯示在公開列表與合集詳情。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             // One error line for the whole avatar flow. It used to render the
@@ -659,7 +659,7 @@ private struct AtlasCollectionItemPicker: View {
                             Image(systemName: "photo.on.rectangle.angled")
                                 .font(.system(size: 36)).foregroundStyle(.tujiInk3)
                             Text(self.model.loadError == nil
-                                ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入集合。")
+                                ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入合集。")
                                 : tujiLocalized("載入失敗，請稍後再試"))
                                 .font(.tujiLabel)
                                 .foregroundStyle(.tujiInk3)

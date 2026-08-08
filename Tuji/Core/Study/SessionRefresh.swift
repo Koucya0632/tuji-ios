@@ -43,7 +43,7 @@ struct SessionRefresh {
     /// The home stores to invalidate + reload (mastery, progress, study stats).
     let stores: [RefreshableStore]
     /// Drop the prefetched study queue — this session changed due/seen counts,
-    /// so the next 復習 / 學新字 must re-fetch. A closure so the caller owns the
+    /// so the next 複習 / 學新字 must re-fetch. A closure so the caller owns the
     /// StudyQueueStore reference and a test can spy the invalidation.
     let invalidateQueue: () -> Void
 

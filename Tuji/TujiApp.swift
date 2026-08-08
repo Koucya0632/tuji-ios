@@ -57,6 +57,7 @@ struct TujiApp: App {
                 .environment(feedRefresh)
                 .environment(collectionBookmarks)
                 .environment(collectionIdentities)
+                .environment(BlockStore.shared)
                 .environment(\.locale, settings.current.uiLanguage.locale)
                 .task {
                     await words.loadIfNeeded()

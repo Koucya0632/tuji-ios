@@ -180,6 +180,30 @@ struct LiveAtlasRepository {
         )
     }
 
+    func reportCollection(
+        slug: String,
+        reason: AtlasReportReason,
+        detail: String?
+    ) async throws {
+        struct Ack: Decodable { let ok: Bool? }
+        let _: Ack = try await self.api.post(
+            .atlasPublicCollectionReport(slug: slug),
+            body: AtlasReportPayload(reason: reason.rawValue, detail: detail)
+        )
+    }
+
+    func reportAuthor(
+        handle: String,
+        reason: AtlasReportReason,
+        detail: String?
+    ) async throws {
+        struct Ack: Decodable { let ok: Bool? }
+        let _: Ack = try await self.api.post(
+            .atlasPublicAuthorReport(handle: handle),
+            body: AtlasReportPayload(reason: reason.rawValue, detail: detail)
+        )
+    }
+
     // MARK: - Community collections 合集
 
     /// Public browse feed, scoped to one learning language. `forceReload`

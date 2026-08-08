@@ -111,7 +111,7 @@ struct TodayView: View {
     }
 
     /// Warm the study queue in the background (JSON only — card images stay
-    /// lazy) so tapping 復習 / 學新字 skips the "載入練習中…" spinner. Only the
+    /// lazy) so tapping 複習 / 學新字 skips the "載入練習中…" spinner. Only the
     /// enabled CTAs are prefetched, so a disabled button costs nothing, and the
     /// fetch replaces — not duplicates — the launcher's request for users who do
     /// study. Runs after vm.load so settings + stats (which drive the params)
@@ -239,7 +239,7 @@ struct TodayView: View {
             return "今天想學點什麼呢？"
         }
         if stats.due > 0 {
-            return "今天有 \(stats.due) 個字要復習"
+            return "今天有 \(stats.due) 個字要複習"
         }
         // Goal reached wins over everything below so this line can never
         // contradict the 達成 badge on the hero card.
@@ -280,14 +280,14 @@ struct TodayView: View {
                     }
                     .buttonStyle(HeroPillStyle(role: .primary))
 
-                    Text("免費註冊就能學新字、排復習，進度存在雲端")
+                    Text("免費註冊就能學新字、排複習，進度存在雲端")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiPaper.opacity(0.6))
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     HStack(spacing: Space.s3) {
                         NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
-                            Text("復習")
+                            Text("複習")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(HeroPillStyle(role: self.reviewDisabled ? .secondary : .primary))
@@ -434,11 +434,21 @@ struct TodayView: View {
     }
 
     /// Total published words in the selected categories. Server count when
-    /// available, else the locally known dictionary size.
+    /// available, else the locally known dictionary — scoped the same way.
+    ///
+    /// The fallback used to be the *whole* dictionary, which fires not only
+    /// when there is no server progress (guests, always) but also whenever the
+    /// selected themes happen to hold nothing. A guest whose only themes were
+    /// 自定義 + 物見 therefore read 「主題進度 0 / 480」 while 設定 said two
+    /// themes were selected — a denominator describing a selection nobody made.
     private var dexTotal: Int {
         if self.showThemePrompt { return 0 }
-        let serverTotal = self.progress.totalCount(filter: self.settings.current.studyCategories)
-        return serverTotal > 0 ? serverTotal : self.words.words.count
+        let selected = self.settings.current.studyCategories
+        let serverTotal = self.progress.totalCount(filter: selected)
+        if serverTotal > 0 { return serverTotal }
+        guard !selected.isEmpty else { return self.words.words.count }
+        let wanted = Set(selected)
+        return self.words.words.count(where: { wanted.contains($0.category) })
     }
 
     private var reviewDisabled: Bool {
@@ -557,7 +567,7 @@ struct TodayView: View {
     }
 
     /// One explanatory line under the CTAs. A greyed 學新字 explains itself
-    /// (newBlockHint); otherwise a greyed 復習 gets its own line so neither
+    /// (newBlockHint); otherwise a greyed 複習 gets its own line so neither
     /// button is ever silently dead. Waits for stats so it never claims
     /// "nothing due" before the first fetch answers.
     private var heroHint: LocalizedStringKey? {
@@ -697,7 +707,7 @@ struct TodayView: View {
 /// The two buttons on the ink block. Only one of them is primary at a time, and
 /// which one depends on what the user can actually do right now.
 ///
-/// 復習 is disabled whenever nothing is due. Hard-coding it as the primary meant
+/// 複習 is disabled whenever nothing is due. Hard-coding it as the primary meant
 /// that on a day with no reviews the screen showed a *disabled* primary button
 /// beside an enabled secondary one — the only available action drawn as the
 /// lesser of the two.

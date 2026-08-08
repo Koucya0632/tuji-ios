@@ -18,6 +18,7 @@ struct AtlasPublicFeedView: View {
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
     @Environment(AuthService.self) private var auth
     @Environment(CollectionBookmarkStore.self) private var bookmarks
+    @Environment(BlockStore.self) private var blocks
 
     @State private var browsing = PublicAtlasBrowsingModel()
     @State private var selectedCollection: AtlasCollection?
@@ -73,15 +74,20 @@ struct AtlasPublicFeedView: View {
         // owns SwiftUI environment objects and translates them into plain values.
         .task(id: self.browsingLoadKey) {
             if self.section == .saved { self.savedShelfMounted = true }
+            await self.blocks.loadIfNeeded()
             await self.browsing.update(
                 shelf: self.section,
                 language: self.targetLanguage,
                 isSignedIn: self.isSignedIn,
+                blockedAuthors: self.blocks.handles,
                 pendingExploreRefresh: self.feedRefresh.consume()
             )
             if let identity = self.currentAuthorIdentity {
                 self.browsing.applyAuthorIdentity(identity)
             }
+        }
+        .onChange(of: self.blocks.handles) { _, handles in
+            self.browsing.applyBlocks(handles)
         }
         .onChange(of: self.currentAuthorIdentity) { _, identity in
             guard let identity else { return }
@@ -478,8 +484,11 @@ struct AtlasPublicDetailView: View {
     @Environment(AuthService.self) private var auth
     @Environment(MasteryStore.self) private var mastery
     @Environment(SettingsStore.self) private var settings
+    @Environment(BlockStore.self) private var blocks
+    @Environment(\.dismiss) private var dismiss
     @State private var vm: AtlasPublicDetailVM
     @State private var showReport = false
+    @State private var showBlockPrompt = false
     @State private var showStopLearningPrompt = false
     /// The author route is keyed by handle, never by display name — two people
     /// may share a name, and only the handle is a valid path component.
@@ -495,6 +504,19 @@ struct AtlasPublicDetailView: View {
             repo: repo,
             itemReader: itemReader
         ))
+    }
+
+    /// Blocking is keyed by the immutable TJ-UID, so an item whose author never
+    /// resolved simply offers no block action rather than a broken one — and an
+    /// item of your own offers none either, since blocking yourself would hide
+    /// your own 圖鑑 from you.
+    private var authorHandle: String? {
+        guard let handle = self.vm.item.author?.handle, !handle.isEmpty else { return nil }
+        guard case let .signedIn(user) = self.auth.state else { return nil }
+        if let uid = user.username, uid.caseInsensitiveCompare(handle) == .orderedSame {
+            return nil
+        }
+        return handle
     }
 
     var body: some View {
@@ -536,6 +558,23 @@ struct AtlasPublicDetailView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(self.vm.reportSent)
+
+                // 檢舉 asks someone else to judge this one item; 封鎖 is the
+                // reader's own decision about everything by this author. They
+                // answer different needs, so they sit together.
+                if let handle = self.authorHandle {
+                    Button {
+                        self.showBlockPrompt = true
+                    } label: {
+                        Text(self.blocks.isBlocked(handle) ? "已封鎖這位作者" : "封鎖這位作者")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.tujiInk3)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Space.s2)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(self.blocks.isBlocked(handle))
+                }
             }
             .padding(Space.s4)
         }
@@ -561,13 +600,40 @@ struct AtlasPublicDetailView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
-        .confirmationDialog("檢舉原因", isPresented: self.$showReport, titleVisibility: .visible) {
-            ForEach(AtlasReportReason.allCases) { reason in
-                Button(reason.label, role: .destructive) {
-                    Task { await self.vm.report(reason) }
+        .tujiPrompt(
+            isPresented: self.$showBlockPrompt,
+            style: .confirmation,
+            title: "封鎖這位作者？",
+            detail: "你不會再看到這個人公開的內容。已經收進圖鑑的字不受影響，隨時可以解除。",
+            primary: TujiPromptAction("封鎖", role: .destructive) {
+                // TujiPrompt nils its backing state before running the action,
+                // so read the handle into a local first (see CONTEXT.md).
+                guard let handle = self.authorHandle else { return }
+                Task {
+                    if await self.blocks.block(handle: handle) {
+                        // This screen is now showing content the user just asked
+                        // never to see again.
+                        self.dismiss()
+                    }
                 }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        // Five options plus the footer line; the default height clips the last.
+        .tujiSheet(isPresented: self.$showReport, title: "檢舉原因", height: 460) {
+            TujiOptionSheet(
+                options: AtlasReportReason.allCases.map {
+                    TujiOptionSheet<AtlasReportReason?>.Option(
+                        Optional($0),
+                        verbatim: $0.label
+                    )
+                },
+                selection: AtlasReportReason?.none,
+                footer: "檢舉會送給審核人員，對方不會知道是誰檢舉的。"
+            ) { picked in
+                guard let picked else { return }
+                Task { await self.vm.report(picked) }
             }
-            Button("取消", role: .cancel) {}
         }
     }
 

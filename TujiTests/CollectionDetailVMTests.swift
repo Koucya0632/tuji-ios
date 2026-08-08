@@ -192,6 +192,94 @@ struct CollectionDetailVMTests {
         #expect(vm.remainingLearningCount == 12)
     }
 
+    /// 收藏 is what opens the member list, and `unlocked` only ever came from
+    /// the server's `access`, so a save that did not re-read the detail left the
+    /// screen locked — 「收藏合集後查看全部 N 個內容」 stayed up, the members
+    /// stayed unopenable and 全部加入學習 never appeared, until the user backed
+    /// out and came in again.
+    @Test
+    func savingUnlocksTheMemberListWithoutLeavingTheScreen() async {
+        let details = FakeCollectionDetailReading()
+        let bookmarks = FakeDetailBookmarking()
+
+        var locked = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: [self.item(id: "x")]
+        )
+        locked.access = AtlasCollectionAccess(
+            unlocked: false,
+            isOwner: false,
+            isSaved: false,
+            totalCount: 3,
+            learningCount: 0
+        )
+        details.result = .success(locked)
+
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+        await vm.open(context: self.context(isSignedIn: true, username: "other"))
+        #expect(!vm.unlocked)
+        #expect(vm.items.count == 1)
+
+        // Unlocking is not a flag flip: the locked response only carried a
+        // preview, so the full catalogue arrives with the re-read.
+        var unlocked = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: [self.item(id: "x"), self.item(id: "y"), self.item(id: "z")]
+        )
+        unlocked.access = AtlasCollectionAccess(
+            unlocked: true,
+            isOwner: false,
+            isSaved: true,
+            totalCount: 3,
+            learningCount: 0
+        )
+        details.result = .success(unlocked)
+        bookmarks.saveResult = .success(.init(ok: true, saved: true, saveCount: 1))
+
+        await vm.save()
+
+        #expect(vm.isSaved)
+        #expect(vm.unlocked)
+        #expect(vm.items.count == 3)
+        #expect(vm.remainingLearningCount == 3)
+    }
+
+    @Test
+    func ownerSaveDoesNotCostASecondDetailFetch() async {
+        let recorder = DetailCallRecorder()
+        let details = FakeCollectionDetailReading(recorder: recorder)
+        let bookmarks = FakeDetailBookmarking(recorder: recorder)
+
+        var response = AtlasCollectionDetailResponse(
+            collection: self.collection(id: "a"),
+            items: [self.item(id: "x")]
+        )
+        // An owner is unlocked whatever their bookmark says, so nothing about
+        // the lock can change and the re-read would be pure waste.
+        response.access = AtlasCollectionAccess(
+            unlocked: true,
+            isOwner: true,
+            isSaved: false,
+            totalCount: 1,
+            learningCount: 0
+        )
+        details.result = .success(response)
+
+        let vm = CollectionDetailVM(
+            slug: "s",
+            repo: details,
+            bookmarkRepo: bookmarks
+        )
+        await vm.open(context: self.context(isSignedIn: true, username: "u"))
+        await vm.save()
+
+        #expect(recorder.calls.count(where: { $0 == .detail }) == 1)
+    }
+
     @Test
     func batchLearningUpdatesCountsAndRefreshesStudyData() async {
         let details = FakeCollectionDetailReading()

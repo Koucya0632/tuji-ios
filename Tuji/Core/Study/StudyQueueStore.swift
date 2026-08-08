@@ -1,4 +1,4 @@
-// Caches the study queue per mode so the common "open app → tap 復習 / 學新字"
+// Caches the study queue per mode so the common "open app → tap 複習 / 學新字"
 // path skips the network round-trip. TodayView pre-fetches in the background
 // while the user reads the home screen; StudyLauncherView consumes the warm
 // queue via take(mode:), or falls back to a live fetch(mode:) on a miss.

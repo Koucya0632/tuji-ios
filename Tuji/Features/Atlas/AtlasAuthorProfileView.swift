@@ -19,6 +19,68 @@ struct AtlasAuthorProfileView: View {
     @State private var selectedItem: AtlasPublicItem?
     @State private var selectedCollection: AtlasCollection?
     @State private var editing = false
+    @State private var showBlockPrompt = false
+    @State private var showReport = false
+    @State private var reportSent = false
+    @Environment(BlockStore.self) private var blocks
+    @Environment(AuthService.self) private var auth
+    @Environment(\.dismiss) private var dismiss
+
+    private let reporter: AtlasReporting = LiveAtlasRepository.shared
+
+    /// `vm.isSelf` answers "did the caller open this as *my* page" — it is passed
+    /// in deliberately (see `AuthorProfileVM.isSelf`) and is false on every route
+    /// that arrives here from a byline, including the ones that land on your own
+    /// profile. That was harmless while it only withheld an edit shortcut; it is
+    /// not harmless now that its absence would offer you 檢舉 and 封鎖 on
+    /// yourself. So ask the other question too, directly: is this handle mine?
+    ///
+    /// Safe to compare here where it wasn't for `isSelf`: the UID is server
+    /// assigned and immutable, so two accounts cannot collide, and the worst a
+    /// stale local value can do is show the menu — exactly today's behaviour.
+    private var isOwnProfile: Bool {
+        if self.vm.isSelf { return true }
+        guard case let .signedIn(user) = self.auth.state,
+              let uid = user.username, !uid.isEmpty
+        else { return false }
+        return uid.caseInsensitiveCompare(self.vm.handle) == .orderedSame
+    }
+
+    /// Guests have no account to report or block *with*, and both endpoints
+    /// require auth — offering an action that can only 401 is worse than not
+    /// offering it.
+    private var canModerate: Bool {
+        if case .signedIn = self.auth.state { return !self.isOwnProfile }
+        return false
+    }
+
+    /// Only ever on someone else's page — there is nothing to protect yourself
+    /// from on your own, and 「封鎖自己」 would be a bug you could tap.
+    ///
+    /// One menu rather than two icons: 檢舉 asks someone else to judge this
+    /// person's 暱稱/簽名/頭像, 封鎖 is your own decision to stop seeing them.
+    /// Different answers to the same moment, so they belong behind one control.
+    private var moderationMenu: some View {
+        Menu {
+            Button(self.reportSent ? "已收到檢舉" : "檢舉這位作者", role: .destructive) {
+                self.showReport = true
+            }
+            .disabled(self.reportSent)
+            if self.blocks.isBlocked(self.vm.handle) {
+                Button("解除封鎖") { self.showBlockPrompt = true }
+            } else {
+                Button("封鎖這位作者", role: .destructive) { self.showBlockPrompt = true }
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.tujiInk2)
+                .frame(width: 44, height: 48)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel(Text("更多"))
+    }
+
     /// `handle` is the author's public handle (`profiles.username`) — the link
     /// target carried on public items, never the name shown on them.
     init(handle: String, isSelf: Bool = false) {
@@ -28,11 +90,59 @@ struct AtlasAuthorProfileView: View {
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back) {
-                if self.vm.isSelf { self.editButton }
+                if self.vm.isSelf {
+                    self.editButton
+                } else if self.canModerate {
+                    self.moderationMenu
+                }
             }
             self.scroll
         }
         .background(.tujiPaper)
+        .tujiPrompt(
+            isPresented: self.$showBlockPrompt,
+            style: .confirmation,
+            title: self.blocks.isBlocked(self.vm.handle) ? "解除封鎖？" : "封鎖這位作者？",
+            detail: self.blocks.isBlocked(self.vm.handle)
+                ? "解除後你會重新看到這個人公開的內容。"
+                : "你不會再看到這個人公開的內容。已經收進圖鑑的字不受影響，隨時可以解除。",
+            primary: self.blocks.isBlocked(self.vm.handle)
+                ? TujiPromptAction("解除封鎖") {
+                    let handle = self.vm.handle
+                    Task { await self.blocks.unblock(handle: handle) }
+                }
+                : TujiPromptAction("封鎖", role: .destructive) {
+                    let handle = self.vm.handle
+                    Task {
+                        if await self.blocks.block(handle: handle) { self.dismiss() }
+                    }
+                },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        // Five options plus the footer line; the default height clips the last.
+        .tujiSheet(isPresented: self.$showReport, title: "檢舉原因", height: 460) {
+            TujiOptionSheet(
+                options: AtlasReportReason.allCases.map {
+                    TujiOptionSheet<AtlasReportReason?>.Option(
+                        Optional($0),
+                        verbatim: $0.label
+                    )
+                },
+                selection: AtlasReportReason?.none,
+                footer: "檢舉會送給審核人員，對方不會知道是誰檢舉的。"
+            ) { picked in
+                guard let picked else { return }
+                let handle = self.vm.handle
+                Task {
+                    self.reportSent = true
+                    try? await self.reporter.reportAuthor(
+                        handle: handle,
+                        reason: picked,
+                        detail: nil
+                    )
+                }
+            }
+        }
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: self.$selectedItem) { item in

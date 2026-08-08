@@ -25,6 +25,8 @@ struct WordCommunityAtlasSection: View {
     /// therefore can't carry a per-user saved flag.
     @State private var savedSlugs: Set<String> = []
 
+    @Environment(BlockStore.self) private var blocks
+
     init(word: Word, repo: PublicItemsReading = LiveAtlasRepository.shared) {
         self.word = word
         self.repo = repo
@@ -34,15 +36,22 @@ struct WordCommunityAtlasSection: View {
         self.settings.current.learningDirection.targetLanguage
     }
 
+    /// Everything below counts and renders this, never `items`. A word whose
+    /// only public photos come from blocked authors has to look exactly like a
+    /// word with no public photos at all — no heading, no count, no gap.
+    private var visibleItems: [AtlasPublicItem] {
+        self.items.filter { !self.blocks.isBlocked($0.author?.handle) }
+    }
+
     var body: some View {
         Group {
-            if self.loaded, !self.items.isEmpty {
+            if self.loaded, !self.visibleItems.isEmpty {
                 VStack(alignment: .leading, spacing: Space.s3) {
                     HStack(spacing: Space.s2) {
                         Text("大家的圖鑑")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(.tujiInk)
-                        Text("\(self.items.count)")
+                        Text("\(self.visibleItems.count)")
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.tujiTeal)
                             .padding(.horizontal, Space.s2)
@@ -52,7 +61,7 @@ struct WordCommunityAtlasSection: View {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: Space.s3) {
-                            ForEach(self.items) { item in
+                            ForEach(self.visibleItems) { item in
                                 Button {
                                     self.selected = item
                                 } label: {

@@ -368,6 +368,14 @@ private struct TabBarButton: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
+        // The icon and the label were separate accessibility elements next to
+        // the button, so each tab was announced three times — and once wrongly,
+        // because an unlabelled SF Symbol carries the system's own name for it:
+        // 今天 read as 「調高亮度」 (sun.max.fill) and 圖鑑 as 「書架」
+        // (books.vertical.fill). Collapse the button into one element that says
+        // the tab's name and nothing else.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(self.tab.titleZh))
         .accessibilityAddTraits(self.isSelected ? [.isSelected] : [])
     }
 }
