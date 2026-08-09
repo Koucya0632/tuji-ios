@@ -86,6 +86,29 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 
+## Domain — 方案與權限 (plan & entitlement)
+
+- **訂閱 (subscription)** — an auto-renewable App Store purchase. Apple owns its whole
+  lifecycle: renewal, cancellation and **refund all arrive as notifications and downgrade
+  the user automatically**, so there is no such thing as manually cancelling someone's
+  subscription and no operator action should ever claim to. It belongs to an Apple ID, not
+  to a Tuji account, which is why binding it to an account is a decision (ADR-0005) rather
+  than a fact.
+- **贈與 (grant)** — Pro given by an operator: a comp, apology credit, reviewer access.
+  Independent of any 訂閱, carries a mandatory reason, and is append-only — revoking marks
+  a grant dead rather than erasing it, because "why was this person Pro last March" has to
+  stay answerable. Revoking a 贈與 never cancels a 訂閱.
+- **生效權限 (effective entitlement)** — the union of 訂閱 and 贈與: Pro if *either* is
+  live, and the later expiry wins. This is the only thing that gates a feature. The two
+  sources are never merged into one stored value — merging them is what used to let a
+  compensation shorten a subscriber's real expiry, and let Apple's next renewal erase the
+  compensation (ADR-0004). Everything user-facing reads 生效權限; anything asking "is this
+  person a *customer*" must read 訂閱 specifically, because a comped account is not revenue.
+- **權限異動紀錄 (entitlement ledger)** — the append-only history of 生效權限 transitions.
+  Both source tables are mutated in place, so this is the only history that exists, and it
+  cannot be backfilled. It answers questions about *our* users; App Store Connect remains
+  the authority on money (revenue, refunds, churn) and is not duplicated here.
+
 ## Architecture — seams & conventions
 
 - **LiveAtlasRepository** — the concrete atlas HTTP client (in `AtlasRepository.swift`).
