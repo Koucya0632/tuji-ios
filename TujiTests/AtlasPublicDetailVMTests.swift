@@ -1,6 +1,6 @@
 // Pins AtlasPublicDetailVM's consumption action state behind the AtlasItemConsuming
 // seam: save reflects the response, a failed unsave must NOT flip the toggle
-// (the state machine's one real hazard), and report sets/gates its flag.
+// (the state machine's one real hazard).
 
 import Foundation
 import Testing
@@ -113,28 +113,8 @@ struct AtlasPublicDetailVMTests {
         #expect(refresher.refreshCount == 1)
     }
 
-    @Test
-    func reportSuccessSetsSentFlag() async {
-        let fake = FakeItemConsuming()
-        let vm = AtlasPublicDetailVM(item: self.item(slug: "s9"), repo: fake)
-
-        await vm.report(.spam)
-
-        #expect(vm.reportSent)
-        #expect(fake.reportedSlugs == ["s9"])
-    }
-
-    @Test
-    func reportFailureSurfacesErrorAndLeavesSentFalse() async {
-        let fake = FakeItemConsuming()
-        fake.reportResult = .failure(FakeError.boom)
-        let vm = AtlasPublicDetailVM(item: self.item(), repo: fake)
-
-        await vm.report(.spam)
-
-        #expect(!vm.reportSent)
-        #expect(vm.actionError != nil)
-    }
+    // 檢舉 moved to ReportFlow (see ReportFlowTests) — these two tests moved
+    // with it, and now cover all three targets instead of only the item.
 
     @Test
     func openingDetailReplacesTheFeedPreview() async {
