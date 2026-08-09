@@ -28,6 +28,17 @@ struct WordsStoreMergeTests {
     }
 
     @Test
+    func fixedSourceOrderMakesSavedOverrideCustomAndPublic() {
+        let merged = WordsStore.merge(
+            publicWords: [self.word("w1", word: "public")],
+            customWords: [self.word("w1", word: "custom")],
+            savedWords: [self.word("w1", word: "saved")]
+        )
+
+        #expect(merged.map(\.word) == ["saved"])
+    }
+
+    @Test
     func duplicatePublicIdsDoNotTrap() {
         // Dictionary(uniqueKeysWithValues:) would crash here; merge must not.
         let merged = WordsStore.merge(

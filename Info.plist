@@ -92,7 +92,7 @@
 		<key>UIColorName</key>
 		<string>LaunchBg</string>
 		<key>UIImageName</key>
-		<string>LaunchMarkV2</string>
+		<string>LaunchLockupPeekStart</string>
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<true/>
 	</dict>

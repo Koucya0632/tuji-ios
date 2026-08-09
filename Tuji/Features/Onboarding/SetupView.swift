@@ -13,7 +13,7 @@ import SwiftUI
 
 struct SetupView: View {
     let userId: UUID
-    let onDone: () -> Void
+    let onDone: @MainActor () async -> Void
 
     @Environment(OnboardingState.self) private var onboarding
     @Environment(CategoriesStore.self) private var categories
@@ -232,13 +232,17 @@ struct SetupView: View {
                 // Today's theme grid read SettingsStore.current, which would
                 // otherwise stay at defaults until the next server load.
                 settingsStore.adoptPersisted(settings)
+                // The main shell needs the catalog for this newly persisted
+                // direction. Keep Setup mounted (and its existing saving
+                // state visible) until that attempt completes, rather than
+                // showing the launch brand for a second time.
+                await onDone()
                 // Flips RootView to MainTabsView, which lands on 主頁 and lets
                 // the first-run tour take it from here. Setup used to park a
                 // study deep link and push straight into a session — that shut
                 // the tour out entirely, since startTourIfNeeded() bails while
                 // StudyLauncherView holds studyFocus.
                 onboarding.markSetupDone(for: userId)
-                onDone()
             } catch APIError.unauthorized {
                 error = tujiLocalized("後端不認這次登入。可能要重新登入一次。")
                 showReSignIn = true

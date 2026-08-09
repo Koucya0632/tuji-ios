@@ -1,142 +1,172 @@
-// Top-level state switcher.
-//
-//   App launch
-//     ├─ AuthService.checking         → SplashView
-//     ├─ AuthService.signedOut
-//     │    ├─ !introDone              → OnboardingFlow
-//     │    └─  introDone              → WelcomeView
-//     ├─ AuthService.guest            → SplashView (until content ready)
-//     │                                 then MainTabsView(user: nil)
-//     │                                 (LocalCache is the source of truth)
-//     └─ AuthService.signedIn(user)
-//          ├─ !setupDone(user.id)     → SetupView
-//          ├─ !contentReady           → SplashView
-//          └─ everything ready        → MainTabsView(user: user)
-//
-// The splash is held over the *main page* (MainTabsView) until the word
-// dictionary + category list have finished their first load, so the home
-// screen never flashes an empty state on launch. Onboarding / Welcome /
-// Setup don't need word data, so they're shown immediately.
+// Top-level state switcher. LaunchCoordinator owns the one-time 600ms/auth/
+// catalog gate; LaunchDestination owns the pure routing table. RootView only
+// renders one destination, so Splash is never duplicated under an overlay.
 
 import SwiftUI
 
 struct RootView: View {
     @Environment(AuthService.self) private var auth
     @Environment(OnboardingState.self) private var onboarding
-    @Environment(WordsStore.self) private var words
-    @Environment(CategoriesStore.self) private var categories
     @Environment(NetworkMonitor.self) private var network
+    @Environment(LaunchCoordinator.self) private var launch
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var minimumSplashElapsed = false
-
-    /// The main page's data is ready once both the dictionary and the
-    /// category list have completed a load attempt (success or failure —
-    /// a failed load still releases the splash and lets MainTabsView show
-    /// its own empty / retry state rather than trapping us here).
-    private var contentReady: Bool {
-        self.words.loaded && self.categories.loaded
-    }
-
     var body: some View {
+        let destination = self.destination
+
         ZStack(alignment: .top) {
-            content
+            self.content(for: destination)
+                .id(destination)
+                .transition(.opacity)
 
-            if !self.minimumSplashElapsed {
-                SplashView()
-                    .transition(.opacity)
-                    .zIndex(10)
-            }
-
-            if self.network.hasStatus, !self.network.isConnected {
+            if destination.isReady,
+               self.network.hasStatus,
+               !self.network.isConnected
+            {
                 OfflineBanner()
                     .padding(.top, 8)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .zIndex(5)
             }
         }
-        .task { await self.runLaunchSequence() }
-        .animation(.easeInOut(duration: 0.25), value: stateKey)
+        .task { await self.launch.start() }
+        .task(id: self.catalogSession) {
+            switch self.catalogSession {
+            case .some(.guest):
+                await self.launch.prepareGuestSession()
+            case let .some(.signedIn(userID)):
+                await self.launch.prepareSignedInSession(userID: userID)
+            case .none:
+                break
+            }
+        }
+        .onChange(of: self.onboarding.learningDirection) { oldValue, newValue in
+            guard oldValue != newValue, newValue != nil else { return }
+            // Direction selection happens before an interactive Main exists.
+            // Replace any speculative/default-context readiness immediately;
+            // Settings changes made from an already-mounted Main keep their
+            // existing no-empty-flash reload behavior instead.
+            switch self.auth.state {
+            case .signedOut:
+                self.launch.refreshGuestCatalog()
+            case let .signedIn(user)
+                where !self.onboarding.setupDone(for: user.id):
+                self.launch.refreshSignedInCatalog(userID: user.id)
+            case .checking, .guest, .signedIn:
+                break
+            }
+        }
+        .onChange(of: destination, initial: true) { _, newDestination in
+            guard newDestination.isReady else { return }
+            self.launch.destinationDidBecomeReady()
+        }
+        .animation(
+            LaunchTransitionPolicy.opacityDuration(reduceMotion: self.reduceMotion)
+                .map { .easeOut(duration: $0) },
+            // `.isReady` changes only when the single brand surface hands off
+            // to the first interactive destination. Later top-level route
+            // changes stay outside this cold-launch opacity transaction.
+            value: destination.isReady
+        )
         .animation(.easeInOut(duration: 0.25), value: network.isConnected)
     }
 
-    @MainActor
-    private func runLaunchSequence() async {
-        // Once per launch — deliberately not re-fired on foregrounding.
-        AnalyticsService.shared.track(.appOpen)
-        async let sessionRestore: Void = self.auth.restoreSession()
-
-        if !self.reduceMotion {
-            try? await Task.sleep(for: .milliseconds(850))
-        }
-
-        guard !Task.isCancelled else { return }
-        if self.reduceMotion {
-            self.minimumSplashElapsed = true
-        } else {
-            withAnimation(.easeOut(duration: 0.18)) {
-                self.minimumSplashElapsed = true
-            }
-        }
-
-        await sessionRestore
-    }
-
     @ViewBuilder
-    private var content: some View {
-        switch auth.state {
-        case .checking:
+    private func content(for destination: LaunchDestination) -> some View {
+        switch destination {
+        case .splash:
             SplashView()
 
-        case .signedOut:
-            if onboarding.learningDirection == nil {
-                LearningDirectionOnboardingView()
-            } else if onboarding.introDone {
-                WelcomeView()
-            } else {
-                OnboardingFlow()
-            }
+        case .learningDirection:
+            LearningDirectionOnboardingView()
 
-        case .guest:
-            if onboarding.learningDirection == nil {
-                LearningDirectionOnboardingView()
-            } else if contentReady {
+        case .onboarding:
+            OnboardingFlow()
+
+        case .welcome:
+            WelcomeView()
+
+        case let .setup(userID):
+            SetupView(
+                userId: userID,
+                onDone: {
+                    // SetupView adopts the newly persisted language/direction
+                    // immediately before this callback. Invalidate the older
+                    // readiness in the same MainActor turn so Main waits for
+                    // that exact final load attempt without flashing stale UI.
+                    let refresh = self.launch.refreshSignedInCatalog(
+                        userID: userID
+                    )
+                    await refresh.value
+                }
+            )
+
+        case .main:
+            switch self.auth.state {
+            case .guest:
                 MainTabsView(user: nil)
-            } else {
-                SplashView()
-            }
-
-        case let .signedIn(user):
-            if onboarding.learningDirection == nil {
-                LearningDirectionOnboardingView()
-            } else if !onboarding.setupDone(for: user.id) {
-                SetupView(userId: user.id, onDone: {})
-            } else if contentReady {
+            case let .signedIn(user):
                 MainTabsView(user: user)
-            } else {
+            case .checking, .signedOut:
+                // Destination is recomputed from the same observable state, so
+                // this is only a defensive fallback for an interrupted update.
                 SplashView()
             }
         }
     }
 
-    private var stateKey: String {
-        switch auth.state {
-        case .checking: "checking"
-        case .signedOut:
-            "signedOut-\(onboarding.learningDirection?.rawValue ?? "unselected")-\(onboarding.introDone)"
-        case .guest:
-            "guest-\(onboarding.learningDirection?.rawValue ?? "unselected")-ready\(contentReady)"
-        case let .signedIn(u):
-            "signedIn-\(u.id)-\(onboarding.learningDirection?.rawValue ?? "unselected")-setup\(onboarding.setupDone(for: u.id))-ready\(contentReady)"
+    private var destination: LaunchDestination {
+        let presentation = self.launch.presentation(
+            for: LaunchDestinationContext(
+                account: self.launchAccount,
+                learningDirectionSelected: self.onboarding.learningDirection != nil,
+                introDone: self.onboarding.introDone
+            )
+        )
+        switch presentation {
+        case .showingBrand:
+            return .splash
+        case let .ready(destination):
+            return destination
         }
+    }
+
+    private var launchAccount: LaunchAccountState {
+        switch self.auth.state {
+        case .checking:
+            .checking
+        case .signedOut:
+            .signedOut
+        case .guest:
+            .guest
+        case let .signedIn(user):
+            .signedIn(
+                userID: user.id,
+                setupDone: self.onboarding.setupDone(for: user.id)
+            )
+        }
+    }
+
+    private var catalogSession: CatalogSession? {
+        switch self.auth.state {
+        case .guest:
+            .guest
+        case let .signedIn(user):
+            .signedIn(userID: user.id)
+        case .checking, .signedOut:
+            nil
+        }
+    }
+
+    private enum CatalogSession: Hashable {
+        case guest
+        case signedIn(userID: UUID)
     }
 }
 
-/// Pinned to the top of the screen (over splash/onboarding/main tabs alike,
-/// since RootView is the top-level container) whenever NWPathMonitor reports
-/// no connectivity. APIClient's per-request error handling stays reactive —
-/// this is a proactive heads-up so a lost connection doesn't look like a
-/// silent hang before the first failed request surfaces an error.
+/// Pinned above interactive destinations whenever NWPathMonitor reports no
+/// connectivity. Launch itself stays visually stable; request-level errors
+/// remain responsible for explaining failures while Splash is visible.
 private struct OfflineBanner: View {
     var body: some View {
         HStack(spacing: Space.s2) {
@@ -161,4 +191,15 @@ private struct OfflineBanner: View {
         .environment(CategoriesStore.shared)
         .environment(MasteryStore.shared)
         .environment(NetworkMonitor.shared)
+        .environment(
+            LaunchCoordinator(
+                minimumSplashDuration: .milliseconds(0),
+                resolveAuthentication: { .signedOut },
+                hydrateProfile: {},
+                preloadCatalog: {},
+                finalizeSignedIn: { _ in },
+                replayOutbox: {},
+                trackAppOpen: {}
+            )
+        )
 }

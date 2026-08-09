@@ -31,10 +31,11 @@
 ### 進入點 — `Tuji/TujiApp.swift`
 
 - `@main TujiApp` 在 `init()` 先安裝自訂 Nuke 圖片管線(`TujiImagePipeline.install()`),必須在任何 `LazyImage` 渲染前完成。
-- 以 `@State` 建立共享狀態並注入 SwiftUI environment,分兩類:
+- 建立共享狀態並注入 SwiftUI environment,分三類:
   - **單例 store**:`AuthService`、`PushNotificationService`、`OnboardingState`、`LocalCache`、`WordsStore`、`CategoriesStore`、`SettingsStore`、`ProgressStore`、`MasteryStore`、`StudyStatsStore`、`StudyFocus`、`DeepLinkCoordinator`、`NetworkMonitor`。
+  - **啟動協調器**:`LaunchCoordinator` 由 App root own,統一處理 600ms 品牌門檻、身份解析、catalog readiness、背景 profile hydration / outbox replay 與一次性 `app_open`。
   - **root 建構的公開側協調物件**(不是單例,由這裡 own):`CommunityFeedRefresh`(剛公開的內容要繞過 URLCache)、`CollectionBookmarkStore`(合集收藏狀態)、`CollectionIdentityStore`(剛換的合集頭像要跨畫面立即生效)。
-- 啟動時的 `.task`:載入字典 + 分類 + 設定、刷新推播授權、重播離線答題 outbox(`StudyAnswerOutbox.replay()`);App 回到前景(`scenePhase == .active`)時再重播一次。
+- 啟動時並行開始:600ms 品牌動畫門檻、session resolution、依本機 mirror 的匿名 words/categories preload,以及非阻塞的推播授權刷新。只有 signed-in session 確立後才讀 server settings、補 personalized catalog、刷新 profile 與重播離線答題 outbox(`StudyAnswerOutbox.replay()`);App 回到前景且仍為 signed-in 時再重播一次。
 - `.onOpenURL` 先交給 GoogleSignIn 處理 OAuth callback,再嘗試解析成 `TujiDeepLink`。
 - environment locale 由 `settings.current.uiLanguage.locale` 決定,支援四種介面語言,見 §16 本地化。
 - **DEBUG 限定**:啟動參數 `--ad-snapshot=home|capture|cards|review` 會把 root 換成一組固定資料的行銷截圖畫面(`AdSnapshotRoot`),release 編譯整段排除。
@@ -50,21 +51,24 @@
 
 ```
 App 啟動
+  ├─ LaunchCoordinator 未過 600ms  → SplashView
   ├─ AuthService.checking          → SplashView
   ├─ .signedOut
   │    ├─ 未選學習方向              → LearningDirectionOnboardingView
   │    ├─ !introDone               → OnboardingFlow(3 頁行銷介紹)
   │    └─ introDone                → WelcomeView(登入/註冊/訪客)
-  ├─ .guest                        → 內容就緒前 SplashView,之後 MainTabsView(user: nil)
+  ├─ .guest                        → catalog 嘗試完成前 SplashView,之後 MainTabsView(user: nil)
   └─ .signedIn(user)
        ├─ 未選學習方向              → LearningDirectionOnboardingView
        ├─ !setupDone(user.id)      → SetupView(選主題 + 每日目標)
-       ├─ !contentReady            → SplashView
+       ├─ personalized catalog 未完成 → SplashView
        └─ 全部就緒                  → MainTabsView(user:)
 ```
 
-- `contentReady = words.loaded && categories.loaded`:「載入完成」包含失敗(失敗也放行,讓主頁自己顯示重試),避免卡死在 Splash。
-- Splash 有最短顯示時間(850ms,`reduceMotion` 時跳過),與 `auth.restoreSession()` 並行。
+- 原生 `UILaunchScreen` 使用 `LaunchLockupPeekStart`(232×230pt)與 `tujiPaper #FBF7EF`;它是 SwiftUI `TujiBrandLockup` 探頭動畫的精確起始幀,因此系統最後一幀到 App 第一幀不跳動。SwiftUI 接手後開啟洞口並讓黑貓探頭,且最少顯示 600ms;Reduce Motion 直接顯示最終品牌鎖定並移除離場 opacity,但不跳過時間門檻。
+- 登出、onboarding 與首次 setup 只等待身份和 600ms;guest / setup 已完成的 signed-in 主介面才等待對應 catalog 的最終載入嘗試。成功或失敗都解除 gate,錯誤與離線提示進入目的頁後再呈現。
+- `LaunchCoordinator.start()` 可重入但整個 process 只執行一次;RootView 只渲染一個頂層 destination,不再有底層 Splash 加 overlay Splash 的雙重轉場。
+- 啟動 catalog 以 immutable `CatalogContext`(介面語言、學習方向、帳號、是否 personalized)識別 single-flight。相同 context 共用請求;context 改變時舊結果可完成但不得覆寫目前畫面。
 
 ---
 
@@ -170,7 +174,7 @@ App 啟動
 
 - 每個新帳號一次:選學習主題(預設勾 kitchen / bathroom / living-room,若資料集沒有則取前三個)+ 每日目標(5/10/20 題)。
 - 主題必須至少選一個才能送出;寫入的是 canonical kebab-case id(後端會過濾非法值)。
-- 儲存成功後:`settingsStore.adoptPersisted()` 立即生效 → `markSetupDone` → **落回主頁**,交給功能導覽帶路;CTA 因此叫「完成設定」,不承諾一場它不會開的 session。
+- 儲存成功後:`settingsStore.adoptPersisted()` 立即生效 → Setup 保持在原畫面等待該語言／方向的 catalog 最終載入嘗試 → `markSetupDone` → **直接落回主頁**。中途不會第二次顯示 Splash,主頁再交給功能導覽帶路;CTA 因此叫「完成設定」,不承諾一場它不會開的 session。
   - 這裡曾經塞一個 `.study(mode: .new)` deep link 直接推進學新字,結果是**首次登入永遠看不到功能導覽** —— `startTourIfNeeded()` 只要 `StudyFocus` 被 `StudyLauncherView` 持有就直接 bail。導覽本來就是新使用者最需要的那一次,所以讓路給它。
 
 ---
@@ -331,11 +335,11 @@ App 啟動
 
 ### 資料來源
 
-- **`WordsStore`**(`Core/Words/WordsStore.swift`):啟動抓一次 GET `/api/words`(帶 uiLang + learningDirection),再合併兩份使用者字 —— 以 id last-wins,最後按 分類→字母 排序。全 App 共讀這份記憶體字典。
+- **`WordsStore`**(`Core/Words/WordsStore.swift`):依 `CatalogContext` single-flight 載入 GET `/api/words`(帶 uiLang + learningDirection);登入後 custom / saved 與 public 並行,但固定按 public → custom → saved 做 id last-wins 合併,最後按 分類→字母 排序。相同語言與方向的匿名 preload 可由 personalized context 重用 public source。全 App 共讀目前 context 的記憶體字典。
   1. `/api/users/custom-words` — 自己拍的自製字,id 為 `atlas:<uuid>`,內嵌完整 detail。
   2. `/api/users/saved-words` — 從物見收藏來的字(§12)。
   兩者都是 best-effort:任一支失敗只記 log,公開字典照常呈現。
-- **`CategoriesStore`**:GET `/api/categories`(本地化分類名)。
+- **`CategoriesStore`**:依 context single-flight 載入 GET `/api/categories`(本地化分類名);相同介面語言可跨 anonymous / personalized context 重用來源,舊 context 晚到時不發布。
 
 ### 圖鑑列表 — `Features/Cards/CardsListView.swift`
 

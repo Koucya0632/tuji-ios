@@ -2,7 +2,7 @@
 //
 // State transitions:
 //   .checking  (app launch)
-//      └─ restoreSession() ──► .signedIn  if persisted session exists
+//      └─ resolveSession() ──► .signedIn  if persisted session exists
 //                          └─► .signedOut otherwise
 //   .signedOut
 //      ├─ signUp()  ──► .signedIn  (or stays .signedOut if email confirm required)
@@ -46,11 +46,13 @@ final class AuthService {
 
     // MARK: - Lifecycle
 
-    func restoreSession() async {
+    /// Resolves only the persisted authentication state. Profile reconciliation
+    /// is deliberately separate so a slow `/api/users/me` request never holds
+    /// the launch route on Splash.
+    func resolveSession() async {
         do {
             let session = try await supabase.auth.session
             state = .signedIn(SessionUser(from: session.user))
-            await hydrateProfile()
             log.info("session restored uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             // `supabase.auth.session` refreshes an expired token over the
@@ -71,6 +73,20 @@ final class AuthService {
                 log.info("no existing session")
             }
         }
+    }
+
+    /// Best-effort profile reconciliation for a session that has already been
+    /// resolved. Launch starts this without awaiting it; `state` remains
+    /// observable, so a fresher username/avatar still reaches mounted views.
+    func refreshResolvedProfile() async {
+        await self.hydrateProfile()
+    }
+
+    /// Compatibility path for callers that explicitly want the old, fully
+    /// hydrated lifecycle operation. Launch uses the two phases above.
+    func restoreSession() async {
+        await self.resolveSession()
+        await self.refreshResolvedProfile()
     }
 
     // MARK: - Guest mode
@@ -280,8 +296,18 @@ final class AuthService {
     private func hydrateProfile() async {
         guard case let .signedIn(user) = state else { return }
         guard let me = try? await users.loadMe().user else { return }
-        let merged = user.merging(username: me.username, nickname: me.nickname, avatar: me.avatar)
-        guard merged != user else { return }
+        // The request runs off the launch-critical path. The account may have
+        // signed out or switched while it was in flight, so only publish into
+        // the same session that initiated the refresh.
+        guard case let .signedIn(currentUser) = state,
+              currentUser.id == user.id
+        else { return }
+        let merged = currentUser.merging(
+            username: me.username,
+            nickname: me.nickname,
+            avatar: me.avatar
+        )
+        guard merged != currentUser else { return }
         state = .signedIn(merged)
         log.info("profile mirror reconciled from server")
     }

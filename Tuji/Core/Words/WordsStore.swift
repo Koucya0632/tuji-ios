@@ -29,58 +29,252 @@ final class WordsStore {
     private let repository: CatalogRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "words")
 
-    private init(repository: CatalogRepository = LiveCatalogRepository.shared) {
+    @ObservationIgnored private var latestRequestedContext: CatalogContext?
+    @ObservationIgnored private var loadedContext: CatalogContext?
+    @ObservationIgnored private var inFlight: [CatalogContext: LoadFlight] = [:]
+    @ObservationIgnored private var publicCache: [PublicKey: [CardWord]] = [:]
+    @ObservationIgnored private var publicInFlight: [PublicKey: PublicFlight] = [:]
+
+    private struct LoadFlight {
+        let id: UUID
+        let task: Task<Void, Never>
+    }
+
+    private struct PublicKey: Hashable {
+        let contentLanguageCode: String
+        let learningDirectionCode: String
+    }
+
+    private struct PublicFlight {
+        let id: UUID
+        let task: Task<Result<[CardWord], Error>, Never>
+    }
+
+    private struct LoadedWords {
+        let words: [CardWord]
+        let customError: Error?
+        let savedError: Error?
+    }
+
+    init(repository: CatalogRepository = LiveCatalogRepository.shared) {
         self.repository = repository
     }
 
     /// Returns immediately if we already have words. Triggers a fresh
     /// network load otherwise.
     func loadIfNeeded() async {
-        guard self.words.isEmpty else { return }
-        await self.reload()
+        await self.loadIfNeeded(for: CatalogContext.current())
+    }
+
+    /// Joins an in-flight request for the same immutable context. A successful
+    /// empty catalog is still considered warm; failed attempts remain retryable.
+    func loadIfNeeded(for context: CatalogContext) async {
+        guard self.loadedContext != context || !self.loaded || self.lastError != nil else { return }
+        await self.load(for: context, reusePublic: true)
     }
 
     func reload() async {
+        await self.reload(for: CatalogContext.current())
+    }
+
+    /// Forces a refresh for `context`, while coalescing concurrent refreshes
+    /// for that same context. Different contexts may load concurrently, but
+    /// only the most recently requested context is allowed to publish state.
+    func reload(for context: CatalogContext) async {
+        await self.load(for: context, reusePublic: false)
+    }
+
+    private func load(for context: CatalogContext, reusePublic: Bool) async {
+        self.latestRequestedContext = context
         self.loading = true
         self.lastError = nil
-        defer {
-            self.loading = false
-            self.loaded = true
+
+        if let flight = self.inFlight[context] {
+            await flight.task.value
+            return
         }
-        do {
-            let settings = SettingsStore.shared.current
-            let resp = try await self.repository.loadWords(
-                lang: settings.uiLanguage.contentLanguageCode,
-                learning: settings.learningDirection.rawValue
+
+        let flightID = UUID()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performReload(
+                for: context,
+                flightID: flightID,
+                reusePublic: reusePublic
             )
-            var merged = resp.words
-            // The two personal sources are fetched independently and each is
-            // allowed to fail on its own: a 物見 outage must not also cost
-            // the user their 自製圖鑑, and neither may take down the catalog.
-            let lang = settings.uiLanguage.contentLanguageCode
-            let learning = settings.learningDirection.rawValue
-            do {
-                let custom = try await self.repository.loadCustomWords(lang: lang, learning: learning)
-                merged = Self.merge(publicWords: merged, customWords: custom.words)
-            } catch {
+        }
+        self.inFlight[context] = LoadFlight(id: flightID, task: task)
+        await task.value
+
+        if self.inFlight[context]?.id == flightID {
+            self.inFlight[context] = nil
+        }
+        self.refreshLoadingState()
+    }
+
+    private func performReload(
+        for context: CatalogContext,
+        flightID: UUID,
+        reusePublic: Bool
+    ) async {
+        let result = await self.fetchWords(for: context, reusePublic: reusePublic)
+        guard self.latestRequestedContext == context,
+              self.inFlight[context]?.id == flightID
+        else { return }
+
+        self.loadedContext = context
+        self.loaded = true
+        switch result {
+        case let .success(payload):
+            self.words = payload.words
+            if let error = payload.customError {
                 self.log.info("custom words skipped: \(error.localizedDescription, privacy: .public)")
             }
-            do {
-                let saved = try await self.repository.loadSavedWords(lang: lang, learning: learning)
-                merged = Self.merge(publicWords: merged, customWords: saved.words)
-            } catch {
+            if let error = payload.savedError {
                 self.log.info("saved words skipped: \(error.localizedDescription, privacy: .public)")
             }
-            self.words = merged
-            self.log.info("loaded \(merged.count, privacy: .public) words")
-        } catch {
+            self.log.info("loaded \(payload.words.count, privacy: .public) words")
+        case let .failure(error):
+            // Preserve the last good snapshot. Existing screens can keep using
+            // it while exposing the retry state through `lastError`.
             self.lastError = error
             self.log.error("words load failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
+    /// Starts all eligible sources together. Public is required; custom and
+    /// saved are independent optional overlays whose failures stay non-fatal.
+    private func fetchWords(
+        for context: CatalogContext,
+        reusePublic: Bool
+    ) async
+        -> Result<LoadedWords, Error>
+    {
+        async let publicResult = self.fetchPublicWords(for: context, reuseCached: reusePublic)
+        async let customResult = self.fetchCustomWords(for: context)
+        async let savedResult = self.fetchSavedWords(for: context)
+
+        let (publicWords, customWords, savedWords) = await (publicResult, customResult, savedResult)
+
+        do {
+            let publicWords = try publicWords.get()
+            let custom = Self.optionalSource(customWords)
+            let saved = Self.optionalSource(savedWords)
+            return .success(
+                LoadedWords(
+                    words: Self.merge(
+                        publicWords: publicWords,
+                        customWords: custom.words,
+                        savedWords: saved.words
+                    ),
+                    customError: custom.error,
+                    savedError: saved.error
+                )
+            )
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    private func fetchPublicWords(
+        for context: CatalogContext,
+        reuseCached: Bool
+    ) async
+        -> Result<[CardWord], Error>
+    {
+        let key = PublicKey(
+            contentLanguageCode: context.contentLanguageCode,
+            learningDirectionCode: context.learningDirectionCode
+        )
+        if reuseCached, let cached = self.publicCache[key] {
+            return .success(cached)
+        }
+        if let flight = self.publicInFlight[key] {
+            return await flight.task.value
+        }
+
+        let flightID = UUID()
+        let repository = self.repository
+        let task = Task { () -> Result<[CardWord], Error> in
+            do {
+                let response = try await repository.loadWords(
+                    lang: key.contentLanguageCode,
+                    learning: key.learningDirectionCode
+                )
+                return .success(response.words)
+            } catch {
+                return .failure(error)
+            }
+        }
+        self.publicInFlight[key] = PublicFlight(id: flightID, task: task)
+        let result = await task.value
+        let flightIsCurrent = self.publicInFlight[key]?.id == flightID
+        if flightIsCurrent {
+            self.publicInFlight[key] = nil
+        }
+        if flightIsCurrent, case let .success(words) = result {
+            self.publicCache[key] = words
+        }
+        return result
+    }
+
+    private func fetchCustomWords(for context: CatalogContext) async -> Result<[CardWord], Error> {
+        guard context.includePersonalization else { return .success([]) }
+        do {
+            let response = try await self.repository.loadCustomWords(
+                lang: context.contentLanguageCode,
+                learning: context.learningDirectionCode
+            )
+            return .success(response.words)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    private func fetchSavedWords(for context: CatalogContext) async -> Result<[CardWord], Error> {
+        guard context.includePersonalization else { return .success([]) }
+        do {
+            let response = try await self.repository.loadSavedWords(
+                lang: context.contentLanguageCode,
+                learning: context.learningDirectionCode
+            )
+            return .success(response.words)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    private static func optionalSource(_ result: Result<[CardWord], Error>)
+        -> (words: [CardWord], error: Error?)
+    {
+        switch result {
+        case let .success(words): (words, nil)
+        case let .failure(error): ([], error)
+        }
+    }
+
+    private func refreshLoadingState() {
+        guard let latestRequestedContext else {
+            self.loading = false
+            return
+        }
+        self.loading = self.inFlight[latestRequestedContext] != nil
+    }
+
     func invalidate() {
+        self.latestRequestedContext = nil
+        self.loadedContext = nil
+        for flight in self.inFlight.values {
+            flight.task.cancel()
+        }
+        for flight in self.publicInFlight.values {
+            flight.task.cancel()
+        }
+        self.inFlight.removeAll()
+        self.publicInFlight.removeAll()
+        self.publicCache.removeAll()
         self.words = []
+        self.loading = false
         self.loaded = false
     }
 
@@ -106,6 +300,18 @@ final class WordsStore {
 
     /// Internal (not private) so unit tests can exercise the last-wins/sort rules.
     static func merge(publicWords: [CardWord], customWords: [CardWord]) -> [CardWord] {
+        self.merge(publicWords: publicWords, customWords: customWords, savedWords: [])
+    }
+
+    /// Overlay precedence is fixed regardless of network completion order:
+    /// public < custom < saved, with later sources winning duplicate ids.
+    static func merge(
+        publicWords: [CardWord],
+        customWords: [CardWord],
+        savedWords: [CardWord]
+    )
+        -> [CardWord]
+    {
         // Last-wins by id. Built with a loop rather than
         // Dictionary(uniqueKeysWithValues:), which traps fatally if the server
         // ever returns a duplicate id in the public list.
@@ -114,6 +320,9 @@ final class WordsStore {
             byId[word.id] = word
         }
         for word in customWords {
+            byId[word.id] = word
+        }
+        for word in savedWords {
             byId[word.id] = word
         }
         return Array(byId.values).sorted {
