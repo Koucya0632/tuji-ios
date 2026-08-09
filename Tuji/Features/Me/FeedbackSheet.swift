@@ -52,7 +52,7 @@ struct FeedbackSheet: View {
                     } label: {
                         HStack(spacing: Space.s3) {
                             Image(systemName: self.feedbackType == type ? "largecircle.fill.circle" : "circle")
-                                .foregroundStyle(self.feedbackType == type ? .tujiTeal : .tujiInk3)
+                                .foregroundStyle(self.feedbackType == type ? .tujiInk : .tujiInk3)
                             Text(self.title(for: type))
                                 .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk)
@@ -61,13 +61,13 @@ struct FeedbackSheet: View {
                         .padding(.horizontal, Space.s3)
                         .padding(.vertical, Space.s3)
                         .background(
-                            self.feedbackType == type ? Color.tujiTealSoft : Color.tujiPaper,
+                            self.feedbackType == type ? Color.tujiCurrent.opacity(0.18) : Color.tujiPaper,
                             in: .rect(cornerRadius: Radius.r0)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: Radius.r0)
                                 .stroke(
-                                    self.feedbackType == type ? Color.tujiTeal : Color.tujiRule,
+                                    self.feedbackType == type ? Color.tujiCurrent : Color.tujiRule,
                                     lineWidth: 1
                                 )
                         )
@@ -131,7 +131,7 @@ struct FeedbackSheet: View {
         VStack(spacing: Space.s4) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiAccumulation)
             Text("謝謝你的意見！我們會參考並持續改進。")
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)

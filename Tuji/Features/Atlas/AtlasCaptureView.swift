@@ -265,7 +265,7 @@ struct AtlasCaptureView: View {
                         } label: {
                             Text("升級 Tuji Pro")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(.tujiTeal)
+                                .foregroundStyle(.tujiBrandSecondary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -497,7 +497,7 @@ struct AtlasCaptureView: View {
 
             BBtn(
                 title: "確認並生成卡片",
-                bg: .tujiEye,
+                bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 fullWidth: true,
                 icon: "checkmark"
@@ -548,10 +548,10 @@ struct AtlasCaptureView: View {
                     Text("重試上傳")
                 }
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
-                .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
+                .background(.tujiBrandPrimary, in: .rect(cornerRadius: Radius.r0))
             }
             .buttonStyle(.plain)
             .disabled(self.vm.busy != nil)
@@ -570,10 +570,10 @@ struct AtlasCaptureView: View {
         } else if let successMessage = self.vm.successMessage {
             Text(successMessage)
                 .font(.tujiLabel)
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiAccumulation)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Space.s3)
-                .background(Color.tujiTeal.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
+                .background(Color.tujiAccumulation.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
         }
     }
 }

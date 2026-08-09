@@ -124,7 +124,7 @@ struct MeProgressSections: View {
                 .foregroundStyle(.tujiPaper.opacity(0.6))
             Text("\(pct)%")
                 .font(.tujiDisplay)
-                .foregroundStyle(.tujiTealSoft)
+                .foregroundStyle(.tujiAccumulationSoft)
                 .contentTransition(.numericText())
             Text(
                 scoped
@@ -133,7 +133,7 @@ struct MeProgressSections: View {
             )
             .font(.tujiBodySm)
             .foregroundStyle(.tujiPaper.opacity(0.7))
-            TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.15), fill: .tujiTealSoft)
+            TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.15), fill: .tujiAccumulationSoft)
                 .padding(.top, Space.s2)
         }
         .padding(Space.s4)
@@ -295,7 +295,7 @@ struct MeProgressSections: View {
                     .foregroundStyle(.tujiInk3)
                     .contentTransition(.numericText())
             }
-            TujiProgressBar(progress: stat.ratio, track: .tujiPaper3, fill: .tujiTeal)
+            TujiProgressBar(progress: stat.ratio, track: .tujiPaper3, fill: .tujiAccumulation)
         }
         .frame(minHeight: 72)
     }
@@ -376,9 +376,9 @@ struct HeatmapGrid: View {
     private func tintForLevel(_ level: Int) -> Color {
         switch level {
         case 0: Color.tujiPaper3
-        case 1: .tujiTealSoft
-        case 2: Color.tujiTeal
-        default: .tujiTeal
+        case 1: .tujiAccumulationSoft
+        case 2: Color.tujiAccumulation
+        default: .tujiAccumulation
         }
     }
 }

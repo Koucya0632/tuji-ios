@@ -31,7 +31,7 @@ struct TujiStepIndicator: View {
 
     private func fill(_ index: Int) -> Color {
         if index < self.current { return .tujiInk }
-        if index == self.current { return .tujiEye }
+        if index == self.current { return .tujiCurrent }
         return .tujiPaper2
     }
 }

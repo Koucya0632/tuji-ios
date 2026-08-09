@@ -90,10 +90,13 @@ struct SetupView: View {
                                 } label: {
                                     Text("重新登入")
                                         .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(.tujiTeal)
+                                        .foregroundStyle(.tujiBrandSecondary)
                                         .padding(.vertical, Space.s2)
                                         .padding(.horizontal, Space.s3)
-                                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                                        .background(
+                                            Color.tujiBrandPrimary.opacity(0.18),
+                                            in: .rect(cornerRadius: Radius.r0)
+                                        )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -111,7 +114,7 @@ struct SetupView: View {
                 // button and the tour's closing card, and this is a third tap
                 // in the same run-in.
                 title: saving ? "儲存中..." : "完成設定",
-                bg: .tujiEye,
+                bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 fullWidth: true,
                 action: save
@@ -147,17 +150,17 @@ struct SetupView: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
+                .foregroundStyle(.tujiInk2)
                 .padding(.vertical, Space.s3)
                 .frame(maxWidth: .infinity)
                 .background(
-                    selected ? Color.tujiTealSoft : .tujiPaper,
+                    selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
                     in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            selected ? Color.tujiTeal : .tujiRule,
+                            selected ? Color.tujiCurrent : .tujiRule,
                             lineWidth: selected ? 1.5 : 1
                         )
                 )
@@ -168,19 +171,19 @@ struct SetupView: View {
         Button(action: action) {
             Text(category.nameZh)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
+                .foregroundStyle(.tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .padding(.vertical, Space.s4)
                 .frame(maxWidth: .infinity)
                 .background(
-                    selected ? Color.tujiTealSoft : .tujiPaper,
+                    selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
                     in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            selected ? Color.tujiTeal : .tujiRule,
+                            selected ? Color.tujiCurrent : .tujiRule,
                             lineWidth: selected ? 1.5 : 1
                         )
                 )

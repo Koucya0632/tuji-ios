@@ -144,7 +144,7 @@ struct WordTile: View {
         case "custom":
             Rectangle().fill(.tujiInk).frame(width: 8, height: 8).padding(Space.s2)
         case "community":
-            Rectangle().fill(.tujiTeal).frame(width: 8, height: 8).padding(Space.s2)
+            Rectangle().fill(.tujiAccumulation).frame(width: 8, height: 8).padding(Space.s2)
         default:
             EmptyView()
         }

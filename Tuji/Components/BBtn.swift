@@ -18,7 +18,7 @@ struct BBtn: View {
     /// key `%@`. That key is in `Localizable.xcstrings` with zero localizations,
     /// so those buttons render correctly *only until someone translates it*.
     let title: Text
-    var bg: Color = .tujiEye
+    var bg: Color = .tujiBrandPrimary
     var fg: Color = .tujiInk
     var fullWidth: Bool = false
     var icon: String?
@@ -26,7 +26,7 @@ struct BBtn: View {
 
     init(
         title: LocalizedStringKey,
-        bg: Color = .tujiEye,
+        bg: Color = .tujiBrandPrimary,
         fg: Color = .tujiInk,
         fullWidth: Bool = false,
         icon: String? = nil,
@@ -38,7 +38,7 @@ struct BBtn: View {
     /// For a title already resolved by `tujiLocalized()`, or built from data.
     init(
         localized title: String,
-        bg: Color = .tujiEye,
+        bg: Color = .tujiBrandPrimary,
         fg: Color = .tujiInk,
         fullWidth: Bool = false,
         icon: String? = nil,
@@ -114,8 +114,8 @@ private struct PressTracker: ButtonStyle {
 #Preview {
     VStack(spacing: Space.s3) {
         BBtn(title: "認識了", action: {})
-        BBtn(title: "繼續", bg: .tujiEye, fg: .tujiInk, fullWidth: true, action: {})
-        BBtn(title: "完成", bg: .tujiEye, fg: .tujiInk, icon: "checkmark", action: {})
+        BBtn(title: "繼續", bg: .tujiBrandPrimary, fg: .tujiInk, fullWidth: true, action: {})
+        BBtn(title: "完成", bg: .tujiBrandPrimary, fg: .tujiInk, icon: "checkmark", action: {})
         BBtn(title: "Disabled", action: {}).disabled(true)
     }
     .padding()

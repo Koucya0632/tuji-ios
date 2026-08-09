@@ -30,7 +30,7 @@ struct FeatureTourOverlay: View {
                 self.dim(cutout: cutout, shape: step.shape)
                 if let cutout {
                     RoundedRectangle(cornerRadius: self.cornerRadius(for: step.shape, rect: cutout))
-                        .stroke(.tujiEye, lineWidth: 2)
+                        .stroke(.tujiCurrent, lineWidth: 2)
                         .frame(width: cutout.width, height: cutout.height)
                         .position(x: cutout.midX, y: cutout.midY)
                         .accessibilityHidden(true)
@@ -142,7 +142,7 @@ struct FeatureTourOverlay: View {
                 }
                 .buttonStyle(.plain)
                 Spacer()
-                BBtn(title: "下一步", bg: .tujiEye, fg: .tujiInk, action: self.onNext)
+                BBtn(title: "下一步", bg: .tujiBrandPrimary, fg: .tujiInk, action: self.onNext)
             }
             .padding(.top, Space.s4)
 
@@ -169,7 +169,7 @@ struct FeatureTourOverlay: View {
                     .font(.tujiBodySm)
                     .foregroundStyle(.tujiPaper.opacity(0.8))
                     .multilineTextAlignment(.center)
-                BBtn(title: "開始使用", bg: .tujiEye, fg: .tujiInk, fullWidth: true, action: self.onNext)
+                BBtn(title: "開始使用", bg: .tujiBrandPrimary, fg: .tujiInk, fullWidth: true, action: self.onNext)
             }
         }
         .accessibilityAddTraits(.isModal)
@@ -179,7 +179,7 @@ struct FeatureTourOverlay: View {
         HStack(spacing: Space.s2) {
             ForEach(self.steps) { step in
                 Rectangle()
-                    .fill(step.id == self.index ? Color.tujiTeal : .tujiPaper2.opacity(0.4))
+                    .fill(step.id == self.index ? Color.tujiCurrent : .tujiPaper2.opacity(0.4))
                     .frame(width: step.id == self.index ? 22 : 7, height: 7)
             }
         }

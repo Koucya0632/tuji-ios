@@ -90,7 +90,7 @@ struct CompleteView: View {
                 // 3.04:1, and this is the biggest number on the screen.
                 Text("\(self.done)")
                     .font(.tujiDisplay)
-                    .foregroundStyle(.tujiTealSoft)
+                    .foregroundStyle(.tujiAccumulationSoft)
                     .contentTransition(.numericText())
                 Text("個字")
                     .font(.tujiH2)
@@ -113,7 +113,7 @@ struct CompleteView: View {
                         .foregroundStyle(.tujiInk3)
                     Text("\(streak)")
                         .font(.tujiMono)
-                        .foregroundStyle(.tujiTeal)
+                        .foregroundStyle(.tujiAccumulation)
                         .contentTransition(.numericText())
                     Text("天")
                         .font(.tujiLabel)
@@ -190,7 +190,7 @@ struct CompleteView: View {
                         if leveledUp {
                             Image(systemName: "arrow.up")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.tujiTeal)
+                                .foregroundStyle(.tujiAccumulation)
                         }
                         Text("\(change.before)→\(change.after)")
                             .font(.tujiMono)
@@ -246,7 +246,7 @@ struct CompleteView: View {
                     title: self.startingNextRound
                         ? "載入下一輪…"
                         : "再來一輪（還有 \(self.remainingDue) 字）",
-                    bg: .tujiEye,
+                    bg: .tujiBrandPrimary,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.clockwise"
@@ -269,7 +269,7 @@ struct CompleteView: View {
             } else {
                 BBtn(
                     title: "回首頁",
-                    bg: .tujiEye,
+                    bg: .tujiBrandPrimary,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "house.fill",

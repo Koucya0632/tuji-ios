@@ -128,7 +128,7 @@ struct EditProfileView: View {
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 104, height: 104)
                                 .clipShape(.circle)
-                                .overlay(Circle().stroke(.tujiTeal, lineWidth: 2))
+                                .overlay(Circle().stroke(.tujiCurrent, lineWidth: 2))
                                 .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
                         } else {
                             ProfileAvatar(avatar: self.avatar, size: 104, selected: true)
@@ -137,9 +137,9 @@ struct EditProfileView: View {
 
                     Image(systemName: "camera.fill")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.tujiInk)
                         .frame(width: 34, height: 34)
-                        .background(.tujiTeal, in: .circle)
+                        .background(.tujiBrandPrimary, in: .circle)
                         .overlay(Circle().stroke(.tujiPaper, lineWidth: 3))
                 }
                 Text("點一下更換頭像")

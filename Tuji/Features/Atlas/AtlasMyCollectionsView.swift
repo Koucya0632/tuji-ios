@@ -389,7 +389,7 @@ struct AtlasCollectionEditView: View {
                         }
                         Text(self.vm.avatarPreviewURL == nil ? "選擇照片" : "更換照片")
                             .font(.tujiLabel)
-                            .foregroundStyle(.tujiTeal)
+                            .foregroundStyle(.tujiBrandSecondary)
                     }
                 }
                 .buttonStyle(.plain)
@@ -415,7 +415,7 @@ struct AtlasCollectionEditView: View {
                             Task { await self.avatar.retry() }
                         }
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.tujiTeal)
+                        .foregroundStyle(.tujiBrandSecondary)
                     }
                 }
             }
@@ -484,7 +484,7 @@ struct AtlasCollectionEditView: View {
                 } label: {
                     Label("新增", systemImage: "plus.circle.fill")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.tujiTeal)
+                        .foregroundStyle(.tujiBrandSecondary)
                 }
                 .buttonStyle(.plain)
             }
@@ -575,7 +575,7 @@ struct AtlasCollectionEditView: View {
             if collection.review.canSubmit {
                 BBtn(
                     title: self.vm.isSubmitting ? "送出中…" : "公開合集",
-                    bg: .tujiEye,
+                    bg: .tujiBrandPrimary,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "square.and.arrow.up"
@@ -730,7 +730,7 @@ private struct AtlasCollectionItemPicker: View {
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
                         .font(.system(size: 18))
-                        .foregroundStyle(isAdded ? .white : .white, isAdded ? .tujiTeal : .black.opacity(0.5))
+                        .foregroundStyle(isAdded ? .white : .white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
                         .padding(4)
                 }
                 Text(item.lemma)

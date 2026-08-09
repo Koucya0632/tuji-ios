@@ -12,7 +12,7 @@ import CoreGraphics
 enum Border {
     /// The `tujiRule` separator. The only "line" in the app.
     static let bw1: CGFloat = 1
-    /// Focus ring (`tujiEye`), check-mark stroke.
+    /// Focus ring (`tujiCurrent`), check-mark stroke.
     static let bw2: CGFloat = 2
     /// Selection indicator: tab top edge, multi-select row leading edge, sheet
     /// top edge, status label leading edge, progress bars.

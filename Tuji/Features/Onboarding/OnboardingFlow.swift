@@ -69,9 +69,9 @@ struct LearningDirectionOnboardingView: View {
             HStack(spacing: Space.s3) {
                 Text(direction == .zhJa ? "日" : "EN")
                     .font(.system(size: 18, weight: .heavy))
-                    .foregroundStyle(.tujiTeal)
+                    .foregroundStyle(.tujiBrandSecondary)
                     .frame(width: 48, height: 48)
-                    .background(.tujiTealSoft, in: .circle)
+                    .background(Color.tujiBrandSecondary.opacity(0.12), in: .circle)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(direction.title)
                         .font(.tujiH3)
@@ -140,7 +140,7 @@ struct OnboardingFlow: View {
 
                 BBtn(
                     title: page == pages.count - 1 ? "開始使用" : "下一步",
-                    bg: .tujiEye,
+                    bg: .tujiBrandPrimary,
                     fg: .tujiInk,
                     fullWidth: true,
                     action: advance
@@ -177,7 +177,7 @@ struct OnboardingFlow: View {
         HStack(spacing: Space.s2) {
             ForEach(0..<pages.count, id: \.self) { i in
                 Rectangle()
-                    .fill(i == page ? Color.tujiTeal : .tujiPaper2.opacity(0.4))
+                    .fill(i == page ? Color.tujiCurrent : .tujiPaper2.opacity(0.4))
                     .frame(width: i == page ? 22 : 7, height: 7)
                     .animation(.easeOut(duration: 0.25), value: page)
             }
@@ -274,7 +274,7 @@ private struct PageView: View {
         case .streak:
             VStack(alignment: .leading, spacing: Space.s3) {
                 HStack(spacing: 6) {
-                    Image(systemName: "flame.fill").foregroundStyle(.tujiTeal)
+                    Image(systemName: "flame.fill").foregroundStyle(.tujiAccumulation)
                     Text("連勝").font(.tujiLabel).foregroundStyle(.white.opacity(0.7))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: Space.s2) {
@@ -306,10 +306,10 @@ private struct TileStub: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: Radius.r0)
-                .fill(.tujiTealSoft)
+                .fill(.tujiBrandSecondary.opacity(0.12))
             Image(systemName: systemImage)
                 .font(.system(size: 40, weight: .bold))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiBrandSecondary)
         }
     }
 }
@@ -324,16 +324,16 @@ private struct OptionRow: View {
         HStack {
             Text(text)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(state == .selected ? .tujiTeal : .tujiInk2)
+                .foregroundStyle(.tujiInk2)
             Spacer()
             if state == .selected {
-                Image(systemName: "checkmark").foregroundStyle(.tujiTeal)
+                Image(systemName: "checkmark").foregroundStyle(.tujiInk)
             }
         }
         .padding(.vertical, Space.s3)
         .padding(.horizontal, Space.s3)
         .background(
-            state == .selected ? Color.tujiTealSoft : Color.tujiPaper,
+            state == .selected ? Color.tujiCurrent.opacity(0.18) : Color.tujiPaper,
             in: .rect(cornerRadius: Radius.r0)
         )
         .overlay(

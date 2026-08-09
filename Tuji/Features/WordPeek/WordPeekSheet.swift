@@ -109,7 +109,7 @@ struct WordPeekSheet: View {
     private var ctaButton: some View {
         BBtn(
             title: self.ctaTitle,
-            bg: .tujiEye,
+            bg: .tujiBrandPrimary,
             fg: .tujiInk,
             fullWidth: true,
             icon: "arrow.right",

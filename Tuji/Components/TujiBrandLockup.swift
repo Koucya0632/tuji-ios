@@ -55,11 +55,11 @@ struct TujiBrandLockup: View {
                     x: self.entranceFinished || self.holeOpen ? 1 : 0.58,
                     y: self.entranceFinished || self.holeOpen ? 1 : 0.72
                 )
-                .opacity(self.entranceFinished || self.holeOpen ? 1 : 0.72)
 
             MascotFigure(pose: .peek, size: catSize, grounding: .none)
                 .scaleEffect(self.entranceFinished || self.mascotPresented ? 1 : 0.82, anchor: .bottom)
                 .offset(y: self.entranceFinished || self.mascotPresented ? 0 : lift + 10)
+                .opacity(self.entranceFinished || self.mascotPresented ? 1 : 0)
                 .frame(width: catSize, height: lift + 17, alignment: .top)
                 .clipped()
 
@@ -95,40 +95,32 @@ struct TujiBrandLockup: View {
         Ellipse()
             .fill(
                 LinearGradient(
-                    colors: [.tujiTeal, .tujiTealDeep],
+                    colors: [.tujiBrandSecondary.opacity(0.78), .tujiBrandSecondary],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             )
             .frame(width: 176, height: 48)
-            .overlay(
-                Ellipse()
-                    .stroke(.tujiTealSoft.opacity(0.72), lineWidth: 3)
-            )
-            .shadow(color: .tujiTealDeep.opacity(0.28), radius: 7, y: 5)
+            .shadow(color: .tujiBrandSecondary.opacity(0.28), radius: 7, y: 5)
     }
 
     private var wordmarkCard: some View {
         ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 24)
-                .fill(.tujiTealDeep)
+                .fill(.tujiInk.opacity(0.24))
                 .frame(width: 220, height: 76)
                 .offset(y: 5)
 
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Text("Tuji")
-                    .foregroundStyle(.tujiInk)
+                    .foregroundStyle(.tujiBrandPrimary)
                 Text(".")
                     .foregroundStyle(.tujiAlert)
             }
             .font(.system(size: 54, weight: .black, design: .rounded))
             .tracking(-2.5)
             .frame(width: 224, height: 78)
-            .background(.tujiPaper, in: .rect(cornerRadius: 24))
-            .overlay(
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(.tujiInk.opacity(0.08), lineWidth: 1)
-            )
+            .background(.tujiBrandSecondary, in: .rect(cornerRadius: 24))
         }
     }
 

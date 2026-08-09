@@ -56,7 +56,7 @@ struct TujiTextField: View {
 
     private var borderColor: Color? {
         if self.errorMessage != nil { return .tujiAlert }
-        return self.focused ? .tujiEye : nil
+        return self.focused ? .tujiCurrent : nil
     }
 }
 
@@ -79,7 +79,7 @@ struct TujiField<Content: View>: View {
                     .tracking(0.5)
                     .foregroundStyle(.tujiInk3)
                 if let badge = self.badge {
-                    TujiStatusEdgeLabel(text: Text(badge), edge: .tujiEye)
+                    TujiStatusEdgeLabel(text: Text(badge), edge: .tujiCurrent)
                 }
                 Spacer(minLength: 0)
             }

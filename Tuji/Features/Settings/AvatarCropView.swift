@@ -212,7 +212,7 @@ struct AvatarCropView: View {
 
             BBtn(
                 title: self.working ? "處理中…" : "使用照片",
-                bg: .tujiEye,
+                bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 icon: "checkmark"
             ) {
@@ -234,7 +234,7 @@ struct AvatarCropView: View {
                 .foregroundStyle(.white)
             Button("返回") { self.onCancel() }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiBrandPrimary)
         }
         .padding(Space.s4)
     }

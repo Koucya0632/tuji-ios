@@ -210,7 +210,7 @@ struct MeView: View {
     private func wordRow(word: TopWord, accent: Color) -> some View {
         HStack(spacing: Space.s3) {
             ZStack {
-                Rectangle().fill(.tujiTealSoft)
+                Rectangle().fill(.tujiAccumulationSoft)
                 LazyImage(url: word.imageURL) { state in
                     if let image = state.image {
                         image.resizable().aspectRatio(contentMode: .fill)
@@ -318,7 +318,7 @@ private struct DebugSmokeSection: View {
         case let .success(r):
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiTeal)
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiAccumulation)
                     Text("HTTP 200 · source: \(r.source.rawValue)")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)

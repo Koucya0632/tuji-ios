@@ -201,7 +201,7 @@ private struct AtlasCardsManagementPane: View {
                     // the system's checkbox and the one shape this design keeps
                     // for things that "speak" (avatars, dots, the cat's bubble).
                     Rectangle()
-                        .fill(selected ? Color.tujiEye : .clear)
+                        .fill(selected ? Color.tujiCurrent : .clear)
                         .frame(width: Border.bw3)
                     self.rowBody(row)
                         .padding(.horizontal, Space.s4)

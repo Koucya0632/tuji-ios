@@ -33,7 +33,7 @@ struct AtlasSavedItemDetailView: View {
                 self.errorState(errorMessage)
             } else {
                 TujiImagePlaceholder()
-                    .tint(.tujiTeal)
+                    .tint(.tujiCurrent)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.tujiPaper)
             }

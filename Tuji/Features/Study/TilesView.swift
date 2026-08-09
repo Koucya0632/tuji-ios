@@ -187,21 +187,21 @@ struct TilesView: View {
 
     private func slotFg(_ verdict: Bool?) -> Color {
         guard let verdict else { return .tujiInk }
-        return verdict ? .tujiTeal : .tujiAlert
+        return verdict ? .tujiAccumulation : .tujiAlert
     }
 
     private func slotBg(filled: Bool, verdict: Bool?) -> Color {
         if let verdict {
-            return (verdict ? Color.tujiTeal : .tujiAlert).opacity(0.12)
+            return (verdict ? Color.tujiAccumulation : .tujiAlert).opacity(0.12)
         }
-        return filled ? .tujiTealSoft : .tujiPaper
+        return filled ? .tujiAccumulationSoft : .tujiPaper
     }
 
     private func slotBorder(filled: Bool, verdict: Bool?) -> Color {
         if let verdict {
-            return verdict ? .tujiTeal : .tujiAlert
+            return verdict ? .tujiAccumulation : .tujiAlert
         }
-        return filled ? .tujiTeal.opacity(0.5) : .tujiPaper3
+        return filled ? .tujiAccumulation.opacity(0.5) : .tujiPaper3
     }
 
     /// The scrambled tiles. A used tile stays in place but dims, so the board

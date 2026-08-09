@@ -58,7 +58,7 @@ struct CategoryTile: View {
     private var accent: Color {
         switch self.status {
         case .mastered: .tujiInk
-        case .completed: .tujiTeal
+        case .completed: .tujiAccumulation
         case .none: .tujiPaper3
         }
     }
@@ -99,7 +99,7 @@ struct ThemeStatusBadge: View {
         case .none:
             EmptyView()
         case .completed:
-            self.pill(text: "完成", icon: "checkmark.seal.fill", tint: .tujiTeal)
+            self.pill(text: "完成", icon: "checkmark.seal.fill", tint: .tujiAccumulation)
         case .mastered:
             self.pill(text: "全精通", icon: "crown.fill", tint: .tujiInk)
         }

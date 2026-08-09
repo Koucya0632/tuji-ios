@@ -119,7 +119,7 @@ enum StudyOptionState: Equatable {
 
     var letterGround: Color {
         switch self {
-        case .right, .answer: .tujiEye
+        case .right, .answer: .tujiCurrent
         case .idle, .wrong, .dim: .tujiPaper3
         }
     }

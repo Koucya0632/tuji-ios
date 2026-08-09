@@ -35,7 +35,7 @@ struct MilestoneView: View {
                     VStack(spacing: Space.s4) {
                         Text("\(self.milestone.streak)")
                             .font(.tujiDisplay)
-                            .foregroundStyle(.tujiTealSoft)
+                            .foregroundStyle(.tujiAccumulationSoft)
                             .contentTransition(.numericText())
                         Text("連續學習天數")
                             .font(.tujiLabel)
@@ -76,7 +76,7 @@ struct MilestoneView: View {
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
-                .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
+                .background(.tujiCurrent, in: .rect(cornerRadius: Radius.r0))
             }
             Button(action: self.onFinish) {
                 Text("繼續")

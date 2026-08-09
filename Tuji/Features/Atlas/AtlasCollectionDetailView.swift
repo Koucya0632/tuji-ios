@@ -21,7 +21,7 @@ private struct CollectionSaveStyle: ButtonStyle {
 
     private func ground(pressed: Bool) -> Color {
         if self.saved { return pressed ? .tujiInk2 : .tujiPaper.opacity(0.2) }
-        return pressed ? .tujiEyeDeep : .tujiEye
+        return pressed ? .tujiCurrentDeep : .tujiCurrent
     }
 }
 
@@ -301,7 +301,7 @@ struct AtlasCollectionDetailView: View {
                         TujiProgressBar(
                             progress: nil,
                             track: .tujiPaper.opacity(0.2),
-                            fill: .tujiEye
+                            fill: .tujiCurrent
                         )
                         .frame(width: 56)
                     } else {
@@ -411,7 +411,7 @@ struct AtlasCollectionDetailView: View {
         if self.vm.learningBusy {
             TujiProgressBar(progress: nil).frame(width: 56)
                 .controlSize(.small)
-                .tint(.tujiTeal)
+                .tint(.tujiCurrent)
                 .frame(minWidth: 98, minHeight: 30)
         } else {
             let remaining = self.vm.remainingLearningCount
@@ -427,11 +427,11 @@ struct AtlasCollectionDetailView: View {
                     ))
                     .font(.system(size: 12, weight: .bold))
                 }
-                .foregroundStyle(remaining == 0 ? .tujiInk3 : .tujiTeal)
+                .foregroundStyle(remaining == 0 ? .tujiInk3 : .tujiAccumulation)
                 .padding(.horizontal, Space.s3)
                 .frame(height: 30)
                 .background(
-                    remaining == 0 ? Color.tujiPaper3 : Color.tujiTealSoft,
+                    remaining == 0 ? Color.tujiPaper3 : Color.tujiAccumulationSoft,
                     in: .rect(cornerRadius: Radius.r0)
                 )
             }

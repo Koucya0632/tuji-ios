@@ -84,10 +84,10 @@ struct WelcomeView: View {
                 } label: {
                     Text("使用 Email")
                         .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(.tujiTeal)
+                        .foregroundStyle(.tujiBrandSecondary)
                         .padding(.vertical, Space.s3)
                         .frame(maxWidth: .infinity)
-                        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                        .background(Color.tujiBrandPrimary.opacity(0.18), in: .rect(cornerRadius: Radius.r0))
                 }
 
                 Button {

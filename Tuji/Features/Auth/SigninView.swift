@@ -119,8 +119,8 @@ struct SigninView: View {
             VStack(spacing: Space.s3) {
                 BBtn(
                     title: auth.loading ? "登入中..." : "登入",
-                    bg: canSubmit ? .tujiEye : .tujiPaper3,
-                    fg: .white,
+                    bg: canSubmit ? .tujiBrandPrimary : .tujiPaper3,
+                    fg: .tujiInk,
                     fullWidth: true,
                     action: submit
                 )
@@ -133,7 +133,7 @@ struct SigninView: View {
                         Text("沒有帳號？")
                             .foregroundStyle(.tujiInk3)
                         Text("註冊")
-                            .foregroundStyle(.tujiTeal)
+                            .foregroundStyle(.tujiBrandSecondary)
                     }
                     .font(.tujiBodySm)
                 }

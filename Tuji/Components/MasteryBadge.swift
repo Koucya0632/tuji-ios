@@ -45,7 +45,7 @@ struct MasteryBadge: View {
     /// complete" inversion the rest of the system uses for a selected state.
     private func fill(at index: Int) -> Color {
         guard index < self.level.filledSegments else { return .tujiPaper3 }
-        return self.level == .expert ? .tujiInk : .tujiTeal
+        return self.level == .expert ? .tujiInk : .tujiAccumulation
     }
 
     private var spokenValue: Text {
@@ -101,7 +101,7 @@ struct MasteryBar: View {
                     Rectangle()
                         .fill(.tujiPaper3)
                     Rectangle()
-                        .fill(.tujiTeal)
+                        .fill(.tujiAccumulation)
                         .frame(width: geo.size.width * self.ratio)
                         .animation(Motion.ease(Motion.d3), value: self.ratio)
                 }

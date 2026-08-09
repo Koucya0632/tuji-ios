@@ -361,7 +361,7 @@ private struct TabBarButton: View {
             .frame(height: 64)
             .overlay(alignment: .top) {
                 Rectangle()
-                    .fill(.tujiEye)
+                    .fill(.tujiCurrent)
                     .frame(height: Border.bw3)
                     .opacity(self.isSelected ? 1 : 0)
             }

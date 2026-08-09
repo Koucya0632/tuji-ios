@@ -151,7 +151,7 @@ struct TodayView: View {
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(n > 0 ? .tujiTeal : .tujiInk3)
+                .foregroundStyle(n > 0 ? .tujiAccumulation : .tujiInk3)
             Text("\(n)")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.tujiInk)
@@ -368,7 +368,7 @@ struct TodayView: View {
                         Text("達成")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundStyle(.tujiEye)
+                    .foregroundStyle(.tujiCurrent)
                 } else {
                     Text("\(done) / \(goal)")
                         .font(.system(size: 12, weight: .semibold))
@@ -383,7 +383,7 @@ struct TodayView: View {
                     // 10am is not an error, it is the thing in progress, and
                     // 瞳黃 is exactly the colour for that.
                     Rectangle()
-                        .fill(.tujiEye)
+                        .fill(.tujiCurrent)
                         .frame(width: geo.size.width * ratio)
                 }
             }
@@ -415,7 +415,7 @@ struct TodayView: View {
                     // reaches 13.58:1 and carries the same "accumulation"
                     // meaning. On ink surfaces it is always the pale one.
                     Rectangle()
-                        .fill(.tujiTealSoft)
+                        .fill(.tujiAccumulationSoft)
                         .frame(width: geo.size.width * ratio)
                 }
             }
@@ -663,7 +663,7 @@ struct TodayView: View {
                         .foregroundStyle(.tujiInk)
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s4)
-                        .background(.tujiEye, in: .rect(cornerRadius: Radius.r0))
+                        .background(.tujiCurrent, in: .rect(cornerRadius: Radius.r0))
                 }
                 .buttonStyle(.plain)
             }
@@ -753,7 +753,7 @@ private struct HeroPillStyle: ButtonStyle {
         // Press changes the ground and nothing moves, the same rule BBtn
         // follows. `tujiPaper3` rather than `tujiPaper2` so the step is as
         // visible as 瞳's — paper2 → paper3 differ by too little to feel.
-        case .primary: return pressed ? .tujiEyeDeep : .tujiEye
+        case .primary: return pressed ? .tujiCurrentDeep : .tujiCurrent
         case .secondary: return pressed ? .tujiPaper3 : .tujiPaper2
         }
     }

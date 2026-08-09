@@ -69,7 +69,7 @@ struct StudyCategoriesPickerView: View {
                 .foregroundStyle(.tujiInk3)
         }
         .font(.system(size: 14, weight: .semibold))
-        .tint(.tujiTeal)
+        .tint(.tujiBrandSecondary)
     }
 
     private var grid: some View {
@@ -95,19 +95,19 @@ struct StudyCategoriesPickerView: View {
         Button(action: action) {
             Text(category.nameZh)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(selected ? .tujiTeal : .tujiInk2)
+                .foregroundStyle(.tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .padding(.vertical, Space.s4)
                 .frame(maxWidth: .infinity)
                 .background(
-                    selected ? Color.tujiTealSoft : .tujiPaper,
+                    selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
                     in: .rect(cornerRadius: Radius.r0)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            selected ? Color.tujiTeal : .tujiRule,
+                            selected ? Color.tujiCurrent : .tujiRule,
                             lineWidth: selected ? 1.5 : 1
                         )
                 )

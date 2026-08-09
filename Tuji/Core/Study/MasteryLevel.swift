@@ -56,9 +56,9 @@ enum MasteryLevel: Int, CaseIterable {
     var background: Color {
         switch self {
         case .notLearned: .tujiPaper3
-        case .know: .tujiTealSoft
-        case .familiar: .tujiTeal
-        case .proficient: .tujiTealDeep
+        case .know: .tujiAccumulationSoft
+        case .familiar: .tujiAccumulation
+        case .proficient: .tujiAccumulationDeep
         case .expert: .tujiInk
         }
     }
@@ -71,9 +71,9 @@ enum MasteryLevel: Int, CaseIterable {
     var foreground: Color {
         switch self {
         case .notLearned: .tujiInk3
-        case .know: .tujiTealDeep
+        case .know: .tujiAccumulationDeep
         case .familiar, .proficient: .tujiPaper
-        case .expert: .tujiEye
+        case .expert: .tujiCurrent
         }
     }
 
