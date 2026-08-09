@@ -12,6 +12,10 @@ struct PaywallView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var store = StoreKitService.shared
+    /// Separate from `store` on purpose: `store` drives the *purchase* flow
+    /// (products, spinners, restore), `entitlement` answers whether this
+    /// account already has Pro by any route.
+    private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
     @State private var errorMessage: String?
     /// True while Product.products(for:) is in flight. Needed because that
     /// call can *succeed with an empty array* (misconfigured store, App Store
@@ -90,7 +94,10 @@ struct PaywallView: View {
                 .background(Color.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
         }
 
-        if self.store.isPro {
+        // 生效權限, not the purchase flag: a 贈與 account holds no StoreKit
+        // transaction but is Pro, and telling it otherwise here is the same
+        // lie 設定 used to tell.
+        if self.entitlement.isPro {
             Text("你已經是 Tuji Pro，感謝支持！")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.tujiAccumulation)

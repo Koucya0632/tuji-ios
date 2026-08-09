@@ -108,16 +108,25 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   Both source tables are mutated in place, so this is the only history that exists, and it
   cannot be backfilled. It answers questions about *our* users; App Store Connect remains
   the authority on money (revenue, refunds, churn) and is not duplicated here.
+- **`EffectiveEntitlementReading`** — the iOS read seam for 生效權限, and the only place a
+  screen may ask "is this account Pro". Its rule is a pure `resolve(serverPlan:devicePurchase:)`
+  mirroring the server's: the server snapshot wins **in both directions whenever it exists**,
+  and the device-local `StoreKitService.isPro` stands in only while it is `nil`. That flag is
+  *purchase* state — a transaction on this Apple ID and device — so it reads false for a 贈與
+  and true for a subscription since re-bound elsewhere; treating it as 生效權限 is what made
+  設定 offer 「升級」 to accounts that already had Pro. `StoreKitService` keeps it for the
+  paywall's own purchase/restore flow and nothing else.
 
 ## Architecture — seams & conventions
 
 - **LiveAtlasRepository** — the concrete atlas HTTP client (in `AtlasRepository.swift`).
-  There is **no** umbrella `AtlasRepository` protocol any more — it was a 25-method
-  god-protocol with one real consumer, retired once the role seams below covered the
-  need. The struct's surface reaches callers through focused role protocols (each
+  There is **no** umbrella `AtlasRepository` protocol any more — it was a god-protocol
+  with one real consumer, retired once the role seams below covered the need. The struct
+  has since grown to 38 methods, which is the point: the seams below carve it, nothing
+  re-declares it whole. Its surface reaches callers through focused role protocols (each
   conformed via a free `extension LiveAtlasRepository: Role {}`). **No screen binds to
-  the concrete type any more** — the only members behind no seam are `publicFeed` and
-  `deleteCollection`, which have no caller (ADR-0001 lazy-narrowing).
+  the concrete type any more** — the only member behind no seam is `publicFeed`, which
+  has no caller (ADR-0001 lazy-narrowing).
 - **Role seams** — narrow protocols, one per consumer, so each consumer (and its test
   fake) depends only on the slice it uses.
   - **AtlasAuthoring** — 10-method authoring/sync pipeline used by `AtlasStore`
@@ -130,7 +139,7 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   - **CollectionBookmarking** — private saved-shelf reads plus collection bookmark
     state/mutations; `PublicAtlasBrowsingModel` depends on it only for `savedCollections`.
   - **CollectionDetailReading** — 1-method seam for the collection detail (`collection(slug:)`).
-  - **AuthorReading** — 1-method seam for the author profile (`author(username:)`).
+  - **AuthorReading** — 1-method seam for the author profile (`author(handle:forceReload:)`).
   - **PublicItemsReading** — 1-method seam (`publicItems`) for `WordCommunityAtlasSection`
     (injected into the view; the trivial fetch stays there, no VM).
   - **AtlasItemConsuming** — save/unsave/report for one public item, used by `AtlasPublicDetailVM`.

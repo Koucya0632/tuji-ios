@@ -13,6 +13,7 @@ struct SettingsView: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     private let users: UserRepository = LiveUserRepository.shared
+    private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteFirst = false
@@ -173,8 +174,10 @@ struct SettingsView: View {
     /// no-hardcoded-base-url lint rule stays clean.
     private static let shareURL = URL(string: "https://tuji.nexflow.team/") ?? URL(fileURLWithPath: "/")
 
+    /// 生效權限, not the device-local StoreKit flag: this row offers 升級, and a
+    /// 贈與 account has no StoreKit transaction to read.
     private var isPro: Bool {
-        StoreKitService.shared.isPro
+        self.entitlement.isPro
     }
 
     // MARK: - List
