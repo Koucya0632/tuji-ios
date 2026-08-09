@@ -63,9 +63,18 @@ final class AtlasCaptureVM {
     var showPaywall = false
 
     private let store: AtlasStore
+    /// Quota *numbers* come from `store.entitlement`; the Pro/Free *verdict*
+    /// comes from here, so 拍照 cannot disagree with 設定 about who is Pro.
+    private let entitlement: any EffectiveEntitlementReading
 
-    init(store: AtlasStore = .shared) {
+    init(
+        store: AtlasStore = .shared,
+        entitlement: (any EffectiveEntitlementReading)? = nil
+    ) {
         self.store = store
+        // Defaulted from the same store the VM was handed, so a test that
+        // stands the VM up over a fake store gets a matching verdict for free.
+        self.entitlement = entitlement ?? LiveEffectiveEntitlement(atlas: store)
     }
 
     // MARK: - Quota / entitlement gates
@@ -96,7 +105,7 @@ final class AtlasCaptureVM {
     }
 
     var isPro: Bool {
-        self.store.entitlement?.isPro ?? false
+        self.entitlement.isPro
     }
 
     /// 高精度 availability (Pro-only). A Free tap should route to the paywall

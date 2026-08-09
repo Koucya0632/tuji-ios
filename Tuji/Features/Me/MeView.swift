@@ -47,17 +47,11 @@ struct MeView: View {
     @Environment(SettingsStore.self) private var settings
 
     @State private var vm = MeVM()
-    @State private var store = StoreKitService.shared
-    @State private var atlas = AtlasStore.shared
 
-    /// Prefer the server-authoritative Atlas entitlement (kept warm by the
-    /// `.task` sync below) over the device-local StoreKit flag: `store.isPro`
-    /// only reflects a transaction verified on this Apple ID/device via
-    /// PaywallView, so it can read false for an account that's actually Pro
-    /// (admin grant, cross-device purchase) until the paywall happens to open.
-    private var isPro: Bool {
-        self.atlas.entitlement?.isPro ?? self.store.isPro
-    }
+    // The rule this screen used to document — server entitlement first, device
+    // StoreKit flag only while it is unknown — now lives in
+    // `LiveEffectiveEntitlement`, where 設定 reads it too. 我的 renders no Pro
+    // row, so it holds no entitlement dependency at all.
 
     private var isGuest: Bool {
         self.user == nil
