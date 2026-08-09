@@ -1,15 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "tuji-launch-hole.png",
+      "filename" : "launch-lockup-peek-start.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
+      "filename" : "launch-lockup-peek-start@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
+      "filename" : "launch-lockup-peek-start@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

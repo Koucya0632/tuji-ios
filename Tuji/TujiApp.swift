@@ -15,8 +15,54 @@ struct TujiApp: App {
     /// Install the custom Nuke pipeline before any LazyImage renders —
     /// ImagePipeline.shared is read at first use, so it must be set
     /// before SwiftUI mounts the view tree.
+    @MainActor
     init() {
         TujiImagePipeline.install()
+        self.launch = LaunchCoordinator(
+            minimumSplashDuration: .milliseconds(600),
+            resolveAuthentication: {
+                await AuthService.shared.resolveSession()
+                if case let .signedIn(user) = AuthService.shared.state {
+                    return .signedIn(userID: user.id)
+                }
+                return .signedOut
+            },
+            hydrateProfile: {
+                await AuthService.shared.refreshResolvedProfile()
+            },
+            preloadCatalog: {
+                let settings = SettingsStore.shared.current
+                let context = CatalogContext(
+                    settings: settings,
+                    userID: nil,
+                    includePersonalization: false
+                )
+                async let words: Void = WordsStore.shared.loadIfNeeded(for: context)
+                async let categories: Void = CategoriesStore.shared.loadIfNeeded(for: context)
+                _ = await (words, categories)
+            },
+            finalizeSignedIn: { userID in
+                await SettingsStore.shared.loadIfNeeded(for: userID)
+                let settings = SettingsStore.shared.current
+                let context = CatalogContext(
+                    settings: settings,
+                    userID: userID,
+                    includePersonalization: true
+                )
+                async let words: Void = WordsStore.shared.loadIfNeeded(for: context)
+                async let categories: Void = CategoriesStore.shared.loadIfNeeded(for: context)
+                _ = await (words, categories)
+            },
+            replayOutbox: {
+                await StudyAnswerOutbox.shared.replay()
+            },
+            trackAppOpen: {
+                AnalyticsService.shared.track(.appOpen)
+            },
+            sleep: { duration in
+                try? await Task.sleep(for: duration)
+            }
+        )
     }
 
     @Environment(\.scenePhase) private var scenePhase
@@ -34,6 +80,8 @@ struct TujiApp: App {
     @State private var studyFocus = StudyFocus.shared
     @State private var deepLinks = DeepLinkCoordinator.shared
     @State private var network = NetworkMonitor.shared
+    /// RootView observes this App-owned reference through the environment.
+    private let launch: LaunchCoordinator
     @State private var feedRefresh = CommunityFeedRefresh()
     @State private var collectionBookmarks = CollectionBookmarkStore()
     @State private var collectionIdentities = CollectionIdentityStore()
@@ -54,23 +102,21 @@ struct TujiApp: App {
                 .environment(studyFocus)
                 .environment(deepLinks)
                 .environment(network)
+                .environment(launch)
                 .environment(feedRefresh)
                 .environment(collectionBookmarks)
                 .environment(collectionIdentities)
                 .environment(BlockStore.shared)
                 .environment(\.locale, settings.current.uiLanguage.locale)
-                .task {
-                    await words.loadIfNeeded()
-                    await categories.loadIfNeeded()
-                }
-                .task { await settings.loadIfNeeded() }
                 .task { await push.refreshAuthorization() }
                 // Re-send SRS answers that failed offline (see
-                // StudyAnswerOutbox). Launch covers "opened at home with wifi";
-                // the foreground trigger covers "came back online mid-day".
-                .task { await StudyAnswerOutbox.shared.replay() }
+                // StudyAnswerOutbox). LaunchCoordinator replays only after a
+                // signed-in session resolves, without blocking navigation; the
+                // foreground trigger covers "came back online mid-day".
                 .onChange(of: scenePhase) { _, phase in
-                    guard phase == .active else { return }
+                    guard phase == .active,
+                          case .signedIn = auth.state
+                    else { return }
                     Task { await StudyAnswerOutbox.shared.replay() }
                 }
                 .onOpenURL { url in

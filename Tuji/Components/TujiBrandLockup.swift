@@ -4,8 +4,15 @@ import SwiftUI
 /// the mascot and name read as one mark instead of two vertically stacked
 /// elements.
 struct TujiBrandLockup: View {
+    enum Entrance: Hashable {
+        case finished
+        case animated
+        case start
+    }
+
     var scale: CGFloat = 1
-    var animateEntrance = false
+    private let entrance: Entrance
+    private let reduceMotionOverride: Bool?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var holeOpen = false
@@ -14,6 +21,29 @@ struct TujiBrandLockup: View {
     private let catSize: CGFloat = 150
     /// Negative spacing lets the paws visibly land on the wordmark card.
     private let gap: CGFloat = -16
+
+    init(
+        scale: CGFloat = 1,
+        animateEntrance: Bool = false,
+        reduceMotionOverride: Bool? = nil
+    ) {
+        self.scale = scale
+        self.entrance = animateEntrance ? .animated : .finished
+        self.reduceMotionOverride = reduceMotionOverride
+    }
+
+    /// Used to render the native launch image from the exact same geometry as
+    /// the first animated SwiftUI frame. Production callers normally use the
+    /// `animateEntrance` initializer above.
+    init(
+        scale: CGFloat = 1,
+        entrance: Entrance,
+        reduceMotionOverride: Bool? = nil
+    ) {
+        self.scale = scale
+        self.entrance = entrance
+        self.reduceMotionOverride = reduceMotionOverride
+    }
 
     var body: some View {
         let lift = MascotPose.peek.visibleHeightRatio * catSize + gap
@@ -41,13 +71,24 @@ struct TujiBrandLockup: View {
         .frame(width: 232 * scale, height: 230 * scale)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Tuji")
-        .task(id: self.animateEntrance) {
+        .task(id: self.entrance) {
             await self.playEntranceIfNeeded()
         }
     }
 
     private var entranceFinished: Bool {
-        !self.animateEntrance || self.reduceMotion
+        switch self.entrance {
+        case .finished:
+            true
+        case .animated:
+            self.effectiveReduceMotion
+        case .start:
+            false
+        }
+    }
+
+    private var effectiveReduceMotion: Bool {
+        self.reduceMotionOverride ?? self.reduceMotion
     }
 
     private var portal: some View {
@@ -93,33 +134,39 @@ struct TujiBrandLockup: View {
 
     @MainActor
     private func playEntranceIfNeeded() async {
-        guard self.animateEntrance, !self.reduceMotion else {
+        switch self.entrance {
+        case .start:
+            self.holeOpen = false
+            self.mascotPresented = false
+            return
+        case .finished:
             self.holeOpen = true
             self.mascotPresented = true
             return
+        case .animated where self.effectiveReduceMotion:
+            self.holeOpen = true
+            self.mascotPresented = true
+            return
+        case .animated:
+            break
         }
 
         self.holeOpen = false
         self.mascotPresented = false
 
-        try? await Task.sleep(for: .milliseconds(90))
+        // Hold the exact native launch frame briefly before opening the portal.
+        // The full entrance settles before LaunchCoordinator's 600ms minimum.
+        try? await Task.sleep(for: .milliseconds(70))
         guard !Task.isCancelled else { return }
 
-        withAnimation(.easeOut(duration: 0.16)) {
+        withAnimation(.easeOut(duration: 0.14)) {
             self.holeOpen = true
         }
 
-        try? await Task.sleep(for: .milliseconds(110))
+        try? await Task.sleep(for: .milliseconds(100))
         guard !Task.isCancelled else { return }
 
-        withAnimation(
-            .interpolatingSpring(
-                mass: 0.78,
-                stiffness: 170,
-                damping: 12,
-                initialVelocity: 0.7
-            )
-        ) {
+        withAnimation(.spring(duration: 0.34, bounce: 0.28)) {
             self.mascotPresented = true
         }
     }

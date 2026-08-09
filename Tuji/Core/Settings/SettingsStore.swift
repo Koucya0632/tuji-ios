@@ -69,24 +69,54 @@ final class SettingsStore {
     /// True once the first server load has completed. TodayView reads this to
     /// avoid flashing the "pick themes" empty state before settings arrive.
     private(set) var hasLoaded: Bool = false
+    @ObservationIgnored private var latestRequestedContext: LoadContext?
+    @ObservationIgnored private var loadedContext: LoadContext?
+    @ObservationIgnored private var inFlight: [LoadContext: LoadFlight] = [:]
     private var saveTask: Task<Void, Never>?
     private let repository: UserRepository
+    private let defaults: UserDefaults
+    private let signedInUserProvider: @MainActor () -> SessionUser?
     private let communityCategoryMigration = CommunityStudyCategoryMigration()
+    private let signposter = OSSignposter(
+        subsystem: "app.tuji.ios",
+        category: "settings"
+    )
+
+    private struct LoadContext: Hashable {
+        let userID: UUID?
+    }
+
+    private struct LoadFlight {
+        let id: UUID
+        let task: Task<Void, Never>
+    }
 
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
     private let saveDebounce: Duration = .milliseconds(400)
 
     private let learningDirectionKey = "tuji.learning.direction"
 
-    private init(repository: UserRepository = LiveUserRepository.shared) {
+    init(
+        repository: UserRepository = LiveUserRepository.shared,
+        defaults: UserDefaults = .standard,
+        signedInUserProvider: @escaping @MainActor () -> SessionUser? = {
+            if case let .signedIn(user) = AuthService.shared.state {
+                user
+            } else {
+                nil
+            }
+        }
+    ) {
         self.repository = repository
+        self.defaults = defaults
+        self.signedInUserProvider = signedInUserProvider
         // Seed the learning target from the persisted choice so the launch-time
         // word preload (gated behind the splash) fetches the right language
         // before the server `load()` completes. Without this, `current` stays
         // at `.default` (.zhEn) on every cold start, so a zh-ja learner who
         // skipped the picker briefly preloads English words behind the splash
         // and only swaps once settings arrive.
-        if let stored = UserDefaults.standard.string(forKey: self.learningDirectionKey),
+        if let stored = defaults.string(forKey: self.learningDirectionKey),
            let direction = LearningDirection(rawValue: stored)
         {
             self.current.learningDirection = direction
@@ -95,7 +125,7 @@ final class SettingsStore {
         // language (right for a first run), so re-seed from the mirror to keep
         // a returning user's stored choice from flashing the device language
         // before the server load() lands.
-        if let storedLang = UserDefaults.standard.string(forKey: tujiUILangDefaultsKey) {
+        if let storedLang = defaults.string(forKey: tujiUILangDefaultsKey) {
             self.current.uiLang = UILanguage(code: storedLang).rawValue
         }
     }
@@ -103,48 +133,119 @@ final class SettingsStore {
     /// Returns immediately on subsequent calls; only the first call hits
     /// the network.
     func loadIfNeeded() async {
-        guard !self.hasLoaded else { return }
-        await self.load()
+        await self.loadIfNeeded(for: self.signedInUserProvider()?.id)
     }
 
+    /// Settings belong to an account, not the process. Keying the flight by
+    /// user id prevents a completed load for account A from satisfying account
+    /// B after an in-process sign-out/sign-in transition.
+    func loadIfNeeded(for userID: UUID?) async {
+        let context = LoadContext(userID: userID)
+        guard self.loadedContext != context || !self.hasLoaded else { return }
+        await self.load(for: context)
+    }
+
+    /// Explicit reloads remain possible, but concurrent callers always join
+    /// the same server request. Launch invokes this only after authentication
+    /// resolves, so auth-dependent reconciliation observes a stable user.
     func load() async {
+        await self.load(for: LoadContext(userID: self.signedInUserProvider()?.id))
+    }
+
+    private func load(for context: LoadContext) async {
+        self.latestRequestedContext = context
+        if self.loadedContext != context {
+            self.hasLoaded = false
+        }
         self.loading = true
         self.lastError = nil
-        defer { self.loading = false }
+
+        if let flight = self.inFlight[context] {
+            await flight.task.value
+            return
+        }
+
+        let flightID = UUID()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performLoad(for: context, flightID: flightID)
+        }
+        self.inFlight[context] = LoadFlight(id: flightID, task: task)
+        await task.value
+
+        if self.inFlight[context]?.id == flightID {
+            self.inFlight[context] = nil
+        }
+        self.refreshLoadingState()
+    }
+
+    private func performLoad(for context: LoadContext, flightID: UUID) async {
+        let signpostID = self.signposter.makeSignpostID()
+        let interval = self.signposter.beginInterval("settings-load", id: signpostID)
+        let result: Result<UserSettings, Error>
         do {
-            var settings = try await self.repository.loadSettings()
-            let signedInUser: SessionUser? = if case let .signedIn(user) = AuthService.shared.state {
-                user
-            } else {
-                nil
-            }
+            result = try await .success(self.repository.loadSettings())
+        } catch {
+            result = .failure(error)
+        }
+        self.signposter.endInterval("settings-load", interval)
+
+        guard self.latestRequestedContext == context,
+              self.inFlight[context]?.id == flightID
+        else { return }
+
+        switch result {
+        case var .success(settings):
             // Before first-run setup completes, the server row is boilerplate
-            // (uiLang defaults to zh-Hant), not a choice the user made. Keep
-            // the locally detected device language so a ja/en-device user's
-            // onboarding doesn't flip to Chinese mid-setup — SetupView then
-            // persists the surviving value.
-            if let user = signedInUser,
-               !OnboardingState.shared.setupDone(for: user.id)
-            {
-                settings.uiLang = self.current.uiLang
-            }
+            // (uiLang / learningDirection defaults), not a choice the user
+            // made. Keep both local choices so a first-time learner cannot be
+            // flipped back to zh-Hant or zh-en while Setup is on screen. When
+            // no direction has been selected yet, leave OnboardingState nil so
+            // RootView still presents the language picker.
+            let setupDone = context.userID.map {
+                OnboardingState.shared.setupDone(for: $0)
+            } ?? true
+            settings = Self.reconcileServerSettings(
+                settings,
+                current: self.current,
+                selectedDirection: OnboardingState.shared.learningDirection,
+                setupDone: setupDone
+            )
             var migrationUserID: UUID?
             var migrationNeedsSave = false
-            if let user = signedInUser,
-               OnboardingState.shared.setupDone(for: user.id),
-               !self.communityCategoryMigration.hasApplied(for: user.id)
+            if let userID = context.userID,
+               OnboardingState.shared.setupDone(for: userID),
+               !self.communityCategoryMigration.hasApplied(for: userID)
             {
                 let migrated = self.communityCategoryMigration.migrated(settings)
-                migrationUserID = user.id
+                migrationUserID = userID
                 migrationNeedsSave = migrated != settings
                 settings = migrated
             }
             let directionChanged =
                 self.current.learningDirection != settings.learningDirection
             self.current = settings
-            UserDefaults.standard.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
-            OnboardingState.shared.learningDirection = settings.learningDirection
+            self.defaults.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
+            if setupDone {
+                OnboardingState.shared.learningDirection = settings.learningDirection
+            }
+            self.loadedContext = context
             self.hasLoaded = true
+            if directionChanged {
+                WordsStore.shared.invalidate()
+                MasteryStore.shared.invalidate()
+                ProgressStore.shared.invalidate()
+                StudyStatsStore.shared.invalidate()
+                // LaunchCoordinator owns the final context-aware words/categories
+                // load. The remaining learning stores are useful soon after
+                // launch but must not extend the signed-in launch gate.
+                Task {
+                    async let masteryLoad: Void = MasteryStore.shared.reload()
+                    async let progressLoad: Void = ProgressStore.shared.reload()
+                    async let statsLoad: Void = StudyStatsStore.shared.reload()
+                    _ = await (masteryLoad, progressLoad, statsLoad)
+                }
+            }
             if let migrationUserID {
                 if migrationNeedsSave {
                     do {
@@ -154,7 +255,11 @@ final class SettingsStore {
                     } catch {
                         // Leave the marker unset so the migration retries on a
                         // later launch instead of silently losing the server update.
-                        self.lastError = error
+                        if self.latestRequestedContext == context,
+                           self.inFlight[context]?.id == flightID
+                        {
+                            self.lastError = error
+                        }
                         self.log.error(
                             "community study category migration failed: \(error.localizedDescription, privacy: .public)"
                         )
@@ -163,22 +268,35 @@ final class SettingsStore {
                     self.communityCategoryMigration.markApplied(for: migrationUserID)
                 }
             }
-            if directionChanged {
-                WordsStore.shared.invalidate()
-                MasteryStore.shared.invalidate()
-                ProgressStore.shared.invalidate()
-                StudyStatsStore.shared.invalidate()
-                async let wordsLoad: Void = WordsStore.shared.reload()
-                async let masteryLoad: Void = MasteryStore.shared.reload()
-                async let progressLoad: Void = ProgressStore.shared.reload()
-                async let statsLoad: Void = StudyStatsStore.shared.reload()
-                _ = await (wordsLoad, masteryLoad, progressLoad, statsLoad)
-            }
             self.log.info("settings loaded")
-        } catch {
+        case let .failure(error):
             self.lastError = error
             self.log.error("settings load failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+
+    private func refreshLoadingState() {
+        guard let latestRequestedContext else {
+            self.loading = false
+            return
+        }
+        self.loading = self.inFlight[latestRequestedContext] != nil
+    }
+
+    static func reconcileServerSettings(
+        _ server: UserSettings,
+        current: UserSettings,
+        selectedDirection: LearningDirection?,
+        setupDone: Bool
+    )
+        -> UserSettings
+    {
+        guard !setupDone else { return server }
+        var reconciled = server
+        reconciled.uiLang = current.uiLang
+        reconciled.learningDirection = selectedDirection
+            ?? current.learningDirection
+        return reconciled
     }
 
     /// Adopt settings that were already persisted server-side by the caller
@@ -187,9 +305,18 @@ final class SettingsStore {
     /// see the fresh choices immediately instead of waiting for the next
     /// server load().
     func adoptPersisted(_ settings: UserSettings) {
+        let context = LoadContext(userID: self.signedInUserProvider()?.id)
+        self.latestRequestedContext = context
+        for flight in self.inFlight.values {
+            flight.task.cancel()
+        }
+        self.inFlight.removeAll()
+        self.loadedContext = context
         self.current = settings
         self.hasLoaded = true
-        UserDefaults.standard.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
+        self.loading = false
+        self.lastError = nil
+        self.defaults.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
     }
 
     // MARK: - Immediate edits
@@ -204,7 +331,7 @@ final class SettingsStore {
         guard next != self.current else { return }
         let uiLangChanged = next.uiLang != self.current.uiLang
         self.current = next
-        UserDefaults.standard.set(next.uiLang, forKey: tujiUILangDefaultsKey)
+        self.defaults.set(next.uiLang, forKey: tujiUILangDefaultsKey)
         self.scheduleSave()
         // Static UI chrome switches live via the environment locale, but the
         // category names (`nameZh`) and word Chinese (`chinese`) are localized
@@ -226,7 +353,7 @@ final class SettingsStore {
     func setLearningDirection(_ direction: LearningDirection, persist: Bool) {
         guard self.current.learningDirection != direction else { return }
         self.current.learningDirection = direction
-        UserDefaults.standard.set(direction.rawValue, forKey: self.learningDirectionKey)
+        self.defaults.set(direction.rawValue, forKey: self.learningDirectionKey)
         if persist {
             self.scheduleSave()
         }
