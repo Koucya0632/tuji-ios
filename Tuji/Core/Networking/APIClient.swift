@@ -101,7 +101,7 @@ final class APIClient {
         -> T
     {
         let boundary = "Boundary-\(UUID().uuidString)"
-        var req = try await buildRequest(ep, method: "POST", body: Empty?.none, retryingAfter401: false)
+        var req = try await buildRequest(ep, method: "POST", body: Empty?.none)
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         req.httpBody = Self.multipartBody(
             boundary: boundary,
@@ -111,7 +111,7 @@ final class APIClient {
             mimeType: mimeType,
             data: data
         )
-        return try await execute(req, ep: ep, method: "POST", body: Empty?.none, decodeAs: T.self)
+        return try await execute(req, ep: ep, method: "POST", decodeAs: T.self)
     }
 
     /// Best-effort POST. Used for analytics where dropping events is
@@ -139,16 +139,15 @@ final class APIClient {
         -> T
     {
         let req = try await buildRequest(
-            ep, method: method, body: body, retryingAfter401: false, cachePolicy: cachePolicy
+            ep, method: method, body: body, cachePolicy: cachePolicy
         )
-        return try await execute(req, ep: ep, method: method, body: body, decodeAs: T.self)
+        return try await execute(req, ep: ep, method: method, decodeAs: T.self)
     }
 
     private func buildRequest(
         _ ep: Endpoint,
         method: String,
         body: (some Encodable)?,
-        retryingAfter401: Bool,
         cachePolicy: URLRequest.CachePolicy? = nil
     ) async throws
         -> URLRequest
@@ -186,11 +185,20 @@ final class APIClient {
         return req
     }
 
+    /// Sends an already-built request and decodes it, retrying once on 401.
+    ///
+    /// Deliberately takes the *request*, not the ingredients: the 401 retry used
+    /// to re-run `buildRequest` from the original `body`, which silently
+    /// discarded every per-call mutation the caller had made to the request
+    /// afterwards. `upload` mutates it the most — it attaches the multipart body
+    /// and its `Content-Type` after building — so a retried photo upload went
+    /// out with no body at all. A per-call `cachePolicy` override was dropped
+    /// the same way. Copying the request and re-stamping one header cannot
+    /// diverge from what was actually sent.
     private func execute<T: Decodable>(
         _ req: URLRequest,
         ep: Endpoint,
         method: String,
-        body: (some Encodable)?,
         decodeAs: T.Type
     ) async throws
         -> T
@@ -209,7 +217,11 @@ final class APIClient {
         // post-refresh is enough.
         if let http = resp as? HTTPURLResponse, http.statusCode == 401, !ep.isPublic {
             log.info("401 on \(ep.path, privacy: .public) — retrying once with refreshed token")
-            let retryReq = try await buildRequest(ep, method: method, body: body, retryingAfter401: true)
+            // Same request, fresh Authorization. validAccessToken() refreshes
+            // the session as a side effect, so re-reading it is enough.
+            var retryReq = req
+            let token = try await auth.validAccessToken()
+            retryReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (retryData, retryResp): (Data, URLResponse)
             do {
                 (retryData, retryResp) = try await urlSession.data(for: retryReq)
