@@ -152,25 +152,29 @@ final class APIClient {
     ) async throws
         -> URLRequest
     {
+        // One read: the endpoint's facts are one value, not six switches.
+        let descriptor = ep.descriptor
+        let policy = descriptor.policy
+
         var components = URLComponents(
-            url: baseURL.appendingPathComponent(ep.path),
+            url: baseURL.appendingPathComponent(descriptor.path),
             resolvingAgainstBaseURL: false
         )
-        if !ep.queryItems.isEmpty {
-            components?.queryItems = ep.queryItems
+        if !descriptor.queryItems.isEmpty {
+            components?.queryItems = descriptor.queryItems
         }
         guard let url = components?.url else { throw APIError.missingBaseURL }
 
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        req.timeoutInterval = ep.timeout
-        req.cachePolicy = cachePolicy ?? ep.cachePolicy
+        req.timeoutInterval = policy.timeout
+        req.cachePolicy = cachePolicy ?? policy.cachePolicy
 
-        if !ep.isPublic {
+        if !policy.isPublic {
             let token = try await auth.validAccessToken()
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else if ep.usesOptionalAuth,
+        } else if policy.usesOptionalAuth,
                   case .signedIn = self.auth.state,
                   let token = try? await self.auth.validAccessToken()
         {

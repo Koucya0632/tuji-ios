@@ -125,230 +125,327 @@ enum Endpoint {
 
     // MARK: -
 
-    var path: String {
+    /// One switch, one endpoint, every fact about it in one arm.
+    ///
+    /// This replaced six parallel exhaustive switches over the same 61 cases
+    /// (`path`, `queryItems`, `cachePolicy`, `isPublic`, `usesOptionalAuth`,
+    /// `timeout`). Adding an endpoint meant editing up to six of them, and one
+    /// endpoint's facts were smeared across 354 lines — which is how ten
+    /// endpoints came to have their cache policy decided by a `default:` arm.
+    ///
+    /// No `default:` here, and none in `EndpointPolicy.cachePolicy`: a new case
+    /// does not compile until someone has answered every question about it.
+    var descriptor: EndpointDescriptor {
         switch self {
-        case .usersMe: "/api/users/me"
-        case .usersProfile: "/api/users/profile"
-        case .usersSettings: "/api/users/settings"
-        case .usersFavorites: "/api/users/favorites"
-        case .usersLearned: "/api/users/learned"
-        case .usersSync: "/api/users/sync"
-        case .usersProgress: "/api/users/progress"
-        case .usersMastery: "/api/users/mastery"
-        case .usersCustomWords: "/api/users/custom-words"
-        case .usersSavedWords: "/api/users/saved-words"
-        case .usersTopWords: "/api/users/top-words"
-        case .usersDeleteAccount: "/api/users/delete-account"
-        case .usersBlocks: "/api/users/blocks"
-        case let .usersBlock(handle): "/api/users/blocks/\(handle)"
-        case .usersPushToken,
-             .usersPushTokenDelete: "/api/users/push-token"
-        case .usersFeedback: "/api/users/feedback"
-        case .studyQueue: "/api/study/queue"
-        case .studyAnswer: "/api/study/answer"
-        case .studyStats: "/api/study/stats"
-        case .studyReports: "/api/study/reports"
-        case .atlasImages: "/api/atlas/images"
-        case let .atlasImage(id): "/api/atlas/images/\(id)"
-        case let .atlasImageRecognize(id, _, _): "/api/atlas/images/\(id)/recognize"
-        case let .atlasImageConfirm(id, _): "/api/atlas/images/\(id)/confirm"
-        case let .atlasItem(id): "/api/atlas/items/\(id)"
-        case let .atlasItemCards(id): "/api/atlas/items/\(id)/cards"
-        case let .atlasItemEnrich(id): "/api/atlas/items/\(id)/enrich"
-        case let .atlasItemDetail(id): "/api/atlas/items/\(id)/detail"
-        case let .atlasItemWithdraw(id): "/api/atlas/items/\(id)/withdraw"
-        case .atlasSync: "/api/atlas/sync"
-        case .atlasFriends: "/api/atlas/friends"
-        case .atlasEntitlement: "/api/atlas/entitlement"
-        case .atlasCollections: "/api/atlas/collections"
-        case let .atlasCollection(id): "/api/atlas/collections/\(id)"
-        case let .atlasCollectionAvatar(id): "/api/atlas/collections/\(id)/avatar"
-        case let .atlasCollectionItems(id): "/api/atlas/collections/\(id)/items"
-        case let .atlasCollectionItem(id, publicItemId): "/api/atlas/collections/\(id)/items/\(publicItemId)"
-        case let .atlasCollectionPublish(id): "/api/atlas/collections/\(id)/publish"
-        case let .atlasCollectionWithdraw(id): "/api/atlas/collections/\(id)/withdraw"
-        case .atlasCollectionCandidates: "/api/atlas/collections/candidates"
-        case .atlasPublicByLemma: "/api/atlas/public/by-lemma"
-        case .atlasPublicFeed: "/api/atlas/public"
-        case let .atlasPublicAuthor(handle, _): "/api/atlas/public/authors/\(handle)"
-        case let .atlasPublicItem(slug, _): "/api/atlas/public/\(slug)"
-        case let .atlasPublicSave(slug): "/api/atlas/public/\(slug)/save"
-        case let .atlasPublicReport(slug): "/api/atlas/public/\(slug)/report"
-        case let .atlasPublicCollectionReport(slug):
-            "/api/atlas/public/collections/\(slug)/report"
-        case let .atlasPublicAuthorReport(handle):
-            "/api/atlas/public/authors/\(handle)/report"
-        case .atlasPublicCollections: "/api/atlas/public/collections"
-        case let .atlasPublicCollection(slug): "/api/atlas/public/collections/\(slug)"
-        case .atlasSavedCollections: "/api/atlas/public/collections/saved"
-        case let .atlasPublicCollectionSave(slug): "/api/atlas/public/collections/\(slug)/save"
-        case let .atlasPublicCollectionLearn(slug): "/api/atlas/public/collections/\(slug)/learn"
-        case .billingVerify: "/api/billing/verify"
-        case .search: "/api/search"
-        case .events: "/api/events"
-        case .words: "/api/words"
-        case let .word(id, _, _): "/api/words/\(id)"
-        case .categories: "/api/categories"
-        case .smokeWhoami: "/api/test_smoke/whoami"
-        }
-    }
+        // MARK: Auth-protected user endpoints
 
-    var queryItems: [URLQueryItem] {
-        switch self {
-        case let .studyQueue(mode, limit, new, categories, lang):
-            [
-                URLQueryItem(name: "mode", value: mode),
-                URLQueryItem(name: "limit", value: String(limit)),
-                URLQueryItem(name: "new", value: String(new)),
-                // Comma-separated category ids; empty = no filter (study all).
-                // Backend strips empty / "all" sentinels for us.
-                URLQueryItem(name: "category", value: categories.joined(separator: ",")),
-                // Gloss language follows the live UI language, not the
-                // debounced server settings.
-                URLQueryItem(name: "lang", value: lang)
-            ]
-        case let .search(q):
-            [URLQueryItem(name: "q", value: q)]
-        case let .usersPushTokenDelete(deviceId):
-            [URLQueryItem(name: "deviceId", value: deviceId)]
-        case let .usersTopWords(type, limit):
-            [
-                URLQueryItem(name: "type", value: type),
-                URLQueryItem(name: "limit", value: String(limit))
-            ]
-        case let .atlasImages(limit),
-             let .atlasFriends(limit),
-             let .atlasPublicFeed(limit):
-            [URLQueryItem(name: "limit", value: String(limit))]
-        case let .atlasSync(since, limit):
-            [
-                since.map { URLQueryItem(name: "since", value: $0) },
-                URLQueryItem(name: "limit", value: String(limit))
-            ].compactMap(\.self)
-        case let .usersCustomWords(lang, learning),
-             let .usersSavedWords(lang, learning):
+        case .usersMe:
+            EndpointDescriptor(path: "/api/users/me", policy: .privateServerCached)
+        case .usersProfile:
+            EndpointDescriptor(path: "/api/users/profile", policy: .privateServerCached)
+        case .usersSettings:
+            EndpointDescriptor(path: "/api/users/settings", policy: .privateServerCached)
+        case .usersFavorites:
+            EndpointDescriptor(path: "/api/users/favorites", policy: .privateServerCached)
+        case .usersLearned:
+            EndpointDescriptor(path: "/api/users/learned", policy: .privateServerCached)
+        case .usersSync:
+            EndpointDescriptor(path: "/api/users/sync", policy: .privateFresh)
+        case .usersProgress:
+            EndpointDescriptor(path: "/api/users/progress", policy: .privateServerCached)
+        case .usersMastery:
+            EndpointDescriptor(path: "/api/users/mastery", policy: .privateFresh)
+        case let .usersCustomWords(lang, learning):
             // ?lang= / ?learning= win over the server-stored setting right after
             // an in-app switch (the settings save is debounced). Without the
             // live learning direction the custom 圖鑑 comes back for the *old*
             // target language until the debounced POST lands.
-            [
-                URLQueryItem(name: "lang", value: lang),
-                URLQueryItem(name: "learning", value: learning)
-            ]
-        case let .atlasImageRecognize(_, lang, learning):
+            EndpointDescriptor(
+                path: "/api/users/custom-words",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "learning", value: learning)
+                ],
+                policy: .privateFresh
+            )
+        case let .usersSavedWords(lang, learning):
+            EndpointDescriptor(
+                path: "/api/users/saved-words",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "learning", value: learning)
+                ],
+                policy: .privateFresh
+            )
+        case let .usersTopWords(type, limit):
+            EndpointDescriptor(
+                path: "/api/users/top-words",
+                queryItems: [
+                    URLQueryItem(name: "type", value: type),
+                    URLQueryItem(name: "limit", value: String(limit))
+                ],
+                policy: .privateServerCached
+            )
+        case .usersDeleteAccount:
+            EndpointDescriptor(path: "/api/users/delete-account", policy: .privateFresh)
+        case .usersPushToken:
+            EndpointDescriptor(path: "/api/users/push-token", policy: .privateFresh)
+        case let .usersPushTokenDelete(deviceId):
+            EndpointDescriptor(
+                path: "/api/users/push-token",
+                queryItems: [URLQueryItem(name: "deviceId", value: deviceId)],
+                policy: .privateFresh
+            )
+        case .usersFeedback:
+            EndpointDescriptor(path: "/api/users/feedback", policy: .privateFresh)
+        case .usersBlocks:
+            EndpointDescriptor(path: "/api/users/blocks", policy: .privateFresh)
+        case let .usersBlock(handle):
+            EndpointDescriptor(path: "/api/users/blocks/\(handle)", policy: .privateFresh)
+
+        // MARK: Study
+        case let .studyQueue(mode, limit, new, categories, lang):
+            EndpointDescriptor(
+                path: "/api/study/queue",
+                queryItems: [
+                    URLQueryItem(name: "mode", value: mode),
+                    URLQueryItem(name: "limit", value: String(limit)),
+                    URLQueryItem(name: "new", value: String(new)),
+                    // Comma-separated category ids; empty = no filter (study all).
+                    // Backend strips empty / "all" sentinels for us.
+                    URLQueryItem(name: "category", value: categories.joined(separator: ",")),
+                    // Gloss language follows the live UI language, not the
+                    // debounced server settings.
+                    URLQueryItem(name: "lang", value: lang)
+                ],
+                policy: .privateServerCached
+            )
+        case .studyAnswer:
+            EndpointDescriptor(path: "/api/study/answer", policy: .privateFresh)
+        case .studyStats:
+            EndpointDescriptor(path: "/api/study/stats", policy: .privateServerCached)
+        case .studyReports:
+            EndpointDescriptor(path: "/api/study/reports", policy: .privateFresh)
+
+        // MARK: Custom Atlas
+        case let .atlasImages(limit):
+            EndpointDescriptor(
+                path: "/api/atlas/images",
+                queryItems: [URLQueryItem(name: "limit", value: String(limit))],
+                policy: .privateFreshSlow
+            )
+        case let .atlasImage(id):
+            EndpointDescriptor(path: "/api/atlas/images/\(id)", policy: .privateFresh)
+        case let .atlasImageRecognize(id, lang, learning):
             // Recognition's candidate gloss + target labels follow the user's
             // live UI language and learning direction, not the debounced
             // server settings — otherwise the meaning field comes back empty.
-            [
-                URLQueryItem(name: "lang", value: lang),
-                URLQueryItem(name: "learning", value: learning)
-            ]
-        case let .atlasImageConfirm(_, lang):
-            [URLQueryItem(name: "lang", value: lang)]
+            EndpointDescriptor(
+                path: "/api/atlas/images/\(id)/recognize",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "learning", value: learning)
+                ],
+                policy: .privateFreshSlow
+            )
+        case let .atlasImageConfirm(id, lang):
+            EndpointDescriptor(
+                path: "/api/atlas/images/\(id)/confirm",
+                queryItems: [URLQueryItem(name: "lang", value: lang)],
+                policy: .privateFresh
+            )
+        case let .atlasItem(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)", policy: .privateFresh)
+        case let .atlasItemCards(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/cards", policy: .privateFresh)
+        case let .atlasItemEnrich(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/enrich", policy: .privateFreshSlow)
+        case let .atlasItemDetail(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/detail", policy: .privateFreshSlow)
+        case let .atlasItemWithdraw(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/withdraw", policy: .privateFresh)
+        case let .atlasSync(since, limit):
+            EndpointDescriptor(
+                path: "/api/atlas/sync",
+                queryItems: [
+                    since.map { URLQueryItem(name: "since", value: $0) },
+                    URLQueryItem(name: "limit", value: String(limit))
+                ].compactMap(\.self),
+                policy: .privateFresh
+            )
+        case let .atlasFriends(limit):
+            EndpointDescriptor(
+                path: "/api/atlas/friends",
+                queryItems: [URLQueryItem(name: "limit", value: String(limit))],
+                policy: .privateFresh
+            )
+        case .atlasEntitlement:
+            EndpointDescriptor(path: "/api/atlas/entitlement", policy: .privateFresh)
+
+        // MARK: Community collections 合集 (authoring)
+        case .atlasCollections:
+            EndpointDescriptor(path: "/api/atlas/collections", policy: .privateFresh)
+        case let .atlasCollection(id):
+            EndpointDescriptor(path: "/api/atlas/collections/\(id)", policy: .privateFresh)
+        case let .atlasCollectionAvatar(id):
+            EndpointDescriptor(
+                path: "/api/atlas/collections/\(id)/avatar",
+                policy: .privateFreshSlow
+            )
+        case let .atlasCollectionItems(id):
+            EndpointDescriptor(path: "/api/atlas/collections/\(id)/items", policy: .privateFresh)
+        case let .atlasCollectionItem(id, publicItemId):
+            EndpointDescriptor(
+                path: "/api/atlas/collections/\(id)/items/\(publicItemId)",
+                policy: .privateFresh
+            )
+        case let .atlasCollectionPublish(id):
+            EndpointDescriptor(path: "/api/atlas/collections/\(id)/publish", policy: .privateFresh)
+        case let .atlasCollectionWithdraw(id):
+            EndpointDescriptor(path: "/api/atlas/collections/\(id)/withdraw", policy: .privateFresh)
+        case let .atlasCollectionCandidates(lang):
+            EndpointDescriptor(
+                path: "/api/atlas/collections/candidates",
+                queryItems: [URLQueryItem(name: "lang", value: lang)],
+                policy: .privateFresh
+            )
+
+        // MARK: Public 圖鑑 (community)
         case let .atlasPublicByLemma(lemma, lang, limit):
             // `lang` is required by the backend: the same spelling can exist in
             // both decks, so omitting it would mix languages into one list.
-            [
-                URLQueryItem(name: "lemma", value: lemma),
-                URLQueryItem(name: "lang", value: lang),
-                URLQueryItem(name: "limit", value: String(limit))
-            ]
+            EndpointDescriptor(
+                path: "/api/atlas/public/by-lemma",
+                queryItems: [
+                    URLQueryItem(name: "lemma", value: lemma),
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "limit", value: String(limit))
+                ],
+                policy: .publicCached
+            )
+        case let .atlasPublicFeed(limit):
+            EndpointDescriptor(
+                path: "/api/atlas/public",
+                queryItems: [URLQueryItem(name: "limit", value: String(limit))],
+                policy: .publicCached
+            )
+        case let .atlasPublicAuthor(handle, cacheBust):
+            EndpointDescriptor(
+                path: "/api/atlas/public/authors/\(handle)",
+                queryItems: cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? [],
+                policy: .publicCached
+            )
+        case let .atlasPublicItem(slug, lang):
+            EndpointDescriptor(
+                path: "/api/atlas/public/\(slug)",
+                queryItems: [URLQueryItem(name: "lang", value: lang)],
+                policy: .publicCached
+            )
+        case let .atlasPublicSave(slug):
+            EndpointDescriptor(path: "/api/atlas/public/\(slug)/save", policy: .privateFresh)
+        case let .atlasPublicReport(slug):
+            EndpointDescriptor(path: "/api/atlas/public/\(slug)/report", policy: .privateFresh)
+        case let .atlasPublicCollectionReport(slug):
+            EndpointDescriptor(
+                path: "/api/atlas/public/collections/\(slug)/report",
+                policy: .privateFresh
+            )
+        case let .atlasPublicAuthorReport(handle):
+            EndpointDescriptor(
+                path: "/api/atlas/public/authors/\(handle)/report",
+                policy: .privateFresh
+            )
         case let .atlasPublicCollections(lang, limit, cacheBust):
             // `lang` scopes the browse feed to the user's current learning
             // direction, so it's required (the backend 400s without it).
-            [
-                URLQueryItem(name: "lang", value: lang),
-                URLQueryItem(name: "limit", value: String(limit))
-            ] + (cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? [])
+            EndpointDescriptor(
+                path: "/api/atlas/public/collections",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "limit", value: String(limit))
+                ] + (cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? []),
+                policy: .publicCached
+            )
+        case let .atlasPublicCollection(slug):
+            EndpointDescriptor(
+                path: "/api/atlas/public/collections/\(slug)",
+                policy: .publicFreshOptionalAuth
+            )
         case let .atlasSavedCollections(lang, limit):
-            [
-                URLQueryItem(name: "lang", value: lang),
-                URLQueryItem(name: "limit", value: String(limit))
-            ]
-        case let .atlasPublicAuthor(_, cacheBust):
-            cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? []
-        case let .atlasPublicItem(_, lang):
-            [URLQueryItem(name: "lang", value: lang)]
-        case let .atlasCollectionCandidates(lang):
-            [URLQueryItem(name: "lang", value: lang)]
-        case let .words(lang, learning),
-             let .word(_, lang, learning):
-            [
-                URLQueryItem(name: "lang", value: lang),
-                URLQueryItem(name: "learning", value: learning)
-            ]
+            EndpointDescriptor(
+                path: "/api/atlas/public/collections/saved",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "limit", value: String(limit))
+                ],
+                policy: .privateFresh
+            )
+        case let .atlasPublicCollectionSave(slug):
+            EndpointDescriptor(
+                path: "/api/atlas/public/collections/\(slug)/save",
+                policy: .privateFresh
+            )
+        case let .atlasPublicCollectionLearn(slug):
+            EndpointDescriptor(
+                path: "/api/atlas/public/collections/\(slug)/learn",
+                policy: .privateFresh
+            )
+
+        // MARK: Billing
+        case .billingVerify:
+            EndpointDescriptor(path: "/api/billing/verify", policy: .privateFresh)
+
+        // MARK: Public
+        case let .search(q):
+            EndpointDescriptor(
+                path: "/api/search",
+                queryItems: [URLQueryItem(name: "q", value: q)],
+                policy: .publicCached
+            )
+        case .events:
+            EndpointDescriptor(path: "/api/events", policy: .publicFresh)
+        case let .words(lang, learning):
+            EndpointDescriptor(
+                path: "/api/words",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "learning", value: learning)
+                ],
+                policy: .publicCached
+            )
+        case let .word(id, lang, learning):
+            EndpointDescriptor(
+                path: "/api/words/\(id)",
+                queryItems: [
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "learning", value: learning)
+                ],
+                policy: .publicCached
+            )
         case let .categories(lang):
-            [URLQueryItem(name: "lang", value: lang)]
-        default:
-            []
+            EndpointDescriptor(
+                path: "/api/categories",
+                queryItems: [URLQueryItem(name: "lang", value: lang)],
+                policy: .publicCached
+            )
+
+        // MARK: Smoke
+        // Technically anonymous-friendly (returns null), but kept authed so the
+        // 我的 debug button actually exercises the Bearer path. The backend
+        // tolerates either.
+        case .smokeWhoami:
+            EndpointDescriptor(path: "/api/test_smoke/whoami", policy: .privateServerCached)
         }
     }
 
-    /// URLCache behavior for this endpoint. Public endpoints honor the
-    /// server's Cache-Control headers; user / mutating endpoints bypass
-    /// the cache so writes immediately reflect.
-    var cachePolicy: URLRequest.CachePolicy {
-        switch self {
-        // Community reads are public and CDN-cached server-side; honor it.
-        case .words, .word, .categories, .search,
-             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor, .atlasPublicItem,
-             .atlasPublicCollections:
-            .useProtocolCachePolicy
-        case .studyAnswer, .studyReports, .events, .usersSync, .usersMastery,
-             .usersDeleteAccount, .usersPushToken, .usersPushTokenDelete,
-             .usersFeedback, .usersCustomWords, .usersSavedWords,
-             .usersBlocks, .usersBlock,
-             .atlasImages, .atlasImage, .atlasImageRecognize, .atlasImageConfirm,
-             .atlasItem, .atlasItemCards, .atlasItemEnrich, .atlasItemDetail,
-             .atlasItemWithdraw, .atlasSync, .atlasFriends, .atlasEntitlement,
-             .atlasCollections, .atlasCollection, .atlasCollectionAvatar, .atlasCollectionItems,
-             .atlasCollectionItem, .atlasCollectionPublish, .atlasCollectionWithdraw,
-             .atlasCollectionCandidates,
-             .atlasPublicSave, .atlasPublicReport,
-             .atlasPublicCollectionReport, .atlasPublicAuthorReport,
-             .atlasPublicCollection, .atlasSavedCollections,
-             .atlasPublicCollectionSave, .atlasPublicCollectionLearn,
-             .billingVerify:
-            .reloadIgnoringLocalCacheData
-        default:
-            .useProtocolCachePolicy
-        }
+    /// Forwards kept because they read better at the two call sites that want
+    /// one fact — logging (`path`) and the 401-retry guard (`isPublic`).
+    /// `APIClient.buildRequest` reads the whole descriptor once instead.
+    var path: String {
+        self.descriptor.path
     }
 
-    /// Public endpoints that don't require a bearer token. APIClient
-    /// skips the AuthService lookup for these.
-    ///
-    /// smokeWhoami is technically anonymous-friendly (returns null), but
-    /// we keep it authed here so MainTabs' button actually exercises
-    /// the Bearer path. The backend tolerates either.
     var isPublic: Bool {
-        switch self {
-        // Save / report stay authed — only the reads are anonymous.
-        case .events, .search, .word, .words, .categories,
-             .atlasPublicByLemma, .atlasPublicFeed, .atlasPublicAuthor, .atlasPublicItem,
-             .atlasPublicCollections, .atlasPublicCollection: true
-        default: false
-        }
-    }
-
-    /// Anonymous access is allowed, but a signed-in request should include its
-    /// bearer token so the server can reveal account-specific access state.
-    var usesOptionalAuth: Bool {
-        if case .atlasPublicCollection = self { return true }
-        return false
-    }
-
-    /// Per-request timeout (seconds). AI endpoints — image recognition (Google
-    /// Vision primary / OpenAI gpt-4o "高精度" escalate) and enrichment / detail
-    /// (gpt-4o-mini, incl. lazy enrich on first open) — can take far longer than
-    /// a normal call, so they override the short default upward.
-    var timeout: TimeInterval {
-        switch self {
-        case .atlasImages, .atlasCollectionAvatar, .atlasImageRecognize,
-             .atlasItemEnrich, .atlasItemDetail:
-            60
-        default:
-            15
-        }
+        self.descriptor.policy.isPublic
     }
 }
