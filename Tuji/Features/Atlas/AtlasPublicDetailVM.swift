@@ -1,8 +1,9 @@
 // View model for AtlasPublicDetailView (a single public 圖鑑 item). Owns the
 // consumption action state — save/unsave toggle, save count, in-flight guard,
-// error line, report-sent flag — behind the AtlasItemConsuming seam, so the view
-// stays presentation-only and the save/report transitions are unit-testable
-// (e.g. a failed unsave must not flip the toggle).
+// error line — behind the AtlasItemConsuming seam, so the view stays
+// presentation-only and the save transitions are unit-testable (e.g. a failed
+// unsave must not flip the toggle). 檢舉 is not here: it belongs to `ReportFlow`,
+// shared with 合集詳情 and 作者主頁.
 //
 // Analytics stays in the view (VMs don't reach AnalyticsService): toggleSave
 // returns the resulting saved state so the view fires .atlasPublicSaved itself.
@@ -21,7 +22,10 @@ final class AtlasPublicDetailVM {
     private(set) var saveCount: Int?
     private(set) var busy = false
     private(set) var actionError: String?
-    private(set) var reportSent = false
+    // 檢舉 moved to `ReportFlow`, which all three reporting screens share. This
+    // VM kept the only correct copy of the write (await, then mark sent) while
+    // the other two marked sent first and swallowed the error — so the module
+    // took this one's behaviour, not theirs.
 
     private let repo: AtlasItemConsuming
     private let itemReader: PublicItemsReading
@@ -94,16 +98,6 @@ final class AtlasPublicDetailVM {
         } catch {
             self.actionError = error.localizedDescription
             return nil
-        }
-    }
-
-    func report(_ reason: AtlasReportReason) async {
-        self.actionError = nil
-        do {
-            try await self.repo.report(slug: self.item.slug, reason: reason, detail: nil)
-            self.reportSent = true
-        } catch {
-            self.actionError = error.localizedDescription
         }
     }
 }

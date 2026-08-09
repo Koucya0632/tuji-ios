@@ -487,7 +487,7 @@ struct AtlasPublicDetailView: View {
     @Environment(BlockStore.self) private var blocks
     @Environment(\.dismiss) private var dismiss
     @State private var vm: AtlasPublicDetailVM
-    @State private var showReport = false
+    @State private var report = ReportFlow()
     @State private var showBlockPrompt = false
     @State private var showStopLearningPrompt = false
     /// The author route is keyed by handle, never by display name — two people
@@ -548,16 +548,16 @@ struct AtlasPublicDetailView: View {
                 }
 
                 Button {
-                    self.showReport = true
+                    self.report.begin(.item(slug: self.vm.item.slug))
                 } label: {
-                    Text(self.vm.reportSent ? "已收到檢舉" : "檢舉這個項目")
+                    Text(self.report.isSent ? "已收到檢舉" : "檢舉這個項目")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(self.vm.reportSent ? .tujiInk3 : .tujiAlert)
+                        .foregroundStyle(self.report.isSent ? .tujiInk3 : .tujiAlert)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Space.s2)
                 }
                 .buttonStyle(.plain)
-                .disabled(self.vm.reportSent)
+                .disabled(self.report.isSent)
 
                 // 檢舉 asks someone else to judge this one item; 封鎖 is the
                 // reader's own decision about everything by this author. They
@@ -619,22 +619,7 @@ struct AtlasPublicDetailView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
-        // Five options plus the footer line; the default height clips the last.
-        .tujiSheet(isPresented: self.$showReport, title: "檢舉原因", height: 460) {
-            TujiOptionSheet(
-                options: AtlasReportReason.allCases.map {
-                    TujiOptionSheet<AtlasReportReason?>.Option(
-                        Optional($0),
-                        verbatim: $0.label
-                    )
-                },
-                selection: AtlasReportReason?.none,
-                footer: "檢舉會送給審核人員，對方不會知道是誰檢舉的。"
-            ) { picked in
-                guard let picked else { return }
-                Task { await self.vm.report(picked) }
-            }
-        }
+        .reportSheet(self.report)
     }
 
     private var imageCard: some View {

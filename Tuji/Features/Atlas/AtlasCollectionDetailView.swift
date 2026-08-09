@@ -45,23 +45,20 @@ struct AtlasCollectionDetailView: View {
     @State private var showBookmarkErrorPrompt = false
     @State private var showLearnAllPrompt = false
     @State private var showLearningErrorPrompt = false
-    @State private var showReport = false
-    @State private var reportSent = false
-
-    private let reporter: AtlasReporting = LiveAtlasRepository.shared
+    @State private var report = ReportFlow()
 
     private var reportButton: some View {
         Button {
-            self.showReport = true
+            self.report.begin(.collection(slug: self.vm.slug))
         } label: {
-            Text(self.reportSent ? "已收到檢舉" : "檢舉這個合集")
+            Text(self.report.isSent ? "已收到檢舉" : "檢舉這個合集")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(self.reportSent ? .tujiInk3 : .tujiAlert)
+                .foregroundStyle(self.report.isSent ? .tujiInk3 : .tujiAlert)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
         }
         .buttonStyle(.plain)
-        .disabled(self.reportSent)
+        .disabled(self.report.isSent)
         .padding(.top, Space.s4)
         .padding(.bottom, Space.s6)
     }
@@ -112,30 +109,7 @@ struct AtlasCollectionDetailView: View {
         .task(id: self.loadKey) {
             await self.openCollection()
         }
-        // Five options plus the footer line; the default height clips the last.
-        .tujiSheet(isPresented: self.$showReport, title: "檢舉原因", height: 460) {
-            TujiOptionSheet(
-                options: AtlasReportReason.allCases.map {
-                    TujiOptionSheet<AtlasReportReason?>.Option(
-                        Optional($0),
-                        verbatim: $0.label
-                    )
-                },
-                selection: AtlasReportReason?.none,
-                footer: "檢舉會送給審核人員，對方不會知道是誰檢舉的。"
-            ) { picked in
-                guard let picked else { return }
-                let slug = self.vm.slug
-                Task {
-                    self.reportSent = true
-                    try? await self.reporter.reportCollection(
-                        slug: slug,
-                        reason: picked,
-                        detail: nil
-                    )
-                }
-            }
-        }
+        .reportSheet(self.report)
         .tujiPrompt(
             isPresented: self.$showSignInPrompt,
             style: .confirmation,

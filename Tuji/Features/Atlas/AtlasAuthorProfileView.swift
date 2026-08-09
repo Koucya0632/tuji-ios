@@ -20,13 +20,10 @@ struct AtlasAuthorProfileView: View {
     @State private var selectedCollection: AtlasCollection?
     @State private var editing = false
     @State private var showBlockPrompt = false
-    @State private var showReport = false
-    @State private var reportSent = false
+    @State private var report = ReportFlow()
     @Environment(BlockStore.self) private var blocks
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
-
-    private let reporter: AtlasReporting = LiveAtlasRepository.shared
 
     /// `vm.isSelf` answers "did the caller open this as *my* page" — it is passed
     /// in deliberately (see `AuthorProfileVM.isSelf`) and is false on every route
@@ -62,10 +59,10 @@ struct AtlasAuthorProfileView: View {
     /// Different answers to the same moment, so they belong behind one control.
     private var moderationMenu: some View {
         Menu {
-            Button(self.reportSent ? "已收到檢舉" : "檢舉這位作者", role: .destructive) {
-                self.showReport = true
+            Button(self.report.isSent ? "已收到檢舉" : "檢舉這位作者", role: .destructive) {
+                self.report.begin(.author(handle: self.vm.handle))
             }
-            .disabled(self.reportSent)
+            .disabled(self.report.isSent)
             if self.blocks.isBlocked(self.vm.handle) {
                 Button("解除封鎖") { self.showBlockPrompt = true }
             } else {
@@ -119,30 +116,7 @@ struct AtlasAuthorProfileView: View {
                 },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
-        // Five options plus the footer line; the default height clips the last.
-        .tujiSheet(isPresented: self.$showReport, title: "檢舉原因", height: 460) {
-            TujiOptionSheet(
-                options: AtlasReportReason.allCases.map {
-                    TujiOptionSheet<AtlasReportReason?>.Option(
-                        Optional($0),
-                        verbatim: $0.label
-                    )
-                },
-                selection: AtlasReportReason?.none,
-                footer: "檢舉會送給審核人員，對方不會知道是誰檢舉的。"
-            ) { picked in
-                guard let picked else { return }
-                let handle = self.vm.handle
-                Task {
-                    self.reportSent = true
-                    try? await self.reporter.reportAuthor(
-                        handle: handle,
-                        reason: picked,
-                        detail: nil
-                    )
-                }
-            }
-        }
+        .reportSheet(self.report)
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: self.$selectedItem) { item in
