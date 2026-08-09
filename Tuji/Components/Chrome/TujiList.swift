@@ -234,7 +234,7 @@ struct TujiSelectionMark: View {
     var body: some View {
         Image(systemName: "checkmark")
             .font(.system(size: 16, weight: .bold))
-            .foregroundStyle(.tujiEye)
+            .foregroundStyle(.tujiCurrent)
             .opacity(self.selected ? 1 : 0)
             .frame(width: 24)
             .accessibilityHidden(true)
@@ -278,8 +278,8 @@ struct TujiStatusLabel: View {
     /// state the user may need to act on.
     private var edge: Color {
         switch self.status {
-        case .approved: .tujiTeal
-        case .pending, .pendingAuto, .pendingReview: .tujiEye
+        case .approved: .tujiAccumulation
+        case .pending, .pendingAuto, .pendingReview: .tujiCurrent
         case .rejected, .takedown: .tujiAlert
         case .draft, .withdrawn: .tujiInk3
         }

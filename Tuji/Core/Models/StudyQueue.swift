@@ -112,9 +112,9 @@ enum SRSRating: String, Codable {
     var edge: Color {
         switch self {
         case .again: .tujiAlert
-        case .hard: .tujiEye
-        case .good: .tujiTealSoft
-        case .easy: .tujiTeal
+        case .hard: .tujiCurrent
+        case .good: .tujiAccumulationSoft
+        case .easy: .tujiAccumulation
         }
     }
 }

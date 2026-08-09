@@ -104,7 +104,7 @@ struct ImageCropView: View {
                 // platform's own crop chrome; 瞳黃 is what this app uses for
                 // "the thing you are working on right now".
                 Rectangle()
-                    .stroke(.tujiEye, lineWidth: Border.bw2)
+                    .stroke(.tujiCurrent, lineWidth: Border.bw2)
                     .frame(width: window.width, height: window.height)
                     .position(x: window.midX, y: window.midY)
                     .allowsHitTesting(false)
@@ -156,7 +156,7 @@ struct ImageCropView: View {
                     path.addLine(to: point)
                     path.addLine(to: CGPoint(x: point.x, y: point.y + sy * arm))
                 }
-                .stroke(.tujiEye, lineWidth: Border.bw3 + 1)
+                .stroke(.tujiCurrent, lineWidth: Border.bw3 + 1)
             }
         }
         .allowsHitTesting(false)
@@ -297,7 +297,7 @@ struct ImageCropView: View {
 
             BBtn(
                 title: self.working ? "處理中…" : "使用",
-                bg: .tujiEye,
+                bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 fullWidth: true
             ) {
@@ -318,7 +318,7 @@ struct ImageCropView: View {
             Text("無法載入這張照片")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)
-            BBtn(title: "繼續上傳原圖", bg: .tujiEye, fg: .tujiInk, icon: "arrow.up") {
+            BBtn(title: "繼續上傳原圖", bg: .tujiBrandPrimary, fg: .tujiInk, icon: "arrow.up") {
                 self.onConfirm(self.imageData)
             }
         }

@@ -1,7 +1,7 @@
 // Category metadata matching GET /api/categories.
 //
 // `color` is a Tailwind gradient string from the web app
-// ("from-orange-100 to-rose-100"). The iOS rendering uses tujiTealSoft
+// ("from-orange-100 to-rose-100"). The iOS rendering uses tujiAccumulationSoft
 // as a default tint and ignores the gradient — design will catch up
 // once W3 finishes.
 

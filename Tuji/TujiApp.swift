@@ -338,7 +338,7 @@ private struct AdCardsSnapshotView: View {
         HStack(spacing: Space.s3) {
             Image(systemName: "sparkles")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiAccumulation)
             VStack(alignment: .leading, spacing: 2) {
                 Text("生活物品，自動變單字卡")
                     .font(.system(size: 14, weight: .bold))
@@ -351,7 +351,7 @@ private struct AdCardsSnapshotView: View {
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s3)
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+        .background(.tujiAccumulationSoft, in: .rect(cornerRadius: Radius.r0))
         .padding(.horizontal, Space.s4)
         .padding(.bottom, Space.s3)
     }

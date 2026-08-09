@@ -190,7 +190,7 @@ struct NewFlowView: View {
             }
             BBtn(
                 title: "開始學習",
-                bg: .tujiEye,
+                bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 fullWidth: true,
                 action: { self.started = true }
@@ -290,10 +290,10 @@ private struct NewStagePips: View {
                         .foregroundStyle(.white)
                 case .active:
                     Circle()
-                        .stroke(.tujiTeal, lineWidth: 2)
+                        .stroke(.tujiCurrent, lineWidth: 2)
                         .frame(width: 16, height: 16)
                     Circle()
-                        .fill(.tujiTeal)
+                        .fill(.tujiCurrent)
                         .frame(width: 6, height: 6)
                 case .pending:
                     EmptyView()
@@ -315,9 +315,9 @@ private struct NewStagePips: View {
 
     private func dotFill(_ state: NewStageStep.State) -> Color {
         switch state {
-        case .done: .tujiTeal
-        case .skipped: .tujiTeal.opacity(0.35)
-        case .active: .tujiTealSoft
+        case .done: .tujiAccumulation
+        case .skipped: .tujiAccumulation.opacity(0.35)
+        case .active: .tujiCurrent.opacity(0.18)
         case .pending: .tujiPaper3
         }
     }
@@ -326,7 +326,7 @@ private struct NewStagePips: View {
         switch state {
         case .done: .tujiInk3
         case .skipped: .tujiInk3
-        case .active: .tujiTeal
+        case .active: .tujiInk
         case .pending: .tujiPaper3
         }
     }

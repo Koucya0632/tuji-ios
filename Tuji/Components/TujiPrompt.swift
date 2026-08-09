@@ -216,7 +216,7 @@ private struct PromptActionStyle: ButtonStyle {
         if self.destructive {
             return pressed ? .tujiAlert : .tujiPaper2
         }
-        return pressed ? .tujiEyeDeep : .tujiEye
+        return pressed ? .tujiCurrentDeep : .tujiCurrent
     }
 }
 

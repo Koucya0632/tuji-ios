@@ -54,7 +54,7 @@ struct StudyReportSheet: View {
                     } label: {
                         HStack(spacing: Space.s3) {
                             Image(systemName: self.issueType == type ? "largecircle.fill.circle" : "circle")
-                                .foregroundStyle(self.issueType == type ? .tujiTeal : .tujiInk3)
+                                .foregroundStyle(self.issueType == type ? .tujiInk : .tujiInk3)
                             Text(self.title(for: type))
                                 .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk)
@@ -63,13 +63,13 @@ struct StudyReportSheet: View {
                         .padding(.horizontal, Space.s3)
                         .padding(.vertical, Space.s3)
                         .background(
-                            self.issueType == type ? Color.tujiTealSoft : Color.tujiPaper,
+                            self.issueType == type ? Color.tujiCurrent.opacity(0.18) : Color.tujiPaper,
                             in: .rect(cornerRadius: Radius.r0)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: Radius.r0)
                                 .stroke(
-                                    self.issueType == type ? Color.tujiTeal : Color.tujiRule,
+                                    self.issueType == type ? Color.tujiCurrent : Color.tujiRule,
                                     lineWidth: 1
                                 )
                         )
@@ -133,7 +133,7 @@ struct StudyReportSheet: View {
         VStack(spacing: Space.s4) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiAccumulation)
             Text("謝謝你的回報！我們會盡快確認並改進。")
                 .font(.system(size: 15, weight: .bold))
                 .multilineTextAlignment(.center)

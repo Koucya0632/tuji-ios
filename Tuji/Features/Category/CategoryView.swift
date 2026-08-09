@@ -160,7 +160,7 @@ struct CategoryView: View {
             Text("單字")
                 .font(.tujiLabel)
                 .tracking(2)
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiBrandSecondary)
             Spacer()
             Text("\(self.filteredWords.count)")
                 .font(.system(size: 13, weight: .semibold))

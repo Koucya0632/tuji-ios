@@ -48,7 +48,7 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 34, weight: .heavy))
-                .foregroundStyle(.tujiEye)
+                .foregroundStyle(.tujiCurrent)
             Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
                 .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
@@ -71,7 +71,7 @@ struct PaywallView: View {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiBrandSecondary)
                 .frame(width: 22)
             Text(text)
                 .font(.system(size: 15, weight: .bold))
@@ -93,7 +93,7 @@ struct PaywallView: View {
         if self.store.isPro {
             Text("你已經是 Tuji Pro，感謝支持！")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.tujiTeal)
+                .foregroundStyle(.tujiAccumulation)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else if self.store.products.isEmpty {
             if self.loadingProducts {
@@ -107,7 +107,7 @@ struct PaywallView: View {
                     BBtn(
                         title: "重新載入方案",
                         bg: .tujiPaper2,
-                        fg: .tujiTeal,
+                        fg: .tujiBrandSecondary,
                         fullWidth: true,
                         icon: "arrow.clockwise"
                     ) {
@@ -136,7 +136,7 @@ struct PaywallView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(product.displayName)
                         .font(.system(size: 16, weight: .heavy))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.tujiBrandPrimary)
                     if let period = self.periodLabel(product) {
                         Text(period)
                             .font(.tujiLabel)
@@ -154,7 +154,7 @@ struct PaywallView: View {
             }
             .padding(.horizontal, Space.s3)
             .padding(.vertical, Space.s3)
-            .background(.tujiTeal, in: .rect(cornerRadius: Radius.r0))
+            .background(.tujiBrandSecondary, in: .rect(cornerRadius: Radius.r0))
         }
         .buttonStyle(.plain)
         .disabled(self.store.purchasing != nil)
@@ -185,7 +185,7 @@ struct PaywallView: View {
                 Link("隱私權政策", destination: Self.privacyURL)
             }
             .font(.tujiLabel)
-            .foregroundStyle(.tujiTeal)
+            .foregroundStyle(.tujiBrandSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

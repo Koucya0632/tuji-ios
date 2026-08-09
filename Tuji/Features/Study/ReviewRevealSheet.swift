@@ -62,7 +62,7 @@ struct ReviewRevealSheet: View {
                     .foregroundStyle(.tujiInk3)
                 BBtn(
                     title: "下一題",
-                    bg: .tujiEye,
+                    bg: .tujiBrandPrimary,
                     fg: .tujiInk,
                     fullWidth: true,
                     icon: "arrow.right"

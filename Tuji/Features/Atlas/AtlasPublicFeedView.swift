@@ -206,7 +206,7 @@ struct AtlasPublicFeedView: View {
                   self.browsing.saved.collections.isEmpty
         {
             TujiProgressBar(progress: nil).frame(width: 56)
-                .tint(.tujiTeal)
+                .tint(.tujiCurrent)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollView {
@@ -412,10 +412,10 @@ struct AtlasPublicTile: View {
             .overlay(alignment: .topTrailing) {
                 Text(self.item.langBadge)
                     .font(.system(size: 10, weight: .heavy))
-                    .foregroundStyle(.tujiTeal)
+                    .foregroundStyle(.tujiBrandSecondary)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
-                    .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                    .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
                     .padding(Space.s2)
             }
             // 卡片主體點擊區（圖）→ 詳情
@@ -439,7 +439,7 @@ struct AtlasPublicTile: View {
                         Button(action: onOpenAuthor) {
                             Text("by \(author.displayName)")
                                 .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.tujiTeal)
+                                .foregroundStyle(.tujiBrandSecondary)
                                 .lineLimit(1)
                                 .padding(.top, 1)
                         }
@@ -467,7 +467,7 @@ struct AtlasPublicTile: View {
     private var placeholder: some View {
         ZStack {
             LinearGradient(
-                colors: [.tujiTealSoft, .tujiPaper],
+                colors: [.tujiBrandSecondary.opacity(0.1), .tujiPaper],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -672,10 +672,10 @@ struct AtlasPublicDetailView: View {
                     .foregroundStyle(.tujiInk)
                 Text(self.vm.item.langBadge)
                     .font(.system(size: 11, weight: .heavy))
-                    .foregroundStyle(.tujiTeal)
+                    .foregroundStyle(.tujiBrandSecondary)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
-                    .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                    .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
             }
             Text(self.vm.item.displayZhHant)
                 .font(.tujiBodySm)
@@ -709,10 +709,10 @@ struct AtlasPublicDetailView: View {
                     if let cefr = word.cefrLevel, !cefr.isEmpty {
                         Text(cefr)
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiTeal)
+                            .foregroundStyle(.tujiBrandSecondary)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                            .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
                     }
                 }
             }
@@ -736,7 +736,7 @@ struct AtlasPublicDetailView: View {
                         ProfileAvatar(avatar: author.avatar, size: 24)
                         Text(author.displayName)
                             .font(.tujiLabel)
-                            .foregroundStyle(.tujiTeal)
+                            .foregroundStyle(.tujiBrandSecondary)
                             .lineLimit(1)
                     }
                 }
@@ -796,7 +796,7 @@ struct AtlasPublicDetailView: View {
         .padding(.horizontal, Space.s3)
         .frame(height: 30)
         .background(
-            active ? Color.tujiInk.opacity(0.64) : Color.tujiTeal,
+            active ? Color.tujiInk.opacity(0.64) : Color.tujiAccumulation,
             in: .rect(cornerRadius: Radius.r0)
         )
     }

@@ -231,16 +231,16 @@ struct WordDetailSections: View {
     private func etymologyCard(_ etymology: String) -> some View {
         ZStack(alignment: .leading) {
             Rectangle()
-                .fill(.tujiTeal)
+                .fill(.tujiBrandSecondary)
                 .frame(width: 3)
             Text(etymology)
                 .font(.tujiBodySm)
-                .foregroundStyle(.tujiTealDeep)
+                .foregroundStyle(.tujiBrandSecondary)
                 .padding(.vertical, Space.s3)
                 .padding(.leading, Space.s4)
                 .padding(.trailing, Space.s3)
         }
-        .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+        .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
         .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
     }
 
@@ -288,12 +288,12 @@ struct WordDetailSections: View {
                     if let zhText, !zhText.isEmpty {
                         Text(zhText)
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.tujiTealDeep)
+                            .foregroundStyle(.tujiBrandSecondary)
                     }
                 }
                 .padding(.horizontal, Space.s3)
                 .padding(.vertical, Space.s2)
-                .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
             }
         }
     }

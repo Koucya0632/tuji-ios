@@ -27,7 +27,7 @@ enum TujiStatusToastStyle {
 
     var tint: Color {
         switch self {
-        case .recognizing: .tujiTeal
+        case .recognizing: .tujiCurrent
         case .deleting: .tujiAlert
         }
     }
@@ -101,7 +101,7 @@ private struct TujiStatusToast: View {
                 self.animatedIcon
 
                 Circle()
-                    .fill(.tujiEye)
+                    .fill(.tujiCurrent)
                     .frame(width: 7, height: 7)
                     .offset(x: 18, y: -15)
             }

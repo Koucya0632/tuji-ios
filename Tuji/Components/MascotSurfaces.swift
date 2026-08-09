@@ -183,7 +183,7 @@ struct MascotAvatar: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [.tujiTealSoft, .tujiEye.opacity(0.26)],
+                        colors: [.tujiBrandSecondary.opacity(0.16), .tujiBrandPrimary.opacity(0.26)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -195,7 +195,7 @@ struct MascotAvatar: View {
         .overlay(
             Circle()
                 .stroke(
-                    self.selected ? Color.tujiTeal : .tujiInk.opacity(0.08),
+                    self.selected ? Color.tujiCurrent : .tujiInk.opacity(0.08),
                     lineWidth: self.selected ? 2 : 1
                 )
         )
@@ -228,12 +228,12 @@ struct ProfileAvatar: View {
                 }
             }
             .frame(width: self.size, height: self.size)
-            .background(.tujiTealSoft)
+            .background(.tujiBrandSecondary.opacity(0.12))
             .clipShape(.circle)
             .overlay(
                 Circle()
                     .stroke(
-                        self.selected ? Color.tujiTeal : .tujiInk.opacity(0.08),
+                        self.selected ? Color.tujiCurrent : .tujiInk.opacity(0.08),
                         lineWidth: self.selected ? 2 : 1
                     )
             )

@@ -231,7 +231,7 @@ struct SearchView: View {
             .background(.tujiPaper2)
             .overlay {
                 if self.fieldFocused {
-                    Rectangle().stroke(.tujiEye, lineWidth: Border.bw2)
+                    Rectangle().stroke(.tujiCurrent, lineWidth: Border.bw2)
                 }
             }
             .animation(Motion.ease(Motion.d1), value: self.fieldFocused)
@@ -459,7 +459,7 @@ private struct SearchResultRow: View {
         guard !needle.isEmpty,
               let range = attr.range(of: needle, options: .caseInsensitive)
         else { return attr }
-        attr[range].backgroundColor = .tujiEye
+        attr[range].backgroundColor = .tujiCurrent
         attr[range].foregroundColor = .tujiInk
         return attr
     }

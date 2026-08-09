@@ -39,7 +39,7 @@ struct NewDoneView: View {
         .safeAreaInset(edge: .bottom) {
             BBtn(
                 title: "完成",
-                bg: .tujiEye,
+                bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 fullWidth: true,
                 icon: "checkmark",

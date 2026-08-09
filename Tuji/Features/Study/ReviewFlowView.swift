@@ -377,11 +377,11 @@ private struct ReviewFlashCapsule: View {
         case let .autoRated(rating):
             switch rating {
             case .again: .tujiAlert
-            case .hard: .tujiEye
-            case .good: .tujiTeal
-            case .easy: .tujiTeal
+            case .hard: .tujiCurrent
+            case .good: .tujiAccumulation
+            case .easy: .tujiAccumulation
             }
-        case .retestPassed: .tujiTeal
+        case .retestPassed: .tujiAccumulation
         }
     }
 }

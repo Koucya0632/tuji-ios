@@ -53,10 +53,10 @@ struct WordCommunityAtlasSection: View {
                             .foregroundStyle(.tujiInk)
                         Text("\(self.visibleItems.count)")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.tujiTeal)
+                            .foregroundStyle(.tujiBrandSecondary)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
-                            .background(.tujiTealSoft, in: .rect(cornerRadius: Radius.r0))
+                            .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
                     }
 
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -122,7 +122,7 @@ struct WordCommunityAtlasSection: View {
                 // FEATURES.md §12.1).
                 Image(systemName: self.savedSlugs.contains(item.slug) ? "bookmark.fill" : "bookmark")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.tujiTeal)
+                    .foregroundStyle(.tujiCurrent)
             }
             .padding(.horizontal, Space.s2)
             .padding(.vertical, Space.s2)

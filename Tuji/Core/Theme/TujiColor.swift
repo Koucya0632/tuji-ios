@@ -1,13 +1,14 @@
 // Color tokens — 紙與墨 (Paper & Ink).
 // Hex literals only allowed in this file (see .swiftlint.yml no_hex_color_outside_theme).
 //
-// The system has exactly five meanings, and every colour belongs to one of them.
+// The system has exactly six meanings, and every colour belongs to one of them.
 // A colour that cannot be written into one of these sentences does not enter the system:
 //
 //   紙 (paper) — the ground. Three steps, expressing region hierarchy.
 //   墨 (ink)   — text, and "this one is selected / this one is primary".
-//   瞳 (eye)   — 現在. Where the next step is, where you are, what is running.
-//   teal       — 你的積累. Mastery, completion, learned, published, streak.
+//   品牌 (brand) — Tuji's identity. Yellow is primary; cocoa is the supporting ground.
+//   現在 (current) — Where the next step is, where you are, what is running.
+//   積累 (accumulation) — Mastery, completion, learned, published, streak.
 //   alert      — errors and destructive actions.
 //
 // Depth is expressed by changing the ground, never by shadow — there is no shadow
@@ -38,25 +39,35 @@ extension Color {
     /// Replaces the old `tujiInk4`, whose only job was to be a translucent hairline.
     static let tujiRule = Color(hex: 0xD9D0C0)
 
-    // MARK: - 瞳 — the only chromatic signal. Means 現在, nothing else.
+    // MARK: - 品牌 — identity, independent from UI state
 
-    /// Primary button ground, selected tab indicator, progress fill, check mark,
-    /// focus ring, search hit.
-    static let tujiEye = Color(hex: 0xF5C84B)
-    /// Pressed state for eye-coloured elements; text under 16pt on an eye ground.
-    static let tujiEyeDeep = Color(hex: 0xC79A1E)
+    /// Tuji's primary brand colour, taken from the mascot's eyes. Brand surfaces
+    /// and the app's primary action share this value today, but use different
+    /// semantic tokens so either can evolve without recolouring the other.
+    static let tujiBrandPrimary = Color(hex: 0xF5C84B)
+    static let tujiBrandPrimaryPressed = Color(hex: 0xC79A1E)
+    /// Warm supporting brand ground, shared with the app icon background.
+    static let tujiBrandSecondary = Color(hex: 0x59483D)
 
-    // MARK: - 積累 — the brand teal's one job
+    // MARK: - 現在 — current focus and action
 
-    /// Brand colour, value fixed. Means only 你的積累 — never a button, nav, link
-    /// or heading. A screen with no teal means the user has accumulated nothing
+    /// Selected tab indicator, active progress, check mark, focus ring and search hit.
+    static let tujiCurrent = tujiBrandPrimary
+    /// Pressed state for current-coloured elements; text under 16pt on a current ground.
+    static let tujiCurrentDeep = tujiBrandPrimaryPressed
+
+    // MARK: - 積累 — learned value, not brand identity
+
+    /// Means only 你的積累 — never a generic button, nav, link or heading. A screen
+    /// with no accumulation colour means the user has accumulated nothing
     /// here yet, which is the correct thing to show.
-    static let tujiTeal = Color(hex: 0x006F72)
-    /// Top two mastery steps; small text on a teal ground.
-    static let tujiTealDeep = Color(hex: 0x004A4C)
-    /// Low mastery ground, and the accumulation signal **on ink surfaces** — the deep
-    /// teal only reaches 3.04:1 against `tujiInk`, this reaches 13.58:1.
-    static let tujiTealSoft = Color(hex: 0xCFE3E0)
+    /// A slightly deeper form of the chosen mist blue keeps normal-size text
+    /// above 4.5:1 on `tujiPaper` while retaining the same calm blue character.
+    static let tujiAccumulation = Color(hex: 0x5A718A)
+    /// High mastery ground; text on the soft accumulation ground.
+    static let tujiAccumulationDeep = Color(hex: 0x40566D)
+    /// Low mastery ground, and the accumulation signal on ink surfaces.
+    static let tujiAccumulationSoft = Color(hex: 0xDDE5EC)
 
     // MARK: - 警示
 
@@ -111,24 +122,36 @@ extension ShapeStyle where Self == Color {
         .tujiRule
     }
 
-    static var tujiEye: Color {
-        .tujiEye
+    static var tujiBrandPrimary: Color {
+        .tujiBrandPrimary
     }
 
-    static var tujiEyeDeep: Color {
-        .tujiEyeDeep
+    static var tujiBrandPrimaryPressed: Color {
+        .tujiBrandPrimaryPressed
     }
 
-    static var tujiTeal: Color {
-        .tujiTeal
+    static var tujiBrandSecondary: Color {
+        .tujiBrandSecondary
     }
 
-    static var tujiTealDeep: Color {
-        .tujiTealDeep
+    static var tujiCurrent: Color {
+        .tujiCurrent
     }
 
-    static var tujiTealSoft: Color {
-        .tujiTealSoft
+    static var tujiCurrentDeep: Color {
+        .tujiCurrentDeep
+    }
+
+    static var tujiAccumulation: Color {
+        .tujiAccumulation
+    }
+
+    static var tujiAccumulationDeep: Color {
+        .tujiAccumulationDeep
+    }
+
+    static var tujiAccumulationSoft: Color {
+        .tujiAccumulationSoft
     }
 
     static var tujiAlert: Color {

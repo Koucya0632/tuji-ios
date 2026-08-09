@@ -89,7 +89,7 @@ struct WordDetailPage: View {
                         .frame(width: geo.size.width)
                 } else {
                     TujiImagePlaceholder()
-                        .tint(.tujiTeal)
+                        .tint(.tujiCurrent)
                         .padding(.top, Space.s6)
                         .frame(width: geo.size.width)
                 }

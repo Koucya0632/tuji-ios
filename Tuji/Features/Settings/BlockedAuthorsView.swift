@@ -47,7 +47,7 @@ struct BlockedAuthorsView: View {
                                         Text(self.working == handle ? "解除中…" : "解除封鎖")
                                             .font(.tujiLabel)
                                             .tracking(0.5)
-                                            .foregroundStyle(.tujiTeal)
+                                            .foregroundStyle(.tujiBrandSecondary)
                                     }
                                     .buttonStyle(.plain)
                                     .disabled(self.working != nil)

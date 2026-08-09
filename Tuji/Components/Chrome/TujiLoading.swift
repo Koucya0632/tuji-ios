@@ -66,7 +66,7 @@ struct TujiSkeletonRows: View {
 struct TujiProgressBar: View {
     var progress: Double?
     var track: Color = .tujiPaper3
-    var fill: Color = .tujiEye
+    var fill: Color = .tujiCurrent
 
     @State private var sweep: CGFloat = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

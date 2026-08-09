@@ -56,7 +56,7 @@ struct AtlasCaptureQueueTile: View {
                 } else {
                     // A known-duration wait, so the bar shows the real fraction
                     // rather than sweeping (C.5).
-                    TujiProgressBar(progress: self.job.progress, track: .tujiPaper, fill: .tujiEye)
+                    TujiProgressBar(progress: self.job.progress, track: .tujiPaper, fill: .tujiCurrent)
                         .padding(.horizontal, Space.s4)
                 }
             }
@@ -75,8 +75,8 @@ struct AtlasCaptureQueueTile: View {
     private var edge: Color {
         switch self.job.stage {
         case .failed: .tujiAlert
-        case .done: .tujiTeal
-        case .confirming, .creating, .enriching: .tujiEye
+        case .done: .tujiAccumulation
+        case .confirming, .creating, .enriching: .tujiCurrent
         }
     }
 }

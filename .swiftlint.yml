@@ -119,7 +119,7 @@ custom_rules:
     regex: 'Color\(hex:'
     match_kinds: [identifier]
     excluded: ".*/Core/Theme/.*\\.swift"
-    message: "請用 .tujiTeal / .tujiCream / ... — Color(hex:) 只能寫在 Core/Theme/ 內。"
+    message: "請用品牌／目前／累積等語意色票 — Color(hex:) 只能寫在 Core/Theme/ 內。"
     severity: error
 
   # 2. 字型：禁止在 Theme 之外用 Font.custom
