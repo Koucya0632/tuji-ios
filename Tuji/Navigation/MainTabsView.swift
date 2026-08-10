@@ -100,7 +100,12 @@ struct MainTabsView: View {
             }
             .scrollTargetBehavior(.paging)
             .scrollPosition(id: self.selectedScrollBinding, anchor: .center)
-            .scrollDisabled(self.studyFocus.active || !self.currentTabAtRoot)
+            .scrollDisabled(
+                !TabShellDecisions.swipeEnabled(
+                    currentTabAtRoot: self.currentTabAtRoot,
+                    studyFocusActive: self.studyFocus.active
+                )
+            )
             .scrollIndicators(.hidden)
         }
     }
@@ -181,11 +186,11 @@ struct MainTabsView: View {
     /// 圖鑑 keep their bar through a push, because a word detail is a place you
     /// come back from, not a window you are handed.
     private var tabBarVisible: Bool {
-        if self.studyFocus.active { return false }
-        switch self.selected {
-        case .me, .community: return self.currentTabAtRoot
-        case .today, .cards: return true
-        }
+        TabShellDecisions.tabBarVisible(
+            selected: self.selected,
+            currentTabAtRoot: self.currentTabAtRoot,
+            studyFocusActive: self.studyFocus.active
+        )
     }
 
     // MARK: - First-run feature tour
@@ -251,29 +256,29 @@ struct MainTabsView: View {
     }
 
     private func consumePendingLink() {
-        // A guest save intent must survive the root swap to Welcome and the
-        // whole sign-in flow. The newly mounted signed-in tab shell consumes it.
-        if let pending = self.deepLinks.pending,
-           case let .collection(_, autoSave) = pending,
-           autoSave,
-           self.user == nil
-        {
-            return
-        }
-        guard let link = deepLinks.consume() else { return }
-        // A deep link (e.g. push-notification tap) outranks the tour.
-        if self.tourIndex != nil { self.skipTour() }
-        self.selected = link.tab
-        if case .favorites = link { self.cardsSourceRequest = .bookmarked }
-        guard let route = link.route else { return }
-        // Append on the next runloop turn so the NavigationStack for the
-        // newly-selected tab has time to mount.
-        DispatchQueue.main.async {
-            switch link.tab {
-            case .today: self.todayPath.append(route)
-            case .cards: self.cardsPath.append(route)
-            case .community: self.communityPath.append(route)
-            case .me: self.mePath.append(route)
+        let effect = TabShellDecisions.pendingLinkEffect(
+            pending: self.deepLinks.pending,
+            isSignedIn: self.user != nil,
+            tourActive: self.tourIndex != nil
+        )
+        switch effect {
+        // Held, not consumed: the signed-in shell picks it up after sign-in.
+        case .hold, .none: return
+        case let .apply(applied):
+            _ = self.deepLinks.consume()
+            if applied.skipTour { self.skipTour() }
+            self.selected = applied.tab
+            if let source = applied.cardsSource { self.cardsSourceRequest = source }
+            guard let route = applied.route else { return }
+            // Append on the next runloop turn so the NavigationStack for the
+            // newly-selected tab has time to mount.
+            DispatchQueue.main.async {
+                switch applied.tab {
+                case .today: self.todayPath.append(route)
+                case .cards: self.cardsPath.append(route)
+                case .community: self.communityPath.append(route)
+                case .me: self.mePath.append(route)
+                }
             }
         }
     }
