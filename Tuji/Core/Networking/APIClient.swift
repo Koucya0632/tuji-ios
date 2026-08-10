@@ -13,23 +13,33 @@ final class APIClient {
     static let shared = APIClient()
 
     private let baseURL: URL
-    private let auth: AuthService
+    private let auth: any AccessTokenProviding
     private let urlSession: URLSession
     private let decoder: JSONDecoder = .tuji
     private let encoder: JSONEncoder = .tuji
     private let log = Logger(subsystem: "app.tuji.ios", category: "api")
 
-    init(auth: AuthService = .shared, urlSession: URLSession = APIClient.makeCachingSession()) {
+    /// `baseURL` defaults to the Info.plist value. It is a parameter so a test
+    /// can point the client somewhere harmless — the fallback below is
+    /// production, and a test process that silently used it would be talking to
+    /// real users' data.
+    init(
+        auth: any AccessTokenProviding = AuthService.shared,
+        urlSession: URLSession = APIClient.makeCachingSession(),
+        baseURL: URL? = nil
+    ) {
         self.auth = auth
         self.urlSession = urlSession
 
-        if let str = Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL") as? String,
-           let url = URL(string: str)
+        if let baseURL {
+            self.baseURL = baseURL
+        } else if let str = Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL") as? String,
+                  let url = URL(string: str)
         {
-            baseURL = url
+            self.baseURL = url
         } else {
             // Last-resort fallback. SmokeTest used the same one.
-            baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
+            self.baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
             log.error("TUJI_BASE_URL missing from Info.plist; falling back to prod")
         }
     }
@@ -175,7 +185,7 @@ final class APIClient {
             let token = try await auth.validAccessToken()
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         } else if policy.usesOptionalAuth,
-                  case .signedIn = self.auth.state,
+                  self.auth.isSignedIn,
                   let token = try? await self.auth.validAccessToken()
         {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
