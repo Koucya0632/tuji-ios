@@ -10,47 +10,112 @@
 // ruby would land on 9pt — inside the range TujiFont.swift removed on purpose,
 // because CJK strokes merge there. The grid therefore keeps the reading line.
 //
-// `.minimumScaleFactor` is not usable here. It shrinks each `Text` on its own,
-// so a row of separate segments would come out at a different size per segment.
-// The layout below measures the whole row, decides one scale for all of it, and
-// proposes each segment the width that produces that scale.
+// The word is fitted to its column by *choosing a size*, not by scaling a laid
+// out row. Each candidate below is already drawn at its final point size, so
+// there is no gap between what the layout measures and what the glyphs paint —
+// which is exactly what the previous version got wrong: it computed a scale,
+// placed segments at scaled offsets, and then let each `Text` draw at full size
+// on top of its neighbour. That never showed because a two-line row absorbed
+// every catalogue word and the scale stayed at 1.
 
 import SwiftUI
 
 struct FuriganaHeadword: View {
     let segments: [FuriganaSegment]
-    /// Point size of the headword. Ruby is drawn at `rubyRatio` of it.
+    /// Point size of the headword at full size. Ruby is `rubyRatio` of it.
     var baseSize: CGFloat
     var rubyRatio: CGFloat = 0.5
     /// Ruby sits closer to its base than normal line spacing would put it.
     var rubySpacing: CGFloat = 1
-    var maxLines: Int = 2
-    /// Matches the `.minimumScaleFactor(0.5)` the plain headwords already use.
-    var minScale: CGFloat = 0.5
+
+    private var steps: [CGFloat] {
+        FuriganaScaleLadder.steps(baseSize: self.baseSize, rubyRatio: self.rubyRatio)
+    }
+
+    /// Clamped, so the rungs can be written out as distinct views even when the
+    /// ladder collapses to a single size.
+    private func step(_ index: Int) -> CGFloat {
+        let steps = self.steps
+        return steps[min(index, steps.count - 1)]
+    }
 
     var body: some View {
-        FuriganaLayout(maxLines: self.maxLines, minScale: self.minScale) {
-            ForEach(Array(self.segments.enumerated()), id: \.offset) { _, segment in
-                VStack(spacing: self.rubySpacing) {
-                    // Every segment reserves the ruby line, including the ones
-                    // with no ruby: without it the bare kana of 歯磨"き"粉 would
-                    // sit a ruby's height higher than its neighbours.
-                    Text(segment.ruby ?? " ")
-                        .font(.tujiFuriganaRuby(self.baseSize * self.rubyRatio))
-                        .foregroundStyle(.tujiInk3)
-                        .lineLimit(1)
-                    Text(segment.text)
-                        .font(.tujiFuriganaBase(self.baseSize))
-                        .foregroundStyle(.tujiInk)
-                        .lineLimit(1)
-                }
-                .fixedSize(horizontal: true, vertical: false)
-            }
+        // `ViewThatFits` takes the first candidate whose ideal width fits the
+        // column, and falls back to the last one when none does. Spelled out
+        // rather than looped: a `ForEach` would hand it one collection where it
+        // needs separate views to choose between.
+        ViewThatFits(in: .horizontal) {
+            self.row(scale: self.step(0))
+            self.row(scale: self.step(1))
+            self.row(scale: self.step(2))
+            self.row(scale: self.step(3))
+            self.row(scale: self.step(4))
         }
         // Segment-by-segment, VoiceOver would read 歯・磨・き・粉 as four items
         // and then say the kana twice over. One label, the word as written.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(self.segments.map(\.text).joined())
+    }
+
+    private func row(scale: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            ForEach(Array(self.segments.enumerated()), id: \.offset) { _, segment in
+                VStack(spacing: self.rubySpacing * scale) {
+                    // Every segment reserves the ruby line, including the ones
+                    // with no ruby: without it the bare kana of 歯磨"き"粉 would
+                    // sit a ruby's height higher than its neighbours.
+                    Text(segment.ruby ?? " ")
+                        .font(.tujiFuriganaRuby(self.baseSize * self.rubyRatio * scale))
+                        .foregroundStyle(.tujiInk3)
+                        .lineLimit(1)
+                    Text(segment.text)
+                        .font(.tujiFuriganaBase(self.baseSize * scale))
+                        .foregroundStyle(.tujiInk)
+                        .lineLimit(1)
+                }
+                .fixedSize()
+            }
+        }
+        // Report the natural width, so `ViewThatFits` compares the size this row
+        // actually wants against the column rather than a compressed one.
+        .fixedSize(horizontal: true, vertical: false)
+    }
+}
+
+/// The sizes a furigana headword is allowed to take, largest first.
+///
+/// The bottom of the ladder is not a taste decision: below roughly 13pt CJK
+/// strokes merge, which is why `TujiFont.swift` removed that end of the scale
+/// outright. Ruby is half the headword, so *the headword's* floor is whatever
+/// keeps the ruby legible — 0.47 under a 56pt word, but 0.77 under a 34pt one.
+/// Deriving it here makes that constraint something the code enforces instead
+/// of something a call site is trusted to remember.
+enum FuriganaScaleLadder {
+    /// Smallest kana the CJK face still resolves; see TujiFont.swift.
+    static let minimumRubyPoint: CGFloat = 13
+
+    static func steps(
+        baseSize: CGFloat,
+        rubyRatio: CGFloat = 0.5,
+        minRubyPoint: CGFloat = FuriganaScaleLadder.minimumRubyPoint
+    )
+        -> [CGFloat]
+    {
+        let rubyAtFullSize = baseSize * rubyRatio
+        guard rubyAtFullSize > 0 else { return [1] }
+
+        // A base so small that even full size breaks the floor still has to
+        // draw something; one rung at full size is the honest answer.
+        let floor = min(1, minRubyPoint / rubyAtFullSize)
+        guard floor < 1 else { return [1] }
+
+        // Five rungs spread over the usable range. Evenly spaced rather than
+        // tuned: the gap only decides how much smaller than necessary a word
+        // ends up, and at this many rungs that is under 5%.
+        let rungs = 5
+        return (0..<rungs).map { index in
+            1 - (1 - floor) * CGFloat(index) / CGFloat(rungs - 1)
+        }
     }
 }
 
@@ -67,157 +132,38 @@ struct TujiHeadword: View {
     /// whatever font the screen would otherwise have set.
     var baseSize: CGFloat
     var font: Font
-    var maxLines: Int = 2
-    var minScale: CGFloat = 0.5
+    /// Decides whether the word may wrap. nil is treated as "not Japanese",
+    /// which is the safe direction: wrapping never truncates.
+    var language: TargetLanguage?
+
+    /// Japanese is written without spaces, so a wrapped headword breaks in the
+    /// middle of a word — シャワーカー / テンポール. It is fitted onto one line
+    /// instead, which is what the ruby ladder does anyway. English wraps at
+    /// spaces, where a second line reads perfectly well, so it keeps wrapping;
+    /// forcing it onto one line only made the longest phrases shrink until they
+    /// truncated.
+    private var wrapsOntoASecondLine: Bool {
+        self.language != .ja
+    }
 
     var body: some View {
         switch self.display {
         case let .ruby(segments):
-            FuriganaHeadword(
-                segments: segments,
-                baseSize: self.baseSize,
-                maxLines: self.maxLines,
-                minScale: self.minScale
-            )
+            FuriganaHeadword(segments: segments, baseSize: self.baseSize)
         case .line, .plain:
             Text(self.word)
                 .font(self.font)
                 .foregroundStyle(.tujiInk)
-                .lineLimit(self.maxLines)
-                .minimumScaleFactor(self.minScale)
+                .lineLimit(self.wrapsOntoASecondLine ? 2 : 1)
+                // No ruby here, so the 13pt CJK floor does not apply and the
+                // only limit is legibility. One line has to shrink much further
+                // than two: the longest kana headword (12em) needs 0.43 of a
+                // 56pt size. Two lines need 0.5 rather than the 0.6 they used to
+                // allow — "chicken bouillon powder" wraps to "bouillon powder",
+                // which wants 0.575, and a floor above that made it truncate to
+                // "chicken bouillon powd…" instead of shrinking.
+                .minimumScaleFactor(self.wrapsOntoASecondLine ? 0.5 : 0.4)
         }
-    }
-}
-
-/// Places furigana segments in a row, wrapping before it shrinks.
-///
-/// Wrapping first is what the plain headwords already do — `.lineLimit(2)`
-/// before `.minimumScaleFactor(0.5)` — and it matters more here: 10% of the
-/// catalogue's kanji words overrun a phone's detail column once ruby widens
-/// them, but none overruns two lines, so scaling is a last resort that almost
-/// never fires.
-struct FuriganaLayout: Layout {
-    var maxLines: Int
-    var minScale: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let widths = subviews.map { $0.sizeThatFits(.unspecified).width }
-        let height = subviews.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-        let solution = FuriganaWrap.solve(
-            widths: widths,
-            available: proposal.width ?? .infinity,
-            maxLines: self.maxLines,
-            minScale: self.minScale
-        )
-        let widest = solution.lines
-            .map { line in line.reduce(0) { $0 + widths[$1] * solution.scale } }
-            .max() ?? 0
-        return CGSize(
-            width: widest,
-            height: height * solution.scale * CGFloat(solution.lines.count)
-        )
-    }
-
-    func placeSubviews(
-        in bounds: CGRect,
-        proposal: ProposedViewSize,
-        subviews: Subviews,
-        cache: inout ()
-    ) {
-        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
-        let widths = sizes.map(\.width)
-        let rowHeight = sizes.map(\.height).max() ?? 0
-        let solution = FuriganaWrap.solve(
-            widths: widths,
-            available: bounds.width,
-            maxLines: self.maxLines,
-            minScale: self.minScale
-        )
-        let scaledRow = rowHeight * solution.scale
-
-        var y = bounds.minY
-        for line in solution.lines {
-            var x = bounds.minX
-            for index in line {
-                let width = widths[index] * solution.scale
-                subviews[index].place(
-                    at: CGPoint(x: x, y: y),
-                    anchor: .topLeading,
-                    // Proposing the scaled width is what performs the scaling:
-                    // each segment's `Text` fits itself to what it is given, and
-                    // since every segment is offered the same fraction of its
-                    // natural width, they all end up at the same size.
-                    proposal: ProposedViewSize(width: width, height: scaledRow)
-                )
-                x += width
-            }
-            y += scaledRow
-        }
-    }
-}
-
-/// Where the line breaks fall and how much the row has to shrink.
-///
-/// Pure, so the awkward cases can be tested without a view: a single segment
-/// wider than the whole column, a row that fits exactly, one that needs the
-/// floor scale.
-enum FuriganaWrap {
-    struct Solution: Equatable {
-        var scale: CGFloat
-        /// Indices of the segments on each line, in order.
-        var lines: [[Int]]
-    }
-
-    static func solve(
-        widths: [CGFloat],
-        available: CGFloat,
-        maxLines: Int,
-        minScale: CGFloat
-    )
-        -> Solution
-    {
-        guard !widths.isEmpty else { return Solution(scale: 1, lines: []) }
-        guard available.isFinite, available > 0 else {
-            return Solution(scale: 1, lines: [Array(widths.indices)])
-        }
-
-        // The largest scale that still wraps into `maxLines`. Search rather than
-        // solve: how many lines a scale needs is a step function of it, because
-        // a break only moves when a segment crosses the edge.
-        var low = max(0.01, minScale)
-        var high: CGFloat = 1
-        if self.wrap(widths: widths, available: available, scale: high).count <= maxLines {
-            return Solution(scale: high, lines: self.wrap(widths: widths, available: available, scale: high))
-        }
-        for _ in 0..<12 {
-            let mid = (low + high) / 2
-            if self.wrap(widths: widths, available: available, scale: mid).count <= maxLines {
-                low = mid
-            } else {
-                high = mid
-            }
-        }
-        // `low` is the floor when nothing fits — a very long word then overruns
-        // rather than becoming unreadable, which is what the old headword did.
-        return Solution(scale: low, lines: self.wrap(widths: widths, available: available, scale: low))
-    }
-
-    private static func wrap(widths: [CGFloat], available: CGFloat, scale: CGFloat) -> [[Int]] {
-        var lines: [[Int]] = []
-        var current: [Int] = []
-        var x: CGFloat = 0
-        for (index, width) in widths.enumerated() {
-            let scaled = width * scale
-            if !current.isEmpty, x + scaled > available {
-                lines.append(current)
-                current = []
-                x = 0
-            }
-            current.append(index)
-            x += scaled
-        }
-        if !current.isEmpty { lines.append(current) }
-        return lines
     }
 }
 
@@ -246,6 +192,7 @@ enum FuriganaWrap {
             segments: [FuriganaSegment(text: "豆板醤", ruby: "トウバンジャン")],
             baseSize: 56
         )
+        // The one catalogue word that actually needs a lower rung.
         FuriganaHeadword(
             segments: [
                 FuriganaSegment(text: "鶏", ruby: "にわとり"),

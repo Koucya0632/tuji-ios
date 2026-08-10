@@ -95,7 +95,7 @@ struct ReviewRevealSheet: View {
                     word: self.item.word.word,
                     baseSize: 34,
                     font: .tujiH1,
-                    minScale: 0.6
+                    language: self.item.word.wordLanguage
                 )
                 if case let .line(text) = self.item.word.headwordDisplay {
                     Text(text)
@@ -109,8 +109,8 @@ struct ReviewRevealSheet: View {
                         .padding(.top, 2)
                 }
             }
-            // See WordDetailView.titleRow: a custom `Layout` beside a `Spacer`
-            // is offered half the row unless it is prioritised.
+            // See WordDetailView.titleRow: beside a `Spacer` the headword is
+            // offered half the row unless it is prioritised.
             .layoutPriority(1)
             Spacer()
             VStack(spacing: Space.s2) {
