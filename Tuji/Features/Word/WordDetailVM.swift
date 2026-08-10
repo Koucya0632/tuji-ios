@@ -131,6 +131,7 @@ final class WordDetailVM {
             partOfSpeech: nil,
             pronunciation: lite.pronunciation,
             reading: lite.reading,
+            readingSegments: lite.readingSegments,
             targetLanguage: lite.targetLanguage,
             audioUrl: nil,
             audioUrls: lite.audioUrls,

@@ -310,6 +310,10 @@ struct SettingsView: View {
                     .simultaneousGesture(TapGesture().onEnded {
                         AnalyticsService.shared.track(.shareApp)
                     })
+                    NavigationLink { AboutView() } label: {
+                        TujiRow("關於")
+                    }
+                    .tujiRowStyle()
                 }
 
                 Text("Tuji v1.0.0 · 圖記")

@@ -156,6 +156,7 @@ private extension Word {
             partOfSpeech: self.partOfSpeech,
             pronunciation: self.pronunciation,
             reading: self.reading,
+            readingSegments: self.readingSegments,
             targetLanguage: self.targetLanguage,
             audioUrl: self.audioUrl,
             audioUrls: self.audioUrls,

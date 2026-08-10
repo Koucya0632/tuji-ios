@@ -184,15 +184,20 @@ extension WordDetailPage {
     private func titleRow(_ w: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
-                Text(w.word)
-                    .font(.tujiDisplay)
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
+                TujiHeadword(
+                    display: w.headwordDisplay,
+                    word: w.word,
+                    baseSize: 56,
+                    font: .tujiDisplay,
+                    minScale: 0.6
+                )
                 HStack(spacing: Space.s2) {
-                    if let pron = w.pronunciation {
-                        Text(pron)
-                            .font(.tujiMono)
+                    // `.line` and not `w.pronunciation`: for Japanese the server
+                    // sends pronunciation as a copy of the reading, so a kana
+                    // headword used to print itself again right here.
+                    if case let .line(text) = w.headwordDisplay {
+                        Text(text)
+                            .font(w.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
                             .foregroundStyle(.tujiInk2)
                     }
                     if let pos = w.partOfSpeech, !pos.isEmpty {
@@ -211,6 +216,12 @@ extension WordDetailPage {
                     }
                 }
             }
+            // The headword is a custom `Layout`, not a `Text`, and an HStack
+            // splits its spare width evenly between equally-flexible children —
+            // so with a `Spacer` alongside, the word was offered half the row
+            // and wrapped 歯磨き粉 onto two lines inside an empty column. `Text`
+            // never showed this because it negotiates an ideal width of its own.
+            .layoutPriority(1)
             Spacer()
             PronunciationButton(
                 text: w.word,

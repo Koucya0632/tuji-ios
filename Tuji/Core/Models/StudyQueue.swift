@@ -13,6 +13,7 @@ struct StudyQueueWord: Decodable, Hashable, Identifiable {
     let imageUrl: String
     let pronunciation: String
     let reading: String?
+    let readingSegments: [FuriganaSegment]?
     let targetLanguage: TargetLanguage?
     let category: String
 

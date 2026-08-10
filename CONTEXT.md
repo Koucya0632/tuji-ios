@@ -86,6 +86,21 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 
+## Domain — 日文詞條
+
+- **振假名 (reading)** — how a Japanese headword is read, written as furigana: kanji are
+  spelled out in hiragana and anything already kana is copied exactly as it appears, so
+  バスマット reads バスマット and シャンプー keeps its ー. A headword written entirely in
+  kana is therefore **its own** reading, which is why printing one under itself says
+  nothing. It is not a transcription and not a romanisation.
+- **切分 (reading segments)** — which kana belong to which characters of the headword: a
+  list of ranges, each with the kana read over it. Per-character is simply the case where
+  a range is one character long; 熟字訓 like 時計 cannot be divided at all and take one
+  range across both characters, so "one range, one ruby" is the shape and 逐字 is an
+  outcome, not a guarantee. Derived from the 振假名 against a dictionary and never a
+  substitute for it — the 拼字 stage still quizzes the whole string.
+  _Avoid_: furigana (ambiguous — it names the 振假名 as often as the split).
+
 ## Domain — 方案與權限 (plan & entitlement)
 
 - **訂閱 (subscription)** — an auto-renewable App Store purchase. Apple owns its whole

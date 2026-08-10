@@ -151,14 +151,16 @@ struct WordPeekSheet: View {
     private var headerRow: some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s1) {
-                Text(self.word.word)
-                    .font(.tujiH1)
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
-                if !self.word.pronunciation.isEmpty {
-                    Text(self.word.pronunciation)
-                        .font(.tujiMono)
+                TujiHeadword(
+                    display: self.word.headwordDisplay,
+                    word: self.word.word,
+                    baseSize: 34,
+                    font: .tujiH1,
+                    minScale: 0.6
+                )
+                if case let .line(text) = self.word.headwordDisplay {
+                    Text(text)
+                        .font(self.word.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
                 if self.settings.current.showZh {
@@ -168,6 +170,9 @@ struct WordPeekSheet: View {
                         .padding(.top, 2)
                 }
             }
+            // See WordDetailView.titleRow: a custom `Layout` beside a `Spacer`
+            // is offered half the row unless it is prioritised.
+            .layoutPriority(1)
             Spacer()
             VStack(spacing: Space.s2) {
                 FavoriteButton(wordId: self.word.id, size: 44)

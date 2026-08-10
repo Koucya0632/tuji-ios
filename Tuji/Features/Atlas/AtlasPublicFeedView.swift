@@ -673,15 +673,17 @@ struct AtlasPublicDetailView: View {
     private func titleRow(_ word: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
-                Text(word.word)
-                    .font(.tujiH1)
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.6)
+                TujiHeadword(
+                    display: word.headwordDisplay,
+                    word: word.word,
+                    baseSize: 34,
+                    font: .tujiH1,
+                    minScale: 0.6
+                )
                 HStack(spacing: Space.s2) {
-                    if let pronunciation = word.pronunciation, !pronunciation.isEmpty {
-                        Text(pronunciation)
-                            .font(.tujiMono)
+                    if case let .line(text) = word.headwordDisplay {
+                        Text(text)
+                            .font(word.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
                             .foregroundStyle(.tujiInk2)
                     }
                     if let partOfSpeech = word.partOfSpeech, !partOfSpeech.isEmpty {
@@ -703,6 +705,9 @@ struct AtlasPublicDetailView: View {
                     }
                 }
             }
+            // See WordDetailView.titleRow: a custom `Layout` beside a `Spacer`
+            // is offered half the row unless it is prioritised.
+            .layoutPriority(1)
             Spacer()
             PronunciationButton(
                 text: word.word,
