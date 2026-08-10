@@ -678,7 +678,7 @@ struct AtlasPublicDetailView: View {
                     word: word.word,
                     baseSize: 34,
                     font: .tujiH1,
-                    minScale: 0.6
+                    language: word.wordLanguage
                 )
                 HStack(spacing: Space.s2) {
                     if case let .line(text) = word.headwordDisplay {
@@ -705,8 +705,8 @@ struct AtlasPublicDetailView: View {
                     }
                 }
             }
-            // See WordDetailView.titleRow: a custom `Layout` beside a `Spacer`
-            // is offered half the row unless it is prioritised.
+            // See WordDetailView.titleRow: beside a `Spacer` the headword is
+            // offered half the row unless it is prioritised.
             .layoutPriority(1)
             Spacer()
             PronunciationButton(

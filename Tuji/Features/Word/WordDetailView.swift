@@ -184,12 +184,15 @@ extension WordDetailPage {
     private func titleRow(_ w: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
+                // Whether this may wrap is the headword's own decision and
+                // depends on the language — see `TujiHeadword`. At 56pt a third
+                // of the Japanese catalogue overruns this column.
                 TujiHeadword(
                     display: w.headwordDisplay,
                     word: w.word,
                     baseSize: 56,
                     font: .tujiDisplay,
-                    minScale: 0.6
+                    language: w.wordLanguage
                 )
                 HStack(spacing: Space.s2) {
                     // `.line` and not `w.pronunciation`: for Japanese the server
@@ -216,11 +219,11 @@ extension WordDetailPage {
                     }
                 }
             }
-            // The headword is a custom `Layout`, not a `Text`, and an HStack
-            // splits its spare width evenly between equally-flexible children —
-            // so with a `Spacer` alongside, the word was offered half the row
-            // and wrapped 歯磨き粉 onto two lines inside an empty column. `Text`
-            // never showed this because it negotiates an ideal width of its own.
+            // An HStack splits its spare width evenly between equally-flexible
+            // children, so with a `Spacer` alongside the headword is offered
+            // half the row — which for a ruby word means picking a smaller size
+            // than the column actually calls for. `Text` alone never showed
+            // this, because it negotiates an ideal width of its own.
             .layoutPriority(1)
             Spacer()
             PronunciationButton(

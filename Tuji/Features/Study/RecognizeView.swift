@@ -80,10 +80,11 @@ struct RecognizeView: View {
                         display: self.item.word.headwordDisplay,
                         word: self.item.word.word,
                         baseSize: 56,
-                        font: .tujiDisplay
+                        font: .tujiDisplay,
+                        language: self.item.word.wordLanguage
                     )
-                    // A custom `Layout` beside a `Spacer` is offered half the
-                    // row unless it is prioritised; see WordDetailView.titleRow.
+                    // Beside a `Spacer` the headword is offered half the row
+                    // unless it is prioritised; see WordDetailView.titleRow.
                     .layoutPriority(1)
                     Spacer(minLength: Space.s2)
                     PronunciationButton(
