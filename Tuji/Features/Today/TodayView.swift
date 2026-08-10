@@ -66,6 +66,31 @@ struct TodayView: View {
         user == nil
     }
 
+    /// One snapshot of everything 首頁's decisions depend on, read from the
+    /// environment here and answered in `TodayDecisions`. Reading the stores in
+    /// this one place is also what registers the observation that re-renders
+    /// the screen when any of them changes.
+    private var decisions: TodayDecisions {
+        let selected = self.settings.current.studyCategories
+        let wanted = Set(selected)
+        return TodayDecisions(
+            .init(
+                isGuest: self.isGuest,
+                settingsLoaded: self.settings.hasLoaded,
+                studyCategories: selected,
+                dailyGoal: self.settings.current.dailyGoal,
+                stats: self.studyStats.stats,
+                guestLearnedCount: self.cache.learnedIds.count,
+                progressLoaded: !self.progress.categoryProgress.isEmpty,
+                seenInSelection: self.progress.seenCount(filter: selected),
+                totalInSelection: self.progress.totalCount(filter: selected),
+                dictionaryCount: self.words.words.count,
+                dictionaryCountInSelection: self.words.words
+                    .count(where: { wanted.contains($0.category) })
+            )
+        )
+    }
+
     var body: some View {
         ScrollView {
             // No shared horizontal padding: the ink block bleeds to the screen
@@ -222,37 +247,20 @@ struct TodayView: View {
         return f.string(from: Date()).uppercased()
     }
 
+    /// The words for `decisions.subtitle`. The verdict lives in
+    /// `TodayDecisions`; this maps it to copy.
     private var subtitle: LocalizedStringKey {
-        if self.isGuest {
-            let learned = self.cache.learnedIds.count
-            return learned > 0
-                ? "訪客模式 · 已認得 \(learned) 個字"
-                : "訪客模式 · 先逛逛圖鑑，想再看的字加書籤"
+        switch self.decisions.subtitle {
+        case .guestBrowsing: "訪客模式 · 先逛逛圖鑑，想再看的字加書籤"
+        case let .guestLearned(count): "訪客模式 · 已認得 \(count) 個字"
+        case .pickThemes: "先選學習主題，開始學新字"
+        case .unknown: "今天想學點什麼呢？"
+        case let .reviewDue(count): "今天有 \(count) 個字要複習"
+        case .goalReached: "今天目標達成，明天再來"
+        case let .newDoneToday(count): "今天已學 \(count) 個新字，繼續加油"
+        case .newAvailable: "今天還沒學新字，挑一個來試試"
+        case .allLearnedInThemes: "這些主題的字都學過了，多選幾個主題吧"
         }
-        if self.showThemePrompt {
-            return "先選學習主題，開始學新字"
-        }
-        // Until the day's stats have loaded there's nothing truthful to say —
-        // a neutral line beats a wrong verdict ("都學過了" flashing on a brand
-        // new account while the first fetch is in flight).
-        guard let stats = self.studyStats.stats else {
-            return "今天想學點什麼呢？"
-        }
-        if stats.due > 0 {
-            return "今天有 \(stats.due) 個字要複習"
-        }
-        // Goal reached wins over everything below so this line can never
-        // contradict the 達成 badge on the hero card.
-        if self.dailyGoalReached {
-            return "今天目標達成，明天再來"
-        }
-        if let done = stats.todayNew, done > 0 {
-            return "今天已學 \(done) 個新字，繼續加油"
-        }
-        if self.newAvailable > 0 {
-            return "今天還沒學新字，挑一個來試試"
-        }
-        return "這些主題的字都學過了，多選幾個主題吧"
     }
 
     // MARK: - Hero card (deep ink)
@@ -340,9 +348,7 @@ struct TodayView: View {
     }
 
     private var dailyGoalReached: Bool {
-        guard !self.isGuest else { return false }
-        let goal = max(1, self.settings.current.dailyGoal)
-        return (self.studyStats.stats?.todayNew ?? 0) >= goal
+        self.decisions.dailyGoalReached
     }
 
     /// Today's new-word goal progress. `todayNew` = new cards introduced today;
@@ -423,106 +429,29 @@ struct TodayView: View {
         }
     }
 
-    /// Words studied at least once (server "seen"), matching the Progress
-    /// tab's completion source. Guests have no SRS state, so fall back to
-    /// the local learned set. With no themes selected, the progress reads 0/0
-    /// to match the "pick themes first" empty state.
     private var dexSeen: Int {
-        if self.isGuest { return self.cache.learnedIds.count }
-        if self.showThemePrompt { return 0 }
-        return self.progress.seenCount(filter: self.settings.current.studyCategories)
+        self.decisions.dexSeen
     }
 
-    /// Total published words in the selected categories. Server count when
-    /// available, else the locally known dictionary — scoped the same way.
-    ///
-    /// The fallback used to be the *whole* dictionary, which fires not only
-    /// when there is no server progress (guests, always) but also whenever the
-    /// selected themes happen to hold nothing. A guest whose only themes were
-    /// 自定義 + 物見 therefore read 「主題進度 0 / 480」 while 設定 said two
-    /// themes were selected — a denominator describing a selection nobody made.
     private var dexTotal: Int {
-        if self.showThemePrompt { return 0 }
-        let selected = self.settings.current.studyCategories
-        let serverTotal = self.progress.totalCount(filter: selected)
-        if serverTotal > 0 { return serverTotal }
-        guard !selected.isEmpty else { return self.words.words.count }
-        let wanted = Set(selected)
-        return self.words.words.count(where: { wanted.contains($0.category) })
+        self.decisions.dexTotal
     }
 
     private var reviewDisabled: Bool {
-        self.isGuest || (self.studyStats.stats?.due ?? 0) == 0
+        self.decisions.reviewDisabled
     }
 
-    /// Categories the 學新字 queue actually draws from: the selected themes
-    /// exactly as picked (StudyQueueStore sends the same list — 自定義 is a
-    /// pickable theme, included only when ticked). The gate below must count
-    /// what the queue serves, or the button's state drifts from the queue.
-    private var newFilterCategories: [String] {
-        self.settings.current.studyCategories
-    }
-
-    /// New words still to learn within the selected themes.
-    /// New cards = those with no SRS row yet, i.e. (total − seen) scoped to
-    /// newFilterCategories — derived from ProgressStore so it tracks the
-    /// selection without a stats refetch. Falls back to the global `new`
-    /// count before progress loads.
     private var newAvailable: Int {
-        let cats = self.newFilterCategories
-        if self.progress.categoryProgress.isEmpty {
-            return self.studyStats.stats?.new ?? 0
-        }
-        return max(0, self.progress.totalCount(filter: cats) - self.progress.seenCount(filter: cats))
-    }
-
-    /// Why 學新字 is unavailable, so the hero can explain the dead-end instead
-    /// of leaving a silently greyed button. The common one is `.allLearned`:
-    /// an early/small theme (e.g. 廚房 — seeded first, so its cards carry the
-    /// lowest ids and get drawn first) empties before the rest.
-    private enum NewBlockReason {
-        case none
-        case noThemes
-        case noCards
-        case allLearned
-        case reviewBacklog
-    }
-
-    private var newBlockReason: NewBlockReason {
-        // Guests can't study new words; the prompt to sign in lives elsewhere.
-        if self.isGuest { return .none }
-        // No themes selected → nothing to draw new words from; the user must
-        // pick themes first (review stays available — it spans all studied words).
-        if self.settings.current.studyCategories.isEmpty { return .noThemes }
-        let cats = self.newFilterCategories
-        // total == 0 with progress loaded means the selected themes have no
-        // cards in the current deck — e.g. a theme with no 日文 cards yet —
-        // which is a different dead-end from "you've learned them all".
-        if !self.progress.categoryProgress.isEmpty,
-           self.progress.totalCount(filter: cats) == 0
-        {
-            return .noCards
-        }
-        if self.newAvailable == 0 { return .allLearned }
-        // When the review backlog crowds out the new-card quota
-        // (computeNewLimit hits 0 once due > 100), grey out the button
-        // instead of letting the user enter the launcher only to bounce
-        // back on an empty queue.
-        let due = self.studyStats.stats?.due ?? 0
-        let goal = self.settings.current.dailyGoal
-        if StudyQuotas.computeNewLimit(goal: goal, due: due) == 0 {
-            return .reviewBacklog
-        }
-        return .none
+        self.decisions.newAvailable
     }
 
     private var newDisabled: Bool {
-        self.isGuest || self.newBlockReason != .none
+        self.decisions.newDisabled
     }
 
     /// Caption shown under the hero CTAs explaining why 學新字 is greyed.
     private var newBlockHint: LocalizedStringKey? {
-        switch self.newBlockReason {
+        switch self.decisions.newBlock {
         case .allLearned: "這些主題的新字都學完了，去複習或多選幾個主題"
         case .noCards: "這個主題目前還沒有可學的字"
         case .reviewBacklog: "要複習的字有點多，先清一些再學新字"
@@ -531,13 +460,7 @@ struct TodayView: View {
     }
 
     private var newQuotaAdjustmentHint: LocalizedStringKey? {
-        guard let adj = Self.newQuotaAdjustment(
-            isGuest: self.isGuest,
-            stats: self.studyStats.stats,
-            newAvailable: self.newAvailable,
-            dailyGoal: self.settings.current.dailyGoal
-        )
-        else { return nil }
+        guard let adj = self.decisions.quotaAdjustment else { return nil }
         // tujiLocalized resolves the interpolated key against the uiLang; wrap
         // the already-localized result verbatim (a String-keyed
         // LocalizedStringKey never re-looks-up, which is why the old
@@ -545,25 +468,6 @@ struct TodayView: View {
         return LocalizedStringKey(
             tujiLocalized("因為還有 \(adj.due) 個字要複習，今天新字先調整為 \(adj.limit) 個。")
         )
-    }
-
-    /// The backlog-tapers-new-quota decision + counts, split from the localized
-    /// string so the logic stays unit-testable without a bundle/locale.
-    static func newQuotaAdjustment(
-        isGuest: Bool,
-        stats: StudyStats?,
-        newAvailable: Int,
-        dailyGoal: Int
-    )
-        -> (due: Int, limit: Int)?
-    {
-        guard !isGuest, let stats else { return nil }
-        let goal = max(1, dailyGoal)
-        guard (stats.todayNew ?? 0) < goal else { return nil }
-        guard newAvailable > 0 else { return nil }
-        let limit = StudyQuotas.computeNewLimit(goal: goal, due: stats.due)
-        guard limit > 0, limit < goal else { return nil }
-        return (stats.due, limit)
     }
 
     /// One explanatory line under the CTAs. A greyed 學新字 explains itself
@@ -639,9 +543,7 @@ struct TodayView: View {
     /// Signed-in user has loaded settings but picked no study themes — nudge
     /// them to choose so the grid + new-word flow have something to show.
     private var showThemePrompt: Bool {
-        !self.isGuest
-            && self.settings.hasLoaded
-            && self.settings.current.studyCategories.isEmpty
+        self.decisions.showThemePrompt
     }
 
     private var themePrompt: some View {

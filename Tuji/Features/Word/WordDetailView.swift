@@ -74,17 +74,14 @@ struct WordDetailPage: View {
     @Environment(WordsStore.self) private var wordsStore
     @Environment(SettingsStore.self) private var settings
 
-    @State private var word: Word?
-    @State private var loading = false
-    @State private var error: Error?
-    private let repository: CatalogRepository = LiveCatalogRepository.shared
+    @State private var vm = WordDetailVM()
 
     var body: some View {
         GeometryReader { geo in
             ScrollView {
-                if let word {
+                if let word = self.vm.word {
                     self.content(word, width: geo.size.width)
-                } else if let error {
+                } else if let error = self.vm.error {
                     self.errorState(error)
                         .frame(width: geo.size.width)
                 } else {
@@ -245,89 +242,18 @@ extension WordDetailPage {
 
     // MARK: - Load
 
+    /// Analytics stays in the View: the VM returns the word worth logging (nil
+    /// for 自製圖鑑, which is private content and deliberately never counted).
     private func load() async {
-        guard self.word == nil, !self.loading else { return }
-        self.loading = true
-        defer { self.loading = false }
-        if self.id.hasPrefix("atlas:") {
-            // /api/users/custom-words now embeds the full detail (definition /
-            // synonyms / forms / etymology) enriched at capture time, so the
-            // common path renders with zero extra round-trips.
-            if let lite = self.wordsStore.find(id: self.id) {
-                if let full = lite.detail {
-                    self.word = full
-                    return
-                }
-                // No embedded detail (cold store, or an item that missed
-                // enrichment): show the lite card instantly, then upgrade via
-                // the detail endpoint, which lazily enriches on first open.
-                self.word = Self.provisionalWord(from: lite, tags: ["custom"])
-            }
-            do {
-                let uuid = String(self.id.dropFirst("atlas:".count))
-                self.word = try await AtlasStore.shared.detail(itemId: uuid)
-            } catch {
-                if self.word == nil { self.error = error }
-            }
-            return
-        }
-        // Public words: the grid already knows the word / image / 中文, so
-        // render those instantly and let the enrichment sections (definitions,
-        // 例句, 詞形, 來源) fill in when the full payload lands — a blank page
-        // with a lone spinner made every card feel broken for 2-3s.
-        if let lite = self.wordsStore.find(id: self.id) {
-            self.word = Self.provisionalWord(from: lite, tags: [])
-        }
-        do {
-            let settings = SettingsStore.shared.current
-            self.word = try await self.repository.word(
-                id: self.id,
-                lang: settings.uiLanguage.contentLanguageCode,
-                learning: settings.learningDirection.rawValue
-            )
-        } catch {
-            if self.word == nil { self.error = error }
-        }
-        // Public-word page view (the atlas branch above returned already —
-        // private 自製 content stays out of analytics).
-        if let w = self.word {
-            AnalyticsService.shared.track(.view, wordId: w.id, category: w.category)
-        }
-    }
-
-    /// Lite grid payload → renderable Word shell: enough for the hero, title
-    /// row, and 中文 definition while the full detail is fetched.
-    private static func provisionalWord(from lite: CardWord, tags: [String]) -> Word {
-        Word(
-            id: lite.id,
-            word: lite.word,
-            alsoKnownAs: nil,
-            category: lite.category,
-            partOfSpeech: nil,
-            pronunciation: lite.pronunciation,
-            reading: lite.reading,
-            targetLanguage: lite.targetLanguage,
-            audioUrl: nil,
-            audioUrls: lite.audioUrls,
-            imageUrl: lite.imageUrl,
-            cefrLevel: nil,
-            status: "published",
-            chinese: lite.chinese,
-            definitions: [
-                WordDefinition(language: "zh", definition: lite.chinese, cefrLevel: nil, sortOrder: 0)
-            ],
-            examples: nil,
-            relations: nil,
-            collocations: nil,
-            collocationsZh: nil,
-            note: nil,
-            etymology: nil,
-            forms: nil,
-            chineseDefinition: lite.chinese,
-            targetDefinition: nil,
-            englishDefinition: nil,
-            tags: tags
+        let current = self.settings.current
+        let logged = await self.vm.load(
+            id: self.id,
+            lang: current.uiLanguage.contentLanguageCode,
+            learning: current.learningDirection.rawValue
         )
+        if let logged {
+            AnalyticsService.shared.track(.view, wordId: logged.id, category: logged.category)
+        }
     }
 }
 

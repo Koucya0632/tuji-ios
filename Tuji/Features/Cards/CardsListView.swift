@@ -28,12 +28,10 @@ struct CardsListView: View {
     /// 主題, which only appears under 官方. `nil` (everything) is still
     /// reachable: tapping the lit chip clears it. See CardsSource.
     @State private var source: CardsSource? = .official
-    @State private var visibleCount: Int = 60
+    @State private var visibleCount: Int = CardsListPaging.pageSize
     @State private var peekWord: CardWord?
     @State private var pushAfterDismiss: String?
     @State private var showCapture = false
-
-    private let pageSize: Int = 60
 
     /// `alignment: .top` is the whole point. A GridItem with no alignment
     /// centres its cell inside the row, so the moment one word wrapped to two
@@ -137,7 +135,7 @@ struct CardsListView: View {
         HStack(spacing: Space.s3) {
             // Reuses the existing `%lld 字` key rather than minting `%lld 個字`
             // beside it — one concept, one string.
-            Text(tujiLocalized("\(self.filtered.count) 字"))
+            Text(tujiLocalized("\(self.page.matchCount) 字"))
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
@@ -193,7 +191,7 @@ struct CardsListView: View {
         let selected = self.source == value
         return Button {
             self.source = selected ? nil : value
-            self.visibleCount = self.pageSize
+            self.visibleCount = CardsListPaging.pageSize
         } label: {
             Text(value.title)
                 .font(.tujiLabel)
@@ -270,7 +268,7 @@ struct CardsListView: View {
 
                 if self.canShowMore {
                     Button {
-                        self.visibleCount += self.pageSize
+                        self.visibleCount += CardsListPaging.pageSize
                     } label: {
                         Text("顯示更多")
                             .font(.system(size: 14, weight: .semibold))
@@ -278,7 +276,7 @@ struct CardsListView: View {
                             .padding(.vertical, Space.s3)
                     }
                     .padding(.top, Space.s3)
-                } else if self.filtered.isEmpty {
+                } else if self.page.matchCount == 0 {
                     // The message has to name what is actually empty. With a
                     // source filter on, "這個分類還沒有字" is simply wrong — the
                     // user filtered by where words come from, not by theme —
@@ -291,19 +289,22 @@ struct CardsListView: View {
         }
     }
 
-    private var filtered: [CardWord] {
-        guard let source = self.source else { return self.store.words }
-        return self.store.words.filter {
-            source.matches($0, isBookmarked: self.cache.isFavorite)
-        }
+    /// One read of the filter + page window; see `CardsListPaging`.
+    private var page: CardsListPage {
+        CardsListPaging.page(
+            words: self.store.words,
+            source: self.source,
+            isBookmarked: self.cache.isFavorite,
+            visibleCount: self.visibleCount
+        )
     }
 
     private var visibleWords: [CardWord] {
-        Array(self.filtered.prefix(self.visibleCount))
+        self.page.words
     }
 
     private var canShowMore: Bool {
-        self.visibleCount < self.filtered.count
+        self.page.canShowMore
     }
 }
 
