@@ -33,13 +33,12 @@ private func collectionLearningPillTitle(remaining: Int, total: Int) -> String {
 
 struct AtlasCollectionDetailView: View {
     @Environment(AuthService.self) private var auth
+    @Environment(TabNavigator.self) private var navigator
     @Environment(CollectionBookmarkStore.self) private var bookmarks
     @Environment(DeepLinkCoordinator.self) private var deepLinks
 
     @State private var vm: CollectionDetailVM
     @State private var tab: Tab = .catalog
-    @State private var selectedItem: AtlasPublicItem?
-    @State private var selectedAuthorHandle: String?
     @State private var showSignInPrompt = false
     @State private var showUnsavePrompt = false
     @State private var showBookmarkErrorPrompt = false
@@ -100,12 +99,6 @@ struct AtlasCollectionDetailView: View {
         .background(.tujiPaper)
         .navigationTitle(self.vm.collection?.title ?? tujiLocalized("合集"))
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(item: self.$selectedItem) { item in
-            AtlasPublicDetailView(item: item)
-        }
-        .navigationDestination(item: self.$selectedAuthorHandle) { handle in
-            AtlasAuthorProfileView(handle: handle)
-        }
         .task(id: self.loadKey) {
             await self.openCollection()
         }
@@ -206,7 +199,7 @@ struct AtlasCollectionDetailView: View {
                 HStack(spacing: Space.s2) {
                     if let author = collection.author {
                         Button {
-                            self.selectedAuthorHandle = author.handle
+                            self.navigator.push(.authorProfile(handle: author.handle, isSelf: false))
                         } label: {
                             HStack(spacing: 6) {
                                 ProfileAvatar(avatar: author.avatar, size: 24)
@@ -439,10 +432,10 @@ struct AtlasCollectionDetailView: View {
                             AtlasPublicTile(
                                 item: item,
                                 onOpen: {
-                                    if self.vm.unlocked { self.selectedItem = item }
+                                    if self.vm.unlocked { self.navigator.push(.atlasPublicItem(item: item)) }
                                 },
                                 onOpenAuthor: self.vm.unlocked ? item.author.map { author in
-                                    { self.selectedAuthorHandle = author.handle }
+                                    { self.navigator.push(.authorProfile(handle: author.handle, isSelf: false)) }
                                 } : nil
                             )
                             .allowsHitTesting(self.vm.unlocked)

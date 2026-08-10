@@ -139,7 +139,7 @@ struct TabShellDecisionsTests {
         #expect(
             effect == .apply(.init(
                 tab: .community,
-                route: .atlasCollectionDetail(slug: "s", autoSave: true),
+                route: .atlasCollectionDetail(slug: "s", autoSave: true, preview: nil),
                 cardsSource: nil,
                 skipTour: false
             ))

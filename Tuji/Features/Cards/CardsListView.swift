@@ -13,6 +13,7 @@ struct CardsListView: View {
     @Environment(MasteryStore.self) private var mastery
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
+    @Environment(TabNavigator.self) private var navigator
 
     private var isGuest: Bool {
         if case .signedIn = self.auth.state { return false }
@@ -63,14 +64,19 @@ struct CardsListView: View {
             self.source = requested
             self.sourceRequest = nil
         }
-        .sheet(item: self.$peekWord) { word in
+        // 看更多 pushes a *route*, so a `saved:` tile opens the same screen
+        // whether it was tapped or long-pressed. It used to construct
+        // WordDetailView here and skip the route table's `saved:` branch — two
+        // gestures on one tile, two different screens.
+        .sheet(item: self.$peekWord, onDismiss: {
+            guard let id = self.pushAfterDismiss else { return }
+            self.pushAfterDismiss = nil
+            self.navigator.push(.wordDetail(id: id))
+        }) { word in
             WordPeekSheet(word: word) {
                 self.pushAfterDismiss = word.id
                 self.peekWord = nil
             }
-        }
-        .navigationDestination(item: self.$pushAfterDismiss) { id in
-            WordDetailView(id: id)
         }
         .fullScreenCover(isPresented: self.$showCapture) {
             AtlasCaptureView()
@@ -313,5 +319,6 @@ struct CardsListView: View {
         CardsListView(sourceRequest: .constant(nil))
             .environment(WordsStore.shared)
             .environment(MasteryStore.shared)
+            .environment(TabNavigator())
     }
 }

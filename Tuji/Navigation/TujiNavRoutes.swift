@@ -11,8 +11,8 @@ extension View {
             case .settings: SettingsView()
             case .atlasManage: AtlasManageView(initialSection: .cards)
             case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
-            case let .atlasCollectionDetail(slug, autoSave):
-                AtlasCollectionDetailView(slug: slug, autoSave: autoSave)
+            case let .atlasCollectionDetail(slug, autoSave, preview):
+                AtlasCollectionDetailView(slug: slug, preview: preview, autoSave: autoSave)
             case let .authorProfile(handle, isSelf):
                 AtlasAuthorProfileView(handle: handle, isSelf: isSelf)
             case .studyCategories: StudyCategoriesPickerView()
@@ -28,6 +28,7 @@ extension View {
                 } else {
                     WordDetailView(id: id)
                 }
+            case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
             case .categoryIndex: CategoryIndexView()
             case let .categoryDetail(id): CategoryView(id: id)
             }

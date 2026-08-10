@@ -16,12 +16,12 @@ import SwiftUI
 struct AtlasPublicFeedView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
+    @Environment(TabNavigator.self) private var navigator
     @Environment(AuthService.self) private var auth
     @Environment(CollectionBookmarkStore.self) private var bookmarks
     @Environment(BlockStore.self) private var blocks
 
     @State private var browsing = PublicAtlasBrowsingModel()
-    @State private var selectedCollection: AtlasCollection?
     @State private var section: PublicAtlasBrowsingModel.Shelf = .explore
     @State private var savedShelfMounted = false
 
@@ -67,9 +67,6 @@ struct AtlasPublicFeedView: View {
         // cost a full 73pt to repeat them.
         .navigationTitle("大家的物見")
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(item: self.$selectedCollection) { collection in
-            AtlasCollectionDetailView(slug: collection.slug, preview: collection)
-        }
         // Reconcile all product context through one state module. The view still
         // owns SwiftUI environment objects and translates them into plain values.
         .task(id: self.browsingLoadKey) {
@@ -168,7 +165,11 @@ struct AtlasPublicFeedView: View {
                                     .padding(.horizontal, Space.s4)
                             }
                             AtlasCollectionCard(collection: collection) {
-                                self.selectedCollection = collection
+                                self.navigator.push(
+                                    .atlasCollectionDetail(
+                                        slug: collection.slug, autoSave: false, preview: collection
+                                    )
+                                )
                             }
                         }
                     }
@@ -231,7 +232,11 @@ struct AtlasPublicFeedView: View {
                                     .padding(.horizontal, Space.s4)
                             }
                             AtlasCollectionCard(collection: collection) {
-                                self.selectedCollection = collection
+                                self.navigator.push(
+                                    .atlasCollectionDetail(
+                                        slug: collection.slug, autoSave: false, preview: collection
+                                    )
+                                )
                             }
                         }
                     }
@@ -483,6 +488,7 @@ struct AtlasPublicTile: View {
 struct AtlasPublicDetailView: View {
     @Environment(AuthService.self) private var auth
     @Environment(MasteryStore.self) private var mastery
+    @Environment(TabNavigator.self) private var navigator
     @Environment(SettingsStore.self) private var settings
     @Environment(BlockStore.self) private var blocks
     @Environment(\.dismiss) private var dismiss
@@ -490,9 +496,8 @@ struct AtlasPublicDetailView: View {
     @State private var report = ReportFlow()
     @State private var showBlockPrompt = false
     @State private var showStopLearningPrompt = false
-    /// The author route is keyed by handle, never by display name — two people
-    /// may share a name, and only the handle is a valid path component.
-    @State private var selectedAuthorHandle: String?
+    // The author route is keyed by handle, never by display name — two people
+    // may share a name, and only the handle is a valid path component.
 
     init(
         item: AtlasPublicItem,
@@ -581,9 +586,6 @@ struct AtlasPublicDetailView: View {
         .background(.tujiPaper)
         .navigationTitle(self.vm.item.lemma)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(item: self.$selectedAuthorHandle) { handle in
-            AtlasAuthorProfileView(handle: handle)
-        }
         .task {
             AnalyticsService.shared.track(.atlasPublicItemViewed)
             async let detail: Void = self.vm.loadDetail()
@@ -715,7 +717,7 @@ struct AtlasPublicDetailView: View {
         HStack(spacing: Space.s2) {
             if let author = self.vm.item.author {
                 Button {
-                    self.selectedAuthorHandle = author.handle
+                    self.navigator.push(.authorProfile(handle: author.handle, isSelf: false))
                 } label: {
                     HStack(spacing: 6) {
                         ProfileAvatar(avatar: author.avatar, size: 24)
@@ -805,4 +807,5 @@ struct AtlasPublicDetailView: View {
     }
     .environment(SettingsStore.shared)
     .environment(CommunityFeedRefresh())
+    .environment(TabNavigator())
 }

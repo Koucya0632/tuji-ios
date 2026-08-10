@@ -58,7 +58,8 @@ enum TujiDeepLink: Hashable {
         case let .category(id): .categoryDetail(id: id)
         case let .study(mode): .studyLanding(mode: mode)
         case let .collection(slug, autoSave):
-            .atlasCollectionDetail(slug: slug, autoSave: autoSave)
+            // A link arrives with no preview row to render from.
+            .atlasCollectionDetail(slug: slug, autoSave: autoSave, preview: nil)
         }
     }
 
