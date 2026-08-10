@@ -266,5 +266,6 @@ extension WordDetailPage {
             .environment(WordsStore.shared)
             .environment(SettingsStore.shared)
             .environment(MasteryStore.shared)
+            .environment(TabNavigator())
     }
 }

@@ -20,12 +20,12 @@ struct WordCommunityAtlasSection: View {
 
     @State private var items: [AtlasPublicItem] = []
     @State private var loaded = false
-    @State private var selected: AtlasPublicItem?
     /// Slugs saved during this session — the list endpoint is public and
     /// therefore can't carry a per-user saved flag.
     @State private var savedSlugs: Set<String> = []
 
     @Environment(BlockStore.self) private var blocks
+    @Environment(TabNavigator.self) private var navigator
 
     init(word: Word, repo: PublicItemsReading = LiveAtlasRepository.shared) {
         self.word = word
@@ -63,7 +63,7 @@ struct WordCommunityAtlasSection: View {
                         HStack(spacing: Space.s3) {
                             ForEach(self.visibleItems) { item in
                                 Button {
-                                    self.selected = item
+                                    self.navigator.push(.atlasPublicItem(item: item))
                                 } label: {
                                     self.card(item)
                                 }
@@ -74,9 +74,6 @@ struct WordCommunityAtlasSection: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .navigationDestination(item: self.$selected) { item in
-                    AtlasPublicDetailView(item: item)
-                }
             }
         }
         .task(id: self.taskKey) {

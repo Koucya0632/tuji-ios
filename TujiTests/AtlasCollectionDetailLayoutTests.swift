@@ -12,6 +12,7 @@ struct AtlasCollectionDetailLayoutTests {
             .environment(CollectionBookmarkStore())
             .environment(CollectionIdentityStore())
             .environment(DeepLinkCoordinator.shared)
+            .environment(TabNavigator())
         let host = UIHostingController(rootView: view)
 
         let size = host.sizeThatFits(in: CGSize(width: 390, height: 800))
@@ -24,6 +25,7 @@ struct AtlasCollectionDetailLayoutTests {
         let view = AtlasCollectionEditView(collectionId: "layout-probe")
             .environment(CommunityFeedRefresh())
             .environment(CollectionIdentityStore())
+            .environment(TabNavigator())
         let host = UIHostingController(rootView: view)
 
         let size = host.sizeThatFits(in: CGSize(width: 390, height: 800))

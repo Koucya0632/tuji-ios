@@ -20,23 +20,9 @@ struct MainTabsView: View {
     @Environment(OnboardingState.self) private var onboarding
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var selected: MainTab = .today
-    @State private var todayPath = NavigationPath()
-    @State private var cardsPath = NavigationPath()
-    @State private var communityPath = NavigationPath()
-    @State private var mePath = NavigationPath()
-    /// Set by a `tuji://favorites` link so the 圖鑑 tab opens on 書籤. Cleared
-    /// by the grid once applied, so a later manual filter change sticks.
-    @State private var cardsSourceRequest: CardsSource?
-
-    /// Whether each tab is showing its own root rather than something pushed
-    /// over it. All start true so a tab that never fires `onAppear` (an
-    /// off-screen page) reads as un-pushed — only a real push takes it away.
-    ///
-    /// This is the *one* signal for "is something on top of this tab". There
-    /// used to be two: this, and `NavigationPath.count`. They answered
-    /// differently, and the wrong one drove the pager — see `currentTabAtRoot`.
-    @State private var atRoot: [MainTab: Bool] = [:]
+    /// Owned here, reachable everywhere: see `TabNavigator` for why the paths
+    /// could not stay private to this View.
+    @State private var navigator = TabNavigator()
 
     @State private var tourIndex: Int?
     @State private var tourTransitioning = false
@@ -47,11 +33,15 @@ struct MainTabsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if self.tabBarVisible {
-                TujiTabBar(selected: self.$selected)
+                TujiTabBar(selected: self.$navigator.selected)
                     .tourAnchor(.tabBar)
                     .transition(.move(edge: .bottom))
             }
         }
+        // Every pushed screen needs it: a feature screen that wants to open a
+        // destination pushes a route through this rather than constructing the
+        // screen itself.
+        .environment(self.navigator)
         .animation(Motion.ease(Motion.d2), value: self.tabBarVisible)
         .background(.tujiPaper)
         .allowsHitTesting(self.tourIndex == nil)
@@ -102,7 +92,7 @@ struct MainTabsView: View {
             .scrollPosition(id: self.selectedScrollBinding, anchor: .center)
             .scrollDisabled(
                 !TabShellDecisions.swipeEnabled(
-                    currentTabAtRoot: self.currentTabAtRoot,
+                    currentTabAtRoot: self.navigator.currentTabAtRoot,
                     studyFocusActive: self.studyFocus.active
                 )
             )
@@ -114,25 +104,25 @@ struct MainTabsView: View {
     private func page(for tab: MainTab) -> some View {
         switch tab {
         case .today:
-            NavigationStack(path: self.$todayPath) {
+            NavigationStack(path: self.$navigator.todayPath) {
                 TodayView(user: self.user)
                     .tujiNavDestinations(user: self.user)
                     .tracksStackRoot(self.binding(for: .today))
             }
         case .cards:
-            NavigationStack(path: self.$cardsPath) {
-                CardsListView(sourceRequest: self.$cardsSourceRequest)
+            NavigationStack(path: self.$navigator.cardsPath) {
+                CardsListView(sourceRequest: self.$navigator.cardsSourceRequest)
                     .tujiNavDestinations(user: self.user)
                     .tracksStackRoot(self.binding(for: .cards))
             }
         case .community:
-            NavigationStack(path: self.$communityPath) {
+            NavigationStack(path: self.$navigator.communityPath) {
                 AtlasPublicFeedView()
                     .tujiNavDestinations(user: self.user)
                     .tracksStackRoot(self.binding(for: .community))
             }
         case .me:
-            NavigationStack(path: self.$mePath) {
+            NavigationStack(path: self.$navigator.mePath) {
                 MeView(user: self.user)
                     .tujiNavDestinations(user: self.user)
                     .tracksStackRoot(self.binding(for: .me))
@@ -142,8 +132,8 @@ struct MainTabsView: View {
 
     private func binding(for tab: MainTab) -> Binding<Bool> {
         Binding(
-            get: { self.atRoot[tab] ?? true },
-            set: { self.atRoot[tab] = $0 }
+            get: { self.navigator.atRoot[tab] ?? true },
+            set: { self.navigator.atRoot[tab] = $0 }
         )
     }
 
@@ -151,31 +141,13 @@ struct MainTabsView: View {
     /// current tab; a settled swipe writes the newly-centred tab through.
     private var selectedScrollBinding: Binding<MainTab?> {
         Binding(
-            get: { self.selected },
+            get: { self.navigator.selected },
             set: { newValue in
-                if let newValue, newValue != self.selected {
-                    self.selected = newValue
+                if let newValue, newValue != self.navigator.selected {
+                    self.navigator.selected = newValue
                 }
             }
         )
-    }
-
-    /// Is the selected tab showing its own root?
-    ///
-    /// Root visibility is the only signal that holds however a screen was
-    /// pushed — a path value, a view-based link (設定's pickers), or a
-    /// `navigationDestination(item:)` (物見's collection cards, which carry a
-    /// preview model no route value could). `NavigationPath.count` sees only
-    /// the first kind.
-    ///
-    /// The pager's swipe guard used to read the count, and the bug was
-    /// reproducible: 物見 → tap a collection card pushes via
-    /// `navigationDestination(item:)`, which never touches `communityPath`, so
-    /// the count stayed 0, the horizontal swipe stayed live *on top of* the
-    /// pushed detail, and it raced NavigationStack's own edge-swipe-to-pop —
-    /// the exact thing the guard exists to prevent.
-    private var currentTabAtRoot: Bool {
-        self.atRoot[self.selected] ?? true
     }
 
     /// The floating bar steps aside for a focused study session, and for
@@ -187,8 +159,8 @@ struct MainTabsView: View {
     /// come back from, not a window you are handed.
     private var tabBarVisible: Bool {
         TabShellDecisions.tabBarVisible(
-            selected: self.selected,
-            currentTabAtRoot: self.currentTabAtRoot,
+            selected: self.navigator.selected,
+            currentTabAtRoot: self.navigator.currentTabAtRoot,
             studyFocusActive: self.studyFocus.active
         )
     }
@@ -223,14 +195,14 @@ struct MainTabsView: View {
             self.finishTour()
             return
         }
-        if steps[index + 1].tab == self.selected {
+        if steps[index + 1].tab == self.navigator.selected {
             withAnimation(self.tourAnimation) { self.tourIndex = index + 1 }
             return
         }
         // Next step lives on another tab: full dim while the pager slides,
         // then reveal the step once the page has settled.
         self.tourTransitioning = true
-        withAnimation(.easeInOut(duration: 0.25)) { self.selected = steps[index + 1].tab }
+        withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = steps[index + 1].tab }
         Task {
             try? await Task.sleep(for: .milliseconds(400))
             withAnimation(self.tourAnimation) {
@@ -252,7 +224,7 @@ struct MainTabsView: View {
         withAnimation(self.tourAnimation) { self.tourIndex = nil }
         // The tour ends on 圖鑑; the closing card invites the user to start
         // today's study, which lives on 主頁.
-        withAnimation(.easeInOut(duration: 0.25)) { self.selected = .today }
+        withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = .today }
     }
 
     private func consumePendingLink() {
@@ -267,19 +239,12 @@ struct MainTabsView: View {
         case let .apply(applied):
             _ = self.deepLinks.consume()
             if applied.skipTour { self.skipTour() }
-            self.selected = applied.tab
-            if let source = applied.cardsSource { self.cardsSourceRequest = source }
-            guard let route = applied.route else { return }
-            // Append on the next runloop turn so the NavigationStack for the
-            // newly-selected tab has time to mount.
-            DispatchQueue.main.async {
-                switch applied.tab {
-                case .today: self.todayPath.append(route)
-                case .cards: self.cardsPath.append(route)
-                case .community: self.communityPath.append(route)
-                case .me: self.mePath.append(route)
-                }
-            }
+            // Tab first, then the push on the next runloop turn so the newly
+            // selected tab's NavigationStack has time to mount.
+            self.navigator.select(applied.tab)
+            if let source = applied.cardsSource { self.navigator.cardsSourceRequest = source }
+            guard applied.route != nil else { return }
+            DispatchQueue.main.async { self.navigator.applyPush(applied) }
         }
     }
 }

@@ -117,6 +117,30 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   設定 offer 「升級」 to accounts that already had Pro. `StoreKitService` keeps it for the
   paywall's own purchase/restore flow and nothing else.
 
+## Navigation
+
+- **NavRoute + the destination table** (`tujiNavDestinations`) — the single place that
+  decides *what a route means*. It always claimed to be, and for a long time it was not:
+  21 of the app's 37 pushes bypassed it and constructed their own screen, so the same
+  destination arrived 2–4 different ways with divergent arguments. That cost two shipped
+  bugs — 檢舉/封鎖 offered on your own profile (an `isSelf: Bool = false` default two call
+  sites inherited), and a `saved:` tile opening a different screen on tap than on
+  long-press. Routes carry preview models where a destination needs one; a defaulted
+  answer to "is this me" is not allowed, so `isSelf` has no default.
+- **TabNavigator** — the tab shell's navigation state (four `NavigationPath`s, selected
+  tab, per-tab `atRoot`, the pending 圖鑑 source filter) and the one way to push. It lives
+  in the environment because the paths *being private to `MainTabsView`* is precisely why
+  screens bypassed the table: a screen with no path to append to had no way to push a
+  route. `push(_:)` targets the selected tab; `push(_:on:)` names one.
+- **TabShellDecisions** — the three shell policies as pure functions: what a pending deep
+  link does, whether the tab bar shows, whether the pager may swipe. Two of them exist
+  because they were wrong once — the swipe guard read `NavigationPath.count`, which sees
+  only value pushes, so a `navigationDestination(item:)` push left the pager live on top
+  of a pushed screen; and a guest's auto-save collection intent must be *held* through the
+  sign-in root swap rather than consumed.
+- **`atRoot`, not `NavigationPath.count`** — the one signal for "is something on top of
+  this tab". The count only counts value-based pushes, and the two answers disagreed.
+
 ## Architecture — seams & conventions
 
 - **LiveAtlasRepository** — the concrete atlas HTTP client (in `AtlasRepository.swift`).

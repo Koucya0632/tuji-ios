@@ -16,12 +16,11 @@ import SwiftUI
 
 struct AtlasAuthorProfileView: View {
     @State private var vm: AuthorProfileVM
-    @State private var selectedItem: AtlasPublicItem?
-    @State private var selectedCollection: AtlasCollection?
     @State private var editing = false
     @State private var showBlockPrompt = false
     @State private var report = ReportFlow()
     @Environment(BlockStore.self) private var blocks
+    @Environment(TabNavigator.self) private var navigator
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
 
@@ -80,7 +79,13 @@ struct AtlasAuthorProfileView: View {
 
     /// `handle` is the author's public handle (`profiles.username`) — the link
     /// target carried on public items, never the name shown on them.
-    init(handle: String, isSelf: Bool = false) {
+    ///
+    /// `isSelf` has **no default on purpose**. It used to default to false, and
+    /// two of the three call sites took that default — which offered 檢舉 and
+    /// 封鎖 on your own profile, patched afterwards with a second self-check
+    /// below. A defaulted answer to "is this me" is how that happened; now
+    /// every caller states it.
+    init(handle: String, isSelf: Bool) {
         _vm = State(initialValue: AuthorProfileVM(handle: handle, isSelf: isSelf))
     }
 
@@ -119,12 +124,6 @@ struct AtlasAuthorProfileView: View {
         .reportSheet(self.report)
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(item: self.$selectedItem) { item in
-            AtlasPublicDetailView(item: item)
-        }
-        .navigationDestination(item: self.$selectedCollection) { collection in
-            AtlasCollectionDetailView(slug: collection.slug, preview: collection)
-        }
         // Refetch on the way back: the page renders the very fields that screen
         // edits, and `isSelf` makes the reload bypass both caches.
         .navigationDestination(isPresented: self.$editing) {
@@ -320,7 +319,13 @@ struct AtlasAuthorProfileView: View {
             ForEach(self.vm.collections) { collection in
                 AtlasCollectionCard(
                     collection: collection,
-                    onOpen: { self.selectedCollection = collection },
+                    onOpen: {
+                        self.navigator.push(
+                            .atlasCollectionDetail(
+                                slug: collection.slug, autoSave: false, preview: collection
+                            )
+                        )
+                    },
                     showsAuthor: false
                 )
             }
@@ -374,7 +379,7 @@ struct AtlasAuthorProfileView: View {
                 spacing: Space.s3
             ) {
                 ForEach(group.items) { item in
-                    AtlasPublicTile(item: item, onOpen: { self.selectedItem = item })
+                    AtlasPublicTile(item: item, onOpen: { self.navigator.push(.atlasPublicItem(item: item)) })
                 }
             }
         }
@@ -387,9 +392,10 @@ struct AtlasAuthorProfileView: View {
 // backend, which is the state worth eyeballing anyway.
 #Preview("作者主頁") {
     NavigationStack {
-        AtlasAuthorProfileView(handle: "mika_k")
+        AtlasAuthorProfileView(handle: "mika_k", isSelf: false)
     }
     .environment(SettingsStore.shared)
+    .environment(TabNavigator())
 }
 
 #Preview("自己的主頁") {
@@ -397,4 +403,5 @@ struct AtlasAuthorProfileView: View {
         AtlasAuthorProfileView(handle: "mika_k", isSelf: true)
     }
     .environment(SettingsStore.shared)
+    .environment(TabNavigator())
 }
