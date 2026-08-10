@@ -76,11 +76,15 @@ struct RecognizeView: View {
                     // Display size: this is the one screen whose whole job is
                     // "here is a new word", so the word is the largest thing
                     // the app ever sets.
-                    Text(self.item.word.word)
-                        .font(.tujiDisplay)
-                        .foregroundStyle(.tujiInk)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.5)
+                    TujiHeadword(
+                        display: self.item.word.headwordDisplay,
+                        word: self.item.word.word,
+                        baseSize: 56,
+                        font: .tujiDisplay
+                    )
+                    // A custom `Layout` beside a `Spacer` is offered half the
+                    // row unless it is prioritised; see WordDetailView.titleRow.
+                    .layoutPriority(1)
                     Spacer(minLength: Space.s2)
                     PronunciationButton(
                         text: self.item.word.word,
@@ -89,20 +93,13 @@ struct RecognizeView: View {
                         size: 48
                     )
                 }
-                if let pron = ReadingLine.shown(
-                    self.item.word.pronunciation,
-                    for: self.item.word.word
-                ) {
-                    Text(pron)
-                        .font(.tujiMono)
-                        .foregroundStyle(.tujiInk3)
-                }
-                if let reading = ReadingLine.shown(
-                    self.item.word.reading,
-                    for: self.item.word.word
-                ), reading != self.item.word.pronunciation {
-                    Text(reading)
-                        .font(.tujiBodySm)
+                // One line, not two. These used to be separate `pronunciation`
+                // and `reading` checks guarded against each other, which only
+                // ever mattered while the two could differ — the server sends
+                // the same string for both on every Japanese word.
+                if case let .line(text) = self.item.word.headwordDisplay {
+                    Text(text)
+                        .font(self.item.word.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
                         .foregroundStyle(.tujiInk3)
                 }
                 // In monolingual mode (UI language == target) the gloss equals

@@ -50,3 +50,24 @@ extension LanguageTagged {
 extension CardWord: LanguageTagged {}
 extension Word: LanguageTagged {}
 extension StudyQueueWord: LanguageTagged {}
+
+/// `headwordPronunciation` only exists because the witness types disagree:
+/// `Word` stores it optional, the other two do not, and Swift will not accept a
+/// `String` property as a `String?` requirement.
+extension CardWord: Headworded {
+    var headwordPronunciation: String? {
+        self.pronunciation
+    }
+}
+
+extension Word: Headworded {
+    var headwordPronunciation: String? {
+        self.pronunciation
+    }
+}
+
+extension StudyQueueWord: Headworded {
+    var headwordPronunciation: String? {
+        self.pronunciation
+    }
+}

@@ -30,6 +30,9 @@ struct CardWord: Codable, Identifiable, Hashable {
     let category: String
     let pronunciation: String
     let reading: String?
+    /// Which kana sit over which characters of `word`; nil when the server has
+    /// no trustworthy split and the reading falls back to a line of its own.
+    let readingSegments: [FuriganaSegment]?
     let targetLanguage: TargetLanguage?
     /// Pre-generated pronunciation clips keyed by locale ("en-US" / "en-GB" /
     /// "ja-JP"). The server only sends the locales relevant to the active
@@ -48,6 +51,7 @@ struct CardWord: Codable, Identifiable, Hashable {
         category: String,
         pronunciation: String,
         reading: String? = nil,
+        readingSegments: [FuriganaSegment]? = nil,
         targetLanguage: TargetLanguage? = nil,
         audioUrls: [String: String]? = nil,
         detail: Word? = nil
@@ -59,6 +63,7 @@ struct CardWord: Codable, Identifiable, Hashable {
         self.category = category
         self.pronunciation = pronunciation
         self.reading = reading
+        self.readingSegments = readingSegments
         self.targetLanguage = targetLanguage
         self.audioUrls = audioUrls
         self.detail = detail
@@ -120,6 +125,65 @@ enum ReadingLine {
     }
 }
 
+/// One run of a headword and the kana read over it (`nil` for bare kana).
+///
+/// Produced on the server, never here: which kana belong to which kanji is a
+/// dictionary fact, and `reading` alone cannot yield it — はみがきこ does not
+/// say that 歯 is は. The two invariants the server guarantees are that `text`
+/// re-spells the headword and `ruby ?? text` re-spells the reading, which is
+/// what lets a renderer draw either from this alone.
+nonisolated struct FuriganaSegment: Codable, Hashable {
+    let text: String
+    let ruby: String?
+}
+
+/// What a screen puts with a headword.
+///
+/// Five screens each carried their own `if let pronunciation` and they did not
+/// agree: only 認識 checked the reading against the headword, so on the other
+/// four every kana-only Japanese word printed itself twice — バスマット at
+/// display size, then バスマット again underneath. The rule belongs in one
+/// place, beside `ReadingLine`, which is the same question one layer down.
+nonisolated enum HeadwordDisplay: Equatable {
+    /// Japanese with a usable split: kana sit over the characters they read.
+    case ruby([FuriganaSegment])
+    /// A line of its own — an English IPA transcription, or Japanese kana that
+    /// could not be aligned.
+    case line(String)
+    /// Nothing to add. The headword already says it.
+    case plain
+}
+
+/// A payload that can decide how its headword is presented.
+nonisolated protocol Headworded: LanguageTagged {
+    var word: String { get }
+    /// Spelled out because the three models disagree on optionality, and a
+    /// protocol witness may not narrow `String` to `String?`.
+    var headwordPronunciation: String? { get }
+    var readingSegments: [FuriganaSegment]? { get }
+}
+
+extension Headworded {
+    var headwordDisplay: HeadwordDisplay {
+        // Japanese only. An English `pronunciation` is IPA — different
+        // information from the headword, and nothing ruby can express.
+        guard self.wordLanguage == .ja else {
+            return ReadingLine.shown(self.headwordPronunciation, for: self.word)
+                .map(HeadwordDisplay.line) ?? .plain
+        }
+        if let segments = self.readingSegments, !segments.isEmpty {
+            return .ruby(segments)
+        }
+        // No split: fall back to the line this replaced. For Japanese the
+        // server sends `pronunciation` as a copy of `reading`, so either
+        // spelling of the question gives the same answer — and a headword
+        // already written in kana is its own reading, which is the case that
+        // used to print twice.
+        return ReadingLine.shown(self.reading ?? self.headwordPronunciation, for: self.word)
+            .map(HeadwordDisplay.line) ?? .plain
+    }
+}
+
 struct WordsListResponse: Decodable {
     let words: [CardWord]
     let total: Int
@@ -138,6 +202,7 @@ struct Word: Codable, Identifiable, Hashable {
     let partOfSpeech: String?
     let pronunciation: String?
     let reading: String?
+    let readingSegments: [FuriganaSegment]?
     let targetLanguage: TargetLanguage?
     let audioUrl: String?
     /// Per-locale pronunciation clips ("en-US" / "en-GB" / "ja-JP"); superset
