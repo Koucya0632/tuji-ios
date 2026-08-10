@@ -85,7 +85,7 @@ struct SessionUserMirrorTests {
             bio: nil
         )
 
-        let seed = EditProfileView.profileSeed(session: self.user(nickname: "Mika"), server: server)
+        let seed = EditProfileVM.profileSeed(session: self.user(nickname: "Mika"), server: server)
 
         #expect(seed.draft.nickname == "Mika")
         #expect(seed.saved.nickname == "")
@@ -103,7 +103,7 @@ struct SessionUserMirrorTests {
             bio: nil
         )
 
-        let seed = EditProfileView.profileSeed(session: self.user(nickname: "Old Mika"), server: server)
+        let seed = EditProfileVM.profileSeed(session: self.user(nickname: "Old Mika"), server: server)
 
         #expect(seed.draft.nickname == "Public Mika")
         #expect(seed.saved.nickname == "Public Mika")
@@ -112,7 +112,7 @@ struct SessionUserMirrorTests {
 
     @Test
     func unavailableServerDoesNotInventAnUnsavedChange() {
-        let seed = EditProfileView.profileSeed(session: self.user(nickname: "Mika"), server: nil)
+        let seed = EditProfileVM.profileSeed(session: self.user(nickname: "Mika"), server: nil)
 
         #expect(seed.draft.nickname == "Mika")
         #expect(seed.draft == seed.saved)

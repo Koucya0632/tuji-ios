@@ -17,48 +17,22 @@ import UIKit
 struct EditProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
-    private let profiles: ProfileEditing = LiveProfileModule.shared
 
-    @State private var nickname: String = ""
-    @State private var bio: String = ""
-    @State private var avatar: String = MascotPose.face.rawValue
-    @State private var pendingAvatarData: Data?
+    @State private var vm = EditProfileVM()
+    /// The cropped photo as an image — preview only. The bytes that get
+    /// uploaded live on the view model, because they are what makes the form
+    /// dirty.
     @State private var pendingAvatarImage: UIImage?
     @State private var avatarPicker = AvatarPicker(encoding: .profile, cropFrame: .circle)
-    @State private var saving = false
-    @State private var loading = true
-    @State private var error: Error?
-    /// What the server had when the screen opened, so `dirty` compares against
-    /// the truth rather than against a stale session copy.
-    @State private var loaded: Loaded?
-    /// Server truth for the UID. The session mirror can lag it, and this screen
-    /// is where someone goes to check what their UID actually is.
-    @State private var serverUid: String?
-
-    private let log = Logger(subsystem: "app.tuji.ios", category: "edit-profile")
-
-    struct Loaded: Equatable {
-        var nickname: String
-        var bio: String
-        var avatar: String
-    }
-
-    struct ProfileSeed: Equatable {
-        var draft: Loaded
-        var saved: Loaded
-    }
-
-    static let nicknameMax = 20
-    static let bioMax = 80
 
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back) {
                 TujiNavTextAction(
-                    title: self.saving ? "儲存中…" : "儲存",
-                    isEnabled: self.canSave
+                    title: self.vm.saving ? "儲存中…" : "儲存",
+                    isEnabled: self.vm.canSave
                 ) {
-                    Task { await self.save() }
+                    Task { await self.saveAndDismiss() }
                 }
             }
             self.form
@@ -68,15 +42,14 @@ struct EditProfileView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task {
             self.connectAvatarPicker()
-            await self.load()
+            await self.vm.load(session: self.sessionUser)
         }
         .avatarPicker(
             self.avatarPicker,
             title: "更換頭像",
-            extraSources: self.hasCustomAvatar
+            extraSources: self.vm.hasCustomAvatar
                 ? [AvatarSource("使用預設黑貓頭像") {
-                    self.avatar = MascotPose.face.rawValue
-                    self.pendingAvatarData = nil
+                    self.vm.useDefaultAvatar()
                     self.pendingAvatarImage = nil
                 }]
                 : []
@@ -90,7 +63,7 @@ struct EditProfileView: View {
                 self.nicknameField
                 self.bioField
                 self.uidField
-                if let message = self.error?.localizedDescription ?? self.avatarPicker.errorMessage {
+                if let message = self.vm.error?.localizedDescription ?? self.avatarPicker.errorMessage {
                     Text(message)
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiAlert)
@@ -108,8 +81,7 @@ struct EditProfileView: View {
     private func connectAvatarPicker() {
         self.avatarPicker.onDeliver { data in
             guard let image = UIImage(data: data) else { return false }
-            self.error = nil
-            self.pendingAvatarData = data
+            self.vm.stageAvatar(data: data)
             self.pendingAvatarImage = image
             return true
         }
@@ -131,7 +103,7 @@ struct EditProfileView: View {
                                 .overlay(Circle().stroke(.tujiCurrent, lineWidth: 2))
                                 .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
                         } else {
-                            ProfileAvatar(avatar: self.avatar, size: 104, selected: true)
+                            ProfileAvatar(avatar: self.vm.avatar, size: 104, selected: true)
                         }
                     }
 
@@ -149,7 +121,7 @@ struct EditProfileView: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
-        .disabled(self.saving || self.loading)
+        .disabled(self.vm.saving || self.vm.loading)
         .accessibilityLabel("更換頭像")
     }
 
@@ -159,7 +131,7 @@ struct EditProfileView: View {
                 .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
-            TextField("大家會怎麼稱呼你", text: self.$nickname)
+            TextField("大家會怎麼稱呼你", text: self.$vm.nickname)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .font(.tujiBodySm)
@@ -169,7 +141,7 @@ struct EditProfileView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            self.nicknameIsValid ? .tujiRule : Color.tujiAlert,
+                            self.vm.nicknameIsValid ? .tujiRule : Color.tujiAlert,
                             lineWidth: 1
                         )
                 )
@@ -187,7 +159,7 @@ struct EditProfileView: View {
                 .font(.tujiLabel)
                 .tracking(2)
                 .foregroundStyle(.tujiInk3)
-            TextField("介紹一下你自己", text: self.$bio, axis: .vertical)
+            TextField("介紹一下你自己", text: self.$vm.bio, axis: .vertical)
                 .lineLimit(2...4)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -198,7 +170,7 @@ struct EditProfileView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: Radius.r0)
                         .stroke(
-                            self.bioIsValid ? .tujiRule : Color.tujiAlert,
+                            self.vm.bioIsValid ? .tujiRule : Color.tujiAlert,
                             lineWidth: 1
                         )
                 )
@@ -207,9 +179,9 @@ struct EditProfileView: View {
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                 Spacer()
-                Text(verbatim: "\(Self.bioMax - self.trimmedBio.count)")
+                Text(verbatim: "\(EditProfileVM.bioMax - self.vm.trimmedBio.count)")
                     .font(.tujiLabel)
-                    .foregroundStyle(self.bioIsValid ? .tujiInk3 : .tujiAlert)
+                    .foregroundStyle(self.vm.bioIsValid ? .tujiInk3 : .tujiAlert)
                     .monospacedDigit()
             }
         }
@@ -239,111 +211,24 @@ struct EditProfileView: View {
     // MARK: - State
 
     private var uid: String {
-        if let serverUid, !serverUid.isEmpty { return serverUid }
+        if let serverUid = self.vm.serverUid, !serverUid.isEmpty { return serverUid }
         if case let .signedIn(user) = auth.state, let uid = user.username, !uid.isEmpty {
             return uid
         }
         return "—"
     }
 
-    private var trimmedNickname: String {
-        self.nickname.trimmingCharacters(in: .whitespaces)
+    private var sessionUser: SessionUser? {
+        if case let .signedIn(user) = self.auth.state { return user }
+        return nil
     }
 
-    private var trimmedBio: String {
-        self.bio.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var nicknameIsValid: Bool {
-        self.trimmedNickname.count <= Self.nicknameMax
-    }
-
-    private var bioIsValid: Bool {
-        self.trimmedBio.count <= Self.bioMax
-    }
-
-    private var dirty: Bool {
-        guard let loaded else { return false }
-        if self.pendingAvatarData != nil { return true }
-        return Loaded(nickname: self.trimmedNickname, bio: self.trimmedBio, avatar: self.avatar) != loaded
-    }
-
-    private var canSave: Bool {
-        self.dirty && !self.saving && !self.loading && self.nicknameIsValid && self.bioIsValid
-    }
-
-    private var hasCustomAvatar: Bool {
-        if self.pendingAvatarData != nil { return true }
-        return URL(string: self.avatar)?.scheme == "https"
-    }
-
-    /// Keeps the edit draft and server truth separate. A legacy auth-session
-    /// nickname may still be useful as a draft, but it is not public until the
-    /// profiles row contains it.
-    static func profileSeed(session: SessionUser?, server: UserMeUser?) -> ProfileSeed {
-        var seeded = Loaded(nickname: "", bio: "", avatar: MascotPose.face.rawValue)
-        if let session {
-            seeded.nickname = session.nickname ?? ""
-            if let avatar = session.avatar, URL(string: avatar)?.scheme == "https" {
-                seeded.avatar = avatar
-            }
-        }
-        var saved = seeded
-        if let server {
-            seeded.nickname = server.nickname ?? seeded.nickname
-            seeded.bio = server.bio ?? ""
-            if let avatar = server.avatar, URL(string: avatar)?.scheme == "https" {
-                seeded.avatar = avatar
-            }
-            saved = seeded
-            // A successful /users/me response is authoritative. Keep a stale
-            // session nickname in the field as a convenient draft, but compare
-            // it against the empty public value so Save becomes available and
-            // publishing still requires an explicit tap.
-            saved.nickname = server.nickname ?? ""
-        }
-        return ProfileSeed(draft: seeded, saved: saved)
-    }
-
-    /// The 簽名 has no other read path, so the screen loads its own copy rather
-    /// than seeding from the cached session (which carries no bio at all).
-    private func load() async {
-        guard self.loading else { return }
-        defer { self.loading = false }
-        let session: SessionUser? = if case let .signedIn(user) = auth.state { user } else { nil }
-        var seed = Self.profileSeed(session: session, server: nil)
-        if let me = try? await self.profiles.load() {
-            self.serverUid = me.username
-            seed = Self.profileSeed(session: session, server: me)
-        }
-        self.nickname = seed.draft.nickname
-        self.bio = seed.draft.bio
-        self.avatar = seed.draft.avatar
-        self.loaded = seed.saved
-    }
-
-    private func save() async {
-        self.saving = true
-        self.error = nil
-        defer { self.saving = false }
-        let newNickname = self.trimmedNickname.isEmpty ? nil : self.trimmedNickname
-        do {
-            let avatarChange = self.pendingAvatarData == nil && self.avatar != self.loaded?.avatar
-                ? self.avatar
-                : nil
-            let change = ProfileEditChange(
-                nickname: newNickname,
-                avatar: avatarChange,
-                bio: self.trimmedBio
-            )
-            let author = try await self.profiles.edit(change, avatarData: self.pendingAvatarData)
-            self.log.info("profile saved")
-            let savedNickname = author.displayName == author.handle ? nil : author.displayName
-            self.auth.applyProfile(nickname: savedNickname, avatar: author.avatar)
-            self.dismiss()
-        } catch {
-            self.error = error
-            self.log.error("profile save failed: \(error.localizedDescription, privacy: .public)")
-        }
+    /// The VM does the write and hands back the identity; mirroring it into the
+    /// session and dismissing are the View's job (a view model does not reach
+    /// `AuthService`).
+    private func saveAndDismiss() async {
+        guard let saved = await self.vm.save() else { return }
+        self.auth.applyProfile(nickname: saved.nickname, avatar: saved.avatar)
+        self.dismiss()
     }
 }
