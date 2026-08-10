@@ -1,0 +1,183 @@
+// What 首頁 says and offers, derived from the day's state.
+//
+// These eight decisions used to be `private var`s on `TodayView` — a 7-branch
+// subtitle, a 5-branch block reason, a 3-level denominator fallback — reading
+// across six environment stores inside a 802-line View. Nothing could reach
+// them: no `@testable import` sees `private` instance state on a `View`, and no
+// fake can be injected into one. The single piece that *was* tested is the one
+// someone had already lifted out as a `static func` (`newQuotaAdjustment`), and
+// its doc comment says exactly why: "split from the localized string so the
+// logic stays unit-testable without a bundle/locale."
+//
+// So this module follows that lead for all of them. It returns *enums*, not
+// `LocalizedStringKey`s — the View owns the words, this owns the verdict. That
+// split is what keeps it testable without a bundle, and it is also why a
+// String-keyed `LocalizedStringKey` can no longer leak Chinese into a ja/en UI
+// from here: there is no string to leak.
+
+import Foundation
+
+/// Which line sits under the greeting. One case per thing 首頁 can truthfully
+/// say, in the order the rules resolve.
+enum TodaySubtitle: Equatable {
+    case guestBrowsing
+    case guestLearned(count: Int)
+    case pickThemes
+    /// Stats have not arrived. A neutral line beats a wrong verdict —
+    /// 「都學過了」 flashing on a brand-new account while the first fetch is in
+    /// flight is worse than saying nothing specific.
+    case unknown
+    case reviewDue(count: Int)
+    case goalReached
+    case newDoneToday(count: Int)
+    case newAvailable
+    case allLearnedInThemes
+}
+
+/// Why 學新字 is unavailable, so the hero can explain the dead-end instead of
+/// leaving a silently greyed button.
+enum TodayNewBlock: Equatable {
+    case none
+    case noThemes
+    case noCards
+    /// An early/small theme (e.g. 廚房 — seeded first, so its cards carry the
+    /// lowest ids and get drawn first) empties before the rest.
+    case allLearned
+    case reviewBacklog
+}
+
+struct TodayDecisions {
+    /// Every fact the decisions depend on, read once by the View from its
+    /// environment. Long on purpose: this is the honest input set, and it used
+    /// to be six store reads scattered through a View body.
+    struct Inputs {
+        var isGuest: Bool
+        /// `SettingsStore.hasLoaded` — an empty theme list means nothing until
+        /// settings have actually arrived.
+        var settingsLoaded: Bool
+        var studyCategories: [String]
+        var dailyGoal: Int
+        var stats: StudyStats?
+        /// Guests have no SRS state; their progress is the local learned set.
+        var guestLearnedCount: Int
+        /// `!ProgressStore.categoryProgress.isEmpty`.
+        var progressLoaded: Bool
+        var seenInSelection: Int
+        var totalInSelection: Int
+        /// Whole local dictionary — the denominator when no themes are picked.
+        var dictionaryCount: Int
+        /// Local dictionary scoped to the selection.
+        var dictionaryCountInSelection: Int
+    }
+
+    let inputs: Inputs
+
+    init(_ inputs: Inputs) {
+        self.inputs = inputs
+    }
+
+    var showThemePrompt: Bool {
+        !self.inputs.isGuest
+            && self.inputs.settingsLoaded
+            && self.inputs.studyCategories.isEmpty
+    }
+
+    var dailyGoalReached: Bool {
+        guard !self.inputs.isGuest else { return false }
+        let goal = max(1, self.inputs.dailyGoal)
+        return (self.inputs.stats?.todayNew ?? 0) >= goal
+    }
+
+    /// Words studied at least once (server "seen"), matching the Progress tab's
+    /// completion source. With no themes selected the progress reads 0/0 to
+    /// match the "pick themes first" empty state.
+    var dexSeen: Int {
+        if self.inputs.isGuest { return self.inputs.guestLearnedCount }
+        if self.showThemePrompt { return 0 }
+        return self.inputs.seenInSelection
+    }
+
+    /// Total published words in the selected categories. Server count when
+    /// available, else the locally known dictionary — scoped the same way.
+    ///
+    /// The fallback used to be the *whole* dictionary, which fired not only
+    /// when there is no server progress (guests, always) but also whenever the
+    /// selected themes happen to hold nothing. A guest whose only themes were
+    /// 自定義 + 物見 therefore read 「主題進度 0 / 480」 while 設定 said two
+    /// themes were selected — a denominator describing a selection nobody made.
+    var dexTotal: Int {
+        if self.showThemePrompt { return 0 }
+        if self.inputs.totalInSelection > 0 { return self.inputs.totalInSelection }
+        guard !self.inputs.studyCategories.isEmpty else { return self.inputs.dictionaryCount }
+        return self.inputs.dictionaryCountInSelection
+    }
+
+    var reviewDisabled: Bool {
+        self.inputs.isGuest || (self.inputs.stats?.due ?? 0) == 0
+    }
+
+    /// New words still to learn within the selected themes: (total − seen)
+    /// scoped to the selection, derived from progress so it tracks the
+    /// selection without a stats refetch. Falls back to the global `new` count
+    /// before progress loads.
+    var newAvailable: Int {
+        guard self.inputs.progressLoaded else { return self.inputs.stats?.new ?? 0 }
+        return max(0, self.inputs.totalInSelection - self.inputs.seenInSelection)
+    }
+
+    var newBlock: TodayNewBlock {
+        // Guests can't study new words; the prompt to sign in lives elsewhere.
+        if self.inputs.isGuest { return .none }
+        // No themes selected → nothing to draw new words from (review stays
+        // available — it spans all studied words).
+        if self.inputs.studyCategories.isEmpty { return .noThemes }
+        // total == 0 with progress loaded means the selected themes have no
+        // cards in the current deck — e.g. a theme with no 日文 cards yet —
+        // a different dead-end from "you've learned them all".
+        if self.inputs.progressLoaded, self.inputs.totalInSelection == 0 { return .noCards }
+        if self.newAvailable == 0 { return .allLearned }
+        // When the review backlog crowds out the new-card quota
+        // (computeNewLimit hits 0 once due > 100), grey the button out instead
+        // of letting the user enter the launcher only to bounce back empty.
+        if StudyQuotas.computeNewLimit(
+            goal: max(1, self.inputs.dailyGoal),
+            due: self.inputs.stats?.due ?? 0
+        ) == 0 {
+            return .reviewBacklog
+        }
+        return .none
+    }
+
+    var newDisabled: Bool {
+        self.inputs.isGuest || self.newBlock != .none
+    }
+
+    var subtitle: TodaySubtitle {
+        if self.inputs.isGuest {
+            let learned = self.inputs.guestLearnedCount
+            return learned > 0 ? .guestLearned(count: learned) : .guestBrowsing
+        }
+        if self.showThemePrompt { return .pickThemes }
+        guard let stats = self.inputs.stats else { return .unknown }
+        if stats.due > 0 { return .reviewDue(count: stats.due) }
+        // Goal reached wins over everything below so this line can never
+        // contradict the 達成 badge on the hero card.
+        if self.dailyGoalReached { return .goalReached }
+        if let done = stats.todayNew, done > 0 { return .newDoneToday(count: done) }
+        if self.newAvailable > 0 { return .newAvailable }
+        return .allLearnedInThemes
+    }
+
+    /// The backlog-tapers-new-quota decision + counts. Unchanged rule, moved
+    /// here from `TodayView.newQuotaAdjustment` so every 首頁 decision has one
+    /// home instead of one having been rescued and the rest left behind.
+    var quotaAdjustment: (due: Int, limit: Int)? {
+        guard !self.inputs.isGuest, let stats = self.inputs.stats else { return nil }
+        let goal = max(1, self.inputs.dailyGoal)
+        guard (stats.todayNew ?? 0) < goal else { return nil }
+        guard self.newAvailable > 0 else { return nil }
+        let limit = StudyQuotas.computeNewLimit(goal: goal, due: stats.due)
+        guard limit > 0, limit < goal else { return nil }
+        return (due: stats.due, limit: limit)
+    }
+}
