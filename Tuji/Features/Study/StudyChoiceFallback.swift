@@ -28,7 +28,18 @@ import Foundation
 /// `variant` folds into the seed: the coordinator bumps it per wrong attempt
 /// so a requeued question re-shuffles (and may re-draw top-ups) — otherwise
 /// remembering "the answer was C" stands in for knowing the word.
-func studyChoices(for item: StudyQueueItem, pool: [CardWord], variant: Int = 0) -> [String] {
+///
+/// `session` is 當前圖鑑語言, used to place words the server did not tag. The
+/// top-up used to skip its same-language filter entirely for an untagged
+/// question, drawing English distractors under a Japanese answer.
+func studyChoices(
+    for item: StudyQueueItem,
+    pool: [CardWord],
+    session: TargetLanguage,
+    variant: Int = 0
+)
+    -> [String]
+{
     let answer = item.word.word
     var rng = SeededRNG(seed: studyStableHash(item.id) &+ UInt64(variant) &* 0x9E3779B97F4A7C15)
     let answerGlosses = chineseGlosses(item.word.chinese)
@@ -50,13 +61,12 @@ func studyChoices(for item: StudyQueueItem, pool: [CardWord], variant: Int = 0) 
         admit(label)
     }
 
-    // Top up from the local dictionary, same-language first. `wordLanguage`
-    // so untagged custom words still land in the right half of the pool.
+    // Top up from the local dictionary, same-language first, so an untagged
+    // custom word still lands in the right half of the pool.
     if distractors.count < 3 {
-        if let lang = item.word.wordLanguage {
-            for word in pool.filter({ $0.wordLanguage == lang }).shuffled(using: &rng) {
-                admit(word.word)
-            }
+        let lang = item.word.language(in: session)
+        for word in pool.filter({ $0.language(in: session) == lang }).shuffled(using: &rng) {
+            admit(word.word)
         }
         if distractors.count < 3 {
             // Same-language pool was thin (e.g. brand-new account) — widen to

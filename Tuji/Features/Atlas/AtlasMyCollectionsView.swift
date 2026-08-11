@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - 我的合集列表
 
 struct AtlasMyCollectionsView: View {
-    @Environment(SettingsStore.self) private var settings
+    @Environment(\.targetLanguage) private var currentLanguage
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     @State private var vm = MyCollectionsVM()
@@ -19,10 +19,6 @@ struct AtlasMyCollectionsView: View {
     @State private var deleting = false
 
     @Binding var showCreate: Bool
-
-    private var currentLanguage: TargetLanguage {
-        self.settings.current.learningDirection.targetLanguage
-    }
 
     private var visibleCollections: [AtlasMyCollection] {
         self.vm.collections(for: self.currentLanguage)
@@ -298,12 +294,16 @@ struct AtlasCollectionEditView: View {
             self.connectAvatarUpload()
             await self.vm.load()
         }
+        // Only the loaded screen can open this, so the collection's language is
+        // known by the time it does — no default stands in for it.
         .sheet(isPresented: self.$showPicker) {
-            AtlasCollectionItemPicker(
-                language: self.vm.language,
-                existingIds: Set(self.vm.members.map(\.id))
-            ) { publicItemId in
-                await self.vm.addMember(publicItemId)
+            if let language = self.vm.language {
+                AtlasCollectionItemPicker(
+                    language: language,
+                    existingIds: Set(self.vm.members.map(\.id))
+                ) { publicItemId in
+                    await self.vm.addMember(publicItemId)
+                }
             }
         }
         .avatarPicker(self.avatar, title: "更換合集頭像")

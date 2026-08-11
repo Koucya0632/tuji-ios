@@ -21,6 +21,7 @@ struct RecognizeView: View {
 
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
+    @Environment(\.targetLanguage) private var session
 
     var body: some View {
         VStack(spacing: Space.s3) {
@@ -37,8 +38,11 @@ struct RecognizeView: View {
         .task { await self.autoPlay() }
     }
 
-    private var wordLanguage: TargetLanguage? {
-        self.detail?.wordLanguage ?? self.item.word.wordLanguage
+    /// The prefetched detail carries the server tag the queue payload may lack,
+    /// so it answers first; either way the session settles an untagged word.
+    private var wordLanguage: TargetLanguage {
+        self.detail?.taggedLanguage
+            ?? self.item.word.language(in: self.session)
     }
 
     /// The first example that has a sentence in the learning language — JA
@@ -79,14 +83,10 @@ struct RecognizeView: View {
                     // was a lottery — 長い外来語 arrived a third of the size of
                     // 洗剤. The picture and the empty page around it carry the
                     // emphasis instead. See `TujiHeadword`.
-                    TujiHeadword(
-                        display: self.item.word.headwordDisplay,
-                        word: self.item.word.word,
-                        language: self.item.word.wordLanguage
-                    )
-                    // Beside a `Spacer` the headword is offered half the row
-                    // unless it is prioritised; see WordDetailView.titleRow.
-                    .layoutPriority(1)
+                    TujiHeadword(word: self.item.word)
+                        // Beside a `Spacer` the headword is offered half the row
+                        // unless it is prioritised; see WordDetailView.titleRow.
+                        .layoutPriority(1)
                     Spacer(minLength: Space.s2)
                     PronunciationButton(
                         text: self.item.word.word,
@@ -99,11 +99,7 @@ struct RecognizeView: View {
                 // and `reading` checks guarded against each other, which only
                 // ever mattered while the two could differ — the server sends
                 // the same string for both on every Japanese word.
-                if case let .line(text) = self.item.word.headwordDisplay {
-                    Text(text)
-                        .font(self.item.word.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
-                        .foregroundStyle(.tujiInk3)
-                }
+                TujiReadingLine(word: self.item.word, ink: .tujiInk3)
                 // In monolingual mode (UI language == target) the gloss equals
                 // the target definition below — show it once, keeping the
                 // ungated definition and dropping the duplicate gloss chip.

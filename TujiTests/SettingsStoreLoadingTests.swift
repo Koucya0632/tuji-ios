@@ -49,7 +49,10 @@ struct SettingsStoreLoadingTests {
         let store = SettingsStore(
             repository: repository,
             defaults: defaults,
-            signedInUserProvider: { nil }
+            signedInUserProvider: { nil },
+            // These tests are about load coalescing, not the direction fan-out;
+            // without this they would reach the real singletons.
+            directionRefresh: InertLearningDirectionRefresher()
         )
         let userID = UUID()
 
@@ -90,7 +93,10 @@ struct SettingsStoreLoadingTests {
         let store = SettingsStore(
             repository: repository,
             defaults: defaults,
-            signedInUserProvider: { nil }
+            signedInUserProvider: { nil },
+            // These tests are about load coalescing, not the direction fan-out;
+            // without this they would reach the real singletons.
+            directionRefresh: InertLearningDirectionRefresher()
         )
         let accountA = UUID()
         let accountB = UUID()
@@ -134,7 +140,10 @@ struct SettingsStoreLoadingTests {
         let store = SettingsStore(
             repository: repository,
             defaults: defaults,
-            signedInUserProvider: { nil }
+            signedInUserProvider: { nil },
+            // These tests are about load coalescing, not the direction fan-out;
+            // without this they would reach the real singletons.
+            directionRefresh: InertLearningDirectionRefresher()
         )
         let userID = UUID()
 
@@ -217,4 +226,9 @@ private enum SettingsLoadingTestFailure: Error {
     case gateMissingResult
     case requestFailed
     case unimplemented
+}
+
+@MainActor
+private struct InertLearningDirectionRefresher: LearningDirectionRefreshing {
+    func refresh(after _: LearningDirectionChangeOrigin) async {}
 }

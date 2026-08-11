@@ -12,8 +12,6 @@ struct LearningDirectionOnboardingView: View {
     @Environment(OnboardingState.self) private var onboarding
     @Environment(SettingsStore.self) private var settings
     @Environment(AuthService.self) private var auth
-    @Environment(WordsStore.self) private var words
-    @Environment(CategoriesStore.self) private var categories
 
     var body: some View {
         ZStack {
@@ -57,14 +55,10 @@ struct LearningDirectionOnboardingView: View {
             } else {
                 false
             }
+            // The store owns the consequences (LearningDirectionRefresh). This
+            // used to drop only the catalog, so a first-run 日文 learner kept the
+            // English mastery, progress and streak the default direction fetched.
             self.settings.setLearningDirection(direction, persist: shouldPersist)
-            self.words.invalidate()
-            self.categories.invalidate()
-            Task {
-                async let wordsLoad: Void = self.words.reload()
-                async let categoriesLoad: Void = self.categories.reload()
-                _ = await (wordsLoad, categoriesLoad)
-            }
         } label: {
             HStack(spacing: Space.s3) {
                 Text(direction == .zhJa ? "日" : "EN")

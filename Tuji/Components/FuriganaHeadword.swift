@@ -126,13 +126,20 @@ enum FuriganaScaleLadder {
 
 /// A headword, with its kana over it when there are kana to place.
 ///
-/// Draws only the word. The kana *line* — what `.line` means — stays where each
-/// screen already puts it, because those places differ: the detail screens sit
-/// it in a row beside the part of speech and the CEFR chip, 認識 gives it a row
-/// of its own. Moving it would have rearranged four screens to no purpose.
+/// Takes the word, not three values derived from it. It used to take
+/// `display:` + `word:` + `language:`, which meant every screen assembled the
+/// same three expressions and then — because `.line` is drawn separately — went
+/// on to destructure the enum again and re-decide the language for its font. The
+/// language question is asked here now, once, and answered against
+/// `\.targetLanguage` so an untagged word follows 當前圖鑑語言.
+///
+/// Where the kana *line* sits is still each screen's call, because those places
+/// genuinely differ: the detail screens put it in a row beside the part of speech
+/// and the CEFR chip, 認識 gives it a row of its own. They render `TujiReadingLine`
+/// there instead of unpacking `HeadwordDisplay` by hand.
 struct TujiHeadword: View {
-    let display: HeadwordDisplay
-    let word: String
+    let word: any Headworded
+    @Environment(\.targetLanguage) private var session
     /// One size for every headword on every screen.
     ///
     /// A size only short words got to keep is not a hierarchy: at 56pt, 洗剤 was
@@ -149,9 +156,6 @@ struct TujiHeadword: View {
     /// constants, and this feature has already been bitten once by a decision
     /// living in five places.
     var baseSize: CGFloat = 26
-    /// Decides whether the word may wrap. nil is treated as "not Japanese",
-    /// which is the safe direction: wrapping never truncates.
-    var language: TargetLanguage?
 
     /// Japanese is written without spaces, so a wrapped headword breaks in the
     /// middle of a word — シャワーカー / テンポール. It is fitted onto one line
@@ -160,15 +164,15 @@ struct TujiHeadword: View {
     /// forcing it onto one line only made the longest phrases shrink until they
     /// truncated.
     private var wrapsOntoASecondLine: Bool {
-        self.language != .ja
+        self.word.language(in: self.session) != .ja
     }
 
     var body: some View {
-        switch self.display {
+        switch self.word.headwordDisplay(in: self.session) {
         case let .ruby(segments):
             FuriganaHeadword(segments: segments, baseSize: self.baseSize)
         case .line, .plain:
-            Text(self.word)
+            Text(self.word.word)
                 .font(.tujiHeadword(self.baseSize))
                 .foregroundStyle(.tujiInk)
                 .lineLimit(self.wrapsOntoASecondLine ? 2 : 1)
@@ -180,6 +184,34 @@ struct TujiHeadword: View {
                 // which wants 0.575, and a floor above that made it truncate to
                 // "chicken bouillon powd…" instead of shrinking.
                 .minimumScaleFactor(self.wrapsOntoASecondLine ? 0.5 : 0.4)
+        }
+    }
+}
+
+/// The phonetic line under a headword — an English IPA transcription, or the
+/// Japanese kana that could not be aligned into ruby. Renders nothing when the
+/// word has nothing to add, which is why the screens can place it
+/// unconditionally.
+///
+/// Its font is the language question in disguise: IPA is Latin and belongs in
+/// the mono face, kana is not and must not be set in it. That ternary was
+/// written out at five screens, each one also re-extracting `.line` from
+/// `HeadwordDisplay` first.
+///
+/// `ink` stays a parameter because it tracks *placement*, not language: beside a
+/// part of speech the line is the more important of the two and takes `tujiInk2`,
+/// on a row of its own there is nothing to outrank and it takes `tujiInk3`.
+struct TujiReadingLine: View {
+    let word: any Headworded
+    var ink: Color = .tujiInk2
+
+    @Environment(\.targetLanguage) private var session
+
+    var body: some View {
+        if case let .line(text) = self.word.headwordDisplay(in: self.session) {
+            Text(text)
+                .font(self.word.language(in: self.session) == .ja ? .tujiBodySm : .tujiMono)
+                .foregroundStyle(self.ink)
         }
     }
 }

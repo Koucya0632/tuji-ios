@@ -85,6 +85,27 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   colour per meaning.
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
+- **當前圖鑑語言 (`\.targetLanguage`)** — the session's target language as a *screen* sees
+  it: one environment value, supplied once at `TujiApp` from `SettingsStore`. Four 圖鑑
+  screens each used to derive it themselves and by four different mechanisms — pushed into
+  a model on `onAppear`, recomputed per render, baked into a `.task(id:)` string — and the
+  derivation was written out ten times. `AtlasShelfModel` still takes it as an explicit
+  input rather than reaching for the store, but the input is now optional: a `@State` model
+  is built before SwiftUI can hand it the environment, and it used to answer `.ja` in that
+  gap, filtering an 英文 learner's own cards against the language they are not learning.
+- **A word's language is a total question** (`language(in:)` on `LanguageTagged`) — the
+  server tag wins, else a kana `reading` marks it Japanese, else 當前圖鑑語言 decides. The
+  raw half stays visible as `taggedLanguage` for the payload-level tests and for
+  `PronunciationButton`, whose subject may be a sentence rather than a word. It was
+  formerly `wordLanguage: TargetLanguage?` with the fallback documented as the caller's
+  job: 11 of 13 callers never did it, so an untagged word — commonest source: a
+  just-captured 自製圖鑑 card — read as English in the font, the wrapping, the MCQ
+  distractor pool, and the ruby/IPA choice.
+- **拼字題目 (`SpellSubject`)** — what the 拼字 stage asks for: `.reading` (a kana reading
+  distinct from the term — 排出這個字的讀音) or `.term` (拼出這個字). Deliberately *not* the
+  language question, which it was masquerading as: ねこ is Japanese and its 振假名 is
+  itself, so the stage quizzes the 詞形. The two agree on most words and part company on
+  exactly the words that make 振假名 subtle.
 
 ## Domain — 日文詞條
 
@@ -100,6 +121,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   outcome, not a guarantee. Derived from the 振假名 against a dictionary and never a
   substitute for it — the 拼字 stage still quizzes the whole string.
   _Avoid_: furigana (ambiguous — it names the 振假名 as often as the split).
+- **`TujiHeadword` / `TujiReadingLine`** — the one home for how a headword is presented:
+  ruby vs line vs nothing, the single 26pt size, whether the word may wrap, and the
+  phonetic line's face (IPA is Latin and belongs in the mono face; kana does not). Takes
+  the `Headworded` word, not three values derived from it — five screens used to assemble
+  `display:`/`word:`/`language:`, then unpack `HeadwordDisplay` again and re-decide the
+  language for the line's font. Where the line *sits* is still each screen's call (beside
+  the part of speech, or a row of its own), which is why `TujiReadingLine` is separate and
+  keeps an `ink` parameter — that one tracks placement, not language. The 圖鑑 grid
+  (`WordTile`) stays outside both, by [ADR-0006](docs/adr/0006-furigana-segmentation.md):
+  ruby at 18pt lands under the CJK floor.
 
 ## Domain — 方案與權限 (plan & entitlement)
 
@@ -252,6 +283,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   save/unsave or collection batch-learn: invalidate `StudyQueueStore`, then await the
   best-effort `WordsStore.reload()`. The stateless live adapter is the only place that
   references those existing singletons; mutation success never depends on refresh success.
+- **LearningDirectionRefreshing** — one policy home for what a 學習語言 switch drops and
+  re-fetches: catalog + study queue + the three learning stores, invalidated before
+  anything is re-read. Producers name a `LearningDirectionChangeOrigin`
+  (`userPicked` / `serverDisagreed`) rather than a list of stores; the origin exists
+  because one consequence genuinely differs — `serverDisagreed` runs inside launch, where
+  `LaunchCoordinator` owns the catalog load, so the module drops the catalog without
+  refetching it. **`SettingsStore` is the only place that notices**: it detects the change
+  in all three of its write paths (`setLearningDirection`, `performLoad`,
+  `adoptPersisted`), so no screen states the consequences. Four hand-written fan-outs
+  disagreed before this — the first-run picker dropped only the catalog, leaving the
+  previous direction's mastery, progress and streak on screen, and two of the four lived
+  in `View` bodies where no test could reach them. The fourth refresh module, beside
+  `AtlasMutationRefresh` (authoring), `CommunityLearningRefresh` (consumption) and
+  `SessionRefresh` (study).
 - **Cache identity ≠ fetch authorisation** (`URL.signedStorageObjectID`). 自製圖鑑 lives in
   a private Supabase bucket, so every API response signs a fresh URL: same object, new
   `token=`. Nuke keys both cache tiers on the URL, so the 500 MB DataCache never scored a
@@ -311,9 +356,13 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   / `StudyStatsStore.shared` inside their methods now inject a narrow read seam instead, so
   they're hermetically testable:
   - **LanguageContext** — `{ uiLang, learningDirection }`, conformed by `SettingsStore`.
-    Injected into `LiveStudyRepository` (queue lang) and `LiveAtlasRepository`
-    (upload/recognize/confirm lang + learning). Read live at call time (an in-app switch
-    must take effect on the next request).
+    Injected into `LiveStudyRepository` (queue lang), `LiveAtlasRepository`
+    (upload/recognize/confirm lang + learning) and `LiveCatalogRepository` (search only —
+    the other calls carry a `CatalogContext` the caller already assembled). Read live at
+    call time (an in-app switch must take effect on the next request). **A direction-scoped
+    endpoint carries the direction in its URL even when the server would infer it**:
+    `/api/search` is `.publicCached`, so its URL *is* its cache key, and with only `q` on it
+    both directions shared one entry.
   - **StudyQueueInputs** — `{ learningDirection, dailyGoal, studyCategories, due }`, the
     slice `StudyQueueStore` folds into its queue params + cache signature. `LiveStudyQueueInputs`
     is the live adapter over settings + stats; `StudyQueueStore.init` is now injectable so a

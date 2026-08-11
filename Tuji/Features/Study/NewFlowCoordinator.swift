@@ -409,8 +409,10 @@ final class NewFlowCoordinator {
 
         var slots: [Slot]
         var pool: [Tile]
-        /// The original subject, spaces intact — what the 正解 line reveals.
-        var subject: String
+        /// 拼字題目, spaces intact: what the 正解 line reveals, and which of the
+        /// two questions the board is asking. The view used to read the string
+        /// here and go back to the coordinator for the question.
+        var subject: SpellSubject
         /// How the units group into rows (a multi-word subject spells one row
         /// per word).
         var tokenUnits: [[String]]

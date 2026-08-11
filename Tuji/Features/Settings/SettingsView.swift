@@ -398,11 +398,6 @@ struct SettingsView: View {
 private struct LearningDirectionPickerView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(OnboardingState.self) private var onboarding
-    @Environment(WordsStore.self) private var words
-    @Environment(CategoriesStore.self) private var categories
-    @Environment(ProgressStore.self) private var progress
-    @Environment(MasteryStore.self) private var mastery
-    @Environment(StudyStatsStore.self) private var studyStats
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
 
@@ -455,21 +450,10 @@ private struct LearningDirectionPickerView: View {
         } else {
             false
         }
+        // What a direction change drops and re-fetches is the store's to know
+        // (LearningDirectionRefresh); this screen only reports the choice.
         self.settings.setLearningDirection(direction, persist: shouldPersist)
-        self.words.invalidate()
-        self.categories.invalidate()
-        self.progress.invalidate()
-        self.mastery.invalidate()
-        self.studyStats.invalidate()
         self.dismiss()
-        Task {
-            async let wordsLoad: Void = self.words.reload()
-            async let categoriesLoad: Void = self.categories.reload()
-            async let progressLoad: Void = self.progress.reload()
-            async let masteryLoad: Void = self.mastery.reload()
-            async let statsLoad: Void = self.studyStats.reload()
-            _ = await (wordsLoad, categoriesLoad, progressLoad, masteryLoad, statsLoad)
-        }
     }
 }
 

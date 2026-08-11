@@ -151,16 +151,8 @@ struct WordPeekSheet: View {
     private var headerRow: some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s1) {
-                TujiHeadword(
-                    display: self.word.headwordDisplay,
-                    word: self.word.word,
-                    language: self.word.wordLanguage
-                )
-                if case let .line(text) = self.word.headwordDisplay {
-                    Text(text)
-                        .font(self.word.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
-                        .foregroundStyle(.tujiInk3)
-                }
+                TujiHeadword(word: self.word)
+                TujiReadingLine(word: self.word, ink: .tujiInk3)
                 if self.settings.current.showZh {
                     Text(self.word.chinese)
                         .font(.tujiBodySm)
@@ -176,7 +168,7 @@ struct WordPeekSheet: View {
                 FavoriteButton(wordId: self.word.id, size: 44)
                 PronunciationButton(
                     text: self.word.word,
-                    language: self.word.wordLanguage,
+                    language: self.word.taggedLanguage,
                     audioUrls: self.word.audioUrls,
                     size: 44
                 )

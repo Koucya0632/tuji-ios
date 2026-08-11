@@ -52,6 +52,7 @@ struct WordDetailSections: View {
     let word: Word
 
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.targetLanguage) private var session
     @State private var selectedDetailTab: WordDetailTab
 
     init(word: Word) {
@@ -247,7 +248,7 @@ struct WordDetailSections: View {
     private func examplesCard(_ examples: [WordExample]) -> some View {
         VStack(spacing: Space.s3) {
             ForEach(Array(examples.prefix(3).enumerated()), id: \.offset) { _, ex in
-                let sentence = ex.target ?? (word.wordLanguage == .ja ? "" : ex.en)
+                let sentence = ex.target ?? (word.language(in: self.session) == .ja ? "" : ex.en)
                 VStack(alignment: .leading, spacing: Space.s1) {
                     HStack(alignment: .top, spacing: Space.s2) {
                         Text(sentence)
@@ -256,7 +257,7 @@ struct WordDetailSections: View {
                         Spacer(minLength: Space.s2)
                         PronunciationButton(
                             text: sentence,
-                            language: word.wordLanguage,
+                            language: word.language(in: self.session),
                             size: 32
                         )
                     }

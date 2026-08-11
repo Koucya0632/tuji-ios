@@ -50,7 +50,7 @@ struct EndpointPolicyTests {
         .atlasSavedCollections(lang: "en", limit: 20),
         .atlasPublicCollectionSave(slug: "s1"), .atlasPublicCollectionLearn(slug: "s1"),
         .billingVerify,
-        .search(q: "cup"), .events,
+        .search(q: "cup", lang: "zh-Hant", learning: "en"), .events,
         .words(lang: "zh-Hant", learning: "en"),
         .word(id: "w1", lang: "zh-Hant", learning: "en"),
         .categories(lang: "zh-Hant"),

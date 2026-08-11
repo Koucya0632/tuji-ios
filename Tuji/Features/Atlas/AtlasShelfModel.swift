@@ -57,9 +57,14 @@ enum AtlasShelfState: Equatable {
 @MainActor
 @Observable
 final class AtlasShelfModel {
-    /// The learning direction the shelf is scoped to. The View pushes the
-    /// environment's current value in; the model never reaches `SettingsStore`.
-    var targetLanguage: TargetLanguage {
+    /// 當前圖鑑語言, or nil before the View has said which one it is. The View
+    /// pushes the environment's value in; the model never reaches `SettingsStore`.
+    ///
+    /// Optional because a `@State` model is constructed before SwiftUI can hand
+    /// it the environment, and an unscoped shelf must not guess: this defaulted
+    /// to `.ja`, so an 英文 learner's own cards were filtered against the language
+    /// they are not learning until `onChange(initial:)` corrected it.
+    var targetLanguage: TargetLanguage? {
         didSet {
             guard oldValue != self.targetLanguage else { return }
             self.reconcileSelection()
@@ -78,7 +83,7 @@ final class AtlasShelfModel {
     init(
         store: AtlasStore = .shared,
         mutations: AtlasMutationRefreshing = LiveAtlasMutationRefresher(),
-        targetLanguage: TargetLanguage = .ja
+        targetLanguage: TargetLanguage? = nil
     ) {
         self.store = store
         self.mutations = mutations
@@ -89,11 +94,14 @@ final class AtlasShelfModel {
 
     /// Captures that teach the current target language, each joined to its item.
     /// An image with no confirmed item carries no language yet (未完成 / 生成中 /
-    /// 失敗), so it stays visible in both directions.
+    /// 失敗), so it stays visible in both directions. Empty until the shelf has
+    /// been scoped — showing the wrong direction's cards is worse than showing
+    /// none for the frame it takes the View to say which one it is.
     var rows: [AtlasShelfRow] {
-        self.store.images.compactMap { image in
+        guard let scope = self.targetLanguage else { return [] }
+        return self.store.images.compactMap { image in
             let item = self.store.itemsByImageId[image.id]
-            if let item, item.targetLanguage != self.targetLanguage { return nil }
+            if let item, item.targetLanguage != scope { return nil }
             return AtlasShelfRow(image: image, item: item)
         }
     }
@@ -106,6 +114,8 @@ final class AtlasShelfModel {
 
     var state: AtlasShelfState {
         if !self.rows.isEmpty { return .loaded }
+        // An unscoped shelf has no answer yet, and `empty` would claim one.
+        if self.targetLanguage == nil { return .loading }
         if self.store.loading { return .loading }
         // Order matters: a failed sync leaves `images` empty, so without this
         // branch the shelf tells the user they own nothing.

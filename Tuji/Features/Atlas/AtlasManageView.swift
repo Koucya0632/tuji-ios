@@ -17,7 +17,7 @@ enum AtlasManagementSection: Hashable {
 }
 
 struct AtlasManageView: View {
-    @Environment(SettingsStore.self) private var settings
+    @Environment(\.targetLanguage) private var targetLanguage
 
     @State private var shelf = AtlasShelfModel()
     @State private var section: AtlasManagementSection
@@ -47,10 +47,6 @@ struct AtlasManageView: View {
                 self.showCreateCollection = true
             }
         }
-    }
-
-    private var currentLanguage: TargetLanguage {
-        self.settings.current.learningDirection.targetLanguage
     }
 
     var body: some View {
@@ -88,11 +84,11 @@ struct AtlasManageView: View {
         .background(.tujiPaper)
         .navigationTitle("圖鑑管理")
         .toolbar(.hidden, for: .navigationBar)
-        // The environment's learning direction is an explicit model input, not
-        // something the shelf reaches for. Setting it re-scopes the rows and
+        // 當前圖鑑語言 is an explicit model input, not something the shelf reaches
+        // for. `initial: true` is the scoping act, not an optimisation — the
+        // shelf shows nothing until this runs. Setting it re-scopes the rows and
         // drops any selection that just went off-screen.
-        .onAppear { self.shelf.targetLanguage = self.currentLanguage }
-        .onChange(of: self.currentLanguage) { _, language in
+        .onChange(of: self.targetLanguage, initial: true) { _, language in
             self.shelf.targetLanguage = language
         }
         .onChange(of: self.section) { previous, _ in
@@ -109,13 +105,15 @@ struct AtlasManageView: View {
 private struct AtlasCardsManagementPane: View {
     let shelf: AtlasShelfModel
 
+    @Environment(\.targetLanguage) private var targetLanguage
+
     @State private var pendingDelete: AtlasShelfRow?
     @State private var showBatchDeleteConfirm = false
 
     /// 「英文圖鑑」/「日文圖鑑」 for the hidden-cards hint — the *other*
     /// direction, i.e. where the hidden cards live.
     private var otherDirectionTitle: String {
-        self.shelf.targetLanguage == .ja ? LearningDirection.zhEn.title : LearningDirection.zhJa.title
+        self.targetLanguage == .ja ? LearningDirection.zhEn.title : LearningDirection.zhJa.title
     }
 
     var body: some View {

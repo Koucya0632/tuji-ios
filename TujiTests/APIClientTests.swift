@@ -206,6 +206,28 @@ struct APIClientTests {
         #expect(recorder.last?.url?.query?.contains("lang=ja") == true)
     }
 
+    /// `/api/search` is `.publicCached`, so its URL *is* its cache key. It used
+    /// to carry only `q`, which gave both learning directions one entry —
+    /// switching 學習語言 and repeating a search could be served the other
+    /// language's rows straight out of URLCache.
+    @Test("a search URL is distinct per learning direction")
+    func searchCarriesTheDirectionInItsIdentity() async throws {
+        let recorder = RequestRecorder()
+        let api = self.client { request in
+            _ = recorder.record(request)
+            return StubResponse(status: 200, body: #"{"ok":true}"#)
+        }
+
+        _ = try await api.get(.search(q: "cup", lang: "zh-Hant", learning: "zh-en"), as: Ack.self)
+        let english = recorder.last?.url
+        _ = try await api.get(.search(q: "cup", lang: "zh-Hant", learning: "zh-ja"), as: Ack.self)
+        let japanese = recorder.last?.url
+
+        #expect(english != nil)
+        #expect(english != japanese)
+        #expect(japanese?.query?.contains("learning=zh-ja") == true)
+    }
+
     @Test("the endpoint's timeout reaches the request")
     func timeoutIsApplied() async throws {
         let recorder = RequestRecorder()

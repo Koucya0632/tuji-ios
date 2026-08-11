@@ -19,11 +19,11 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
         case uk = "en-GB"
         case japanese = "ja-JP"
 
-        /// Voice for a word: its own `wordLanguage` when known (so a JA word
-        /// speaks Japanese even outside a JA session), else the session's
-        /// learning direction; English resolves through the saved 發音口音
-        /// setting ("us"/"uk"). Shared by PronunciationButton and the study
-        /// flows' auto-play so the resolutions can't drift.
+        /// Voice for a word: its own `taggedLanguage` when the payload carries
+        /// one (so a JA word speaks Japanese even outside a JA session), else
+        /// 當前圖鑑語言; English resolves through the saved 發音口音 setting
+        /// ("us"/"uk"). Shared by PronunciationButton and the study flows'
+        /// auto-play so the resolutions can't drift.
         static func preferred(for settings: UserSettings, language: TargetLanguage? = nil) -> Voice {
             switch language ?? settings.learningDirection.targetLanguage {
             case .ja: .japanese

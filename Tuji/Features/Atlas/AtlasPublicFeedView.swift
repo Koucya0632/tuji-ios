@@ -14,7 +14,10 @@ import SwiftUI
 // MARK: - 列表頁（合集）
 
 struct AtlasPublicFeedView: View {
-    @Environment(SettingsStore.self) private var settings
+    /// The feed follows the user's current learning direction — Japanese learners
+    /// see Japanese collections, English learners see English ones. There is no
+    /// manual language switch on this screen, by product decision.
+    @Environment(\.targetLanguage) private var targetLanguage
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
     @Environment(TabNavigator.self) private var navigator
     @Environment(AuthService.self) private var auth
@@ -24,13 +27,6 @@ struct AtlasPublicFeedView: View {
     @State private var browsing = PublicAtlasBrowsingModel()
     @State private var section: PublicAtlasBrowsingModel.Shelf = .explore
     @State private var savedShelfMounted = false
-
-    /// The feed follows the user's current learning direction — Japanese learners
-    /// see Japanese collections, English learners see English ones. There is no
-    /// manual language switch on this screen, by product decision.
-    private var targetLanguage: TargetLanguage {
-        self.settings.current.learningDirection.targetLanguage
-    }
 
     /// nil for a guest, or for an account the server has not minted a UID for.
     private var myUid: String? {
@@ -673,17 +669,9 @@ struct AtlasPublicDetailView: View {
     private func titleRow(_ word: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
-                TujiHeadword(
-                    display: word.headwordDisplay,
-                    word: word.word,
-                    language: word.wordLanguage
-                )
+                TujiHeadword(word: word)
                 HStack(spacing: Space.s2) {
-                    if case let .line(text) = word.headwordDisplay {
-                        Text(text)
-                            .font(word.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
-                            .foregroundStyle(.tujiInk2)
-                    }
+                    TujiReadingLine(word: word)
                     if let partOfSpeech = word.partOfSpeech, !partOfSpeech.isEmpty {
                         Text(localizedPartOfSpeech(
                             partOfSpeech,
@@ -709,7 +697,7 @@ struct AtlasPublicDetailView: View {
             Spacer()
             PronunciationButton(
                 text: word.word,
-                language: word.wordLanguage,
+                language: word.taggedLanguage,
                 audioUrls: word.audioUrls,
                 size: 48
             )

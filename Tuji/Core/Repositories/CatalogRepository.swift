@@ -15,9 +15,13 @@ struct LiveCatalogRepository: CatalogRepository {
     static let shared = LiveCatalogRepository()
 
     private let api: APIClient
+    /// Only `search` needs this: the other calls are driven by a `CatalogContext`
+    /// the caller already assembled. Read live at call time, per ADR-0001.
+    private let settings: LanguageContext
 
-    init(api: APIClient = .shared) {
+    init(api: APIClient = .shared, settings: LanguageContext = SettingsStore.shared) {
         self.api = api
+        self.settings = settings
     }
 
     func loadCategories(lang: String) async throws -> CategoriesResponse {
@@ -38,8 +42,16 @@ struct LiveCatalogRepository: CatalogRepository {
         try await self.api.get(.usersSavedWords(lang: lang, learning: learning))
     }
 
+    /// Scopes itself rather than making `SearchVM` remember to: search results
+    /// differ by learning direction, and the endpoint is publicly cached, so the
+    /// direction belongs to the request's identity. The repository is where the
+    /// other language-scoped calls resolve it too.
     func search(_ query: String) async throws -> SearchResponse {
-        try await self.api.get(.search(q: query))
+        try await self.api.get(.search(
+            q: query,
+            lang: self.settings.uiLang,
+            learning: self.settings.learningDirection.rawValue
+        ))
     }
 
     func word(id: String, lang: String, learning: String) async throws -> Word {
