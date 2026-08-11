@@ -79,4 +79,19 @@ struct FuriganaScaleLadderTests {
         let steps = FuriganaScaleLadder.steps(baseSize: 56)
         #expect(steps.contains { $0 <= needed })
     }
+
+    @Test
+    func theShippedHeadwordSizeIsTheFloorItself() {
+        // Why 26 and not 24 or 34. `TujiHeadword` sets one size for every screen
+        // so that a short word is not twice the size of a long one, and 26 is
+        // the smallest that still clears the ruby floor exactly: half of it is
+        // 13pt. The ladder therefore has nowhere to shrink to and collapses to a
+        // single rung, which is correct — every kanji word in the catalogue fits
+        // its column at 26pt, so nothing needs to.
+        let shipped: CGFloat = 26
+        #expect(shipped * 0.5 == self.floor)
+        #expect(FuriganaScaleLadder.steps(baseSize: shipped) == [1])
+        // One point smaller and the kana stop resolving.
+        #expect((shipped - 1) * 0.5 < self.floor)
+    }
 }

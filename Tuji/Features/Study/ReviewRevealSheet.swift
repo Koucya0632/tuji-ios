@@ -93,8 +93,6 @@ struct ReviewRevealSheet: View {
                 TujiHeadword(
                     display: self.item.word.headwordDisplay,
                     word: self.item.word.word,
-                    baseSize: 34,
-                    font: .tujiH1,
                     language: self.item.word.wordLanguage
                 )
                 if case let .line(text) = self.item.word.headwordDisplay {
