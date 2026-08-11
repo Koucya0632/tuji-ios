@@ -47,6 +47,20 @@ final class MasteryStore {
 
     /// Fetch once. Returns immediately after the first attempt; use reload()
     /// to force a refresh.
+    ///
+    /// No TTL, deliberately — and this is the one place in the accumulation
+    /// readout where the staleness policy differs. `ProgressStore` and
+    /// `StudyStatsStore` both use `loadIfStale(ttl: 30)` because their numbers
+    /// move on their own: `due` crosses midnight, the streak turns over, the
+    /// heatmap gains a day. Mastery does not. Decay is applied server-side at
+    /// read, but a score only *changes* when this user answers something, and
+    /// every path that answers something already invalidates this store through
+    /// `SessionRefresh`. A 30-second TTL here would re-fetch the whole map on
+    /// every tab swap to buy a number that cannot have moved.
+    ///
+    /// The cost of the choice: a session on another device does not show up
+    /// here until this one is relaunched or pull-to-refreshed. 首頁 has that
+    /// pull; 我 does not.
     func loadIfNeeded() async {
         guard !self.loaded else { return }
         await self.reload()

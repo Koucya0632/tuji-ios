@@ -66,6 +66,7 @@ struct MeProgressSections: View {
     @Environment(CategoriesStore.self) private var categories
     @Environment(ProgressStore.self) private var progress
     @Environment(SettingsStore.self) private var settings
+    @Environment(LocalCache.self) private var cache
 
     private var isGuest: Bool {
         if case .signedIn = auth.state { return false }
@@ -82,39 +83,43 @@ struct MeProgressSections: View {
             self.categoryBreakdownCard
                 .padding(.horizontal, Space.s4)
         }
-        .task {
-            await self.words.loadIfNeeded()
-            await self.categories.loadIfNeeded()
-            await self.settings.loadIfNeeded()
-            if !self.isGuest { await self.progress.loadIfStale() }
-        }
+        .warmsAccumulation(.progressSections, isGuest: self.isGuest)
     }
 
     // MARK: - Completion card
 
-    /// Words studied at least once (server "seen") in the selected categories.
-    private var seenTotal: Int {
-        self.progress.seenCount(filter: self.settings.current.studyCategories)
-    }
-
-    /// Total published words in the selected categories. Server count when
-    /// available, else the locally known dictionary size (guests / before
-    /// progress loads).
-    private var dictTotal: Int {
-        let serverTotal = self.progress.totalCount(filter: self.settings.current.studyCategories)
-        return serverTotal > 0 ? serverTotal : self.words.words.count
+    /// 完成度, from the same module 首頁's hero reads. This card used to carry
+    /// its own copy of the rule, and the copy was the pre-fix one: it fell back
+    /// to the whole dictionary when the selected themes held no published
+    /// cards, and it had no guest branch at all, so a guest who had learned 37
+    /// words read 「0% · 已學 0 / 共 480 字」 while 首頁 said 37 / 480.
+    private var completion: CompletionReadout {
+        let selected = self.settings.current.studyCategories
+        let wanted = Set(selected)
+        return CompletionReadout(
+            .init(
+                isGuest: self.isGuest,
+                settingsLoaded: self.settings.hasLoaded,
+                studyCategories: selected,
+                guestLearnedCount: self.cache.learnedIds.count,
+                seenInSelection: self.progress.seenCount(filter: selected),
+                totalInSelection: self.progress.totalCount(filter: selected),
+                dictionaryCount: self.words.words.count,
+                dictionaryCountInSelection: self.words.words
+                    .count(where: { wanted.contains($0.category) })
+            )
+        )
     }
 
     private var completionCard: some View {
-        let learned = self.seenTotal
-        let total = self.dictTotal
-        let ratio = total > 0 ? Double(learned) / Double(total) : 0
-        let pct = Int((ratio * 100).rounded())
+        let readout = self.completion
+        let learned = readout.seen
+        let total = readout.total
         // Both this stat and its detail line are scoped to the user's
         // selected 學習主題 (empty selection = all categories), same as the
         // 明細 breakdown below. Label it explicitly so it doesn't read as a
         // whole-catalog number next to Me tab's unscoped 已學字 total.
-        let scoped = !self.settings.current.studyCategories.isEmpty
+        let scoped = readout.scope != .wholeDictionary
         // The one number on this tab that is *the* number, so it gets the ink
         // block — the same weight the Today hero and the completion screen use.
         return VStack(alignment: .leading, spacing: Space.s2) {
@@ -122,7 +127,7 @@ struct MeProgressSections: View {
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiPaper.opacity(0.6))
-            Text("\(pct)%")
+            Text("\(readout.percent)%")
                 .font(.tujiDisplay)
                 .foregroundStyle(.tujiAccumulationSoft)
                 .contentTransition(.numericText())
@@ -133,8 +138,12 @@ struct MeProgressSections: View {
             )
             .font(.tujiBodySm)
             .foregroundStyle(.tujiPaper.opacity(0.7))
-            TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.15), fill: .tujiAccumulationSoft)
-                .padding(.top, Space.s2)
+            TujiProgressBar(
+                progress: readout.ratio,
+                track: .tujiPaper.opacity(0.15),
+                fill: .tujiAccumulationSoft
+            )
+            .padding(.top, Space.s2)
         }
         .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -223,7 +232,7 @@ struct MeProgressSections: View {
         let learned: Int
         let total: Int
         var ratio: Double {
-            self.total > 0 ? Double(self.learned) / Double(self.total) : 0
+            CompletionReadout.ratio(seen: self.learned, total: self.total)
         }
     }
 
@@ -393,5 +402,6 @@ struct HeatmapGrid: View {
             .environment(ProgressStore.shared)
             .environment(StudyStatsStore.shared)
             .environment(SettingsStore.shared)
+            .environment(MasteryStore.shared)
     }
 }

@@ -62,7 +62,7 @@ struct CategoryProgress: Decodable, Hashable, Identifiable {
     }
 
     var ratio: Double {
-        self.total > 0 ? Double(self.seen) / Double(self.total) : 0
+        CompletionReadout.ratio(seen: self.seen, total: self.total)
     }
 }
 

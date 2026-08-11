@@ -1,51 +1,24 @@
 // Today (首頁) — design §III.E.
 //
 // Greeting → streak chip → hero card with stats + 2 CTAs → themes grid.
-// Owns a private TodayVM that concurrently fetches /users/me +
-// /study/stats + /users/progress (async let). Guest mode skips the
-// network and reads only LocalCache + WordsStore for a degraded hero.
+// What the screen needs loaded is named by `AccumulationLoading`, shared with
+// 我 · 進度 and 主題. Guest mode skips the network and reads only LocalCache +
+// WordsStore for a degraded hero.
+//
+// There used to be a `TodayVM` here. It held `me` / `loading` / `error` and no
+// view read any of the three: it fetched GET /api/users/me on every appearance
+// and every pull-to-refresh, wrote the response to a property nobody rendered,
+// and threw it away. (That endpoint is not cheap — it is four queries including
+// the account's whole learned set — and it has no side effect, so nothing was
+// riding on the call either.) Its only real work was two `loadIfStale` calls,
+// which arrived as *parameters* rather than as an injected seam, so no test
+// could reach them. Both now live in the warm policy.
+//
+// One thing it did that nothing does now: it caught the load error. Nothing
+// rendered `vm.error` either, so 首頁 already failed silently — giving the
+// screen a real error surface is a separate decision, not a regression here.
 
-import OSLog
-import Observation
 import SwiftUI
-
-@MainActor
-@Observable
-final class TodayVM {
-    var me: UserMeResponse?
-    var loading = true
-    var error: Error?
-
-    private let users: UserRepository
-    private let log = Logger(subsystem: "app.tuji.ios", category: "today")
-
-    init(users: UserRepository = LiveUserRepository.shared) {
-        self.users = users
-    }
-
-    /// Streak + study stats come from shared stores (ProgressStore,
-    /// StudyStatsStore) so Today, Progress, Me, StudyLanding, and
-    /// CompleteView don't each round-trip on tab swap.
-    func load(progress: ProgressStore, studyStats: StudyStatsStore) async {
-        self.loading = true
-        self.error = nil
-        defer { self.loading = false }
-        async let progressLoad: Void = progress.loadIfStale()
-        async let statsLoad: Void = studyStats.loadIfStale()
-        do {
-            let me = try await self.users.loadMe()
-            await progressLoad
-            await statsLoad
-            self.me = me
-            self.log.info(
-                "today loaded streak=\(progress.streak?.current ?? 0, privacy: .public) due=\(studyStats.stats?.due ?? 0, privacy: .public)"
-            )
-        } catch {
-            self.error = error
-            self.log.error("today load failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-}
 
 struct TodayView: View {
     let user: SessionUser?
@@ -59,8 +32,6 @@ struct TodayView: View {
     @Environment(MasteryStore.self) private var mastery
     @Environment(AuthService.self) private var auth
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var vm = TodayVM()
 
     private var isGuest: Bool {
         user == nil
@@ -116,22 +87,23 @@ struct TodayView: View {
                 self.progress.invalidate()
                 self.studyStats.invalidate()
                 self.mastery.invalidate()
-                await self.vm.load(progress: self.progress, studyStats: self.studyStats)
-                await self.mastery.reload()
+                // Concurrent, unlike the warm path: the user is watching a
+                // spinner here, and these are concrete `@MainActor` stores
+                // rather than the existentials `AccumulationWarmer` holds, so
+                // `async let` is available.
+                async let progressReload: Void = self.progress.reload()
+                async let statsReload: Void = self.studyStats.reload()
+                async let masteryReload: Void = self.mastery.reload()
+                await progressReload
+                await statsReload
+                await masteryReload
             }
             await self.words.reload()
             await self.categories.reload()
         }
-        .task {
-            await self.words.loadIfNeeded()
-            await self.categories.loadIfNeeded()
-            await self.settings.loadIfNeeded()
-            if !self.isGuest {
-                await self.vm.load(progress: self.progress, studyStats: self.studyStats)
-                // Powers the 完成 / 全精通 badges on the theme tiles.
-                await self.mastery.loadIfNeeded()
-                self.prefetchStudyQueues()
-            }
+        .warmsAccumulation(.todayHero, isGuest: self.isGuest) {
+            guard !self.isGuest else { return }
+            self.prefetchStudyQueues()
         }
     }
 
@@ -139,8 +111,9 @@ struct TodayView: View {
     /// lazy) so tapping 複習 / 學新字 skips the "載入練習中…" spinner. Only the
     /// enabled CTAs are prefetched, so a disabled button costs nothing, and the
     /// fetch replaces — not duplicates — the launcher's request for users who do
-    /// study. Runs after vm.load so settings + stats (which drive the params)
-    /// are warm. StudyQueueStore's TTL + signature avoid re-fetching on tab swaps.
+    /// study. Runs as the warm policy's `then`, so settings + stats (which drive
+    /// the params) are already warm. StudyQueueStore's TTL + signature avoid
+    /// re-fetching on tab swaps.
     private func prefetchStudyQueues() {
         if !self.reviewDisabled {
             Task { await StudyQueueStore.shared.prefetch(mode: .review) }
@@ -359,7 +332,7 @@ struct TodayView: View {
         let done = self.studyStats.stats?.todayNew ?? 0
         let goal = max(1, self.settings.current.dailyGoal)
         let reached = done >= goal
-        let ratio = min(1.0, Double(done) / Double(goal))
+        let ratio = CompletionReadout.ratio(seen: done, total: goal)
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
                 Text("今日目標")
@@ -381,28 +354,20 @@ struct TodayView: View {
                         .foregroundStyle(.tujiPaper.opacity(0.7))
                 }
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(.tujiPaper.opacity(0.2))
-                    // Always 瞳黃. The unreached state used to be `tujiAlert`,
-                    // which said "you are failing" — not hitting today's goal at
-                    // 10am is not an error, it is the thing in progress, and
-                    // 瞳黃 is exactly the colour for that.
-                    Rectangle()
-                        .fill(.tujiCurrent)
-                        .frame(width: geo.size.width * ratio)
-                }
-            }
-            .frame(height: Border.bw3)
+            // Always 瞳黃. The unreached state used to be `tujiAlert`, which
+            // said "you are failing" — not hitting today's goal at 10am is not
+            // an error, it is the thing in progress, and 瞳黃 is exactly the
+            // colour for that.
+            TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.2), fill: .tujiCurrent)
         }
         .tourAnchor(.dailyGoal)
     }
 
     @ViewBuilder
     private var heroProgress: some View {
-        let learned = self.dexSeen
-        let total = self.dexTotal
-        let ratio = total > 0 ? min(1.0, Double(learned) / Double(total)) : 0
+        let readout = self.decisions.completion
+        let learned = readout.seen
+        let total = readout.total
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
                 Text("主題進度")
@@ -414,18 +379,14 @@ struct TodayView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.tujiPaper.opacity(0.7))
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(.tujiPaper.opacity(0.2))
-                    // Deep teal only reaches 3.04:1 against ink; the pale step
-                    // reaches 13.58:1 and carries the same "accumulation"
-                    // meaning. On ink surfaces it is always the pale one.
-                    Rectangle()
-                        .fill(.tujiAccumulationSoft)
-                        .frame(width: geo.size.width * ratio)
-                }
-            }
-            .frame(height: Border.bw3)
+            // Deep teal only reaches 3.04:1 against ink; the pale step reaches
+            // 13.58:1 and carries the same "accumulation" meaning. On ink
+            // surfaces it is always the pale one.
+            TujiProgressBar(
+                progress: readout.ratio,
+                track: .tujiPaper.opacity(0.2),
+                fill: .tujiAccumulationSoft
+            )
         }
     }
 
