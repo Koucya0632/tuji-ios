@@ -261,4 +261,30 @@ struct AtlasShelfModelTests {
         #expect(spy.reported.isEmpty)
         #expect(!model.withdrawing)
     }
+
+    // MARK: - Scoping
+
+    /// A `@State` model is built before SwiftUI can hand it the environment, so
+    /// there is a moment when it does not know 當前圖鑑語言. It used to answer
+    /// `.ja` in that moment, which filtered an 英文 learner's own cards against
+    /// the language they are not learning. Showing nothing for a frame is the
+    /// honest answer; `loading`, not `empty`, is what says so.
+    @Test
+    func anUnscopedShelfShowsNothingRatherThanGuessingADirection() async {
+        let (store, _) = await self.store(
+            images: [AtlasFixtures.image("en")],
+            items: [AtlasFixtures.item("t-en", imageId: "en", language: .en)]
+        )
+        let model = AtlasShelfModel(store: store)
+
+        #expect(model.targetLanguage == nil)
+        #expect(model.rows.isEmpty)
+        #expect(model.state == .loading)
+        #expect(!model.canSelect)
+
+        model.targetLanguage = .en
+
+        #expect(model.rows.map(\.id) == ["en"])
+        #expect(model.state == .loaded)
+    }
 }

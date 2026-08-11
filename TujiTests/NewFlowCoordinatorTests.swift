@@ -114,18 +114,29 @@ struct NewFlowCoordinatorTests {
     func spellSubjectPrefersReading() throws {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
-        #expect(c.spellSubject(for: queue[0]) == "apple")
-        #expect(c.spellSubject(for: queue[1]) == "りんご")
+        #expect(c.spellSubject(for: queue[0]) == .term("apple"))
+        #expect(c.spellSubject(for: queue[1]) == .reading("りんご"))
     }
 
     @Test
-    func spellUsesReadingOnlyWhenDistinctFromTerm() throws {
+    func aKanaOnlyWordIsQuizzedAsATermNotAReading() throws {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
-        #expect(!c.spellUsesReading(for: queue[0]))
-        #expect(c.spellUsesReading(for: queue[1]))
-        // reading == word → the kana IS the term; no separate reading mode.
-        #expect(!c.spellUsesReading(for: queue[2]))
+        // queue[2] (ねこ) is Japanese and its 振假名 is itself, so there is no
+        // separate reading to quiz — the stage asks for the 詞形. This is the
+        // case where 拼字題目 and the word's *language* give different answers,
+        // which is why they are different questions.
+        #expect(c.spellSubject(for: queue[2]).isReading == false)
+        #expect(c.spellSubject(for: queue[0]).isReading == false)
+        #expect(c.spellSubject(for: queue[1]).isReading == true)
+    }
+
+    @Test
+    func everySubjectCarriesTheStringBeingAssembled() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        #expect(c.spellSubject(for: queue[0]).text == "apple")
+        #expect(c.spellSubject(for: queue[1]).text == "りんご")
     }
 
     // MARK: - Scheduling
@@ -352,11 +363,11 @@ struct NewFlowCoordinatorTests {
             CardWord(id: "p3", word: "grape", chinese: "葡萄", imageUrl: "", category: "food", pronunciation: ""),
             CardWord(id: "p4", word: "lemon", chinese: "檸檬", imageUrl: "", category: "food", pronunciation: "")
         ]
-        let base = studyChoices(for: apple, pool: pool, variant: 0)
+        let base = studyChoices(for: apple, pool: pool, session: .en, variant: 0)
         #expect(base.contains("apple"))
         // Some later variant must present a different order — otherwise a
         // requeued question can be answered from remembered positions.
-        let reshuffled = (1...4).map { studyChoices(for: apple, pool: pool, variant: $0) }
+        let reshuffled = (1...4).map { studyChoices(for: apple, pool: pool, session: .en, variant: $0) }
         #expect(reshuffled.contains { $0 != base })
     }
 

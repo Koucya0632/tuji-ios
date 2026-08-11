@@ -12,6 +12,7 @@ struct IdentifyView: View {
     private static let abc = ["A", "B", "C", "D", "E"]
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
+    @Environment(\.targetLanguage) private var session
 
     var body: some View {
         VStack(spacing: Space.s3) {
@@ -33,8 +34,7 @@ struct IdentifyView: View {
     private var prompt: some View {
         // The quizzed word's own language, so a JA custom word asks 日文 even
         // if the session direction disagrees; untagged words follow the session.
-        let language = self.item.word.wordLanguage
-            ?? self.settings.current.learningDirection.targetLanguage
+        let language = self.item.word.language(in: self.session)
         return Text(
             language == .ja
                 ? LocalizedStringKey("對應的日文是哪個？")
@@ -86,7 +86,7 @@ struct IdentifyView: View {
                 Spacer(minLength: Space.s2)
                 PronunciationButton(
                     text: self.item.word.word,
-                    language: self.item.word.wordLanguage,
+                    language: self.item.word.taggedLanguage,
                     audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                     size: 48,
                     ground: .tujiPaper
@@ -122,6 +122,7 @@ struct IdentifyView: View {
         studyChoices(
             for: self.item,
             pool: self.words.words,
+            session: self.session,
             variant: self.coord.choicesVariant(for: self.item)
         )
     }

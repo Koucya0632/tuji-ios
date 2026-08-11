@@ -14,9 +14,10 @@ import SwiftUI
 
 struct PronunciationButton: View {
     let text: String
-    /// The word's own language (`wordLanguage`); wins over the session
-    /// direction when picking the voice. `nil` follows the learning
-    /// direction + 發音口音 setting.
+    /// The word's own language (`taggedLanguage`); wins over the session
+    /// direction when picking the voice. `nil` follows 當前圖鑑語言 + the
+    /// 發音口音 setting — the resolution lives in `Voice.preferred`, which is
+    /// where a sentence with no word behind it also lands.
     var language: TargetLanguage?
     /// Pre-generated clips keyed by locale ("en-US"/"en-GB"/"ja-JP"). When the
     /// resolved voice has a clip it plays that; otherwise SpeechService falls

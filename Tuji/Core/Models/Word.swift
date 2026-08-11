@@ -164,10 +164,13 @@ nonisolated protocol Headworded: LanguageTagged {
 }
 
 extension Headworded {
-    var headwordDisplay: HeadwordDisplay {
+    /// `session` is 當前圖鑑語言, for a word the server did not tag. It reaches
+    /// here from `TujiHeadword`'s environment rather than from each screen —
+    /// this used to be an untagged word's silent vote for the English branch.
+    func headwordDisplay(in session: TargetLanguage) -> HeadwordDisplay {
         // Japanese only. An English `pronunciation` is IPA — different
         // information from the headword, and nothing ruby can express.
-        guard self.wordLanguage == .ja else {
+        guard self.language(in: session) == .ja else {
             return ReadingLine.shown(self.headwordPronunciation, for: self.word)
                 .map(HeadwordDisplay.line) ?? .plain
         }

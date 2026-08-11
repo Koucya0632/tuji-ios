@@ -240,6 +240,7 @@ private struct ReviewQuestionView: View {
 
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(WordsStore.self) private var words
+    @Environment(\.targetLanguage) private var session
 
     private static let abc = ["A", "B", "C", "D", "E"]
 
@@ -302,7 +303,7 @@ private struct ReviewQuestionView: View {
 
             PronunciationButton(
                 text: self.item.word.word,
-                language: self.item.word.wordLanguage,
+                language: self.item.word.taggedLanguage,
                 audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                 size: 48,
                 ground: .tujiPaper
@@ -338,6 +339,7 @@ private struct ReviewQuestionView: View {
         studyChoices(
             for: self.item,
             pool: self.words.words,
+            session: self.session,
             variant: self.coord.choicesVariant(for: self.item)
         )
     }

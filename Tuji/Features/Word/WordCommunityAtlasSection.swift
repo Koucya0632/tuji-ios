@@ -16,7 +16,7 @@ struct WordCommunityAtlasSection: View {
     let word: Word
     private let repo: PublicItemsReading
 
-    @Environment(SettingsStore.self) private var settings
+    @Environment(\.targetLanguage) private var language
 
     @State private var items: [AtlasPublicItem] = []
     @State private var loaded = false
@@ -30,10 +30,6 @@ struct WordCommunityAtlasSection: View {
     init(word: Word, repo: PublicItemsReading = LiveAtlasRepository.shared) {
         self.word = word
         self.repo = repo
-    }
-
-    private var language: TargetLanguage {
-        self.settings.current.learningDirection.targetLanguage
     }
 
     /// Everything below counts and renders this, never `items`. A word whose

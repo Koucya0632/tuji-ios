@@ -70,7 +70,7 @@ struct TilesView: View {
             MascotSpeechBubble(pose: .peek, text: "差一點，看看正解")
         } else if board.verdict == nil {
             Text(
-                self.coord.spellUsesReading(for: self.item)
+                board.subject.isReading
                     ? LocalizedStringKey("排出這個字的讀音")
                     : LocalizedStringKey("拼出這個字")
             )
@@ -93,7 +93,7 @@ struct TilesView: View {
                 Spacer()
                 PronunciationButton(
                     text: self.item.word.word,
-                    language: self.item.word.wordLanguage,
+                    language: self.item.word.taggedLanguage,
                     audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
                     size: 36
                 )
@@ -148,7 +148,7 @@ struct TilesView: View {
         // board so the peek sheet isn't the only place carrying the answer.
         .overlay(alignment: .bottom) {
             if board.verdict == false {
-                Text("正解 \(board.subject)")
+                Text("正解 \(board.subject.text)")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .offset(y: 22)

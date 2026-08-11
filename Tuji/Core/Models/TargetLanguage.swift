@@ -35,15 +35,31 @@ nonisolated protocol LanguageTagged {
 }
 
 extension LanguageTagged {
-    /// The word's own language: the explicit server tag wins, else a kana
-    /// `reading` (a JA-only backend field) marks it Japanese. nil when the
-    /// payload carries neither (older caches, just-captured custom words) —
-    /// callers that need a definite answer fall back to the session's
-    /// `learningDirection.targetLanguage`.
-    var wordLanguage: TargetLanguage? {
+    /// What the *payload* says: the explicit server tag wins, else a kana
+    /// `reading` (a JA-only backend field) marks it Japanese. nil when it
+    /// carries neither — older caches, and just-captured 自製圖鑑 words.
+    ///
+    /// Not for callers. Ask `language(in:)`, which is total; this is the half of
+    /// the answer that lives on the word, exposed so the resolution can be tested
+    /// against a payload directly.
+    var taggedLanguage: TargetLanguage? {
         if let targetLanguage { return targetLanguage }
         if let reading, !reading.isEmpty { return .ja }
         return nil
+    }
+
+    /// The word's language. Always an answer.
+    ///
+    /// The fallback used to be the caller's job, stated in a doc comment: eleven
+    /// of thirteen call sites never did it, so an untagged word read as English
+    /// everywhere — the wrong half of a coin flip for a payload whose commonest
+    /// source is a Japanese learner's own capture. `session` is 當前圖鑑語言, which
+    /// a View reads from `\.targetLanguage` and a model takes as an input.
+    ///
+    /// A word's own tag still wins over the session, so a JA custom word speaks
+    /// and sets Japanese inside an 英文 session.
+    func language(in session: TargetLanguage) -> TargetLanguage {
+        self.taggedLanguage ?? session
     }
 }
 

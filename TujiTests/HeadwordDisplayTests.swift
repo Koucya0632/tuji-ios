@@ -44,7 +44,7 @@ struct HeadwordDisplayTests {
             FuriganaSegment(text: "粉", ruby: "こ")
         ]
         let word = self.jaWord("歯磨き粉", reading: "はみがきこ", segments: segments)
-        #expect(word.headwordDisplay == .ruby(segments))
+        #expect(word.headwordDisplay(in: .en) == .ruby(segments))
     }
 
     @Test
@@ -52,7 +52,7 @@ struct HeadwordDisplayTests {
         // MRT（台湾の地下鉄）is the one catalogue word nothing can align, so it
         // must keep the behaviour ruby replaced rather than losing its kana.
         let word = self.jaWord("MRT（台湾の地下鉄）", reading: "mrt（たいわんのちかてつ）")
-        #expect(word.headwordDisplay == .line("mrt（たいわんのちかてつ）"))
+        #expect(word.headwordDisplay(in: .en) == .line("mrt（たいわんのちかてつ）"))
     }
 
     @Test
@@ -60,14 +60,14 @@ struct HeadwordDisplayTests {
         // 231 of the 480 Japanese words are written entirely in kana. There is
         // nothing to annotate and nothing to add underneath.
         let word = self.jaWord("バスマット", reading: "バスマット")
-        #expect(word.headwordDisplay == .plain)
+        #expect(word.headwordDisplay(in: .en) == .plain)
     }
 
     @Test
     func emptySegmentsAreNotRuby() {
         // An empty array is not a split; it would draw a headword with no text.
         let word = self.jaWord("洗剤", reading: "せんざい", segments: [])
-        #expect(word.headwordDisplay == .line("せんざい"))
+        #expect(word.headwordDisplay(in: .en) == .line("せんざい"))
     }
 
     @Test
@@ -81,7 +81,7 @@ struct HeadwordDisplayTests {
             pronunciation: "/ˈtuːθpeɪst/",
             targetLanguage: .en
         )
-        #expect(word.headwordDisplay == .line("/ˈtuːθpeɪst/"))
+        #expect(word.headwordDisplay(in: .en) == .line("/ˈtuːθpeɪst/"))
     }
 
     @Test
@@ -95,13 +95,14 @@ struct HeadwordDisplayTests {
             pronunciation: "",
             targetLanguage: .en
         )
-        #expect(word.headwordDisplay == .plain)
+        #expect(word.headwordDisplay(in: .en) == .plain)
     }
 
     @Test
     func languageIsInferredFromTheReadingWhenTheServerDidNotTag() {
         // Older caches and just-captured custom words carry no targetLanguage;
-        // `wordLanguage` reads a kana reading as the Japanese marker it is.
+        // a kana reading is the Japanese marker it looks like, and it beats the
+        // session — the display is `.ruby` under an 英文 session.
         let word = CardWord(
             id: "x",
             word: "洗剤",
@@ -116,11 +117,41 @@ struct HeadwordDisplayTests {
             ]
         )
         #expect(
-            word.headwordDisplay == .ruby([
+            word.headwordDisplay(in: .en) == .ruby([
                 FuriganaSegment(text: "洗", ruby: "せん"),
                 FuriganaSegment(text: "剤", ruby: "ざい")
             ])
         )
+    }
+
+    /// A payload with neither a tag nor a reading — the case that used to read
+    /// as English at eleven of thirteen call sites, on a coin flip the untagged
+    /// word never got to call. There is nothing on the word to go on, so
+    /// 當前圖鑑語言 decides, and it decides *differently* in the two sessions.
+    private var untagged: CardWord {
+        CardWord(
+            id: "u",
+            word: "ざる",
+            chinese: "笊籬",
+            imageUrl: "",
+            category: "custom",
+            pronunciation: ""
+        )
+    }
+
+    @Test
+    func anUntaggedWordFollowsTheSessionRatherThanGuessingEnglish() {
+        #expect(self.untagged.language(in: .ja) == .ja)
+        #expect(self.untagged.language(in: .en) == .en)
+        // The payload itself still says nothing — the session is doing the work.
+        #expect(self.untagged.taggedLanguage == nil)
+    }
+
+    @Test
+    func aTaggedWordIgnoresTheSessionInBothDirections() {
+        let japanese = self.jaWord("洗剤", reading: "せんざい")
+        #expect(japanese.language(in: .en) == .ja)
+        #expect(japanese.language(in: .ja) == .ja)
     }
 
     @Test
@@ -139,7 +170,7 @@ struct HeadwordDisplayTests {
         }
         """
         let word = try JSONDecoder().decode(StudyQueueWord.self, from: Data(json.utf8))
-        #expect(word.headwordDisplay == .plain)
+        #expect(word.headwordDisplay(in: .en) == .plain)
         #expect(word.readingSegments == nil)
     }
 }

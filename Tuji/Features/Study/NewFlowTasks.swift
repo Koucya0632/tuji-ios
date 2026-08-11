@@ -67,25 +67,46 @@ extension SRSRating {
     }
 }
 
+/// 拼字題目 — what the spell stage is asking the learner to assemble.
+///
+/// This was two predicates over `reading`, both documented as "distinguishes JA
+/// from EN". They do not: バスマット is Japanese and its 振假名 is itself, so the
+/// stage quizzes the 詞形 and the answer is `.term`. The language question and
+/// this one agree on most words and part company on exactly the words that make
+/// 振假名 subtle — which is why they get separate names.
+nonisolated enum SpellSubject: Equatable {
+    /// A kana reading distinct from the written term: 排出這個字的讀音. Drives the
+    /// on-device wrong-variant generation and the kanji reveal.
+    case reading(String)
+    /// The term itself: 拼出這個字. Every English word, and Japanese already
+    /// written in kana.
+    case term(String)
+
+    /// The string being assembled, whichever question is being asked.
+    var text: String {
+        switch self {
+        case let .reading(text), let .term(text): text
+        }
+    }
+
+    var isReading: Bool {
+        if case .reading = self { return true }
+        return false
+    }
+}
+
 extension NewFlowCoordinator {
-    /// The string the spell stage quizzes: the hiragana reading for JA words
-    /// (so the learner judges the kana), else the term form.
-    nonisolated static func spellSubject(for item: StudyQueueItem) -> String {
-        if let r = item.word.reading, !r.isEmpty { return r }
-        return item.word.word
+    /// `reading` is a JA-only backend field, so a non-empty one that differs
+    /// from the term is a kana reading worth quizzing on its own.
+    nonisolated static func spellSubject(for item: StudyQueueItem) -> SpellSubject {
+        guard let reading = item.word.reading, !reading.isEmpty else {
+            return .term(item.word.word)
+        }
+        return reading == item.word.word ? .term(reading) : .reading(reading)
     }
 
-    func spellSubject(for item: StudyQueueItem) -> String {
+    func spellSubject(for item: StudyQueueItem) -> SpellSubject {
         Self.spellSubject(for: item)
-    }
-
-    /// True when we're quizzing a kana reading distinct from the written term
-    /// (JA). Drives the on-device wrong-variant generation and the view's
-    /// kanji-reveal + prompt wording. `reading` is a JA-only backend field, so
-    /// its presence reliably distinguishes JA-with-kana from EN.
-    func spellUsesReading(for item: StudyQueueItem) -> Bool {
-        guard let r = item.word.reading, !r.isEmpty else { return false }
-        return r != item.word.word
     }
 
     /// Board caps at 10 tiles; longer subjects re-chunk so the pool stays a
@@ -101,8 +122,7 @@ extension NewFlowCoordinator {
     /// the retry attempt (chunk boundaries must not move between retries;
     /// only the pool shuffle re-seeds).
     nonisolated static func tileBoard(for item: StudyQueueItem) -> TileBoard {
-        let subject = self.spellSubject(for: item)
-        var tokenUnits = subject
+        var tokenUnits = self.spellSubject(for: item).text
             .split(whereSeparator: \.isWhitespace)
             .map { self.baseUnits(for: $0) }
         let total = tokenUnits.reduce(0) { $0 + $1.count }

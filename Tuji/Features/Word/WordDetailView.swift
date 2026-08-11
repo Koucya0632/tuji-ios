@@ -184,23 +184,12 @@ extension WordDetailPage {
     private func titleRow(_ w: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
-                // Size and wrapping are the headword's own decisions — one size
-                // for every screen, and whether it may wrap depends on the
-                // language. See `TujiHeadword`.
-                TujiHeadword(
-                    display: w.headwordDisplay,
-                    word: w.word,
-                    language: w.wordLanguage
-                )
+                // Size, wrapping and the reading line are the headword's own
+                // decisions — see `TujiHeadword`. This screen only says where
+                // the line goes: in the row, before the part of speech.
+                TujiHeadword(word: w)
                 HStack(spacing: Space.s2) {
-                    // `.line` and not `w.pronunciation`: for Japanese the server
-                    // sends pronunciation as a copy of the reading, so a kana
-                    // headword used to print itself again right here.
-                    if case let .line(text) = w.headwordDisplay {
-                        Text(text)
-                            .font(w.wordLanguage == .ja ? .tujiBodySm : .tujiMono)
-                            .foregroundStyle(.tujiInk2)
-                    }
+                    TujiReadingLine(word: w)
                     if let pos = w.partOfSpeech, !pos.isEmpty {
                         Text(localizedPartOfSpeech(pos, language: self.settings.current.uiLanguage))
                             .font(.tujiLabel)
@@ -226,7 +215,7 @@ extension WordDetailPage {
             Spacer()
             PronunciationButton(
                 text: w.word,
-                language: w.wordLanguage,
+                language: w.taggedLanguage,
                 audioUrls: w.audioUrls,
                 size: 48,
                 wordId: self.id.hasPrefix("atlas:") ? nil : w.id

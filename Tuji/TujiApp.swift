@@ -108,6 +108,10 @@ struct TujiApp: App {
                 .environment(collectionIdentities)
                 .environment(BlockStore.shared)
                 .environment(\.locale, settings.current.uiLanguage.locale)
+                // 當前圖鑑語言, supplied once. Every screen that scopes itself to
+                // the learning direction reads it from here rather than deriving
+                // it again from the store — see TargetLanguageScope.swift.
+                .environment(\.targetLanguage, settings.current.learningDirection.targetLanguage)
                 .task { await push.refreshAuthorization() }
                 // Re-send SRS answers that failed offline (see
                 // StudyAnswerOutbox). LaunchCoordinator replays only after a

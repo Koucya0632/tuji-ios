@@ -113,7 +113,7 @@ enum Endpoint {
 
     // MARK: - Public
 
-    case search(q: String)
+    case search(q: String, lang: String, learning: String)
     case events
     case words(lang: String, learning: String)
     case word(id: String, lang: String, learning: String)
@@ -396,10 +396,20 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/billing/verify", policy: .privateFresh)
 
         // MARK: Public
-        case let .search(q):
+        case let .search(q, lang, learning):
+            // The response is direction-scoped — 搜尋日文/假名 and 搜尋英文 return
+            // different rows for the same query — and the policy is
+            // `.publicCached`, so leaving the direction out of the URL gave both
+            // directions one cache entry: switching 學習語言 and repeating a
+            // search could be served the other language's results out of
+            // URLCache. Identity, not a hint.
             EndpointDescriptor(
                 path: "/api/search",
-                queryItems: [URLQueryItem(name: "q", value: q)],
+                queryItems: [
+                    URLQueryItem(name: "q", value: q),
+                    URLQueryItem(name: "lang", value: lang),
+                    URLQueryItem(name: "learning", value: learning)
+                ],
                 policy: .publicCached
             )
         case .events:

@@ -90,9 +90,13 @@ final class CollectionEditVM {
         return self.actionError
     }
 
-    /// The member picker is scoped to this collection's language.
-    var language: TargetLanguage {
-        self.collection?.targetLanguage ?? .ja
+    /// The member picker is scoped to this collection's language — nil until the
+    /// collection loads, because the model has no way to know it before then.
+    /// This used to answer `.ja` while loading, which is a guess wearing a fact's
+    /// clothes: an 英文 author's picker would have been scoped to 日文 had the
+    /// sheet ever opened first.
+    var language: TargetLanguage? {
+        self.collection?.targetLanguage
     }
 
     private var trimmedTitle: String {

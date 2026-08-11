@@ -76,6 +76,10 @@ final class SettingsStore {
     private let repository: UserRepository
     private let defaults: UserDefaults
     private let signedInUserProvider: @MainActor () -> SessionUser?
+    /// What a 學習語言 change costs. This store is the only place the direction
+    /// can change, so it is the only place that has to notice — see
+    /// LearningDirectionRefresh.swift for why the callers stopped saying.
+    private let directionRefresh: LearningDirectionRefreshing
     private let communityCategoryMigration = CommunityStudyCategoryMigration()
     private let signposter = OSSignposter(
         subsystem: "app.tuji.ios",
@@ -105,11 +109,13 @@ final class SettingsStore {
             } else {
                 nil
             }
-        }
+        },
+        directionRefresh: LearningDirectionRefreshing = LiveLearningDirectionRefresher()
     ) {
         self.repository = repository
         self.defaults = defaults
         self.signedInUserProvider = signedInUserProvider
+        self.directionRefresh = directionRefresh
         // Seed the learning target from the persisted choice so the launch-time
         // word preload (gated behind the splash) fetches the right language
         // before the server `load()` completes. Without this, `current` stays
@@ -232,19 +238,9 @@ final class SettingsStore {
             self.loadedContext = context
             self.hasLoaded = true
             if directionChanged {
-                WordsStore.shared.invalidate()
-                MasteryStore.shared.invalidate()
-                ProgressStore.shared.invalidate()
-                StudyStatsStore.shared.invalidate()
-                // LaunchCoordinator owns the final context-aware words/categories
-                // load. The remaining learning stores are useful soon after
-                // launch but must not extend the signed-in launch gate.
-                Task {
-                    async let masteryLoad: Void = MasteryStore.shared.reload()
-                    async let progressLoad: Void = ProgressStore.shared.reload()
-                    async let statsLoad: Void = StudyStatsStore.shared.reload()
-                    _ = await (masteryLoad, progressLoad, statsLoad)
-                }
+                // Detached so the reloads never extend the signed-in launch gate;
+                // `.serverDisagreed` is what keeps the catalog reload out of them.
+                Task { await self.directionRefresh.refresh(after: .serverDisagreed) }
             }
             if let migrationUserID {
                 if migrationNeedsSave {
@@ -312,11 +308,19 @@ final class SettingsStore {
         }
         self.inFlight.removeAll()
         self.loadedContext = context
+        let directionChanged = self.current.learningDirection != settings.learningDirection
         self.current = settings
         self.hasLoaded = true
         self.loading = false
         self.lastError = nil
         self.defaults.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
+        // Normally a no-op: Setup posts the direction the onboarding picker
+        // already applied. It is here because this is the third way `current`
+        // can change, and "the store notices" is the whole point of the seam —
+        // a fourth caller should not have to remember.
+        if directionChanged {
+            Task { await self.directionRefresh.refresh(after: .serverDisagreed) }
+        }
     }
 
     // MARK: - Immediate edits
@@ -350,6 +354,12 @@ final class SettingsStore {
 
     /// Applies the learning target immediately. First-launch and guest flows
     /// use `persist: false`; signed-in settings changes sync to the server.
+    ///
+    /// Also drops and re-fetches everything scoped to the old direction. The two
+    /// callers used to do that themselves and disagreed about what it meant —
+    /// the first-run picker left the previous direction's mastery, progress and
+    /// streak on screen. Fire-and-forget: the picker dismisses immediately and
+    /// the stores publish as they land.
     func setLearningDirection(_ direction: LearningDirection, persist: Bool) {
         guard self.current.learningDirection != direction else { return }
         self.current.learningDirection = direction
@@ -357,6 +367,7 @@ final class SettingsStore {
         if persist {
             self.scheduleSave()
         }
+        Task { await self.directionRefresh.refresh(after: .userPicked) }
     }
 
     /// Two-way binding for SwiftUI controls (e.g. Toggle). Reading returns the
