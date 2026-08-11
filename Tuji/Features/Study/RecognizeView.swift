@@ -73,14 +73,15 @@ struct RecognizeView: View {
             self.hero
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(alignment: .firstTextBaseline) {
-                    // Display size: this is the one screen whose whole job is
-                    // "here is a new word", so the word is the largest thing
-                    // the app ever sets.
+                    // This screen's whole job is "here is a new word", so the
+                    // word used to be set at display size. It no longer is: a
+                    // size only short words could keep was not a hierarchy, it
+                    // was a lottery — 長い外来語 arrived a third of the size of
+                    // 洗剤. The picture and the empty page around it carry the
+                    // emphasis instead. See `TujiHeadword`.
                     TujiHeadword(
                         display: self.item.word.headwordDisplay,
                         word: self.item.word.word,
-                        baseSize: 56,
-                        font: .tujiDisplay,
                         language: self.item.word.wordLanguage
                     )
                     // Beside a `Spacer` the headword is offered half the row

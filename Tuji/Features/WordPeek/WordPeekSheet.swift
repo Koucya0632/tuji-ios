@@ -154,8 +154,6 @@ struct WordPeekSheet: View {
                 TujiHeadword(
                     display: self.word.headwordDisplay,
                     word: self.word.word,
-                    baseSize: 34,
-                    font: .tujiH1,
                     language: self.word.wordLanguage
                 )
                 if case let .line(text) = self.word.headwordDisplay {

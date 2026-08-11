@@ -5,10 +5,10 @@
 // nothing about 磨 being みが. The split itself is a server-side dictionary
 // fact (see `FuriganaSegment`); this file is only about drawing it.
 //
-// Only the display-size screens use this. A correctly proportioned ruby is half
-// the base size, and the 圖鑑 grid sets its headword in `tujiH3` (18pt), so its
-// ruby would land on 9pt — inside the range TujiFont.swift removed on purpose,
-// because CJK strokes merge there. The grid therefore keeps the reading line.
+// Every screen that shows a headword uses this, at one size. The 圖鑑 grid does
+// not: it sets its words in `tujiH3` (18pt), and a correctly proportioned ruby
+// there would land on 9pt — inside the range TujiFont.swift removed on purpose,
+// because CJK strokes merge. The grid therefore keeps the reading line.
 //
 // The word is fitted to its column by *choosing a size*, not by scaling a laid
 // out row. Each candidate below is already drawn at its final point size, so
@@ -65,11 +65,11 @@ struct FuriganaHeadword: View {
                     // with no ruby: without it the bare kana of 歯磨"き"粉 would
                     // sit a ruby's height higher than its neighbours.
                     Text(segment.ruby ?? " ")
-                        .font(.tujiFuriganaRuby(self.baseSize * self.rubyRatio * scale))
+                        .font(.tujiHeadwordRuby(self.baseSize * self.rubyRatio * scale))
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                     Text(segment.text)
-                        .font(.tujiFuriganaBase(self.baseSize * scale))
+                        .font(.tujiHeadword(self.baseSize * scale))
                         .foregroundStyle(.tujiInk)
                         .lineLimit(1)
                 }
@@ -90,6 +90,11 @@ struct FuriganaHeadword: View {
 /// keeps the ruby legible — 0.47 under a 56pt word, but 0.77 under a 34pt one.
 /// Deriving it here makes that constraint something the code enforces instead
 /// of something a call site is trusted to remember.
+///
+/// At the 26pt `TujiHeadword` now sets, the floor *is* full size and the ladder
+/// collapses to a single rung. That is the correct answer, not a degenerate one:
+/// there is no room left to shrink into, and every kanji word in the catalogue
+/// fits at 26pt anyway.
 enum FuriganaScaleLadder {
     /// Smallest kana the CJK face still resolves; see TujiFont.swift.
     static let minimumRubyPoint: CGFloat = 13
@@ -128,10 +133,22 @@ enum FuriganaScaleLadder {
 struct TujiHeadword: View {
     let display: HeadwordDisplay
     let word: String
-    /// The headword's point size, so ruby can be derived from it. Must match
-    /// whatever font the screen would otherwise have set.
-    var baseSize: CGFloat
-    var font: Font
+    /// One size for every headword on every screen.
+    ///
+    /// A size only short words got to keep is not a hierarchy: at 56pt, 洗剤 was
+    /// set twice as large as シャワーカーテンポール purely because it is shorter.
+    /// 26pt is where that stops — 478 of the 480 Japanese words fit their column
+    /// outright, so they all render identically.
+    ///
+    /// It is also the floor. Ruby is half the headword and the CJK face stops
+    /// resolving below 13pt (TujiFont.swift), so 26 is the smallest headword that
+    /// can carry legible kana; the two remaining outliers have no kanji, so they
+    /// shrink without a ruby to protect.
+    ///
+    /// Defaulted rather than passed: five screens were handing over the same
+    /// constants, and this feature has already been bitten once by a decision
+    /// living in five places.
+    var baseSize: CGFloat = 26
     /// Decides whether the word may wrap. nil is treated as "not Japanese",
     /// which is the safe direction: wrapping never truncates.
     var language: TargetLanguage?
@@ -152,7 +169,7 @@ struct TujiHeadword: View {
             FuriganaHeadword(segments: segments, baseSize: self.baseSize)
         case .line, .plain:
             Text(self.word)
-                .font(self.font)
+                .font(.tujiHeadword(self.baseSize))
                 .foregroundStyle(.tujiInk)
                 .lineLimit(self.wrapsOntoASecondLine ? 2 : 1)
                 // No ruby here, so the 13pt CJK floor does not apply and the
@@ -176,7 +193,7 @@ struct TujiHeadword: View {
                 FuriganaSegment(text: "き", ruby: nil),
                 FuriganaSegment(text: "粉", ruby: "こ")
             ],
-            baseSize: 56
+            baseSize: 26
         )
         FuriganaHeadword(
             segments: [
@@ -186,13 +203,14 @@ struct TujiHeadword: View {
                 FuriganaSegment(text: "し", ruby: nil),
                 FuriganaSegment(text: "時計", ruby: "どけい")
             ],
-            baseSize: 56
+            baseSize: 26
         )
         FuriganaHeadword(
             segments: [FuriganaSegment(text: "豆板醤", ruby: "トウバンジャン")],
-            baseSize: 56
+            baseSize: 26
         )
-        // The one catalogue word that actually needs a lower rung.
+        // The widest ruby-bearing word in the catalogue (9.0em). At 26pt it
+        // fits a phone's detail column outright, so nothing shrinks.
         FuriganaHeadword(
             segments: [
                 FuriganaSegment(text: "鶏", ruby: "にわとり"),
@@ -204,7 +222,7 @@ struct TujiHeadword: View {
                 FuriganaSegment(text: "の", ruby: nil),
                 FuriganaSegment(text: "素", ruby: "もと")
             ],
-            baseSize: 56
+            baseSize: 26
         )
     }
     .padding()

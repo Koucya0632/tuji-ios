@@ -184,14 +184,12 @@ extension WordDetailPage {
     private func titleRow(_ w: Word) -> some View {
         HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s2) {
-                // Whether this may wrap is the headword's own decision and
-                // depends on the language — see `TujiHeadword`. At 56pt a third
-                // of the Japanese catalogue overruns this column.
+                // Size and wrapping are the headword's own decisions — one size
+                // for every screen, and whether it may wrap depends on the
+                // language. See `TujiHeadword`.
                 TujiHeadword(
                     display: w.headwordDisplay,
                     word: w.word,
-                    baseSize: 56,
-                    font: .tujiDisplay,
                     language: w.wordLanguage
                 )
                 HStack(spacing: Space.s2) {

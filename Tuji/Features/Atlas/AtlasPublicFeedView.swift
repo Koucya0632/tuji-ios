@@ -676,8 +676,6 @@ struct AtlasPublicDetailView: View {
                 TujiHeadword(
                     display: word.headwordDisplay,
                     word: word.word,
-                    baseSize: 34,
-                    font: .tujiH1,
                     language: word.wordLanguage
                 )
                 HStack(spacing: Space.s2) {

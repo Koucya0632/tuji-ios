@@ -60,16 +60,19 @@ extension Font {
     /// IPA, UID, system codes. Latin-only by definition, so no CJK cascade.
     static let tujiMono = Font.custom("JetBrainsMono-Regular", size: 13)
 
-    /// The headword half of a furigana pair — the same face as `tujiDisplay`,
-    /// but sized by its caller because the ruby is derived from that size and
-    /// the two have to stay in proportion.
-    static func tujiFuriganaBase(_ size: CGFloat) -> Font {
-        TujiTypeface.font(latin: "PlusJakartaSans-ExtraBold", size: size)
+    /// The word being learned, at the one size every screen sets it.
+    ///
+    /// Sized by its caller rather than fixed here, because ruby is derived from
+    /// this size and the two have to stay in proportion — see `TujiHeadword`,
+    /// which owns the number. Bold rather than `tujiDisplay`'s ExtraBold: this
+    /// is now a 26pt word, and a heavy CJK face closes up at that size.
+    static func tujiHeadword(_ size: CGFloat) -> Font {
+        TujiTypeface.font(latin: "PlusJakartaSans-Bold", size: size)
     }
 
-    /// The kana over a headword. Regular, not the headword's ExtraBold: at half
-    /// the size a heavy CJK face closes up its own counters.
-    static func tujiFuriganaRuby(_ size: CGFloat) -> Font {
+    /// The kana over a headword. Regular, because at half the headword's size
+    /// even Bold starts filling in its own counters.
+    static func tujiHeadwordRuby(_ size: CGFloat) -> Font {
         TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: size)
     }
 }
