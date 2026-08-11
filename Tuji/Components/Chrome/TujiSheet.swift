@@ -109,9 +109,7 @@ struct TujiFormSheet<Content: View>: View {
     }
 }
 
-/// Not private: the App Store snapshot mock draws this screen too, and a mock
-/// that reimplements the chrome is a mock that quietly stops matching the app.
-struct TujiSheetHeader: View {
+private struct TujiSheetHeader: View {
     let title: Text
     var closeDisabled: Bool = false
     var onClose: (() -> Void)?
