@@ -16,6 +16,14 @@ struct CategoryIndexView: View {
     @Environment(CategoriesStore.self) private var categories
     @Environment(MasteryStore.self) private var mastery
     @Environment(ProgressStore.self) private var progress
+    @Environment(AuthService.self) private var auth
+
+    /// Guests have no mastery or progress rows, so both badges stay `.none`
+    /// for them and the two account-scoped fetches are skipped.
+    private var isGuest: Bool {
+        if case .signedIn = self.auth.state { return false }
+        return true
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,11 +33,10 @@ struct CategoryIndexView: View {
         .background(.tujiPaper)
         .navigationTitle("主題")
         .toolbar(.hidden, for: .navigationBar)
-        .task {
-            await self.categories.loadIfNeeded()
-            await self.words.loadIfNeeded()
-            await self.mastery.loadIfNeeded()
-        }
+        // 完成 reads ProgressStore, which this screen used to render without
+        // ever loading — the badge showed up only when another screen had
+        // warmed the store first.
+        .warmsAccumulation(.themeIndex, isGuest: self.isGuest)
     }
 
     private var list: some View {
@@ -130,5 +137,8 @@ struct CategoryIndexView: View {
             .environment(CategoriesStore.shared)
             .environment(MasteryStore.shared)
             .environment(ProgressStore.shared)
+            .environment(SettingsStore.shared)
+            .environment(StudyStatsStore.shared)
+            .environment(AuthService.shared)
     }
 }

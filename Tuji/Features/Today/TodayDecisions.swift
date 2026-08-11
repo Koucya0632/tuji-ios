@@ -76,10 +76,26 @@ struct TodayDecisions {
         self.inputs = inputs
     }
 
+    /// 完成度, scoped to the selection. The rule lives on `CompletionReadout`
+    /// so 我's card asks the same question the same way — it used to carry its
+    /// own copy, with a whole-dictionary fallback and no guest branch.
+    var completion: CompletionReadout {
+        CompletionReadout(
+            .init(
+                isGuest: self.inputs.isGuest,
+                settingsLoaded: self.inputs.settingsLoaded,
+                studyCategories: self.inputs.studyCategories,
+                guestLearnedCount: self.inputs.guestLearnedCount,
+                seenInSelection: self.inputs.seenInSelection,
+                totalInSelection: self.inputs.totalInSelection,
+                dictionaryCount: self.inputs.dictionaryCount,
+                dictionaryCountInSelection: self.inputs.dictionaryCountInSelection
+            )
+        )
+    }
+
     var showThemePrompt: Bool {
-        !self.inputs.isGuest
-            && self.inputs.settingsLoaded
-            && self.inputs.studyCategories.isEmpty
+        self.completion.showsThemePrompt
     }
 
     var dailyGoalReached: Bool {
@@ -88,28 +104,15 @@ struct TodayDecisions {
         return (self.inputs.stats?.todayNew ?? 0) >= goal
     }
 
-    /// Words studied at least once (server "seen"), matching the Progress tab's
-    /// completion source. With no themes selected the progress reads 0/0 to
-    /// match the "pick themes first" empty state.
+    /// Words studied at least once (server "seen"), matching 我's completion
+    /// card — the same `CompletionReadout` answers both.
     var dexSeen: Int {
-        if self.inputs.isGuest { return self.inputs.guestLearnedCount }
-        if self.showThemePrompt { return 0 }
-        return self.inputs.seenInSelection
+        self.completion.seen
     }
 
-    /// Total published words in the selected categories. Server count when
-    /// available, else the locally known dictionary — scoped the same way.
-    ///
-    /// The fallback used to be the *whole* dictionary, which fired not only
-    /// when there is no server progress (guests, always) but also whenever the
-    /// selected themes happen to hold nothing. A guest whose only themes were
-    /// 自定義 + 物見 therefore read 「主題進度 0 / 480」 while 設定 said two
-    /// themes were selected — a denominator describing a selection nobody made.
+    /// Total published words in the selected categories.
     var dexTotal: Int {
-        if self.showThemePrompt { return 0 }
-        if self.inputs.totalInSelection > 0 { return self.inputs.totalInSelection }
-        guard !self.inputs.studyCategories.isEmpty else { return self.inputs.dictionaryCount }
-        return self.inputs.dictionaryCountInSelection
+        self.completion.total
     }
 
     var reviewDisabled: Bool {

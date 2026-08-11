@@ -83,6 +83,21 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   mastery and completion — not to "what to do now" — even though its product purpose is to
   pull the user back today. The distinction matters because the visual system assigns one
   colour per meaning.
+- **完成度 (`CompletionReadout`)** — how far through the selected 學習主題 the account is:
+  seen / total, plus the clamped ratio and the percentage rendered from it. The
+  denominator is **always scoped to the selection** — server count when there is one,
+  else the locally known dictionary *within the same selection*. Falling back to the
+  whole dictionary is the bug this module was built around: it fires not only for guests
+  (who never have server rows) but whenever the picked themes hold no published cards, so
+  自定義 + 物見 read 「已學 0 / 共 480 字」, a denominator describing a selection nobody
+  made. Three states the two screens used to answer differently: a **guest**'s progress is
+  the local learned set, not the empty server rows; **no themes picked** reads 0 / 0 to
+  match the 選擇主題 empty state rather than widening to every category; and `seen > total`
+  is reachable (seen counts studied words, total counts *published* cards, so a 取消公開
+  leaves the difference), which is why the ratio clamps and the percentage is derived from
+  it rather than computed beside it. One module answers 首頁's 主題進度 and 我's 完成度 card.
+  `CompletionReadout.ratio(seen:total:)` is the only seen/total ratio in the app — there
+  were five copies and two skipped the clamp.
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 - **當前圖鑑語言 (`\.targetLanguage`)** — the session's target language as a *screen* sees
@@ -297,6 +312,29 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   in `View` bodies where no test could reach them. The fourth refresh module, beside
   `AtlasMutationRefresh` (authoring), `CommunityLearningRefresh` (consumption) and
   `SessionRefresh` (study).
+- **AccumulationLoading** — the **reader's** counterpart to those four: what a screen needs
+  *warm* before its numbers are true, where they name what a write *invalidates*. An
+  `AccumulationSurface` (`todayHero` / `progressSections` / `themeIndex`) answers `needs(isGuest:)`
+  with a set of `AccumulationStore` roles; `AccumulationWarmer` warms them and the
+  `.warmsAccumulation(_:isGuest:then:)` modifier is the screen-side seam (`then` exists for
+  首頁, whose study-queue prefetch must follow settings + stats). It exists because three
+  screens hand-wrote the same fan-out and one got it wrong: `CategoryIndexView` rendered the
+  完成 badge from `ProgressStore` and never loaded it, so on a cold open of 主題 the badge was
+  missing from every theme and appeared only if another screen had warmed the store first —
+  intermittent rather than broken, because 全精通 reads mastery, which *was* loaded.
+  **Settings is warmed first and alone**: it is the only one of the six with consequences for
+  the others (it is where a 學習語言 disagreement is noticed, which invalidates the learning
+  stores), so warming progress alongside it would race a load against its own invalidation.
+  The rest are awaited **in sequence, deliberately** — `any WarmableStore` is a non-Sendable
+  existential and sending one into a child task passes Debug and fails the Swift 6 WMO build,
+  the trap already documented on `MeVM.load`. Every store is TTL- or once-guarded, so after
+  the first appearance the whole sequence is a no-op.
+- **Staleness is per-store and not uniform.** `ProgressStore` / `StudyStatsStore` use
+  `loadIfStale(ttl: 30)` because their numbers move on their own (`due` crosses midnight, the
+  streak turns over). `MasteryStore` uses `loadIfNeeded` — no TTL — because a score only
+  changes when *this* user answers something, and every path that does already invalidates it
+  through `SessionRefresh`. The cost: another device's session shows up only after a relaunch
+  or a pull-to-refresh, and 我 has no pull.
 - **Cache identity ≠ fetch authorisation** (`URL.signedStorageObjectID`). 自製圖鑑 lives in
   a private Supabase bucket, so every API response signs a fresh URL: same object, new
   `token=`. Nuke keys both cache tiers on the URL, so the 500 MB DataCache never scored a
