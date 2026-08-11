@@ -38,7 +38,6 @@
 - 啟動時並行開始:600ms 品牌動畫門檻、session resolution、依本機 mirror 的匿名 words/categories preload,以及非阻塞的推播授權刷新。只有 signed-in session 確立後才讀 server settings、補 personalized catalog、刷新 profile 與重播離線答題 outbox(`StudyAnswerOutbox.replay()`);App 回到前景且仍為 signed-in 時再重播一次。
 - `.onOpenURL` 先交給 GoogleSignIn 處理 OAuth callback,再嘗試解析成 `TujiDeepLink`。
 - environment locale 由 `settings.current.uiLanguage.locale` 決定,支援四種介面語言,見 §16 本地化。
-- **DEBUG 限定**:啟動參數 `--ad-snapshot=home|capture|cards|review` 會把 root 換成一組固定資料的行銷截圖畫面(`AdSnapshotRoot`),release 編譯整段排除。
 
 ### 架構模式
 
@@ -672,7 +671,7 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 
 - `Core/Diagnostics/CrashReporting.swift`:Firebase Crashlytics(詳見 `CRASH_REPORTING.md`)。
 - 全 App 用 OSLog(subsystem `app.tuji.ios`)分 category 記錄;Atlas 佇列另有 OSSignposter 打點。
-- DEBUG 限定:我的 分頁「除錯工具」的 Bearer smoke test(GET `/api/test_smoke/whoami`)、以及 `--ad-snapshot=` 行銷截圖模式(§1),release 編譯皆排除。
+- DEBUG 限定:我的 分頁「除錯工具」的 Bearer smoke test(GET `/api/test_smoke/whoami`),release 編譯排除。
 
 ### 測試 — `TujiTests/`
 
