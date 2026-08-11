@@ -14,21 +14,33 @@ struct LiveProgressRepository: ProgressRepository {
     static let shared = LiveProgressRepository()
 
     private let api: APIClient
+    /// 連勝、完成度 and 熟練度 all live in a per-direction namespace, and both
+    /// reads are re-issued the moment 學習語言 changes — before the debounced
+    /// settings POST has told the server. So the repository states the scope
+    /// rather than letting the server infer it, the same way
+    /// `LiveCatalogRepository.search` does. Read live at call time, per ADR-0001.
+    private let settings: LanguageContext
 
-    init(api: APIClient = .shared) {
+    init(api: APIClient = .shared, settings: LanguageContext = SettingsStore.shared) {
         self.api = api
+        self.settings = settings
+    }
+
+    private var learning: String {
+        self.settings.learningDirection.rawValue
     }
 
     func loadProgress() async throws -> ProgressResponse {
-        try await self.api.get(.usersProgress)
+        try await self.api.get(.usersProgress(learning: self.learning))
     }
 
+    /// Clears every direction, so it names none.
     func clearProgress() async throws {
-        try await self.api.delete(.usersProgress)
+        try await self.api.delete(.usersProgressClear)
     }
 
     func loadMastery() async throws -> MasteryListResponse {
-        try await self.api.get(.usersMastery)
+        try await self.api.get(.usersMastery(learning: self.learning))
     }
 
     func loadTopWords(type: String, limit: Int) async throws -> TopWordsResponse {

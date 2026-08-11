@@ -20,15 +20,16 @@ struct EndpointPolicyTests {
     /// One value per case, in declaration order.
     private static let all: [Endpoint] = [
         .usersMe, .usersProfile, .usersSettings, .usersFavorites, .usersLearned,
-        .usersSync, .usersProgress, .usersMastery,
+        .usersSync, .usersProgress(learning: "zh-en"), .usersProgressClear,
+        .usersMastery(learning: "zh-en"),
         .usersCustomWords(lang: "zh-Hant", learning: "en"),
         .usersSavedWords(lang: "zh-Hant", learning: "en"),
         .usersTopWords(type: "weak", limit: 3),
         .usersDeleteAccount, .usersPushToken,
         .usersPushTokenDelete(deviceId: "d1"), .usersFeedback,
         .usersBlocks, .usersBlock(handle: "TJ1"),
-        .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant"),
-        .studyAnswer, .studyStats, .studyReports,
+        .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant", learning: "zh-en"),
+        .studyAnswer, .studyStats(learning: "zh-en"), .studyReports,
         .atlasImages(limit: 20), .atlasImage(id: "i1"),
         .atlasImageRecognize(id: "i1", lang: "zh-Hant", learning: "en"),
         .atlasImageConfirm(id: "i1", lang: "zh-Hant"),
@@ -59,7 +60,7 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 61)
+        #expect(Self.all.count == 62)
     }
 
     @Test("every path is rooted at /api and carries no query string")
@@ -78,9 +79,9 @@ struct EndpointPolicyTests {
     func formerlyDefaultedAreUnchanged() {
         let formerlyDefaulted: [Endpoint] = [
             .usersMe, .usersProfile, .usersSettings, .usersFavorites, .usersLearned,
-            .usersProgress, .usersTopWords(type: "weak", limit: 3),
-            .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant"),
-            .studyStats, .smokeWhoami
+            .usersProgress(learning: "zh-en"), .usersTopWords(type: "weak", limit: 3),
+            .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant", learning: "zh-en"),
+            .studyStats(learning: "zh-en"), .smokeWhoami
         ]
         for ep in formerlyDefaulted {
             #expect(
@@ -161,7 +162,7 @@ struct EndpointPolicyTests {
     @Test("query items carry the values they were built from")
     func queryItemsAreCarried() {
         let queue = Endpoint.studyQueue(
-            mode: "review", limit: 7, new: 2, categories: ["a", "b"], lang: "ja"
+            mode: "review", limit: 7, new: 2, categories: ["a", "b"], lang: "ja", learning: "zh-ja"
         )
         let items = Dictionary(
             uniqueKeysWithValues: queue.descriptor.queryItems.map { ($0.name, $0.value) }
@@ -171,6 +172,38 @@ struct EndpointPolicyTests {
         #expect(items["new"] == "2")
         #expect(items["category"] == "a,b")
         #expect(items["lang"] == "ja")
+        #expect(items["learning"] == "zh-ja")
+    }
+
+    /// The four per-user reads whose answer the server derives from a learning
+    /// direction. They used to send none, so the server fell back to the stored
+    /// setting — which, right after a switch, is still the old one: the client
+    /// re-fetches these immediately and the settings POST is debounced 400ms
+    /// behind. 圖鑑 熟練度, 完成度 and 連勝 all answered for the deck the user had
+    /// just left, and stuck there for the stores' 30s freshness window.
+    @Test("every direction-scoped read states its direction")
+    func directionScopedReadsCarryLearning() {
+        let scoped: [Endpoint] = [
+            .usersProgress(learning: "zh-ja"),
+            .usersMastery(learning: "zh-ja"),
+            .studyStats(learning: "zh-ja"),
+            .studyQueue(mode: "new", limit: 10, new: 5, categories: [], lang: "ja", learning: "zh-ja")
+        ]
+        for ep in scoped {
+            let items = Dictionary(
+                uniqueKeysWithValues: ep.descriptor.queryItems.map { ($0.name, $0.value) }
+            )
+            #expect(
+                items["learning"] == "zh-ja",
+                "\(ep.descriptor.path) must not leave its direction to the server's stored setting"
+            )
+        }
+    }
+
+    @Test("clearing progress names no direction, because it clears them all")
+    func clearingProgressIsDirectionless() {
+        #expect(Endpoint.usersProgressClear.descriptor.queryItems.isEmpty)
+        #expect(Endpoint.usersProgressClear.descriptor.path == "/api/users/progress")
     }
 
     @Test("an absent cache-bust nonce adds no query item")

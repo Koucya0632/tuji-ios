@@ -312,6 +312,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   in `View` bodies where no test could reach them. The fourth refresh module, beside
   `AtlasMutationRefresh` (authoring), `CommunityLearningRefresh` (consumption) and
   `SessionRefresh` (study).
+  **Dropping and re-reading is only half of it**: the re-read has to say which direction it
+  is for. `/api/users/progress`, `/api/users/mastery`, `/api/study/stats` and
+  `/api/study/queue` derive their answer from a direction, and the settings POST that would
+  tell the server is debounced 400ms behind — so a re-fetch issued here always beat it and
+  came back scoped to the language the user had just left, which the stores then held for
+  their 30s freshness window. Every direction-scoped request now carries `?learning=`, and
+  the server takes the request at its word (the rule `?lang=` already had). A request that
+  states nothing still falls back to stored settings, for installs that predate this.
 - **AccumulationLoading** — the **reader's** counterpart to those four: what a screen needs
   *warm* before its numbers are true, where they name what a write *invalidates*. An
   `AccumulationSurface` (`todayHero` / `progressSections` / `themeIndex`) answers `needs(isGuest:)`
