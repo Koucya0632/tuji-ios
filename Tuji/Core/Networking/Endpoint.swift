@@ -14,8 +14,11 @@ enum Endpoint {
     case usersFavorites
     case usersLearned
     case usersSync
-    case usersProgress
-    case usersMastery
+    /// 連勝 + 熱力圖 + 各主題完成度, all of it scoped to one learning direction.
+    case usersProgress(learning: String)
+    /// 清除學習進度 — every direction at once, so it names none.
+    case usersProgressClear
+    case usersMastery(learning: String)
     case usersCustomWords(lang: String, learning: String)
     /// Saved 公開圖鑑 items, shaped as words for the 圖鑑 page's 物見 theme.
     case usersSavedWords(lang: String, learning: String)
@@ -33,9 +36,9 @@ enum Endpoint {
 
     // MARK: - Study (auth-protected)
 
-    case studyQueue(mode: String, limit: Int, new: Int, categories: [String], lang: String)
+    case studyQueue(mode: String, limit: Int, new: Int, categories: [String], lang: String, learning: String)
     case studyAnswer
-    case studyStats
+    case studyStats(learning: String)
     case studyReports
 
     // MARK: - Custom Atlas (auth-protected)
@@ -151,10 +154,26 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/users/learned", policy: .privateServerCached)
         case .usersSync:
             EndpointDescriptor(path: "/api/users/sync", policy: .privateFresh)
-        case .usersProgress:
-            EndpointDescriptor(path: "/api/users/progress", policy: .privateServerCached)
-        case .usersMastery:
-            EndpointDescriptor(path: "/api/users/mastery", policy: .privateFresh)
+        case let .usersProgress(learning):
+            // Same rule as the custom-words pair below: the direction the user
+            // just picked wins over the one the server still has stored. These
+            // are re-fetched the instant 學習語言 changes — ahead of the
+            // debounced settings POST — so without it 完成度 and 連勝 answered
+            // for the deck the user had just left, and the client's 30s
+            // freshness window kept that answer on screen.
+            EndpointDescriptor(
+                path: "/api/users/progress",
+                queryItems: [URLQueryItem(name: "learning", value: learning)],
+                policy: .privateServerCached
+            )
+        case .usersProgressClear:
+            EndpointDescriptor(path: "/api/users/progress", policy: .privateFresh)
+        case let .usersMastery(learning):
+            EndpointDescriptor(
+                path: "/api/users/mastery",
+                queryItems: [URLQueryItem(name: "learning", value: learning)],
+                policy: .privateFresh
+            )
         case let .usersCustomWords(lang, learning):
             // ?lang= / ?learning= win over the server-stored setting right after
             // an in-app switch (the settings save is debounced). Without the
@@ -204,7 +223,7 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/users/blocks/\(handle)", policy: .privateFresh)
 
         // MARK: Study
-        case let .studyQueue(mode, limit, new, categories, lang):
+        case let .studyQueue(mode, limit, new, categories, lang, learning):
             EndpointDescriptor(
                 path: "/api/study/queue",
                 queryItems: [
@@ -216,14 +235,22 @@ enum Endpoint {
                     URLQueryItem(name: "category", value: categories.joined(separator: ",")),
                     // Gloss language follows the live UI language, not the
                     // debounced server settings.
-                    URLQueryItem(name: "lang", value: lang)
+                    URLQueryItem(name: "lang", value: lang),
+                    // And the deck follows the live learning direction, for the
+                    // same reason — a queue built seconds after a switch would
+                    // otherwise come from the language the user just left.
+                    URLQueryItem(name: "learning", value: learning)
                 ],
                 policy: .privateServerCached
             )
         case .studyAnswer:
             EndpointDescriptor(path: "/api/study/answer", policy: .privateFresh)
-        case .studyStats:
-            EndpointDescriptor(path: "/api/study/stats", policy: .privateServerCached)
+        case let .studyStats(learning):
+            EndpointDescriptor(
+                path: "/api/study/stats",
+                queryItems: [URLQueryItem(name: "learning", value: learning)],
+                policy: .privateServerCached
+            )
         case .studyReports:
             EndpointDescriptor(path: "/api/study/reports", policy: .privateFresh)
 

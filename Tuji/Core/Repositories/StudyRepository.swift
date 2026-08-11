@@ -37,13 +37,14 @@ struct LiveStudyRepository: StudyRepository {
                 limit: max(1, limit),
                 new: newCount,
                 categories: categories,
-                lang: self.settings.uiLang
+                lang: self.settings.uiLang,
+                learning: self.settings.learningDirection.rawValue
             )
         )
     }
 
     func loadStats() async throws -> StudyStatsResponse {
-        try await self.api.get(.studyStats)
+        try await self.api.get(.studyStats(learning: self.settings.learningDirection.rawValue))
     }
 
     func submitAnswer(_ payload: StudyAnswerPayload) async throws -> StudyAnswerResponse {
