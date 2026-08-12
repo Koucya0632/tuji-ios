@@ -242,8 +242,14 @@ final class AtlasCaptureVM {
     func applyCandidates(_ list: [AtlasCandidate], mode: AtlasRecognitionMode) {
         self.activeMode = mode
         self.candidates = list.sorted { $0.rank < $1.rank }
-        if let best = self.candidates.first(where: { $0.levelKind == .fine }) ?? self.candidates.first {
-            self.apply(best)
+        // Match the order rendered by candidateSection: primary candidates are
+        // shown before fine candidates, with rank order preserved within each
+        // group. Reusing this path for cached modes also makes every mode switch
+        // select the first visible result without spending another AI call.
+        if let firstVisible = self.candidates.first(where: { $0.levelKind == .primary })
+            ?? self.candidates.first(where: { $0.levelKind == .fine })
+        {
+            self.apply(firstVisible)
         }
         // No "已辨識…" success banner — only surface the empty-result guidance so
         // the user knows to fill the fields in manually.

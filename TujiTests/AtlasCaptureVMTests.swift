@@ -62,18 +62,32 @@ struct AtlasCaptureVMTests {
     }
 
     @Test
-    func applyCandidatesPrefersFineAndSortsByRank() throws {
+    func applyCandidatesSelectsTheFirstDisplayedCandidateAndSortsByRank() throws {
         let vm = AtlasCaptureVM()
-        let coarse = try self.candidate(id: "coarse", level: "primary", label: "animal", rank: 1)
-        let fine = try self.candidate(id: "fine", level: "fine", label: "tabby cat", rank: 2)
+        let coarse = try self.candidate(id: "coarse", level: "primary", label: "animal", rank: 2)
+        let fine = try self.candidate(id: "fine", level: "fine", label: "tabby cat", rank: 1)
         vm.applyCandidates([fine, coarse], mode: .primary)
-        #expect(vm.candidates.map(\.id) == ["coarse", "fine"])
-        // The fine candidate wins the auto-apply even though it ranks later.
-        #expect(vm.selectedCandidateId == "fine")
-        #expect(vm.lemma == "tabby cat")
+        #expect(vm.candidates.map(\.id) == ["fine", "coarse"])
+        // The view groups primary candidates before fine candidates, so the
+        // primary candidate is visually first even when its global rank is later.
+        #expect(vm.selectedCandidateId == "coarse")
+        #expect(vm.lemma == "animal")
         // A successful recognition shows no banner; it just marks the mode active.
         #expect(vm.successMessage == nil)
         #expect(vm.activeMode == .primary)
+    }
+
+    @Test
+    func applyCandidatesSelectsTheTopRankedFineCandidateWhenThereIsNoPrimary() throws {
+        let vm = AtlasCaptureVM()
+        let later = try self.candidate(id: "later", level: "fine", label: "tabby cat", rank: 2)
+        let first = try self.candidate(id: "first", level: "fine", label: "cat", rank: 1)
+
+        vm.applyCandidates([later, first], mode: .escalate)
+
+        #expect(vm.candidates.map(\.id) == ["first", "later"])
+        #expect(vm.selectedCandidateId == "first")
+        #expect(vm.lemma == "cat")
     }
 
     @Test
@@ -276,6 +290,40 @@ struct AtlasCaptureVMTests {
 
         #expect(repository.recognizeCalls == [.escalate])
         #expect(vm.lemma == "tabby")
+    }
+
+    @Test
+    func switchingBetweenCachedModesSelectsEachFirstDisplayedCandidateForFree() async throws {
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = try AtlasFixtures.uploadResponse(
+            candidates: [
+                AtlasFixtures.candidate(id: "primary-fine", level: "fine", label: "tabby", rank: 1),
+                AtlasFixtures.candidate(id: "primary-first", level: "primary", label: "cat", rank: 2)
+            ]
+        )
+        repository.recognitionsByMode[.escalate] = try AtlasRecognitionResponse(
+            job: nil,
+            candidates: [
+                AtlasFixtures.candidate(id: "precision-fine", level: "fine", label: "tabby cat", rank: 1),
+                AtlasFixtures.candidate(id: "precision-first", level: "primary", label: "animal", rank: 2)
+            ]
+        )
+        let (vm, _, _) = self.standUp(repository: repository)
+        await vm.handlePicked(data: Data([0xFF]))
+        #expect(vm.selectedCandidateId == "primary-first")
+
+        vm.lemma = "my name"
+        vm.displayZhHant = "我的名字"
+        await vm.requestRecognize(.escalate)
+        #expect(vm.selectedCandidateId == "precision-first")
+        #expect(vm.lemma == "my name")
+        #expect(vm.displayZhHant == "我的名字")
+
+        await vm.requestRecognize(.primary)
+        #expect(vm.selectedCandidateId == "primary-first")
+        await vm.requestRecognize(.escalate)
+        #expect(vm.selectedCandidateId == "precision-first")
+        #expect(repository.recognizeCalls == [.escalate])
     }
 
     @Test
