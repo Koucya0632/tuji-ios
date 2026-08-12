@@ -217,6 +217,9 @@ struct RecognizeView: View {
     }
 
     private func rate(_ r: SRSRating) {
-        Task { await self.coord.recognizeAnswer(rating: r) }
+        // Synchronous: the beat is the coordinator's, tracked in `pendingBeats`
+        // so 先離開 can cancel it. This used to spawn a Task the view dropped,
+        // around a sleep nothing could reach.
+        self.coord.recognizeAnswer(rating: r)
     }
 }

@@ -10,31 +10,15 @@ struct NewDoneView: View {
     let queue: [StudyQueueItem]
     let onFinish: () -> Void
 
-    @Environment(MasteryStore.self) private var mastery
-    @Environment(StudyStatsStore.self) private var studyStats
-    @Environment(ProgressStore.self) private var progress
-
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s4) {
                 self.hero
-                UnsyncedAnswersNotice(unsyncedCount: self.coord.parkedCount)
+                UnsyncedAnswersNotice(unsyncedCount: self.coord.writes.parkedCount)
                     .padding(.horizontal, Space.s4)
                 StudyWordGrid(items: self.queue, mistakeCounts: self.coord.mistakeCounts)
             }
             .padding(.bottom, Space.s5)
-        }
-        // Learning new words writes mastery + creates user_cards + study_logs
-        // (the deferred recognize POSTs fired as each word cleared Spell).
-        // Reload — not just invalidate — every store the home surfaces read:
-        // Today stays mounted under this push, so its .task won't re-run on
-        // pop, and an invalidated-but-unreloaded store leaves 今日目標 0/10 and
-        // the streak flame at 0 right after the session (until a tab swap).
-        .task {
-            await SessionRefresh(
-                stores: [self.mastery, self.studyStats, self.progress],
-                invalidateQueue: { StudyQueueStore.shared.invalidate() }
-            ).run(draining: self.coord)
         }
         .safeAreaInset(edge: .bottom) {
             BBtn(

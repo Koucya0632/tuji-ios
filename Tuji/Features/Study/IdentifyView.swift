@@ -9,7 +9,6 @@ struct IdentifyView: View {
     let coord: NewFlowCoordinator
     let item: StudyQueueItem
 
-    private static let abc = ["A", "B", "C", "D", "E"]
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
     @Environment(\.targetLanguage) private var session
@@ -97,33 +96,11 @@ struct IdentifyView: View {
     }
 
     private var choicesList: some View {
-        VStack(spacing: Space.s2) {
-            let choices = self.computedChoices
-            ForEach(Array(choices.enumerated()), id: \.element) { idx, choice in
-                StudyOptionRow(
-                    letter: Self.abc[idx],
-                    label: choice,
-                    state: StudyOptionState.forOption(
-                        label: choice,
-                        answer: self.item.word.word,
-                        picked: self.coord.idPicked,
-                        revealed: self.coord.idLocked
-                    ),
-                    disabled: self.coord.idLocked
-                ) { self.coord.identifyPick(choice) }
-            }
-        }
-    }
-
-    private var computedChoices: [String] {
-        // Server choices scrubbed of near-synonyms of the answer + topped up;
-        // custom (自制圖鑑) cards build the whole set from the local pool.
-        // The variant bumps per wrong attempt so a retry reshuffles.
-        studyChoices(
-            for: self.item,
-            pool: self.words.words,
-            session: self.session,
-            variant: self.coord.choicesVariant(for: self.item)
-        )
+        StudyChoiceList(
+            item: self.item,
+            variant: self.coord.choicesVariant(for: self.item),
+            picked: self.coord.idPicked,
+            revealed: self.coord.idLocked
+        ) { self.coord.identifyPick($0) }
     }
 }

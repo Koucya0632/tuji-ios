@@ -5,6 +5,7 @@
 // word's write. SessionRefresh owns that sequence so the two flows can't drift.
 
 import Foundation
+import SwiftUI
 
 /// A store the completion screens invalidate + reload after a session. The three
 /// home stores (mastery, progress, study stats) already have this shape, so they
@@ -19,16 +20,17 @@ extension MasteryStore: RefreshableStore {}
 extension ProgressStore: RefreshableStore {}
 extension StudyStatsStore: RefreshableStore {}
 
-/// A study coordinator whose optimistic SRS writes can be awaited (bounded), so
-/// the refresh doesn't race the writes.
+/// Something whose optimistic SRS writes can be awaited (bounded), so the
+/// refresh doesn't race the writes. Both study flows satisfy it through the one
+/// module that owns their writes — the two coordinators used to conform
+/// separately, each with its own one-line delegation to the same free function.
 @MainActor
 protocol PendingWriteDraining {
     func drainPendingWrites(within timeout: Duration) async
     var hasPendingWrites: Bool { get }
 }
 
-extension NewFlowCoordinator: PendingWriteDraining {}
-extension ReviewFlowCoordinator: PendingWriteDraining {}
+extension StudySessionWrites: PendingWriteDraining {}
 
 /// A drainer with nothing to drain — for previews / callers with no coordinator.
 struct NoPendingWrites: PendingWriteDraining {
@@ -70,6 +72,47 @@ struct SessionRefresh {
         let reloads = self.stores.map { store in Task { await store.reload() } }
         for reload in reloads {
             await reload.value
+        }
+    }
+}
+
+/// Attach to the screen a finished session shows — **every** one of them.
+///
+/// The refresh belongs to *finishing the session*, not to the celebration that
+/// happens to be on screen. It used to hang off `CompleteView` / `NewDoneView`,
+/// so a session that crossed a streak milestone showed `MilestoneView` instead
+/// and refreshed nothing at all: the streak it had just celebrated stayed
+/// stale, mastery was never reloaded, and the study queue was never dropped.
+///
+/// The three home stores and the queue invalidation are read here rather than
+/// assembled by each caller — that assembly was the duplication that survived
+/// deduping the sequence itself.
+extension View {
+    func refreshesFinishedSession(
+        draining: PendingWriteDraining,
+        then: @escaping @MainActor () -> Void = {}
+    )
+        -> some View
+    {
+        self.modifier(FinishedSessionRefresh(draining: draining, then: then))
+    }
+}
+
+private struct FinishedSessionRefresh: ViewModifier {
+    let draining: PendingWriteDraining
+    let then: @MainActor () -> Void
+
+    @Environment(MasteryStore.self) private var mastery
+    @Environment(ProgressStore.self) private var progress
+    @Environment(StudyStatsStore.self) private var studyStats
+
+    func body(content: Content) -> some View {
+        content.task {
+            await SessionRefresh(
+                stores: [self.mastery, self.studyStats, self.progress],
+                invalidateQueue: { StudyQueueStore.shared.invalidate() }
+            ).run(draining: self.draining)
+            self.then()
         }
     }
 }

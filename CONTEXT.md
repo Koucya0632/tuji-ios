@@ -429,6 +429,54 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   broke the former `StudyRepository ↔ StudyAnswerOutbox` cycle before it could block
   injection.
 
+## Study — the session's three modules
+
+- **`StudySessionWrites`** — what a session does with an answer *after* the writer
+  returns: track the task so the completion screen can drain it, fold the mastery
+  delta, keep the milestone, count the parks. Both flows hold one. They used to hold
+  a copy each: `hasPendingWrites` was byte-identical, `drainPendingWrites` was the
+  same one-line delegation twice (each carrying the same comment about the module
+  qualification that stops it recursing into itself), and the parked count had two
+  names — `parkedCount` / `unsyncedCount` — while rendering through one view. The
+  duplication hid an asymmetry: only 複習 read the `.synced` body, so **a streak
+  milestone crossed by a `new_recognize` write was dropped and unrecoverable**, and
+  學新字 had no milestone screen to show it on. The seam is the `DurableAnswerWriting`
+  the module is built over; mastery is keyed by *word* while the payload carries a
+  *card* id, so the caller states the word rather than the module deriving it.
+- **`StudyLadder`** — the 學新字 task queue as list algebra: the interleave, the
+  requeue, the 已認識 fast path, the normalize-head rule that keeps a 拼字 from
+  surfacing before its word cleared 選字, and the progress readout. A value type
+  with no beats, locks, writes or latency capture in it. It was already a module
+  and had no interface: living inside `NewFlowCoordinator` beside six other
+  responsibilities, the only way to exercise it was through `resolveRecognize` /
+  `resolveIdentify` / `resolveTiles` — three internal methods written for the tests
+  that **the app never calls**, entered from 11 test call sites. *The interface is
+  the test surface*: tests that must enter where the app doesn't are telling you
+  the module is the wrong shape.
+- **`DistractorPool`** — whether a label may stand beside the answer, as a returned
+  `DistractorFairness` (`sameTerm` / `tokenSubset` / `cjkSubstring` / `sharedGloss`
+  / `fair`) rather than a private `Bool`. The four rules are the reason the module
+  exists and not one was pinned: they lived in file-private functions with no test
+  file, assertable only through a seeded shuffle, *by absence* — an assertion that
+  passes just as well when the shuffle happened to fill the slot otherwise. Its
+  `studyChoices` entry point is unchanged; what moved is that the verdict is now a
+  value. `StudyChoiceList` is the matching view seam — 選字 and 複習 each carried
+  their own copy of the same 18-line option list and the same four-argument
+  assembly.
+- **A finished session refreshes, whichever screen celebrates it.**
+  `.refreshesFinishedSession(draining:)` hangs off the *finish*, not off
+  `CompleteView` / `NewDoneView` — where it used to live, so a session that crossed a
+  milestone showed `MilestoneView` and refreshed nothing: the streak it had just
+  celebrated stayed stale and the study queue was never dropped. The three home
+  stores and the queue invalidation are read inside the modifier; assembling them
+  was the duplication that survived deduping the sequence itself.
+- **`TileBoard` owns how a tile board is made.** `spellSubject` / `of(_:)` /
+  `units(for:attempt:)` used to hang off `NewFlowCoordinator` as a `nonisolated
+  static` extension purely to borrow its name, and `TilesView` had to `typealias
+  SpellBoard = NewFlowCoordinator.SpellBoard` to get back out. **A module named
+  after one of its callers does not get found by the next one** — the same lesson
+  `ImageIntake` learned from `AvatarPicker`.
+
 ## Study — flow decisions live in the coordinators, not the views
 
 - **Tile spell-check is a coordinator decision.** `NewFlowCoordinator` owns the tile
