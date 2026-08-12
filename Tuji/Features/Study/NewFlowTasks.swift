@@ -164,7 +164,12 @@ extension TileBoard {
     /// Scrambled tile pool — deterministic per (item, attempt) so re-renders
     /// don't reshuffle mid-task, but a retry gets a new scramble. Never reads
     /// as the answer itself (that would be a free win).
-    nonisolated static func units(for item: StudyQueueItem, attempt: Int) -> [String] {
+    ///
+    /// Main-actor isolated, unlike its neighbours: it reads `studyStableHash`
+    /// and the board's computed properties, which the module's default
+    /// isolation puts on the main actor. `-Onone` lets a `nonisolated` version
+    /// through; the whole-module release build does not.
+    static func units(for item: StudyQueueItem, attempt: Int) -> [String] {
         let board = Self.of(item)
         var rng = SeededRNG(seed: studyStableHash("\(item.id)#tiles#\(attempt)"))
         var units = board.orderedUnits
