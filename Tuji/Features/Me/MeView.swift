@@ -47,11 +47,13 @@ struct MeView: View {
     @Environment(SettingsStore.self) private var settings
 
     @State private var vm = MeVM()
+    @State private var showPaywall = false
 
-    // The rule this screen used to document — server entitlement first, device
-    // StoreKit flag only while it is unknown — now lives in
-    // `LiveEffectiveEntitlement`, where 設定 reads it too. 我的 renders no Pro
-    // row, so it holds no entitlement dependency at all.
+    /// The rule this screen used to document — server entitlement first, device
+    /// StoreKit flag only while it is unknown — now lives in
+    /// `LiveEffectiveEntitlement`. 我的 and 設定 both read that same answer, so
+    /// the account row cannot disagree with the paywall or quota UI.
+    private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
 
     private var isGuest: Bool {
         self.user == nil
@@ -85,6 +87,7 @@ struct MeView: View {
         // so the system nav bar itself stays hidden.
         .navigationTitle("我")
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .refreshable {
             if !self.isGuest {
                 self.progress.invalidate()
@@ -127,27 +130,43 @@ struct MeView: View {
     /// a 92pt centred avatar over your own name was the app telling you about
     /// yourself, which you already know. What you came for is below it.
     private var identityRow: some View {
-        HStack(spacing: Space.s3) {
-            ProfileAvatar(
-                avatar: self.isGuest ? nil : self.user?.avatar,
-                fallbackPose: .face,
-                size: 48
-            )
-            VStack(alignment: .leading, spacing: 2) {
-                Text(self.displayName)
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-                    .lineLimit(1)
-                if let handle = self.handle {
-                    Text(verbatim: "\(tujiLocalized("UID")): \(handle)")
-                        .font(.tujiMono)
-                        .foregroundStyle(.tujiInk3)
+        Button { self.showPaywall = true } label: {
+            HStack(spacing: Space.s3) {
+                ProfileAvatar(
+                    avatar: self.isGuest ? nil : self.user?.avatar,
+                    fallbackPose: .face,
+                    size: 48
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(self.displayName)
+                        .font(.tujiH3)
+                        .foregroundStyle(.tujiInk)
                         .lineLimit(1)
+                    if let handle = self.handle {
+                        Text(verbatim: "\(tujiLocalized("UID")): \(handle)")
+                            .font(.tujiMono)
+                            .foregroundStyle(.tujiInk3)
+                            .lineLimit(1)
+                    }
                 }
+                Spacer(minLength: 0)
+                HStack(spacing: Space.s2) {
+                    TujiStatusEdgeLabel(
+                        text: Text(verbatim: self.subscriptionTier),
+                        edge: self.subscriptionEdge
+                    )
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.tujiInk3)
+                }
+                .fixedSize(horizontal: true, vertical: false)
             }
-            Spacer(minLength: 0)
+            .padding(.horizontal, Space.s4)
+            .contentShape(.rect)
         }
-        .padding(.horizontal, Space.s4)
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: "\(self.displayName), \(self.subscriptionTier)"))
     }
 
     // MARK: - Weak section
@@ -258,6 +277,14 @@ struct MeView: View {
             return String(local)
         }
         return nil
+    }
+
+    private var subscriptionTier: String {
+        self.entitlement.isPro ? "Pro" : "Free"
+    }
+
+    private var subscriptionEdge: Color {
+        self.entitlement.isPro ? .tujiAccumulation : .tujiInk3
     }
 }
 

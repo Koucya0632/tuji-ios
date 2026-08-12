@@ -1,5 +1,5 @@
-// Client-side "next review in …" formatting for the 圖鑑 grid, plus a tolerant
-// ISO8601 parser for the schedule timestamps.
+// Client-side "next review in …" formatting for mastery detail, plus a
+// tolerant ISO8601 parser for the schedule timestamps.
 //
 // The countdown strings mirror the backend `humanizeWhen` / `humanizeInterval`
 // (lib/srs.ts). They're returned as `LocalizedStringKey` so `Text(...)` resolves
