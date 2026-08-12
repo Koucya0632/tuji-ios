@@ -598,7 +598,7 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 
 ### StoreKit 2 — `Core/Billing/StoreKitService.swift`
 
-- 產品:`app.tuji.pro.monthly` / `app.tuji.pro.yearly`(自動續訂)。
+- 產品:`app.tuji.pro.monthly` / `app.tuji.pro.quarterly` / `app.tuji.pro.semiannual` / `app.tuji.pro.yearly`(自動續訂)。
 - **伺服器是有效權限權威**:每筆已驗證交易(首購/背景續訂/恢復)都把 JWS 轉送 POST `/api/billing/verify`;伺服器把 App Store 訂閱與營運手動贈與分開保存,再取聯集回 `AtlasEntitlement.plan`。贈與不覆寫訂閱,收回贈與也不取消訂閱。
 - **一份訂閱只綁一個帳號**:`original_transaction_id` 唯一;同一 Apple 訂閱同步到另一 Tuji 帳號時會轉移綁定,所以已有 server snapshot 時連 `free` 都必須勝過裝置 `isPro`。
 - 單例常駐監聽 `Transaction.updates`(背景續訂、退款、Ask-to-Buy);驗證後同步伺服器並 `finish()`。
