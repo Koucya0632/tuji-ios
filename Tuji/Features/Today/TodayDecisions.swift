@@ -104,17 +104,6 @@ struct TodayDecisions {
         return (self.inputs.stats?.todayNew ?? 0) >= goal
     }
 
-    /// Words studied at least once (server "seen"), matching 我's completion
-    /// card — the same `CompletionReadout` answers both.
-    var dexSeen: Int {
-        self.completion.seen
-    }
-
-    /// Total published words in the selected categories.
-    var dexTotal: Int {
-        self.completion.total
-    }
-
     var reviewDisabled: Bool {
         self.inputs.isGuest || (self.inputs.stats?.due ?? 0) == 0
     }

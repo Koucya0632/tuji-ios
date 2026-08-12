@@ -89,6 +89,29 @@ struct AccumulationWarmerTests {
         }
         return stores
     }
+
+    /// Settings must be *finished*, not merely started, before anything else
+    /// warms: it is where a 學習語言 disagreement is noticed, and noticing it
+    /// invalidates the learning stores. A warmer that only ordered the calls
+    /// would still race a load against its own invalidation.
+    @Test
+    func nothingWarmsUntilSettingsHasActuallyFinished() async {
+        var order: [String] = []
+        var stores: [AccumulationStore: any WarmableStore] = [:]
+        for key in AccumulationStore.allCases {
+            let spy = SpyWarmable(key: key) { order.append("done:\($0)") }
+            if key == .settings {
+                spy.delay = .milliseconds(30)
+            }
+            stores[key] = spy
+        }
+
+        await AccumulationWarmer(stores: stores).warm(.todayHero, isGuest: false)
+
+        let settingsDone = order.firstIndex(of: "done:settings")
+        #expect(settingsDone == 0)
+        #expect(order.count > 1)
+    }
 }
 
 @MainActor
@@ -101,7 +124,13 @@ private final class SpyWarmable: WarmableStore {
         self.record = record
     }
 
+    /// Held before recording, so a test can express 「settings has not finished
+    /// yet」 — the shape the original spy could not represent, and the exact
+    /// failure mode the settings-first rule exists to prevent.
+    var delay: Duration?
+
     func warm() async {
+        if let delay { try? await Task.sleep(for: delay) }
         self.record(self.key)
     }
 }

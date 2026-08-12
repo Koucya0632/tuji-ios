@@ -32,7 +32,8 @@ final class StudyStatsStore {
     private let repository: StudyRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "study-stats-store")
 
-    private init(repository: StudyRepository = LiveStudyRepository.shared) {
+    /// Internal, not private — see ProgressStore (ADR-0001 amendment).
+    init(repository: StudyRepository = LiveStudyRepository.shared) {
         self.repository = repository
     }
 

@@ -152,14 +152,14 @@ struct TodayDecisionsTests {
             dictionaryCount: 480,
             dictionaryCountInSelection: 60
         ))
-        #expect(d.dexTotal == 60)
+        #expect(d.completion.total == 60)
     }
 
     @Test("with no themes picked the fraction reads 0/0, matching the empty state")
     func dexIsZeroWhileThemesArePending() {
         let d = TodayDecisions(self.inputs(studyCategories: [], totalInSelection: 99))
-        #expect(d.dexSeen == 0)
-        #expect(d.dexTotal == 0)
+        #expect(d.completion.seen == 0)
+        #expect(d.completion.total == 0)
     }
 
     @Test("with themes picked but nothing selected locally the whole dictionary is the fallback")
@@ -172,7 +172,7 @@ struct TodayDecisionsTests {
             totalInSelection: 0,
             dictionaryCount: 480
         ))
-        #expect(d.dexTotal == 480)
+        #expect(d.completion.total == 480)
     }
 
     // MARK: - 學新字 gate

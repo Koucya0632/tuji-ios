@@ -331,7 +331,13 @@ struct TodayView: View {
     private var dailyGoalProgress: some View {
         let done = self.studyStats.stats?.todayNew ?? 0
         let goal = max(1, self.settings.current.dailyGoal)
-        let reached = done >= goal
+        // The verdict comes from the module, not from a second copy of the rule.
+        // This line used to re-derive `done >= goal` here, without the guest
+        // guard the module carries — and `TodayDecisions.subtitle` documents
+        // that 達成 "wins over everything below so this line can never
+        // contradict the 達成 badge on the hero card", while the badge was
+        // being drawn from the copy.
+        let reached = self.dailyGoalReached
         let ratio = CompletionReadout.ratio(seen: done, total: goal)
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack {
@@ -390,20 +396,8 @@ struct TodayView: View {
         }
     }
 
-    private var dexSeen: Int {
-        self.decisions.dexSeen
-    }
-
-    private var dexTotal: Int {
-        self.decisions.dexTotal
-    }
-
     private var reviewDisabled: Bool {
         self.decisions.reviewDisabled
-    }
-
-    private var newAvailable: Int {
-        self.decisions.newAvailable
     }
 
     private var newDisabled: Bool {
