@@ -17,12 +17,9 @@ import Supabase
 @MainActor
 @Observable
 final class AuthService {
-    enum State: Equatable {
-        case checking
-        case signedOut
-        case guest // browsing without an account
-        case signedIn(SessionUser)
-    }
+    /// The 43 call sites spell it `AuthService.State`; the machine itself is
+    /// `AuthSession`, which a test can hold without Supabase.
+    typealias State = AuthState
 
     enum SignUpResult: Equatable {
         case signedIn
@@ -32,7 +29,15 @@ final class AuthService {
 
     static let shared = AuthService()
 
-    private(set) var state: State = .checking
+    /// The state machine and its guards — see AuthSession. This class keeps the
+    /// Supabase glue and the fan-outs; the transitions live there so they can be
+    /// exercised without a network client that `fatalError`s in a test process.
+    private(set) var session = AuthSession()
+
+    var state: State {
+        self.session.state
+    }
+
     var error: String?
     var loading: Bool = false
 
@@ -52,7 +57,7 @@ final class AuthService {
     func resolveSession() async {
         do {
             let session = try await supabase.auth.session
-            state = .signedIn(SessionUser(from: session.user))
+            self.session.restored(SessionUser(from: session.user))
             log.info("session restored uid=\(session.user.id.uuidString, privacy: .public)")
         } catch {
             // `supabase.auth.session` refreshes an expired token over the
@@ -62,14 +67,15 @@ final class AuthService {
             // in with the stale cached session rather than bouncing an
             // already-authenticated user out to Welcome for a transient
             // network hiccup; it'll refresh next time we have connectivity.
-            if let cached = supabase.auth.currentSession, (error as? AuthError) != .sessionMissing {
-                state = .signedIn(SessionUser(from: cached.user))
-                log
-                    .info(
-                        "session refresh failed, keeping cached session uid=\(cached.user.id.uuidString, privacy: .public)"
-                    )
+            let cached = supabase.auth.currentSession.map { SessionUser(from: $0.user) }
+            let failure: SessionRefreshFailure =
+                (error as? AuthError) == .sessionMissing ? .noSession : .unreachable
+            self.session.failedRefresh(failure, cached: cached)
+            if let cached, case .signedIn = self.session.state {
+                log.info(
+                    "session refresh failed, keeping cached session uid=\(cached.id.uuidString, privacy: .public)"
+                )
             } else {
-                state = .signedOut
                 log.info("no existing session")
             }
         }
@@ -95,21 +101,19 @@ final class AuthService {
     /// / Today hero 登入/註冊) rather than at first launch. Welcome uses it to
     /// offer a close button back to guest browsing — otherwise the screen is
     /// an exit-less dead end for someone who tapped in by accident.
-    private(set) var cameFromGuest = false
+    var cameFromGuest: Bool {
+        self.session.cameFromGuest
+    }
 
     func enterGuestMode() {
-        guard case .signedOut = state else { return }
-        state = .guest
-        cameFromGuest = false
+        self.session.enterGuest()
         log.info("entered guest mode")
     }
 
     /// Called from MainTabsView's "登入 / 註冊" button so guest can land
     /// on Welcome and pick a flow.
     func exitGuestMode() {
-        guard case .guest = state else { return }
-        state = .signedOut
-        cameFromGuest = true
+        self.session.exitGuest()
         log.info("exited guest mode")
     }
 
@@ -129,7 +133,7 @@ final class AuthService {
                 redirectTo: emailConfirmationRedirectURL
             )
             if let session = resp.session {
-                state = .signedIn(SessionUser(from: session.user))
+                self.session.signedIn(SessionUser(from: session.user))
                 await syncLocalCacheToServer()
                 await hydrateProfile()
                 log.info("signup ok uid=\(session.user.id.uuidString, privacy: .public)")
@@ -151,7 +155,7 @@ final class AuthService {
         defer { loading = false }
         do {
             let session = try await supabase.auth.signIn(email: email, password: password)
-            state = .signedIn(SessionUser(from: session.user))
+            self.session.signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("signin ok uid=\(session.user.id.uuidString, privacy: .public)")
@@ -184,7 +188,7 @@ final class AuthService {
                     nonce: nonce
                 )
             )
-            state = .signedIn(SessionUser(from: session.user))
+            self.session.signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("apple signin ok uid=\(session.user.id.uuidString, privacy: .public)")
@@ -218,7 +222,7 @@ final class AuthService {
                     idToken: idToken
                 )
             )
-            state = .signedIn(SessionUser(from: session.user))
+            self.session.signedIn(SessionUser(from: session.user))
             await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("google signin ok uid=\(session.user.id.uuidString, privacy: .public)")
@@ -254,8 +258,7 @@ final class AuthService {
         MyCollectionsCache.shared.reset()
         BlockStore.shared.reset()
 
-        state = .signedOut
-        cameFromGuest = false
+        self.session.signedOut()
         error = nil
         log.info("signed out")
     }
@@ -273,13 +276,11 @@ final class AuthService {
     /// UI updates immediately, without waiting for the auth token's metadata
     /// to refresh. The backend has already persisted the change.
     func applyNickname(_ nickname: String?) {
-        guard case let .signedIn(user) = state else { return }
-        state = .signedIn(user.withNickname(nickname))
+        self.session.applyNickname(nickname)
     }
 
     func applyProfile(nickname: String?, avatar: String?) {
-        guard case let .signedIn(user) = state else { return }
-        state = .signedIn(user.withProfile(nickname: nickname, avatar: avatar))
+        self.session.applyProfile(nickname: nickname, avatar: avatar)
     }
 
     /// Reconciles the session's `user_metadata` mirror against `profiles`.
@@ -308,7 +309,7 @@ final class AuthService {
             avatar: me.avatar
         )
         guard merged != currentUser else { return }
-        state = .signedIn(merged)
+        self.session.reconcile(merged, ifStillSignedInAs: user.id)
         log.info("profile mirror reconciled from server")
     }
 
