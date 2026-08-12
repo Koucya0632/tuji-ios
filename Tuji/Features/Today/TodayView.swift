@@ -43,7 +43,6 @@ struct TodayView: View {
     /// the screen when any of them changes.
     private var decisions: TodayDecisions {
         let selected = self.settings.current.studyCategories
-        let wanted = Set(selected)
         return TodayDecisions(
             .init(
                 isGuest: self.isGuest,
@@ -56,8 +55,7 @@ struct TodayView: View {
                 seenInSelection: self.progress.seenCount(filter: selected),
                 totalInSelection: self.progress.totalCount(filter: selected),
                 dictionaryCount: self.words.words.count,
-                dictionaryCountInSelection: self.words.words
-                    .count(where: { wanted.contains($0.category) })
+                dictionaryCountInSelection: self.words.count(inCategories: selected)
             )
         )
     }
