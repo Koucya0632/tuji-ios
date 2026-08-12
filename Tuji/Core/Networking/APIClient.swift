@@ -70,15 +70,6 @@ final class APIClient {
     }
 
     @discardableResult
-    func put<T: Decodable>(
-        _ ep: Endpoint, body: some Encodable, as: T.Type = T.self
-    ) async throws
-        -> T
-    {
-        try await request(ep, method: "PUT", body: body, decodeAs: T.self)
-    }
-
-    @discardableResult
     func patch<T: Decodable>(
         _ ep: Endpoint, body: some Encodable, as: T.Type = T.self
     ) async throws
