@@ -19,7 +19,7 @@ import Testing
 struct EndpointPolicyTests {
     /// One value per case, in declaration order.
     private static let all: [Endpoint] = [
-        .usersMe, .usersProfile, .usersSettings, .usersFavorites, .usersLearned,
+        .usersMe, .usersProfile, .usersSettings, .usersFavorites,
         .usersSync, .usersProgress(learning: "zh-en"), .usersProgressClear,
         .usersMastery(learning: "zh-en"),
         .usersCustomWords(lang: "zh-Hant", learning: "en"),
@@ -33,9 +33,9 @@ struct EndpointPolicyTests {
         .atlasImages(limit: 20), .atlasImage(id: "i1"),
         .atlasImageRecognize(id: "i1", lang: "zh-Hant", learning: "en"),
         .atlasImageConfirm(id: "i1", lang: "zh-Hant"),
-        .atlasItem(id: "t1"), .atlasItemCards(id: "t1"), .atlasItemEnrich(id: "t1"),
+        .atlasItemCards(id: "t1"), .atlasItemEnrich(id: "t1"),
         .atlasItemDetail(id: "t1"), .atlasItemWithdraw(id: "t1"),
-        .atlasSync(since: nil, limit: 50), .atlasFriends(limit: 10), .atlasEntitlement,
+        .atlasSync(since: nil, limit: 50), .atlasEntitlement,
         .atlasCollections, .atlasCollection(id: "c1"), .atlasCollectionAvatar(id: "c1"),
         .atlasCollectionItems(id: "c1"), .atlasCollectionItem(id: "c1", publicItemId: "p1"),
         .atlasCollectionPublish(id: "c1"), .atlasCollectionWithdraw(id: "c1"),
@@ -60,7 +60,19 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 62)
+        #expect(Self.all.count == 59)
+        // …and no path appears twice. The count alone cannot tell a missing
+        // sample from a duplicated one, and a *missing* sample is exempt from
+        // every invariant below — including 「no authenticated endpoint may be
+        // served from URLCache」. Swift cannot derive `CaseIterable` for an enum
+        // with associated values, so the list stays hand-maintained; this at
+        // least makes the count mean what it looks like it means.
+        let identities = Self.all.map { ep -> String in
+            let d = ep.descriptor
+            let query = d.queryItems.map { "\($0.name)=\($0.value ?? "")" }.sorted().joined(separator: "&")
+            return "\(d.path)?\(query)"
+        }
+        #expect(Set(identities).count == identities.count)
     }
 
     @Test("every path is rooted at /api and carries no query string")
@@ -78,7 +90,7 @@ struct EndpointPolicyTests {
     @Test("the formerly-defaulted endpoints still honour the server's Cache-Control")
     func formerlyDefaultedAreUnchanged() {
         let formerlyDefaulted: [Endpoint] = [
-            .usersMe, .usersProfile, .usersSettings, .usersFavorites, .usersLearned,
+            .usersMe, .usersProfile, .usersSettings, .usersFavorites,
             .usersProgress(learning: "zh-en"), .usersTopWords(type: "weak", limit: 3),
             .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant", learning: "zh-en"),
             .studyStats(learning: "zh-en"), .smokeWhoami
@@ -94,7 +106,7 @@ struct EndpointPolicyTests {
     @Test("exactly the eleven anonymous endpoints are public")
     func publicSetIsExact() {
         let publicPaths = Set(
-            Self.all.filter(\.descriptor.policy.isPublic).map(\.descriptor.path)
+            Self.all.filter { !$0.descriptor.policy.access.requiresToken }.map(\.descriptor.path)
         )
         #expect(publicPaths == [
             "/api/events",
@@ -116,9 +128,40 @@ struct EndpointPolicyTests {
         // A public read that reveals account-specific save state when a token
         // happens to be available. Widening this silently would leak
         // personalised responses into the shared CDN cache.
-        let optional = Self.all.filter(\.descriptor.policy.usesOptionalAuth)
+        let optional = Self.all.filter { $0.descriptor.policy.access == .optionalToken }
         #expect(optional.count == 1)
         #expect(optional.first?.descriptor.path == "/api/atlas/public/collections/s1")
+    }
+
+    /// The illegal state the two `Bool`s allowed: a response that can vary by
+    /// caller, sitting in the shared, disk-backed `URLCache`. `EndpointAccess`
+    /// makes the *pair* unrepresentable in intent; this pins that no endpoint
+    /// pairs them anyway.
+    @Test("nothing that can vary by caller is cached across callers")
+    func callerVaryingResponsesAreNeverSharedCached() {
+        for ep in Self.all {
+            let d = ep.descriptor
+            guard d.policy.cachePolicy == .useProtocolCachePolicy else { continue }
+            #expect(
+                d.policy.access.mayBeCachedAcrossCallers || d.policy.access.requiresToken,
+                "\(d.path) may vary by caller yet honours the shared cache"
+            )
+        }
+    }
+
+    /// `isPublic` used to answer both 「attach no bearer」 and 「never retry a
+    /// 401」. They part company on exactly the optional-auth endpoint: a
+    /// signed-in caller *does* send a token there, so a 401 means the token was
+    /// stale and is worth one retry — which the old guard refused, leaving the
+    /// user on the guest view of a collection they had saved.
+    @Test("a 401 is retried wherever a token may have been attached")
+    func optionalAuthEndpointsRetryUnauthorized() {
+        let optional = EndpointAccess.optionalToken
+        #expect(optional.mayRetryUnauthorized)
+        #expect(!optional.requiresToken)
+        #expect(EndpointAccess.authenticated.mayRetryUnauthorized)
+        // Anonymous is the only one where a 401 says nothing about a token.
+        #expect(!EndpointAccess.anonymous.mayRetryUnauthorized)
     }
 
     @Test("only the AI endpoints get the long timeout")
@@ -145,13 +188,13 @@ struct EndpointPolicyTests {
         // that picks the cached profile has to be a deliberate, visible choice.
         let pinnedPaths: Set = [
             "/api/users/me", "/api/users/profile", "/api/users/settings",
-            "/api/users/favorites", "/api/users/learned", "/api/users/progress",
+            "/api/users/favorites", "/api/users/progress",
             "/api/users/top-words", "/api/study/queue", "/api/study/stats",
             "/api/test_smoke/whoami"
         ]
         for ep in Self.all {
             let d = ep.descriptor
-            guard !d.policy.isPublic, !pinnedPaths.contains(d.path) else { continue }
+            guard d.policy.access.requiresToken, !pinnedPaths.contains(d.path) else { continue }
             #expect(
                 d.policy.cachePolicy == .reloadIgnoringLocalCacheData,
                 "\(d.path) is authenticated but may be served from URLCache"

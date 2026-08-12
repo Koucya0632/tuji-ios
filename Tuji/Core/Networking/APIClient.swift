@@ -172,10 +172,10 @@ final class APIClient {
         req.timeoutInterval = policy.timeout
         req.cachePolicy = cachePolicy ?? policy.cachePolicy
 
-        if !policy.isPublic {
+        if policy.access.requiresToken {
             let token = try await auth.validAccessToken()
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        } else if policy.usesOptionalAuth,
+        } else if policy.access.attachesTokenWhenAvailable,
                   self.auth.isSignedIn,
                   let token = try? await self.auth.validAccessToken()
         {
@@ -220,7 +220,9 @@ final class APIClient {
         // One-shot 401 retry. supabase-swift refreshes the session as a
         // side effect of validAccessToken(), so re-fetching the token
         // post-refresh is enough.
-        if let http = resp as? HTTPURLResponse, http.statusCode == 401, !ep.isPublic {
+        if let http = resp as? HTTPURLResponse, http.statusCode == 401,
+           ep.descriptor.policy.access.mayRetryUnauthorized
+        {
             log.info("401 on \(ep.path, privacy: .public) — retrying once with refreshed token")
             // Same request, fresh Authorization. validAccessToken() refreshes
             // the session as a side effect, so re-reading it is enough.
