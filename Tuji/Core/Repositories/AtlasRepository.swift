@@ -5,9 +5,10 @@ import Foundation
 /// `CollectionDetailReading`, `AuthorReading`, `PublicItemsReading`,
 /// `AtlasItemConsuming`, `CollectionBookmarking`, `CollectionManaging` — each
 /// conformed in its own file, so every consumer (and its test fake) depends only
-/// on the slice it uses. No screen binds to this concrete type any more. The only
-/// member behind no seam is `publicFeed`, which has no caller (per ADR-0001's
-/// lazy-narrowing, a seam is carved when a consumer needs it).
+/// on the slice it uses. No screen binds to this concrete type any more, and
+/// every member now sits behind a seam: `publicFeed` — the last one that did
+/// not — turned out to have no caller at all and is gone (ADR-0001
+/// lazy-narrowing: a seam is carved when a consumer needs it).
 @MainActor
 struct LiveAtlasRepository {
     static let shared = LiveAtlasRepository()
@@ -115,17 +116,6 @@ struct LiveAtlasRepository {
     {
         let response: AtlasPublicByLemmaResponse = try await self.api.get(
             .atlasPublicByLemma(lemma: lemma, lang: language.rawValue, limit: limit)
-        )
-        return response.items
-    }
-
-    /// `forceReload` bypasses the disk URLCache (pull-to-refresh, or right after
-    /// publishing) so a freshly published item shows up immediately rather than
-    /// waiting for the cached list to expire.
-    func publicFeed(limit: Int = 60, forceReload: Bool = false) async throws -> [AtlasPublicItem] {
-        let response: AtlasPublicFeedResponse = try await self.api.get(
-            .atlasPublicFeed(limit: limit),
-            cachePolicy: forceReload ? .reloadIgnoringLocalCacheData : nil
         )
         return response.items
     }
