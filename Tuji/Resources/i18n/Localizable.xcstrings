@@ -11489,6 +11489,28 @@
         }
       }
     },
+    "自製圖鑑已達上限，刪除一些後再試。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your custom atlas is full — delete some cards and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マイ図鑑が上限に達しました。いくつか削除してからもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自制图鉴已达上限，删除一些后再试。"
+          }
+        }
+      }
+    },
     "自製圖鑑已達上限（%lld），刪除一些後再新增。" : {
       "localizations" : {
         "en" : {
@@ -14217,6 +14239,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "还差 %lld 个字符"
+          }
+        }
+      }
+    },
+    "還有 %lld 張卡片正在生成，完成後再新增。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld cards are still being made — add more once they finish."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 枚のカードを生成中です。完成してから追加してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还有 %lld 张卡片正在生成，完成后再新增。"
           }
         }
       }

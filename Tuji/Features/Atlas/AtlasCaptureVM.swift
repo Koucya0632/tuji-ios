@@ -4,10 +4,17 @@
 // gating, confirm-payload assembly) are plain unit-testable code.
 // Abandoning a capture is "throw the VM away" — the view swaps in a fresh
 // instance instead of hand-clearing a dozen fields.
+//
+// Every method that does work is `async` and the View owns the `Task`. This was
+// the odd one out among the atlas view models: `requestRecognize` was
+// synchronous and spawned a `Task {}` it dropped on the floor, so the rule that
+// protects the user's paid AI allowance — each mode recognises at most once, an
+// incomplete cache gets exactly one repair — could not be awaited, and therefore
+// was not tested. (`submit()` was the mirror image: `async`, awaiting nothing.)
 
 import Observation
-import PhotosUI
 import SwiftUI
+import UIKit
 
 @MainActor
 @Observable
@@ -27,11 +34,9 @@ final class AtlasCaptureVM {
     private(set) var busy: Busy?
     private(set) var errorMessage: String?
     private(set) var successMessage: String?
-    /// The downscaled frame kept around to seed the 圖鑑 progress placeholder.
+    /// The frame kept around to seed the 圖鑑 progress placeholder. Parking the
+    /// bytes for a retry is `ImageIntake`'s job, not a second copy here.
     private(set) var localThumbnail: UIImage?
-    /// The last picked/cropped frame, retained so a failed upload (weak network)
-    /// can be retried without re-picking the photo.
-    private(set) var lastUploadData: Data?
 
     /// Each recognition mode (primary / escalate) runs at most once and its
     /// candidates are kept here — a re-run barely differs and just burns another
@@ -66,32 +71,45 @@ final class AtlasCaptureVM {
     /// Quota *numbers* come from `store.entitlement`; the Pro/Free *verdict*
     /// comes from here, so 拍照 cannot disagree with 設定 about who is Pro.
     private let entitlement: any EffectiveEntitlementReading
+    /// The 生成佇列 the confirmed capture is handed to. Injected rather than
+    /// reached statically, so the seam the store arrives on survives the handoff.
+    private let queue: AtlasCaptureQueue
+    /// `{ uiLang, learningDirection }` — the read seam `SettingsStore` conforms
+    /// to. Read live at call time: an in-app language switch must take effect on
+    /// the next question asked, not on the next VM.
+    private let language: any LanguageContext
 
     init(
         store: AtlasStore = .shared,
-        entitlement: (any EffectiveEntitlementReading)? = nil
+        entitlement: (any EffectiveEntitlementReading)? = nil,
+        queue: AtlasCaptureQueue = .shared,
+        language: any LanguageContext = SettingsStore.shared
     ) {
         self.store = store
         // Defaulted from the same store the VM was handed, so a test that
         // stands the VM up over a fake store gets a matching verdict for free.
         self.entitlement = entitlement ?? LiveEffectiveEntitlement(atlas: store)
+        self.queue = queue
+        self.language = language
     }
 
     // MARK: - Quota / entitlement gates
 
+    /// 自製圖鑑 room, counting the captures 生成佇列 is still working on. The
+    /// server's snapshot cannot know about those — it counts confirmed items —
+    /// so a gate reading it alone let a second capture through at capacity − 1.
+    var capacity: AtlasCapacityReadout {
+        AtlasCapacityReadout.of(self.store.entitlement, inFlight: self.queue.inFlightCount)
+    }
+
     /// At the tier's 自製圖鑑 capacity — capture is blocked until the user frees a
     /// slot or upgrades. Unknown entitlement resolves to "allow" (server enforces).
     var atCapacity: Bool {
-        !AtlasQuotas.canCreateItem(self.store.entitlement)
+        !self.capacity.canCapture
     }
 
     var capacityMessage: String {
-        guard let limit = self.store.entitlement?.atlasSlotsLimit else {
-            return tujiLocalized("自製圖鑑已達上限，刪除一些後再新增。")
-        }
-        return self.isPro
-            ? tujiLocalized("自製圖鑑已達上限（\(limit)），刪除一些後再新增。")
-            : tujiLocalized("自製圖鑑已達免費上限（\(limit)），升級 Pro 可擴充，或刪除一些。")
+        self.capacity.message(isPro: self.isPro)
     }
 
     /// Remaining ordinary AI recognitions this month; nil = unknown.
@@ -121,6 +139,18 @@ final class AtlasCaptureVM {
             && !self.displayZhHant.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    // MARK: - Correction form shape
+
+    /// Which second field the form asks for. One module answers this and the
+    /// gloss-repair question below, so the two cannot disagree about the same
+    /// {UILanguage × TargetLanguage} cell.
+    var secondField: CaptureSecondField {
+        CaptureCorrectionFields.second(
+            ui: UILanguage(code: self.language.uiLang),
+            target: self.language.learningDirection.targetLanguage
+        )
+    }
+
     // MARK: - Pipeline
 
     /// Fresh tier / usage so capture gating and remaining-quota copy are current
@@ -129,40 +159,20 @@ final class AtlasCaptureVM {
         await self.store.refreshEntitlement()
     }
 
-    /// Resolve a PhotosPicker selection to raw bytes for the crop step.
-    /// Returns nil (and sets the error banner) when the item can't be read.
-    func loadPhotoData(_ item: PhotosPickerItem) async -> Data? {
-        self.errorMessage = nil
-        self.successMessage = nil
-        do {
-            guard let data = try await item.loadTransferable(type: Data.self) else {
-                throw AtlasCaptureError.missingPhotoData
-            }
-            return data
-        } catch {
-            self.errorMessage = error.localizedDescription
-            return nil
-        }
-    }
-
-    /// Upload one captured/picked frame, then immediately kick AI recognition so
-    /// the flow feels one-shot.
+    /// Upload one frame the intake has already cropped and encoded, then
+    /// immediately kick AI recognition so the flow feels one-shot.
     func handlePicked(data: Data) async {
         self.busy = .upload
         self.errorMessage = nil
         self.successMessage = nil
-        // Retain the frame so a failed upload can be retried in place.
-        self.lastUploadData = data
         do {
-            let encoded = ImageDownscale.jpeg(from: data) ?? data
-            self.localThumbnail = UIImage(data: encoded)
+            self.localThumbnail = UIImage(data: data)
             let response = try await self.store.uploadImage(
-                data: encoded,
+                data: data,
                 filename: "atlas-photo.jpg",
                 mimeType: "image/jpeg"
             )
             self.uploadedImage = response.image
-            self.lastUploadData = nil
             self.busy = nil
             // Candidates ride back with the upload (recognition runs inline
             // server-side) — no separate recognize round trip on the first pass.
@@ -179,29 +189,29 @@ final class AtlasCaptureVM {
     /// have its candidates, re-show them for free rather than spending another
     /// AI call (the result barely changes on a re-run). An empty / failed result
     /// isn't treated as final, so it can still be retried.
-    func requestRecognize(_ mode: AtlasRecognitionMode) {
+    func requestRecognize(_ mode: AtlasRecognitionMode) async {
         guard let image = self.uploadedImage else { return }
         if let cached = self.candidatesByMode[mode], !cached.isEmpty {
             if self.needsGlossRefresh(cached), !self.glossRepairAttemptedModes.contains(mode) {
                 self.glossRepairAttemptedModes.insert(mode)
-                Task { await self.recognize(imageId: image.id, mode: mode) }
+                await self.recognize(imageId: image.id, mode: mode)
             } else {
                 self.applyCandidates(cached, mode: mode)
             }
             return
         }
-        Task { await self.recognize(imageId: image.id, mode: mode) }
+        await self.recognize(imageId: image.id, mode: mode)
     }
 
     /// Candidates saved by older upload responses may have their target label
     /// but no UI-language meaning. Let an explicit tap repair that incomplete
     /// cache instead of showing it forever.
     private func needsGlossRefresh(_ candidates: [AtlasCandidate]) -> Bool {
-        let settings = SettingsStore.shared.current
-        let ui = settings.uiLanguage
-        let target = settings.learningDirection.targetLanguage
-        let needsSeparateGloss = (ui == .en && target == .ja) || (ui == .ja && target == .en)
-        guard needsSeparateGloss else { return false }
+        guard CaptureCorrectionFields.needsGloss(
+            ui: UILanguage(code: self.language.uiLang),
+            target: self.language.learningDirection.targetLanguage
+        )
+        else { return false }
         return candidates.contains { candidate in
             candidate.gloss?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
         }
@@ -315,12 +325,15 @@ final class AtlasCaptureVM {
         )
     }
 
-    /// Hand the heavy tail (confirm → createCards → sync) to the background
-    /// queue. Returns once the job is enqueued so the caller can dismiss the
-    /// cover; the 圖鑑 page shows a 製作中 placeholder until the queue finishes.
-    func submit() async {
+    /// Hand the heavy tail (confirm → createCards → sync) to 生成佇列 and return.
+    /// The caller dismisses the cover immediately; the 圖鑑 page shows a 生成中
+    /// placeholder until the queue finishes.
+    ///
+    /// Not `async`: it was, and it awaited nothing — the work it commits outlives
+    /// the sheet by design, and saying `await` about it claimed otherwise.
+    func submit() {
         guard let image = self.uploadedImage else { return }
-        AtlasCaptureQueue.shared.enqueue(
+        self.queue.enqueue(
             imageId: image.id,
             payload: self.confirmPayload,
             thumbnail: self.localThumbnail
@@ -329,10 +342,9 @@ final class AtlasCaptureVM {
 
     /// Best-effort delete of the just-uploaded image when the user abandons this
     /// capture (X / 換一張), so an unconfirmed photo is never kept in 自制圖鑑.
-    func discardUploadedImage() {
+    func discardUploadedImage() async {
         guard let image = self.uploadedImage else { return }
-        let store = self.store
-        Task { try? await store.deleteImage(id: image.id) }
+        try? await self.store.deleteImage(id: image.id)
     }
 
     /// Non-blocking heads-up when an existing custom word already uses this
@@ -359,15 +371,5 @@ final class AtlasCaptureVM {
             return "\(candidate.label) · \(meaning) · \(pct)%"
         }
         return "\(candidate.label) · \(pct)%"
-    }
-}
-
-enum AtlasCaptureError: LocalizedError {
-    case missingPhotoData
-
-    var errorDescription: String? {
-        switch self {
-        case .missingPhotoData: tujiLocalized("讀取照片失敗")
-        }
     }
 }

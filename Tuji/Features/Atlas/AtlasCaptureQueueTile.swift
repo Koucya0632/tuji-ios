@@ -9,12 +9,15 @@
 //
 // The strip also cost a permanent band of vertical space at the top of the tab
 // for as long as any job was alive, pushing the filter chips and the count down.
+//
+// The tile renders `CaptureProgress` and owns none of its copy: 圖鑑管理 says the
+// same words about the same photo, and two screens deriving them separately is
+// what let one call a capture 生成中 while the other called it 已上傳.
 
 import SwiftUI
 
 struct AtlasCaptureQueueTile: View {
     let job: AtlasCaptureQueue.Job
-    let onRetry: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -24,7 +27,7 @@ struct AtlasCaptureQueueTile: View {
                 .foregroundStyle(.tujiInk)
                 .lineLimit(1)
                 .padding(.top, Space.s2)
-            TujiStatusEdgeLabel(text: Text(self.status), edge: self.edge)
+            TujiStatusEdgeLabel(text: Text(self.job.progress.label), edge: self.edge)
                 .padding(.top, Space.s1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -49,34 +52,31 @@ struct AtlasCaptureQueueTile: View {
                 }
             }
             .overlay {
-                if self.job.stage == .failed {
+                if let fraction = job.progress.fraction {
+                    // A known-duration wait, so the bar shows the real fraction
+                    // rather than sweeping (C.5).
+                    TujiProgressBar(progress: fraction, track: .tujiPaper, fill: .tujiCurrent)
+                        .padding(.horizontal, Space.s4)
+                } else if self.job.progress.canRetry {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 26, weight: .semibold))
                         .foregroundStyle(.tujiInk2)
                 } else {
-                    // A known-duration wait, so the bar shows the real fraction
-                    // rather than sweeping (C.5).
-                    TujiProgressBar(progress: self.job.progress, track: .tujiPaper, fill: .tujiCurrent)
-                        .padding(.horizontal, Space.s4)
+                    // A capacity dead end. An arrow here would be an invitation
+                    // to do the one thing that cannot work.
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 26, weight: .semibold))
+                        .foregroundStyle(.tujiInk2)
                 }
             }
             .clipped()
     }
 
-    private var status: LocalizedStringKey {
-        switch self.job.stage {
-        case .confirming, .creating: "生成中"
-        case .enriching: "補充詳情中"
-        case .done: "已加入圖鑑"
-        case .failed: "生成失敗，點一下重試"
-        }
-    }
-
     private var edge: Color {
-        switch self.job.stage {
+        switch self.job.progress {
         case .failed: .tujiAlert
-        case .done: .tujiAccumulation
-        case .confirming, .creating, .enriching: .tujiCurrent
+        case .ready: .tujiAccumulation
+        case .generating, .enriching: .tujiCurrent
         }
     }
 }
@@ -91,19 +91,26 @@ struct AtlasCaptureQueueTiles: View {
 
     var body: some View {
         ForEach(self.queue.jobs) { job in
-            switch job.stage {
-            case .done:
+            switch job.progress {
+            case .ready:
                 NavigationLink(value: NavRoute.atlasManage) {
-                    AtlasCaptureQueueTile(job: job) {}
+                    AtlasCaptureQueueTile(job: job)
+                }
+                .buttonStyle(.plain)
+            case .failed where job.progress.canRetry:
+                Button { self.queue.retry(job.id) } label: {
+                    AtlasCaptureQueueTile(job: job)
                 }
                 .buttonStyle(.plain)
             case .failed:
-                Button { self.queue.retry(job.id) } label: {
-                    AtlasCaptureQueueTile(job: job) { self.queue.retry(job.id) }
+                // 已達上限: the only way out is 圖鑑管理 (delete something) or the
+                // paywall, and both are a tap away from there.
+                NavigationLink(value: NavRoute.atlasManage) {
+                    AtlasCaptureQueueTile(job: job)
                 }
                 .buttonStyle(.plain)
-            case .confirming, .creating, .enriching:
-                AtlasCaptureQueueTile(job: job) {}
+            case .generating, .enriching:
+                AtlasCaptureQueueTile(job: job)
             }
         }
     }

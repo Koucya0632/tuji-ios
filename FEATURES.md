@@ -342,7 +342,7 @@ App 啟動
 
 ### 圖鑑列表 — `Features/Cards/CardsListView.swift`
 
-2 欄格 + 分類 chip 過濾 + 分頁載入(每頁 60);頂部相機鈕開自製圖鑑拍照流程,`AtlasCaptureProgressStrip` 顯示製作中的卡。點格開 WordPeek(輕量預覽),從 peek 再進完整詳情。
+2 欄格 + 分類 chip 過濾 + 分頁載入(每頁 60);頂部相機鈕開自製圖鑑拍照流程,`AtlasCaptureQueueTiles` 在格頭顯示生成中的卡。點格開 WordPeek(輕量預覽),從 peek 再進完整詳情。
 
 分類 chip 只列出實際有字的分類,但 `custom`(自製圖鑑)與 `community`(物見)兩個主題**恆常顯示** —— 它們是使用者自己創作與收藏的去處,即使目前是空的,格子也要看得到自己收藏了什麼。
 
@@ -402,34 +402,40 @@ App 啟動
 ### 流程總覽
 
 ```
-拍照/選相簿 → 裁切(ImageCropView) → 下採樣(≤1600px JPEG)
+拍照/選相簿 → 裁切 → 編碼(≤1600px / 0.78 JPEG)   ← 全在 ImageIntake
   → 上傳 /api/atlas/images(辨識在同一請求內完成,candidates 隨上傳回來)
   → 校正表單(候選 chip / 手動修改 lemma + 中文)
   → [可選] AI 識別(primary)/ 高精度(escalate, Pro 限定) 重跑
-  → 確認並生成卡片 → 交給背景佇列:confirm → createCards → enrich → sync
+  → 確認並生成卡片 → 交給生成佇列:confirm → createCards → enrich → 對帳
 ```
+
+### 取像 — `Components/ImageIntake.swift`
+
+拍照新增與兩個頭像畫面共用同一條「把照片弄進來」的流程(來源 → 相機/相簿 → 350ms 轉場空拍 → 裁切 → 編碼 → 遞交 → 停放重試),差別只有編碼設定、用哪個裁切器、以及「遞交」是什麼。拍照新增用 `.freeform`(四角把手、任意比例 —— 要框的是待辨識的主體,壓成正方形會把它切掉),並自己畫來源面板(`pick(_:)` 而非 `begin()`),因為剩餘額度與滿格警告都在那塊面板上。詳見 CONTEXT.md。
 
 ### View Model — `Features/Atlas/AtlasCaptureVM.swift`
 
-- 擁有整條管線狀態;「放棄重來」= 直接換一顆新 VM。
-- **每個辨識 mode 最多跑一次**,結果快取(`candidatesByMode`),再點同 mode 免費重顯示(重跑幾乎不變、只燒額度);失敗/空結果不算 final,可重試。
+- 擁有管線狀態;「放棄重來」= 直接換一顆新 VM。取像與停放重試不在這裡(見上)。
+- **每個辨識 mode 最多跑一次**,結果快取(`candidatesByMode`),再點同 mode 免費重顯示(重跑幾乎不變、只燒額度);失敗/空結果不算 final,可重試。舊快取缺 UI 語言 gloss 時**每個 mode 只修一次**,修不出來就不再花錢。
 - 候選自動套用規則:排 rank 後優先取 fine 級;`apply(overwrite:)` — 使用者點 chip 才覆蓋欄位,自動套用只填空欄(不覆蓋手動輸入)。
-- 402(額度用盡)→ 開 Paywall 而非顯示錯誤;失敗的上傳保留原始 bytes 可原地重試。
+- 402(額度用盡)→ 開 Paywall 而非顯示錯誤;429 留在訊息列(暫時性的,送去 Paywall 是謊)。
 - 放棄時 best-effort 刪除已上傳影像(未確認的照片不留在帳號)。
+- 校正表單的第二個欄位問哪一題,由 `CaptureCorrectionFields` 一張表回答(見 CONTEXT.md)。
 
-### 額度 — `Core/Atlas/AtlasQuotas.swift`, `AtlasStore.entitlement`
+### 額度 — `Core/Atlas/AtlasQuotas.swift`, `AtlasCapacityReadout`
 
 - 鏡像伺服器 `lib/atlas/entitlement.ts`;**entitlement 未知時一律放行**(伺服器才是權威,UI 保持寬鬆)。
 - 規則:自製圖鑑格數上限(Free 少 / Pro 300)、普通 AI 每月軟上限(Free 30 / Pro 500)、高精度 Pro 限定(Free 上限 0,Free 點高精度直接進 Paywall,不浪費一次必 402 的呼叫)。
-- 滿格時擋拍照並顯示對應文案(Pro:刪一些;Free:升級或刪一些)。
+- **格數要連生成佇列裡的一起算**:伺服器快照數的是已 confirm 的 item,數不到還在生成的那幾張。只讀快照的閘門在「剩一格」時會放兩張進來,第二張到 confirm 才 402。佇列佔住的格子說「正在生成」,不說「刪除一些」—— 這時候該做的是等。
 
-### 背景佇列 — `Core/Atlas/AtlasCaptureQueue.swift`
+### 生成佇列 — `Core/Atlas/AtlasCaptureQueue.swift`
 
-- 確認後的重尾(confirm → createCards → enrich → 一次對帳 sync)在 @MainActor 單例佇列跑,sheet 立即關閉;圖鑑頁顯示「製作中」占位卡(`AtlasCaptureProgressStrip`)。
-- **弱網韌性**:job 持久化到 Application Support;App 被殺後啟動時恢復續跑。confirm 是**非冪等** INSERT — 成功後 checkpoint `itemId`,恢復時跳過 confirm 只重跑(冪等的)createCards 之後。
+- 確認後的重尾(confirm → createCards → enrich → 一次對帳)在 @MainActor 單例佇列跑,sheet 立即關閉;圖鑑格頭顯示「生成中」占位格(`AtlasCaptureQueueTiles`)。
+- **弱網韌性**:job 經 `CaptureJobJournal` 持久化到 Application Support;App 被殺後啟動時恢復續跑。confirm 是**非冪等** INSERT — 成功後 checkpoint `itemId`,恢復時跳過 confirm 只重跑(冪等的)createCards 之後。有 checkpoint 的 job 從 50% 續跑,不從頭重報。
 - enrich(定義/同義詞/詞形/字源)best-effort,失敗不影響卡片(詳情頁開啟時會 lazy enrich)。
 - 完成後 `reload()`(絕不 `invalidate()` — 那會清 `loaded` 把整個 App 彈回 Splash)刷新 WordsStore(新卡要出現在圖鑑格)+ ProgressStore + StudyStatsStore,並以 OSSignposter 打點各階段耗時。
-- 失敗的 job 保留占位卡供手動 retry(從 checkpoint 續跑)或移除。
+- **失敗分兩種**(`CaptureFailure`):`.transient` 留占位格供手動 retry(從 checkpoint 續跑);`.atCapacity`(402)不給 retry —— 再按一次也只會一樣失敗,出路是刪卡或升級。
+- 依賴全部從 init 進來(`AtlasCardGenerating` / `CaptureJobJournal` / `AtlasMutationRefreshing`),測試用 `enqueue` 回傳的 Task 或 `settle()` 等它跑完。
 
 ### 資料同步 — `Core/Atlas/AtlasStore.swift`
 
@@ -455,6 +461,8 @@ App 啟動
 - **Review status**(`AtlasReviewStatus`,§12):公開審核閘門走到哪。
 
 `confirmed` 與 `cards_ready` 蘊含「已存在一個確認過的 item」;處於這兩態卻 join 不到 item 的列是**同步落差**,不是未完成的拍照 —— 兩者一旦混淆,「未完成」就會出現在「已完成」旁邊。
+
+第三種曾經也存在:生成佇列自己的 `Stage`。同一張照片在圖鑑格是「生成中」、在圖鑑管理是「已上傳」,而且沒有任何規則把兩者對起來。現在只有一份 **`CaptureProgress`**,兩個畫面都讀它,**在跑的 job 蓋過伺服器那一列**(還在跑的 job 知道的事,那一列還沒寫下來)。`AtlasShelfRow.inFlight` 是兩者交會的地方。
 
 ### 變更後刷新什麼 — `Core/Atlas/AtlasMutationRefresh.swift`
 
@@ -622,7 +630,7 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 - 一次編輯就是一次 Author 身分變更:被否決時保留原本的完整身分,而不是露出改到一半的狀態。
 - UID 在這裡顯示但不可編輯,而且讀的是**伺服器真值** —— session 鏡像會落後,而這裡正是使用者來確認自己 UID 到底是什麼的地方。
 - `dirty` 比對的是畫面打開時伺服器的內容,不是可能過期的 session 副本。
-- 頭像走共用的 `AvatarPicker` 流程(來源對話框 → 相簿/相機 → 裁切 → 編碼 → 遞交 → 重試),個人資料用 1200px / 0.86 圓形遮罩(合集用 1600px / 0.82 方形)。
+- 頭像走共用的 `ImageIntake` 流程(來源對話框 → 相簿/相機 → 裁切 → 編碼 → 遞交 → 重試,§11 拍照新增是第三個 adapter),個人資料用 1200px / 0.86 圓形遮罩(合集用 1600px / 0.82 方形)。
 
 ### 意見收集 — `Features/Me/FeedbackSheet.swift`
 
@@ -684,7 +692,7 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 | 額度與排程 | `StudyQuotasTests`、`AtlasQuotasTests`、`ReviewScheduleTests` |
 | 自製圖鑑 | `AtlasCaptureVMTests`、`AtlasStoreTests`、`AtlasShelfModelTests`、`AtlasImageStatusTests`、`AtlasMutationRefreshTests`、`ImageCropTests` |
 | 物見 | `PublicAtlasBrowsingModelTests`、`CollectionDetailVMTests`、`CollectionEditVMTests`、`MyCollectionsVMTests`、`AtlasPublicDetailVMTests`、`AuthorProfileVMTests`、`AtlasReviewStatusTests`、`CommunityLearningRefreshTests`、`SavedCommunityWordsTests` |
-| 身分與設定 | `AuthorProfileModuleTests`、`SessionUserMirrorTests`、`AvatarPickerTests`、`UILanguageTests` |
+| 身分與設定 | `AuthorProfileModuleTests`、`SessionUserMirrorTests`、`ImageIntakeTests`、`UILanguageTests` |
 | 其他 | `SearchVMTests`、`WordsStoreMergeTests`、`TodayViewHintTests`、`AnalyticsTests`、`SignedStorageObjectIDTests`、`FeedbackTests` |
 
 `AtlasTestSupport.swift` 提供共用 fake。`AnalyticsTests` 會把 `AnalyticsEvent` 的值域釘住,新增事件必須同步更新白名單。
