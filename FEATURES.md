@@ -1,5 +1,7 @@
 # Tuji iOS 功能邏輯總覽
 
+更新日期：2026-08-12
+
 本文件描述 Tuji iOS App 內所有功能的邏輯與規則,並標註對應的原始碼位置。
 後端 API 位於同層的 `../tuji-web`(Next.js);iOS 端只負責呈現與客戶端規則,伺服器是所有資料的最終權威。
 
@@ -261,6 +263,7 @@ App 啟動
 
 - **建議評分 `computeSuggestion`**:答錯=重來;<3 秒且熟練度 ≥50 → 熟練,否則穩定;3–7 秒 → 穩定;>7 秒 → 困難。(低熟練度的字快答只算正常回想,不給長間隔跳升。)
 - **答錯 requeue**:第一次答錯的字 append 到佇列尾端,session 內再測一次;**retest 絕不寫第二次 SRS**(第一次的 重來 已重排;retest 答對閃過、答錯只給「下一題」純講解)。每字最多 requeue 一次。
+- **求救提示**:點 hero 翻面只顯示中文釋義,不顯示 reading / pronunciation。提示在本次呈現中是 sticky(翻回去也算用過),並把可選 rating 限制成答錯表 `[重來,困難]`;正確與否仍決定 suggestion 和是否 requeue。寫入時帶 `hinted: true`,後端保存到 `study_logs.metadata`。
 - 每次字離開畫面 `presentedCounts+1` 折入選項 seed,re-test 一定重新洗牌。
 - **樂觀寫入 `persist()`**:UI 立即前進,背景重試 3 次(退避 400ms×n);全部失敗 → 存入持久 `StudyAnswerOutbox` 並累加 `unsyncedCount`。回應中的 mastery before/after 合併進 `masteryByWord`(同字二測保留最早 before、最新 after);伺服器帶 `milestone` 就記錄。
 - 進度條以「不同字完成數」計,reveal 中加 0.5 半步。
@@ -277,8 +280,9 @@ App 啟動
 ### 6.7 離線與同步保證
 
 - **`StudyAnswerOutbox`**(`Core/Study/StudyAnswerOutbox.swift`):寫入失敗的答題持久化到 Application Support JSON,App 啟動/回前景時依序重播;第一筆失敗即中止本輪(同一個網路後面也會失敗)。後端容忍重複答題。
-- **`drainPendingWrites`**(`StudyWriteDrain.swift`):把「所有 in-flight 寫入完成」與 timeout 賽跑,先到先贏;沒趕上的寫入照常在背景跑完並經 @Observable 合流。完成頁 reload 前先 drain,避免 reload 跑贏寫入、剛學的字顯示過期狀態。
-- `submitAnswerBestEffort`(`StudyRepository.swift`):重試 3 次(400ms 指數退避)後進 outbox。
+- **`DurableAnswerWriter`**(`Core/Study/DurableAnswerWriter.swift`):唯一的「短暫重試後停放到 outbox」政策;raw `LiveStudyRepository` 只做一次會 throw 的 network call,重播 outbox 時不會再把同一筆重新停放。
+- **`StudySessionWrites`**(`Core/Study/StudySessionWrites.swift`):兩個 coordinator 共用的 session 寫入追蹤,合併 mastery/milestone、計 parked 數,並提供 `drainPendingWrites`。完成頁把 in-flight 寫入與 timeout 賽跑;沒趕上的寫入照常在背景完成。
+- **`SessionRefresh`**(`Core/Study/SessionRefresh.swift`):完成時統一執行 drain → invalidate queue/stores → reload,避免最後一題寫入輸給完成頁刷新。
 
 ### 6.8 完成畫面
 
@@ -322,9 +326,9 @@ App 啟動
 
 - `ReviewSchedule`(`Core/Study/ReviewSchedule.swift`):圖鑑格的「下次復習」倒數文案(復習期 / N 分鐘後 / N 天後 / 約 N 週後…),移植後端 `humanizeInterval`;並提供容忍小數秒的 ISO8601 解析(全域 decoder 的 `.iso8601` 不吃 `.SSS`,所以時間欄位以 String 解再手動 parse)。
 
-### 7.3 進度分頁 — `Tuji/Features/Progress/ProgressTabView.swift`
+### 7.3 我的進度區塊 — `Tuji/Features/Me/MeProgressSections.swift`
 
-- 圖鑑完成度(所選主題 seen/total 百分比)、目前/最長連勝、最近 6 週熱力圖(0 / 1–4 / 5–12 / >12 四檔深淺)、每分類明細(依所選主題過濾,空選=全部)。
+- 進度不再是主分頁,完整搬到「我」:圖鑑完成度(所選主題 seen/total 百分比)、目前/最長連勝、最近 6 週熱力圖(0 / 1–4 / 5–12 / >12 四檔深淺)、每分類明細(依所選主題過濾,空選=全部)。
 - 訪客顯示登入提示空狀態。
 - **清除學習進度**放在 設定 → 帳號(不在進度頁,破壞性操作不該離統計一步之遙):DELETE `/api/users/progress` 後同時 `cache.clearLearned()`(sync 是 union-only,不清本機會在下次登入把已清除的 id 復活)+ invalidate/reload progress 與 stats。收藏、設定、自製圖鑑不受影響。
 
@@ -388,7 +392,7 @@ App 啟動
 > 「收藏」在 App 裡有兩個意思,不要混淆:**本章**是把字典裡的字加進「我的收藏」(純本機事實來源);**§12** 的收藏是把別人公開的圖鑑項目或合集收進自己的學習內容(伺服器事實來源,會影響 `WordsStore` 與學習佇列)。
 
 - **來源**:`LocalCache.favoriteIds`(UserDefaults)是唯一事實來源;訪客純本機,登入者由 `FavoriteButton` 樂觀更新本機後 fire-and-forget POST `/api/users/favorites`,登入時再由 sync 統一 union。
-- **`Features/Favorites/FavoritesView.swift`**:favoriteIds × WordsStore 直接渲染,不打 GET;分類 chip 只顯示有收藏的分類;排序 A→Z / Z→A / 依主題;點格開 WordPeek,長按 contextMenu 移除收藏。
+- **圖鑑的收藏來源**:`CardsSource.bookmarks` 以 `favoriteIds × WordsStore` 直接渲染,不打 GET;`CardsListView` 與所有字共用分頁、排序、WordPeek 與列操作。`tuji://favorites` 保留舊連結語意,但現在是切到圖鑑的收藏 filter,不再 push 獨立 Favorites 畫面。
 
 ### LocalCache — `Core/Cache/LocalCache.swift`
 
@@ -506,7 +510,7 @@ App 啟動
 
 - **收藏 / 取消收藏** — POST/DELETE `/api/atlas/public/{slug}/save`,回傳最新收藏數。有 in-flight guard;**失敗不翻轉開關**(取消收藏失敗了,開關就得留在「已收藏」)。
 - 成功後跑 `CommunityLearningRefreshing`:invalidate `StudyQueueStore` 再 best-effort `WordsStore.reload()`,讓佇列與圖鑑立刻反映這次變更。**收藏本身的成功與否,從不取決於刷新是否成功。**
-- **檢舉** — POST `/api/atlas/public/{slug}/report`,`AtlasReportReason` 五種:垃圾內容 / 不當內容 / 侵犯版權 / 內容有誤 / 其他,可附說明。
+- **檢舉** — 共用 `ReportFlow` 選五種原因:垃圾內容 / 不當內容 / 侵犯版權 / 內容有誤 / 其他。只有 POST 成功後才進 `.sent`;401/429/網路失敗不會顯示成「已收到」。
 - 分析事件留在 View(VM 不碰 `AnalyticsService`):`atlas_public_item_viewed`、`atlas_public_saved`、`author_profile_viewed`。
 
 ### 12.5 作者主頁 — `AtlasAuthorProfileView` / `AuthorProfileVM`
@@ -528,7 +532,15 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 - **成員資格**:可加入已通過、審核中、私有的自己的項目;**不能**加入已否決、已下架、未完成、已刪除的項目。
 - **頭像**:合集的方形頭像照片是公開的,與早期由成員推導的封面/背景圖無關(新畫面不再渲染後者)。推導出的安全色只當頭像的載入中與舊資料 fallback。剛上傳的頭像透過 `CollectionIdentityStore` 立刻在列表、已收藏書架、作者主頁、詳情四處生效。
 
-### 12.7 審核閘門 — `AtlasReviewStatus`
+### 12.7 檢舉與封鎖 — `ReportFlow` / `BlockStore`
+
+- **三種檢舉目標**:`ReportTarget.item(slug:)` / `.collection(slug:)` / `.author(handle:)`,由 `ReportSubmitting` 選正確 endpoint。公開項目、合集詳情與作者主頁共用一個 reason sheet 與成功/失敗狀態機。
+- **不能檢舉或封鎖自己**:`NavRoute.authorProfile(handle:isSelf:)` 的 `isSelf` 沒有 default,所有入口都必須明確回答;合集/作者畫面依 owner 判斷隱藏治理動作。
+- **封鎖語意是停止 discovery**:`BlockStore` 的帳號清單在 App 啟動後載入,對物見 feed、合集/作者入口與單字頁「大家的圖鑑」做 client filter。已收藏的字和 SRS 屬於封鎖者自己的學習歷史,不會被刪除。
+- **公開 API 仍可共享快取**:四條 public discovery API 不做 per-user server filter;一份小而低頻變更的封鎖清單換回 CDN/URLCache。清單載入失敗 fail-open(不隱藏),避免網路抖動把物見變空。
+- 封鎖採 optimistic hide,server 失敗回滾;設定 → 已封鎖的作者 可解除。登出時由 account-scoped reset 清除,避免下一帳號繼承。
+
+### 12.8 審核閘門 — `AtlasReviewStatus`
 
 送審會跑一道機器閘門,結果是三選一:直接公開、轉人工、或退回。
 
@@ -545,16 +557,18 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 - 文案一律說「送審 / 審核中」,絕不暗示「已經公開了」—— 通過不是自動的。
 - `pending` 是舊的單一佇列,留給早期資料列。
 
-### 12.8 端點對照
+### 12.9 端點對照
 
 | 用途 | 端點 |
 |---|---|
 | 公開合集牆 / 單一合集 | GET `/api/atlas/public/collections`、`/api/atlas/public/collections/{slug}` |
 | 公開項目 | GET `/api/atlas/public`、`/api/atlas/public/{slug}`、`/api/atlas/public/by-lemma` |
 | 作者主頁 | GET `/api/atlas/public/authors/{handle}` |
-| 消費動作 | POST/DELETE `…/{slug}/save`、POST `…/{slug}/report`、POST `…/{slug}/learn` |
+| 消費動作 | POST/DELETE `…/{slug}/save`、POST `…/{slug}/learn` |
+| 檢舉 | POST 公開項目 `…/{slug}/report`、合集 `…/collections/{slug}/report`、作者 `…/authors/{handle}/report` |
 | 作者端合集 | `/api/atlas/collections`(CRUD)、`…/{id}/avatar`、`…/{id}/items`、`…/{id}/publish`、`…/{id}/withdraw`、`…/candidates` |
 | 已收藏的字 | GET `/api/users/saved-words`(併入 `WordsStore`,§8) |
+| 封鎖 | GET/POST `/api/users/blocks`、DELETE `/api/users/blocks/{handle}` |
 
 完整定義見 `Core/Networking/Endpoint.swift`。
 
@@ -562,18 +576,19 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 
 ## 13. 我的(Me)
 
-檔案:`Features/Me/MeView.swift`, `MeMenu.swift`
+檔案:`Features/Me/MeView.swift`, `MeProgressSections.swift`
 
 **我的 是私人中樞,作者主頁 是公開作品集**,兩者刻意分開:這頁只有你看得到,§12.5 那頁是別人看到的。
 
 - **頁首**:頭像 + 顯示名(暱稱 → UID)+ UID。
 - **三格統計**:連勝 / 已學字數 / 自製圖鑑數。連勝與已學字讀共用的 `ProgressStore`,主頁、進度、我的 共用同一份抓取結果。
+- **完整進度**:`MeProgressSections` 呈現圖鑑完成度、目前/最長連勝、6 週 heatmap 與主題明細;原 Progress 主分頁已移除。
 - **最弱三個字**:GET `/api/users/top-words?type=weak&limit=3`,點進 WordPeek。這是 我的 專屬的 payload,所以留在 `MeVM`。
 - **兩張選單卡**,分組本身就是重點:
   - **創作** — 圖鑑管理(§11)、我的主頁(§12.5,帶 `isSelf`)。你做的東西,和它流向的公開頁。
   - **帳號** — 我的收藏(§10)、設定(§15)、意見收集、分享 App。
   - 拆開之前這八列擠在同一張卡裡,連同 Pro 與分享,讀起來像雜物抽屜而不是一個家。
-- **Pro 卡**:是否為 Pro 以**伺服器權威的 `AtlasStore.entitlement`** 為準,不是裝置端的 `store.isPro` —— 後者只反映這台裝置/Apple ID 上驗證過的交易,一個實際上是 Pro 的帳號(管理員授予、跨裝置購買)在 paywall 打開之前會被誤判為免費。
+- **Pro 卡**:是否為 Pro 只問 `EffectiveEntitlementReading`:已有 server snapshot 時(包含 free)server 雙向勝出,只有首次 sync 前才以裝置 StoreKit 交易暫時 fallback。這同時涵蓋管理員贈與、跨裝置購買與訂閱重新綁定。
 - 掛載時 warm `AtlasStore`(§11 的 sync)。
 - **DEBUG 限定**:底部「除錯工具」可展開,內含 Bearer smoke test(GET `/api/test_smoke/whoami`),release 編譯排除。
 
@@ -584,10 +599,12 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 ### StoreKit 2 — `Core/Billing/StoreKitService.swift`
 
 - 產品:`app.tuji.pro.monthly` / `app.tuji.pro.yearly`(自動續訂)。
-- **伺服器是 entitlement 權威**:每筆已驗證交易(首購/背景續訂/恢復)都把 JWS 轉送 POST `/api/billing/verify`,伺服器寫 `user_entitlements` 並回 tier;iOS 的 `isPro` 只驅動 paywall UI,配額判斷一律讀 `AtlasStore.entitlement`。
+- **伺服器是有效權限權威**:每筆已驗證交易(首購/背景續訂/恢復)都把 JWS 轉送 POST `/api/billing/verify`;伺服器把 App Store 訂閱與營運手動贈與分開保存,再取聯集回 `AtlasEntitlement.plan`。贈與不覆寫訂閱,收回贈與也不取消訂閱。
+- **一份訂閱只綁一個帳號**:`original_transaction_id` 唯一;同一 Apple 訂閱同步到另一 Tuji 帳號時會轉移綁定,所以已有 server snapshot 時連 `free` 都必須勝過裝置 `isPro`。
 - 單例常駐監聽 `Transaction.updates`(背景續訂、退款、Ask-to-Buy);驗證後同步伺服器並 `finish()`。
 - `restore()` = `AppStore.sync()` + 重新枚舉 currentEntitlements 全部上報。
 - 同步成功後刷新 atlas entitlement,配額 UI 立即更新。
+- 使用者畫面一律讀 `EffectiveEntitlementReading`;`StoreKitService.isPro` 只服務首次 snapshot 前的 fallback 與 paywall 自己的購買/restore 狀態。
 
 ### Paywall — `Features/Paywall/PaywallView.swift`
 
@@ -618,7 +635,9 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 | 學習 | 中文釋義 | showZh 開關,各列表/學習畫面條件渲染中文 |
 | 顯示 | 語言 | 介面語言四選一(§16 本地化) |
 | 顯示 | 發音口音 | 美式/英式(僅 zh-en 顯示) |
+| 方案 | Tuji Pro / 目前方案 | 有效權限為 Free 才顯示升級;Pro 顯示目前方案,不以裝置交易 flag 判斷 |
 | 帳號 | 編輯個人資料 | 見下方 |
+| 帳號 | 已封鎖的作者 | 讀 `BlockStore`,可解除並讓物見 discovery 重新出現 |
 | 帳號 | 登出 | 確認 prompt → `auth.signOut()` |
 | 危險 | 清除學習進度 | 二段確認,見 §7.3 |
 | 危險 | 刪除帳號 | **兩層確認** prompt → DELETE `/api/users/delete-account` → 自動登出 |
@@ -644,10 +663,10 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 
 ## 16. 基礎設施
 
-### HTTP — `Core/Networking/APIClient.swift`, `Endpoint.swift`, `APIError.swift`
+### HTTP — `Core/Networking/APIClient.swift`, `Endpoint.swift`, `EndpointPolicy.swift`, `APIError.swift`
 
-- 型別化 client:所有 endpoint 集中在 `Endpoint` enum(路徑、query、cache policy、timeout、是否公開)。
-- 受保護請求自動帶 `AuthService.validAccessToken()` 的 Bearer;**401 重試一次**(supabase-swift 讀 session 時已順帶 refresh)。公開端點(words/word/categories/search/events)跳過 auth。
+- 型別化 client:所有 endpoint 集中在 `Endpoint` enum(一個 case 對應一組 path/query);access、cache policy、timeout 由 `EndpointPolicy` 明確決定,不用 broad default 讓新 case 偷繼承錯政策。
+- 受保護請求透過 `AccessTokenProviding` 取 Bearer;**401 重試一次**(supabase-swift 讀 session 時已順帶 refresh)。JSON 與 multipart 都重建完整 request,照片上傳重試不會丟 body。
 - Base URL 從 Info.plist `TUJI_BASE_URL` 讀,缺失 fallback 到 prod。
 - URLSession 帶磁碟 URLCache(16MB/128MB):公開 GET 依伺服器 Cache-Control/ETag 快取、重啟仍有效;使用者/寫入端點一律 `reloadIgnoringLocalCacheData`。
 - Timeout:一般 15 秒;AI 端點(上傳辨識/enrich/detail)60 秒。
@@ -683,16 +702,16 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 
 ### 測試 — `TujiTests/`
 
-單元測試覆蓋純邏輯與畫面 model(共 40 個測試檔),不碰網路 —— 每個 model 都能站在自己的 role seam fake 上:
+單元測試覆蓋純邏輯與畫面 model(目前 71 個 `*Tests.swift` 檔),不碰正式網路 —— 每個 model 都能站在自己的 role seam fake 上:
 
 | 範圍 | 代表測試 |
 |---|---|
-| 學習流程 | `NewFlowCoordinatorTests`、`ReviewFlowCoordinatorTests`、`StudyOptionStyleTests`、`StudyQueueStoreTests` |
+| 學習流程 | `NewFlowCoordinatorTests`、`ReviewFlowCoordinatorTests`、`StudyOptionStateTests`、`StudyLadderTests`、`TileBoardTests` |
 | SRS 寫入與刷新 | `DurableAnswerWriterTests`、`StudyAnswerOutboxTests`、`SessionRefreshTests` |
 | 額度與排程 | `StudyQuotasTests`、`AtlasQuotasTests`、`ReviewScheduleTests` |
 | 自製圖鑑 | `AtlasCaptureVMTests`、`AtlasStoreTests`、`AtlasShelfModelTests`、`AtlasImageStatusTests`、`AtlasMutationRefreshTests`、`ImageCropTests` |
-| 物見 | `PublicAtlasBrowsingModelTests`、`CollectionDetailVMTests`、`CollectionEditVMTests`、`MyCollectionsVMTests`、`AtlasPublicDetailVMTests`、`AuthorProfileVMTests`、`AtlasReviewStatusTests`、`CommunityLearningRefreshTests`、`SavedCommunityWordsTests` |
-| 身分與設定 | `AuthorProfileModuleTests`、`SessionUserMirrorTests`、`ImageIntakeTests`、`UILanguageTests` |
-| 其他 | `SearchVMTests`、`WordsStoreMergeTests`、`TodayViewHintTests`、`AnalyticsTests`、`SignedStorageObjectIDTests`、`FeedbackTests` |
+| 物見 | `PublicAtlasBrowsingModelTests`、`CollectionDetailVMTests`、`CollectionEditVMTests`、`MyCollectionsVMTests`、`AtlasPublicDetailVMTests`、`AuthorProfileVMTests`、`AtlasReviewStatusTests`、`CommunityLearningRefreshTests`、`SavedCommunityWordsTests`、`BlockStoreTests`、`ReportFlowTests` |
+| 身分與設定 | `AuthSessionTests`、`AccountScopedStoreTests`、`EffectiveEntitlementTests`、`AuthorProfileModuleTests`、`SessionUserMirrorTests`、`ImageIntakeTests`、`UILanguageTests` |
+| 其他 | `SearchVMTests`、`WordsStoreMergeTests`、`TodayDecisionsTests`、`EndpointPolicyTests`、`NavigationSafetyNetTests`、`AnalyticsTests`、`SignedStorageObjectIDTests`、`FeedbackTests` |
 
 `AtlasTestSupport.swift` 提供共用 fake。`AnalyticsTests` 會把 `AnalyticsEvent` 的值域釘住,新增事件必須同步更新白名單。
