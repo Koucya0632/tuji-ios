@@ -31,7 +31,9 @@ final class MasteryStore {
     private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "mastery-store")
 
-    private init(repository: ProgressRepository = LiveProgressRepository.shared) {
+    /// Internal, not private — see ProgressStore. Mastery's no-TTL policy is
+    /// the one most worth asserting, and it was unreachable.
+    init(repository: ProgressRepository = LiveProgressRepository.shared) {
         self.repository = repository
     }
 

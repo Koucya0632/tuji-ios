@@ -90,8 +90,14 @@ extension CategoriesStore: WarmableStore {
 }
 
 extension SettingsStore: WarmableStore {
+    /// Warming settings has to include the consequences of warming settings.
+    /// The store fires its 學習語言 refresh detached (so it never extends the
+    /// launch gate), so `loadIfNeeded()` returning is not the end of the story —
+    /// and the warmer's whole settings-first rule rests on it being the end of
+    /// the story.
     func warm() async {
         await self.loadIfNeeded()
+        await self.awaitPendingDirectionRefresh()
     }
 }
 
@@ -177,19 +183,37 @@ private struct AccumulationWarmModifier: ViewModifier {
     @Environment(MasteryStore.self) private var mastery
 
     func body(content: Content) -> some View {
-        content.task {
-            await AccumulationWarmer(
-                stores: [
-                    .dictionary: self.words,
-                    .themes: self.categories,
-                    .settings: self.settings,
-                    .progress: self.progress,
-                    .stats: self.stats,
-                    .mastery: self.mastery
-                ]
-            )
-            .warm(self.surface, isGuest: self.isGuest)
-            self.follow()
-        }
+        // Warms on *appearance*, and re-keys on `isGuest`.
+        //
+        // Two things were wrong with a bare `.task`. The tab shell's pager is a
+        // plain `HStack` — not lazy — so **all four tabs are constructed at
+        // launch** and every warm fired once, then, whichever tab was showing;
+        // returning to 今天 never re-ran it. So the 30 s TTL on Progress/Stats,
+        // justified by 「`due` crosses midnight, the streak turns over」, was
+        // unreachable through the very surface built to consume it. And
+        // `isGuest` was captured at construction, so a guest→signed-in
+        // transition that preserved view identity left the three
+        // account-scoped stores unwarmed forever.
+        //
+        // Every store is TTL- or once-guarded, so a repeat is a no-op in the
+        // common case — that guard is what makes appearance the right trigger.
+        content
+            .task(id: self.isGuest) { await self.warm() }
+            .onAppear { Task { await self.warm() } }
+    }
+
+    private func warm() async {
+        await AccumulationWarmer(
+            stores: [
+                .dictionary: self.words,
+                .themes: self.categories,
+                .settings: self.settings,
+                .progress: self.progress,
+                .stats: self.stats,
+                .mastery: self.mastery
+            ]
+        )
+        .warm(self.surface, isGuest: self.isGuest)
+        self.follow()
     }
 }

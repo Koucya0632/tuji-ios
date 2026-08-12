@@ -75,11 +75,38 @@ final class SettingsStore {
     private var saveTask: Task<Void, Never>?
     private let repository: UserRepository
     private let defaults: UserDefaults
+    /// Fire the direction refresh without awaiting it here, keeping a handle so
+    /// anything that depends on its consequences can wait for it.
+    private func trackDirectionRefresh(after origin: LearningDirectionChangeOrigin) {
+        let previous = self.directionRefreshTask
+        self.directionRefreshTask = Task {
+            await previous?.value
+            await self.directionRefresh.refresh(after: origin)
+        }
+    }
+
+    /// Wait for the consequences of any 學習語言 change this store has noticed.
+    /// A no-op unless one is in flight.
+    func awaitPendingDirectionRefresh() async {
+        await self.directionRefreshTask?.value
+    }
+
     private let signedInUserProvider: @MainActor () -> SessionUser?
     /// What a 學習語言 change costs. This store is the only place the direction
     /// can change, so it is the only place that has to notice — see
     /// LearningDirectionRefresh.swift for why the callers stopped saying.
     private let directionRefresh: LearningDirectionRefreshing
+    /// The direction refresh in flight, if any.
+    ///
+    /// It stays detached — awaiting it inline would extend the signed-in launch
+    /// gate — but it is now *reachable*. `AccumulationWarmer` warms settings
+    /// first and alone precisely because noticing a 學習語言 disagreement
+    /// invalidates the learning stores; with the refresh fired into an untracked
+    /// `Task`, `await settings.warm()` returning meant nothing and the warmer
+    /// went on to race a load against its own invalidation. The spy in the
+    /// warmer's tests records synchronously, so it could not express 「returns
+    /// before its consequences land」 — which was the entire failure mode.
+    private var directionRefreshTask: Task<Void, Never>?
     private let communityCategoryMigration = CommunityStudyCategoryMigration()
     private let signposter = OSSignposter(
         subsystem: "app.tuji.ios",
@@ -240,7 +267,7 @@ final class SettingsStore {
             if directionChanged {
                 // Detached so the reloads never extend the signed-in launch gate;
                 // `.serverDisagreed` is what keeps the catalog reload out of them.
-                Task { await self.directionRefresh.refresh(after: .serverDisagreed) }
+                self.trackDirectionRefresh(after: .serverDisagreed)
             }
             if let migrationUserID {
                 if migrationNeedsSave {
@@ -319,7 +346,7 @@ final class SettingsStore {
         // can change, and "the store notices" is the whole point of the seam —
         // a fourth caller should not have to remember.
         if directionChanged {
-            Task { await self.directionRefresh.refresh(after: .serverDisagreed) }
+            self.trackDirectionRefresh(after: .serverDisagreed)
         }
     }
 
@@ -367,7 +394,7 @@ final class SettingsStore {
         if persist {
             self.scheduleSave()
         }
-        Task { await self.directionRefresh.refresh(after: .userPicked) }
+        self.trackDirectionRefresh(after: .userPicked)
     }
 
     /// Two-way binding for SwiftUI controls (e.g. Toggle). Reading returns the

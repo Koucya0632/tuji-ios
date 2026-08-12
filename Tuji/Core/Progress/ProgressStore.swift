@@ -28,7 +28,10 @@ final class ProgressStore {
     private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "progress-store")
 
-    private init(repository: ProgressRepository = LiveProgressRepository.shared) {
+    /// Internal, not private: a seam defaulted to `.shared` that no test can
+    /// construct is not a seam (ADR-0001, 2026-08-03 amendment). Production
+    /// still goes through `.shared`.
+    init(repository: ProgressRepository = LiveProgressRepository.shared) {
         self.repository = repository
     }
 
