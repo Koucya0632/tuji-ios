@@ -92,15 +92,28 @@ final class ReviewFlowCoordinator {
 
     private let queueProvider: StudyQueueProviding
 
+    /// How long the flow pauses before advancing past an answered item.
+    ///
+    /// Injected for the same reason 學新字 injects its own: the advance beats
+    /// are 300–800 ms of real `Task.sleep`, and CI runs every `@MainActor`
+    /// suite in parallel on one actor — a starved run turned a 300 ms beat into
+    /// a minute and failed every assertion after it. This coordinator was the
+    /// one that still had no seam at all, so its tests polled a wall clock and
+    /// carried a nine-line comment about the resulting flake instead of closing
+    /// it.
+    private let beat: @Sendable (Duration) async -> Void
+
     init(
         queue: [StudyQueueItem],
         writer: DurableAnswerWriting = DurableAnswerWriter(),
-        queueProvider: StudyQueueProviding = StudyQueueStore.shared
+        queueProvider: StudyQueueProviding = StudyQueueStore.shared,
+        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.queue = queue
         self.originalCount = queue.count
         self.writes = StudySessionWrites(writer: writer)
         self.queueProvider = queueProvider
+        self.beat = beat
     }
 
     /// Fetch the next round's due queue for 再來一輪; empty ⇒ nothing left. The
@@ -291,7 +304,7 @@ final class ReviewFlowCoordinator {
     private func scheduleAdvance(after delay: Duration) {
         Task {
             if delay > .zero {
-                try? await Task.sleep(for: delay)
+                await self.beat(delay)
             }
             self.advance()
         }

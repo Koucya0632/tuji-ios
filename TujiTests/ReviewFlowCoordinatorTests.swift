@@ -72,7 +72,7 @@ struct ReviewFlowCoordinatorTests {
     func fastCorrectAutoRatesWithoutSheet() async throws {
         let queue = try self.makeQueue()
         let writer = SpyAnswerWriter()
-        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer, beat: { _ in })
         c.pick("fork")
         // No sheet, flash capsule instead, suggested applied (mastery 10 → 穩定).
         #expect(c.revealMode == nil)
@@ -122,7 +122,10 @@ struct ReviewFlowCoordinatorTests {
     func retestReshufflesOptionsAndNeverWritesAgain() async throws {
         let queue = try self.makeQueue()
         let writer = SpyAnswerWriter()
-        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        // Instant beats: the advance delays are the coordinator's, not the
+        // test's, and a starved CI actor used to stretch a 300ms one past the
+        // poll ceiling and fail every assertion after it.
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer, beat: { _ in })
 
         // Item 1 (fork): wrong → manual 重來 → requeued.
         c.pick("spoon")
@@ -132,15 +135,10 @@ struct ReviewFlowCoordinatorTests {
 
         // Item 2 (cup): fast correct → auto-rated (mastery 80 → 熟練).
         //
-        // "Fast" is wall-clock — `pick()` reads `Date.now - startedAt` — so it
-        // has to be stated here, not assumed. The poll above returns some time
-        // *after* the advance beat reset `startedAt`, and on a loaded CI that
-        // gap runs past the slow-answer threshold: the answer then asks for a
-        // manual rating and every assertion below falls over. Worse, the next
-        // `waitUntil` would burn its full ceiling waiting for an advance that
-        // is never scheduled, which is why a starved run took 100s to fail.
-        // Symmetrical with `slowCorrectStillAsksForManualRating`, which
-        // backdates `startedAt` to force the other branch.
+        // "Fast" is still wall-clock — `pick()` reads `Date.now - startedAt` —
+        // so it is stated rather than assumed, the mirror of
+        // `slowCorrectStillAsksForManualRating` backdating it to force the
+        // other branch.
         c.startedAt = .now
         c.pick("cup")
         #expect(c.flash == .autoRated(.easy))
@@ -275,7 +273,7 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func hintResetsOnAdvance() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.toggleHint()
         c.pick("fork")
         c.rate(.hard)

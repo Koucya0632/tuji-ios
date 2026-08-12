@@ -96,20 +96,27 @@ struct StudySessionWritesTests {
         #expect(writes.masteryByWord["atlas:card-a"] == nil)
     }
 
+    /// The drain is bounded: a write that has not landed does not hold the
+    /// completion screen. Asserted as a *decision* — the drain returned while
+    /// the write was still outstanding — not as a wall-clock bound. Timing
+    /// assertions do not survive CI, which runs every @MainActor suite in
+    /// parallel and starves anything waiting on a beat.
     @Test
-    func drainReturnsAtTheTimeoutWithoutWaitingOutASlowWrite() async {
+    func drainReturnsWhileASlowWriteIsStillOutstanding() async {
         let writer = StubWriter()
-        writer.delay = .seconds(30)
+        writer.hold = true
         let writes = StudySessionWrites(writer: writer)
         writes.submit(self.payload(), wordId: "w1")
 
-        let started = ContinuousClock.now
-        await writes.drainPendingWrites(within: .milliseconds(200))
+        await writes.drainPendingWrites(within: .milliseconds(50))
 
-        // Generous ceiling: CI runs every @MainActor suite in parallel, so the
-        // assertion is 「it did not wait out the 30s write」, not a tight bound.
-        #expect(ContinuousClock.now - started < .seconds(10))
         #expect(writes.hasPendingWrites)
+        #expect(writes.masteryByWord.isEmpty)
+
+        // Let it finish so the suite leaves nothing running.
+        writer.release()
+        await writes.drainPendingWrites(within: .seconds(10))
+        #expect(!writes.hasPendingWrites)
     }
 }
 
@@ -123,12 +130,21 @@ private final class StubWriter: DurableAnswerWriting {
             mastery: MasteryDelta(before: 0, after: 5, delta: 5)
         )
     )
-    /// Held before answering, so the drain's timeout can be exercised.
-    var delay: Duration?
+    /// Parks the write on a continuation instead of a sleep, so the drain's
+    /// bound can be exercised without a timer the CI scheduler can starve.
+    var hold = false
+    private var continuation: CheckedContinuation<Void, Never>?
 
     func submitAnswer(_ payload: StudyAnswerPayload) async -> StudyWriteOutcome {
         self.answers.append(payload)
-        if let delay { try? await Task.sleep(for: delay) }
+        if self.hold {
+            await withCheckedContinuation { self.continuation = $0 }
+        }
         return self.outcome
+    }
+
+    func release() {
+        self.continuation?.resume()
+        self.continuation = nil
     }
 }
