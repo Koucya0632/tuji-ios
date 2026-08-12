@@ -6725,6 +6725,28 @@
         }
       }
     },
+    "想不起來？點一下圖片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can't recall? Tap the picture"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "思い出せない？画像をタップ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "想不起来？点一下图片"
+          }
+        }
+      }
+    },
     "想告訴我們什麼呢？" : {
       "localizations" : {
         "en" : {
@@ -10334,6 +10356,28 @@
         }
       }
     },
+    "看圖片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show picture"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画像を見る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看图片"
+          }
+        }
+      }
+    },
     "看完整詳情" : {
       "localizations" : {
         "en" : {
@@ -10352,6 +10396,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "看完整详情"
+          }
+        }
+      }
+    },
+    "看提示" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show hint"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヒントを見る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看提示"
           }
         }
       }

@@ -42,6 +42,21 @@ struct StudyAnswerOutboxTests {
         #expect(StudyAnswerOutbox(fileURL: url).pending.isEmpty)
     }
 
+    /// An answer parked by a build that predates 求救提示 has no `hinted` key.
+    /// The field is optional precisely so those still decode — a non-optional
+    /// one would have made every offline answer unreplayable across the update.
+    @Test
+    func legacyParkedAnswersWithoutHintedStillDecode() throws {
+        let legacy = """
+        [{ "cardId": "c1", "rating": "重來", "responseMs": 1234, "activity": "mcq" }]
+        """
+        let url = self.tempURL()
+        try Data(legacy.utf8).write(to: url)
+        let outbox = StudyAnswerOutbox(fileURL: url)
+        #expect(outbox.pending.map(\.cardId) == ["c1"])
+        #expect(outbox.pending.first?.hinted == nil)
+    }
+
     @Test
     func replayHoldsEverythingWhenOffline() async {
         let url = self.tempURL()

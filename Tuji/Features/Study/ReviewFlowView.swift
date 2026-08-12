@@ -254,61 +254,13 @@ private struct ReviewQuestionView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s3) {
-                self.hero
+                ReviewHeroCard(coord: self.coord, item: self.item, height: self.heroHeight)
                 self.choicesList
                     .padding(.horizontal, Space.s4)
             }
             // PR #46: in study mode the tab bar is gone so we can trim the
             // big s24 scroll buffer that previously kept the footer clear.
             .padding(.bottom, self.studyFocus.active ? Space.s3 : Space.s6)
-        }
-    }
-
-    /// Full-bleed, on `tujiPaper2`, with the picture multiplied into it. The
-    /// image used to be a `tujiPaper` rectangle inset inside the page margins,
-    /// which put a white square on warm paper and framed the one thing the whole
-    /// screen is asking about.
-    ///
-    /// The height stays adaptive rather than the square the spec asks for: a
-    /// full-width 1:1 image plus four 64pt options does not fit above the fold
-    /// on any phone, and pushing the answers off-screen to square the picture
-    /// would cost more than the shape is worth.
-    private var hero: some View {
-        ZStack(alignment: .bottomTrailing) {
-            Color.tujiPaper2
-                .frame(height: self.heroHeight)
-                .overlay {
-                    LazyImage(url: self.item.word.imageURL) { state in
-                        if let image = state.image {
-                            image.resizable()
-                                .aspectRatio(
-                                    contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
-                                )
-                                .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
-                                .blendMode(
-                                    self.item.word.imageKind == .cutout ? .multiply : .normal
-                                )
-                        } else if state.error != nil {
-                            Image(systemName: "photo")
-                                .foregroundStyle(.tujiInk3)
-                        } else {
-                            TujiImagePlaceholder()
-                        }
-                    }
-                    .pipeline(.shared)
-                }
-                .clipped()
-                .accessibilityElement()
-                .accessibilityLabel(Text("這個是什麼？"))
-
-            PronunciationButton(
-                text: self.item.word.word,
-                language: self.item.word.taggedLanguage,
-                audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
-                size: 48,
-                ground: .tujiPaper
-            )
-            .padding(Space.s3)
         }
     }
 

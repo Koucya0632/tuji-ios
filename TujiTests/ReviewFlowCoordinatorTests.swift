@@ -187,6 +187,144 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.availableRatings == [.hard, .good, .easy])
     }
 
+    // MARK: - 求救提示 (hint flip)
+
+    @Test
+    func suggestionCapsHintedAnswersAtHard() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        // Speed and mastery stop mattering once the gloss was read.
+        #expect(c.computeSuggestion(correct: true, elapsed: 1, mastery: 80, hinted: true) == .hard)
+        #expect(c.computeSuggestion(correct: true, elapsed: 5, mastery: 80, hinted: true) == .hard)
+        // Wrong is still 重來 — the hint cannot make a miss look better.
+        #expect(c.computeSuggestion(correct: false, elapsed: 1, mastery: 80, hinted: true) == .again)
+    }
+
+    /// The load-bearing one. Nothing in `pick()` mentions the hint: the auto-rate
+    /// branch requires a suggestion other than 困難, and capping a hinted answer
+    /// at 困難 is what switches it off. If someone later relaxes the cap, the
+    /// sheet silently stops appearing — this test is the tripwire.
+    @Test
+    func hintedCorrectRaisesSheetInsteadOfAutoRating() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.toggleHint()
+        #expect(c.hintFaceUp)
+        #expect(c.hinted)
+        // Answered immediately and correctly — without the hint this would have
+        // auto-rated 穩定 and flash-advanced.
+        c.pick("fork")
+        #expect(c.revealMode == .rate)
+        #expect(c.flash == nil)
+        #expect(c.rated == nil)
+        #expect(c.suggested == .hard)
+        #expect(c.availableRatings == [.again, .hard])
+    }
+
+    @Test
+    func hintedCorrectDoesNotRequeue() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.toggleHint()
+        c.pick("fork")
+        // 重來 is offered on a hinted answer, but requeueing still keys off
+        // "did they pick the wrong option", which they did not.
+        c.rate(.again)
+        #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup"])
+        #expect(c.retriedIds.isEmpty)
+        #expect(c.passedCount == 1)
+    }
+
+    @Test
+    func hintedWrongMatchesThePlainWrongPath() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.toggleHint()
+        c.pick("spoon")
+        #expect(c.suggested == .again)
+        #expect(c.availableRatings == [.again, .hard])
+        c.rate(.again)
+        #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup", "w-fork"])
+        #expect(c.retriedIds.contains("w-fork"))
+    }
+
+    @Test
+    func hintStaysSeenAfterFlippingBack() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.toggleHint()
+        c.toggleHint()
+        #expect(!c.hintFaceUp) // showing the picture again…
+        #expect(c.hinted) // …but the gloss cannot be un-seen
+        #expect(!c.canNudge)
+    }
+
+    @Test
+    func hintIsLockedOnceAnswered() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        // The reveal sheet rests at a detent that leaves the hero tappable, so
+        // an answered item must refuse the flip rather than rewrite its rating.
+        c.pick("fork")
+        c.toggleHint()
+        #expect(!c.hintFaceUp)
+        #expect(!c.hinted)
+        #expect(!c.canNudge)
+    }
+
+    @Test
+    func hintResetsOnAdvance() async throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.toggleHint()
+        c.pick("fork")
+        c.rate(.hard)
+        try await self.waitUntil { c.current?.word.id == "w-cup" } // 300ms beat
+        #expect(!c.hinted)
+        #expect(!c.hintFaceUp)
+        #expect(c.canNudge)
+    }
+
+    @Test
+    func hintedFlagReachesThePayload() async throws {
+        let queue = try self.makeQueue()
+        let writer = SpyAnswerWriter()
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        c.toggleHint()
+        c.pick("fork")
+        c.rate(.hard)
+        await c.drainPendingWrites(within: .seconds(10))
+        #expect(writer.answers.map(\.hinted) == [true])
+        #expect(writer.answers.map(\.rating) == ["困難"])
+    }
+
+    @Test
+    func plainAnswerReportsNotHinted() async throws {
+        let queue = try self.makeQueue()
+        let writer = SpyAnswerWriter()
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        c.pick("fork")
+        await c.drainPendingWrites(within: .seconds(10))
+        #expect(writer.answers.map(\.hinted) == [false])
+    }
+
+    @Test
+    func retestFlipIsFree() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let writer = SpyAnswerWriter()
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        c.retriedIds.insert("w-fork")
+        // A retest never writes SRS, so there is nothing for the hint to cost.
+        #expect(!c.canNudge)
+        c.toggleHint()
+        c.pick("fork")
+        #expect(c.flash == .retestPassed)
+        #expect(c.revealMode == nil)
+        #expect(c.rated == nil)
+        await c.drainPendingWrites(within: .seconds(2))
+        #expect(writer.answers.isEmpty)
+    }
+
     // MARK: - 再來一輪 (another round)
 
     @Test
