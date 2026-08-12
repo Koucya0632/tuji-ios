@@ -95,7 +95,6 @@ struct MeProgressSections: View {
     /// words read 「0% · 已學 0 / 共 480 字」 while 首頁 said 37 / 480.
     private var completion: CompletionReadout {
         let selected = self.settings.current.studyCategories
-        let wanted = Set(selected)
         return CompletionReadout(
             .init(
                 isGuest: self.isGuest,
@@ -105,8 +104,7 @@ struct MeProgressSections: View {
                 seenInSelection: self.progress.seenCount(filter: selected),
                 totalInSelection: self.progress.totalCount(filter: selected),
                 dictionaryCount: self.words.words.count,
-                dictionaryCountInSelection: self.words.words
-                    .count(where: { wanted.contains($0.category) })
+                dictionaryCountInSelection: self.words.count(inCategories: selected)
             )
         )
     }

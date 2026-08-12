@@ -25,6 +25,9 @@ final class ProgressStore {
     private(set) var lastError: Error?
 
     private var lastFetch: Date?
+    /// Filtered-row cache; see `rows(filter:)`. `@ObservationIgnored` because a
+    /// memo is not state anyone observes — touching it must not re-render.
+    @ObservationIgnored private var rowsByFilter: [String: [CategoryProgress]] = [:]
     private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "progress-store")
 
@@ -53,6 +56,7 @@ final class ProgressStore {
             streak = resp.streak
             heatmap = resp.heatmap ?? []
             categoryProgress = resp.categories ?? []
+            self.rowsByFilter.removeAll()
             lastFetch = Date()
         } catch {
             lastError = error
@@ -80,9 +84,23 @@ final class ProgressStore {
         self.rows(filter: categories).reduce(0) { $0 + $1.total }
     }
 
+    /// Memoised per (filter, loaded rows).
+    ///
+    /// 首頁 asks for these through `TodayDecisions`, which is a *computed*
+    /// property re-read about a dozen times in one `body` evaluation — and each
+    /// read allocated a fresh `Set` and walked every row again. 我 · 進度 asks
+    /// for the same two numbers through a second, hand-written assembly of the
+    /// same inputs. Caching here fixes every reader at once, which threading a
+    /// snapshot through one screen's view tree would not.
+    ///
+    /// The rows only change on `reload()`, which clears this.
     private func rows(filter categories: [String]) -> [CategoryProgress] {
         guard !categories.isEmpty else { return self.categoryProgress }
+        let key = categories.sorted().joined(separator: "\u{1F}")
+        if let cached = rowsByFilter[key] { return cached }
         let wanted = Set(categories)
-        return self.categoryProgress.filter { wanted.contains($0.category) }
+        let rows = self.categoryProgress.filter { wanted.contains($0.category) }
+        self.rowsByFilter[key] = rows
+        return rows
     }
 }

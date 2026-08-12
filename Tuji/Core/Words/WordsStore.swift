@@ -29,6 +29,9 @@ final class WordsStore {
     private let repository: CatalogRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "words")
 
+    /// Per-selection dictionary counts; see `count(inCategories:)`.
+    /// `@ObservationIgnored` because a memo is not state anyone observes.
+    @ObservationIgnored private var countByCategories: [String: Int] = [:]
     @ObservationIgnored private var latestRequestedContext: CatalogContext?
     @ObservationIgnored private var loadedContext: CatalogContext?
     @ObservationIgnored private var inFlight: [CatalogContext: LoadFlight] = [:]
@@ -127,6 +130,7 @@ final class WordsStore {
         switch result {
         case let .success(payload):
             self.words = payload.words
+            self.countByCategories.removeAll()
             if let error = payload.customError {
                 self.log.info("custom words skipped: \(error.localizedDescription, privacy: .public)")
             }
@@ -274,6 +278,7 @@ final class WordsStore {
         self.publicInFlight.removeAll()
         self.publicCache.removeAll()
         self.words = []
+        self.countByCategories.removeAll()
         self.loading = false
         self.loaded = false
     }
@@ -329,5 +334,20 @@ final class WordsStore {
             if $0.category != $1.category { return $0.category < $1.category }
             return $0.word.localizedCaseInsensitiveCompare($1.word) == .orderedAscending
         }
+    }
+
+    /// How many dictionary words fall inside a 學習主題 selection.
+    ///
+    /// Memoised: this is an O(dictionary) scan — ~480 words — and 首頁 asks for
+    /// it through `TodayDecisions`, a *computed* property re-read about a dozen
+    /// times in one `body` evaluation. 我 · 進度 hand-writes the same scan for
+    /// the same number. The cache clears whenever `words` is replaced.
+    func count(inCategories categories: [String]) -> Int {
+        let key = categories.sorted().joined(separator: "\u{1F}")
+        if let cached = countByCategories[key] { return cached }
+        let wanted = Set(categories)
+        let count = self.words.count { wanted.contains($0.category) }
+        self.countByCategories[key] = count
+        return count
     }
 }

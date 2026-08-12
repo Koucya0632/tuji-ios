@@ -71,6 +71,45 @@ struct AccumulationStoreStalenessTests {
         #expect(store.streak == nil)
     }
 
+    // MARK: - Memoised selection queries
+
+    /// 首頁 reads these through `TodayDecisions`, a *computed* property re-read
+    /// about a dozen times in one `body` evaluation; 我 · 進度 hand-writes the
+    /// same two numbers. Each read used to allocate a `Set` and walk every row.
+    /// The memo must not change the answers, and must not outlive a reload.
+    @Test
+    func filteredProgressCountsAreMemoisedWithoutChangingTheAnswer() async {
+        let repo = SpyProgressRepository()
+        repo.categories = [
+            CategoryProgressFixture.make(category: "food", seen: 3, total: 10),
+            CategoryProgressFixture.make(category: "body", seen: 1, total: 5)
+        ]
+        let store = ProgressStore(repository: repo)
+        await store.loadIfStale()
+
+        #expect(store.seenCount(filter: ["food"]) == 3)
+        #expect(store.seenCount(filter: ["food"]) == 3) // served from the memo
+        #expect(store.totalCount(filter: ["food"]) == 10)
+        #expect(store.seenCount(filter: ["food", "body"]) == 4)
+        // An empty filter means "all categories", never a cached subset.
+        #expect(store.totalCount(filter: []) == 15)
+    }
+
+    @Test
+    func theFilteredRowMemoDoesNotSurviveAReload() async {
+        let repo = SpyProgressRepository()
+        repo.categories = [CategoryProgressFixture.make(category: "food", seen: 3, total: 10)]
+        let store = ProgressStore(repository: repo)
+        await store.loadIfStale()
+        #expect(store.seenCount(filter: ["food"]) == 3)
+
+        repo.categories = [CategoryProgressFixture.make(category: "food", seen: 9, total: 10)]
+        store.invalidate()
+        await store.loadIfStale()
+
+        #expect(store.seenCount(filter: ["food"]) == 9)
+    }
+
     // MARK: - MasteryStore
 
     /// No TTL by design: a score only moves when this user answers something,
@@ -142,6 +181,7 @@ struct AccumulationStoreStalenessTests {
 @MainActor
 private final class SpyProgressRepository: ProgressRepository {
     var failing = false
+    var categories: [CategoryProgress] = []
     private(set) var progressLoads = 0
     private(set) var masteryLoads = 0
 
@@ -160,7 +200,7 @@ private final class SpyProgressRepository: ProgressRepository {
                 lastStudyDate: nil
             ),
             heatmap: [],
-            categories: []
+            categories: self.categories
         )
     }
 
@@ -214,5 +254,15 @@ private final class SpyStudyRepository: StudyRepository {
 
     func submitReport(_: StudyReportPayload) async throws {
         throw NotImplemented()
+    }
+}
+
+/// `CategoryProgress` is `Decodable` only, so fixtures go through JSON.
+enum CategoryProgressFixture {
+    static func make(category: String, seen: Int, total: Int) -> CategoryProgress {
+        try! JSONDecoder().decode(
+            CategoryProgress.self,
+            from: Data(#"{"category":"\#(category)","seen":\#(seen),"total":\#(total)}"#.utf8)
+        )
     }
 }
