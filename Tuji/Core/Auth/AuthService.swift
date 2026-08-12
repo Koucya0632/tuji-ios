@@ -27,6 +27,17 @@ final class AuthService {
         case failed
     }
 
+    /// The outcome of one sign-in attempt, returned rather than deposited in a
+    /// shared field. `error` still carries the message for the form, but a
+    /// caller no longer has to read it to know what happened.
+    enum AuthAttempt: Equatable {
+        case succeeded
+        /// Includes the user-facing reason, already localised by `friendly(_:)`.
+        case failed(String)
+        /// The user backed out (Google's sheet). Not an error, and not success.
+        case cancelled
+    }
+
     static let shared = AuthService()
 
     /// The state machine and its guards — see AuthSession. This class keeps the
@@ -38,8 +49,15 @@ final class AuthService {
         self.session.state
     }
 
-    var error: String?
-    var loading: Bool = false
+    /// The last attempt's failure, for the form that is showing. `private(set)`:
+    /// it used to be writable by any of the 43 call sites, and every sign-in
+    /// method returned `Void` and communicated failure *only* through it — so
+    /// two concurrent attempts stomped each other and a caller could not tell
+    /// success from failure without reading a field someone else might have
+    /// just overwritten. The methods return an `AuthAttempt` now; this stays for
+    /// the views that render the message.
+    private(set) var error: String?
+    private(set) var loading: Bool = false
 
     private let supabase = SupabaseProvider.client
     private let log = Logger(subsystem: "app.tuji.ios", category: "auth")
@@ -122,6 +140,7 @@ final class AuthService {
     /// Registration creates only the server-minted UID and default avatar.
     /// A public nickname is optional and goes through Profile edit moderation
     /// only after authentication.
+    @discardableResult
     func signUp(email: String, password: String) async -> SignUpResult {
         loading = true
         error = nil
@@ -143,13 +162,13 @@ final class AuthService {
                 return .pendingEmailConfirmation
             }
         } catch {
-            self.error = friendly(error)
-            log.error("signup failed: \(error.localizedDescription, privacy: .public)")
+            self.fail(error, "signup")
             return .failed
         }
     }
 
-    func signIn(email: String, password: String) async {
+    @discardableResult
+    func signIn(email: String, password: String) async -> AuthAttempt {
         loading = true
         error = nil
         defer { loading = false }
@@ -159,9 +178,9 @@ final class AuthService {
             await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("signin ok uid=\(session.user.id.uuidString, privacy: .public)")
+            return .succeeded
         } catch {
-            self.error = friendly(error)
-            log.error("signin failed: \(error.localizedDescription, privacy: .public)")
+            return self.fail(error, "signin")
         }
     }
 
@@ -176,7 +195,8 @@ final class AuthService {
     /// name shown on every public page, so seeding it would publish a legal name
     /// nobody offered. A name reaches the community only by being typed into a
     /// field labelled 暱稱.
-    func signInWithApple(idToken: String, nonce: String, fullName _: String?) async {
+    @discardableResult
+    func signInWithApple(idToken: String, nonce: String, fullName _: String?) async -> AuthAttempt {
         loading = true
         error = nil
         defer { loading = false }
@@ -192,17 +212,27 @@ final class AuthService {
             await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("apple signin ok uid=\(session.user.id.uuidString, privacy: .public)")
+            return .succeeded
         } catch {
-            self.error = friendly(error)
-            log.error("apple signin failed: \(error.localizedDescription, privacy: .public)")
+            return self.fail(error, "apple signin")
         }
     }
 
     /// Surfaces a non-cancellation Apple sign-in failure. AppleSignInButton
     /// filters out user cancellation before calling this.
-    func appleSignInDidFail(_ error: Error) {
-        self.error = friendly(error)
-        log.error("apple signin failed: \(error.localizedDescription, privacy: .public)")
+    @discardableResult
+    func appleSignInDidFail(_ error: Error) -> AuthAttempt {
+        self.fail(error, "apple signin")
+    }
+
+    /// One place a failed attempt is recorded and reported. It used to be four
+    /// copies of 「write `self.error`, log, return nothing」.
+    @discardableResult
+    private func fail(_ error: Error, _ what: String) -> AuthAttempt {
+        let message = self.friendly(error)
+        self.error = message
+        log.error("\(what, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+        return .failed(message)
     }
 
     /// Drives the full Google native flow: GoogleSignInBridge gets the
@@ -210,7 +240,8 @@ final class AuthService {
     /// Supabase project must have **Skip nonce checks ON** for this to
     /// succeed — the GoogleSignIn iOS SDK doesn't expose the nonce
     /// parameter (Supabase iOS guide reflects this).
-    func signInWithGoogle() async {
+    @discardableResult
+    func signInWithGoogle() async -> AuthAttempt {
         loading = true
         error = nil
         defer { loading = false }
@@ -226,11 +257,16 @@ final class AuthService {
             await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("google signin ok uid=\(session.user.id.uuidString, privacy: .public)")
+            return .succeeded
         } catch GoogleSignInBridge.GoogleSignInError.userCancelled {
+            // Backing out of the sheet is neither success nor failure, and
+            // must not leave a red line under the button. Apple states the
+            // same fact differently: its button filters cancellation out
+            // before ever calling us.
             log.info("google signin cancelled by user")
+            return .cancelled
         } catch {
-            self.error = friendly(error)
-            log.error("google signin failed: \(error.localizedDescription, privacy: .public)")
+            return self.fail(error, "google signin")
         }
     }
 
@@ -247,16 +283,11 @@ final class AuthService {
 
         _ = await unregisterPush
 
-        // The atlas store is an app-lifetime singleton whose sync merge is
-        // additive, so without an explicit wipe the next account would still
-        // see this account's 自製圖鑑; the capture queue likewise persists its
-        // jobs and would resume them under the next account's session, and the
-        // 合集 cache would hand the next account this one's 合集 list, and the
-        // block list would hide the next account's feed on this account's behalf.
-        AtlasStore.shared.reset()
-        AtlasCaptureQueue.shared.reset()
-        MyCollectionsCache.shared.reset()
-        BlockStore.shared.reset()
+        // Everything whose contents belong to one account. The roster — and
+        // why each store is on it — lives with the protocol, so a fifth
+        // account-scoped store learns its obligation from `AccountScopedStore`
+        // rather than from a comment inside the method that discharges it.
+        AccountScopedStores.resetAll()
 
         self.session.signedOut()
         error = nil
