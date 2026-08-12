@@ -29,7 +29,7 @@ struct AboutView: View {
                     )
                 }
 
-                Text("Tuji v1.0.0 · 圖記")
+                Text("Tuji v1.1.0 · 圖記")
                     .font(.tujiLabel)
                     .tracking(0.5)
                     .foregroundStyle(.tujiInk3)

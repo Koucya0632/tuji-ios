@@ -41,6 +41,48 @@
         {
           "adHocOffers" : [],
           "codeOffers" : [],
+          "displayPrice" : "13.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "B7F3A1C0-0000-4000-8000-000000000013",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "每 3 個月自動續訂，自製圖鑑容量與 AI 額度全面升級。",
+              "displayName" : "Tuji Pro（3 個月）",
+              "locale" : "zh_TW"
+            }
+          ],
+          "productID" : "app.tuji.pro.quarterly",
+          "recurringSubscriptionPeriod" : "P3M",
+          "referenceName" : "Tuji Pro Quarterly",
+          "subscriptionGroupID" : "B7F3A1C0-0000-4000-8000-000000000001",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "24.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "B7F3A1C0-0000-4000-8000-000000000014",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "每半年自動續訂，自製圖鑑容量與 AI 額度全面升級。",
+              "displayName" : "Tuji Pro（半年）",
+              "locale" : "zh_TW"
+            }
+          ],
+          "productID" : "app.tuji.pro.semiannual",
+          "recurringSubscriptionPeriod" : "P6M",
+          "referenceName" : "Tuji Pro Semiannual",
+          "subscriptionGroupID" : "B7F3A1C0-0000-4000-8000-000000000001",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
           "displayPrice" : "44.99",
           "familyShareable" : false,
           "groupNumber" : 1,

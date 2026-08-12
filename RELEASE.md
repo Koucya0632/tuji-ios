@@ -16,7 +16,7 @@ iOS 是 Tuji 的主要產品面。發版前必須先保證：
 - metadata 不宣稱尚未完成的能力。目前仍未完成的是：
   - **Push**：程式碼存在，但 entitlement 沒有 `aps-environment`（`Tuji.entitlements` 只有 Sign in with Apple）。未完成前不要打開正式推播能力。
   - **Universal Links**：App 已能解析 `https://tuji.app/` 路徑，但尚未完成 Associated Domains / AASA；目前可對外使用的仍只有 custom scheme `tuji://`。
-- Pro 訂閱已上線（`app.tuji.pro.monthly` / `app.tuji.pro.yearly`），送審必附 restore purchases 與訂閱條款。
+- Pro 訂閱已上線（`app.tuji.pro.monthly` / `app.tuji.pro.quarterly` / `app.tuji.pro.semiannual` / `app.tuji.pro.yearly`），送審必附 restore purchases 與訂閱條款。
 
 ## 2. Schemes
 

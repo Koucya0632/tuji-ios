@@ -1,4 +1,5 @@
-// StoreKit 2 for Tuji Pro (auto-renewable subscription: monthly + yearly).
+// StoreKit 2 for Tuji Pro (auto-renewable subscription: monthly, quarterly,
+// semiannual, and yearly).
 //
 // The server is the entitlement authority — every verified transaction (initial
 // purchase, background renewal, restore) is forwarded to /api/billing/verify,
@@ -19,8 +20,10 @@ final class StoreKitService {
 
     enum ProductID {
         static let monthly = "app.tuji.pro.monthly"
+        static let quarterly = "app.tuji.pro.quarterly"
+        static let semiannual = "app.tuji.pro.semiannual"
         static let yearly = "app.tuji.pro.yearly"
-        static let all: [String] = [monthly, yearly]
+        static let all: [String] = [monthly, quarterly, semiannual, yearly]
     }
 
     private(set) var products: [Product] = []
