@@ -22,15 +22,12 @@ struct WordTile: View {
     /// Fixed image height. `nil` (the grid case) makes the image square.
     var height: CGFloat?
     var showLabel: Bool = true
-    /// When true, shows the mastery scale and the next-review countdown
-    /// (used by 圖鑑). Other reuse sites leave this off.
+    /// When true, shows the mastery scale (used by 圖鑑). Other reuse sites
+    /// leave this off.
     var showMastery: Bool = false
     /// The word's 0–100 mastery score, or nil if never studied (→ 未學). Only
     /// consulted when `showMastery` is true.
     var masteryScore: Int?
-    /// The word's soonest next-review date, or nil if unscheduled. Only shown
-    /// when `showMastery` is true.
-    var nextReviewDate: Date?
 
     @Environment(SettingsStore.self) private var settings
 
@@ -52,10 +49,10 @@ struct WordTile: View {
                     }
 
                     // Two lines are reserved whether or not the word needs
-                    // them, so the reading / 中文 / countdown under a short word
-                    // sit on the same line as the ones under a wrapped
-                    // neighbour. `reservesSpace` rather than a fixed `.frame`,
-                    // which would stop scaling with Dynamic Type.
+                    // them, so the reading / 中文 under a short word sit on the
+                    // same line as the ones under a wrapped neighbour.
+                    // `reservesSpace` rather than a fixed `.frame`, which would
+                    // stop scaling with Dynamic Type.
                     Text(self.word.word)
                         .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
@@ -80,15 +77,6 @@ struct WordTile: View {
                             .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
-                    }
-
-                    if self.showMastery, let due = self.nextReviewDate {
-                        Text(ReviewSchedule.countdownLabel(until: due))
-                            .font(.tujiLabel)
-                            .tracking(0.5)
-                            .foregroundStyle(.tujiInk3)
-                            .lineLimit(1)
-                            .padding(.top, 2)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
