@@ -12,12 +12,53 @@ import Foundation
 /// getting them wrong fails loudly (a 401, not stale personal data).
 struct EndpointPolicy {
     let cachePolicy: URLRequest.CachePolicy
-    /// No bearer token required. `APIClient` skips the `AuthService` lookup.
-    var isPublic = false
-    /// Anonymous access is allowed, but a signed-in caller should still send its
-    /// token so the server can reveal account-specific state.
-    var usesOptionalAuth = false
+    var access: EndpointAccess = .authenticated
     var timeout: TimeInterval = 15
+}
+
+/// How a request authenticates. One value, three cases — it used to be two
+/// independent `Bool`s, which made two illegal states representable and one
+/// word mean two things.
+///
+/// `usesOptionalAuth: true, isPublic: false` compiled and was silently ignored,
+/// because `APIClient` only reached the optional branch inside `else`. And
+/// `isPublic` answered *two* questions that part company on exactly one
+/// endpoint: 「attach no bearer」 (`buildRequest`) and 「never retry a 401」
+/// (`execute`). `.atlasPublicCollection` is `optionalToken`, so a signed-in
+/// caller *does* send a token — and its 401 was the one 401 never retried,
+/// leaving the user looking at the guest view of a collection they had saved.
+enum EndpointAccess: Equatable {
+    /// A bearer token is required; the request cannot be made without one.
+    case authenticated
+    /// No token, ever. The response is the same for everybody.
+    case anonymous
+    /// Usable signed out, but a signed-in caller sends its token so the server
+    /// can reveal account-specific state (「已收藏」 and the like).
+    case optionalToken
+
+    /// `APIClient` must fetch a token before sending.
+    var requiresToken: Bool {
+        self == .authenticated
+    }
+
+    /// `APIClient` should attach a token if one happens to be available.
+    var attachesTokenWhenAvailable: Bool {
+        self == .optionalToken
+    }
+
+    /// A 401 is worth one refresh-and-retry. True wherever a token may have
+    /// been attached — which includes `optionalToken`, the case the old
+    /// `!isPublic` guard excluded.
+    var mayRetryUnauthorized: Bool {
+        self != .anonymous
+    }
+
+    /// Whether a response for this access level may sit in the shared
+    /// `URLCache`. Anything that can vary by caller may not: the cache is
+    /// disk-backed and shared across accounts on the device.
+    var mayBeCachedAcrossCallers: Bool {
+        self == .anonymous
+    }
 }
 
 extension EndpointPolicy {
@@ -34,19 +75,21 @@ extension EndpointPolicy {
     static let privateServerCached = EndpointPolicy(cachePolicy: .useProtocolCachePolicy)
 
     /// Anonymous read behind the CDN; honours `Cache-Control`.
-    static let publicCached = EndpointPolicy(cachePolicy: .useProtocolCachePolicy, isPublic: true)
+    static let publicCached = EndpointPolicy(
+        cachePolicy: .useProtocolCachePolicy,
+        access: .anonymous
+    )
 
     /// Anonymous write (analytics) — nothing to cache.
     static let publicFresh = EndpointPolicy(
         cachePolicy: .reloadIgnoringLocalCacheData,
-        isPublic: true
+        access: .anonymous
     )
 
     /// Anonymous read whose response depends on the caller when there is one.
     static let publicFreshOptionalAuth = EndpointPolicy(
         cachePolicy: .reloadIgnoringLocalCacheData,
-        isPublic: true,
-        usesOptionalAuth: true
+        access: .optionalToken
     )
 
     /// Authenticated AI call — image recognition (Vision primary / gpt-4o 高精度)

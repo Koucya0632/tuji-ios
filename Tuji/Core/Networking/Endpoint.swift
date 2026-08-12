@@ -12,7 +12,6 @@ enum Endpoint {
     case usersProfile
     case usersSettings
     case usersFavorites
-    case usersLearned
     case usersSync
     /// 連勝 + 熱力圖 + 各主題完成度, all of it scoped to one learning direction.
     case usersProgress(learning: String)
@@ -47,13 +46,11 @@ enum Endpoint {
     case atlasImage(id: String)
     case atlasImageRecognize(id: String, lang: String, learning: String)
     case atlasImageConfirm(id: String, lang: String)
-    case atlasItem(id: String)
     case atlasItemCards(id: String)
     case atlasItemEnrich(id: String)
     case atlasItemDetail(id: String)
     case atlasItemWithdraw(id: String)
     case atlasSync(since: String?, limit: Int)
-    case atlasFriends(limit: Int)
     case atlasEntitlement
 
     // MARK: - Community collections 合集 (auth-protected authoring)
@@ -131,7 +128,7 @@ enum Endpoint {
     /// One switch, one endpoint, every fact about it in one arm.
     ///
     /// This replaced six parallel exhaustive switches over the same 61 cases
-    /// (`path`, `queryItems`, `cachePolicy`, `isPublic`, `usesOptionalAuth`,
+    /// (`path`, `queryItems`, `cachePolicy`, `access`,
     /// `timeout`). Adding an endpoint meant editing up to six of them, and one
     /// endpoint's facts were smeared across 354 lines — which is how ten
     /// endpoints came to have their cache policy decided by a `default:` arm.
@@ -150,8 +147,6 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/users/settings", policy: .privateServerCached)
         case .usersFavorites:
             EndpointDescriptor(path: "/api/users/favorites", policy: .privateServerCached)
-        case .usersLearned:
-            EndpointDescriptor(path: "/api/users/learned", policy: .privateServerCached)
         case .usersSync:
             EndpointDescriptor(path: "/api/users/sync", policy: .privateFresh)
         case let .usersProgress(learning):
@@ -281,8 +276,6 @@ enum Endpoint {
                 queryItems: [URLQueryItem(name: "lang", value: lang)],
                 policy: .privateFresh
             )
-        case let .atlasItem(id):
-            EndpointDescriptor(path: "/api/atlas/items/\(id)", policy: .privateFresh)
         case let .atlasItemCards(id):
             EndpointDescriptor(path: "/api/atlas/items/\(id)/cards", policy: .privateFresh)
         case let .atlasItemEnrich(id):
@@ -298,12 +291,6 @@ enum Endpoint {
                     since.map { URLQueryItem(name: "since", value: $0) },
                     URLQueryItem(name: "limit", value: String(limit))
                 ].compactMap(\.self),
-                policy: .privateFresh
-            )
-        case let .atlasFriends(limit):
-            EndpointDescriptor(
-                path: "/api/atlas/friends",
-                queryItems: [URLQueryItem(name: "limit", value: String(limit))],
                 policy: .privateFresh
             )
         case .atlasEntitlement:
@@ -475,14 +462,13 @@ enum Endpoint {
         }
     }
 
-    /// Forwards kept because they read better at the two call sites that want
-    /// one fact — logging (`path`) and the 401-retry guard (`isPublic`).
+    /// Kept because logging wants exactly this one fact.
     /// `APIClient.buildRequest` reads the whole descriptor once instead.
+    ///
+    /// The `isPublic` forward that used to sit beside it is gone: its *name*
+    /// was what hid the fact that it answered two different questions — see
+    /// `EndpointAccess`.
     var path: String {
         self.descriptor.path
-    }
-
-    var isPublic: Bool {
-        self.descriptor.policy.isPublic
     }
 }
