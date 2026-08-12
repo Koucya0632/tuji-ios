@@ -433,7 +433,7 @@ struct AtlasCaptureVMTests {
         )
         // The last slot is claimed by a capture the server has not counted yet.
         #expect(vm.atCapacity)
-        #expect(vm.capacityMessage.contains("正在生成"))
+        #expect(vm.capacity.blocker == .waitingOnQueue(1))
         await running.value
     }
 }

@@ -36,20 +36,43 @@ struct AtlasCapacityReadout: Equatable {
         self.remaining.map { $0 > 0 } ?? true
     }
 
-    /// Why capture is blocked. `isPro` comes from `EffectiveEntitlementReading`
-    /// rather than from the snapshot above, so 拍照 cannot disagree with 設定
-    /// about who is Pro (CONTEXT.md → 生效權限).
+    /// Why capture is blocked, *before* it becomes a sentence — nil when it
+    /// isn't. Separated from the rendering below so the decision can be
+    /// asserted without pinning a test to one language's wording; the string is
+    /// resolved through `tujiLocalized`, so what it says depends on the running
+    /// device's interface language.
+    enum Blocker: Equatable {
+        /// Every free slot is claimed by a capture still being made. Not a dead
+        /// end — waiting works, and telling this user to delete something would
+        /// be wrong advice.
+        case waitingOnQueue(Int)
+        /// At a ceiling we can name.
+        case atLimit(Int)
+        /// At a ceiling we cannot name: no entitlement snapshot has arrived.
+        case atUnknownLimit
+    }
+
+    var blocker: Blocker? {
+        guard !self.canCapture else { return nil }
+        if self.inFlight > 0 { return .waitingOnQueue(self.inFlight) }
+        guard let limit = self.limit else { return .atUnknownLimit }
+        return .atLimit(limit)
+    }
+
+    /// `isPro` comes from `EffectiveEntitlementReading` rather than from the
+    /// snapshot above, so 拍照 cannot disagree with 設定 about who is Pro
+    /// (CONTEXT.md → 生效權限). Only the ceiling case is sold to; being told to
+    /// wait is not an upgrade prompt.
     func message(isPro: Bool) -> String {
-        if self.inFlight > 0, self.remaining == 0 {
-            // Not a dead end: the slots are claimed by captures still being made,
-            // and telling this user to delete something would be wrong advice.
-            return tujiLocalized("還有 \(self.inFlight) 張卡片正在生成，完成後再新增。")
+        switch self.blocker ?? .atUnknownLimit {
+        case let .waitingOnQueue(count):
+            tujiLocalized("還有 \(count) 張卡片正在生成，完成後再新增。")
+        case .atUnknownLimit:
+            tujiLocalized("自製圖鑑已達上限，刪除一些後再新增。")
+        case let .atLimit(limit):
+            isPro
+                ? tujiLocalized("自製圖鑑已達上限（\(limit)），刪除一些後再新增。")
+                : tujiLocalized("自製圖鑑已達免費上限（\(limit)），升級 Pro 可擴充，或刪除一些。")
         }
-        guard let limit = self.limit else {
-            return tujiLocalized("自製圖鑑已達上限，刪除一些後再新增。")
-        }
-        return isPro
-            ? tujiLocalized("自製圖鑑已達上限（\(limit)），刪除一些後再新增。")
-            : tujiLocalized("自製圖鑑已達免費上限（\(limit)），升級 Pro 可擴充，或刪除一些。")
     }
 }
