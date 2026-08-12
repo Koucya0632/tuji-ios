@@ -42,15 +42,14 @@ func studyChoices(
 {
     let answer = item.word.word
     var rng = SeededRNG(seed: studyStableHash(item.id) &+ UInt64(variant) &* 0x9E3779B97F4A7C15)
-    let answerGlosses = chineseGlosses(item.word.chinese)
-    let glossIndex = buildGlossIndex(pool)
+    let fairness = DistractorPool(answer: answer, gloss: item.word.chinese, pool: pool)
     var seen: Set<String> = [answer.lowercased()]
     var distractors: [String] = []
 
     func admit(_ label: String) {
         guard distractors.count < 3,
               !label.isEmpty,
-              isFairDistractor(label, answer: answer, answerGlosses: answerGlosses, glossIndex: glossIndex),
+              fairness.fairness(of: label) == .fair,
               seen.insert(label.lowercased()).inserted
         else { return }
         distractors.append(label)
@@ -80,39 +79,66 @@ func studyChoices(
     return ([answer] + distractors).shuffled(using: &rng)
 }
 
-/// A distractor is unfair when a learner who knows the answer could
-/// legitimately pick it: it shares a Chinese gloss with the answer
-/// (pan / frying pan → both 平底鍋), or one term's word tokens contain the
-/// other's (knife / kitchen knife / table knife), or — for CJK terms without
-/// token boundaries — one string contains the other (時計 / 腕時計).
-private func isFairDistractor(
-    _ label: String,
-    answer: String,
-    answerGlosses: Set<String>,
-    glossIndex: [String: Set<String>]
-)
-    -> Bool
-{
-    if label.compare(answer, options: [.caseInsensitive]) == .orderedSame { return false }
-    let answerTokens = wordTokens(answer)
-    let labelTokens = wordTokens(label)
-    if !answerTokens.isEmpty, !labelTokens.isEmpty,
-       answerTokens.isSubset(of: labelTokens) || labelTokens.isSubset(of: answerTokens)
-    {
-        return false
+/// Why a label may not stand beside the answer — or that it may.
+///
+/// A returned *value*, not a private `Bool`. The four rules were the reason
+/// this module exists and every one of them was unreachable: they lived in
+/// file-private functions with no test file, assertable only through a seeded
+/// shuffle, by absence. The most valuable logic here sat behind the least
+/// testable door.
+enum DistractorFairness: Equatable {
+    case fair
+    /// The label *is* the answer, modulo case.
+    case sameTerm
+    /// One term's word tokens contain the other's: knife / kitchen knife.
+    case tokenSubset
+    /// CJK has no token boundaries, so substring stands in: 時計 / 腕時計.
+    case cjkSubstring
+    /// The dictionary translates both identically: pan / frying pan → 平底鍋.
+    case sharedGloss
+}
+
+/// The fairness question for one question's answer, against one dictionary.
+///
+/// Built once per call rather than per candidate: the gloss index is a full
+/// pass over the pool.
+struct DistractorPool {
+    let answer: String
+    private let answerGlosses: Set<String>
+    private let glossIndex: [String: Set<String>]
+
+    init(answer: String, gloss: String, pool: [CardWord]) {
+        self.answer = answer
+        self.answerGlosses = chineseGlosses(gloss)
+        self.glossIndex = buildGlossIndex(pool)
     }
-    if containsCJK(label) || containsCJK(answer) {
-        let a = answer.lowercased()
-        let l = label.lowercased()
-        if a.contains(l) || l.contains(a) { return false }
+
+    /// A distractor is unfair when a learner who knows the answer could
+    /// legitimately pick it.
+    func fairness(of label: String) -> DistractorFairness {
+        if label.compare(self.answer, options: [.caseInsensitive]) == .orderedSame {
+            return .sameTerm
+        }
+        let answerTokens = wordTokens(self.answer)
+        let labelTokens = wordTokens(label)
+        if !answerTokens.isEmpty, !labelTokens.isEmpty,
+           answerTokens.isSubset(of: labelTokens) || labelTokens.isSubset(of: answerTokens)
+        {
+            return .tokenSubset
+        }
+        if containsCJK(label) || containsCJK(self.answer) {
+            let a = self.answer.lowercased()
+            let l = label.lowercased()
+            if a.contains(l) || l.contains(a) { return .cjkSubstring }
+        }
+        if !self.answerGlosses.isEmpty,
+           let glosses = glossIndex[label.lowercased()],
+           !glosses.isDisjoint(with: self.answerGlosses)
+        {
+            return .sharedGloss
+        }
+        return .fair
     }
-    if !answerGlosses.isEmpty,
-       let glosses = glossIndex[label.lowercased()],
-       !glosses.isDisjoint(with: answerGlosses)
-    {
-        return false
-    }
-    return true
 }
 
 /// Lowercased word tokens ("kitchen knife" → {kitchen, knife}). CJK terms

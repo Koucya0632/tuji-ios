@@ -20,6 +20,10 @@ struct ReviewFlowView: View {
     @State private var leaving = false
     @State private var reportDraft: StudyReportDraft?
     @State private var showCustomCardNotice = false
+    /// Set when the post-session refresh lands. CompleteView's 還有 N 個 CTA
+    /// waits for it — before that round-trip the store holds the pre-session
+    /// due count.
+    @State private var sessionRefreshed = false
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -29,21 +33,12 @@ struct ReviewFlowView: View {
     var body: some View {
         Group {
             if self.coord.finished {
-                if let m = coord.milestone {
-                    MilestoneView(milestone: m, onFinish: { self.dismiss() })
-                        .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
-                } else {
-                    CompleteView(
-                        answered: self.coord.answered,
-                        masteryByWord: self.coord.masteryByWord,
-                        wrongIds: self.coord.retriedIds,
-                        unsyncedCount: self.coord.unsyncedCount,
-                        onFinish: { self.dismiss() },
-                        onAnotherRound: { await self.startAnotherRound() },
-                        draining: self.coord
-                    )
-                    .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
-                }
+                // The refresh hangs off the finish, not off whichever screen
+                // celebrates it — a milestone session used to refresh nothing.
+                self.finishedSurface
+                    .refreshesFinishedSession(draining: self.coord.writes) {
+                        self.sessionRefreshed = true
+                    }
             } else {
                 self.flowSurface
             }
@@ -80,6 +75,28 @@ struct ReviewFlowView: View {
         .onDisappear { self.studyFocus.exit() }
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)
+        }
+    }
+
+    /// Which celebration a finished session shows. A streak milestone wins:
+    /// it happens at most a few times a year and the summary is always one tap
+    /// away behind it.
+    @ViewBuilder
+    private var finishedSurface: some View {
+        if let milestone = coord.writes.milestone {
+            MilestoneView(milestone: milestone, onFinish: { self.dismiss() })
+                .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
+        } else {
+            CompleteView(
+                answered: self.coord.answered,
+                masteryByWord: self.coord.writes.masteryByWord,
+                wrongIds: self.coord.retriedIds,
+                unsyncedCount: self.coord.writes.parkedCount,
+                onFinish: { self.dismiss() },
+                onAnotherRound: { await self.startAnotherRound() },
+                refreshed: self.sessionRefreshed
+            )
+            .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
         }
     }
 
@@ -242,8 +259,6 @@ private struct ReviewQuestionView: View {
     @Environment(WordsStore.self) private var words
     @Environment(\.targetLanguage) private var session
 
-    private static let abc = ["A", "B", "C", "D", "E"]
-
     /// The cat used to sit here on *every* question asking 這個是什麼？, with its
     /// pose switching to cheer once the combo hit three. C.11 allows the mascot
     /// at four moments only, and "each of the thirty cards in a session" is not
@@ -265,35 +280,12 @@ private struct ReviewQuestionView: View {
     }
 
     private var choicesList: some View {
-        VStack(spacing: Space.s2) {
-            let choices = self.computedChoices
-            ForEach(Array(choices.enumerated()), id: \.element) { idx, choice in
-                StudyOptionRow(
-                    letter: Self.abc[idx],
-                    label: choice,
-                    state: StudyOptionState.forOption(
-                        label: choice,
-                        answer: self.item.word.word,
-                        picked: self.coord.picked,
-                        revealed: self.coord.phase == .review
-                    ),
-                    disabled: self.coord.phase == .review
-                ) { self.coord.pick(choice) }
-            }
-        }
-    }
-
-    private var computedChoices: [String] {
-        // Server choices scrubbed of near-synonyms of the answer + topped up;
-        // custom (自制圖鑑) cards build the whole set from the local pool.
-        // The variant bumps once the word leaves the screen, so its re-test
-        // shows a fresh shuffle instead of rewarding position memory.
-        studyChoices(
-            for: self.item,
-            pool: self.words.words,
-            session: self.session,
-            variant: self.coord.choicesVariant(for: self.item)
-        )
+        StudyChoiceList(
+            item: self.item,
+            variant: self.coord.choicesVariant(for: self.item),
+            picked: self.coord.picked,
+            revealed: self.coord.phase == .review
+        ) { self.coord.pick($0) }
     }
 }
 

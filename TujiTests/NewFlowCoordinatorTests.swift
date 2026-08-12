@@ -110,35 +110,6 @@ struct NewFlowCoordinatorTests {
         #expect(queue[0].spellingChoices == ["appel", "aple"])
     }
 
-    @Test
-    func spellSubjectPrefersReading() throws {
-        let queue = try self.makeQueue()
-        let c = NewFlowCoordinator(queue: queue)
-        #expect(c.spellSubject(for: queue[0]) == .term("apple"))
-        #expect(c.spellSubject(for: queue[1]) == .reading("りんご"))
-    }
-
-    @Test
-    func aKanaOnlyWordIsQuizzedAsATermNotAReading() throws {
-        let queue = try self.makeQueue()
-        let c = NewFlowCoordinator(queue: queue)
-        // queue[2] (ねこ) is Japanese and its 振假名 is itself, so there is no
-        // separate reading to quiz — the stage asks for the 詞形. This is the
-        // case where 拼字題目 and the word's *language* give different answers,
-        // which is why they are different questions.
-        #expect(c.spellSubject(for: queue[2]).isReading == false)
-        #expect(c.spellSubject(for: queue[0]).isReading == false)
-        #expect(c.spellSubject(for: queue[1]).isReading == true)
-    }
-
-    @Test
-    func everySubjectCarriesTheStringBeingAssembled() throws {
-        let queue = try self.makeQueue()
-        let c = NewFlowCoordinator(queue: queue)
-        #expect(c.spellSubject(for: queue[0]).text == "apple")
-        #expect(c.spellSubject(for: queue[1]).text == "りんご")
-    }
-
     // MARK: - Scheduling
 
     @Test
@@ -158,37 +129,8 @@ struct NewFlowCoordinatorTests {
             ("w-ringo", .spellTiles),
             ("w-neko", .spellTiles)
         ]
-        #expect(c.tasks.map(\.item.word.id) == expected.map(\.0))
-        #expect(c.tasks.map(\.kind) == expected.map(\.1))
-    }
-
-    @Test
-    func tileBoardSplitsPerGraphemeForShortSubjects() throws {
-        let queue = try self.makeQueue()
-        let apple = NewFlowCoordinator.tileBoard(for: queue[0])
-        #expect(apple.tokenUnits == [["a", "p", "p", "l", "e"]])
-        #expect(apple.target == "apple")
-        let ringo = NewFlowCoordinator.tileBoard(for: queue[1])
-        #expect(ringo.tokenUnits == [["り", "ん", "ご"]])
-    }
-
-    @Test
-    func tileBoardChunksLongSubjectsWithinTokens() throws {
-        // 12 base units > the 10-tile cap → chunk length 2, re-grouped per
-        // token (never across the space), space itself is not a tile.
-        let board = try NewFlowCoordinator.tileBoard(for: self.makeMultiWordQueue()[0])
-        #expect(board.tokenUnits == [["cu", "tt", "in", "g"], ["bo", "ar", "d"]])
-        #expect(board.target == "cuttingboard")
-        #expect(board.unitCount == 7)
-    }
-
-    @Test
-    func tileBoardMergesSmallKanaIntoPrecedingUnit() throws {
-        let queue = try self.makeKanaEdgeQueue()
-        let kyou = NewFlowCoordinator.tileBoard(for: queue[0])
-        #expect(kyou.tokenUnits == [["きょ", "う"]])
-        let me = NewFlowCoordinator.tileBoard(for: queue[1])
-        #expect(me.unitCount == 1)
+        #expect(c.ladder.tasks.map(\.item.word.id) == expected.map(\.0))
+        #expect(c.ladder.tasks.map(\.kind) == expected.map(\.1))
     }
 
     @Test
@@ -197,7 +139,7 @@ struct NewFlowCoordinatorTests {
         let spy = SpyAnswerWriter()
         let c = NewFlowCoordinator(queue: queue, writer: spy)
         // A 1-tile board is a free answer, so め gets no spell task…
-        #expect(c.tasks.map(\.kind) == [.recognize, .identify])
+        #expect(c.ladder.tasks.map(\.kind) == [.recognize, .identify])
         c.resolveRecognize(rating: .hard)
         #expect(abs(c.progress - 0.5) < 0.0001)
         c.resolveIdentify(correct: true)
@@ -205,7 +147,7 @@ struct NewFlowCoordinatorTests {
         #expect(c.finished)
         #expect(c.clearedWords == 1)
         #expect(c.progress == 1.0)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["困難"])
     }
 
@@ -230,7 +172,7 @@ struct NewFlowCoordinatorTests {
         // …and apple's pre-scheduled 拼字 may now be at the head, but apple
         // hasn't cleared 選字 — the guard must keep the stage ladder intact:
         // ringo's spell first, then apple's identify retry, then apple's spell.
-        #expect(c.tasks.map(\.id) == [
+        #expect(c.ladder.tasks.map(\.id) == [
             "w-ringo#spell_tiles",
             "w-apple#identify",
             "w-apple#spell_tiles"
@@ -261,7 +203,7 @@ struct NewFlowCoordinatorTests {
             lastProgress = c.progress
         }
         c.resolveRecognize(rating: .good)
-        #expect(!c.tasks.contains { $0.kind == .identify && $0.item.word.id == "w-apple" })
+        #expect(!c.ladder.tasks.contains { $0.kind == .identify && $0.item.word.id == "w-apple" })
         #expect(c.stagePlan(for: queue[0]).first { $0.kind == .identify }?.state == .skipped)
         expectMonotone()
         c.resolveRecognize(rating: .hard)
@@ -282,7 +224,7 @@ struct NewFlowCoordinatorTests {
         #expect(c.finished)
         #expect(c.clearedWords == 2)
         #expect(c.progress == 1.0)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["穩定", "困難"])
     }
 
@@ -301,7 +243,7 @@ struct NewFlowCoordinatorTests {
         #expect(c.current?.kind == .spellTiles)
         c.resolveTiles(correct: true)
         #expect(c.finished)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         // The tile miss corrects the overconfident self-rating: 穩定 → 困難.
         #expect(spy.answers.map(\.rating) == ["困難"])
     }
@@ -316,42 +258,11 @@ struct NewFlowCoordinatorTests {
         #expect(c.finished)
         #expect(c.clearedWords == 1)
         #expect(c.progress == 1.0)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["穩定"])
     }
 
     // MARK: - Seeded tile scrambles
-
-    @Test
-    func tileUnitsArePermutationNotAnswer() throws {
-        let queue = try self.makeQueue()
-        let c = NewFlowCoordinator(queue: queue)
-        let apple = queue[0]
-        let units = c.tileUnits(for: apple, attempt: 0)
-        // Deterministic across re-renders.
-        #expect(units == c.tileUnits(for: apple, attempt: 0))
-        // A permutation of the subject's letters…
-        #expect(units.sorted() == "apple".map(String.init).sorted())
-        // …that never spells the answer outright.
-        #expect(units.joined() != "apple")
-        // Kana subjects tile the same way.
-        let kana = c.tileUnits(for: queue[1], attempt: 0)
-        #expect(kana.sorted() == "りんご".map(String.init).sorted())
-        #expect(kana.joined() != "りんご")
-    }
-
-    @Test
-    func tileUnitsOfChunkedSubjectRebuildTheTarget() throws {
-        let board = try self.makeMultiWordQueue()[0]
-        let c = NewFlowCoordinator(queue: [board])
-        let units = c.tileUnits(for: board, attempt: 0)
-        let expected = NewFlowCoordinator.tileBoard(for: board)
-        // The pool is the board's chunks reshuffled — same multiset, never in
-        // solved order, and a later attempt reshuffles differently.
-        #expect(units.sorted() == expected.orderedUnits.sorted())
-        #expect(units.joined() != expected.target)
-        #expect((1...4).contains { c.tileUnits(for: board, attempt: $0) != units })
-    }
 
     @Test
     func choicesReshuffleAcrossVariants() throws {
@@ -383,7 +294,7 @@ struct NewFlowCoordinatorTests {
         c.resolveTiles(correct: true)
         #expect(c.finished)
         #expect(c.clearedWords == 1)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["困難"])
     }
 
@@ -404,7 +315,7 @@ struct NewFlowCoordinatorTests {
         // Let the (now instant) beat run.
         await Task.yield()
         c.resolveTiles(correct: true)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.first?.responseMs != nil)
     }
 
@@ -427,6 +338,44 @@ struct NewFlowCoordinatorTests {
         #expect(spy.answers.isEmpty)
     }
 
+    /// The same guarantee for 認識, which never had it: that beat hardcoded its
+    /// own sleep instead of the injected one and was never appended to
+    /// `pendingBeats`, so 先離開 could not reach it. A single-unit word rated
+    /// 已認識 skips 選字 and has no 拼字, so the tap alone runs the SRS write —
+    /// which is exactly the case that leaked past the screen.
+    @Test
+    func leavingDuringTheRecognizeBeatStopsItsWrite() async throws {
+        let queue = try self.makeKanaEdgeQueue() // w-me is a single-unit subject
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy, beat: { _ in
+            try? await Task.sleep(for: .milliseconds(200))
+        })
+        let before = c.clearedWords
+
+        c.recognizeAnswer(rating: .good)
+        c.cancelPendingBeats()
+        try? await Task.sleep(for: .milliseconds(300))
+        await c.writes.drainPendingWrites(within: .milliseconds(200))
+
+        #expect(c.clearedWords == before)
+        #expect(spy.answers.isEmpty)
+        #expect(c.recLocked) // frozen mid-answer; the screen is gone anyway
+    }
+
+    @Test
+    func theRecognizeBeatResolvesWhenItIsNotCancelled() async throws {
+        let queue = try self.makeKanaEdgeQueue()
+        let spy = SpyAnswerWriter()
+        let c = NewFlowCoordinator(queue: queue, writer: spy, beat: { _ in })
+
+        c.recognizeAnswer(rating: .good)
+        try? await Task.sleep(for: .milliseconds(50))
+
+        #expect(!c.recLocked)
+        #expect(c.recRating == nil)
+        #expect(c.current?.kind != .recognize || c.current?.item.word.id != "w-kyou")
+    }
+
     @Test
     func oneMistakeDowngradesOneLevel() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
@@ -438,7 +387,7 @@ struct NewFlowCoordinatorTests {
         c.advanceFromPeek()
         c.resolveTiles(correct: true)
         #expect(c.finished)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["困難"])
     }
 
@@ -453,7 +402,7 @@ struct NewFlowCoordinatorTests {
         c.resolveIdentify(correct: true)
         c.resolveTiles(correct: true)
         #expect(c.finished)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["重來"])
     }
 
@@ -469,7 +418,7 @@ struct NewFlowCoordinatorTests {
         c.advanceFromPeek()
         c.resolveTiles(correct: true)
         #expect(c.finished)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["重來"])
     }
 
@@ -543,7 +492,7 @@ struct NewFlowCoordinatorTests {
         #expect(board.isLocked)
         #expect(board.slots.allSatisfy { $0.unit != nil })
         // 正解 renders from the board, spaces intact — not re-derived by the view.
-        #expect(board.subject == c.spellSubject(for: item))
+        #expect(board.subject == TileBoard.spellSubject(for: item))
     }
 
     @Test
@@ -551,8 +500,8 @@ struct NewFlowCoordinatorTests {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
         let apple = queue[0]
-        let units = c.tileUnits(for: apple, attempt: 0)
-        let board = NewFlowCoordinator.tileBoard(for: apple)
+        let units = TileBoard.units(for: apple, attempt: 0)
+        let board = TileBoard.of(apple)
 
         // The pick order that spells the target: consume each ordered unit from
         // the scramble by first-available index (handles the duplicate "p").
@@ -579,16 +528,40 @@ struct NewFlowCoordinatorTests {
         c.resolveRecognize(rating: .good)
         c.resolveTiles(correct: true)
         #expect(c.finished)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.count == 1)
-        #expect(c.parkedCount == 1)
+        #expect(c.writes.parkedCount == 1)
+    }
+
+    /// The server attaches a streak milestone to whichever answer crosses the
+    /// threshold — a 學新字 write can be that answer. The new-word flow used to
+    /// match only `.parked` and throw the `.synced` body away, so those
+    /// milestones were dropped and could never be recovered.
+    @Test
+    func learnedCommitKeepsTheMilestoneTheServerAttached() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let writer = SpyAnswerWriter()
+        writer.outcome = .synced(
+            StudyAnswerResponse(
+                ok: true,
+                milestone: Milestone(streak: 30),
+                mastery: MasteryDelta(before: 0, after: 12, delta: 12)
+            )
+        )
+        let c = NewFlowCoordinator(queue: queue, writer: writer)
+        c.resolveRecognize(rating: .good)
+        c.resolveTiles(correct: true)
+        await c.writes.drainPendingWrites(within: .seconds(2))
+
+        #expect(c.writes.milestone?.streak == 30)
+        #expect(c.writes.masteryByWord["w-apple"]?.after == 12)
+        #expect(c.writes.parkedCount == 0)
     }
 }
 
 /// Records the held-back recognize writes the coordinator commits, and returns
-/// a configurable outcome. New-word flow ignores the response body, so the
-/// default `.synced` payload is irrelevant; set `outcome = .parked` to exercise
-/// the offline path.
+/// a configurable outcome. Set `outcome = .parked` to exercise the offline
+/// path, or attach a milestone/mastery to assert the response is folded in.
 @MainActor
 private final class SpyAnswerWriter: DurableAnswerWriting {
     private(set) var answers: [StudyAnswerPayload] = []

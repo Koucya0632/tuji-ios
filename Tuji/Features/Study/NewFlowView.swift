@@ -250,6 +250,27 @@ struct NewFlowView: View {
             // reshuffle takes visual effect.
             .id(self.coord.currentPresentationId)
         } else if self.coord.finished {
+            self.finishedSurface
+                // Learning new words writes mastery + creates user_cards +
+                // study_logs (the deferred recognize POSTs fired as each word
+                // cleared 拼字). Reload — not just invalidate — every store the
+                // home surfaces read: Today stays mounted under this push, so
+                // its .task won't re-run on pop, and an invalidated-but-unreloaded
+                // store leaves 今日目標 0/10 and the streak flame at 0.
+                .refreshesFinishedSession(draining: self.coord.writes)
+        }
+    }
+
+    /// Which celebration a finished session shows. A streak milestone can be
+    /// crossed by a 學新字 write just as easily as by a 複習 one — the server
+    /// attaches it to whichever answer crosses the threshold. This branch used
+    /// to be missing entirely, so those milestones were shown nowhere.
+    @ViewBuilder
+    private var finishedSurface: some View {
+        if let milestone = coord.writes.milestone {
+            MilestoneView(milestone: milestone, onFinish: { self.dismiss() })
+                .onAppear { AnalyticsService.shared.track(.studyComplete, category: "new") }
+        } else {
             NewDoneView(coord: self.coord, queue: self.coord.queue, onFinish: { self.dismiss() })
                 .onAppear { AnalyticsService.shared.track(.studyComplete, category: "new") }
         }

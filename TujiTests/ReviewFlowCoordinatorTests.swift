@@ -79,11 +79,11 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.flash == .autoRated(.good))
         #expect(c.rated == .good)
         #expect(c.passedCount == 1)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.map(\.rating) == ["穩定"])
         #expect(writer.answers.first?.responseMs != nil)
         // The .synced response's mastery delta folds into the session summary.
-        #expect(c.masteryByWord["w-fork"]?.after == 20)
+        #expect(c.writes.masteryByWord["w-fork"]?.after == 20)
     }
 
     @Test
@@ -97,10 +97,10 @@ struct ReviewFlowCoordinatorTests {
         // a (non-existent) mastery delta.
         c.pick("fork")
         #expect(c.rated == .good)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.count == 1)
-        #expect(c.unsyncedCount == 1)
-        #expect(c.masteryByWord["w-fork"] == nil)
+        #expect(c.writes.parkedCount == 1)
+        #expect(c.writes.masteryByWord["w-fork"] == nil)
     }
 
     @Test
@@ -159,7 +159,7 @@ struct ReviewFlowCoordinatorTests {
         // …and the session wrote exactly two answers: fork's 重來 and cup's
         // auto 熟練 — nothing for the retest. Same generous ceiling as
         // waitUntil: the drain returns as soon as both writes land.
-        await c.drainPendingWrites(within: .seconds(10))
+        await c.writes.drainPendingWrites(within: .seconds(10))
         #expect(writer.answers.map(\.rating).sorted() == ["熟練", "重來"].sorted())
     }
 
@@ -293,7 +293,7 @@ struct ReviewFlowCoordinatorTests {
         c.toggleHint()
         c.pick("fork")
         c.rate(.hard)
-        await c.drainPendingWrites(within: .seconds(10))
+        await c.writes.drainPendingWrites(within: .seconds(10))
         #expect(writer.answers.map(\.hinted) == [true])
         #expect(writer.answers.map(\.rating) == ["困難"])
     }
@@ -304,7 +304,7 @@ struct ReviewFlowCoordinatorTests {
         let writer = SpyAnswerWriter()
         let c = ReviewFlowCoordinator(queue: queue, writer: writer)
         c.pick("fork")
-        await c.drainPendingWrites(within: .seconds(10))
+        await c.writes.drainPendingWrites(within: .seconds(10))
         #expect(writer.answers.map(\.hinted) == [false])
     }
 
@@ -321,7 +321,7 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.flash == .retestPassed)
         #expect(c.revealMode == nil)
         #expect(c.rated == nil)
-        await c.drainPendingWrites(within: .seconds(2))
+        await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.isEmpty)
     }
 

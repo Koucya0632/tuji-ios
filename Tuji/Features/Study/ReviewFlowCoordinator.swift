@@ -75,12 +75,6 @@ final class ReviewFlowCoordinator {
     /// Items the user actually answered (one per cleared item). Drives the
     /// "今天複習" tile row on CompleteView.
     var answered: [StudyQueueItem] = []
-    /// Per-word mastery before/after for the words rated this session, keyed by
-    /// word id. Drives CompleteView's 熟練度變化 list.
-    var masteryByWord: [String: MasteryDelta] = [:]
-    /// Highest streak milestone the server flagged during this session.
-    /// CompleteView promotes to MilestoneView when non-nil.
-    var milestone: Milestone?
     /// Words already requeued once — enforces "one extra re-test per word".
     /// Also CompleteView's 答錯過 marker.
     var retriedIds: Set<String> = []
@@ -90,24 +84,12 @@ final class ReviewFlowCoordinator {
     /// option seed so a re-test reshuffles instead of letting "the answer was
     /// C" stand in for the word.
     private var presentedCounts: [String: Int] = [:]
-    /// In-flight SRS writes (POST /api/study/answer). The UI advances
-    /// optimistically without awaiting these; the finish boundary drains them.
-    private var pendingWrites: [Task<Void, Never>] = []
-    /// Writes fired but not yet landed — drives SessionRefresh's conditional
-    /// second drain (the last word's write is the one most likely to miss the
-    /// short window). Mirrors NewFlowCoordinator.
-    private(set) var pendingWriteRemaining = 0
 
-    var hasPendingWrites: Bool {
-        self.pendingWriteRemaining > 0
-    }
+    /// Everything that happens to an answer after it is handed to the writer:
+    /// the drain, the mastery fold, the milestone, the parked count. Shared with
+    /// 學新字 — see StudySessionWrites.
+    let writes: StudySessionWrites
 
-    /// Ratings whose write exhausted all retries (e.g. offline). They're parked
-    /// in StudyAnswerOutbox for replay; CompleteView surfaces the count so the
-    /// session doesn't silently look fully synced.
-    var unsyncedCount: Int = 0
-
-    private let writer: DurableAnswerWriting
     private let queueProvider: StudyQueueProviding
 
     init(
@@ -117,7 +99,7 @@ final class ReviewFlowCoordinator {
     ) {
         self.queue = queue
         self.originalCount = queue.count
-        self.writer = writer
+        self.writes = StudySessionWrites(writer: writer)
         self.queueProvider = queueProvider
     }
 
@@ -303,12 +285,7 @@ final class ReviewFlowCoordinator {
             activity: "mcq",
             hinted: self.hinted
         )
-        let wordId = item.word.id
-        self.pendingWriteRemaining += 1
-        self.pendingWrites.append(Task {
-            await self.persist(payload, wordId: wordId)
-            self.pendingWriteRemaining -= 1
-        })
+        self.writes.submit(payload, wordId: item.word.id)
     }
 
     private func scheduleAdvance(after delay: Duration) {
@@ -320,39 +297,6 @@ final class ReviewFlowCoordinator {
         }
     }
 
-    /// Hands one SRS answer to the durable writer and folds the returned
-    /// mastery/milestone back into session state. Runs detached from the UI;
-    /// the writer owns the retry+park policy, so a write that can't reach the
-    /// server surfaces as `.parked` and only bumps the unsynced count.
-    private func persist(_ payload: StudyAnswerPayload, wordId: String) async {
-        switch await self.writer.submitAnswer(payload) {
-        case let .synced(resp):
-            if let m = resp.mastery { self.mergeMastery(m, wordId: wordId) }
-            if let ms = resp.milestone {
-                // Server only emits the milestone on the answer that crosses the
-                // threshold, so always overwrite when present.
-                self.milestone = ms
-            }
-        case .parked:
-            self.unsyncedCount += 1
-        }
-    }
-
-    /// Keep the first `before` but the latest `after` when a word is rated
-    /// twice in one session (wrong-answer re-test) so the row shows the full
-    /// session swing.
-    private func mergeMastery(_ m: MasteryDelta, wordId: String) {
-        if let existing = self.masteryByWord[wordId] {
-            self.masteryByWord[wordId] = MasteryDelta(
-                before: existing.before,
-                after: m.after,
-                delta: m.after - existing.before
-            )
-        } else {
-            self.masteryByWord[wordId] = m
-        }
-    }
-
     private func advance() {
         if let leaving = current {
             self.presentedCounts[leaving.word.id, default: 0] += 1
@@ -360,10 +304,9 @@ final class ReviewFlowCoordinator {
         if self.index + 1 >= self.queue.count {
             // Last item: give outstanding SRS writes a brief window to land so
             // CompleteView's mastery deltas are populated, but cap it so a slow
-            // or dead network can't hang the summary. Module-qualified — the
-            // unqualified name resolves to the instance method below.
+            // or dead network can't hang the summary.
             Task {
-                await Tuji.drainPendingWrites(self.pendingWrites, within: .milliseconds(800))
+                await self.writes.drainPendingWrites(within: .milliseconds(800))
                 self.finished = true
             }
         } else {
@@ -377,11 +320,5 @@ final class ReviewFlowCoordinator {
             self.flash = nil
             self.startedAt = .now
         }
-    }
-
-    /// Await outstanding writes (bounded). Mirrors NewFlowCoordinator; also
-    /// lets tests assert on persisted payloads without real sleeps.
-    func drainPendingWrites(within timeout: Duration) async {
-        await Tuji.drainPendingWrites(self.pendingWrites, within: timeout)
     }
 }

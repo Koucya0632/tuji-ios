@@ -14,8 +14,6 @@ import Nuke
 import NukeUI
 import SwiftUI
 
-typealias SpellBoard = NewFlowCoordinator.SpellBoard
-
 struct TilesView: View {
     let coord: NewFlowCoordinator
     let item: StudyQueueItem
@@ -31,7 +29,7 @@ struct TilesView: View {
     /// already computed and discarded. Two readers of the same index pair, and
     /// they disagreed about bounds: the coordinator's was checked, this one's
     /// was a trap.
-    private var board: NewFlowCoordinator.SpellBoard? {
+    private var board: SpellBoard? {
         self.coord.spellBoard
     }
 

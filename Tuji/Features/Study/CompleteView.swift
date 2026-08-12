@@ -29,19 +29,17 @@ struct CompleteView: View {
     /// Starts a follow-up session when words are still due (再來一輪). nil
     /// hides the chaining CTA.
     var onAnotherRound: (() async -> Void)?
-    /// The review coordinator, so the post-session refresh can drain its
-    /// optimistic writes before reloading (mirrors NewDoneView). Defaults to a
-    /// no-op drainer for previews.
-    var draining: PendingWriteDraining = NoPendingWrites()
+    /// Whether the post-session refresh has landed. The remaining-due CTA waits
+    /// for it: before that round-trip the store still holds the pre-session due
+    /// count. Owned by the flow root, which is where the refresh now runs — it
+    /// has to happen whether this screen or MilestoneView is the one shown.
+    var refreshed = false
 
-    @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
-    @Environment(MasteryStore.self) private var mastery
     @Environment(SettingsStore.self) private var settings
-
-    /// The remaining-due CTA waits for refresh(): before the round-trip the
-    /// store still holds the pre-session due count.
-    @State private var refreshed = false
+    /// Read for the 連勝 line only — the post-session reload it depends on is
+    /// run by the flow root, not here.
+    @Environment(ProgressStore.self) private var progress
     @State private var startingNextRound = false
 
     private var done: Int {
@@ -78,7 +76,6 @@ struct CompleteView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiPaper)
-        .task { await self.refresh() }
     }
 
     // MARK: - Bits
@@ -280,19 +277,6 @@ struct CompleteView: View {
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
         .background(.tujiPaper)
-    }
-
-    private func refresh() async {
-        // Same drain → invalidate → reload as NewDoneView, via the shared home:
-        // streak, due/seen counts, and per-word mastery all just changed on the
-        // answer POST, and we want fresh values here and on the 圖鑑/詳情 the user
-        // returns to. Draining first (which review didn't used to do) keeps the
-        // reload from racing the last answer's write.
-        await SessionRefresh(
-            stores: [self.mastery, self.studyStats, self.progress],
-            invalidateQueue: { StudyQueueStore.shared.invalidate() }
-        ).run(draining: self.draining)
-        self.refreshed = true
     }
 }
 

@@ -27,12 +27,10 @@ final class NewFlowCoordinator {
     /// The session's words, in server order. NewDoneView renders this grid.
     let queue: [StudyQueueItem]
 
-    /// Pending tasks; `tasks.first` is on screen. Empty ⇒ session finished.
-    private(set) var tasks: [NewStudyTask]
-    private(set) var finished = false
-
-    /// Words that fully cleared all three stages (drives the header count).
-    private(set) var clearedWords = 0
+    /// The interleaved task queue: what is on screen, what comes next, what a
+    /// wrong answer does to the order, and how far through the ladder we are.
+    /// A value type with its own tests — see StudyLadder.
+    private(set) var ladder: StudyLadder
 
     // Transient per-kind UI state (the task views read these).
     var recRating: SRSRating?
@@ -59,48 +57,19 @@ final class NewFlowCoordinator {
     /// took. First-attempt-only: retries after the peek sheet aren't timed.
     private var identifyShownAt: [String: Date] = [:]
     private var identifyResponseMs: [String: Int] = [:]
-    /// Words whose 選字 was answered correctly — gates their 拼字 task.
-    private var identifyCleared: Set<String> = []
-    /// Words whose 選字 was dropped by the 已認識 fast path (subset of
-    /// identifyCleared) — shown as a dimmed check in the stage pips.
-    private var skippedIdentify: Set<String> = []
     /// Wrong-attempt counts per word id: reshuffles MCQ options, re-seeds the
     /// spell variant, and re-scrambles the tiles on each retry so position
     /// memory doesn't stand in for the word.
     private var identifyAttempts: [String: Int] = [:]
     private var spellAttempts: [String: Int] = [:]
 
-    /// Completed stage count (recognize taps + correct 選字 + correct 拼字)
-    /// out of `totalStages` — requeued retries don't inflate the denominator,
-    /// so the header bar only ever moves forward.
-    private var stageClears = 0
-    /// Stages actually scheduled: 3 per word, minus the spell stage of
-    /// single-tile subjects (a 1-tile board is a free answer, so those words
-    /// finish after 選字).
-    private var totalStages: Int
-
-    /// In-flight SRS writes (POST /api/study/answer) fired by commitLearned.
-    /// NewDoneView drains these before reloading mastery so the just-learned
-    /// words don't show stale on the 圖鑑/詳情 (the write would otherwise race
-    /// the reload, since it's fired optimistically without awaiting).
-    private var pendingWrites: [Task<Void, Never>] = []
-    /// Writes fired but not yet landed. The last word's write starts moments
-    /// before the done screen's drain, so it's the one most likely to miss the
-    /// bounded window — NewDoneView checks this to know a second drain +
-    /// mastery reload is needed (otherwise that word stays 未學).
-    private(set) var pendingWriteRemaining = 0
-
-    /// Held-back recognize writes whose retries all failed — parked in the
-    /// durable outbox by the writer. NewDoneView surfaces the count so an
-    /// offline session doesn't silently look fully saved (mirrors
-    /// ReviewFlowCoordinator.unsyncedCount).
-    private(set) var parkedCount = 0
-
-    var hasPendingWrites: Bool {
-        self.pendingWriteRemaining > 0
-    }
-
-    private let writer: DurableAnswerWriting
+    /// Everything that happens to an answer after it is handed to the writer:
+    /// the drain NewDoneView needs before reloading mastery, the mastery fold,
+    /// the milestone, and the parked count. Shared with 複習 — see
+    /// StudySessionWrites. Learning new words used to discard the `.synced`
+    /// body entirely, which is why a streak milestone crossed by a
+    /// `new_recognize` write was dropped and could never be recovered.
+    let writes: StudySessionWrites
 
     /// How long the app pauses on a locked answer before resolving it.
     ///
@@ -117,9 +86,6 @@ final class NewFlowCoordinator {
     /// write — on a coordinator whose screen was gone.
     private var pendingBeats: [Task<Void, Never>] = []
 
-    /// How many tasks sit between a wrong answer and its retry.
-    private static let requeueGap = 3
-
     init(
         queue: [StudyQueueItem],
         writer: DurableAnswerWriting = DurableAnswerWriter(),
@@ -127,53 +93,32 @@ final class NewFlowCoordinator {
     ) {
         self.queue = queue
         self.beat = beat
-        let tasks = Self.initialSchedule(for: queue)
-        self.tasks = tasks
-        self.totalStages = tasks.count
-        self.writer = writer
-        self.afterMutation()
-    }
-
-    /// rec@3i, id@3i+4, spell@3i+8, stable-sorted by position. Guarantees each
-    /// word's stages stay ordered while neighbouring words interleave between
-    /// them (for w₀: 認識, then ~2 other tasks, then 選字, …). Words whose
-    /// tile board has a single unit skip the spell stage entirely.
-    private static func initialSchedule(for queue: [StudyQueueItem]) -> [NewStudyTask] {
-        struct Slot {
-            let pos: Int
-            let order: Int
-            let task: NewStudyTask
-        }
-        var scheduled: [Slot] = []
-        func add(_ pos: Int, _ task: NewStudyTask) {
-            scheduled.append(Slot(pos: pos, order: scheduled.count, task: task))
-        }
-        for (i, item) in queue.enumerated() {
-            add(3 * i, NewStudyTask(item: item, kind: .recognize))
-            add(3 * i + 4, NewStudyTask(item: item, kind: .identify))
-            if self.tileBoard(for: item).unitCount >= 2 {
-                add(3 * i + 8, NewStudyTask(item: item, kind: .spellTiles))
-            }
-        }
-        return scheduled
-            .sorted { ($0.pos, $0.order) < ($1.pos, $1.order) }
-            .map(\.task)
+        self.ladder = StudyLadder(queue: queue)
+        self.writes = StudySessionWrites(writer: writer)
+        self.stampIdentifyShown()
     }
 
     var current: NewStudyTask? {
-        self.tasks.first
+        self.ladder.current
+    }
+
+    var finished: Bool {
+        self.ladder.finished
     }
 
     var progress: Double {
-        guard self.totalStages > 0 else { return 0 }
-        return Double(self.stageClears) / Double(self.totalStages)
+        self.ladder.progress
+    }
+
+    var clearedWords: Int {
+        self.ladder.clearedWords
     }
 
     /// Stable identity for the current presentation: same task shown again
     /// after a wrong answer gets a new identity, so the task view's local
     /// state (e.g. assembled tiles) resets per attempt.
     var currentPresentationId: String {
-        guard let task = current else { return "done" }
+        guard let task = ladder.current else { return "done" }
         let attempt = switch task.kind {
         case .recognize: 0
         case .identify: self.identifyAttempts[task.item.word.id] ?? 0
@@ -193,7 +138,7 @@ final class NewFlowCoordinator {
     /// subject carry no spell entry.
     func stagePlan(for item: StudyQueueItem) -> [NewStageStep] {
         let wordId = item.word.id
-        let currentKind = self.current?.item.word.id == wordId ? self.current?.kind : nil
+        let currentKind = self.ladder.current?.item.word.id == wordId ? self.ladder.current?.kind : nil
 
         func state(_ kind: NewTaskKind, done: Bool) -> NewStageStep.State {
             if currentKind == kind { return .active }
@@ -207,12 +152,12 @@ final class NewFlowCoordinator {
             ),
             NewStageStep(
                 kind: .identify,
-                state: self.skippedIdentify.contains(wordId)
+                state: self.ladder.skippedIdentify.contains(wordId)
                     ? .skipped
-                    : state(.identify, done: self.identifyCleared.contains(wordId))
+                    : state(.identify, done: self.ladder.identifyCleared.contains(wordId))
             )
         ]
-        if Self.tileBoard(for: item).unitCount >= 2 {
+        if self.ladder.hasSpellStage(item) {
             steps.append(NewStageStep(kind: .spellTiles, state: state(.spellTiles, done: false)))
         }
         return steps
@@ -220,83 +165,60 @@ final class NewFlowCoordinator {
 
     // MARK: - Queue mechanics
 
-    /// Pop the head after a completed stage. If the word has no tasks left,
-    /// flush its held-back SRS write. "No tasks left" instead of "spell done"
-    /// because stage counts vary per word (single-tile subjects skip spell);
-    /// a wrong answer keeps its task queued, so this never commits early.
+    /// Advance the ladder past a cleared stage, flushing the word's held-back
+    /// SRS write if that was its last one. The ordering rule — write on "no
+    /// tasks left for this word", not on "拼字 done" — belongs to the ladder,
+    /// which reports it; the write belongs here.
     private func completeCurrentTask() {
-        guard let task = self.tasks.first else { return }
-        self.tasks.removeFirst()
-        self.stageClears += 1
-        let wordId = task.item.word.id
-        if !self.tasks.contains(where: { $0.item.word.id == wordId }) {
-            self.clearedWords += 1
-            self.commitLearned(task.item)
+        if let cleared = self.ladder.completeCurrent() {
+            self.commitLearned(cleared)
         }
-        self.afterMutation()
+        self.stampIdentifyShown()
     }
 
-    /// Requeue the head a few positions back after a wrong answer.
     private func requeueCurrentTask() {
-        guard !self.tasks.isEmpty else { return }
-        let task = self.tasks.removeFirst()
-        self.tasks.insert(task, at: min(Self.requeueGap, self.tasks.count))
-        self.afterMutation()
+        self.ladder.requeueCurrent()
+        self.stampIdentifyShown()
     }
 
-    private func afterMutation() {
-        self.normalizeHead()
-        if self.tasks.isEmpty {
-            self.finished = true
-        } else if let task = current, task.kind == .identify,
-                  self.identifyShownAt[task.item.word.id] == nil
-        {
-            self.identifyShownAt[task.item.word.id] = Date()
-        }
-    }
-
-    /// A requeued 選字 can end up *behind* its word's pre-scheduled 拼字 task;
-    /// spelling a word the user just failed to recognise breaks the stage
-    /// ladder, so push the 拼字 back behind the pending 選字. The loop guard
-    /// bounds the degenerate all-heads-blocked case.
-    private func normalizeHead() {
-        var moved = 0
-        while let head = tasks.first,
-              head.kind == .spellTiles,
-              !self.identifyCleared.contains(head.item.word.id),
-              moved <= self.tasks.count
-        {
-            let spell = self.tasks.removeFirst()
-            let idIdx = self.tasks.firstIndex {
-                $0.kind == .identify && $0.item.word.id == spell.item.word.id
-            }
-            if let idIdx {
-                self.tasks.insert(spell, at: min(idIdx + Self.requeueGap, self.tasks.count))
-            } else {
-                // No pending 選字 for this word (shouldn't happen) — tail it.
-                self.tasks.append(spell)
-            }
-            moved += 1
-        }
+    /// Start the first-attempt clock the moment a 選字 task reaches the head.
+    /// Latency capture is this coordinator's business, not the ladder's, which
+    /// is why it sits beside the mutation rather than inside it.
+    private func stampIdentifyShown() {
+        guard let task = ladder.current, task.kind == .identify,
+              self.identifyShownAt[task.item.word.id] == nil
+        else { return }
+        self.identifyShownAt[task.item.word.id] = Date()
     }
 
     // MARK: - 認識 (recognize)
 
-    func recognizeAnswer(rating: SRSRating) async {
-        guard !self.recLocked, let task = current, task.kind == .recognize else { return }
+    /// The self-rating tap. Beats, then resolves — through the injected `beat`
+    /// and tracked in `pendingBeats`, like the other two stages.
+    ///
+    /// It used to hardcode its sleep and skip `pendingBeats` entirely, so
+    /// `cancelPendingBeats` (wired to 先離開) could not reach it: rating a
+    /// single-unit word 已認識 and leaving immediately still ran the resolution
+    /// — and its SRS write — on a coordinator whose screen was gone. The class
+    /// doc claimed that defect was fixed; it was fixed for 選字 only.
+    func recognizeAnswer(rating: SRSRating) {
+        guard !self.recLocked, let task = ladder.current, task.kind == .recognize else { return }
         self.recLocked = true
         self.recRating = rating
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        try? await Task.sleep(for: .milliseconds(450))
-        self.recRating = nil
-        self.recLocked = false
-        self.resolveRecognize(rating: rating)
+        self.pendingBeats.append(Task {
+            await self.beat(.milliseconds(450))
+            guard !Task.isCancelled else { return }
+            self.recRating = nil
+            self.recLocked = false
+            self.resolveRecognize(rating: rating)
+        })
     }
 
     /// Synchronous core, split from the button handler so unit tests can walk
     /// the scheduler without real sleeps.
     func resolveRecognize(rating: SRSRating) {
-        guard let task = current, task.kind == .recognize else { return }
+        guard let task = ladder.current, task.kind == .recognize else { return }
         // Hold the rating back; the SRS write fires only once this word clears
         // its final stage (see commitLearned). This keeps 今日目標 counting
         // full completions instead of bare recognize taps.
@@ -305,30 +227,15 @@ final class NewFlowCoordinator {
         // commit, and a tile miss downgrades the rating — an overconfident
         // self-rating gets corrected there instead of by an easy MCQ.
         if rating == .good {
-            self.skipIdentify(for: task.item)
+            self.ladder.skipIdentify(for: task.item)
         }
         self.completeCurrentTask()
-    }
-
-    /// Drop the word's pending 選字 task. Marking it cleared is load-bearing:
-    /// normalizeHead() gates a head 拼字 on identifyCleared, so without the
-    /// insert the word's tiles would be deferred forever.
-    private func skipIdentify(for item: StudyQueueItem) {
-        let wordId = item.word.id
-        guard let idx = self.tasks.firstIndex(where: {
-            $0.kind == .identify && $0.item.word.id == wordId
-        })
-        else { return }
-        self.tasks.remove(at: idx)
-        self.identifyCleared.insert(wordId)
-        self.skippedIdentify.insert(wordId)
-        self.totalStages -= 1
     }
 
     // MARK: - 選字 (identify)
 
     func identifyPick(_ choice: String) {
-        guard !self.idLocked, let task = current, task.kind == .identify else { return }
+        guard !self.idLocked, let task = ladder.current, task.kind == .identify else { return }
         self.idPicked = choice
         self.idLocked = true
         // First-attempt latency only — a retry after the peek sheet has seen
@@ -365,9 +272,9 @@ final class NewFlowCoordinator {
     /// Synchronous core: correct clears the stage; wrong records the mistake
     /// and raises the peek (requeue happens on advanceFromPeek()).
     func resolveIdentify(correct: Bool) {
-        guard let task = current, task.kind == .identify else { return }
+        guard let task = ladder.current, task.kind == .identify else { return }
         if correct {
-            self.identifyCleared.insert(task.item.word.id)
+            self.ladder.markIdentifyCleared(task.item.word.id)
             self.completeCurrentTask()
         } else {
             self.mistakes[task.item.word.id, default: 0] += 1
@@ -383,53 +290,12 @@ final class NewFlowCoordinator {
 
     // MARK: - 拼字塊 (letter tiles)
 
-    /// The spell board as the view should draw it.
-    ///
-    /// `tilePicked` is one flat `[Int]` shared across every word, indexing a
-    /// per-item, per-attempt unit list. Handing the view those two raw pieces
-    /// meant both sides had to subscript one with the other — and they disagreed
-    /// about what an out-of-range index means: `tilesMatch` bounds-checks and
-    /// returns `false`, `TilesView.slotBox` did not and would trap. One frame
-    /// during the `.id(currentPresentationId)` swap between a 7-tile board and a
-    /// 3-tile board hits both readers at once.
-    ///
-    /// The view also re-derived the verdict the coordinator had just computed
-    /// and thrown away. It is stored now, so "did they get it right" is answered
-    /// once, where the answer is made.
-    struct SpellBoard: Equatable {
-        struct Slot: Equatable {
-            /// nil = still empty.
-            var unit: String?
-        }
-
-        struct Tile: Equatable {
-            var unit: String
-            var used: Bool
-        }
-
-        var slots: [Slot]
-        var pool: [Tile]
-        /// 拼字題目, spaces intact: what the 正解 line reveals, and which of the
-        /// two questions the board is asking. The view used to read the string
-        /// here and go back to the coordinator for the question.
-        var subject: SpellSubject
-        /// How the units group into rows (a multi-word subject spells one row
-        /// per word).
-        var tokenUnits: [[String]]
-        /// nil until the board fills and locks.
-        var verdict: Bool?
-
-        var isLocked: Bool {
-            self.verdict != nil
-        }
-    }
-
     /// Latched when the board fills, cleared when it resets. Also what the view
     /// used to reconstruct as `boardFull && tiLocked`.
     private(set) var tilesVerdict: Bool?
 
     var spellBoard: SpellBoard? {
-        guard let task = current, task.kind == .spellTiles else { return nil }
+        guard let task = ladder.current, task.kind == .spellTiles else { return nil }
         let item = task.item
         let units = self.tileUnits(for: item)
         let placed = self.tilePicked.filter { units.indices.contains($0) }
@@ -440,8 +306,8 @@ final class NewFlowCoordinator {
             pool: units.enumerated().map { index, unit in
                 SpellBoard.Tile(unit: unit, used: self.tilePicked.contains(index))
             },
-            subject: self.spellSubject(for: item),
-            tokenUnits: Self.tileBoard(for: item).tokenUnits,
+            subject: TileBoard.spellSubject(for: item),
+            tokenUnits: TileBoard.of(item).tokenUnits,
             verdict: self.tilesVerdict
         )
     }
@@ -449,7 +315,7 @@ final class NewFlowCoordinator {
     /// Scrambled tiles, seeded per (item, attempt) — see the core in
     /// NewFlowTasks.swift.
     func tileUnits(for item: StudyQueueItem) -> [String] {
-        self.tileUnits(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
+        TileBoard.units(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
     }
 
     /// Tap a pool tile into the next slot. Auto-checks when the board fills. A
@@ -478,7 +344,7 @@ final class NewFlowCoordinator {
     func tilesMatch(_ picked: [Int], for item: StudyQueueItem) -> Bool {
         let units = self.tileUnits(for: item)
         let assembled = picked.compactMap { units.indices.contains($0) ? units[$0] : nil }.joined()
-        return assembled == Self.tileBoard(for: item).target
+        return assembled == TileBoard.of(item).target
     }
 
     /// Locks the board and, after a beat, resolves. Called by pickTile when the
@@ -504,7 +370,7 @@ final class NewFlowCoordinator {
 
     /// Synchronous core, also reachable from tests.
     func resolveTiles(correct: Bool) {
-        guard let task = current, task.kind == .spellTiles else { return }
+        guard let task = ladder.current, task.kind == .spellTiles else { return }
         if correct {
             self.completeCurrentTask()
             // The next spell task (whenever it surfaces) starts from an empty
@@ -526,7 +392,7 @@ final class NewFlowCoordinator {
     /// swipe-down behave identically and never double-advance.
     func advanceFromPeek() {
         self.peek = nil
-        guard let task = current else { return }
+        guard let task = ladder.current else { return }
         switch task.kind {
         case .identify:
             self.idPicked = nil
@@ -567,19 +433,11 @@ final class NewFlowCoordinator {
             activity: "new_recognize"
         )
         // Tracked (not detached) so NewDoneView can drain it before reloading
-        // mastery — see pendingWrites / drainPendingWrites. A write the writer
-        // can't land is parked; count it so the done screen can say so.
-        self.pendingWriteRemaining += 1
-        self.pendingWrites.append(Task {
-            if case .parked = await self.writer.submitAnswer(payload) {
-                self.parkedCount += 1
-            }
-            self.pendingWriteRemaining -= 1
-        })
+        // mastery. Everything the response carries — mastery delta, streak
+        // milestone, or a park — is folded in by StudySessionWrites.
+        self.writes.submit(payload, wordId: item.word.id)
     }
 
-    /// Give the optimistic recognize writes a bounded window to land before the
-    /// completion screen reloads mastery/stats. Mirrors ReviewFlowCoordinator.
     /// Drop the answer resolutions still waiting on their beat. Called when the
     /// user leaves the session: without it, an answer given moments before ✕
     /// still resolved — and still posted to the SRS — after the screen was gone.
@@ -588,11 +446,5 @@ final class NewFlowCoordinator {
             task.cancel()
         }
         self.pendingBeats.removeAll()
-    }
-
-    func drainPendingWrites(within timeout: Duration) async {
-        // Module-qualified: unqualified would resolve to this instance method
-        // (member lookup wins over the global), recursing forever.
-        await Tuji.drainPendingWrites(self.pendingWrites, within: timeout)
     }
 }
