@@ -80,3 +80,29 @@ retreat from decision 4 — `AtlasStore.shared` remains the lifecycle singleton
 and `AuthService.signOut` still resets it. It is decision 1 applied honestly: a
 seam defaulted to `.shared` that no test can construct is not a seam, and the
 `AtlasAuthoring` protocol had been carved for exactly that purpose.
+
+## Amendment — 2026-08-11 (AI 自製圖鑑 review)
+
+The 2026-08-03 amendment was applied to `AtlasStore` and not to the module
+behind it. `AtlasCaptureQueue` still had a `private init`, reached
+`AtlasStore.shared` at four call sites and `FileManager` at five, and had zero
+tests — while owning the confirm checkpoint, the one rule standing between a
+resumed job and a duplicate 自製圖鑑 card. It is now constructed over
+`AtlasCardGenerating` + `CaptureJobJournal` + `AtlasMutationRefreshing`, all
+defaulted to the live adapters; `AtlasCaptureQueue.shared` remains the
+lifecycle singleton and `AuthService.signOut` still resets it (decision 4).
+
+Two notes for whoever applies this next:
+
+1. **The rule generalises past the store.** When a seam is unsealed, unseal the
+   modules that consume it in the same pass — an injected dependency that is
+   dropped at the next handoff (here, `AtlasCaptureVM` injected its store and
+   then enqueued onto `AtlasCaptureQueue.shared`) buys only the illusion of one.
+
+2. **Fire-and-forget is an injection problem, not just a style one.** A seam
+   reaches only as far as a test can await. `AtlasCaptureQueue.enqueue` now
+   returns its `Task` and the queue exposes `settle()`; `AtlasCaptureVM`'s
+   `requestRecognize` became `async` with the View owning the `Task`. Without
+   that, the fakes were constructible and still could not be asserted on —
+   which is how `FakeAtlasAuthoring` came to stub `uploadImage` / `recognize` /
+   `confirm` with `NotImplemented` for as long as it did.

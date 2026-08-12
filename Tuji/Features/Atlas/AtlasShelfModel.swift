@@ -20,6 +20,18 @@ import Observation
 struct AtlasShelfRow: Identifiable, Hashable {
     let image: AtlasImageSummary
     let item: AtlasItem?
+    /// Set while 生成佇列 still has this capture in flight.
+    ///
+    /// It wins over the server row, because a job that is still running knows
+    /// something the row it has not written yet cannot: this screen used to read
+    /// 「已上傳」 off a photo the 卡片 grid was simultaneously calling 「生成中」.
+    let inFlight: CaptureProgress?
+
+    init(image: AtlasImageSummary, item: AtlasItem?, inFlight: CaptureProgress? = nil) {
+        self.image = image
+        self.item = item
+        self.inFlight = inFlight
+    }
 
     var id: String {
         self.image.id
@@ -37,7 +49,7 @@ struct AtlasShelfRow: Identifiable, Hashable {
     }
 
     var statusLabel: String {
-        self.image.statusLabel
+        self.inFlight?.label ?? self.image.statusLabel
     }
 }
 
@@ -79,14 +91,19 @@ final class AtlasShelfModel {
 
     private let store: AtlasStore
     private let mutations: AtlasMutationRefreshing
+    /// Read only for its in-flight jobs, so a row can say what the 卡片 grid is
+    /// saying about the same photo.
+    private let queue: AtlasCaptureQueue
 
     init(
         store: AtlasStore = .shared,
         mutations: AtlasMutationRefreshing = LiveAtlasMutationRefresher(),
+        queue: AtlasCaptureQueue = .shared,
         targetLanguage: TargetLanguage? = nil
     ) {
         self.store = store
         self.mutations = mutations
+        self.queue = queue
         self.targetLanguage = targetLanguage
     }
 
@@ -99,10 +116,14 @@ final class AtlasShelfModel {
     /// none for the frame it takes the View to say which one it is.
     var rows: [AtlasShelfRow] {
         guard let scope = self.targetLanguage else { return [] }
+        let inFlight = Dictionary(
+            self.queue.jobs.map { ($0.imageId, $0.progress) },
+            uniquingKeysWith: { first, _ in first }
+        )
         return self.store.images.compactMap { image in
             let item = self.store.itemsByImageId[image.id]
             if let item, item.targetLanguage != scope { return nil }
-            return AtlasShelfRow(image: image, item: item)
+            return AtlasShelfRow(image: image, item: item, inFlight: inFlight[image.id])
         }
     }
 

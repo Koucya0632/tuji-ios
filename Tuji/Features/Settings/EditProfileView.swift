@@ -23,7 +23,7 @@ struct EditProfileView: View {
     /// uploaded live on the view model, because they are what makes the form
     /// dirty.
     @State private var pendingAvatarImage: UIImage?
-    @State private var avatarPicker = AvatarPicker(encoding: .profile, cropFrame: .circle)
+    @State private var avatarIntake = ImageIntake(encoding: .profile, crop: .square(mask: .circle))
 
     var body: some View {
         VStack(spacing: 0) {
@@ -41,14 +41,14 @@ struct EditProfileView: View {
         .navigationTitle("編輯個人資料")
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            self.connectAvatarPicker()
+            self.connectAvatarIntake()
             await self.vm.load(session: self.sessionUser)
         }
-        .avatarPicker(
-            self.avatarPicker,
+        .imageIntake(
+            self.avatarIntake,
             title: "更換頭像",
-            extraSources: self.vm.hasCustomAvatar
-                ? [AvatarSource("使用預設黑貓頭像") {
+            extraChoices: self.vm.hasCustomAvatar
+                ? [ImageIntakeChoice("使用預設黑貓頭像") {
                     self.vm.useDefaultAvatar()
                     self.pendingAvatarImage = nil
                 }]
@@ -63,7 +63,7 @@ struct EditProfileView: View {
                 self.nicknameField
                 self.bioField
                 self.uidField
-                if let message = self.vm.error?.localizedDescription ?? self.avatarPicker.errorMessage {
+                if let message = self.vm.error?.localizedDescription ?? self.avatarIntake.errorMessage {
                     Text(message)
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiAlert)
@@ -78,18 +78,18 @@ struct EditProfileView: View {
     /// 個人資料 doesn't upload on pick — the encoded photo is stashed and sent
     /// with 儲存 — so delivery is a local decode that only fails on an
     /// unreadable image.
-    private func connectAvatarPicker() {
-        self.avatarPicker.onDeliver { data in
-            guard let image = UIImage(data: data) else { return false }
+    private func connectAvatarIntake() {
+        self.avatarIntake.onDeliver { data in
+            guard let image = UIImage(data: data) else { return .rejected(nil) }
             self.vm.stageAvatar(data: data)
             self.pendingAvatarImage = image
-            return true
+            return .accepted
         }
     }
 
     private var heroAvatar: some View {
         Button {
-            self.avatarPicker.begin()
+            self.avatarIntake.begin()
         } label: {
             VStack(spacing: Space.s2) {
                 ZStack(alignment: .bottomTrailing) {

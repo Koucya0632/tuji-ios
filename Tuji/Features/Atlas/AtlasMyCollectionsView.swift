@@ -253,7 +253,7 @@ struct AtlasCollectionEditView: View {
     @State private var showConfirm = false
     @State private var showWithdrawConfirm = false
     @State private var showPicker = false
-    @State private var avatar = AvatarPicker(encoding: .collection, cropFrame: .square)
+    @State private var avatar = ImageIntake(encoding: .collection, crop: .square(mask: .square))
 
     init(collectionId: String) {
         _vm = State(initialValue: CollectionEditVM(collectionId: collectionId))
@@ -306,7 +306,7 @@ struct AtlasCollectionEditView: View {
                 }
             }
         }
-        .avatarPicker(self.avatar, title: "更換合集頭像")
+        .imageIntake(self.avatar, title: "更換合集頭像")
         .tujiPrompt(
             isPresented: self.$showConfirm,
             style: .confirmation,
@@ -432,7 +432,7 @@ struct AtlasCollectionEditView: View {
         let identities = self.identities
         let feed = self.feedRefresh
         self.avatar.onDeliver { data in
-            guard let color = await vm.updateAvatar(data) else { return false }
+            guard let color = await vm.updateAvatar(data) else { return .rejected(nil) }
             identities.publish(
                 collectionID: vm.collectionId,
                 avatarColor: color,
@@ -443,7 +443,7 @@ struct AtlasCollectionEditView: View {
             await LiveAtlasMutationRefresher(feed: feed).refresh(
                 after: .collectionAvatarChanged(isPublic: vm.collection?.review == .approved)
             )
-            return true
+            return .accepted
         }
     }
 

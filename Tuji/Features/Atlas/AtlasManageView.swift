@@ -218,7 +218,7 @@ private struct AtlasCardsManagementPane: View {
                 NavigationLink {
                     AtlasManageDetailView(
                         shelf: self.shelf,
-                        image: row.image,
+                        row: row,
                         onDelete: { self.pendingDelete = row }
                     )
                 } label: {
@@ -340,15 +340,22 @@ private struct AtlasCardsManagementPane: View {
 
 private struct AtlasManageDetailView: View {
     let shelf: AtlasShelfModel
-    let image: AtlasImageSummary
+    /// The row rather than the image: 狀態 is the folded answer (an in-flight
+    /// 生成佇列 job wins over the server's row), and deriving it a second time
+    /// here is how this screen and the 卡片 grid came to disagree about one photo.
+    let row: AtlasShelfRow
     let onDelete: () -> Void
 
     @State private var showWithdrawConfirm = false
     @Environment(\.dismiss) private var dismiss
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
+    private var image: AtlasImageSummary {
+        self.row.image
+    }
+
     private var item: AtlasItem? {
-        self.shelf.item(forImage: self.image.id)
+        self.row.item
     }
 
     var body: some View {
@@ -382,7 +389,7 @@ private struct AtlasManageDetailView: View {
                         .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                 }
-                self.detailRow("狀態", self.image.statusLabel)
+                self.detailRow("狀態", self.row.statusLabel)
 
                 if let item {
                     self.publicationSection(item)

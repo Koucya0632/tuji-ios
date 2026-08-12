@@ -25,6 +25,50 @@ struct AtlasShelfModelTests {
     // MARK: - Rows
 
     @Test
+    func aCaptureStillBeingMadeSaysSoRatherThanQuotingTheServerRow() async {
+        // The 卡片 grid and this shelf used to answer separately: the grid read
+        // 生成佇列, the shelf read the server's status, and one photo could be
+        // 「生成中」 in one place and 「已上傳」 in the other.
+        let (store, _) = await self.store(
+            images: [AtlasFixtures.image("img-1", status: "uploaded")],
+            items: []
+        )
+        let cards = FakeCardGenerating()
+        cards.confirmFailures = 1 // hold the job in flight
+        let queue = AtlasCaptureQueue(
+            cards: cards,
+            journal: InMemoryCaptureJobJournal(),
+            mutations: SpyAtlasMutationRefreshing(),
+            doneLinger: .zero,
+            celebrate: {}
+        )
+        let model = AtlasShelfModel(store: store, queue: queue, targetLanguage: .ja)
+        #expect(model.rows.first?.statusLabel == AtlasImageStatus.uploaded.label)
+
+        let running = queue.enqueue(
+            imageId: "img-1",
+            payload: AtlasFixtures.payload(),
+            thumbnail: nil
+        )
+        #expect(model.rows.first?.statusLabel == CaptureProgress.generating(0.15).label)
+        await running.value
+
+        // The job failed and is still on the shelf: the row says why, and does
+        // not fall back to a server status that predates the attempt.
+        #expect(model.rows.first?.statusLabel == CaptureProgress.failed(.transient).label)
+    }
+
+    @Test
+    func aShelfRowWithNoJobStillReadsTheServer() async {
+        let (store, _) = await self.store(
+            images: [AtlasFixtures.image("img-1", status: "cards_ready")],
+            items: [AtlasFixtures.item("t-1", imageId: "img-1", language: .ja)]
+        )
+        let model = AtlasShelfModel(store: store, targetLanguage: .ja)
+        #expect(model.rows.first?.statusLabel == AtlasImageStatus.cardsReady.label)
+    }
+
+    @Test
     func rowsKeepOnlyTheCurrentDirectionAndCountTheRest() async {
         let (store, _) = await self.store(
             images: [AtlasFixtures.image("ja"), AtlasFixtures.image("en")],

@@ -7,6 +7,40 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 - **自製圖鑑 (custom atlas)** — a user's own captured items. Created via the capture
   pipeline (photo → AI 識別 → 校正 → confirm). Capacity is quota-gated per tier.
+- **生成佇列 (`AtlasCaptureQueue`)** — the durable tail of a capture: confirm →
+  createCards → enrich → one reconciling read, run after the sheet closes so the user
+  never waits. Jobs are journalled, so an app kill mid-flight resumes on launch. The
+  load-bearing rule is the **confirm checkpoint**: confirm is a plain INSERT server-side
+  and *not* idempotent, so the itemId it returns is written to the journal before the
+  (idempotent) tail runs, and a resumed job that finds one skips confirm. Everything it
+  reaches is an init parameter — `AtlasCardGenerating` (the four-method 生成卡片 seam
+  carved off `AtlasStore`), `CaptureJobJournal` (the on-disk half), `AtlasMutationRefreshing`.
+  It had a `private init` and four `AtlasStore.shared` reach-ins, so the checkpoint rule —
+  the only thing between a resumed run and a duplicate card — was verified by nothing.
+- **拍照進度 (`CaptureProgress`)** — where one capture sits, in the single vocabulary
+  every screen reads: generating / enriching / ready / failed, plus the label and the
+  determinate fraction. A third status vocabulary used to exist beside `AtlasImageStatus`
+  and `AtlasReviewStatus` — the queue's own `Stage` — and nothing related them, so the
+  卡片 grid said 「生成中」 about a photo 圖鑑管理 was calling 「已上傳」. **The in-flight
+  job wins over the server row**, because a job still running knows something the row it
+  has not written yet cannot. `AtlasShelfRow.inFlight` is where the two meet.
+- **`CaptureFailure`** — why a capture stopped, in the only two kinds a screen must tell
+  apart: `.atCapacity` (another attempt fails the same way — no 重試 offered) and
+  `.transient`. The queue's `catch` used to flatten every error into one untyped failure,
+  so a spent quota wore a retry's costume; the paywall route the VM builds for a 402
+  during 識別 had no counterpart after enqueue.
+- **`AtlasCapacityReadout`** — 自製圖鑑 room as the capture flow must ask it: the server's
+  usage snapshot **plus the captures 生成佇列 has not finished**. Two things consume a
+  slot and the gate counted one, so at capacity − 1 two quick captures both passed and
+  the second died in the queue. `AtlasQuotas` stays the pure mirror of the server's
+  arithmetic (lib/atlas/entitlement.ts); this is the reading built on it. Slots held by
+  the queue say 「正在生成」 rather than 「刪除一些」 — waiting is what actually works.
+- **校正欄位 (`CaptureCorrectionFields`)** — which second field the correction form asks
+  for (`chineseName` / `gloss` / `hidden`), over the {UILanguage × TargetLanguage} grid.
+  `needsGloss` — whether a cached candidate is missing the meaning that field would show,
+  and so worth one repair call — is *derived from* the field rather than stated beside it.
+  The two were written separately, as exact complements (`monolingual` in a View computed
+  property, `needsSeparateGloss` in the VM), and one of them was unreachable from a test.
 - **Pipeline status (`AtlasImageStatus`)** — where an uploaded capture sits in card
   generation: uploaded / processing / needs_review / confirmed / cards_ready / failed /
   deleted. Distinct from the **review status** (`AtlasReviewStatus`), which is about the
@@ -216,6 +250,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   fake) depends only on the slice it uses.
   - **AtlasAuthoring** — 10-method authoring/sync pipeline used by `AtlasStore`
     (sync/upload/recognize/confirm/createCards/deleteImage/enrich/detail/entitlement/withdraw).
+  - **AtlasCardGenerating** — the 4-method 生成卡片 tail used by 生成佇列
+    (confirm / generateCards / enrich / reconcile), conformed by `AtlasStore`. Narrower
+    than `AtlasAuthoring` on purpose: the queue discards the card list `createCards`
+    returns and always reconciles `.full`, so neither the return value nor the scope
+    belongs on the seam.
+  - **CaptureJobJournal** — 生成佇列's on-disk half (save / remove / restore / removeAll),
+    with `FileCaptureJobJournal` over Application Support. Split out because the confirm
+    checkpoint is the pipeline's load-bearing rule and it lived behind a hard-coded path.
   - **CollectionEditing** — 7-method seam for the collection-edit screen
     (`collectionEdit`, `updateCollection`, `updateCollectionAvatar`,
     `add/removeCollectionItem`, `publishCollection`, `withdrawCollection`).
@@ -254,17 +296,39 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   because that signal is a root-constructed environment value a model cannot reach; the
   View supplies it and names nothing else. The authoring-side counterpart to
   `CommunityLearningRefreshing` (consumption) and `SessionRefresh` (study).
-- **AvatarPicker** — the shared 頭像 flow (source dialog → PhotosPicker/camera → crop →
-  encode → deliver → retry), applied by the `.avatarPicker(_:title:)` modifier. Two
-  adapters justify the seam: 合集 and 個人資料 differ only in `AvatarEncoding` (1600/0.82
-  vs 1200/0.86), the crop mask, and what "deliver" means. It carries one error line —
-  the two screens used to run two parallel error channels, and 合集 rendered
-  `CollectionEditVM.errorMessage` (defined as "a failed publish wins") as an upload error.
+- **取像 (`ImageIntake`)** — the shared "get a photo in" flow (source → PhotosPicker/camera
+  → 350 ms cover beat → crop → encode → deliver → park-and-retry), applied by the
+  `.imageIntake(_:title:)` modifier. **Three** adapters: 合集, 個人資料 and 拍照新增 differ
+  only in `ImageIntakeEncoding` (1600/0.82, 1200/0.86, 1600/0.78), which cropper they
+  present, and what "deliver" means. It carries one error line — the screens used to run
+  two parallel error channels, and 合集 rendered `CollectionEditVM.errorMessage` (defined
+  as "a failed publish wins") as an upload error. `ImageIntakeDelivery.rejected(String?)`
+  lets a screen supply its own reason, because a server's description of a failed upload
+  beats the module's generic line.
+  It was `AvatarPicker`, and it covered two of its three callers: 拍照新增 hand-wrote the
+  same seven steps — with the 350 ms beat in the *view* rather than the model, and
+  park-and-retry under a second name (`lastUploadData`) — because the module was named
+  after avatars and 拍照新增 is not one. **A module named after one of its callers does not
+  get found by the next one.**
+  Two croppers stay two implementations behind one entry (`ImageIntakeCrop`): `AvatarCropView`
+  is a fixed square with pan-and-zoom, `ImageCropView` is four corner handles at any aspect —
+  拍照新增 boxes a subject for AI 辨識 and squaring that would crop the thing being
+  identified. Everything on either side of them is shared. A screen with its own source
+  affordances calls `pick(_:)` instead of `begin()`: 拍照新增's source panel carries the
+  remaining-allowance line and the capacity warning, which a list of chooser rows cannot.
 - **Screen view model convention** — non-trivial screen logic (fetch / paginate / save /
   publish / form + async state) lives in an `@Observable @MainActor` view model,
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
   The View is presentation-only; analytics stays in the View (VMs don't reach
-  `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`). The community
+  `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`).
+  **A view model's async work is `async`, and the View owns the `Task`.** Every atlas
+  model follows this and `AtlasCaptureVM` was the one that did not: `requestRecognize`
+  was synchronous and spawned a `Task {}` it dropped, so the rule protecting the user's
+  paid AI allowance (each mode recognises at most once; an incomplete cache gets exactly
+  one repair) could not be awaited and so was never tested — while `submit()` was `async`
+  and awaited nothing. Work that must outlive the screen goes to a module that owns it
+  (生成佇列), not to an unstructured task inside a `@State` object SwiftUI is about to
+  throw away. The community
   screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`,
   `PublicAtlasBrowsingModel`, `CollectionDetailVM`, `AuthorProfileVM`, `MyCollectionsVM`,
   `AtlasPublicDetailVM`. `PublicAtlasBrowsingModel` owns both the public and saved

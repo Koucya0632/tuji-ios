@@ -2,11 +2,20 @@
 // chip taps, rank/level selection, submit gating, and the confirm-payload
 // fallbacks. Also guards the NUMERIC-as-string confidence decode that has
 // bitten the atlas routes before (資料解析失敗).
+//
+// The second half of the file is the part that used to be unreachable. Every
+// test here once constructed a bare `AtlasCaptureVM()` against the live
+// singleton, so upload, 識別 and the mode cache — the rule that protects the
+// user's paid AI allowance — were never exercised, even though the seam and the
+// fake to fill it both already existed. `requestRecognize` being synchronous and
+// spawning a `Task {}` it dropped is what made that impossible rather than
+// merely unwritten.
 
 import Foundation
 import Testing
 @testable import Tuji
 
+@MainActor
 struct AtlasCaptureVMTests {
     private func candidate(
         id: String = "c1",
@@ -192,5 +201,239 @@ struct AtlasCaptureVMTests {
         #expect(vm.candidateLabel(chineseFallback) == "猫 · 貓 · 87%")
         let noMeaning = try self.candidate(label: "猫", zhHant: nil, confidence: "0.87")
         #expect(vm.candidateLabel(noMeaning) == "猫 · 87%")
+    }
+
+    // MARK: - Over the seam
+
+    /// A VM standing on fakes end to end: the store over `FakeAtlasAuthoring`,
+    /// a 生成佇列 that touches neither network nor disk, and a two-line
+    /// `LanguageContext`.
+    private func standUp(
+        repository: FakeAtlasAuthoring = FakeAtlasAuthoring(),
+        language: FakeLanguageContext = FakeLanguageContext(),
+        queue: AtlasCaptureQueue? = nil
+    )
+        -> (vm: AtlasCaptureVM, store: AtlasStore, queue: AtlasCaptureQueue)
+    {
+        let store = AtlasStore(repository: repository)
+        let queue = queue ?? AtlasCaptureQueue(
+            cards: FakeCardGenerating(),
+            journal: InMemoryCaptureJobJournal(),
+            mutations: SpyAtlasMutationRefreshing(),
+            doneLinger: .zero,
+            celebrate: {}
+        )
+        return (AtlasCaptureVM(store: store, queue: queue, language: language), store, queue)
+    }
+
+    @Test
+    func uploadCachesTheCandidatesThatRodeBackWithIt() async throws {
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = try AtlasFixtures.uploadResponse(
+            candidates: [AtlasFixtures.candidate(id: "c1", label: "cat")]
+        )
+        let (vm, _, _) = self.standUp(repository: repository)
+
+        await vm.handlePicked(data: Data([0xFF, 0xD8, 0xFF]))
+
+        #expect(vm.uploadedImage?.id == "img-1")
+        #expect(vm.lemma == "cat")
+        // Recognition ran server-side inside the upload, so no separate call.
+        #expect(repository.recognizeCalls.isEmpty)
+    }
+
+    @Test
+    func aSecondTapOnTheSameModeSpendsNothing() async throws {
+        // The result of a re-run barely differs, and every call comes out of the
+        // user's monthly allowance.
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = try AtlasFixtures.uploadResponse(
+            candidates: [AtlasFixtures.candidate(id: "c1", label: "cat")]
+        )
+        let (vm, _, _) = self.standUp(repository: repository)
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.primary)
+        await vm.requestRecognize(.primary)
+
+        #expect(repository.recognizeCalls.isEmpty)
+        #expect(vm.activeMode == .primary)
+    }
+
+    @Test
+    func eachDepthIsRecognizedAtMostOnce() async throws {
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = AtlasFixtures.uploadResponse(candidates: [])
+        repository.recognitionsByMode[.escalate] = try AtlasRecognitionResponse(
+            job: nil,
+            candidates: [AtlasFixtures.candidate(id: "hi", level: "fine", label: "tabby")]
+        )
+        let (vm, _, _) = self.standUp(repository: repository)
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.escalate)
+        await vm.requestRecognize(.escalate)
+
+        #expect(repository.recognizeCalls == [.escalate])
+        #expect(vm.lemma == "tabby")
+    }
+
+    @Test
+    func anEmptyCachedResultIsNotTreatedAsFinal() async {
+        // An upload whose inline recognition found nothing must stay retryable.
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = AtlasFixtures.uploadResponse(candidates: [])
+        let (vm, _, _) = self.standUp(repository: repository)
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.primary)
+
+        #expect(repository.recognizeCalls == [.primary])
+    }
+
+    @Test
+    func anIncompleteGlossCacheIsRepairedExactlyOnce() async throws {
+        // A ja interface learning 英文 expects a gloss. An older upload response
+        // that has none gets one repair call — and, if the model still cannot
+        // supply one, no more, or every later tap bills the user again.
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = try AtlasFixtures.uploadResponse(
+            candidates: [AtlasFixtures.candidate(id: "c1", label: "cat", gloss: nil)]
+        )
+        repository.recognitionsByMode[.primary] = try AtlasRecognitionResponse(
+            job: nil,
+            candidates: [AtlasFixtures.candidate(id: "c1", label: "cat", gloss: nil)]
+        )
+        let (vm, _, _) = self.standUp(
+            repository: repository,
+            language: FakeLanguageContext(uiLang: "ja", learningDirection: .zhEn)
+        )
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.primary)
+        await vm.requestRecognize(.primary)
+        await vm.requestRecognize(.primary)
+
+        #expect(repository.recognizeCalls == [.primary])
+    }
+
+    @Test
+    func aChineseInterfaceNeverSpendsACallRepairingAGlossItDoesNotUse() async throws {
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = try AtlasFixtures.uploadResponse(
+            candidates: [AtlasFixtures.candidate(id: "c1", label: "cat", gloss: nil)]
+        )
+        let (vm, _, _) = self.standUp(
+            repository: repository,
+            language: FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhJa)
+        )
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.primary)
+
+        #expect(repository.recognizeCalls.isEmpty)
+        #expect(vm.secondField == .chineseName)
+    }
+
+    @Test
+    func aSpentAllowanceOpensThePaywallRatherThanShowingARawError() async {
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = AtlasFixtures.uploadResponse(candidates: [])
+        repository.recognizeError = APIError.paymentRequired(message: nil)
+        let (vm, _, _) = self.standUp(repository: repository)
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.primary)
+
+        #expect(vm.showPaywall)
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test
+    func aThrottleStaysAMessage() async {
+        // 429 is transient — sending the user to the paywall would be a lie
+        // about why the call failed.
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = AtlasFixtures.uploadResponse(candidates: [])
+        repository.recognizeError = APIError.rateLimited(message: "慢一點")
+        let (vm, _, _) = self.standUp(repository: repository)
+        await vm.handlePicked(data: Data([0xFF]))
+
+        await vm.requestRecognize(.primary)
+
+        #expect(!vm.showPaywall)
+        #expect(vm.errorMessage == "慢一點")
+    }
+
+    @Test
+    func aFailedUploadReportsTheReasonTheIntakeWillPark() async {
+        // The screen turns this into `.rejected(vm.errorMessage)`, so the frame
+        // is parked by `ImageIntake` and 重試上傳 re-sends the same bytes. The VM
+        // used to keep a second copy of them under `lastUploadData`.
+        let repository = FakeAtlasAuthoring()
+        repository.uploadError = AtlasFakeError.boom
+        let (vm, _, _) = self.standUp(repository: repository)
+
+        await vm.handlePicked(data: Data([0xFF, 0xD8]))
+
+        #expect(vm.uploadedImage == nil)
+        #expect(vm.errorMessage != nil)
+    }
+
+    @Test
+    func submitHandsTheCaptureToTheQueueAndNothingElse() async {
+        let repository = FakeAtlasAuthoring()
+        repository.uploadResponse = AtlasFixtures.uploadResponse(candidates: [])
+        let cards = FakeCardGenerating()
+        let queue = AtlasCaptureQueue(
+            cards: cards,
+            journal: InMemoryCaptureJobJournal(),
+            mutations: SpyAtlasMutationRefreshing(),
+            doneLinger: .zero,
+            celebrate: {}
+        )
+        let (vm, _, _) = self.standUp(repository: repository, queue: queue)
+        await vm.handlePicked(data: Data([0xFF]))
+        vm.lemma = "cat"
+        vm.displayZhHant = "貓"
+
+        vm.submit()
+
+        // The injected queue receives it — the VM used to reach `.shared` here,
+        // dropping the seam its own store arrived on.
+        #expect(queue.jobs.count == 1)
+        #expect(queue.jobs.first?.lemma == "cat")
+        await queue.settle()
+        #expect(cards.confirmedImageIds == ["img-1"])
+    }
+
+    @Test
+    func capacityCountsWhatTheQueueIsStillMaking() async {
+        let repository = FakeAtlasAuthoring()
+        // One slot left on the server's snapshot.
+        repository.entitlementValue = AtlasFixtures.entitlement(slots: 49, slotsLimit: 50)
+        repository.uploadResponse = AtlasFixtures.uploadResponse(candidates: [])
+        let cards = FakeCardGenerating()
+        cards.confirmFailures = 1 // keep the job in flight long enough to observe
+        let queue = AtlasCaptureQueue(
+            cards: cards,
+            journal: InMemoryCaptureJobJournal(),
+            mutations: SpyAtlasMutationRefreshing(),
+            doneLinger: .zero,
+            celebrate: {}
+        )
+        let (vm, _, _) = self.standUp(repository: repository, queue: queue)
+        await vm.prepareOnOpen()
+        #expect(!vm.atCapacity)
+
+        let running = queue.enqueue(
+            imageId: "img-1",
+            payload: AtlasFixtures.payload(),
+            thumbnail: nil
+        )
+        // The last slot is claimed by a capture the server has not counted yet.
+        #expect(vm.atCapacity)
+        #expect(vm.capacity.blocker == .waitingOnQueue(1))
+        await running.value
     }
 }

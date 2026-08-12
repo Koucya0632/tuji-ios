@@ -1,65 +1,37 @@
 // 自制圖鑑「拍照快速新增」一鏡到底流程 (presented as a fullScreenCover from the
 // 圖鑑 camera icon). Steps run top-to-bottom in one sheet:
-//   1. 取得影像 — 拍照 (CameraPicker) 或 從相簿選 (PhotosPicker)
+//   1. 取得影像 — 拍照 或 從相簿選, then crop (ImageIntake)
 //   2. 上傳 → 自動 AI 識別
 //   3. 校正候選 / 人工修正
-//   4. 確認並生成卡片 → 成功後可「完成」或「再拍一張」
+//   4. 確認並生成卡片 → 交給 生成佇列, sheet closes
 //
-// The pipeline state + rules live in AtlasCaptureVM; this view only renders it
-// and owns presentation-only state (covers, prompts, the pending crop frame).
-// Management (list/delete/review) lives separately in AtlasManageView — this
-// screen is create-only.
+// The pipeline state + rules live in AtlasCaptureVM; getting the photo in lives
+// in `ImageIntake`, shared with the two 頭像 screens. This view only renders
+// them and owns its prompts. Management (list/delete/review) lives separately in
+// AtlasManageView — this screen is create-only.
+//
+// The screen keeps its own source *panel* rather than the intake's chooser
+// sheet: 拍下身邊的東西, the remaining-allowance line and the capacity warning
+// all live there, and a list of rows has nowhere to put them.
 
 import NukeUI
-import PhotosUI
 import SwiftUI
 import UIKit
 
 struct AtlasCaptureView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(SettingsStore.self) private var settings
 
     /// Pipeline + form state. Replaced wholesale on 換一張 — a fresh VM *is* the
     /// reset, so there's no field-by-field clearing to keep in sync.
     @State private var vm = AtlasCaptureVM()
+    /// 取得影像: source → crop → encode → deliver → park-and-retry.
+    @State private var intake = ImageIntake(encoding: .capture, crop: .freeform)
 
-    /// What the correction sheet's second (meaning) field should be.
-    private enum SecondField {
-        case chineseName // zh UIs edit displayZhHant directly
-        case gloss // ja/en learning a different language: edit their-language gloss
-        case hidden // monolingual (UI language == target): lemma is already in
-        // their language and the definition is auto-generated, so there's no
-        // useful meaning to hand-enter.
-    }
-
-    private var secondField: SecondField {
-        let ui = self.settings.current.uiLanguage
-        switch ui {
-        case .zhHant, .zhHans:
-            return .chineseName
-        case .ja, .en:
-            let target = self.settings.current.learningDirection.targetLanguage
-            let monolingual = (ui == .ja && target == .ja) || (ui == .en && target == .en)
-            return monolingual ? .hidden : .gloss
-        }
-    }
-
-    @State private var showCamera = false
-    @State private var pickerItem: PhotosPickerItem?
-    /// A freshly picked frame awaiting the crop/preview step before upload. Wrapping
-    /// the bytes in an Identifiable drives `.fullScreenCover(item:)` and re-creates
-    /// the crop view per pick.
-    @State private var pendingCrop: PendingCrop?
     @State private var confirmDismiss = false
     @State private var confirmRetake = false
     @State private var showPrecisionInfo = false
     /// Set 3s into a recognition — see `recognizingPanel`.
     @State private var slowRecognition = false
-
-    private struct PendingCrop: Identifiable {
-        let id = UUID()
-        let data: Data
-    }
 
     var body: some View {
         @Bindable var vm = self.vm
@@ -93,50 +65,18 @@ struct AtlasCaptureView: View {
                 .padding(.vertical, Space.s3)
             }
         }
-        .fullScreenCover(isPresented: self.$showCamera) {
-            CameraPicker(
-                onCapture: { data in
-                    self.showCamera = false
-                    // Hand off to the crop cover only after the camera cover has
-                    // dismissed — presenting a second fullScreenCover in the same
-                    // runloop tick gets dropped by SwiftUI. (The 相簿 path has no
-                    // such race; it isn't coming from another cover.)
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(350))
-                        self.pendingCrop = PendingCrop(data: data)
-                    }
-                },
-                onCancel: { self.showCamera = false }
-            )
-            .ignoresSafeArea()
-        }
-        .fullScreenCover(item: self.$pendingCrop) { pending in
-            ImageCropView(
-                imageData: pending.data,
-                onConfirm: { cropped in
-                    self.pendingCrop = nil
-                    Task { await self.vm.handlePicked(data: cropped) }
-                },
-                onCancel: { self.pendingCrop = nil }
-            )
-        }
-        .onChange(of: self.pickerItem) { _, newValue in
-            guard let newValue else { return }
-            Task {
-                let data = await self.vm.loadPhotoData(newValue)
-                self.pickerItem = nil
-                if let data {
-                    self.pendingCrop = PendingCrop(data: data)
-                }
-            }
-        }
+        .imageIntake(self.intake, title: "拍照新增")
         .tujiPrompt(
             isPresented: self.$confirmDismiss,
             style: .destructive,
             title: "放棄這次辨識？",
             message: "這張照片的辨識與校正結果會清除，不會生成卡片。",
             primary: TujiPromptAction("放棄", role: .destructive) {
-                self.vm.discardUploadedImage()
+                // Held locally because the delete outlives the screen: the task
+                // must keep the VM it was started for, not whatever `@State`
+                // holds by the time it runs.
+                let abandoned = self.vm
+                Task { await abandoned.discardUploadedImage() }
                 self.dismiss()
             },
             secondary: TujiPromptAction("繼續校正", role: .cancel) {}
@@ -147,7 +87,12 @@ struct AtlasCaptureView: View {
             title: "換一張照片？",
             message: "目前的辨識與校正結果會清除，再拍或選一張新的。",
             primary: TujiPromptAction("換一張", role: .destructive) {
-                self.vm.discardUploadedImage()
+                // Held before the reassignment below: `@State` reads resolve
+                // through the storage box at execution time, so an unheld
+                // `self.vm` inside the task would find the *fresh* VM and
+                // discard nothing.
+                let abandoned = self.vm
+                Task { await abandoned.discardUploadedImage() }
                 // Fresh VM = full reset back to the source chooser.
                 self.vm = AtlasCaptureVM()
             },
@@ -170,10 +115,23 @@ struct AtlasCaptureView: View {
         )
         .task {
             AnalyticsService.shared.track(.atlasCaptureOpen)
+            self.connectIntake()
             await self.vm.prepareOnOpen()
         }
         .sheet(isPresented: $vm.showPaywall) {
             PaywallView()
+        }
+    }
+
+    /// Delivery for this screen is the upload itself. A rejection carries the
+    /// VM's own message — the server's description of why an upload failed beats
+    /// 「上傳失敗，請再試一次。」 — and parks the encoded frame so 重試 re-sends the
+    /// same bytes instead of making the user pick the photo again.
+    private func connectIntake() {
+        let vm = self.vm
+        self.intake.onDeliver { data in
+            await vm.handlePicked(data: data)
+            return vm.uploadedImage == nil ? .rejected(vm.errorMessage) : .accepted
         }
     }
 
@@ -276,16 +234,23 @@ struct AtlasCaptureView: View {
 
             if CameraPicker.isAvailable {
                 BBtn(title: "拍照", fullWidth: true, icon: "camera.fill") {
-                    self.showCamera = true
+                    self.intake.pick(.camera)
                 }
-                .disabled(self.vm.busy != nil || self.vm.atCapacity)
+                .disabled(self.sourcesDisabled)
             }
 
-            PhotosPicker(selection: self.$pickerItem, matching: .images) {
+            Button {
+                self.intake.pick(.photoLibrary)
+            } label: {
                 AtlasPickerPillLabel(title: "從相簿選", icon: "photo.on.rectangle")
             }
-            .disabled(self.vm.busy != nil || self.vm.atCapacity)
+            .buttonStyle(.plain)
+            .disabled(self.sourcesDisabled)
         }
+    }
+
+    private var sourcesDisabled: Bool {
+        self.vm.busy != nil || self.vm.atCapacity || self.intake.isBusy
     }
 
     // MARK: - Correction (recognize + manual fields + confirm)
@@ -335,7 +300,7 @@ struct AtlasCaptureView: View {
     private var actionRow: some View {
         HStack(spacing: Space.s2) {
             Button {
-                self.vm.requestRecognize(.primary)
+                Task { await self.vm.requestRecognize(.primary) }
             } label: {
                 self.modeActionLabel(
                     "普通識別",
@@ -350,7 +315,7 @@ struct AtlasCaptureView: View {
                 // 高精度 is Pro-only — a Free user goes straight to the paywall
                 // instead of spending a call that the server would 402.
                 if self.vm.precisionAvailable {
-                    self.vm.requestRecognize(.escalate)
+                    Task { await self.vm.requestRecognize(.escalate) }
                 } else {
                     self.vm.showPaywall = true
                 }
@@ -486,7 +451,7 @@ struct AtlasCaptureView: View {
             // "中文名稱" localizes to Meaning/意味 for ja/en. displayZhHant
             // always rides through as the Chinese base column (prefilled from
             // the candidate) even when the field is hidden or bound to the gloss.
-            switch self.secondField {
+            switch self.vm.secondField {
             case .chineseName:
                 self.field("中文名稱", text: $vm.displayZhHant, suggested: .zhHant)
             case .gloss:
@@ -503,11 +468,9 @@ struct AtlasCaptureView: View {
                 icon: "checkmark"
             ) {
                 // Enqueue and close the cover immediately — the user never
-                // waits here.
-                Task {
-                    await self.vm.submit()
-                    self.dismiss()
-                }
+                // waits here, and the queue owns the work from this point.
+                self.vm.submit()
+                self.dismiss()
             }
             .disabled(!self.vm.canSubmit)
         }
@@ -535,13 +498,13 @@ struct AtlasCaptureView: View {
         .padding(.horizontal, -Space.s4)
     }
 
-    /// Shown when the initial upload failed (typically weak network): re-upload
-    /// the retained frame without making the user re-pick the photo.
+    /// Shown when the initial upload failed (typically weak network): re-send the
+    /// frame the intake parked, without making the user re-pick the photo.
     @ViewBuilder
     private var uploadRetry: some View {
-        if self.vm.uploadedImage == nil, self.vm.errorMessage != nil, let data = self.vm.lastUploadData {
+        if self.vm.uploadedImage == nil, self.intake.canRetry {
             Button {
-                Task { await self.vm.handlePicked(data: data) }
+                Task { await self.intake.retry() }
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
@@ -558,9 +521,14 @@ struct AtlasCaptureView: View {
         }
     }
 
+    /// One error line, from two owners that cannot both be speaking: the intake
+    /// only fails *before* a photo is in (selection, encode, the upload it
+    /// delivers), and every VM error comes after one is. Disjoint by
+    /// construction, unlike the two parallel channels `ImageIntake` was built
+    /// to end.
     @ViewBuilder
     private var statusMessage: some View {
-        if let errorMessage = self.vm.errorMessage {
+        if let errorMessage = self.vm.errorMessage ?? self.intake.errorMessage {
             Text(errorMessage)
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiAlert)

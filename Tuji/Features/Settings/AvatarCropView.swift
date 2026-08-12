@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-enum ImageCropFrame {
+enum ImageCropFrame: Equatable {
     case circle
     case square
 }

@@ -1,18 +1,25 @@
-// Background queue for the 自制圖鑑 capture flow. Once the user confirms a name
-// in AtlasCaptureView, the heavy tail — confirm → createCards → enrich → one
-// reconciling sync — runs here instead of blocking the sheet. The 圖鑑 page
-// renders these jobs as 生成中 tiles at the head of its own grid
+// 生成佇列 — the durable tail of the 自製圖鑑 capture flow. Once the user confirms
+// a name in AtlasCaptureView, confirm → createCards → enrich → one reconciling
+// read runs here instead of blocking the sheet. The 卡片 grid renders these jobs
+// as 生成中 tiles at the head of its own grid.
 //
 // Jobs are owned by this @MainActor singleton, so they keep running after the
 // capture cover is dismissed. Completion refreshes counters in place via
 // reload() — never invalidate(), which would clear WordsStore.loaded and bounce
 // the whole app back to Splash (see memory: rootview-invalidate-splash-bounce).
 //
-// Weak-network resilience (Phase 5): jobs are persisted to Application Support,
-// so an app kill mid-flight doesn't lose committed work — on launch the queue
-// restores and resumes them. confirm is a plain INSERT server-side (not
-// idempotent), so once it succeeds we checkpoint the itemId; a resumed run then
-// skips confirm and continues from createCards (which IS idempotent).
+// Weak-network resilience: jobs are journalled, so an app kill mid-flight does
+// not lose committed work — on launch the queue restores and resumes them.
+// confirm is a plain INSERT server-side (not idempotent), so once it succeeds
+// the itemId is checkpointed; a resumed run then skips confirm and continues
+// from createCards (which IS idempotent).
+//
+// Everything the queue reaches now arrives through an init parameter. It used to
+// reach `AtlasStore.shared` at four call sites and `FileManager` at five, behind
+// a `private init` — so the checkpoint rule above, the only thing standing
+// between a resumed run and a duplicate 自製圖鑑 card, was verified by nothing.
+// ADR-0001's amendment already said it: a seam defaulted to `.shared` that no
+// test can construct is not a seam. Production still goes through `.shared`.
 
 import OSLog
 import Observation
@@ -24,48 +31,57 @@ import UIKit
 final class AtlasCaptureQueue {
     static let shared = AtlasCaptureQueue()
 
-    enum Stage {
-        case confirming
-        case creating
-        case enriching
-        case done
-        case failed
-    }
-
     struct Job: Identifiable {
         let id: UUID
         let imageId: String
-        let payload: AtlasConfirmPayload
-        let thumbnail: UIImage?
         let lemma: String
-        var stage: Stage
-        var progress: Double
-        /// Set once confirm succeeds, so a resumed run skips re-confirming (which
-        /// would create a duplicate item — confirm is a plain INSERT server-side).
-        var itemId: String?
+        let thumbnail: UIImage?
+        /// Where this capture sits, in the vocabulary both screens read.
+        /// `CaptureProgress` replaced a queue-private `Stage` enum that only the
+        /// grid tile understood.
+        fileprivate(set) var progress: CaptureProgress
 
-        init(
-            id: UUID = UUID(),
-            imageId: String,
-            payload: AtlasConfirmPayload,
-            thumbnail: UIImage?,
-            lemma: String,
-            stage: Stage,
-            progress: Double,
-            itemId: String? = nil
-        ) {
-            self.id = id
-            self.imageId = imageId
-            self.payload = payload
+        fileprivate let payload: AtlasConfirmPayload
+        /// Set once confirm succeeds, so a resumed run never re-confirms.
+        fileprivate var itemId: String?
+
+        fileprivate init(record: CaptureJobRecord, thumbnail: UIImage?) {
+            self.id = record.id
+            self.imageId = record.imageId
+            self.lemma = record.lemma
             self.thumbnail = thumbnail
-            self.lemma = lemma
-            self.stage = stage
-            self.progress = progress
-            self.itemId = itemId
+            self.payload = record.payload
+            self.itemId = record.itemId
+            self.progress = .generating(Self.startingFraction(resuming: record.itemId != nil))
+        }
+
+        fileprivate var record: CaptureJobRecord {
+            CaptureJobRecord(
+                id: self.id,
+                imageId: self.imageId,
+                payload: self.payload,
+                lemma: self.lemma,
+                itemId: self.itemId
+            )
+        }
+
+        /// A job with a checkpoint has already confirmed. Restarting it from the
+        /// top would re-announce work the server has finished — the bar would
+        /// walk back to 15% for a card that already exists.
+        fileprivate static func startingFraction(resuming: Bool) -> Double {
+            resuming ? 0.5 : 0.15
         }
     }
 
     private(set) var jobs: [Job] = []
+
+    /// Captures committed but not yet counted by the server's usage snapshot.
+    /// `AtlasCapacityReadout` folds this in — a queued job has already claimed a
+    /// 自製圖鑑 slot, and the gate that ignored them let a second capture through
+    /// at capacity − 1 only to die as a retry-forever tile.
+    var inFlightCount: Int {
+        self.jobs.count(where: { !$0.progress.isFailed && $0.progress != .ready })
+    }
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-capture-queue")
     /// Signpost the confirm→cards→enrich tail so the pipeline is measurable in
@@ -73,62 +89,102 @@ final class AtlasCaptureQueue {
     /// derived server-side from the atlas tables.
     private let signposter = OSSignposter(subsystem: "app.tuji.ios", category: "atlas-capture")
 
-    /// On-disk home for in-flight jobs. Application Support survives app kills
-    /// and (unlike Caches) is not purged under storage pressure.
-    private let store: URL = {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let dir = base.appendingPathComponent("AtlasCaptureQueue", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
-    }()
-
+    private let cards: AtlasCardGenerating
+    private let journal: CaptureJobJournal
     /// What a finished capture refreshes is not this queue's decision — it
     /// belongs to `AtlasMutationRefresh`, shared with the manage screen's delete.
     private let mutations: AtlasMutationRefreshing
+    /// How long a finished tile stays on the grid saying 已加入圖鑑 before it is
+    /// replaced by the real card. Configurable so a test is not a four-second wait.
+    private let doneLinger: Duration
+    private let celebrate: @MainActor () -> Void
 
-    private init(mutations: AtlasMutationRefreshing = LiveAtlasMutationRefresher()) {
+    private var running: [UUID: Task<Void, Never>] = [:]
+
+    init(
+        cards: AtlasCardGenerating = AtlasStore.shared,
+        journal: CaptureJobJournal = FileCaptureJobJournal(),
+        mutations: AtlasMutationRefreshing = LiveAtlasMutationRefresher(),
+        doneLinger: Duration = .seconds(4),
+        celebrate: @escaping @MainActor () -> Void = {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    ) {
+        self.cards = cards
+        self.journal = journal
         self.mutations = mutations
+        self.doneLinger = doneLinger
+        self.celebrate = celebrate
         self.restore()
     }
 
-    func enqueue(imageId: String, payload: AtlasConfirmPayload, thumbnail: UIImage?) {
-        let job = Job(
+    /// The returned task is the job. Production ignores it — the queue owns the
+    /// lifetime, which is the whole point of handing work here — but a caller
+    /// that wants to observe completion can, and a test that cannot wait for a
+    /// pipeline can only assert on it by polling, which is how CI flakes start.
+    @discardableResult
+    func enqueue(imageId: String, payload: AtlasConfirmPayload, thumbnail: UIImage?) -> Task<Void, Never> {
+        let record = CaptureJobRecord(
+            id: UUID(),
             imageId: imageId,
             payload: payload,
-            thumbnail: thumbnail,
             lemma: payload.lemma,
-            stage: .confirming,
-            progress: 0.15
+            itemId: nil
         )
-        self.jobs.append(job)
-        self.persist(job)
-        let id = job.id
-        Task { await self.run(id) }
+        self.jobs.append(Job(record: record, thumbnail: thumbnail))
+        self.journal.save(record, thumbnail: thumbnail?.jpegData(compressionQuality: 0.6))
+        return self.start(record.id)
     }
 
-    func retry(_ id: UUID) {
-        guard let job = self.jobs.first(where: { $0.id == id }), job.stage == .failed else { return }
-        self.update(id) { $0.stage = .confirming
-            $0.progress = 0.15
+    /// Only a transient failure can be retried. A capture that died at capacity
+    /// would fail the same way every time, so the tile does not offer it.
+    @discardableResult
+    func retry(_ id: UUID) -> Task<Void, Never>? {
+        guard let job = self.jobs.first(where: { $0.id == id }), job.progress.canRetry else { return nil }
+        self.update(id) {
+            $0.progress = .generating(Job.startingFraction(resuming: $0.itemId != nil))
         }
-        Task { await self.run(id) }
+        return self.start(id)
     }
 
     func remove(_ id: UUID) {
         self.jobs.removeAll { $0.id == id }
-        self.deletePersisted(id)
+        self.journal.remove(id)
     }
 
-    /// Drop every job, in memory and on disk. Called on sign-out — a leftover
-    /// job (persisted records survive app kills) would otherwise resume under
-    /// the next account's session and surface the previous account's capture
-    /// there. In-flight stage requests fail with 401 once the session is gone;
-    /// their `update`/`persist` calls no-op after the job is removed.
+    /// Drop every job, in memory and on disk. Called on sign-out — a journalled
+    /// job survives app kills and would otherwise resume under the next
+    /// account's session and surface the previous account's capture there.
+    /// In-flight requests fail with 401 once the session is gone; their
+    /// `update` calls no-op after the job is removed.
     func reset() {
-        for job in self.jobs {
-            self.deletePersisted(job.id)
+        for task in self.running.values {
+            task.cancel()
         }
+        self.running = [:]
         self.jobs = []
+        self.journal.removeAll()
+    }
+
+    /// Await every job currently in flight.
+    ///
+    /// This is the observability the module never had: `enqueue` returns before
+    /// the work it commits, which is correct for the sheet and impossible for a
+    /// test. Nothing in production calls it — sign-out deliberately drops
+    /// in-flight jobs rather than waiting for them.
+    func settle() async {
+        while let task = self.running.values.first {
+            await task.value
+        }
+    }
+
+    private func start(_ id: UUID) -> Task<Void, Never> {
+        let task = Task { [weak self] in
+            await self?.run(id)
+            self?.running[id] = nil
+        }
+        self.running[id] = task
+        return task
     }
 
     private func run(_ id: UUID) async {
@@ -144,41 +200,32 @@ final class AtlasCaptureQueue {
                 self.signposter.emitEvent("resume", id: signpostID)
                 itemId = existing
             } else {
-                let item = try await AtlasStore.shared.confirm(imageId: job.imageId, payload: job.payload)
+                let item = try await self.cards.confirm(imageId: job.imageId, payload: job.payload)
                 itemId = item.id
                 self.update(id) { $0.itemId = item.id }
-                self.persistCurrent(id) // checkpoint before the (idempotent) tail
+                self.checkpoint(id) // before the (idempotent) tail
                 self.signposter.emitEvent("confirmed", id: signpostID)
             }
-            self.update(id) { $0.stage = .creating
-                $0.progress = 0.5
-            }
-            _ = try await AtlasStore.shared.createCards(itemId: itemId)
+            self.update(id) { $0.progress = .generating(0.5) }
+            try await self.cards.generateCards(forItem: itemId)
             self.signposter.emitEvent("carded", id: signpostID)
-            // Enrich (definition / synonyms / forms / etymology) so the card's
-            // detail page matches a dictionary word. Best-effort — a failure
-            // doesn't fail the card; the detail endpoint lazily enriches on open.
-            self.update(id) { $0.stage = .enriching
-                $0.progress = 0.7
-            }
-            try? await AtlasStore.shared.enrich(itemId: itemId)
-            self.update(id) { $0.progress = 0.9 }
-            // One reconciling sync for the atlas list, then the shared policy for
+            self.update(id) { $0.progress = .enriching(0.7) }
+            try? await self.cards.enrich(itemId: itemId)
+            self.update(id) { $0.progress = .enriching(0.9) }
+            // One reconciling read for the atlas list, then the shared policy for
             // everything else a finished capture touches (AtlasMutationRefresh).
-            await AtlasStore.shared.sync(.full)
+            await self.cards.reconcile()
             await self.mutations.refresh(after: .captureCompleted)
-            self.update(id) { $0.stage = .done
-                $0.progress = 1
-            }
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            self.deletePersisted(id) // done — drop the on-disk record now
-            try? await Task.sleep(for: .seconds(4))
+            self.update(id) { $0.progress = .ready }
+            self.celebrate()
+            self.journal.remove(id) // done — drop the record now
+            try? await Task.sleep(for: self.doneLinger)
             self.remove(id)
         } catch {
             self.signposter.emitEvent("failed", id: signpostID)
             self.log.error("capture job failed: \(error.localizedDescription, privacy: .public)")
-            self.update(id) { $0.stage = .failed }
-            // Keep the persisted record so the job survives an app kill and can
+            self.update(id) { $0.progress = .failed(CaptureFailure(error)) }
+            // Keep the journalled record so the job survives an app kill and can
             // be retried (from the itemId checkpoint if confirm already ran).
         }
     }
@@ -188,76 +235,24 @@ final class AtlasCaptureQueue {
         mutate(&self.jobs[idx])
     }
 
-    // MARK: - Persistence
-
-    private struct PersistedJob: Codable {
-        let id: UUID
-        let imageId: String
-        let payload: AtlasConfirmPayload
-        let lemma: String
-        var itemId: String?
-    }
-
-    private func persist(_ job: Job) {
-        let record = PersistedJob(
-            id: job.id,
-            imageId: job.imageId,
-            payload: job.payload,
-            lemma: job.lemma,
-            itemId: job.itemId
-        )
-        if let data = try? JSONEncoder().encode(record) {
-            try? data.write(to: self.jsonURL(job.id))
-        }
-        if let thumb = job.thumbnail, let jpg = thumb.jpegData(compressionQuality: 0.6) {
-            try? jpg.write(to: self.thumbURL(job.id))
-        }
-    }
-
-    private func persistCurrent(_ id: UUID) {
+    /// Re-journal a job whose record changed — in practice, only ever to write
+    /// the itemId checkpoint. The thumbnail is already on disk from `enqueue`.
+    private func checkpoint(_ id: UUID) {
         guard let job = self.jobs.first(where: { $0.id == id }) else { return }
-        self.persist(job)
-    }
-
-    private func deletePersisted(_ id: UUID) {
-        try? FileManager.default.removeItem(at: self.jsonURL(id))
-        try? FileManager.default.removeItem(at: self.thumbURL(id))
-    }
-
-    private func jsonURL(_ id: UUID) -> URL {
-        self.store.appendingPathComponent("\(id.uuidString).json")
-    }
-
-    private func thumbURL(_ id: UUID) -> URL {
-        self.store.appendingPathComponent("\(id.uuidString).jpg")
+        self.journal.save(job.record, thumbnail: nil)
     }
 
     /// Reload jobs left over from a previous session and resume them. confirm is
     /// skipped when an itemId checkpoint exists, so createCards (idempotent) is
     /// the worst that can repeat.
     private func restore() {
-        guard let files = try? FileManager.default.contentsOfDirectory(
-            at: self.store,
-            includingPropertiesForKeys: nil
-        )
-        else { return }
-        for file in files where file.pathExtension == "json" {
-            guard let data = try? Data(contentsOf: file),
-                  let record = try? JSONDecoder().decode(PersistedJob.self, from: data)
-            else { continue }
+        for entry in self.journal.restore() {
             let job = Job(
-                id: record.id,
-                imageId: record.imageId,
-                payload: record.payload,
-                thumbnail: UIImage(contentsOfFile: self.thumbURL(record.id).path),
-                lemma: record.lemma,
-                stage: .confirming,
-                progress: 0.15,
-                itemId: record.itemId
+                record: entry.record,
+                thumbnail: entry.thumbnail.flatMap(UIImage.init(data:))
             )
             self.jobs.append(job)
-            let id = job.id
-            Task { await self.run(id) }
+            _ = self.start(job.id)
         }
     }
 }

@@ -167,7 +167,9 @@ struct AtlasRecognitionResponse: Decodable {
     let candidates: [AtlasCandidate]
 }
 
-struct AtlasConfirmPayload: Codable {
+/// `Equatable` so `CaptureJobRecord` — which carries one across an app kill —
+/// can be compared in a test without unpacking nine fields.
+struct AtlasConfirmPayload: Codable, Equatable {
     let selectedCandidateId: String?
     let targetLanguage: TargetLanguage?
     let primaryLabel: String

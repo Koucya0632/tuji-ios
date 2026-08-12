@@ -86,15 +86,166 @@ enum AtlasFixtures {
         )
     }
 
-    static func entitlement(plan: String = "free", slots: Int = 1) -> AtlasEntitlement {
+    static func entitlement(
+        plan: String = "free",
+        slots: Int = 1,
+        slotsLimit: Int = 50
+    )
+        -> AtlasEntitlement
+    {
         AtlasEntitlement(
             plan: plan,
-            atlasSlotsLimit: 50,
+            atlasSlotsLimit: slotsLimit,
             primaryAiSoftLimitMonthly: 30,
             precisionAiLimitMonthly: 0,
             subscriptionExpiresAt: nil,
             usage: AtlasUsage(atlasSlots: slots, primaryAiThisMonth: 0, precisionAiThisMonth: 0)
         )
+    }
+
+    /// `AtlasCandidate` declares its own `init(from:)` for the NUMERIC-as-string
+    /// confidence, which suppresses the memberwise init — so a fixture has to go
+    /// through the decoder the app uses.
+    static func candidate(
+        id: String = "c1",
+        level: String = "primary",
+        label: String = "cat",
+        zhHant: String? = "貓",
+        gloss: String? = nil,
+        confidence: String = "0.9",
+        rank: Int = 1
+    ) throws
+        -> AtlasCandidate
+    {
+        var fields = [
+            "\"id\": \"\(id)\"",
+            "\"level\": \"\(level)\"",
+            "\"label\": \"\(label)\"",
+            "\"normalizedLabel\": \"\(label)\"",
+            "\"confidence\": \(confidence)",
+            "\"rank\": \(rank)"
+        ]
+        if let zhHant { fields.append("\"zhHant\": \"\(zhHant)\"") }
+        if let gloss { fields.append("\"gloss\": \"\(gloss)\"") }
+        return try JSONDecoder().decode(
+            AtlasCandidate.self,
+            from: Data("{ \(fields.joined(separator: ", ")) }".utf8)
+        )
+    }
+
+    static func uploadResponse(
+        image: AtlasImageSummary? = nil,
+        candidates: [AtlasCandidate]? = nil
+    )
+        -> AtlasUploadResponse
+    {
+        AtlasUploadResponse(
+            duplicate: nil,
+            targetLanguage: nil,
+            image: image ?? Self.image("img-1", status: "uploaded"),
+            job: nil,
+            candidates: candidates
+        )
+    }
+
+    static func payload(lemma: String = "cat") -> AtlasConfirmPayload {
+        AtlasConfirmPayload(
+            selectedCandidateId: nil,
+            targetLanguage: nil,
+            primaryLabel: lemma,
+            fineLabel: nil,
+            lemma: lemma,
+            displayZhHant: "貓",
+            displayGloss: nil,
+            partOfSpeech: "noun",
+            category: nil
+        )
+    }
+}
+
+/// `{ uiLang, learningDirection }` — the two-line stub the read seam exists for.
+@MainActor
+final class FakeLanguageContext: LanguageContext {
+    var uiLang: String
+    var learningDirection: LearningDirection
+
+    init(uiLang: String = "zh-Hant", learningDirection: LearningDirection = .zhJa) {
+        self.uiLang = uiLang
+        self.learningDirection = learningDirection
+    }
+}
+
+/// The 生成卡片 tail, in memory. Every method logs what it was asked for, so a
+/// test can assert the checkpoint rule — that a resumed run never confirms twice.
+@MainActor
+final class FakeCardGenerating: AtlasCardGenerating {
+    var item = AtlasFixtures.item("item-1", imageId: "img-1")
+    /// How many more times each step should fail before succeeding. Counted
+    /// rather than latched so a test can fail a run and then retry it.
+    var confirmFailures = 0
+    var generateFailures = 0
+    var failureError: Error = AtlasFakeError.boom
+
+    private(set) var confirmedImageIds: [String] = []
+    private(set) var generatedItemIds: [String] = []
+    private(set) var enrichedItemIds: [String] = []
+    private(set) var reconciles = 0
+
+    func confirm(imageId: String, payload _: AtlasConfirmPayload) async throws -> AtlasItem {
+        if self.confirmFailures > 0 {
+            self.confirmFailures -= 1
+            throw self.failureError
+        }
+        self.confirmedImageIds.append(imageId)
+        return self.item
+    }
+
+    func generateCards(forItem itemId: String) async throws {
+        if self.generateFailures > 0 {
+            self.generateFailures -= 1
+            throw self.failureError
+        }
+        self.generatedItemIds.append(itemId)
+    }
+
+    func enrich(itemId: String) async throws {
+        self.enrichedItemIds.append(itemId)
+    }
+
+    func reconcile() async {
+        self.reconciles += 1
+    }
+}
+
+/// The journal, in memory. Mirrors the file adapter's one subtlety: a save with
+/// no thumbnail is a checkpoint and must not drop the frame already stored.
+@MainActor
+final class InMemoryCaptureJobJournal: CaptureJobJournal {
+    private(set) var entries: [UUID: CaptureJobEntry] = [:]
+    private(set) var saves: [CaptureJobRecord] = []
+
+    init(_ preloaded: [CaptureJobEntry] = []) {
+        for entry in preloaded {
+            self.entries[entry.record.id] = entry
+        }
+    }
+
+    func save(_ record: CaptureJobRecord, thumbnail: Data?) {
+        self.saves.append(record)
+        let existing = self.entries[record.id]?.thumbnail
+        self.entries[record.id] = CaptureJobEntry(record: record, thumbnail: thumbnail ?? existing)
+    }
+
+    func remove(_ id: UUID) {
+        self.entries[id] = nil
+    }
+
+    func restore() -> [CaptureJobEntry] {
+        Array(self.entries.values)
+    }
+
+    func removeAll() {
+        self.entries = [:]
     }
 }
 
@@ -123,6 +274,19 @@ final class FakeAtlasAuthoring: AtlasAuthoring {
     /// sign-out (or another account's sync) in the middle of the call.
     var onDeleteImage: (() async -> Void)?
 
+    // The capture half. These used to throw `NotImplemented`, which is exactly
+    // how far the seam reached: `AtlasCaptureVM` was injectable and nothing
+    // injected anything, so upload / 識別 / confirm went untested.
+    var uploadResponse = AtlasFixtures.uploadResponse()
+    var uploadError: Error?
+    /// One canned answer per recognition depth, so a test can prove that
+    /// re-tapping a mode does not spend a second call.
+    var recognitionsByMode: [AtlasRecognitionMode: AtlasRecognitionResponse] = [:]
+    var recognizeError: Error?
+
+    private(set) var uploads = 0
+    private(set) var recognizeCalls: [AtlasRecognitionMode] = []
+
     func sync(since: String?, limit _: Int) async throws -> AtlasSyncResponse {
         self.syncSinceLog.append(since)
         if let syncError { throw syncError }
@@ -137,13 +301,18 @@ final class FakeAtlasAuthoring: AtlasAuthoring {
     ) async throws
         -> AtlasUploadResponse
     {
-        throw NotImplemented()
+        self.uploads += 1
+        if let uploadError { throw uploadError }
+        return self.uploadResponse
     }
 
-    func recognize(imageId _: String, mode _: AtlasRecognitionMode) async throws
+    func recognize(imageId _: String, mode: AtlasRecognitionMode) async throws
         -> AtlasRecognitionResponse
     {
-        throw NotImplemented()
+        self.recognizeCalls.append(mode)
+        if let recognizeError { throw recognizeError }
+        return self.recognitionsByMode[mode]
+            ?? AtlasRecognitionResponse(job: nil, candidates: [])
     }
 
     func confirm(imageId _: String, payload _: AtlasConfirmPayload) async throws -> AtlasItem {
