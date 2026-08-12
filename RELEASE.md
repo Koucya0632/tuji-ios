@@ -1,6 +1,6 @@
 # Tuji iOS Release
 
-更新日期：2026-08-04
+更新日期：2026-08-12
 
 App 已於 2026-07-16 上架。以下是**已上架後**的發版規則，不是首次送審的清單。
 
@@ -15,7 +15,7 @@ iOS 是 Tuji 的主要產品面。發版前必須先保證：
 - Privacy Manifest 與實際 SDK/權限一致。
 - metadata 不宣稱尚未完成的能力。目前仍未完成的是：
   - **Push**：程式碼存在，但 entitlement 沒有 `aps-environment`（`Tuji.entitlements` 只有 Sign in with Apple）。未完成前不要打開正式推播能力。
-  - **Universal Links**：尚未完成 Associated Domains / AASA，目前只有 custom scheme `tuji://`。
+  - **Universal Links**：App 已能解析 `https://tuji.app/` 路徑，但尚未完成 Associated Domains / AASA；目前可對外使用的仍只有 custom scheme `tuji://`。
 - Pro 訂閱已上線（`app.tuji.pro.monthly` / `app.tuji.pro.yearly`），送審必附 restore purchases 與訂閱條款。
 
 ## 2. Schemes
@@ -86,7 +86,7 @@ Archive 前用 Release/TestFlight scheme 再跑一次。
 - Today -> Study -> Complete（新字與復習兩條）。
 - Cards -> Word detail -> Favorite。
 - Search。
-- Progress。
+- 我 -> 完整進度（總覽、heatmap、mastery 與統計）。
 - Settings（含切換介面語言四種、切換學習方向）。
 - Atlas golden path：拍照 -> 校正 -> 生成卡片 -> 出現在圖鑑格。
 
@@ -96,7 +96,9 @@ Archive 前用 Release/TestFlight scheme 再跑一次。
 - 我的 -> 我的主頁：零公開作品時也要開得起來。
 - 圖鑑管理 -> 合集：建立 -> 加成員 -> 換頭像 -> 送審 -> 收回。
 - 物見 -> 瀏覽合集 -> 收藏 -> 全部加入學習 -> 確認字進了圖鑑與學習佇列。
-- 公開項目 -> 檢舉，確認送出成功。
+- 公開項目、合集、作者 -> 分別檢舉，確認只有 API 成功後才顯示已送出。
+- 作者主頁 -> 封鎖，確認物見列表排除該作者；再從設定的封鎖清單解除封鎖。
+- 封鎖後確認既有收藏、圖鑑內容與學習進度仍保留。
 
 詳見 umbrella repo 的 `../docs/ios/MANUAL_TEST.md`。
 
@@ -106,7 +108,8 @@ Archive 前用 Release/TestFlight scheme 再跑一次。
 
 - 測試帳號（要有已公開的合集，否則審核者看不到公開內容）。
 - **UGC 審核說明**（現在是必備，不是「如果有」）：
-  - 檢舉入口：物見 -> 公開項目詳情 -> 檢舉，五種理由 + 說明。
+  - 檢舉入口：物見的公開項目、合集與作者頁皆可檢舉；目前介面提供理由選擇，送出成功才顯示完成。
+  - 封鎖入口：作者頁可封鎖；設定內可查看與解除封鎖。封鎖會過濾探索內容，但不刪除既有收藏或學習進度。
   - 下架與收回：作者可自行「取消公開」；審核端下架後作者無法再送審。
   - 審核閘門：送審不等於公開，文案一律說「送審／審核中」。
 - **AI 功能說明**：拍照辨識後有校正表單，使用者可修改 lemma 與釋義後才生成卡片。
