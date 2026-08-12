@@ -131,19 +131,25 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
     let responseMs: Int?
     let sessionId: String?
     let activity: String?
+    /// The user asked for the gloss before answering (複習's 求救提示). Optional
+    /// so answers parked on disk by an older build still decode — a new
+    /// non-optional key would fail every one of them.
+    let hinted: Bool?
 
     init(
         cardId: String,
         rating: SRSRating,
         responseMs: Int? = nil,
         sessionId: String? = nil,
-        activity: String? = nil
+        activity: String? = nil,
+        hinted: Bool? = nil
     ) {
         self.cardId = cardId
         self.rating = rating.rawValue
         self.responseMs = responseMs
         self.sessionId = sessionId
         self.activity = activity
+        self.hinted = hinted
     }
 }
 

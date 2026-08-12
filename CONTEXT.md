@@ -441,6 +441,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   right/wrong/answer/dim reveal logic (`StudyOptionStyle.forOption`), used by both
   `IdentifyView` (選字) and `ReviewFlowView` (複習). Replaced the two near-identical private
   `OptStyle` / `OptionStyle` copies.
+- **求救提示 (hint flip)** — the face 複習's hero turns over to: the gloss, and **only** the
+  gloss. `reading` and `pronunciation` are both on the payload and neither may appear there —
+  a kana headword's 振假名 is itself and an IPA line is the word read aloud, so either one
+  turns the hint into a skip. Asking for it is the user reporting they could not retrieve the
+  word, so it is **sticky within the presentation** (flipping back does not un-see it) and it
+  makes the item take the **wrong-answer rating table** `[重來, 困難]`, correct or not; only
+  the *suggestion* still tracks correctness ([ADR-0007](docs/adr/0007-review-hint-costs-a-downgrade.md)).
+  Three things it deliberately does **not** touch: the requeue rule (still "did they pick the
+  wrong option" — 重來 on a hinted *correct* answer reschedules but does not re-ask this round),
+  a retest (which writes no SRS at all, so there is nothing for the hint to cost), and `showZh`
+  — that switch governs the *always-on* gloss 學新字 prints on the picture, and a deliberate
+  tap is not that. It is also the one rule in `pick()` that is stated nowhere in `pick()`:
+  capping the suggestion at 困難 is what switches the auto-rate path off, because that path
+  requires a suggestion other than 困難.
 - **StudyQueueProviding** — 1-method seam (`fetch(mode:)`) over `StudyQueueStore`, injected
   into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
   longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a

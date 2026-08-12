@@ -16,6 +16,7 @@ final class OnboardingState {
 
     private let introKey = "tuji.onboarding.introDone"
     private let tourKey = "tuji.onboarding.tourDone"
+    private let reviewHintKey = "tuji.study.reviewHintTaught"
     private let learningDirectionKey = "tuji.learning.direction"
 
     var introDone: Bool {
@@ -24,6 +25,14 @@ final class OnboardingState {
 
     var tourDone: Bool {
         didSet { UserDefaults.standard.set(tourDone, forKey: tourKey) }
+    }
+
+    /// The 複習 hero carries no visible affordance, so a stalled item offers
+    /// 「想不起來？點一下圖片」 once. Set when the user actually flips — someone
+    /// who ignored the line has not learned it and should see it again.
+    /// Device-global like `tourDone`: it teaches the UI, not the account.
+    var reviewHintTaught: Bool {
+        didSet { UserDefaults.standard.set(reviewHintTaught, forKey: reviewHintKey) }
     }
 
     var learningDirection: LearningDirection? {
@@ -46,6 +55,7 @@ final class OnboardingState {
     private init() {
         introDone = UserDefaults.standard.bool(forKey: introKey)
         tourDone = UserDefaults.standard.bool(forKey: tourKey)
+        reviewHintTaught = UserDefaults.standard.bool(forKey: reviewHintKey)
         learningDirection = UserDefaults.standard.string(forKey: learningDirectionKey)
             .flatMap(LearningDirection.init(rawValue:))
     }
