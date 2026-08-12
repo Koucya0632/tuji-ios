@@ -78,9 +78,9 @@ struct AccumulationStoreStalenessTests {
     /// same two numbers. Each read used to allocate a `Set` and walk every row.
     /// The memo must not change the answers, and must not outlive a reload.
     @Test
-    func filteredProgressCountsAreMemoisedWithoutChangingTheAnswer() async {
+    func filteredProgressCountsAreMemoisedWithoutChangingTheAnswer() async throws {
         let repo = SpyProgressRepository()
-        repo.categories = [
+        repo.categories = try [
             CategoryProgressFixture.make(category: "food", seen: 3, total: 10),
             CategoryProgressFixture.make(category: "body", seen: 1, total: 5)
         ]
@@ -96,14 +96,14 @@ struct AccumulationStoreStalenessTests {
     }
 
     @Test
-    func theFilteredRowMemoDoesNotSurviveAReload() async {
+    func theFilteredRowMemoDoesNotSurviveAReload() async throws {
         let repo = SpyProgressRepository()
-        repo.categories = [CategoryProgressFixture.make(category: "food", seen: 3, total: 10)]
+        repo.categories = try [CategoryProgressFixture.make(category: "food", seen: 3, total: 10)]
         let store = ProgressStore(repository: repo)
         await store.loadIfStale()
         #expect(store.seenCount(filter: ["food"]) == 3)
 
-        repo.categories = [CategoryProgressFixture.make(category: "food", seen: 9, total: 10)]
+        repo.categories = try [CategoryProgressFixture.make(category: "food", seen: 9, total: 10)]
         store.invalidate()
         await store.loadIfStale()
 
@@ -259,8 +259,8 @@ private final class SpyStudyRepository: StudyRepository {
 
 /// `CategoryProgress` is `Decodable` only, so fixtures go through JSON.
 enum CategoryProgressFixture {
-    static func make(category: String, seen: Int, total: Int) -> CategoryProgress {
-        try! JSONDecoder().decode(
+    static func make(category: String, seen: Int, total: Int) throws -> CategoryProgress {
+        try JSONDecoder().decode(
             CategoryProgress.self,
             from: Data(#"{"category":"\#(category)","seen":\#(seen),"total":\#(total)}"#.utf8)
         )
