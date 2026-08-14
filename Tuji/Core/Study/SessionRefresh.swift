@@ -32,14 +32,6 @@ protocol PendingWriteDraining {
 
 extension StudySessionWrites: PendingWriteDraining {}
 
-/// A drainer with nothing to drain — for previews / callers with no coordinator.
-struct NoPendingWrites: PendingWriteDraining {
-    func drainPendingWrites(within _: Duration) async {}
-    var hasPendingWrites: Bool {
-        false
-    }
-}
-
 @MainActor
 struct SessionRefresh {
     /// The home stores to invalidate + reload (mastery, progress, study stats).
