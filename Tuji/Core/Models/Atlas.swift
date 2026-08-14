@@ -86,10 +86,6 @@ struct AtlasImageSummary: Decodable, Hashable, Identifiable {
     }
 }
 
-struct AtlasImagesResponse: Decodable {
-    let images: [AtlasImageSummary]
-}
-
 struct AtlasUploadResponse: Decodable {
     let duplicate: Bool?
     let targetLanguage: TargetLanguage?
