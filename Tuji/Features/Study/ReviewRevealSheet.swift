@@ -6,6 +6,29 @@
 
 import SwiftUI
 
+/// How tall the reveal sheet rests. Everything the user must be able to read
+/// without dragging — the word they just answered, and the rating row they are
+/// being asked to use — is *measured*, not assumed.
+///
+/// It replaces a fixed `.fraction(0.4)`, which the rating section had quietly
+/// outgrown: three 56pt rows plus the label, rule and padding come to ~275pt,
+/// against ~350pt of sheet on a 874pt screen, leaving the summary a viewport
+/// shorter than one line of a 26pt headword. The word was clipped in half at
+/// the exact moment the sheet asked how well it was remembered. A fraction also
+/// cannot grow with Dynamic Type, so every larger text size made it worse.
+enum ReviewRevealLayout {
+    /// Used only until the first layout pass reports real heights.
+    static let fallbackFraction: CGFloat = 0.4
+
+    /// `summary` and `rating` are measured; the two constants are the sheet's
+    /// own top margin and the gap the scroll content leaves under the summary.
+    /// The result is never smaller than the sum of its parts — that is the
+    /// whole invariant, and the thing the old constant could not promise.
+    static func restHeight(summary: CGFloat, rating: CGFloat) -> CGFloat {
+        Space.s4 + summary + Space.s3 + rating
+    }
+}
+
 struct ReviewRevealSheet: View {
     let coord: ReviewFlowCoordinator
     let item: StudyQueueItem
@@ -13,17 +36,26 @@ struct ReviewRevealSheet: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
 
-    /// Resting detent — just tall enough for the header + hint + pinned rating
-    /// row, so there's little dead space. Drag up to `.large` to reveal the
-    /// full word details inline.
-    private static let restDetent: PresentationDetent = .fraction(0.4)
+    @State private var summaryHeight: CGFloat?
+    @State private var ratingHeight: CGFloat?
+    @State private var detent: PresentationDetent = .fraction(ReviewRevealLayout.fallbackFraction)
 
-    @State private var detent: PresentationDetent = ReviewRevealSheet.restDetent
+    /// Resting detent — exactly tall enough for the summary + pinned rating
+    /// row. Drag up to `.large` to reveal the full word details inline.
+    private var restDetent: PresentationDetent {
+        guard let s = self.summaryHeight, let r = self.ratingHeight else {
+            return .fraction(ReviewRevealLayout.fallbackFraction)
+        }
+        return .height(ReviewRevealLayout.restHeight(summary: s, rating: r))
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.s3) {
                 self.summary
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                        self.summaryHeight = $0
+                    }
                 ExpandableWordDetail(wordId: self.item.word.id, expanded: self.detent == .large)
                     .padding(.top, self.detent == .large ? 0 : Space.s3)
             }
@@ -33,17 +65,26 @@ struct ReviewRevealSheet: View {
         }
         .safeAreaInset(edge: .bottom) {
             self.ratingSection
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                    self.ratingHeight = $0
+                }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
-        .presentationDetents([Self.restDetent, .large], selection: self.$detent)
+        .presentationDetents([self.restDetent, .large], selection: self.$detent)
+        // The measured detent replaces the fallback one pass after the sheet
+        // appears, and a selection that is no longer in the set is undefined —
+        // so follow it, unless the user has already pulled the sheet up.
+        .onChange(of: self.restDetent) { _, new in
+            if self.detent != .large { self.detent = new }
+        }
         // The grabber stays, unlike every other sheet in the app: this one has
         // two detents and pulling it up is how the full word detail is reached.
         // There it is an affordance, not the system's signature.
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(Radius.r0)
         .presentationBackground(.tujiPaper)
-        .presentationBackgroundInteraction(.enabled(upThrough: Self.restDetent))
+        .presentationBackgroundInteraction(.enabled(upThrough: self.restDetent))
         // Must rate to proceed — never swipe the sheet away (dragging between
         // detents to peek at details is still allowed).
         .interactiveDismissDisabled(true)
