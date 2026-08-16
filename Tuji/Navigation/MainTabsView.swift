@@ -373,7 +373,7 @@ private struct TabBarButton: View {
     }
 }
 
-/// 拍照, in the middle of the bar.
+/// 拍照, in the middle of the bar — the mascot's eye as a shutter.
 ///
 /// Deliberately *not* a fifth `MainTab`: it is something you do, not a place
 /// you are, and making it a tab would hand it a `NavigationPath`, an `atRoot`
@@ -385,33 +385,32 @@ private struct TabBarButton: View {
 /// now, and reaching it meant switching tabs and then reaching the top-right
 /// corner — the hardest place on a 6" phone for the thumb already holding it.
 ///
-/// Icon-only, and that is the rule that tells the two kinds of slot apart here:
-/// the things with labels are places, the thing without one is an action. It
-/// wears `tujiBrandPrimary` like every other primary action in the app, and
-/// deliberately not `tujiCurrent` — that colour answers "where are you", and a
-/// permanent yellow block meaning "here" would be lying on every screen.
+/// **A mark, not a slot.** It first arrived here as a full-height yellow
+/// rectangle, which made it the loudest of five slots but still, unmistakably,
+/// one of five slots — a tab that happened to be painted. `MascotEye` is a
+/// different kind of object: round where everything around it is square, drawn
+/// where everything around it is set. That is what separates it, not its
+/// colour. Its ground stays ink like its neighbours' precisely so the eye is
+/// the only figure.
+///
+/// The cost, stated plainly: an eye does not say "camera" the way
+/// `camera.viewfinder` did. What carries the meaning instead is the shape it
+/// shares with a lens, the tour's third step, and the accessibility label —
+/// which is now doing real work rather than translating a glyph.
 private struct CaptureBarButton: View {
     let action: () -> Void
 
     var body: some View {
         Button(action: self.action) {
-            Image(systemName: "camera.viewfinder")
-                .font(.tujiIcon(24, weight: .semibold))
-                .foregroundStyle(.tujiInk)
+            MascotEye(size: 44)
                 .frame(maxWidth: .infinity)
                 .frame(height: 64)
-                // Runs past the home indicator, the same way the bar's ink
-                // does — stated rather than inherited, so the yellow is a full
-                // slot cut through the strip and not a 64pt tile floating in
-                // it. Tapping below the glyph, in the home-indicator band,
-                // still is not a tap on the button: `contentShape` is the 64pt
-                // row, and this is only paint.
-                .background(Color.tujiBrandPrimary.ignoresSafeArea(edges: .bottom))
+                // The whole slot is the target, not just the 44pt circle: a
+                // round button in a bar is a smaller tap area than the row it
+                // sits in, and the row is what the thumb aims at.
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        // Same reason as the tabs: an unlabelled SF Symbol is announced with
-        // the system's own name for it, so this would read as 「相機觀景窗」.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("拍照收字"))
         .accessibilityAddTraits(.isButton)

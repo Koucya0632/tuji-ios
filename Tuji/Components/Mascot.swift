@@ -72,6 +72,58 @@ struct Mascot: View {
     }
 }
 
+/// The cat's eye, drawn rather than cropped: gold iris, ink pupil, one
+/// catchlight up and to the right.
+///
+/// It is the mascot's eye and a camera lens at the same time, which is why it
+/// can stand in for a shutter button. Both are the same three concentric
+/// things — a coloured ring, a dark centre, a highlight where the light gets
+/// in — and the app's primary brand colour is documented as taken from these
+/// eyes (`TujiColor.tujiBrandPrimary`), so the mark is not borrowing the
+/// palette, it is where the palette came from.
+///
+/// **This is the one round thing in the app, and that is deliberate.**
+/// `Radius.r0` is 0 and every chip, button, card and sheet obeys it. The rule
+/// governs UI chrome — shapes the interface invents. A mark is not chrome: it
+/// has the form it has, the same carve-out `Font.tujiWordmark` gets for setting
+/// the logotype outside the type scale. Rounding a *button* would break the
+/// system; drawing the cat's eye as anything but a circle would break the cat.
+///
+/// Drawn from shapes rather than cropped out of `mascot-face`, because the
+/// artwork is a 512² painting with soft shading — scaled down to 48pt its
+/// gradients turn to mud, and it carries a highlight, fur edge and eyelid that
+/// a 30pt mark cannot spare the pixels for.
+struct MascotEye: View {
+    var size: CGFloat = 48
+
+    /// Measured off `mascot-face.png` (eye ⌀88px, pupil ⌀62, catchlight ⌀18):
+    /// the pupil is about seven tenths of the eye, leaving a *thin* iris ring
+    /// rather than the donut a heavier one reads as, and the catchlight sits
+    /// high and outboard rather than centred.
+    private var pupil: CGFloat {
+        self.size * 0.70
+    }
+
+    private var catchlight: CGFloat {
+        self.size * 0.20
+    }
+
+    var body: some View {
+        ZStack {
+            Circle().fill(.tujiBrandPrimary)
+            Circle()
+                .fill(.tujiInk)
+                .frame(width: self.pupil, height: self.pupil)
+            Circle()
+                .fill(.tujiPaper)
+                .frame(width: self.catchlight, height: self.catchlight)
+                .offset(x: self.size * 0.12, y: -self.size * 0.14)
+        }
+        .frame(width: self.size, height: self.size)
+        .accessibilityHidden(true)
+    }
+}
+
 /// How a free-standing mascot is grounded into its surface.
 enum MascotGrounding {
     /// Soft dark contact shadow — for light surfaces.

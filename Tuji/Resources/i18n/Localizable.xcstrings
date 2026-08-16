@@ -1514,24 +1514,24 @@
         }
       }
     },
-    "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，中間的黃色按鈕隨時可以拍照收字。" : {
+    "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，黃色按鈕隨時可以拍照收字。" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Today is where you study, Atlas collects your words, Sightings shows what everyone else has taken in, and Me holds your progress and account. The yellow button in the middle takes a photo any time."
+            "value" : "Today is where you study, Atlas collects your words, Sightings shows what everyone else has taken in, and Me holds your progress and account. The yellow button takes a photo any time."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "「今日」で学習し、「図鑑」に単語を集め、「物見」でみんなが集めたものを見て、「マイページ」で記録とアカウントを確認します。真ん中の黄色いボタンからはいつでも写真を撮れます。"
+            "value" : "「今日」で学習し、「図鑑」に単語を集め、「物見」でみんなが集めたものを見て、「マイページ」で記録とアカウントを確認します。黄色いボタンからはいつでも写真を撮れます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "今天开始学习、图鉴收集单词、物见看大家收的东西、我查看成果与账号，中间的黄色按钮随时可以拍照收字。"
+            "value" : "今天开始学习、图鉴收集单词、物见看大家收的东西、我查看成果与账号，黄色按钮随时可以拍照收字。"
           }
         }
       }

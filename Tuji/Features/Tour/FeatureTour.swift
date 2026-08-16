@@ -98,32 +98,39 @@ struct TourStep: Identifiable {
                 tab: .today,
                 target: .tabBar,
                 fallback: nil,
-                shape: .pill,
+                // Squared: the cutout frames the ink navigation slab, which is
+                // a rectangle with the app's usual zero radius. It was a pill
+                // when the bar was one full-width strip.
+                shape: .rounded(Radius.r0),
                 pose: .face,
-                // This step has now been wrong three times. It first said
+                // This step has now been wrong four times. It first said
                 // "四個分頁" listing 主頁/圖鑑/進度/我的 and missed 社群 entirely;
                 // the fix added 社群 but kept three tab names that no longer
                 // exist, so the tour pointed at the bar and read out 主頁, 進度
-                // and 我的 to every new user; and the count went stale again the
-                // day 拍照 moved into the middle of the bar. Whatever this says
-                // must match what the bar actually renders — `MainTab.allCases`
-                // plus the capture slot — and there is still nothing that makes
-                // a divergence fail to compile. Counting them is what keeps
-                // going wrong, so this no longer counts them.
+                // and 我的 to every new user; the count went stale the day 拍照
+                // moved into the middle of the bar; and then *this* line said
+                // "中間的黃色按鈕" the day 拍照 became its own block on the right.
+                //
+                // Counting them went wrong twice and pointing at them went
+                // wrong once, so this copy now does neither: it names what each
+                // one is for and lets the cutout say where. Whatever it says
+                // must match what the bar renders, and there is still nothing
+                // that makes a divergence fail to compile.
                 title: "底下這一排",
-                text: "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，中間的黃色按鈕隨時可以拍照收字。"
+                text: "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，黃色按鈕隨時可以拍照收字。"
             ),
             TourStep(
                 id: 3,
                 // Stays on 今天: the capture slot is in the tab bar, so it is on
                 // screen whichever tab is showing, and this step used to switch
-                // to 圖鑑 only because that is where the button lived. Squaring
-                // the cutout for the same reason — it is a rectangular key in
-                // the bar now, not the round icon it was in the header.
+                // to 圖鑑 only because that is where the button lived.
                 tab: .today,
                 target: .capture,
                 fallback: nil,
-                shape: .rounded(Radius.r0),
+                // Round, because what it frames is: `MascotEye` is the one
+                // circle in the app. The cutout squared off for one release,
+                // when 拍照 was briefly a rectangular yellow key.
+                shape: .pill,
                 pose: .peek,
                 title: "拍照收字",
                 // 拍照 needs an account (the upload is authenticated), so the
