@@ -8,8 +8,6 @@
 // inherit that choice — it gets an explicit custom action, because a user who
 // cannot see the picture also cannot poke at it to find out.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct ReviewHeroCard: View {
@@ -107,24 +105,7 @@ struct ReviewHeroCard: View {
     }
 
     private var pictureFace: some View {
-        LazyImage(url: self.item.word.imageURL) { state in
-            if let image = state.image {
-                image.resizable()
-                    .aspectRatio(
-                        contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
-                    )
-                    .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
-                    .blendMode(
-                        self.item.word.imageKind == .cutout ? .multiply : .normal
-                    )
-            } else if state.error != nil {
-                Image(systemName: "photo")
-                    .foregroundStyle(.tujiInk3)
-            } else {
-                TujiImagePlaceholder()
-            }
-        }
-        .pipeline(.shared)
+        WordPicture(url: self.item.word.imageURL, kind: self.item.word.imageKind)
     }
 
     /// Gloss only. `reading` and `pronunciation` are both on the payload and

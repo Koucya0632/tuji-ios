@@ -1,20 +1,15 @@
 // Image tile for a CardWord. Used in the 圖鑑 grid, Today themes, Search
-// results, Favorites. Image loads via Nuke's LazyImage — cached on disk + in
-// memory automatically.
+// results, Favorites.
 //
 // The card is gone. The tile used to be a white rounded rectangle with a border,
 // which meant the most prominent thing in a grid of words was the *box*, not the
 // picture or the word. Content now sits directly on the paper.
 //
-// The white backdrop is gone too, and that was the app's most widespread visual
-// flaw: dictionary artwork is a cut-out on pure white, so on a warm page every
-// tile showed a white rectangle brighter than its surroundings. Multiplying the
-// image against a `tujiPaper2` container makes white → the container's colour
-// and leaves the object untouched, so the object sits on the page instead of on
-// a card. It is applied only to cut-outs — see `CardWord.imageKind`.
+// This file owns the *container* — the square, the ground, the clip. How the
+// picture meets it (fit vs fill, the inset, the multiply that removes a
+// cut-out's white backdrop) belongs to `WordPicture`, which every screen showing
+// a word's picture now shares.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct WordTile: View {
@@ -102,24 +97,7 @@ struct WordTile: View {
     }
 
     private var picture: some View {
-        LazyImage(url: self.word.imageURL) { state in
-            if let image = state.image {
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: self.word.imageKind == .cutout ? .fit : .fill)
-                    .padding(self.word.imageKind == .cutout ? Space.s3 : 0)
-                    // White × any ground = that ground, so the backdrop
-                    // disappears and the object keeps its own colour.
-                    .blendMode(self.word.imageKind == .cutout ? .multiply : .normal)
-            } else if state.error != nil {
-                Image(systemName: "photo")
-                    .font(.system(size: 24))
-                    .foregroundStyle(.tujiInk3)
-            } else {
-                TujiImagePlaceholder()
-            }
-        }
-        .pipeline(.shared)
+        WordPicture(url: self.word.imageURL, kind: self.word.imageKind)
     }
 
     /// An 8pt square marking where the word came from. Ink = you made it,

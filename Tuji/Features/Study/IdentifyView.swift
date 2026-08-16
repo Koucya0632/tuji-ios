@@ -1,8 +1,6 @@
 // Step 2 of NewFlow: show image + chinese chip; user taps the matching
 // English. Pure practice — wrong answers requeue without writing SRS.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct IdentifyView: View {
@@ -50,25 +48,11 @@ struct IdentifyView: View {
             Color.tujiPaper2
                 .frame(height: 200)
                 .overlay {
-                    LazyImage(url: self.item.word.imageURL) { state in
-                        if let image = state.image {
-                            image.resizable()
-                                .aspectRatio(
-                                    contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
-                                )
-                                .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
-                                .blendMode(
-                                    self.item.word.imageKind == .cutout ? .multiply : .normal
-                                )
-                        } else if state.error != nil {
-                            Image(systemName: "photo")
-                                .font(.system(size: 28))
-                                .foregroundStyle(.tujiInk3)
-                        } else {
-                            TujiImagePlaceholder()
-                        }
-                    }
-                    .pipeline(.shared)
+                    WordPicture(
+                        url: self.item.word.imageURL,
+                        kind: self.item.word.imageKind,
+                        glyphSize: 28
+                    )
                 }
                 .clipped()
 

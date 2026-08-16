@@ -8,8 +8,6 @@
 // While the field is empty, surface LocalCache.recentSearches. Tapping a
 // result pushes WordDetailView. Tapping a recent search re-runs the query.
 
-import Nuke
-import NukeUI
 import OSLog
 import Observation
 import SwiftUI
@@ -426,24 +424,12 @@ private struct SearchResultRow: View {
         Color.tujiPaper2
             .frame(width: 56, height: 56)
             .overlay {
-                LazyImage(url: self.word.imageURL) { state in
-                    if let image = state.image {
-                        image
-                            .resizable()
-                            .aspectRatio(
-                                contentMode: self.word.imageKind == .cutout ? .fit : .fill
-                            )
-                            .padding(self.word.imageKind == .cutout ? Space.s1 : 0)
-                            .blendMode(self.word.imageKind == .cutout ? .multiply : .normal)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
-                    }
-                }
-                .pipeline(.shared)
+                WordPicture(
+                    url: self.word.imageURL,
+                    kind: self.word.imageKind,
+                    inset: Space.s1,
+                    glyphSize: 16
+                )
             }
             .clipped()
     }
