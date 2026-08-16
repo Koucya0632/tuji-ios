@@ -291,7 +291,7 @@ private struct AtlasCardsManagementPane: View {
             Text("還沒有自制圖鑑卡片")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.tujiInk)
-            Text("回圖鑑頁點右上角相機，拍一張就能做卡片。")
+            Text("點底下中間的相機，拍一張就能做卡片。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
@@ -368,7 +368,7 @@ private struct AtlasManageDetailView: View {
                             img.resizable().aspectRatio(contentMode: .fit)
                         } else if state.error != nil {
                             Image(systemName: "photo")
-                                .font(.system(size: 28, weight: .bold))
+                                .font(.tujiIcon(28, weight: .bold))
                                 .foregroundStyle(.tujiInk3)
                         } else {
                             TujiImagePlaceholder()

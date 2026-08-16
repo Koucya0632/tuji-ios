@@ -32,9 +32,9 @@ struct AppleSignInButton: View {
         .overlay {
             HStack(spacing: Space.s2) {
                 Image(systemName: "applelogo")
-                    .font(.system(size: 17, weight: .medium))
+                    .font(.tujiIcon(17, weight: .medium))
                 Text("繼續使用 Apple")
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.tujiIcon(15, weight: .heavy))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

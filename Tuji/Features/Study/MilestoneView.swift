@@ -72,7 +72,7 @@ struct MilestoneView: View {
                     Image(systemName: "square.and.arrow.up")
                     Text("分享")
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiIcon(16, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)

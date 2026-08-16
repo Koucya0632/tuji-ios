@@ -387,7 +387,7 @@ struct AtlasCollectionDetailView: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: remaining == 0 ? "checkmark" : "plus")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.tujiIcon(11, weight: .bold))
                     Text(collectionLearningPillTitle(
                         remaining: remaining,
                         total: self.vm.totalCount
@@ -470,7 +470,7 @@ struct AtlasCollectionDetailView: View {
     private var errorState: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(self.vm.isUnavailable
                 ? tujiLocalized("找不到這個合集")

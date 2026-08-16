@@ -108,9 +108,9 @@ struct ThemeStatusBadge: View {
     private func pill(text: LocalizedStringKey, icon: String, tint: Color) -> some View {
         HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.system(size: 8, weight: .semibold))
+                .font(.tujiIcon(8, weight: .semibold))
             Text(text)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.tujiIcon(9, weight: .semibold))
         }
         .foregroundStyle(tint)
         .padding(.horizontal, 5)

@@ -332,7 +332,7 @@ private struct TabBarButton: View {
         Button(action: self.action) {
             VStack(spacing: Space.s1) {
                 Image(systemName: self.tab.iconName)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.tujiIcon(20, weight: .semibold))
                 Text(self.tab.titleZh)
                     .font(.tujiLabel)
                     // No tracking, unlike every other tujiLabel: the +0.5pt is a
@@ -396,7 +396,7 @@ private struct CaptureBarButton: View {
     var body: some View {
         Button(action: self.action) {
             Image(systemName: "camera.viewfinder")
-                .font(.system(size: 24, weight: .semibold))
+                .font(.tujiIcon(24, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
                 .frame(height: 64)

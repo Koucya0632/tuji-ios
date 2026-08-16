@@ -34,7 +34,7 @@ struct TujiSwipeRow<Content: View>: View {
             } label: {
                 VStack(spacing: Space.s1) {
                     Image(systemName: self.systemImage)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.tujiIcon(18, weight: .semibold))
                     Text(self.actionLabel)
                         .font(.tujiLabel)
                         .tracking(0.5)

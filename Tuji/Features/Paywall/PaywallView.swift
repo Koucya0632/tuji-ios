@@ -51,7 +51,7 @@ struct PaywallView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Image(systemName: "crown.fill")
-                .font(.system(size: 34, weight: .heavy))
+                .font(.tujiIcon(34, weight: .heavy))
                 .foregroundStyle(.tujiCurrent)
             Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
                 .font(.tujiH3)
@@ -74,7 +74,7 @@ struct PaywallView: View {
     private func benefitRow(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.tujiIcon(15, weight: .semibold))
                 .foregroundStyle(.tujiBrandSecondary)
                 .frame(width: 22)
             Text(text)

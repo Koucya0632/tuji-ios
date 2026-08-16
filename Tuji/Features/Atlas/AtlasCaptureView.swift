@@ -286,7 +286,7 @@ struct AtlasCaptureView: View {
                             image.resizable().aspectRatio(contentMode: .fit)
                         } else if state.error != nil {
                             Image(systemName: "photo")
-                                .font(.system(size: 28, weight: .bold))
+                                .font(.tujiIcon(28, weight: .bold))
                                 .foregroundStyle(.tujiInk3)
                         } else {
                             TujiProgressBar(progress: nil)
@@ -329,7 +329,7 @@ struct AtlasCaptureView: View {
                 self.showPrecisionInfo = true
             } label: {
                 Image(systemName: "questionmark.circle")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.tujiIcon(18, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
                     .frame(width: 32)
                     .padding(.vertical, Space.s3)
@@ -510,7 +510,7 @@ struct AtlasCaptureView: View {
                     Image(systemName: "arrow.clockwise")
                     Text("重試上傳")
                 }
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiIcon(14, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)

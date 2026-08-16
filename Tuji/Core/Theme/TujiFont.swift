@@ -75,6 +75,33 @@ extension Font {
     static func tujiHeadwordRuby(_ size: CGFloat) -> Font {
         TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: size)
     }
+
+    /// An SF Symbol's point size.
+    ///
+    /// Not one of the eight steps, and deliberately not a scale at all yet: it
+    /// is `Font.system(size:weight:)` under a name that lives in the theme,
+    /// nothing more. It exists so the lint rule below it can be absolute.
+    ///
+    /// `no_system_font_outside_theme` is a single-line regex — it cannot see
+    /// whether the line above says `Image(systemName:)` or `Text(`, so a rule
+    /// that catches every hard-coded *text* size catches every hard-coded
+    /// *icon* size with it. Routing icons through here is what lets the rule be
+    /// an error instead of a suggestion.
+    ///
+    /// What it is not: discipline. The 71 icons that came through this door
+    /// arrived carrying **21 distinct sizes** (8, 9, 10, 11, 12, 14, 15, 16,
+    /// 17, 18, 19, 20, 22, 24, 26, 28, 32, 34, 36, 40, 64), which is the same
+    /// "any value can be found somewhere in it, so a layout never has to make a
+    /// decision" problem `Space.swift` describes about its own former 13-step
+    /// scale. Collapsing them to a real scale is a separate, deliberate pass
+    /// that moves pixels on every screen; this one moves none.
+    ///
+    /// Unlike the text tokens it does **not** apply `UIFontMetrics`, matching
+    /// what these call sites did before: a glyph in a fixed-height row that
+    /// grows with the user's text size overflows the row.
+    static func tujiIcon(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight)
+    }
 }
 
 /// Resolves a token to a real font, pairing the Latin face with the CJK face for

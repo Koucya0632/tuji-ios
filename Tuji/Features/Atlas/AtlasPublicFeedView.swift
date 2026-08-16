@@ -294,7 +294,7 @@ struct AtlasPublicFeedView: View {
         VStack(spacing: Space.s3) {
             Spacer()
             Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(self.browsing.explore.errorMessage == nil
                 ? tujiLocalized("這個語言還沒有公開合集")
@@ -473,7 +473,7 @@ struct AtlasPublicTile: View {
                 endPoint: .bottomTrailing
             )
             Image(systemName: "photo")
-                .font(.system(size: 22))
+                .font(.tujiIcon(22))
                 .foregroundStyle(.tujiInk3)
         }
     }
@@ -631,7 +631,7 @@ struct AtlasPublicDetailView: View {
                         .padding(Space.s3)
                 } else if state.error != nil {
                     Image(systemName: "photo")
-                        .font(.system(size: 28))
+                        .font(.tujiIcon(28))
                         .foregroundStyle(.tujiInk3)
                 } else {
                     TujiImagePlaceholder()
@@ -765,7 +765,7 @@ struct AtlasPublicDetailView: View {
         HStack(spacing: 5) {
             if let icon {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.tujiIcon(11, weight: .bold))
             }
             Text(title)
                 .font(.system(size: 12, weight: .bold))

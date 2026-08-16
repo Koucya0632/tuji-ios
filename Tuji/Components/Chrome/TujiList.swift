@@ -167,7 +167,7 @@ struct TujiRowAccessory: View {
                 // arrow implies moving forward and shares the 2pt round-cap
                 // stroke every other icon in the app uses.
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.tujiIcon(16, weight: .semibold))
                     .foregroundStyle(.tujiInk3)
             }
         }
@@ -233,7 +233,7 @@ struct TujiSelectionMark: View {
 
     var body: some View {
         Image(systemName: "checkmark")
-            .font(.system(size: 16, weight: .bold))
+            .font(.tujiIcon(16, weight: .bold))
             .foregroundStyle(.tujiCurrent)
             .opacity(self.selected ? 1 : 0)
             .frame(width: 24)

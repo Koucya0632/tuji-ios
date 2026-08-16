@@ -145,7 +145,7 @@ struct NewFlowView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.tujiIcon(19, weight: .semibold))
                         .foregroundStyle(.tujiInk)
                         .frame(width: 44, height: 48)
                         .contentShape(.rect)
@@ -307,7 +307,7 @@ private struct NewStagePips: View {
                 switch step.state {
                 case .done, .skipped:
                     Image(systemName: "checkmark")
-                        .font(.system(size: 8, weight: .heavy))
+                        .font(.tujiIcon(8, weight: .heavy))
                         .foregroundStyle(.white)
                 case .active:
                     Circle()

@@ -109,7 +109,7 @@ struct AtlasMyCollectionsView: View {
     private var emptyState: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "square.stack.3d.up")
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(self.vm.loadError == nil
                 ? self.emptyTitle
@@ -538,7 +538,7 @@ struct AtlasCollectionEditView: View {
                     Task { await self.vm.removeMember(item.id) }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.tujiIcon(18))
                         .foregroundStyle(.white, .black.opacity(0.5))
                         .padding(4)
                 }
@@ -613,7 +613,7 @@ struct AtlasCollectionEditView: View {
     private var errorState: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
+                .font(.tujiIcon(36))
                 .foregroundStyle(.tujiInk3)
             Text(tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBodySm)
@@ -657,7 +657,7 @@ private struct AtlasCollectionItemPicker: View {
                     } else if self.model.available.isEmpty {
                         VStack(spacing: Space.s3) {
                             Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 36)).foregroundStyle(.tujiInk3)
+                                .font(.tujiIcon(36)).foregroundStyle(.tujiInk3)
                             Text(self.model.loadError == nil
                                 ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入合集。")
                                 : tujiLocalized("載入失敗，請稍後再試"))
@@ -729,7 +729,7 @@ private struct AtlasCollectionItemPicker: View {
                 }
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.tujiIcon(18))
                         .foregroundStyle(isAdded ? .white : .white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
                         .padding(4)
                 }

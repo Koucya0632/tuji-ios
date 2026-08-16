@@ -302,7 +302,7 @@ private struct TileStub: View {
             RoundedRectangle(cornerRadius: Radius.r0)
                 .fill(.tujiBrandSecondary.opacity(0.12))
             Image(systemName: systemImage)
-                .font(.system(size: 40, weight: .bold))
+                .font(.tujiIcon(40, weight: .bold))
                 .foregroundStyle(.tujiBrandSecondary)
         }
     }

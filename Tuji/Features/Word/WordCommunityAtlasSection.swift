@@ -91,7 +91,7 @@ struct WordCommunityAtlasSection: View {
                         image.resizable().aspectRatio(contentMode: .fill)
                     } else if state.error != nil {
                         Image(systemName: "photo")
-                            .font(.system(size: 18))
+                            .font(.tujiIcon(18))
                             .foregroundStyle(.tujiInk3)
                     } else {
                         TujiImagePlaceholder()
@@ -114,7 +114,7 @@ struct WordCommunityAtlasSection: View {
                 // 圖鑑 capacity (../docs/COMMUNITY_ATLAS_PLAN.md §4.1 —
                 // FEATURES.md §12.1).
                 Image(systemName: self.savedSlugs.contains(item.slug) ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.tujiIcon(11, weight: .bold))
                     .foregroundStyle(.tujiCurrent)
             }
             .padding(.horizontal, Space.s2)

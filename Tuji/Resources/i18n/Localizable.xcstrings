@@ -4288,28 +4288,6 @@
         }
       }
     },
-    "回圖鑑頁點右上角相機，拍一張就能做卡片。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On the Atlas tab, tap the camera in the top right and take a photo to make a card."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "図鑑ページ右上のカメラをタップして撮影すると、カードが作れます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回图鉴页点右上角相机，拍一张就能做卡片。"
-          }
-        }
-      }
-    },
     "回報學習問題" : {
       "localizations" : {
         "en" : {
@@ -9723,28 +9701,6 @@
         }
       }
     },
-    "用右上角的相機拍一張，就會多一張卡片" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap the camera above to make one"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "右上のカメラで撮ると1枚増えます"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用右上角的相机拍一张，就会多一张卡片"
-          }
-        }
-      }
-    },
     "用圖學語言" : {
       "localizations" : {
         "en" : {
@@ -9785,6 +9741,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当前学习遇到什么问题呢？"
+          }
+        }
+      }
+    },
+    "用底下中間的相機拍一張，就會多一張卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the camera in the middle of the bar below to add a card"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下のバー中央のカメラで撮ると、カードが1枚増えます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用底下中间的相机拍一张，就会多一张卡片"
           }
         }
       }
@@ -15241,6 +15219,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点击更换头像"
+          }
+        }
+      }
+    },
+    "點底下中間的相機，拍一張就能做卡片。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap the camera in the middle of the bar below and take a photo to make a card."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下のバー中央のカメラをタップして撮影すると、カードを作れます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点底下中间的相机，拍一张就能做卡片。"
           }
         }
       }

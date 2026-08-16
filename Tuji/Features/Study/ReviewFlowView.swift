@@ -137,7 +137,7 @@ struct ReviewFlowView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 19, weight: .semibold))
+                            .font(.tujiIcon(19, weight: .semibold))
                             .foregroundStyle(.tujiInk)
                             .frame(width: 44, height: 48)
                             .contentShape(.rect)
@@ -300,9 +300,9 @@ private struct ReviewFlashCapsule: View {
     var body: some View {
         HStack(spacing: Space.s2) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.tujiIcon(15, weight: .semibold))
             Text(self.label)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.tujiIcon(15, weight: .semibold))
         }
         .foregroundStyle(.white)
         .padding(.horizontal, Space.s4)

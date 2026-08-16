@@ -32,7 +32,7 @@ struct WelcomeView: View {
                         auth.enterGuestMode()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.tujiIcon(16, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                             .padding(Space.s3)
                             .background(.tujiPaper, in: .circle)

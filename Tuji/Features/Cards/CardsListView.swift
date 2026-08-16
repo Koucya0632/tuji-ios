@@ -95,7 +95,7 @@ struct CardsListView: View {
             Spacer()
             NavigationLink(value: NavRoute.search(query: nil)) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.tujiIcon(18, weight: .bold))
                     .foregroundStyle(.tujiInk2)
             }
             .buttonStyle(.plain)
@@ -176,7 +176,7 @@ struct CardsListView: View {
     private var emptyHint: LocalizedStringKey? {
         switch self.source {
         case .bookmarked: "你加書籤的字會出現在這裡"
-        case .mine: "用右上角的相機拍一張，就會多一張卡片"
+        case .mine: "用底下中間的相機拍一張，就會多一張卡片"
         case .taken: "在物見收進的字會出現在這裡"
         case .official, nil: nil
         }

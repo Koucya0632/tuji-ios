@@ -184,7 +184,7 @@ struct CompleteView: View {
                         // arrow says the crossing happened.
                         if leveledUp {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.tujiIcon(10, weight: .bold))
                                 .foregroundStyle(.tujiAccumulation)
                         }
                         Text("\(change.before)→\(change.after)")

@@ -132,7 +132,7 @@ struct StudyReportSheet: View {
     private var successContent: some View {
         VStack(spacing: Space.s4) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 64))
+                .font(.tujiIcon(64))
                 .foregroundStyle(.tujiAccumulation)
             Text("謝謝你的回報！我們會盡快確認並改進。")
                 .font(.system(size: 15, weight: .bold))

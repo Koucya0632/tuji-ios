@@ -132,7 +132,7 @@ struct TodayView: View {
     private var searchButton: some View {
         NavigationLink(value: NavRoute.search(query: nil)) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiIcon(16, weight: .semibold))
                 .foregroundStyle(.tujiInk2)
                 .padding(Space.s2)
                 .background(.tujiPaper, in: .circle)
@@ -146,7 +146,7 @@ struct TodayView: View {
         let n = self.progress.streak?.current ?? 0
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.tujiIcon(12, weight: .semibold))
                 .foregroundStyle(n > 0 ? .tujiAccumulation : .tujiInk3)
             Text("\(n)")
                 .font(.system(size: 14, weight: .semibold))
@@ -347,9 +347,9 @@ struct TodayView: View {
                 if reached {
                     HStack(spacing: 3) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.tujiIcon(11, weight: .semibold))
                         Text("達成")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.tujiIcon(12, weight: .semibold))
                     }
                     .foregroundStyle(.tujiCurrent)
                 } else {

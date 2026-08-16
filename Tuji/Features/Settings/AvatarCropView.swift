@@ -227,7 +227,7 @@ struct AvatarCropView: View {
     private var failureView: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32, weight: .bold))
+                .font(.tujiIcon(32, weight: .bold))
                 .foregroundStyle(.white.opacity(0.8))
             Text("無法載入這張照片")
                 .font(.system(size: 16, weight: .semibold))

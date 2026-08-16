@@ -59,13 +59,13 @@ struct AtlasCaptureQueueTile: View {
                         .padding(.horizontal, Space.s4)
                 } else if self.job.progress.canRetry {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 26, weight: .semibold))
+                        .font(.tujiIcon(26, weight: .semibold))
                         .foregroundStyle(.tujiInk2)
                 } else {
                     // A capacity dead end. An arrow here would be an invitation
                     // to do the one thing that cannot work.
                     Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 26, weight: .semibold))
+                        .font(.tujiIcon(26, weight: .semibold))
                         .foregroundStyle(.tujiInk2)
                 }
             }

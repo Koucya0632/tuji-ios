@@ -187,7 +187,7 @@ struct SearchView: View {
         HStack(spacing: Space.s3) {
             HStack(spacing: Space.s2) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.tujiIcon(17, weight: .semibold))
                     .foregroundStyle(.tujiInk2)
                 TextField(
                     self.settings.current.learningDirection == .zhJa
@@ -214,7 +214,7 @@ struct SearchView: View {
                         // disc is iOS's own clear button, and it is the second
                         // thing that gave this field away as a system control.
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.tujiIcon(14, weight: .bold))
                             .foregroundStyle(.tujiInk2)
                             .frame(width: 44, height: 44)
                             .contentShape(.rect)
@@ -302,7 +302,7 @@ struct SearchView: View {
                                 // so it reads as "put this back" rather than as
                                 // another row that pushes a screen.
                                 Image(systemName: "arrow.up.left")
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(.tujiIcon(17, weight: .semibold))
                                     .foregroundStyle(.tujiInk3)
                             }
                             .padding(.horizontal, Space.s4)

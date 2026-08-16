@@ -27,7 +27,7 @@ struct TujiCheckbox: View {
                 Rectangle().fill(self.ground)
                 if self.isOn {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.tujiIcon(15, weight: .bold))
                         .foregroundStyle(self.isEnabled ? Color.tujiCurrent : .tujiInk3)
                 }
             }
