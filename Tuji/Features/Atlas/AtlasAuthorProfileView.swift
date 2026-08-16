@@ -69,7 +69,7 @@ struct AtlasAuthorProfileView: View {
             }
         } label: {
             Image(systemName: "ellipsis")
-                .font(.system(size: 17, weight: .semibold))
+                .font(.tujiIcon(17, weight: .semibold))
                 .foregroundStyle(.tujiInk2)
                 .frame(width: 44, height: 48)
                 .contentShape(.rect)
@@ -220,7 +220,7 @@ struct AtlasAuthorProfileView: View {
     private func plainBlank(icon: String, text: String, retry: Bool) -> some View {
         VStack(spacing: Space.s3) {
             Image(systemName: icon)
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(text)
                 .font(.tujiBodySm)
@@ -340,7 +340,7 @@ struct AtlasAuthorProfileView: View {
             // section directly above it.
             if !self.vm.showsSegmentedControl {
                 Text("公開的圖鑑")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

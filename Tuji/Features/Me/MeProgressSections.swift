@@ -342,7 +342,7 @@ struct HeatmapGrid: View {
         return HStack(spacing: 5) {
             ForEach(labels.indices, id: \.self) { i in
                 Text(labels[i])
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity)
             }
@@ -352,7 +352,7 @@ struct HeatmapGrid: View {
     private var legend: some View {
         HStack(spacing: 6) {
             Text("少")
-                .font(.system(size: 10, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             ForEach(0..<4, id: \.self) { lvl in
                 RoundedRectangle(cornerRadius: 3)
@@ -360,7 +360,7 @@ struct HeatmapGrid: View {
                     .frame(width: 14, height: 14)
             }
             Text("多")
-                .font(.system(size: 10, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             Spacer()
         }

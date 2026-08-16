@@ -89,7 +89,7 @@ struct SetupView: View {
                                     Task { await auth.signOut() }
                                 } label: {
                                     Text("重新登入")
-                                        .font(.system(size: 14, weight: .semibold))
+                                        .font(.tujiBodySm(.strong))
                                         .foregroundStyle(.tujiBrandSecondary)
                                         .padding(.vertical, Space.s2)
                                         .padding(.horizontal, Space.s3)
@@ -149,7 +149,7 @@ struct SetupView: View {
     private func tile(label: LocalizedStringKey, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk2)
                 .padding(.vertical, Space.s3)
                 .frame(maxWidth: .infinity)
@@ -170,7 +170,7 @@ struct SetupView: View {
     private func categoryTile(category: TujiCategory, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(category.nameZh)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

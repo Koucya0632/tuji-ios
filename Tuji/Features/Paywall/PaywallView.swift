@@ -51,7 +51,7 @@ struct PaywallView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Image(systemName: "crown.fill")
-                .font(.system(size: 34, weight: .heavy))
+                .font(.tujiIcon(34, weight: .heavy))
                 .foregroundStyle(.tujiCurrent)
             Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
                 .font(.tujiH3)
@@ -74,11 +74,11 @@ struct PaywallView: View {
     private func benefitRow(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: Space.s3) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.tujiIcon(15, weight: .semibold))
                 .foregroundStyle(.tujiBrandSecondary)
                 .frame(width: 22)
             Text(text)
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
         }
     }
@@ -99,7 +99,7 @@ struct PaywallView: View {
         // lie 設定 used to tell.
         if self.entitlement.isPro {
             Text("你已經是 Tuji Pro，感謝支持！")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiAccumulation)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else if self.store.products.isEmpty {
@@ -142,7 +142,7 @@ struct PaywallView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(product.displayName)
-                        .font(.system(size: 16, weight: .heavy))
+                        .font(.tujiBody(.strong))
                         .foregroundStyle(.tujiBrandPrimary)
                     if let period = self.periodLabel(product) {
                         Text(period)
@@ -155,7 +155,7 @@ struct PaywallView: View {
                     TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 56)
                 } else {
                     Text(product.displayPrice)
-                        .font(.system(size: 16, weight: .heavy))
+                        .font(.tujiBody(.strong))
                         .foregroundStyle(.white)
                 }
             }
@@ -172,7 +172,7 @@ struct PaywallView: View {
             Task { await self.restore() }
         } label: {
             Text("恢復購買")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk3)
                 .frame(maxWidth: .infinity)
         }

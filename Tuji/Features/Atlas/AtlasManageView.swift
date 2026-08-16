@@ -289,9 +289,9 @@ private struct AtlasCardsManagementPane: View {
     private var emptyRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("還沒有自制圖鑑卡片")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
-            Text("回圖鑑頁點右上角相機，拍一張就能做卡片。")
+            Text("點底下中間的相機，拍一張就能做卡片。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
@@ -317,7 +317,7 @@ private struct AtlasCardsManagementPane: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(row.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                 if let subtitle = row.subtitle {
@@ -329,7 +329,7 @@ private struct AtlasCardsManagementPane: View {
             }
             Spacer()
             Text(row.statusLabel)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, 2)
@@ -368,7 +368,7 @@ private struct AtlasManageDetailView: View {
                             img.resizable().aspectRatio(contentMode: .fit)
                         } else if state.error != nil {
                             Image(systemName: "photo")
-                                .font(.system(size: 28, weight: .bold))
+                                .font(.tujiIcon(28, weight: .bold))
                                 .foregroundStyle(.tujiInk3)
                         } else {
                             TujiImagePlaceholder()
@@ -480,7 +480,7 @@ private struct AtlasManageDetailView: View {
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             Text(value)
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

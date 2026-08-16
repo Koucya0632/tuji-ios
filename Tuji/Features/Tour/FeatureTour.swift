@@ -20,7 +20,7 @@ nonisolated enum TourTarget: Hashable {
     case streak
     /// The floating tab bar pill.
     case tabBar
-    /// Camera capture button in the 圖鑑 header.
+    /// The 拍照 action in the middle of the tab bar.
     case capture
 }
 
@@ -100,22 +100,30 @@ struct TourStep: Identifiable {
                 fallback: nil,
                 shape: .pill,
                 pose: .face,
-                // This step has been wrong twice. It first said "四個分頁"
-                // listing 主頁/圖鑑/進度/我的 and missed 社群 entirely; the fix
-                // added 社群 but kept three tab names that no longer exist, so
-                // the tour pointed at the bar and read out 主頁, 進度 and 我的
-                // to every new user. Whatever this says must match
-                // `MainTab.allCases` — there is nothing that makes a
-                // divergence fail to compile.
-                title: "四個分頁",
-                text: "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號。"
+                // This step has now been wrong three times. It first said
+                // "四個分頁" listing 主頁/圖鑑/進度/我的 and missed 社群 entirely;
+                // the fix added 社群 but kept three tab names that no longer
+                // exist, so the tour pointed at the bar and read out 主頁, 進度
+                // and 我的 to every new user; and the count went stale again the
+                // day 拍照 moved into the middle of the bar. Whatever this says
+                // must match what the bar actually renders — `MainTab.allCases`
+                // plus the capture slot — and there is still nothing that makes
+                // a divergence fail to compile. Counting them is what keeps
+                // going wrong, so this no longer counts them.
+                title: "底下這一排",
+                text: "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，中間的黃色按鈕隨時可以拍照收字。"
             ),
             TourStep(
                 id: 3,
-                tab: .cards,
+                // Stays on 今天: the capture slot is in the tab bar, so it is on
+                // screen whichever tab is showing, and this step used to switch
+                // to 圖鑑 only because that is where the button lived. Squaring
+                // the cutout for the same reason — it is a rectangular key in
+                // the bar now, not the round icon it was in the header.
+                tab: .today,
                 target: .capture,
                 fallback: nil,
-                shape: .pill,
+                shape: .rounded(Radius.r0),
                 pose: .peek,
                 title: "拍照收字",
                 // 拍照 needs an account (the upload is authenticated), so the

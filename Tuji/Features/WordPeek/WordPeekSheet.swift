@@ -133,7 +133,7 @@ struct WordPeekSheet: View {
                             )
                     } else if state.error != nil {
                         Image(systemName: "photo")
-                            .font(.system(size: 32))
+                            .font(.tujiIcon(32))
                             .foregroundStyle(.tujiInk3)
                     } else {
                         TujiImagePlaceholder()

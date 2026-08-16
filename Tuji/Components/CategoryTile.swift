@@ -66,7 +66,7 @@ struct CategoryTile: View {
     var body: some View {
         VStack(spacing: 3) {
             Text(self.category.nameZh)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -108,9 +108,9 @@ struct ThemeStatusBadge: View {
     private func pill(text: LocalizedStringKey, icon: String, tint: Color) -> some View {
         HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.system(size: 8, weight: .semibold))
+                .font(.tujiIcon(8, weight: .semibold))
             Text(text)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.tujiIcon(9, weight: .semibold))
         }
         .foregroundStyle(tint)
         .padding(.horizontal, 5)

@@ -57,10 +57,10 @@ struct AtlasSavedItemDetailView: View {
     private func errorState(_ message: String) -> some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "eye.slash")
-                .font(.system(size: 36))
+                .font(.tujiIcon(36))
                 .foregroundStyle(.tujiInk3)
             Text("這張卡片已經不公開了")
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
             Text(message)
                 .font(.tujiLabel)

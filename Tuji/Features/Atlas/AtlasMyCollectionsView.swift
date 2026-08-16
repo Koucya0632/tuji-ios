@@ -109,7 +109,7 @@ struct AtlasMyCollectionsView: View {
     private var emptyState: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "square.stack.3d.up")
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(self.vm.loadError == nil
                 ? self.emptyTitle
@@ -354,7 +354,7 @@ struct AtlasCollectionEditView: View {
     private var avatarSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text("合集頭像")
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
             HStack(spacing: Space.s4) {
                 Button {
@@ -414,7 +414,7 @@ struct AtlasCollectionEditView: View {
                         Button("重試上傳") {
                             Task { await self.avatar.retry() }
                         }
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiBrandSecondary)
                     }
                 }
@@ -476,14 +476,14 @@ struct AtlasCollectionEditView: View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
                 Text("項目 \(self.vm.members.count)")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                 Spacer()
                 Button {
                     self.showPicker = true
                 } label: {
                     Label("新增", systemImage: "plus.circle.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiBrandSecondary)
                 }
                 .buttonStyle(.plain)
@@ -525,7 +525,7 @@ struct AtlasCollectionEditView: View {
 
                 if let label = item.collectionPublicationLabel {
                     Text(label)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 3)
@@ -538,14 +538,14 @@ struct AtlasCollectionEditView: View {
                     Task { await self.vm.removeMember(item.id) }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.tujiIcon(18))
                         .foregroundStyle(.white, .black.opacity(0.5))
                         .padding(4)
                 }
                 .buttonStyle(.plain)
             }
             Text(item.lemma)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
                 .lineLimit(1)
         }
@@ -559,7 +559,7 @@ struct AtlasCollectionEditView: View {
                 Text("公開狀態").font(.tujiLabel).foregroundStyle(.tujiInk3)
                 Spacer()
                 Text(collection.review.label)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk)
             }
             if let errorMessage = self.vm.errorMessage {
@@ -586,7 +586,7 @@ struct AtlasCollectionEditView: View {
                 .opacity(self.vm.canSubmit ? 1 : 0.6)
                 if self.vm.members.isEmpty {
                     Text("合集至少要有一個項目才能公開。")
-                        .font(.system(size: 11))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }
             }
@@ -613,7 +613,7 @@ struct AtlasCollectionEditView: View {
     private var errorState: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 36))
+                .font(.tujiIcon(36))
                 .foregroundStyle(.tujiInk3)
             Text(tujiLocalized("載入失敗，請稍後再試"))
                 .font(.tujiBodySm)
@@ -657,7 +657,7 @@ private struct AtlasCollectionItemPicker: View {
                     } else if self.model.available.isEmpty {
                         VStack(spacing: Space.s3) {
                             Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 36)).foregroundStyle(.tujiInk3)
+                                .font(.tujiIcon(36)).foregroundStyle(.tujiInk3)
                             Text(self.model.loadError == nil
                                 ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入合集。")
                                 : tujiLocalized("載入失敗，請稍後再試"))
@@ -719,7 +719,7 @@ private struct AtlasCollectionItemPicker: View {
                 .overlay(alignment: .bottomLeading) {
                     if let label = item.collectionPublicationLabel {
                         Text(label)
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.tujiLabel)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 3)
@@ -729,12 +729,12 @@ private struct AtlasCollectionItemPicker: View {
                 }
                 .overlay(alignment: .topTrailing) {
                     Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.tujiIcon(18))
                         .foregroundStyle(isAdded ? .white : .white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
                         .padding(4)
                 }
                 Text(item.lemma)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk2)
                     .lineLimit(1)
             }

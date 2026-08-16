@@ -12,8 +12,6 @@
 // shows the new value here, and the 圖鑑/詳情 reflect the new scores when the
 // user navigates back.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct CompleteView: View {
@@ -186,7 +184,7 @@ struct CompleteView: View {
                         // arrow says the crossing happened.
                         if leveledUp {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.tujiIcon(10, weight: .bold))
                                 .foregroundStyle(.tujiAccumulation)
                         }
                         Text("\(change.before)→\(change.after)")
@@ -206,19 +204,12 @@ struct CompleteView: View {
         Color.tujiPaper2
             .frame(width: 48, height: 48)
             .overlay {
-                LazyImage(url: word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable()
-                            .aspectRatio(contentMode: word.imageKind == .cutout ? .fit : .fill)
-                            .padding(word.imageKind == .cutout ? Space.s1 : 0)
-                            .blendMode(word.imageKind == .cutout ? .multiply : .normal)
-                    } else if state.error != nil {
-                        Image(systemName: "photo").font(.system(size: 14)).foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
-                    }
-                }
-                .pipeline(.shared)
+                WordPicture(
+                    url: word.imageURL,
+                    kind: word.imageKind,
+                    inset: Space.s1,
+                    glyphSize: 14
+                )
             }
             .clipped()
     }
@@ -258,7 +249,7 @@ struct CompleteView: View {
                 .disabled(self.startingNextRound)
                 Button(action: self.onFinish) {
                     Text("先到這裡，回首頁")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk3)
                         .padding(.vertical, Space.s2)
                 }

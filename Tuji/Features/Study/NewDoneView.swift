@@ -1,8 +1,6 @@
 // Completion celebration shown after Step 3 wraps. Lists the words
 // learned this session and a 完成 CTA back to the previous screen.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct NewDoneView: View {
@@ -102,22 +100,7 @@ struct StudyWordGrid: View {
             Color.tujiPaper2
                 .aspectRatio(1, contentMode: .fit)
                 .overlay {
-                    LazyImage(url: item.word.imageURL) { state in
-                        if let image = state.image {
-                            image.resizable()
-                                .aspectRatio(
-                                    contentMode: item.word.imageKind == .cutout ? .fit : .fill
-                                )
-                                .padding(item.word.imageKind == .cutout ? Space.s3 : 0)
-                                .blendMode(item.word.imageKind == .cutout ? .multiply : .normal)
-                        } else if state.error != nil {
-                            Image(systemName: "photo")
-                                .foregroundStyle(.tujiInk3)
-                        } else {
-                            TujiImagePlaceholder()
-                        }
-                    }
-                    .pipeline(.shared)
+                    WordPicture(url: item.word.imageURL, kind: item.word.imageKind)
                 }
                 .clipped()
 

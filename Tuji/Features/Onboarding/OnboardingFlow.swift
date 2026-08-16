@@ -62,7 +62,7 @@ struct LearningDirectionOnboardingView: View {
         } label: {
             HStack(spacing: Space.s3) {
                 Text(direction == .zhJa ? "日" : "EN")
-                    .font(.system(size: 18, weight: .heavy))
+                    .font(.tujiH3)
                     .foregroundStyle(.tujiBrandSecondary)
                     .frame(width: 48, height: 48)
                     .background(Color.tujiBrandSecondary.opacity(0.12), in: .circle)
@@ -156,7 +156,7 @@ struct OnboardingFlow: View {
                     state.introDone = true
                 } label: {
                     Text("跳過")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk3)
                         .padding(.vertical, Space.s2)
                         .padding(.horizontal, Space.s3)
@@ -259,9 +259,9 @@ private struct PageView: View {
             VStack(spacing: Space.s3) {
                 TileStub(systemImage: "carrot.fill").frame(height: 120)
                 VStack(spacing: Space.s2) {
-                    OptionRow(text: "lettuce", state: .idle)
-                    OptionRow(text: "carrot", state: .selected)
-                    OptionRow(text: "cucumber", state: .idle)
+                    OptionRow(word: "lettuce", state: .idle)
+                    OptionRow(word: "carrot", state: .selected)
+                    OptionRow(word: "cucumber", state: .idle)
                 }
             }
             .frame(height: 250)
@@ -272,7 +272,7 @@ private struct PageView: View {
                     Text("連勝").font(.tujiLabel).foregroundStyle(.white.opacity(0.7))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: Space.s2) {
-                    Text("23").font(.system(size: 52, weight: .heavy)).foregroundStyle(.white)
+                    Text("23").font(.tujiDisplay).foregroundStyle(.white)
                     Text("天").font(.tujiH3).foregroundStyle(.white.opacity(0.7))
                 }
                 LazyVGrid(
@@ -302,22 +302,27 @@ private struct TileStub: View {
             RoundedRectangle(cornerRadius: Radius.r0)
                 .fill(.tujiBrandSecondary.opacity(0.12))
             Image(systemName: systemImage)
-                .font(.system(size: 40, weight: .bold))
+                .font(.tujiIcon(40, weight: .bold))
                 .foregroundStyle(.tujiBrandSecondary)
         }
     }
 }
 
 private struct OptionRow: View {
-    let text: String
+    /// A vocabulary word being *illustrated*, not interface copy — these rows
+    /// mock up the 選字 stage, so "lettuce" stays "lettuce" in every interface
+    /// language. Named `word` rather than `text` to say so: `text:` is the
+    /// project's argument name for a `LocalizedStringKey`, and the localization
+    /// check reads it that way.
+    let word: String
     let state: State
 
     enum State { case idle, selected }
 
     var body: some View {
         HStack {
-            Text(text)
-                .font(.system(size: 14, weight: .semibold))
+            Text(verbatim: self.word)
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk2)
             Spacer()
             if state == .selected {

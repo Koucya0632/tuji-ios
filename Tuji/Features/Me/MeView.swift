@@ -72,7 +72,7 @@ struct MeView: View {
             TujiNavBar(leading: .none) {
                 NavigationLink(value: NavRoute.settings) {
                     Image(systemName: "gearshape")
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.tujiIcon(19, weight: .semibold))
                         .foregroundStyle(.tujiInk)
                         .frame(width: 44, height: 48)
                         .contentShape(.rect)
@@ -156,7 +156,7 @@ struct MeView: View {
                         edge: self.subscriptionEdge
                     )
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.tujiIcon(16, weight: .semibold))
                         .foregroundStyle(.tujiInk3)
                 }
                 .fixedSize(horizontal: true, vertical: false)
@@ -238,7 +238,7 @@ struct MeView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                 if self.settings.current.showZh {
                     Text(word.chinese)
@@ -249,10 +249,10 @@ struct MeView: View {
             }
             Spacer()
             Text("\(word.mastery)")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(accent)
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.tujiIcon(11, weight: .semibold))
                 .foregroundStyle(.tujiInk3)
         }
         .padding(.horizontal, Space.s3)
@@ -309,7 +309,7 @@ private struct DebugSmokeSection: View {
                         .foregroundStyle(.tujiInk3)
                     Spacer()
                     Image(systemName: self.open ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.tujiIcon(11, weight: .semibold))
                         .foregroundStyle(.tujiInk3)
                 }
             }

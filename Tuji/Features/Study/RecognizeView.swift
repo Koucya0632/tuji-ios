@@ -7,8 +7,6 @@
 // word is the expected answer, so it must have a button (the old 知道/熟悉
 // pair were both positive and left first-timers guessing).
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct RecognizeView: View {
@@ -154,23 +152,12 @@ struct RecognizeView: View {
         Color.tujiPaper2
             .frame(height: 220)
             .overlay {
-                LazyImage(url: self.item.word.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable()
-                            .aspectRatio(
-                                contentMode: self.item.word.imageKind == .cutout ? .fit : .fill
-                            )
-                            .padding(self.item.word.imageKind == .cutout ? Space.s3 : 0)
-                            .blendMode(self.item.word.imageKind == .cutout ? .multiply : .normal)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .font(.system(size: 32))
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
-                    }
-                }
-                .pipeline(.shared)
+                WordPicture(
+                    url: self.item.word.imageURL,
+                    kind: self.item.word.imageKind,
+                    framing: .whole,
+                    glyphSize: 32
+                )
             }
             .clipped()
     }

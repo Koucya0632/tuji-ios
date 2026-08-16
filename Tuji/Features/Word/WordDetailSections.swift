@@ -168,7 +168,7 @@ struct WordDetailSections: View {
             HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
                 if self.settings.current.showZh, !glossDupesTarget {
                     Text(w.chinese)
-                        .font(.system(size: 17, weight: .heavy))
+                        .font(.tujiH3)
                         .foregroundStyle(.tujiInk)
                 }
                 if let pos = w.partOfSpeech {
@@ -284,11 +284,11 @@ struct WordDetailSections: View {
                 let zhText = (zh != nil && idx < (zh?.count ?? 0)) ? zh?[idx] : nil
                 VStack(alignment: .leading, spacing: 2) {
                     Text(c)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                     if let zhText, !zhText.isEmpty {
                         Text(zhText)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiBrandSecondary)
                     }
                 }

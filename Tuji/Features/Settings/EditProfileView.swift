@@ -108,7 +108,7 @@ struct EditProfileView: View {
                     }
 
                     Image(systemName: "camera.fill")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.tujiIcon(14, weight: .bold))
                         .foregroundStyle(.tujiInk)
                         .frame(width: 34, height: 34)
                         .background(.tujiBrandPrimary, in: .circle)

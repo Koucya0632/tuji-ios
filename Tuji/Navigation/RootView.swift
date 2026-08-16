@@ -173,7 +173,7 @@ private struct OfflineBanner: View {
             Image(systemName: "wifi.slash")
                 .foregroundStyle(.white)
             Text("目前沒有網路連線")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiIcon(14, weight: .semibold))
                 .foregroundStyle(.white)
         }
         .padding(.horizontal, Space.s3)

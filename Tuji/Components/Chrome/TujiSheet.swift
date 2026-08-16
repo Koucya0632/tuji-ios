@@ -134,7 +134,7 @@ private struct TujiSheetHeader: View {
                     if let onClose = self.onClose { onClose() } else { self.dismiss() }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.tujiIcon(18, weight: .semibold))
                         .foregroundStyle(self.closeDisabled ? .tujiInk3 : .tujiInk2)
                         .frame(width: 48, height: 48)
                         .contentShape(.rect)

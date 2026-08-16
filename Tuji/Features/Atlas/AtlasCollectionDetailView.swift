@@ -51,7 +51,7 @@ struct AtlasCollectionDetailView: View {
             self.report.begin(.collection(slug: self.vm.slug))
         } label: {
             Text(self.report.isSent ? "已收到檢舉" : "檢舉這個合集")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(self.report.isSent ? .tujiInk3 : .tujiAlert)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
@@ -387,12 +387,12 @@ struct AtlasCollectionDetailView: View {
             } label: {
                 HStack(spacing: 5) {
                     Image(systemName: remaining == 0 ? "checkmark" : "plus")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.tujiIcon(11, weight: .bold))
                     Text(collectionLearningPillTitle(
                         remaining: remaining,
                         total: self.vm.totalCount
                     ))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.tujiLabel)
                 }
                 .foregroundStyle(remaining == 0 ? .tujiInk3 : .tujiAccumulation)
                 .padding(.horizontal, Space.s3)
@@ -470,7 +470,7 @@ struct AtlasCollectionDetailView: View {
     private var errorState: some View {
         VStack(spacing: Space.s3) {
             Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(self.vm.isUnavailable
                 ? tujiLocalized("找不到這個合集")

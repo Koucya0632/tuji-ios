@@ -132,7 +132,7 @@ struct TodayView: View {
     private var searchButton: some View {
         NavigationLink(value: NavRoute.search(query: nil)) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiIcon(16, weight: .semibold))
                 .foregroundStyle(.tujiInk2)
                 .padding(Space.s2)
                 .background(.tujiPaper, in: .circle)
@@ -146,10 +146,10 @@ struct TodayView: View {
         let n = self.progress.streak?.current ?? 0
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.tujiIcon(12, weight: .semibold))
                 .foregroundStyle(n > 0 ? .tujiAccumulation : .tujiInk3)
             Text("\(n)")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
                 .contentTransition(.numericText())
         }
@@ -347,14 +347,14 @@ struct TodayView: View {
                 if reached {
                     HStack(spacing: 3) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.tujiIcon(11, weight: .semibold))
                         Text("達成")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.tujiIcon(12, weight: .semibold))
                     }
                     .foregroundStyle(.tujiCurrent)
                 } else {
                     Text("\(done) / \(goal)")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiPaper.opacity(0.7))
                 }
             }
@@ -380,7 +380,7 @@ struct TodayView: View {
                     .foregroundStyle(.tujiPaper.opacity(0.6))
                 Spacer()
                 Text("\(learned) / \(total)")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiPaper.opacity(0.7))
             }
             // Deep teal only reaches 3.04:1 against ink; the pale step reaches
@@ -507,14 +507,14 @@ struct TodayView: View {
                 .foregroundStyle(.tujiInk3)
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("還沒選學習主題")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                 Text("選幾個你想學的主題，這裡會顯示它們，學新字也會從中出題。")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                 NavigationLink(value: NavRoute.studyCategories) {
                     Text("選擇主題")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk)
                         .padding(.vertical, Space.s3)
                         .padding(.horizontal, Space.s4)

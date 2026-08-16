@@ -43,7 +43,7 @@ struct FeedbackSheet: View {
         VStack(alignment: .leading, spacing: Space.s4) {
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("想告訴我們什麼呢？")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
 
                 ForEach(FeedbackType.allCases) { type in
@@ -78,7 +78,7 @@ struct FeedbackSheet: View {
 
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text("請詳細描述你的意見（必填）")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
 
                 ZStack(alignment: .topLeading) {
@@ -130,10 +130,10 @@ struct FeedbackSheet: View {
     private var successContent: some View {
         VStack(spacing: Space.s4) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 64))
+                .font(.tujiIcon(64))
                 .foregroundStyle(.tujiAccumulation)
             Text("謝謝你的意見！我們會參考並持續改進。")
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.tujiInk)
             BBtn(localized: tujiLocalized("完成"), fullWidth: true) { self.dismiss() }

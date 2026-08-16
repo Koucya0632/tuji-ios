@@ -157,7 +157,7 @@ extension WordDetailPage {
                             .blendMode(self.isCutout(w) ? .multiply : .normal)
                     } else if state.error != nil {
                         Image(systemName: "photo")
-                            .font(.system(size: 28))
+                            .font(.tujiIcon(28))
                             .foregroundStyle(.tujiInk3)
                     } else {
                         TujiImagePlaceholder()
@@ -232,7 +232,7 @@ extension WordDetailPage {
     {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.tujiIcon(20, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(width: 48, height: 48)
                 .contentShape(.rect)

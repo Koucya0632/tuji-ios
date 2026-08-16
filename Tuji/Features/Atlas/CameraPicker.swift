@@ -77,7 +77,7 @@ struct CameraPicker: View {
             // to the source chooser, which is where 從相簿選 lives.
             Button(action: self.onCancel) {
                 Image(systemName: "photo.on.rectangle")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.tujiIcon(22, weight: .semibold))
                     .foregroundStyle(.tujiPaper)
                     .frame(width: 56, height: 56)
                     .contentShape(.rect)
@@ -105,7 +105,7 @@ struct CameraPicker: View {
 
             Button { self.session.flip() } label: {
                 Image(systemName: "arrow.triangle.2.circlepath.camera")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.tujiIcon(22, weight: .semibold))
                     .foregroundStyle(.tujiPaper)
                     .frame(width: 56, height: 56)
                     .contentShape(.rect)

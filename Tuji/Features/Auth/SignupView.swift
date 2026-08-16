@@ -147,7 +147,7 @@ struct SignupView: View {
     private var passwordField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text("密碼")
-                .font(.system(size: 13, weight: .bold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
 
             HStack {
@@ -208,7 +208,7 @@ struct SignupView: View {
     {
         VStack(alignment: .leading, spacing: Space.s2) {
             Text(label)
-                .font(.system(size: 13, weight: .bold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
 
             TextField(placeholder, text: text)

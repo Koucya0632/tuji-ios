@@ -163,7 +163,7 @@ struct CategoryView: View {
                 .foregroundStyle(.tujiBrandSecondary)
             Spacer()
             Text("\(self.filteredWords.count)")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, Space.s2)

@@ -10,8 +10,6 @@
 // long subjects stay within a 10-tile board. Single-unit subjects skip the
 // spell stage entirely (see NewFlowCoordinator.initialSchedule).
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct TilesView: View {
@@ -85,7 +83,7 @@ struct TilesView: View {
             HStack {
                 if self.settings.current.showZh {
                     Text(self.item.word.chinese)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk)
                 }
                 Spacer()
@@ -109,20 +107,17 @@ struct TilesView: View {
     private var hero: some View {
         ZStack {
             Rectangle().fill(.tujiPaper)
-            LazyImage(url: self.item.word.imageURL) { state in
-                if let image = state.image {
-                    image.resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .padding(Space.s2)
-                } else if state.error != nil {
-                    Image(systemName: "photo")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.tujiInk3)
-                } else {
-                    TujiImagePlaceholder()
-                }
-            }
-            .pipeline(.shared)
+            // This screen used to hard-code `.fit` with no blend mode at all,
+            // so a dictionary cut-out kept the white rectangle every other
+            // screen multiplies away — the one place the 紙與墨 fix never
+            // reached.
+            WordPicture(
+                url: self.item.word.imageURL,
+                kind: self.item.word.imageKind,
+                inset: Space.s2,
+                framing: .whole,
+                glyphSize: 28
+            )
         }
         .frame(height: 168)
         .clipped()
@@ -167,7 +162,7 @@ struct TilesView: View {
             self.coord.unpickTile(atSlot: index)
         } label: {
             Text(slot.unit ?? " ")
-                .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .font(.tujiHeadword(22))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(self.slotFg(verdict))
@@ -230,7 +225,7 @@ struct TilesView: View {
             self.coord.pickTile(index)
         } label: {
             Text(tile.unit)
-                .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .font(.tujiHeadword(22))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(used ? .tujiInk3 : .tujiInk)

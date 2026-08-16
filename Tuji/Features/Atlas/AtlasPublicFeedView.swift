@@ -294,7 +294,7 @@ struct AtlasPublicFeedView: View {
         VStack(spacing: Space.s3) {
             Spacer()
             Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 40))
+                .font(.tujiIcon(40))
                 .foregroundStyle(.tujiInk3)
             Text(self.browsing.explore.errorMessage == nil
                 ? tujiLocalized("這個語言還沒有公開合集")
@@ -412,7 +412,7 @@ struct AtlasPublicTile: View {
             .clipped()
             .overlay(alignment: .topTrailing) {
                 Text(self.item.langBadge)
-                    .font(.system(size: 10, weight: .heavy))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiBrandSecondary)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
@@ -425,7 +425,7 @@ struct AtlasPublicTile: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(self.item.lemma)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                 Text(self.item.displayZhHant)
@@ -439,7 +439,7 @@ struct AtlasPublicTile: View {
                     if let onOpenAuthor {
                         Button(action: onOpenAuthor) {
                             Text("by \(author.displayName)")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiBrandSecondary)
                                 .lineLimit(1)
                                 .padding(.top, 1)
@@ -447,7 +447,7 @@ struct AtlasPublicTile: View {
                         .buttonStyle(.plain)
                     } else {
                         Text("by \(author.displayName)")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
                             .padding(.top, 1)
@@ -473,7 +473,7 @@ struct AtlasPublicTile: View {
                 endPoint: .bottomTrailing
             )
             Image(systemName: "photo")
-                .font(.system(size: 22))
+                .font(.tujiIcon(22))
                 .foregroundStyle(.tujiInk3)
         }
     }
@@ -552,7 +552,7 @@ struct AtlasPublicDetailView: View {
                     self.report.begin(.item(slug: self.vm.item.slug))
                 } label: {
                     Text(self.report.isSent ? "已收到檢舉" : "檢舉這個項目")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.tujiLabel)
                         .foregroundStyle(self.report.isSent ? .tujiInk3 : .tujiAlert)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, Space.s2)
@@ -568,7 +568,7 @@ struct AtlasPublicDetailView: View {
                         self.showBlockPrompt = true
                     } label: {
                         Text(self.blocks.isBlocked(handle) ? "已封鎖這位作者" : "封鎖這位作者")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, Space.s2)
@@ -631,7 +631,7 @@ struct AtlasPublicDetailView: View {
                         .padding(Space.s3)
                 } else if state.error != nil {
                     Image(systemName: "photo")
-                        .font(.system(size: 28))
+                        .font(.tujiIcon(28))
                         .foregroundStyle(.tujiInk3)
                 } else {
                     TujiImagePlaceholder()
@@ -654,7 +654,7 @@ struct AtlasPublicDetailView: View {
                     .font(.tujiH1)
                     .foregroundStyle(.tujiInk)
                 Text(self.vm.item.langBadge)
-                    .font(.system(size: 11, weight: .heavy))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiBrandSecondary)
                     .padding(.horizontal, Space.s2)
                     .padding(.vertical, 3)
@@ -683,7 +683,7 @@ struct AtlasPublicDetailView: View {
                     }
                     if let cefr = word.cefrLevel, !cefr.isEmpty {
                         Text(cefr)
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiBrandSecondary)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
@@ -765,10 +765,10 @@ struct AtlasPublicDetailView: View {
         HStack(spacing: 5) {
             if let icon {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.tujiIcon(11, weight: .bold))
             }
             Text(title)
-                .font(.system(size: 12, weight: .bold))
+                .font(.tujiLabel)
         }
         .foregroundStyle(.white)
         .padding(.horizontal, Space.s3)

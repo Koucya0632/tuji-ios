@@ -109,7 +109,7 @@ private struct TujiStatusToast: View {
 
             VStack(spacing: 3) {
                 Text(self.style.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.tujiBody(.strong))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
@@ -138,7 +138,7 @@ private struct TujiStatusToast: View {
     @ViewBuilder
     private var animatedIcon: some View {
         let icon = Image(systemName: self.style.icon)
-            .font(.system(size: 18, weight: .heavy))
+            .font(.tujiIcon(18, weight: .heavy))
             .foregroundStyle(self.style.tint)
 
         switch self.style {

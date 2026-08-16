@@ -18,6 +18,37 @@
 import SwiftUI
 import UIKit
 
+/// Whether a body step is carrying weight.
+///
+/// The scale used to be eight steps with one weight each, and that is the hole
+/// 84 call sites climbed out of: a button's label, a row's title and a status
+/// word are all *body-sized text that has to look heavier than the sentence
+/// next to it*, and the scale had no way to say so. They reached for
+/// `Font.system(size: 15, weight: .semibold)` instead — which is not the app's
+/// typeface at all. `Font.system` is San Francisco, and for Chinese it is
+/// PingFang, so those 84 strings were rendering in the system face while
+/// everything around them was Plus Jakarta + GenSenRounded (ADR-0003). On 我's
+/// heatmap the two sat 70pt apart: 「9 個活躍日」 rounded, 「日一二三四五六」
+/// square.
+///
+/// Two cases, not a `Font.Weight`, because two is what is bundled: the CJK
+/// faces ship in R and B only (see `TujiTypeface.name(matching:)`), so a third
+/// Latin weight would pair with the same GenSenRounded Bold and buy nothing but
+/// a Latin-only distinction the Chinese half cannot honour.
+enum TujiEmphasis {
+    case normal
+    /// SemiBold. The face was bundled and registered in `Info.plist` from the
+    /// start and no token had ever used it.
+    case strong
+
+    var latinFace: String {
+        switch self {
+        case .normal: "PlusJakartaSans-Regular"
+        case .strong: "PlusJakartaSans-SemiBold"
+        }
+    }
+}
+
 extension Font {
     /// The word being learned; the number on a completion screen.
     static var tujiDisplay: Font {
@@ -42,12 +73,23 @@ extension Font {
 
     /// Body copy, example sentences, descriptions.
     static var tujiBody: Font {
-        TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: 16)
+        self.tujiBody(.normal)
+    }
+
+    /// Body copy that has to carry weight: a button's label, a row's title, a
+    /// status word. See `TujiEmphasis` — this axis is why 84 call sites were
+    /// bypassing the scale.
+    static func tujiBody(_ emphasis: TujiEmphasis) -> Font {
+        TujiTypeface.font(latin: emphasis.latinFace, size: 16)
     }
 
     /// Secondary explanation, row subtitles.
     static var tujiBodySm: Font {
-        TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: 14)
+        self.tujiBodySm(.normal)
+    }
+
+    static func tujiBodySm(_ emphasis: TujiEmphasis) -> Font {
+        TujiTypeface.font(latin: emphasis.latinFace, size: 14)
     }
 
     /// Badges, status labels, section overlines, tab labels.
@@ -59,6 +101,15 @@ extension Font {
 
     /// IPA, UID, system codes. Latin-only by definition, so no CJK cascade.
     static let tujiMono = Font.custom("JetBrainsMono-Regular", size: 13)
+
+    /// The 「Tuji.」 logotype, and nothing else.
+    ///
+    /// A wordmark is drawn, not typeset: it is the one place in the app where
+    /// the point size, the weight and the face are the artwork rather than a
+    /// step on a scale. It lives here so `no_system_font_outside_theme` can be
+    /// absolute — the rule's whole value is that it has no judgement calls in
+    /// it, and "except the logo" is a judgement call in a regex.
+    static let tujiWordmark = Font.system(size: 54, weight: .black, design: .rounded)
 
     /// The word being learned, at the one size every screen sets it.
     ///
@@ -74,6 +125,33 @@ extension Font {
     /// even Bold starts filling in its own counters.
     static func tujiHeadwordRuby(_ size: CGFloat) -> Font {
         TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: size)
+    }
+
+    /// An SF Symbol's point size.
+    ///
+    /// Not one of the eight steps, and deliberately not a scale at all yet: it
+    /// is `Font.system(size:weight:)` under a name that lives in the theme,
+    /// nothing more. It exists so the lint rule below it can be absolute.
+    ///
+    /// `no_system_font_outside_theme` is a single-line regex — it cannot see
+    /// whether the line above says `Image(systemName:)` or `Text(`, so a rule
+    /// that catches every hard-coded *text* size catches every hard-coded
+    /// *icon* size with it. Routing icons through here is what lets the rule be
+    /// an error instead of a suggestion.
+    ///
+    /// What it is not: discipline. The 71 icons that came through this door
+    /// arrived carrying **21 distinct sizes** (8, 9, 10, 11, 12, 14, 15, 16,
+    /// 17, 18, 19, 20, 22, 24, 26, 28, 32, 34, 36, 40, 64), which is the same
+    /// "any value can be found somewhere in it, so a layout never has to make a
+    /// decision" problem `Space.swift` describes about its own former 13-step
+    /// scale. Collapsing them to a real scale is a separate, deliberate pass
+    /// that moves pixels on every screen; this one moves none.
+    ///
+    /// Unlike the text tokens it does **not** apply `UIFontMetrics`, matching
+    /// what these call sites did before: a glyph in a fixed-height row that
+    /// grows with the user's text size overflows the row.
+    static func tujiIcon(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight)
     }
 }
 

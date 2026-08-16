@@ -80,7 +80,7 @@ struct TujiNavBar<Trailing: View>: View {
             if let onLeading = self.onLeading { onLeading() } else { self.dismiss() }
         } label: {
             Image(systemName: systemName)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.tujiIcon(20, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 // Visual size is 24; the tap target is the 48 the whole system uses.
                 .frame(width: 48, height: 48)
@@ -122,7 +122,7 @@ struct TujiNavIcon: View {
     var body: some View {
         Button(action: self.action) {
             Image(systemName: self.systemName)
-                .font(.system(size: 19, weight: .semibold))
+                .font(.tujiIcon(19, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(width: 44, height: 48)
                 .contentShape(.rect)

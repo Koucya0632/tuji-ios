@@ -68,7 +68,7 @@ struct StudyCategoriesPickerView: View {
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }
-        .font(.system(size: 14, weight: .semibold))
+        .font(.tujiBodySm(.strong))
         .tint(.tujiBrandSecondary)
     }
 
@@ -94,7 +94,7 @@ struct StudyCategoriesPickerView: View {
     {
         Button(action: action) {
             Text(category.nameZh)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
