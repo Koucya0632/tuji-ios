@@ -89,7 +89,13 @@ LEADING_KEY_CALLS = (
 PATTERNS = [
     re.compile(r'\bText\(\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\btujiLocalized\(\s*"((?:[^"\\]|\\.)*)"'),
-    re.compile(r'\b(?:title|label|subtitle|message|detail|placeholder|footer|badge)'
+    # `text:` joined this list the day a tour step's body copy was rewritten and
+    # nothing noticed it had left the catalogue. `TourStep.text` is a
+    # `LocalizedStringKey` sitting directly beneath `title:`, which *was*
+    # checked — so the one line of the step that gets translated was guarded and
+    # the paragraph under it was not. Keep this list and `KEY_CALL_ON_LINE`'s
+    # copy of it in step; they are the same list read two ways.
+    re.compile(r'\b(?:title|text|label|subtitle|message|detail|placeholder|footer|badge)'
                r'\s*:\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\bLocalizedStringKey\(\s*"((?:[^"\\]|\\.)*)"'),
     re.compile(r'\baccessibilityLabel\(\s*Text\(\s*"((?:[^"\\]|\\.)*)"'),
@@ -105,7 +111,12 @@ KEY_CALL_ON_LINE = re.compile(
     r"\b(?:Text|tujiLocalized|LocalizedStringKey|accessibilityLabel|"
     + "|".join(LEADING_KEY_CALLS)
     + r")\(|"
-    + r"\b(?:title|label|subtitle|message|detail|placeholder|footer|badge)\s*:"
+    # `text:` joined this list the day a tour step's body copy was rewritten and
+    # nothing noticed it had left the catalogue. `TourStep.text` is a
+    # `LocalizedStringKey` sitting beside `title:`, which *was* checked — so the
+    # one line of the step that gets translated was guarded and the paragraph
+    # under it was not.
+    + r"\b(?:title|text|label|subtitle|message|detail|placeholder|footer|badge)\s*:"
 )
 
 # A key that carries no meaning of its own. `Text("\(count)")` is a number, not

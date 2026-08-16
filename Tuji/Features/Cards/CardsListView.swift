@@ -32,7 +32,6 @@ struct CardsListView: View {
     @State private var visibleCount: Int = CardsListPaging.pageSize
     @State private var peekWord: CardWord?
     @State private var pushAfterDismiss: String?
-    @State private var showCapture = false
 
     /// `alignment: .top` is the whole point. A GridItem with no alignment
     /// centres its cell inside the row, so the moment one word wrapped to two
@@ -78,9 +77,6 @@ struct CardsListView: View {
                 self.peekWord = nil
             }
         }
-        .fullScreenCover(isPresented: self.$showCapture) {
-            AtlasCaptureView()
-        }
     }
 
     // MARK: - Bits
@@ -90,18 +86,13 @@ struct CardsListView: View {
     /// you are looking at it. 我 already works this way (`MeView`): the first
     /// real content is the title, and the bar carries nothing but what you can
     /// do from here.
+    ///
+    /// 搜尋 is all that is left of it: 拍照 used to sit here too, and it was the
+    /// app's headline feature reachable from exactly one screen, in the corner
+    /// furthest from the thumb. It is in the tab bar now (`CaptureBarButton`).
     private var header: some View {
         HStack {
             Spacer()
-            Button {
-                self.showCapture = true
-            } label: {
-                Image(systemName: "camera.viewfinder")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.tujiInk2)
-            }
-            .buttonStyle(.plain)
-            .tourAnchor(.capture)
             NavigationLink(value: NavRoute.search(query: nil)) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18, weight: .bold))

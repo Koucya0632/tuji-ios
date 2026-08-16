@@ -1514,6 +1514,28 @@
         }
       }
     },
+    "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，中間的黃色按鈕隨時可以拍照收字。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today is where you study, Atlas collects your words, Sightings shows what everyone else has taken in, and Me holds your progress and account. The yellow button in the middle takes a photo any time."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「今日」で学習し、「図鑑」に単語を集め、「物見」でみんなが集めたものを見て、「マイページ」で記録とアカウントを確認します。真ん中の黄色いボタンからはいつでも写真を撮れます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天开始学习、图鉴收集单词、物见看大家收的东西、我查看成果与账号，中间的黄色按钮随时可以拍照收字。"
+          }
+        }
+      }
+    },
     "今天還沒學新字，挑一個來試試" : {
       "localizations" : {
         "en" : {
@@ -1532,28 +1554,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "今天还没学新字，挑一个来试试"
-          }
-        }
-      }
-    },
-    "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Today to start studying, Atlas to collect words, Sightings for what everyone else has taken in, Me for your progress and account."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日で学習を始め、図鑑で単語を集め、物見でみんなが集めたものを見て、マイページで成果とアカウントを確認します。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今天开始学习、图鉴收集单字、物见看大家收的东西、我查看成果与账号。"
           }
         }
       }
@@ -4288,28 +4288,6 @@
         }
       }
     },
-    "四個分頁" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Four tabs"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "4つのタブ"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "四个分页"
-          }
-        }
-      }
-    },
     "回圖鑑頁點右上角相機，拍一張就能做卡片。" : {
       "localizations" : {
         "en" : {
@@ -6379,6 +6357,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "账号"
+          }
+        }
+      }
+    },
+    "底下這一排" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bar along the bottom"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "画面下のバー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "底下这一排"
           }
         }
       }

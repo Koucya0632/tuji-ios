@@ -27,16 +27,27 @@ struct MainTabsView: View {
     @State private var tourIndex: Int?
     @State private var tourTransitioning = false
 
+    /// Presented from the shell, not from 圖鑑, because the bar that opens it is
+    /// on every tab. It was `@State` on `CardsListView`, which is why the only
+    /// way to reach 拍照 was to be standing in 圖鑑 first.
+    @State private var showCapture = false
+
     var body: some View {
         VStack(spacing: 0) {
             self.pager
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if self.tabBarVisible {
-                TujiTabBar(selected: self.$navigator.selected)
-                    .tourAnchor(.tabBar)
-                    .transition(.move(edge: .bottom))
+                TujiTabBar(
+                    selected: self.$navigator.selected,
+                    onCapture: { self.showCapture = true }
+                )
+                .tourAnchor(.tabBar)
+                .transition(.move(edge: .bottom))
             }
+        }
+        .fullScreenCover(isPresented: self.$showCapture) {
+            AtlasCaptureView()
         }
         // Every pushed screen needs it: a feature screen that wants to open a
         // destination pushes a route through this rather than constructing the
@@ -273,16 +284,25 @@ private extension View {
 /// here: it answers "where are you" continuously.
 private struct TujiTabBar: View {
     @Binding var selected: MainTab
+    let onCapture: () -> Void
+
+    /// 拍照 sits after this tab, which puts it in the middle of the bar.
+    private static let captureFollows: MainTab = .cards
 
     var body: some View {
         HStack(spacing: 0) {
             // `MainTab.allCases`, not a second hand-written list: the bar and
             // the pager have to agree on order or `scrollPosition(id:)` desyncs
             // from the highlighted tab, and nothing made a divergence fail to
-            // compile.
+            // compile. The capture slot is interleaved rather than added to the
+            // enum, so the pager still pages over exactly the tabs.
             ForEach(MainTab.allCases, id: \.self) { tab in
                 TabBarButton(tab: tab, isSelected: self.selected == tab) {
                     self.select(tab)
+                }
+                if tab == Self.captureFollows {
+                    CaptureBarButton(action: self.onCapture)
+                        .tourAnchor(.capture)
                 }
             }
         }
@@ -319,10 +339,13 @@ private struct TabBarButton: View {
                     // Latin adjustment, and on a full-width CJK glyph it only
                     // buys width. GenSenRounded is wider than the system face.
                     //
-                    // Four columns leave ~98pt each, which "コミュニティ" (six
-                    // full-width glyphs at 13pt) now clears. The scale factor
-                    // stays for the accessibility text sizes, where truncation
-                    // is the expected behaviour rather than a layout failure.
+                    // Five columns leave ~80pt each. The longest label is now
+                    // "マイページ" — five full-width glyphs at 13pt, ~65pt — so it
+                    // clears. (This note used to budget for "コミュニティ" at
+                    // ~78pt, a label that stopped existing when 社群 became
+                    // 物見.) The scale factor stays for the accessibility text
+                    // sizes, where truncation is the expected behaviour rather
+                    // than a layout failure.
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
@@ -347,6 +370,51 @@ private struct TabBarButton: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(self.tab.titleZh))
         .accessibilityAddTraits(self.isSelected ? [.isSelected] : [])
+    }
+}
+
+/// 拍照, in the middle of the bar.
+///
+/// Deliberately *not* a fifth `MainTab`: it is something you do, not a place
+/// you are, and making it a tab would hand it a `NavigationPath`, an `atRoot`
+/// entry, a pager page and a deep-link target — four pieces of navigation state
+/// for a screen that is presented as a cover and dismissed.
+///
+/// It lived in the 圖鑑 header before this, which is the wrong home for an
+/// action nobody plans: you photograph a thing because it is in front of you
+/// now, and reaching it meant switching tabs and then reaching the top-right
+/// corner — the hardest place on a 6" phone for the thumb already holding it.
+///
+/// Icon-only, and that is the rule that tells the two kinds of slot apart here:
+/// the things with labels are places, the thing without one is an action. It
+/// wears `tujiBrandPrimary` like every other primary action in the app, and
+/// deliberately not `tujiCurrent` — that colour answers "where are you", and a
+/// permanent yellow block meaning "here" would be lying on every screen.
+private struct CaptureBarButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: self.action) {
+            Image(systemName: "camera.viewfinder")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(.tujiInk)
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                // Runs past the home indicator, the same way the bar's ink
+                // does — stated rather than inherited, so the yellow is a full
+                // slot cut through the strip and not a 64pt tile floating in
+                // it. Tapping below the glyph, in the home-indicator band,
+                // still is not a tap on the button: `contentShape` is the 64pt
+                // row, and this is only paint.
+                .background(Color.tujiBrandPrimary.ignoresSafeArea(edges: .bottom))
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        // Same reason as the tabs: an unlabelled SF Symbol is announced with
+        // the system's own name for it, so this would read as 「相機觀景窗」.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("拍照收字"))
+        .accessibilityAddTraits(.isButton)
     }
 }
 

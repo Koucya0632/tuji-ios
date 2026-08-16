@@ -259,9 +259,9 @@ private struct PageView: View {
             VStack(spacing: Space.s3) {
                 TileStub(systemImage: "carrot.fill").frame(height: 120)
                 VStack(spacing: Space.s2) {
-                    OptionRow(text: "lettuce", state: .idle)
-                    OptionRow(text: "carrot", state: .selected)
-                    OptionRow(text: "cucumber", state: .idle)
+                    OptionRow(word: "lettuce", state: .idle)
+                    OptionRow(word: "carrot", state: .selected)
+                    OptionRow(word: "cucumber", state: .idle)
                 }
             }
             .frame(height: 250)
@@ -309,14 +309,19 @@ private struct TileStub: View {
 }
 
 private struct OptionRow: View {
-    let text: String
+    /// A vocabulary word being *illustrated*, not interface copy — these rows
+    /// mock up the 選字 stage, so "lettuce" stays "lettuce" in every interface
+    /// language. Named `word` rather than `text` to say so: `text:` is the
+    /// project's argument name for a `LocalizedStringKey`, and the localization
+    /// check reads it that way.
+    let word: String
     let state: State
 
     enum State { case idle, selected }
 
     var body: some View {
         HStack {
-            Text(text)
+            Text(verbatim: self.word)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.tujiInk2)
             Spacer()
