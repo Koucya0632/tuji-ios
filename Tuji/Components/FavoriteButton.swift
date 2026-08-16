@@ -29,7 +29,7 @@ struct FavoriteButton: View {
             ZStack {
                 Rectangle().fill(self.isFavorite ? Color.tujiInk : .tujiPaper2)
                 Image(systemName: self.isFavorite ? "bookmark.fill" : "bookmark")
-                    .font(.system(size: self.size * 0.38, weight: .semibold))
+                    .font(.tujiIcon(self.size * 0.38, weight: .semibold))
                     .foregroundStyle(self.isFavorite ? .tujiPaper : .tujiInk2)
                     .contentTransition(.symbolEffect(.replace))
             }

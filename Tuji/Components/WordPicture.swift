@@ -48,7 +48,7 @@ struct WordPicture: View {
                     .blendMode(self.kind == .cutout ? .multiply : .normal)
             } else if state.error != nil {
                 Image(systemName: "photo")
-                    .font(.system(size: self.glyphSize))
+                    .font(.tujiIcon(self.glyphSize))
                     .foregroundStyle(.tujiInk3)
             } else {
                 TujiImagePlaceholder()

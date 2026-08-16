@@ -60,7 +60,7 @@ struct WelcomeView: View {
                         Text(auth.loading ? LocalizedStringKey("Google 登入中...") : LocalizedStringKey("繼續使用 Google"))
                             .foregroundStyle(.tujiInk)
                     }
-                    .font(.system(size: 15, weight: .heavy))
+                    .font(.tujiBodySm(.strong))
                     .padding(.vertical, Space.s3)
                     .frame(maxWidth: .infinity)
                     .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
@@ -83,7 +83,7 @@ struct WelcomeView: View {
                     path.append(.signup)
                 } label: {
                     Text("使用 Email")
-                        .font(.system(size: 15, weight: .heavy))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiBrandSecondary)
                         .padding(.vertical, Space.s3)
                         .frame(maxWidth: .infinity)
@@ -94,7 +94,7 @@ struct WelcomeView: View {
                     path.append(.signin)
                 } label: {
                     Text("已有帳號？登入")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk3)
                 }
                 .padding(.top, Space.s2)
@@ -105,7 +105,7 @@ struct WelcomeView: View {
                     // Someone who *left* guest mode to get here isn't choosing
                     // a mode — they're going back.
                     Text(auth.cameFromGuest ? LocalizedStringKey("返回訪客模式") : LocalizedStringKey("先逛逛 → 訪客模式"))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }
             }

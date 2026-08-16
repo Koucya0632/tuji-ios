@@ -60,7 +60,7 @@ struct AtlasSavedItemDetailView: View {
                 .font(.tujiIcon(36))
                 .foregroundStyle(.tujiInk3)
             Text("這張卡片已經不公開了")
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
             Text(message)
                 .font(.tujiLabel)

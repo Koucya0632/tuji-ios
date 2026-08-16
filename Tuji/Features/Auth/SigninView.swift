@@ -38,7 +38,7 @@ struct SigninView: View {
 
                         VStack(alignment: .leading, spacing: Space.s2) {
                             Text("Email")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiInk2)
                             TextField("", text: $email)
                                 .keyboardType(.emailAddress)
@@ -59,7 +59,7 @@ struct SigninView: View {
 
                         VStack(alignment: .leading, spacing: Space.s2) {
                             Text("密碼")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiInk2)
                             HStack {
                                 Group {

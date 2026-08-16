@@ -45,7 +45,7 @@ struct StudyReportSheet: View {
 
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("當前學習遇到什麼問題呢？")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
 
                 ForEach(StudyReportIssueType.allCases) { type in
@@ -80,7 +80,7 @@ struct StudyReportSheet: View {
 
             VStack(alignment: .leading, spacing: Space.s2) {
                 Text("請詳細說說哪裡需要改進呢？（必填）")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
 
                 ZStack(alignment: .topLeading) {
@@ -135,7 +135,7 @@ struct StudyReportSheet: View {
                 .font(.tujiIcon(64))
                 .foregroundStyle(.tujiAccumulation)
             Text("謝謝你的回報！我們會盡快確認並改進。")
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.tujiInk)
             BBtn(localized: self.localized("完成"), fullWidth: true) { self.dismiss() }

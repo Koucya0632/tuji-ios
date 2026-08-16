@@ -340,7 +340,7 @@ struct AtlasAuthorProfileView: View {
             // section directly above it.
             if !self.vm.showsSegmentedControl {
                 Text("公開的圖鑑")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

@@ -321,7 +321,7 @@ private struct NewStagePips: View {
                 }
             }
             Text(self.label(step.kind))
-                .font(.system(size: 12, weight: step.state == .active ? .bold : .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(self.labelColor(step.state))
         }
     }

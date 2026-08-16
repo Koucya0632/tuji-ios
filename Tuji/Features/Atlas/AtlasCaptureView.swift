@@ -222,7 +222,7 @@ struct AtlasCaptureView: View {
                             self.vm.showPaywall = true
                         } label: {
                             Text("升級 Tuji Pro")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.tujiLabel)
                                 .foregroundStyle(.tujiBrandSecondary)
                         }
                         .buttonStyle(.plain)

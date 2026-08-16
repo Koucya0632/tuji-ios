@@ -249,7 +249,7 @@ struct CompleteView: View {
                 .disabled(self.startingNextRound)
                 Button(action: self.onFinish) {
                     Text("先到這裡，回首頁")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk3)
                         .padding(.vertical, Space.s2)
                 }

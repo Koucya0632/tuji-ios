@@ -316,7 +316,7 @@ struct ImageCropView: View {
                 .font(.tujiIcon(32, weight: .bold))
                 .foregroundStyle(.white.opacity(0.8))
             Text("無法載入這張照片")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiBody(.strong))
                 .foregroundStyle(.white)
             BBtn(title: "繼續上傳原圖", bg: .tujiBrandPrimary, fg: .tujiInk, icon: "arrow.up") {
                 self.onConfirm(self.imageData)

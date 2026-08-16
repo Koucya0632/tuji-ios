@@ -83,7 +83,7 @@ struct TilesView: View {
             HStack {
                 if self.settings.current.showZh {
                     Text(self.item.word.chinese)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk)
                 }
                 Spacer()
@@ -161,7 +161,7 @@ struct TilesView: View {
             self.coord.unpickTile(atSlot: index)
         } label: {
             Text(slot.unit ?? " ")
-                .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .font(.tujiHeadword(22))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(self.slotFg(verdict))
@@ -224,7 +224,7 @@ struct TilesView: View {
             self.coord.pickTile(index)
         } label: {
             Text(tile.unit)
-                .font(.system(size: 22, weight: .heavy, design: .monospaced))
+                .font(.tujiHeadword(22))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(used ? .tujiInk3 : .tujiInk)

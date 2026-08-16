@@ -51,7 +51,7 @@ struct PronunciationButton: View {
             ZStack {
                 Rectangle().fill(self.ground)
                 Image(systemName: "speaker.wave.2.fill")
-                    .font(.system(size: self.size * 0.38, weight: .semibold))
+                    .font(.tujiIcon(self.size * 0.38, weight: .semibold))
                     .foregroundStyle(.tujiInk)
             }
             .frame(width: self.size, height: self.size)

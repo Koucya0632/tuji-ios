@@ -66,7 +66,7 @@ struct CategoryTile: View {
     var body: some View {
         VStack(spacing: 3) {
             Text(self.category.nameZh)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)

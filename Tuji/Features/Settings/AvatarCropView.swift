@@ -196,7 +196,7 @@ struct AvatarCropView: View {
     private var toolbar: some View {
         HStack(spacing: Space.s3) {
             Button("取消") { self.onCancel() }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiBody(.strong))
                 .foregroundStyle(.white)
                 .disabled(self.working)
 
@@ -204,7 +204,7 @@ struct AvatarCropView: View {
                 self.zoom = 1
                 self.offset = .zero
             }
-            .font(.system(size: 16, weight: .semibold))
+            .font(.tujiBody(.strong))
             .foregroundStyle(.white.opacity(0.82))
             .disabled(self.working || self.proxy == nil)
 
@@ -230,10 +230,10 @@ struct AvatarCropView: View {
                 .font(.tujiIcon(32, weight: .bold))
                 .foregroundStyle(.white.opacity(0.8))
             Text("無法載入這張照片")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiBody(.strong))
                 .foregroundStyle(.white)
             Button("返回") { self.onCancel() }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.tujiBody(.strong))
                 .foregroundStyle(.tujiBrandPrimary)
         }
         .padding(Space.s4)

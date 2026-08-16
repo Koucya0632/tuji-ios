@@ -45,10 +45,10 @@ struct WordCommunityAtlasSection: View {
                 VStack(alignment: .leading, spacing: Space.s3) {
                     HStack(spacing: Space.s2) {
                         Text("大家的圖鑑")
-                            .font(.system(size: 16, weight: .heavy))
+                            .font(.tujiBody(.strong))
                             .foregroundStyle(.tujiInk)
                         Text("\(self.visibleItems.count)")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.tujiLabel)
                             .foregroundStyle(.tujiBrandSecondary)
                             .padding(.horizontal, Space.s2)
                             .padding(.vertical, 2)
@@ -105,7 +105,7 @@ struct WordCommunityAtlasSection: View {
             HStack(spacing: Space.s1) {
                 if let author = item.author {
                     Text("by \(author.displayName)")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .lineLimit(1)
                 }

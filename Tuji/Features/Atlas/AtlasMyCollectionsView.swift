@@ -354,7 +354,7 @@ struct AtlasCollectionEditView: View {
     private var avatarSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text("合集頭像")
-                .font(.system(size: 15, weight: .bold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
             HStack(spacing: Space.s4) {
                 Button {
@@ -414,7 +414,7 @@ struct AtlasCollectionEditView: View {
                         Button("重試上傳") {
                             Task { await self.avatar.retry() }
                         }
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiBrandSecondary)
                     }
                 }
@@ -476,14 +476,14 @@ struct AtlasCollectionEditView: View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
                 Text("項目 \(self.vm.members.count)")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                 Spacer()
                 Button {
                     self.showPicker = true
                 } label: {
                     Label("新增", systemImage: "plus.circle.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiBrandSecondary)
                 }
                 .buttonStyle(.plain)
@@ -525,7 +525,7 @@ struct AtlasCollectionEditView: View {
 
                 if let label = item.collectionPublicationLabel {
                     Text(label)
-                        .font(.system(size: 9, weight: .bold))
+                        .font(.tujiLabel)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 3)
@@ -545,7 +545,7 @@ struct AtlasCollectionEditView: View {
                 .buttonStyle(.plain)
             }
             Text(item.lemma)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(.tujiInk2)
                 .lineLimit(1)
         }
@@ -559,7 +559,7 @@ struct AtlasCollectionEditView: View {
                 Text("公開狀態").font(.tujiLabel).foregroundStyle(.tujiInk3)
                 Spacer()
                 Text(collection.review.label)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk)
             }
             if let errorMessage = self.vm.errorMessage {
@@ -586,7 +586,7 @@ struct AtlasCollectionEditView: View {
                 .opacity(self.vm.canSubmit ? 1 : 0.6)
                 if self.vm.members.isEmpty {
                     Text("合集至少要有一個項目才能公開。")
-                        .font(.system(size: 11))
+                        .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }
             }
@@ -719,7 +719,7 @@ private struct AtlasCollectionItemPicker: View {
                 .overlay(alignment: .bottomLeading) {
                     if let label = item.collectionPublicationLabel {
                         Text(label)
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.tujiLabel)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 3)
@@ -734,7 +734,7 @@ private struct AtlasCollectionItemPicker: View {
                         .padding(4)
                 }
                 Text(item.lemma)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk2)
                     .lineLimit(1)
             }

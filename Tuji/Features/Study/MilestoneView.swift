@@ -80,7 +80,7 @@ struct MilestoneView: View {
             }
             Button(action: self.onFinish) {
                 Text("繼續")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiPaper.opacity(0.85))
                     .padding(.vertical, Space.s3)
             }

@@ -267,7 +267,7 @@ struct CardsListView: View {
                         self.visibleCount += CardsListPaging.pageSize
                     } label: {
                         Text("顯示更多")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.tujiBodySm(.strong))
                             .foregroundStyle(.tujiInk3)
                             .padding(.vertical, Space.s3)
                     }

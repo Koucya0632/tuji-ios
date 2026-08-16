@@ -131,6 +131,25 @@ custom_rules:
     message: "請用 .tujiH1 / .tujiBody / ... — Font.custom 只能寫在 Core/Theme/ 內。"
     severity: error
 
+  # 2b. 字級：禁止在 Theme 之外用 Font.system
+  #
+  # 這條是第三個逃生口，而它一直沒人守：顏色有 no_hex_color、自訂字型有
+  # no_font_custom，Font.system 沒有——所以 156 個呼叫點從這裡漏出去。
+  #
+  # 漏出去的代價不只是尺寸沒進階。Font.system 給的是系統字體：拉丁是 SF、
+  # 中文是蘋方。也就是說全 App 有 84 段文字根本不是用 Plus Jakarta +
+  # GenSenRounded 畫的（ADR-0003 為此打包了 60MB 字型），在「我」的熱力圖上
+  # 兩者相隔 70pt 並排：「9 個活躍日」是圓的，「日一二三四五六」是方的。
+  #
+  # 圖示尺寸也一起被擋，因為單行 regex 分不出上一行是 Image 還是 Text——
+  # 那就是 Font.tujiIcon 存在的理由（尺寸照舊，只是換個住在 Theme 的名字）。
+  no_system_font_outside_theme:
+    name: "用 Theme tokens"
+    regex: 'Font\.system\(|\.system\(size:'
+    excluded: ".*/Core/Theme/.*\\.swift"
+    message: "請用 .tujiBody / .tujiLabel / .tujiIcon(_:) — Font.system 只能寫在 Core/Theme/ 內（它用的是系統字體，不是 Plus Jakarta + GenSenRounded）。"
+    severity: error
+
   # 3. URL：禁止在 Networking 之外手寫 URLSession
   no_urlsession_outside_networking:
     name: "用 APIClient"

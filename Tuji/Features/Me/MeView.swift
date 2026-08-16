@@ -238,7 +238,7 @@ struct MeView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(word.word)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                 if self.settings.current.showZh {
                     Text(word.chinese)
@@ -249,7 +249,7 @@ struct MeView: View {
             }
             Spacer()
             Text("\(word.mastery)")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(accent)
             Image(systemName: "chevron.right")
                 .font(.tujiIcon(11, weight: .semibold))

@@ -16,7 +16,7 @@ struct PullUpHint: View {
                 .font(.tujiIcon(14, weight: .semibold))
                 .symbolEffect(.bounce, options: .repeating)
             Text("向上拉看完整詳情")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.tujiLabel)
         }
         .foregroundStyle(.tujiInk3)
         .frame(maxWidth: .infinity)

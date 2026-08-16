@@ -62,7 +62,7 @@ struct LearningDirectionOnboardingView: View {
         } label: {
             HStack(spacing: Space.s3) {
                 Text(direction == .zhJa ? "日" : "EN")
-                    .font(.system(size: 18, weight: .heavy))
+                    .font(.tujiH3)
                     .foregroundStyle(.tujiBrandSecondary)
                     .frame(width: 48, height: 48)
                     .background(Color.tujiBrandSecondary.opacity(0.12), in: .circle)
@@ -156,7 +156,7 @@ struct OnboardingFlow: View {
                     state.introDone = true
                 } label: {
                     Text("跳過")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk3)
                         .padding(.vertical, Space.s2)
                         .padding(.horizontal, Space.s3)
@@ -272,7 +272,7 @@ private struct PageView: View {
                     Text("連勝").font(.tujiLabel).foregroundStyle(.white.opacity(0.7))
                 }
                 HStack(alignment: .lastTextBaseline, spacing: Space.s2) {
-                    Text("23").font(.system(size: 52, weight: .heavy)).foregroundStyle(.white)
+                    Text("23").font(.tujiDisplay).foregroundStyle(.white)
                     Text("天").font(.tujiH3).foregroundStyle(.white.opacity(0.7))
                 }
                 LazyVGrid(
@@ -322,7 +322,7 @@ private struct OptionRow: View {
     var body: some View {
         HStack {
             Text(verbatim: self.word)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk2)
             Spacer()
             if state == .selected {

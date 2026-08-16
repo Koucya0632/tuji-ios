@@ -51,7 +51,7 @@ struct AtlasCollectionDetailView: View {
             self.report.begin(.collection(slug: self.vm.slug))
         } label: {
             Text(self.report.isSent ? "已收到檢舉" : "檢舉這個合集")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.tujiLabel)
                 .foregroundStyle(self.report.isSent ? .tujiInk3 : .tujiAlert)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.s3)
@@ -392,7 +392,7 @@ struct AtlasCollectionDetailView: View {
                         remaining: remaining,
                         total: self.vm.totalCount
                     ))
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.tujiLabel)
                 }
                 .foregroundStyle(remaining == 0 ? .tujiInk3 : .tujiAccumulation)
                 .padding(.horizontal, Space.s3)

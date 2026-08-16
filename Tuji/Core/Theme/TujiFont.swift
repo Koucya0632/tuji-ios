@@ -18,6 +18,37 @@
 import SwiftUI
 import UIKit
 
+/// Whether a body step is carrying weight.
+///
+/// The scale used to be eight steps with one weight each, and that is the hole
+/// 84 call sites climbed out of: a button's label, a row's title and a status
+/// word are all *body-sized text that has to look heavier than the sentence
+/// next to it*, and the scale had no way to say so. They reached for
+/// `Font.system(size: 15, weight: .semibold)` instead — which is not the app's
+/// typeface at all. `Font.system` is San Francisco, and for Chinese it is
+/// PingFang, so those 84 strings were rendering in the system face while
+/// everything around them was Plus Jakarta + GenSenRounded (ADR-0003). On 我's
+/// heatmap the two sat 70pt apart: 「9 個活躍日」 rounded, 「日一二三四五六」
+/// square.
+///
+/// Two cases, not a `Font.Weight`, because two is what is bundled: the CJK
+/// faces ship in R and B only (see `TujiTypeface.name(matching:)`), so a third
+/// Latin weight would pair with the same GenSenRounded Bold and buy nothing but
+/// a Latin-only distinction the Chinese half cannot honour.
+enum TujiEmphasis {
+    case normal
+    /// SemiBold. The face was bundled and registered in `Info.plist` from the
+    /// start and no token had ever used it.
+    case strong
+
+    var latinFace: String {
+        switch self {
+        case .normal: "PlusJakartaSans-Regular"
+        case .strong: "PlusJakartaSans-SemiBold"
+        }
+    }
+}
+
 extension Font {
     /// The word being learned; the number on a completion screen.
     static var tujiDisplay: Font {
@@ -42,12 +73,23 @@ extension Font {
 
     /// Body copy, example sentences, descriptions.
     static var tujiBody: Font {
-        TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: 16)
+        self.tujiBody(.normal)
+    }
+
+    /// Body copy that has to carry weight: a button's label, a row's title, a
+    /// status word. See `TujiEmphasis` — this axis is why 84 call sites were
+    /// bypassing the scale.
+    static func tujiBody(_ emphasis: TujiEmphasis) -> Font {
+        TujiTypeface.font(latin: emphasis.latinFace, size: 16)
     }
 
     /// Secondary explanation, row subtitles.
     static var tujiBodySm: Font {
-        TujiTypeface.font(latin: "PlusJakartaSans-Regular", size: 14)
+        self.tujiBodySm(.normal)
+    }
+
+    static func tujiBodySm(_ emphasis: TujiEmphasis) -> Font {
+        TujiTypeface.font(latin: emphasis.latinFace, size: 14)
     }
 
     /// Badges, status labels, section overlines, tab labels.
@@ -59,6 +101,15 @@ extension Font {
 
     /// IPA, UID, system codes. Latin-only by definition, so no CJK cascade.
     static let tujiMono = Font.custom("JetBrainsMono-Regular", size: 13)
+
+    /// The 「Tuji.」 logotype, and nothing else.
+    ///
+    /// A wordmark is drawn, not typeset: it is the one place in the app where
+    /// the point size, the weight and the face are the artwork rather than a
+    /// step on a scale. It lives here so `no_system_font_outside_theme` can be
+    /// absolute — the rule's whole value is that it has no judgement calls in
+    /// it, and "except the logo" is a judgement call in a regex.
+    static let tujiWordmark = Font.system(size: 54, weight: .black, design: .rounded)
 
     /// The word being learned, at the one size every screen sets it.
     ///

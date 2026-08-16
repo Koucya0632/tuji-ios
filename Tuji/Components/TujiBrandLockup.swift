@@ -117,7 +117,7 @@ struct TujiBrandLockup: View {
                 Text(".")
                     .foregroundStyle(.tujiAlert)
             }
-            .font(.system(size: 54, weight: .black, design: .rounded))
+            .font(.tujiWordmark)
             .tracking(-2.5)
             .frame(width: 224, height: 78)
             .background(.tujiBrandSecondary, in: .rect(cornerRadius: 24))
