@@ -26,6 +26,24 @@ import Nuke
 import NukeUI
 import SwiftUI
 
+/// Whether a photograph may be cropped to its container's shape.
+///
+/// Only photographs have anything at stake: a cut-out is a single object on
+/// white and is always fitted whole. But 拍照新增 deliberately lets the user box
+/// the subject at **any aspect ratio** — `ImageCropView` is four corner handles
+/// precisely because squaring the frame would cut the thing being identified —
+/// and then every surface cropped it back to the container's shape anyway. The
+/// capture flow respected the user's framing and the display did not.
+enum WordFraming {
+    /// Cropped to fill. The picture is an identifier here — a row's thumbnail,
+    /// a tile in a recap grid — and a tidy grid is worth more than the corners.
+    case cropped
+    /// Shown whole, letterboxed on the ground. For the screens that hold the
+    /// picture up and ask *what is this*: cutting the subject out of frame
+    /// there damages the question itself.
+    case whole
+}
+
 struct WordPicture: View {
     let url: URL?
     let kind: WordImageKind
@@ -33,6 +51,8 @@ struct WordPicture: View {
     /// (`s3`) for a hero, smaller for a thumbnail — a 48pt thumb inset by 16
     /// would have nothing left in the middle.
     var inset: CGFloat = Space.s3
+    /// Only consulted for a photograph; a cut-out is always whole.
+    var framing: WordFraming = .cropped
     /// The "this picture did not load" glyph, sized to its container.
     var glyphSize: CGFloat = 24
 
@@ -61,12 +81,13 @@ struct WordPicture: View {
     /// still disagree about, besides the blend mode.
     @ViewBuilder
     private func placed(_ image: Image) -> some View {
-        switch self.kind {
-        case .cutout:
+        switch (self.kind, self.framing) {
+        case (.cutout, _), (.photograph, .whole):
             // Fitted whole. A cut-out is an object with nothing around it, so
-            // cropping one cuts into the thing being named.
+            // cropping one cuts into the thing being named; a photograph on a
+            // `.whole` surface is the question the screen is asking.
             image.resizable().aspectRatio(contentMode: .fit)
-        case .photograph:
+        case (.photograph, .cropped):
             // Filled and cropped to the inset rect. The explicit frame is what
             // makes that deterministic: `.aspectRatio(.fill)` alone reports a
             // layout size that depends on the picture's own proportions, so in

@@ -105,7 +105,11 @@ struct ReviewHeroCard: View {
     }
 
     private var pictureFace: some View {
-        WordPicture(url: self.item.word.imageURL, kind: self.item.word.imageKind)
+        WordPicture(
+            url: self.item.word.imageURL,
+            kind: self.item.word.imageKind,
+            framing: .whole
+        )
     }
 
     /// Gloss only. `reading` and `pronunciation` are both on the payload and

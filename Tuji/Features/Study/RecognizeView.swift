@@ -155,6 +155,7 @@ struct RecognizeView: View {
                 WordPicture(
                     url: self.item.word.imageURL,
                     kind: self.item.word.imageKind,
+                    framing: .whole,
                     glyphSize: 32
                 )
             }
