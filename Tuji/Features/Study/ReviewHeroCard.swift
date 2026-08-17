@@ -107,8 +107,7 @@ struct ReviewHeroCard: View {
     private var pictureFace: some View {
         WordPicture(
             url: self.item.word.imageURL,
-            kind: self.item.word.imageKind,
-            framing: .whole
+            kind: self.item.word.imageKind
         )
     }
 

@@ -115,7 +115,6 @@ struct TilesView: View {
                 url: self.item.word.imageURL,
                 kind: self.item.word.imageKind,
                 inset: Space.s2,
-                framing: .whole,
                 glyphSize: 28
             )
         }
