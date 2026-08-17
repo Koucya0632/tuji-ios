@@ -4,8 +4,6 @@
 // Sections render conditionally — etymology / examples / forms /
 // collocations may all be empty for some words.
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 /// Pushed entry point. Hosts a horizontally-paged TabView so the user can
@@ -137,33 +135,17 @@ extension WordDetailPage {
 
     // MARK: - Sections
 
-    /// Whether this word's picture is dictionary artwork (a cut-out that should
-    /// blend into the paper) or a photograph the user took.
-    private func isCutout(_ w: Word) -> Bool {
-        WordImageKind(category: w.category) == .cutout
-    }
-
     private func hero(_ w: Word) -> some View {
         Color.tujiPaper2
             .aspectRatio(1, contentMode: .fit)
             .frame(maxWidth: .infinity)
             .overlay {
-                LazyImage(url: w.imageURL) { state in
-                    if let image = state.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: self.isCutout(w) ? .fit : .fill)
-                            .padding(self.isCutout(w) ? Space.s5 : 0)
-                            .blendMode(self.isCutout(w) ? .multiply : .normal)
-                    } else if state.error != nil {
-                        Image(systemName: "photo")
-                            .font(.tujiIcon(28))
-                            .foregroundStyle(.tujiInk3)
-                    } else {
-                        TujiImagePlaceholder()
-                    }
-                }
-                .pipeline(.shared)
+                // The ninth copy of the picture rules used to live here, behind
+                // an `isCutout(_:)` helper — which is also why a search for the
+                // other eight did not find it. It filled photographs to the
+                // square, so the one screen devoted to a single word showed less
+                // of it than the grid you tapped to get here.
+                WordPicture(url: w.imageURL, kind: w.imageKind, inset: Space.s5, glyphSize: 28)
             }
             .clipped()
             // Controls float over the artwork rather than taking a row of their

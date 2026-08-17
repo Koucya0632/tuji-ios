@@ -244,6 +244,15 @@ struct Word: Codable, Identifiable, Hashable {
     var imageURL: URL? {
         URL(string: imageUrl)
     }
+
+    /// Same question `CardWord` and `StudyQueueWord` answer, from the same
+    /// `category`. It was missing here, and that absence is what produced the
+    /// last hand-written copy of the picture rules: 圖鑑詳情 could not ask a
+    /// `Word` what kind of picture it had, so it built an `isCutout` helper and
+    /// then spelled out fit-vs-fill, the inset and the multiply beside it.
+    var imageKind: WordImageKind {
+        WordImageKind(category: self.category)
+    }
 }
 
 struct WordDefinition: Codable, Hashable {
