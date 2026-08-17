@@ -10,11 +10,15 @@
 // theme already has a page of its own (CategoryView). Browsing by theme is
 // CategoryIndexView's job.
 //
-// There is no `全部` case. "All" is the *absence* of a filter, not a filter, and
-// spelling it as a chip meant two rows each opened with a 全部 that meant
-// something different. Tapping the selected chip again clears it, and `nil` is
-// that unfiltered state — reachable, but not where the tab opens. 圖鑑 opens on
-// `official`, because the dictionary is what the tab is for.
+// There is no `全部` case, and no unfiltered state either. "All" used to be
+// reachable by tapping the lit chip a second time to clear it — a state with no
+// chip to show it was on, which is indistinguishable from "the row is broken".
+// A filter row that can end up looking unselected teaches the user to distrust
+// it, and mixing four sources into one grid answers a question nobody asked:
+// 官方 and 我做的 are different *kinds* of thing, not two halves of a list.
+//
+// So one source is always in effect. Tapping the lit chip does nothing; 圖鑑
+// opens on `official`, because the dictionary is what the tab is for.
 
 import SwiftUI
 
