@@ -24,11 +24,10 @@ struct CardsListView: View {
     /// Consumed once and cleared, so it never fights a later manual pick.
     @Binding var sourceRequest: CardsSource?
 
-    /// Opens on 官方 rather than on nothing. The tab has to open *somewhere*,
-    /// and an unselected row reads as "no filter is available" — it also hides
-    /// 主題, which only appears under 官方. `nil` (everything) is still
-    /// reachable: tapping the lit chip clears it. See CardsSource.
-    @State private var source: CardsSource? = .official
+    /// Always one, never none. The row used to be clearable — tapping the lit
+    /// chip dropped the filter and showed everything — which left the row with
+    /// no chip on and nothing saying why. See CardsSource.
+    @State private var source: CardsSource = .official
     @State private var visibleCount: Int = CardsListPaging.pageSize
     @State private var peekWord: CardWord?
     @State private var pushAfterDismiss: String?
@@ -148,7 +147,7 @@ struct CardsListView: View {
                     self.rowAction("主題 →")
                 }
                 .buttonStyle(.plain)
-            case .taken, .bookmarked, nil:
+            case .taken, .bookmarked:
                 EmptyView()
             }
         }
@@ -169,7 +168,7 @@ struct CardsListView: View {
         case .bookmarked: "還沒有書籤"
         case .mine: "還沒有自製圖鑑"
         case .taken: "還沒有收進的字"
-        case .official, nil: "這個分類還沒有字"
+        case .official: "這個分類還沒有字"
         }
     }
 
@@ -178,16 +177,17 @@ struct CardsListView: View {
         case .bookmarked: "你加書籤的字會出現在這裡"
         case .mine: "用底下中間的相機拍一張，就會多一張卡片"
         case .taken: "在物見收進的字會出現在這裡"
-        case .official, nil: nil
+        case .official: nil
         }
     }
 
-    /// Tapping the chip that is already on clears it, which is how the grid
-    /// gets back to "everything" without a 全部 chip standing in for it.
+    /// Tapping the lit chip does nothing: one source is always in effect, so
+    /// there is no state for it to clear to.
     private func sourceChip(_ value: CardsSource) -> some View {
         let selected = self.source == value
         return Button {
-            self.source = selected ? nil : value
+            guard !selected else { return }
+            self.source = value
             self.visibleCount = CardsListPaging.pageSize
         } label: {
             Text(value.title)

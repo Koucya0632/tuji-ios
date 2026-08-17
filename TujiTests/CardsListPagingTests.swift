@@ -33,15 +33,6 @@ struct CardsListPagingTests {
         false
     }
 
-    @Test("no source means no filter, not an empty list")
-    func nilSourceShowsEverything() {
-        let page = CardsListPaging.page(
-            words: self.corpus, source: nil, isBookmarked: self.never, visibleCount: 60
-        )
-        #expect(page.matchCount == 4)
-        #expect(!page.canShowMore)
-    }
-
     @Test("官方 excludes both 自製圖鑑 and 物見")
     func officialExcludesUserSources() {
         let page = CardsListPaging.page(
@@ -85,18 +76,21 @@ struct CardsListPagingTests {
         #expect(filtered.matchCount == 1)
         #expect(!filtered.canShowMore)
 
-        let unfiltered = CardsListPaging.page(
-            words: many, source: nil, isBookmarked: self.never, visibleCount: 60
+        // The same corpus under a source with more than a page in it. There is
+        // no unfiltered reading to compare against any more — every grid the
+        // user can reach is one source deep.
+        let wide = CardsListPaging.page(
+            words: many, source: .official, isBookmarked: self.never, visibleCount: 60
         )
-        #expect(unfiltered.canShowMore)
-        #expect(unfiltered.words.count == 60)
+        #expect(wide.canShowMore)
+        #expect(wide.words.count == 60)
     }
 
     @Test("revealing the last page turns 顯示更多 off")
     func lastPageEndsPaging() {
         let many = (0..<70).map { self.word("k\($0)", category: "kitchen") }
         let second = CardsListPaging.page(
-            words: many, source: nil, isBookmarked: self.never, visibleCount: 120
+            words: many, source: .official, isBookmarked: self.never, visibleCount: 120
         )
         #expect(second.words.count == 70)
         #expect(!second.canShowMore)

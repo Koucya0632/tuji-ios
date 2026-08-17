@@ -24,19 +24,17 @@ enum CardsListPaging {
     /// makes 顯示更多 feel like the list is fighting back.
     static let pageSize = 60
 
-    /// `source == nil` means "everything" — reachable by tapping the lit chip,
-    /// and distinct from a source that happens to match nothing.
+    /// A source is always in effect — see `CardsSource` for why the grid has no
+    /// unfiltered state.
     static func page(
         words: [CardWord],
-        source: CardsSource?,
+        source: CardsSource,
         isBookmarked: (String) -> Bool,
         visibleCount: Int
     )
         -> CardsListPage
     {
-        let matched = source.map { source in
-            words.filter { source.matches($0, isBookmarked: isBookmarked) }
-        } ?? words
+        let matched = words.filter { source.matches($0, isBookmarked: isBookmarked) }
         return CardsListPage(
             words: Array(matched.prefix(max(0, visibleCount))),
             canShowMore: visibleCount < matched.count,

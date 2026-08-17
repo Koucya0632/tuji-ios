@@ -107,7 +107,12 @@ struct MainTabsView: View {
                     studyFocusActive: self.studyFocus.active
                 )
             )
-            .scrollIndicators(.hidden)
+            // Horizontal only. `scrollIndicators` reads from the environment, so
+            // it applies to *every* scroll view below it — and this one sits
+            // above all four tabs. Unqualified, it was hiding the vertical bar
+            // in 圖鑑, 今天, 我 and 物見 as a side effect of hiding the pager's
+            // own, which is why nothing in the app had a scroll position to read.
+            .scrollIndicators(.hidden, axes: .horizontal)
         }
     }
 
