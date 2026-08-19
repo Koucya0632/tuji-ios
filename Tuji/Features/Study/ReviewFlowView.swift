@@ -55,7 +55,9 @@ struct ReviewFlowView: View {
             title: "要離開這次複習嗎？",
             message: "已答的進度會保留，未完成的字下次還會出現。",
             primary: TujiPromptAction("先離開") {
-                // Drop the reveal sheet first (and keep it down), then leave.
+                // Drop the scheduled advance first, or it fires after teardown.
+                // Then drop the reveal sheet (and keep it down), then leave.
+                self.coord.cancelPendingBeats()
                 self.leaving = true
                 self.dismiss()
             },

@@ -103,6 +103,18 @@ final class ReviewFlowCoordinator {
     /// it.
     private let beat: @Sendable (Duration) async -> Void
 
+    /// The advances in flight. Unstructured `Task`s that outlive the view: 複習
+    /// scheduled its beats and never kept them, so leaving mid-answer still ran
+    /// `advance()` — and `drainPendingWrites`, and `finished = true` — on a
+    /// coordinator whose screen was gone.
+    ///
+    /// 學新字 carries the same array for the same reason, and the comment on
+    /// `NewFlowCoordinator.recognizeAnswer` records that the defect had already
+    /// been declared fixed once while one of its three stages still leaked. This
+    /// was the fourth copy of that stage, in the other flow, and it had no array
+    /// at all.
+    private var pendingBeats: [Task<Void, Never>] = []
+
     init(
         queue: [StudyQueueItem],
         writer: DurableAnswerWriting = DurableAnswerWriter(),
@@ -302,12 +314,22 @@ final class ReviewFlowCoordinator {
     }
 
     private func scheduleAdvance(after delay: Duration) {
-        Task {
+        self.pendingBeats.append(Task {
             if delay > .zero {
                 await self.beat(delay)
             }
+            guard !Task.isCancelled else { return }
             self.advance()
+        })
+    }
+
+    /// Drops every advance still waiting. 先離開 calls this before dismissing;
+    /// without it the beat outlives the screen (see `pendingBeats`).
+    func cancelPendingBeats() {
+        for task in self.pendingBeats {
+            task.cancel()
         }
+        self.pendingBeats.removeAll()
     }
 
     private func advance() {
