@@ -31,6 +31,10 @@ struct RecognizeView: View {
                 .padding(.horizontal, Space.s4)
         }
         .padding(.bottom, Space.s4)
+        // Hosts the 詞塊 card for the teach example. On the root rather than on
+        // the sentence: the sentence is inside the `ScrollView`, and a card
+        // hosted there would scroll away with the card content.
+        .glossCard()
         // The flow view keys this view per presentation, so the task fires
         // once per card — recognize never requeues, so once per word.
         .task { await self.autoPlay() }
@@ -45,11 +49,11 @@ struct RecognizeView: View {
 
     /// The first example that has a sentence in the learning language — JA
     /// entries missing `target` teach nothing, so they're skipped.
-    private var teachExample: (sentence: String, zh: String?)? {
+    private var teachExample: (sentence: String, zh: String?, spans: [GlossSpan]?)? {
         for ex in self.detail?.examples ?? [] {
             let sentence = ex.target ?? (self.wordLanguage == .ja ? "" : ex.en)
             if !sentence.isEmpty {
-                return (sentence, ex.zh)
+                return (sentence, ex.zh, ex.spans)
             }
         }
         return nil
@@ -123,13 +127,17 @@ struct RecognizeView: View {
         }
     }
 
-    private func exampleBlock(_ example: (sentence: String, zh: String?)) -> some View {
+    private func exampleBlock(_ example: (sentence: String, zh: String?, spans: [GlossSpan]?)) -> some View {
         VStack(alignment: .leading, spacing: Space.s1) {
             HStack(alignment: .top, spacing: Space.s2) {
-                Text(example.sentence)
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk)
-                    .fixedSize(horizontal: false, vertical: true)
+                InteractiveSentenceText(
+                    sentence: example.sentence,
+                    spans: example.spans,
+                    language: self.wordLanguage
+                )
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk)
+                .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: Space.s2)
                 PronunciationButton(
                     text: example.sentence,

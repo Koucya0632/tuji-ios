@@ -137,6 +137,68 @@ nonisolated struct FuriganaSegment: Codable, Hashable {
     let ruby: String?
 }
 
+/// One unit of an annotated example sentence — see 詞塊 in `CONTEXT.md`.
+///
+/// Deliberately not "one word": `look forward to` is a single span, because to
+/// a learner it is one unit and translating the bare `to` inside it is not
+/// merely useless but wrong. Which is also why the split is made on the server,
+/// against the whole sentence, rather than by the `NLTagger` sitting free on
+/// the device ([ADR-0009](../../../docs/adr/0009-example-sentence-annotation.md)).
+///
+/// **A span with a `gloss` is tappable and one without it is not.** There is no
+/// `isTappable`, and the answer must not vary by interface language: a span
+/// missing its ja gloss falls back to zh-Hant server-side rather than going
+/// dead, or the same sentence would lose half its live words in 日本語.
+nonisolated struct GlossSpan: Codable, Hashable {
+    /// This span's slice of the sentence, verbatim — including whatever spaces
+    /// and punctuation belong to it. `SentenceAnnotation` re-spells the
+    /// sentence from these, so it is never normalised.
+    let text: String
+    /// What the span means *in this sentence*. nil for function words and
+    /// punctuation, which is exactly what makes them untappable.
+    let gloss: String?
+    /// `running` → `run`. nil when the span is already its own base form.
+    ///
+    /// Not `lemma`: that name is taken by the 自製圖鑑 item headword
+    /// (`atlas_items.lemma`), and one word meaning two things in one codebase
+    /// is the next person's trap.
+    let baseForm: String?
+    /// Canonical English part of speech, as `localizedPartOfSpeech` expects.
+    let partOfSpeech: String?
+    /// Kana reading, Japanese only. nil for English spans.
+    let reading: String?
+    /// The catalogue word this span teaches, when it is one. Lets the card
+    /// offer a way into 圖鑑詳情; nil for the many spans that will never be
+    /// dictionary entries.
+    let wordId: String?
+
+    /// The one question every consumer asks. Spelled out here so no screen
+    /// re-derives it as `span.gloss != nil` and lets the two drift.
+    var isTappable: Bool {
+        self.gloss?.isEmpty == false
+    }
+}
+
+/// Whether a sentence's spans may be trusted to render it.
+///
+/// The annotation is **total**: every character of the sentence sits in exactly
+/// one span, so concatenating them re-spells it. That is the same invariant
+/// `FuriganaSegment` carries, kept for the same reason — the checkable half of
+/// a model's answer gets checked. It also means a renderer never indexes into
+/// the string (it appends span by span), so the two languages never have to
+/// agree on what one character is: JS counts UTF-16, Swift's `Character` is a
+/// grapheme cluster, and Postgres counts code points.
+///
+/// Failing the check is not an error state. It renders the plain sentence the
+/// app shipped with before any of this existed.
+nonisolated enum SentenceAnnotation {
+    static func spans(_ spans: [GlossSpan]?, for sentence: String) -> [GlossSpan]? {
+        guard let spans, !spans.isEmpty else { return nil }
+        guard spans.map(\.text).joined() == sentence else { return nil }
+        return spans
+    }
+}
+
 /// What a screen puts with a headword.
 ///
 /// Five screens each carried their own `if let pronunciation` and they did not
@@ -235,6 +297,12 @@ struct Word: Codable, Identifiable, Hashable {
     let chineseDefinition: String?
     /// Definition in the active learning target language (`en` or `ja`).
     let targetDefinition: String?
+    /// 詞塊 for `targetDefinition`. The 譯義 line is a sentence in the language
+    /// being learned, so it is tappable on the same terms an example sentence
+    /// is. The Chinese explainer beside it deliberately is not: glossing
+    /// Chinese for a Chinese reader teaches nothing, and a ja/en interface
+    /// never renders that line at all.
+    let targetDefinitionSpans: [GlossSpan]?
     /// Convenience: first en-language definition prefilled by the server
     /// (the `definitions` array itself is lang-filtered so the en row
     /// gets dropped when UI lang is zh-Hant — see lib/word-localize.ts).
@@ -271,6 +339,12 @@ struct WordExample: Codable, Hashable {
     let translations: [String: String]?
     let cefrLevel: String?
     let sortOrder: Int?
+    /// The sentence split into tappable 詞塊, glossed in the requested UI
+    /// language. Optional and often absent: an un-annotated sentence renders as
+    /// the plain text it always was. Ask `SentenceAnnotation.spans(_:for:)`
+    /// rather than reading this directly — the spans are only usable if they
+    /// re-spell the sentence.
+    let spans: [GlossSpan]?
 }
 
 struct WordRelation: Codable, Hashable {

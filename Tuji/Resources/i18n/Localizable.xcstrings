@@ -3906,6 +3906,29 @@
         }
       }
     },
+    "原形" : {
+      "comment" : "A label on the 詞塊 card for a word's dictionary base form (running → run).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base form"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原形"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原形"
+          }
+        }
+      }
+    },
     "去單字庫逛逛" : {
       "comment" : "A button label that translates to \"Go to the word bank to browse\".",
       "extractionState" : "stale",

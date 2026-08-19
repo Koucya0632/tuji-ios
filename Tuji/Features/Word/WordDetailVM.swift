@@ -151,6 +151,7 @@ final class WordDetailVM {
             forms: nil,
             chineseDefinition: lite.chinese,
             targetDefinition: nil,
+            targetDefinitionSpans: nil,
             englishDefinition: nil,
             tags: tags
         )

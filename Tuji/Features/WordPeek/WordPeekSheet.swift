@@ -56,6 +56,11 @@ struct WordPeekSheet: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
+        // Hosts the 詞塊 card for the inline details revealed at `.large`.
+        // Inside the sheet's own content, which is the reason the card is an
+        // overlay and not a `.sheet`: presenting one from here would stack a
+        // sheet on a sheet and bury the sentence being read.
+        .glossCard()
         .presentationDetents([self.restDetent, .large], selection: self.$detent)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(24)
