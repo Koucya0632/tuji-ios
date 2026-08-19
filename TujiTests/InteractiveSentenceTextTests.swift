@@ -92,11 +92,9 @@ struct InteractiveSentenceTextTests {
     // MARK: - Resolving a tap
 
     @Test
-    func aLinkResolvesToItsSpan() {
+    func aLinkResolvesToItsSpan() throws {
         let attributed = InteractiveSentenceText.attributed(self.sentence)
-        let url = try! #require(
-            attributed.runs.compactMap(\.link).first
-        )
+        let url = try #require(attributed.runs.compactMap(\.link).first)
         #expect(InteractiveSentenceText.spanIndex(in: url) == 1)
         #expect(self.sentence[1].text == "look forward to")
     }
@@ -106,9 +104,10 @@ struct InteractiveSentenceTextTests {
     /// the two must not be the same scheme — and the resolver must refuse
     /// anything that is not its own.
     @Test
-    func foreignSchemesAreRefused() {
-        for raw in ["tuji://word/3", "https://tuji.app/word/3"] {
-            #expect(InteractiveSentenceText.spanIndex(in: URL(string: raw)!) == nil)
+    func foreignSchemesAreRefused() throws {
+        for raw in ["tuji://word/3", "https://example.com/word/3"] {
+            let url = try #require(URL(string: raw))
+            #expect(InteractiveSentenceText.spanIndex(in: url) == nil)
         }
     }
 

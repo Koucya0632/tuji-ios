@@ -75,7 +75,7 @@ struct InteractiveSentenceText: View {
     }
 
     static func spanIndex(in url: URL) -> Int? {
-        guard url.scheme == Self.scheme else { return nil }
+        guard url.scheme == scheme else { return nil }
         return url.pathComponents.last.flatMap(Int.init)
     }
 }
