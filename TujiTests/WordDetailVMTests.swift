@@ -174,6 +174,7 @@ private extension Word {
             forms: self.forms,
             chineseDefinition: self.chineseDefinition,
             targetDefinition: self.targetDefinition,
+            targetDefinitionSpans: nil,
             englishDefinition: self.englishDefinition,
             tags: self.tags
         )

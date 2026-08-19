@@ -55,6 +55,11 @@ struct WordDetailView: View {
         }
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
+        // Hosts the 詞塊 card for every page's examples. On the pager rather
+        // than on each page, so the screen has exactly one card — and the
+        // scrim covers the pager, which is what stops a swipe from carrying an
+        // open card to a different word.
+        .glossCard()
         // Ensure the dictionary is loaded so neighbours exist to swipe to;
         // returns immediately when 圖鑑 already populated the store.
         .task { await self.wordsStore.loadIfNeeded() }

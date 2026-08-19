@@ -181,6 +181,35 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   (`WordTile`) stays outside both, by [ADR-0006](docs/adr/0006-furigana-segmentation.md):
   ruby at 18pt lands under the CJK floor.
 
+## Domain — 例句標註
+
+- **詞塊 (`GlossSpan`)** — 一個可讀句子裡的一個單位，以及掛在它上面的東西：這個詞**在這句話裡**
+  的意思、原形、詞性、日文讀音，命中目錄詞時再加一個 `wordId`。刻意不是「一個詞」——
+  `look forward to` 是一塊，因為對學習者它是一個單位，而把中間那個 `to` 單獨翻成「到」不是
+  沒用而是錯的。片語邊界要看得懂整句才判得出來，這正是[ADR-0009](docs/adr/0009-example-sentence-annotation.md)
+  把切分放在伺服器、而不是交給裝置上免費的 `NLTagger` 的第二個理由（第一個是：原形查出來
+  之後沒有字典可以查——Tuji 的字典是 480 個有圖片的策展詞頭，`quickly` 永遠不會有詞條）。
+- **有釋義 = 可點。** 不存在 `isTappable`。虛詞與標點就是沒有釋義的詞塊，而**這件事跟介面
+  語言無關**：某個詞塊缺 ja 釋義時退回 zh-Hant，不是變成不可點——否則同一句話在日文介面會
+  少掉一半可以點的字，而使用者只會當成 bug。
+- **例句標註 (`SentenceAnnotation`)** — 一句話的那一串詞塊，**全覆蓋**：每個字元都落在某一
+  塊裡，串起來必須一字不差地重寫出原句。跟 **切分 (reading segments)** 是同一條不變量，理由
+  也同一條——可驗的部分要驗。因此客戶端**從不對字串做索引**（它逐塊接成 `AttributedString`），
+  兩邊也就不需要對「一個字元是什麼」達成共識（JS 數 UTF-16、Swift 的 `Character` 是 grapheme
+  cluster、Postgres 數 code point，三者在組合字上會分家）。串不回原句就整句作廢、退回純文字：
+  那是這個功能唯一的失敗模式，而它剛好等於功能上線前的樣子。
+- **以句子為鍵，不是以列為鍵。** 標註是那個字串的性質，所以 `sentence_spans` 的主鍵是
+  (語言, 句子, 序號)，例句與**譯義**（`targetDefinition`）共用同一張表：同一句話標一次，
+  在哪裡出現都通。中文釋義那行刻意不標——對中文讀者標中文教不到東西，而 ja/en 介面根本不會
+  渲染那一行。句子被改寫時舊標註自然對不上而退回純文字，**沒有比標錯好**。
+- **詞塊不連回當前頁面。** 例句與譯義都會提到自己的詞頭（例句正是為了示範它），所以最好點的
+  那一塊會讓「看完整詳情」把同一頁再推一次。伺服器端的 `unlinkSelfReference` 拔掉那個
+  `wordId`——**塊還是可點的，只是少一顆按鈕**，因為可點與否從來只看有沒有釋義。
+- **原形 (`baseForm`)** — `running` 的 `run`。**不叫 `lemma`**：這個 codebase 裡 `lemma` 已經
+  是自製圖鑑 item 的詞頭（`atlas_items.lemma`、confirm API 的必填欄位、`AtlasItemRow.lemma`），
+  同一個字在同一份程式碼裡有兩個意思，是下一個人一定會踩的坑。
+  _Avoid_: lemma（已被佔用）、詞根（那是 etymology 的事）。
+
 ## Domain — 方案與權限 (plan & entitlement)
 
 - **訂閱 (subscription)** — an auto-renewable App Store purchase. Apple owns its whole

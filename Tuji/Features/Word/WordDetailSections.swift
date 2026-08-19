@@ -178,11 +178,20 @@ struct WordDetailSections: View {
                         .foregroundStyle(.tujiInk3)
                 }
             }
+            // The 譯義 line is a sentence in the language being learned, so it
+            // is tappable on the same terms an example is.
             if let targetDef, !targetDef.isEmpty {
-                Text(targetDef)
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk)
+                InteractiveSentenceText(
+                    sentence: targetDef,
+                    spans: w.targetDefinitionSpans,
+                    language: w.language(in: self.session)
+                )
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk)
             }
+            // The Chinese explainer stays plain on purpose: glossing Chinese
+            // for a Chinese reader teaches nothing, and a ja/en interface never
+            // renders this line at all.
             if self.settings.current.showZh,
                let chineseDef,
                !chineseDef.isEmpty
@@ -251,9 +260,13 @@ struct WordDetailSections: View {
                 let sentence = ex.target ?? (word.language(in: self.session) == .ja ? "" : ex.en)
                 VStack(alignment: .leading, spacing: Space.s1) {
                     HStack(alignment: .top, spacing: Space.s2) {
-                        Text(sentence)
-                            .font(.tujiBody)
-                            .foregroundStyle(.tujiInk)
+                        InteractiveSentenceText(
+                            sentence: sentence,
+                            spans: ex.spans,
+                            language: self.word.language(in: self.session)
+                        )
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk)
                         Spacer(minLength: Space.s2)
                         PronunciationButton(
                             text: sentence,
