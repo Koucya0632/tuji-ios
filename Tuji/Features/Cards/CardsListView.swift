@@ -15,11 +15,6 @@ struct CardsListView: View {
     @Environment(AuthService.self) private var auth
     @Environment(TabNavigator.self) private var navigator
 
-    private var isGuest: Bool {
-        if case .signedIn = self.auth.state { return false }
-        return true
-    }
-
     /// A source the navigation layer wants shown (a `tuji://favorites` link).
     /// Consumed once and cleared, so it never fights a later manual pick.
     @Binding var sourceRequest: CardsSource?
@@ -108,7 +103,7 @@ struct CardsListView: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Space.s2) {
-                    ForEach(CardsSource.available(isGuest: self.isGuest)) { value in
+                    ForEach(CardsSource.available(isGuest: self.auth.isGuest)) { value in
                         self.sourceChip(value)
                     }
                 }

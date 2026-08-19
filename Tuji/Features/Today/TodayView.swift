@@ -33,10 +33,6 @@ struct TodayView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var isGuest: Bool {
-        user == nil
-    }
-
     /// One snapshot of everything 首頁's decisions depend on, read from the
     /// environment here and answered in `TodayDecisions`. Reading the stores in
     /// this one place is also what registers the observation that re-renders
@@ -45,7 +41,7 @@ struct TodayView: View {
         let selected = self.settings.current.studyCategories
         return TodayDecisions(
             .init(
-                isGuest: self.isGuest,
+                isGuest: self.auth.isGuest,
                 settingsLoaded: self.settings.hasLoaded,
                 studyCategories: selected,
                 dailyGoal: self.settings.current.dailyGoal,
@@ -81,7 +77,7 @@ struct TodayView: View {
         .navigationTitle("主頁")
         .toolbar(.hidden, for: .navigationBar)
         .refreshable {
-            if !self.isGuest {
+            if !self.auth.isGuest {
                 self.progress.invalidate()
                 self.studyStats.invalidate()
                 self.mastery.invalidate()
@@ -99,8 +95,8 @@ struct TodayView: View {
             await self.words.reload()
             await self.categories.reload()
         }
-        .warmsAccumulation(.todayHero, isGuest: self.isGuest) {
-            guard !self.isGuest else { return }
+        .warmsAccumulation(.todayHero, isGuest: self.auth.isGuest) {
+            guard !self.auth.isGuest else { return }
             self.prefetchStudyQueues()
         }
     }
@@ -199,13 +195,10 @@ struct TodayView: View {
         }
     }
 
+    /// The fallback is this screen's copy — 今天 greets 「探險者」 where 我 titles
+    /// the row 「Tuji 探險者」 — so it stays here while the derivation does not.
     private var displayName: String {
-        if let user {
-            if let n = user.nickname, !n.isEmpty { return n }
-            if let u = user.username, !u.isEmpty { return u }
-            if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
-        }
-        return tujiLocalized("探險者")
+        self.auth.displayName(fallback: tujiLocalized("探險者"))
     }
 
     /// Overline date in the interface language (reading `settings.current`
@@ -240,14 +233,14 @@ struct TodayView: View {
         ZStack(alignment: .topTrailing) {
             VStack(alignment: .leading, spacing: Space.s3) {
                 VStack(alignment: .leading, spacing: Space.s3) {
-                    if !self.isGuest {
+                    if !self.auth.isGuest {
                         self.dailyGoalProgress
                     }
                     self.heroProgress
                 }
                 .padding(.trailing, 96)
 
-                if self.isGuest {
+                if self.auth.isGuest {
                     // Guests can't study (SRS is account-scoped), so instead of
                     // two permanently-dead buttons the hero offers the one
                     // action that actually works: creating an account.
@@ -537,7 +530,7 @@ struct TodayView: View {
     private var themeTiles: [TujiCategory] {
         let presentIds = Set(self.words.categories)
         let known = self.categories.categories.filter { presentIds.contains($0.id) }
-        if self.isGuest {
+        if self.auth.isGuest {
             return Array(known.prefix(4))
         }
         let selected = Set(self.settings.current.studyCategories)

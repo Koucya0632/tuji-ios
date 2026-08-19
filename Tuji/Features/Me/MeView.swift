@@ -55,10 +55,6 @@ struct MeView: View {
     /// the account row cannot disagree with the paywall or quota UI.
     private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
 
-    private var isGuest: Bool {
-        self.user == nil
-    }
-
     /// 我 is no longer a directory of six entry points — it *is* your progress
     /// (D.8). The two menu cards are gone and their entries went where the thing
     /// they open actually lives: 圖鑑管理 to the 圖鑑 tab's 管理 → (only when the
@@ -89,13 +85,13 @@ struct MeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .refreshable {
-            if !self.isGuest {
+            if !self.auth.isGuest {
                 self.progress.invalidate()
                 await self.vm.load(progress: self.progress)
             }
         }
         .task {
-            if !self.isGuest {
+            if !self.auth.isGuest {
                 // Warm the 圖鑑管理 store from here (its parent screen) so tapping
                 // into AtlasManageView renders from the cached singleton instead
                 // of waiting on /api/atlas/sync. Fire-and-forget so it doesn't
@@ -116,7 +112,7 @@ struct MeView: View {
                 #if DEBUG
                 // Dev-only Bearer smoke test. Compiled out of release /
                 // App Store builds so end users never see it.
-                DebugSmokeSection(isGuest: self.isGuest)
+                DebugSmokeSection(isGuest: self.auth.isGuest)
                     .padding(.horizontal, Space.s4)
                 #endif
             }
@@ -133,7 +129,7 @@ struct MeView: View {
         Button { self.showPaywall = true } label: {
             HStack(spacing: Space.s3) {
                 ProfileAvatar(
-                    avatar: self.isGuest ? nil : self.user?.avatar,
+                    avatar: self.auth.isGuest ? nil : self.user?.avatar,
                     fallbackPose: .face,
                     size: 48
                 )
@@ -173,7 +169,7 @@ struct MeView: View {
 
     @ViewBuilder
     private var weakSection: some View {
-        if !self.isGuest, !self.vm.weakWords.isEmpty {
+        if !self.auth.isGuest, !self.vm.weakWords.isEmpty {
             self.wordSection(
                 title: "需要加強",
                 words: self.vm.weakWords,
@@ -262,17 +258,16 @@ struct MeView: View {
     // MARK: - Helpers
 
     private var displayName: String {
-        if let user {
-            if let n = user.nickname, !n.isEmpty { return n }
-            if let u = user.username, !u.isEmpty { return u }
-            if let e = user.email, let local = e.split(separator: "@").first { return String(local) }
-        }
-        return tujiLocalized("Tuji 探險者")
+        self.auth.displayName(fallback: tujiLocalized("Tuji 探險者"))
     }
 
+    /// The `@handle` line. Not `displayName`: this one skips the nickname, so it
+    /// prints the UID a stranger would search for rather than the name the user
+    /// chose. The email local part stays as a last resort for an account whose
+    /// UID has not mirrored yet.
     private var handle: String? {
-        if self.isGuest { return "guest" }
-        if let u = user?.username, !u.isEmpty { return u }
+        if self.auth.isGuest { return "guest" }
+        if let uid = self.auth.uid { return uid }
         if let e = user?.email, let local = e.split(separator: "@").first {
             return String(local)
         }

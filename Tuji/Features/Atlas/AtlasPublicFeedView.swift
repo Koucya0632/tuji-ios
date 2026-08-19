@@ -28,19 +28,11 @@ struct AtlasPublicFeedView: View {
     @State private var section: PublicAtlasBrowsingModel.Shelf = .explore
     @State private var savedShelfMounted = false
 
-    /// nil for a guest, or for an account the server has not minted a UID for.
-    private var myUid: String? {
-        guard case let .signedIn(user) = self.auth.state,
-              let uid = user.username, !uid.isEmpty
-        else { return nil }
-        return uid
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             // Guests have no public page, and an account with no UID yet has
             // nothing to link to — in both cases the row simply isn't there.
-            if let uid = self.myUid {
+            if let uid = self.auth.uid {
                 CommunityMyPageRow(uid: uid)
                 Rectangle()
                     .fill(.tujiRule)
@@ -71,7 +63,7 @@ struct AtlasPublicFeedView: View {
             await self.browsing.update(
                 shelf: self.section,
                 language: self.targetLanguage,
-                isSignedIn: self.isSignedIn,
+                isSignedIn: !self.auth.isGuest,
                 blockedAuthors: self.blocks.handles,
                 pendingExploreRefresh: self.feedRefresh.consume()
             )
@@ -179,7 +171,7 @@ struct AtlasPublicFeedView: View {
                 await self.browsing.refresh(
                     shelf: .explore,
                     language: self.targetLanguage,
-                    isSignedIn: self.isSignedIn
+                    isSignedIn: !self.auth.isGuest
                 )
             }
         }
@@ -187,7 +179,7 @@ struct AtlasPublicFeedView: View {
 
     @ViewBuilder
     private var savedContent: some View {
-        if !self.isSignedIn {
+        if self.auth.isGuest {
             VStack(spacing: Space.s3) {
                 Spacer()
                 Text("登入後才能查看已收藏的合集")
@@ -245,35 +237,25 @@ struct AtlasPublicFeedView: View {
                 await self.browsing.refresh(
                     shelf: .saved,
                     language: self.targetLanguage,
-                    isSignedIn: self.isSignedIn
+                    isSignedIn: !self.auth.isGuest
                 )
             }
         }
     }
 
-    private var isSignedIn: Bool {
-        if case .signedIn = self.auth.state { return true }
-        return false
-    }
-
     private var currentAuthorIdentity: AtlasAuthorRef? {
-        guard case let .signedIn(user) = self.auth.state,
-              let handle = user.username,
-              !handle.isEmpty
-        else {
-            return nil
-        }
-        let nickname = user.nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let displayName = nickname.flatMap { $0.isEmpty ? nil : $0 } ?? handle
+        guard let handle = self.auth.uid,
+              case let .signedIn(user) = self.auth.state
+        else { return nil }
         return AtlasAuthorRef(
             handle: handle,
-            displayName: displayName,
+            displayName: self.auth.displayName(fallback: handle),
             avatar: user.avatar ?? "face"
         )
     }
 
     private var browsingLoadKey: String {
-        "\(self.section.rawValue)-\(self.targetLanguage.rawValue)-\(self.isSignedIn)"
+        "\(self.section.rawValue)-\(self.targetLanguage.rawValue)-\(!self.auth.isGuest)"
     }
 
     private func title(for shelf: PublicAtlasBrowsingModel.Shelf) -> LocalizedStringKey {
@@ -307,7 +289,7 @@ struct AtlasPublicFeedView: View {
                         await self.browsing.refresh(
                             shelf: .explore,
                             language: self.targetLanguage,
-                            isSignedIn: self.isSignedIn
+                            isSignedIn: !self.auth.isGuest
                         )
                     }
                 }
@@ -513,10 +495,7 @@ struct AtlasPublicDetailView: View {
     /// your own 圖鑑 from you.
     private var authorHandle: String? {
         guard let handle = self.vm.item.author?.handle, !handle.isEmpty else { return nil }
-        guard case let .signedIn(user) = self.auth.state else { return nil }
-        if let uid = user.username, uid.caseInsensitiveCompare(handle) == .orderedSame {
-            return nil
-        }
+        guard !self.auth.isGuest, !self.auth.owns(handle: handle) else { return nil }
         return handle
     }
 
@@ -780,11 +759,8 @@ struct AtlasPublicDetailView: View {
     }
 
     private var isOwnItem: Bool {
-        guard case let .signedIn(user) = self.auth.state,
-              let username = user.username,
-              let handle = self.vm.item.author?.handle
-        else { return false }
-        return username.caseInsensitiveCompare(handle) == .orderedSame
+        guard let handle = self.vm.item.author?.handle else { return false }
+        return self.auth.owns(handle: handle)
     }
 }
 

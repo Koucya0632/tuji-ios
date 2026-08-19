@@ -18,13 +18,6 @@ struct CategoryIndexView: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(AuthService.self) private var auth
 
-    /// Guests have no mastery or progress rows, so both badges stay `.none`
-    /// for them and the two account-scoped fetches are skipped.
-    private var isGuest: Bool {
-        if case .signedIn = self.auth.state { return false }
-        return true
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back)
@@ -36,7 +29,7 @@ struct CategoryIndexView: View {
         // 完成 reads ProgressStore, which this screen used to render without
         // ever loading — the badge showed up only when another screen had
         // warmed the store first.
-        .warmsAccumulation(.themeIndex, isGuest: self.isGuest)
+        .warmsAccumulation(.themeIndex, isGuest: self.auth.isGuest)
     }
 
     private var list: some View {
