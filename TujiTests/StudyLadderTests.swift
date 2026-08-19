@@ -15,7 +15,7 @@ struct StudyLadderTests {
     /// `ねこ` reads as its own term over two kana, so it does too. A
     /// single-character word is added where a 1-unit board is needed.
     private func makeQueue(_ json: String) throws -> [StudyQueueItem] {
-        try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     private func word(id: String, word: String, reading: String? = nil) -> String {

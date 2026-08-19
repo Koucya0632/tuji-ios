@@ -78,11 +78,7 @@ enum AtlasFixtures {
         AtlasSyncResponse(
             serverTime: serverTime,
             images: images,
-            items: items,
-            cards: [],
-            cardStates: [],
-            mastery: [],
-            paging: AtlasSyncPaging(limit: 500, truncated: false)
+            items: items
         )
     }
 
@@ -127,7 +123,7 @@ enum AtlasFixtures {
         ]
         if let zhHant { fields.append("\"zhHant\": \"\(zhHant)\"") }
         if let gloss { fields.append("\"gloss\": \"\(gloss)\"") }
-        return try JSONDecoder().decode(
+        return try JSONDecoder.tuji.decode(
             AtlasCandidate.self,
             from: Data("{ \(fields.joined(separator: ", ")) }".utf8)
         )

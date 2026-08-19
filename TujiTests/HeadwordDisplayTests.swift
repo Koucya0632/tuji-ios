@@ -169,7 +169,7 @@ struct HeadwordDisplayTests {
           "category": "bathroom"
         }
         """
-        let word = try JSONDecoder().decode(StudyQueueWord.self, from: Data(json.utf8))
+        let word = try JSONDecoder.tuji.decode(StudyQueueWord.self, from: Data(json.utf8))
         #expect(word.headwordDisplay(in: .en) == .plain)
         #expect(word.readingSegments == nil)
     }

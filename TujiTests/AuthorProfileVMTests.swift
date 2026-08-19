@@ -294,7 +294,7 @@ struct AuthorProfileVMTests {
         "items":[]}
         """.utf8)
 
-        let decoded = try JSONDecoder().decode(AtlasAuthorResponse.self, from: json)
+        let decoded = try JSONDecoder.tuji.decode(AtlasAuthorResponse.self, from: json)
 
         #expect(decoded.collections.isEmpty)
         #expect(decoded.author.handle == "mika_k")

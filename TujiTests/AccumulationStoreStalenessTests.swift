@@ -207,7 +207,7 @@ private final class SpyProgressRepository: ProgressRepository {
     func loadMastery() async throws -> MasteryListResponse {
         self.masteryLoads += 1
         if self.failing { throw Boom() }
-        return try JSONDecoder().decode(
+        return try JSONDecoder.tuji.decode(
             MasteryListResponse.self,
             from: Data(#"{"items":[{"wordId":"w-apple","mastery":42,"nextReviewAt":null}]}"#.utf8)
         )
@@ -260,7 +260,7 @@ private final class SpyStudyRepository: StudyRepository {
 /// `CategoryProgress` is `Decodable` only, so fixtures go through JSON.
 enum CategoryProgressFixture {
     static func make(category: String, seen: Int, total: Int) throws -> CategoryProgress {
-        try JSONDecoder().decode(
+        try JSONDecoder.tuji.decode(
             CategoryProgress.self,
             from: Data(#"{"category":"\#(category)","seen":\#(seen),"total":\#(total)}"#.utf8)
         )

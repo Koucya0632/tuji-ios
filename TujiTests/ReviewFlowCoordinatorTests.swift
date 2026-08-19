@@ -38,7 +38,7 @@ struct ReviewFlowCoordinatorTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     /// Yields the main actor in short beats until `condition` holds. Returns

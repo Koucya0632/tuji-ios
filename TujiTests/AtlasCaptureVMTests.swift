@@ -43,7 +43,7 @@ struct AtlasCaptureVMTests {
             fields.append("\"gloss\": \"\(gloss)\"")
         }
         let json = "{ \(fields.joined(separator: ", ")) }"
-        return try JSONDecoder().decode(AtlasCandidate.self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode(AtlasCandidate.self, from: Data(json.utf8))
     }
 
     @Test
