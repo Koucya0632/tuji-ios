@@ -119,7 +119,7 @@ struct DistractorPoolTests {
           "choices": \(choicesJSON), "spellingChoices": null, "mastery": 0
         }
         """
-        return try JSONDecoder().decode(StudyQueueItem.self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode(StudyQueueItem.self, from: Data(json.utf8))
     }
 
     @Test

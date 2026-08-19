@@ -49,7 +49,7 @@ struct NewFlowCoordinatorTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     /// Single multi-word EN item — 12 letters across two tokens, so its tile
@@ -69,7 +69,7 @@ struct NewFlowCoordinatorTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     /// JA items exercising kana tiling: a yōon reading (きょう) whose small
@@ -100,7 +100,7 @@ struct NewFlowCoordinatorTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     @Test

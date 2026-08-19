@@ -234,40 +234,24 @@ struct AtlasCardsResponse: Decodable {
     let cards: [AtlasCard]
 }
 
-struct AtlasCardState: Decodable, Hashable {
-    let cardId: String
-    let status: String
-    let intervalDays: Double
-    let nextReviewAt: String
-    let reviewCount: Int
-    let mistakeCount: Int
-    let lastRating: String?
-    let lastReviewedAt: String?
-    let updatedAt: String?
-}
-
-struct AtlasMasteryEntry: Decodable, Hashable {
-    let itemId: String
-    let targetLanguage: TargetLanguage
-    let mastery: Double
-    let lastReviewedAt: String?
-    let reviewCount: Int
-    let updatedAt: String?
-}
-
+/// What `AtlasStore.merge` actually reads, and nothing else.
+///
+/// The payload also carries `cards`, `cardStates`, `mastery` and `paging`, and
+/// this struct used to decode all four — strictly, non-optionally — into
+/// properties no screen ever read. `AtlasCardState` and `AtlasMasteryEntry`
+/// existed for that and were referenced nowhere else in the app or its tests.
+///
+/// The cost was not the wasted work. `cardStates.intervalDays` is a Postgres
+/// NUMERIC, so it arrives as `"1.0000"`; one such value, or one missing key on
+/// a partial deploy, threw — and `APIClient` turns a decode failure into
+/// **資料解析失敗** across the whole 圖鑑管理 shelf. A field nothing reads could
+/// blank a screen.
+///
+/// Same rule ADR-0001 applied to `publicFeed`: what has no caller goes.
 struct AtlasSyncResponse: Decodable {
     let serverTime: String
     let images: [AtlasImageSummary]
     let items: [AtlasItem]
-    let cards: [AtlasCard]
-    let cardStates: [AtlasCardState]
-    let mastery: [AtlasMasteryEntry]
-    let paging: AtlasSyncPaging
-}
-
-struct AtlasSyncPaging: Decodable, Hashable {
-    let limit: Int
-    let truncated: Bool
 }
 
 // MARK: - Entitlement / quota (GET /api/atlas/entitlement)
@@ -293,23 +277,4 @@ struct AtlasUsage: Decodable, Hashable {
     let atlasSlots: Int
     let primaryAiThisMonth: Int
     let precisionAiThisMonth: Int
-}
-
-private extension KeyedDecodingContainer {
-    /// Decodes a Double that may arrive as a JSON number or a numeric string.
-    /// A few atlas routes return raw Postgres NUMERIC columns (e.g. candidate
-    /// `confidence`, study-state `interval_days`), which serialize as strings
-    /// like "0.9500"; this tolerates both forms so decoding doesn't fail.
-    func decodeFlexibleDouble(forKey key: Key) throws -> Double {
-        if let value = try? decode(Double.self, forKey: key) { return value }
-        let raw = try decode(String.self, forKey: key)
-        guard let value = Double(raw) else {
-            throw DecodingError.dataCorruptedError(
-                forKey: key,
-                in: self,
-                debugDescription: "Expected Double or numeric string, got \"\(raw)\""
-            )
-        }
-        return value
-    }
 }

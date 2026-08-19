@@ -10,7 +10,20 @@ extension JSONDecoder {
         // snake_case DB columns before serializing). Conversion is on as a
         // safety net for any snake_case payloads that slip through.
         d.keyDecodingStrategy = .convertFromSnakeCase
-        d.dateDecodingStrategy = .iso8601
+        // `.iso8601` rejects the fractional seconds the server always emits, so
+        // it was not an unused knob — it was the reason no model can declare a
+        // `Date` (every wire timestamp is a `String` parsed at the point of use;
+        // see `ReviewSchedule`). `Wire.parseISO` tolerates both forms.
+        d.dateDecodingStrategy = .custom { decoder in
+            let raw = try decoder.singleValueContainer().decode(String.self)
+            guard let date = Wire.parseISO(raw) else {
+                throw try DecodingError.dataCorruptedError(
+                    in: decoder.singleValueContainer(),
+                    debugDescription: "Expected an ISO8601 timestamp, got \"\(raw)\""
+                )
+            }
+            return date
+        }
         return d
     }()
 }

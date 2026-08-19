@@ -70,7 +70,7 @@ struct CollectionEditVMTests {
             #"{"id":"private-1","slug":"private-1","lemma":"cat","displayZhHant":"貓","targetLanguage":"ja","category":null,"imageUrl":"https://example.test/thumb","author":null,"publishedAt":null,"publicItemId":null,"reviewStatus":"draft","publicationState":"private"}"#
                 .utf8
         )
-        let privateItem = try JSONDecoder().decode(AtlasPublicItem.self, from: data)
+        let privateItem = try JSONDecoder.tuji.decode(AtlasPublicItem.self, from: data)
         #expect(privateItem.collectionPublicationLabel != nil)
 
         let fake = FakeCollectionEditing(

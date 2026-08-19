@@ -39,7 +39,7 @@ struct TileBoardTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     /// 12 letters across two tokens — over the 10-tile cap, so it chunks.
@@ -56,7 +56,7 @@ struct TileBoardTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     /// A yo\u{304A}n reading whose small kana must merge into the preceding unit,
@@ -82,7 +82,7 @@ struct TileBoardTests {
           }
         ]
         """
-        return try JSONDecoder().decode([StudyQueueItem].self, from: Data(json.utf8))
+        return try JSONDecoder.tuji.decode([StudyQueueItem].self, from: Data(json.utf8))
     }
 
     @Test

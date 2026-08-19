@@ -6,11 +6,11 @@
 // them against the SwiftUI environment locale (driven by uiLang) — the zh-Hans
 // values live in the String Catalog and switch live with the interface language.
 //
-// Why parse ISO by hand: APIClient's JSONDecoder uses `.iso8601`, whose default
-// ISO8601DateFormatter rejects fractional seconds — but the server's
-// `Date.toISOString()` always emits `.SSS`. Decoding nextReviewAt as a Date
-// would throw and sink the whole mastery payload, so we decode it as a String
-// and parse it here, tolerating both forms.
+// Why timestamps are decoded as `String` and parsed: `JSONDecoder.tuji` used to
+// carry `.iso8601`, whose formatter rejects the fractional seconds the server's
+// `Date.toISOString()` always emits — so a `Date` field would throw and sink the
+// payload. That strategy is `Wire.parseISO` now, so the constraint is lifted;
+// the existing `String` fields are left as they are rather than re-typed.
 
 import SwiftUI
 
@@ -42,16 +42,11 @@ enum ReviewSchedule {
 
     // MARK: - ISO parsing
 
-    private static let isoFractional: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
-
-    private static let isoPlain = ISO8601DateFormatter()
-
-    /// Parse an ISO8601 timestamp with or without fractional seconds.
+    /// Kept as the name four call sites already use. The parser itself is
+    /// `Wire.parseISO` — reading a timestamp off the wire is not 複習's
+    /// business, and while it lived here the decoder next door still carried
+    /// the strategy that rejects the fractional seconds this tolerates.
     static func parseISO(_ string: String) -> Date? {
-        self.isoFractional.date(from: string) ?? self.isoPlain.date(from: string)
+        Wire.parseISO(string)
     }
 }
