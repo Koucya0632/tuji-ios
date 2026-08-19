@@ -17,8 +17,22 @@ import SwiftUI
 struct CommunityMyPageRow: View {
     let uid: String
 
-    private let authors: AuthorReading = LiveAtlasRepository.shared
+    /// Goes through `AuthorProfileModule`, not the repository under it.
+    ///
+    /// The module exists to hold one fact the network cannot: a successful
+    /// profile edit is newer than any public edge-cache copy, so it keeps the
+    /// edited identity and applies it on top of whatever the route returns.
+    /// This row reached past it to `LiveAtlasRepository.shared`, so it was the
+    /// one place that still showed the pre-edit nickname and avatar — at the top
+    /// of 物見, directly above cards that had already been refreshed with the new
+    /// one. Injected rather than stored so a test can substitute it.
+    private let authors: AuthorProfileLoading
     private let log = Logger(subsystem: "app.tuji.ios", category: "community")
+
+    init(uid: String, authors: AuthorProfileLoading = AuthorProfileModule.shared) {
+        self.uid = uid
+        self.authors = authors
+    }
 
     /// Three states, not one optional. `author == nil` used to mean both "still
     /// loading" and "the fetch failed", so the row rendered nothing in either —
@@ -80,7 +94,7 @@ struct CommunityMyPageRow: View {
     private func load() async {
         if case .loaded = self.phase { return }
         do {
-            let author = try await self.authors.author(handle: self.uid, forceReload: false).author
+            let author = try await self.authors.load(handle: self.uid, refresh: false).author
             self.phase = .loaded(author)
         } catch {
             // Still silent to the user: a network problem here must not cost

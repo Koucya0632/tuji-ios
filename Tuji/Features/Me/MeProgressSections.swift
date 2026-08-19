@@ -354,9 +354,9 @@ struct HeatmapGrid: View {
             Text("少")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
-            ForEach(0..<4, id: \.self) { lvl in
+            ForEach(HeatmapBand.allCases, id: \.self) { band in
                 RoundedRectangle(cornerRadius: 3)
-                    .fill(self.tintForLevel(lvl))
+                    .fill(band.tint)
                     .frame(width: 14, height: 14)
             }
             Text("多")
@@ -368,24 +368,39 @@ struct HeatmapGrid: View {
 
     private func color(for cell: HeatmapCell) -> Color {
         if cell.future { return .tujiPaper }
-        return self.tintForLevel(self.strength(for: cell.count))
+        return HeatmapBand(count: cell.count).tint
     }
+}
 
-    private func strength(for count: Int) -> Int {
+/// How many answers a day's cell stands for, as one of four steps.
+///
+/// It was two `private func`s on the grid — `strength(for:)` mapped a count to
+/// `0…3` and `tintForLevel(_:)` mapped that to a colour, and the second one
+/// returned `.tujiAccumulation` for both `2` and its `default`. So 5–12 and 13+
+/// drew the same swatch, and the legend — which walks the levels rather than
+/// listing colours — printed that swatch twice. `.tujiAccumulationDeep` is the
+/// darkest step of the same ramp and already existed; the ramp stopped one short.
+///
+/// A value, not two functions on a `View`: the four bands and the four colours
+/// are the whole content of the heatmap's legend, and nothing could reach them.
+enum HeatmapBand: Int, CaseIterable {
+    case none, light, medium, heavy
+
+    init(count: Int) {
         switch count {
-        case 0: 0
-        case 1...4: 1
-        case 5...12: 2
-        default: 3
+        case ..<1: self = .none
+        case 1...4: self = .light
+        case 5...12: self = .medium
+        default: self = .heavy
         }
     }
 
-    private func tintForLevel(_ level: Int) -> Color {
-        switch level {
-        case 0: Color.tujiPaper3
-        case 1: .tujiAccumulationSoft
-        case 2: Color.tujiAccumulation
-        default: .tujiAccumulation
+    var tint: Color {
+        switch self {
+        case .none: .tujiPaper3
+        case .light: .tujiAccumulationSoft
+        case .medium: .tujiAccumulation
+        case .heavy: .tujiAccumulationDeep
         }
     }
 }

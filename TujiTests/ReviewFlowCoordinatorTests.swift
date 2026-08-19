@@ -348,6 +348,64 @@ struct ReviewFlowCoordinatorTests {
 
         #expect(next.isEmpty)
     }
+
+    // MARK: - 先離開 during the advance beat
+
+    /// 學新字 has carried `cancelPendingBeats` for a while, and the comment on
+    /// `NewFlowCoordinator.recognizeAnswer` records that the guarantee had been
+    /// declared complete once while one of its three stages still leaked. 複習
+    /// was a fourth copy of that stage in the other flow, and it had no array to
+    /// cancel at all: `scheduleAdvance` spawned an untracked `Task`, so leaving
+    /// mid-answer still ran `advance()` on a coordinator whose screen was gone —
+    /// draining writes and flipping `finished` behind a dismissed view.
+    @Test
+    func leavingDuringTheAdvanceBeatDoesNotFinishTheSession() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in
+            // Long enough that the cancellation lands first.
+            try? await Task.sleep(for: .milliseconds(200))
+        })
+
+        c.pick("fork") // fast + correct ⇒ auto-rate ⇒ scheduleAdvance
+        c.cancelPendingBeats()
+        try? await Task.sleep(for: .milliseconds(300))
+
+        #expect(!c.finished)
+    }
+
+    /// The control: without the cancel, the same beat must still land. A guard
+    /// that swallows every advance would pass the test above.
+    @Test
+    func theAdvanceBeatFinishesTheSessionWhenItIsNotCancelled() async throws {
+        let queue = try Array(self.makeQueue().prefix(1))
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
+
+        c.pick("fork")
+        // `advance()` drains writes before flipping `finished`, so poll rather
+        // than sleep a fixed span — CI runs these suites in parallel on one actor.
+        for _ in 0..<120 where !c.finished {
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+
+        #expect(c.finished)
+    }
+
+    /// Cancelling mid-queue must not advance to the next item either — the
+    /// single-item case above only proves the `finished` branch.
+    @Test
+    func leavingDuringTheAdvanceBeatDoesNotMoveToTheNextItem() async throws {
+        let queue = try self.makeQueue() // two items
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in
+            try? await Task.sleep(for: .milliseconds(200))
+        })
+        let before = c.current?.word.id
+
+        c.pick("fork")
+        c.cancelPendingBeats()
+        try? await Task.sleep(for: .milliseconds(300))
+
+        #expect(c.current?.word.id == before)
+    }
 }
 
 private enum RoundError: Error { case boom }
