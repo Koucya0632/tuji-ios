@@ -69,9 +69,10 @@ final class SettingsStore {
     /// True once the first server load has completed. TodayView reads this to
     /// avoid flashing the "pick themes" empty state before settings arrive.
     private(set) var hasLoaded: Bool = false
-    @ObservationIgnored private var latestRequestedContext: LoadContext?
     @ObservationIgnored private var loadedContext: LoadContext?
-    @ObservationIgnored private var inFlight: [LoadContext: LoadFlight] = [:]
+    /// Coalescing, the publish guard and the loading flag — see `LoadFlights`,
+    /// which 單字 and 分類 hold too.
+    @ObservationIgnored private let flights = LoadFlights<LoadContext>()
     private var saveTask: Task<Void, Never>?
     private let repository: UserRepository
     private let defaults: UserDefaults
@@ -115,11 +116,6 @@ final class SettingsStore {
 
     private struct LoadContext: Hashable {
         let userID: UUID?
-    }
-
-    private struct LoadFlight {
-        let id: UUID
-        let task: Task<Void, Never>
     }
 
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
@@ -186,33 +182,22 @@ final class SettingsStore {
     }
 
     private func load(for context: LoadContext) async {
-        self.latestRequestedContext = context
         if self.loadedContext != context {
             self.hasLoaded = false
         }
         self.loading = true
         self.lastError = nil
-
-        if let flight = self.inFlight[context] {
-            await flight.task.value
-            return
-        }
-
-        let flightID = UUID()
-        let task = Task { [weak self] in
-            guard let self else { return }
-            await self.performLoad(for: context, flightID: flightID)
-        }
-        self.inFlight[context] = LoadFlight(id: flightID, task: task)
-        await task.value
-
-        if self.inFlight[context]?.id == flightID {
-            self.inFlight[context] = nil
-        }
+        await self.flights.run(
+            context,
+            fetch: { await self.fetchSettings() },
+            publish: { result, stillCurrent in
+                await self.publish(result, for: context, stillCurrent: stillCurrent)
+            }
+        )
         self.refreshLoadingState()
     }
 
-    private func performLoad(for context: LoadContext, flightID: UUID) async {
+    private func fetchSettings() async -> Result<UserSettings, Error> {
         let signpostID = self.signposter.makeSignpostID()
         let interval = self.signposter.beginInterval("settings-load", id: signpostID)
         let result: Result<UserSettings, Error>
@@ -222,11 +207,17 @@ final class SettingsStore {
             result = .failure(error)
         }
         self.signposter.endInterval("settings-load", interval)
+        return result
+    }
 
-        guard self.latestRequestedContext == context,
-              self.inFlight[context]?.id == flightID
-        else { return }
-
+    /// Runs only for a result that is still the one being waited for. It
+    /// suspends partway through — the community-category migration saves back —
+    /// so it re-asks `stillCurrent` before writing anything after that await.
+    private func publish(
+        _ result: Result<UserSettings, Error>,
+        for context: LoadContext,
+        stillCurrent: LoadFlights<LoadContext>.StillCurrent
+    ) async {
         switch result {
         case var .success(settings):
             // Before first-run setup completes, the server row is boilerplate
@@ -278,9 +269,7 @@ final class SettingsStore {
                     } catch {
                         // Leave the marker unset so the migration retries on a
                         // later launch instead of silently losing the server update.
-                        if self.latestRequestedContext == context,
-                           self.inFlight[context]?.id == flightID
-                        {
+                        if stillCurrent() {
                             self.lastError = error
                         }
                         self.log.error(
@@ -299,11 +288,7 @@ final class SettingsStore {
     }
 
     private func refreshLoadingState() {
-        guard let latestRequestedContext else {
-            self.loading = false
-            return
-        }
-        self.loading = self.inFlight[latestRequestedContext] != nil
+        self.loading = self.flights.isLoading
     }
 
     static func reconcileServerSettings(
@@ -329,11 +314,7 @@ final class SettingsStore {
     /// server load().
     func adoptPersisted(_ settings: UserSettings) {
         let context = LoadContext(userID: self.signedInUserProvider()?.id)
-        self.latestRequestedContext = context
-        for flight in self.inFlight.values {
-            flight.task.cancel()
-        }
-        self.inFlight.removeAll()
+        self.flights.adopt(context)
         self.loadedContext = context
         let directionChanged = self.current.learningDirection != settings.learningDirection
         self.current = settings

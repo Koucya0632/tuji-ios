@@ -32,16 +32,12 @@ final class WordsStore {
     /// Per-selection dictionary counts; see `count(inCategories:)`.
     /// `@ObservationIgnored` because a memo is not state anyone observes.
     @ObservationIgnored private var countByCategories: [String: Int] = [:]
-    @ObservationIgnored private var latestRequestedContext: CatalogContext?
     @ObservationIgnored private var loadedContext: CatalogContext?
-    @ObservationIgnored private var inFlight: [CatalogContext: LoadFlight] = [:]
+    /// Coalescing, the publish guard and the loading flag — see `LoadFlights`,
+    /// which 分類 and 設定 hold too.
+    @ObservationIgnored private let flights = LoadFlights<CatalogContext>()
     @ObservationIgnored private var publicCache: [PublicKey: [CardWord]] = [:]
     @ObservationIgnored private var publicInFlight: [PublicKey: PublicFlight] = [:]
-
-    private struct LoadFlight {
-        let id: UUID
-        let task: Task<Void, Never>
-    }
 
     private struct PublicKey: Hashable {
         let contentLanguageCode: String
@@ -88,43 +84,19 @@ final class WordsStore {
     }
 
     private func load(for context: CatalogContext, reusePublic: Bool) async {
-        self.latestRequestedContext = context
         self.loading = true
         self.lastError = nil
-
-        if let flight = self.inFlight[context] {
-            await flight.task.value
-            return
-        }
-
-        let flightID = UUID()
-        let task = Task { [weak self] in
-            guard let self else { return }
-            await self.performReload(
-                for: context,
-                flightID: flightID,
-                reusePublic: reusePublic
-            )
-        }
-        self.inFlight[context] = LoadFlight(id: flightID, task: task)
-        await task.value
-
-        if self.inFlight[context]?.id == flightID {
-            self.inFlight[context] = nil
-        }
+        await self.flights.run(
+            context,
+            fetch: { await self.fetchWords(for: context, reusePublic: reusePublic) },
+            publish: { result, _ in self.publish(result, for: context) }
+        )
         self.refreshLoadingState()
     }
 
-    private func performReload(
-        for context: CatalogContext,
-        flightID: UUID,
-        reusePublic: Bool
-    ) async {
-        let result = await self.fetchWords(for: context, reusePublic: reusePublic)
-        guard self.latestRequestedContext == context,
-              self.inFlight[context]?.id == flightID
-        else { return }
-
+    /// Runs only for a result that is still the one being waited for — the
+    /// staleness guard lives in `LoadFlights`.
+    private func publish(_ result: Result<LoadedWords, Error>, for context: CatalogContext) {
         self.loadedContext = context
         self.loaded = true
         switch result {
@@ -258,23 +230,15 @@ final class WordsStore {
     }
 
     private func refreshLoadingState() {
-        guard let latestRequestedContext else {
-            self.loading = false
-            return
-        }
-        self.loading = self.inFlight[latestRequestedContext] != nil
+        self.loading = self.flights.isLoading
     }
 
     func invalidate() {
-        self.latestRequestedContext = nil
         self.loadedContext = nil
-        for flight in self.inFlight.values {
-            flight.task.cancel()
-        }
+        self.flights.reset()
         for flight in self.publicInFlight.values {
             flight.task.cancel()
         }
-        self.inFlight.removeAll()
         self.publicInFlight.removeAll()
         self.publicCache.removeAll()
         self.words = []
