@@ -158,3 +158,67 @@ struct TourStep: Identifiable {
         ]
     }
 }
+
+// MARK: - The flow
+
+/// What advancing the tour means, once. The shell turns each of these into
+/// animations and beats; none of that changes which one is right.
+enum TourAdvance: Equatable {
+    /// The next step is on the tab already showing.
+    case show(index: Int)
+    /// The next step lives elsewhere: switch, let the pager settle, then reveal.
+    case crossTab(to: MainTab, index: Int)
+    /// There is no next step.
+    case finish
+}
+
+/// The five-step tour as decisions rather than as `@State` on the tab shell.
+///
+/// It was ~60 lines inside `MainTabsView`: an index, a transitioning flag, a
+/// four-condition start guard behind a 900 ms sleep, an advance that branched on
+/// whether the next step lived on another tab, and a skip/finish pair that
+/// differed only in a trailing `selected = .today`. `TourStep`, `advanceTour`
+/// and `startTourIfNeeded` appeared in no test, and the only way to exercise
+/// "the next step lives on another tab" was to launch the app.
+///
+/// Anchor resolution stays in the shell — `TourAnchorKey` merges up the view
+/// tree and cannot be anywhere else. The index machine can.
+struct FeatureTourFlow {
+    let steps: [TourStep]
+
+    init(isGuest: Bool) {
+        self.steps = TourStep.steps(isGuest: isGuest)
+    }
+
+    /// May the tour open at all?
+    ///
+    /// Checked *after* the splash beat, not before: all four of these can change
+    /// while the shell waits, and the one that bit hardest is `pendingLink` — a
+    /// deep link that arrives during the wait should win, because the user asked
+    /// for it and the tour did not.
+    static func mayStart(
+        tourDone: Bool,
+        studyFocusActive: Bool,
+        hasPendingLink: Bool,
+        alreadyRunning: Bool
+    )
+        -> Bool
+    {
+        !tourDone && !studyFocusActive && !hasPendingLink && !alreadyRunning
+    }
+
+    /// What happens when the reader taps 下一步 on `index`, given the tab they
+    /// are looking at.
+    func advance(from index: Int, showing tab: MainTab) -> TourAdvance {
+        let next = index + 1
+        guard next < self.steps.count else { return .finish }
+        let step = self.steps[next]
+        return step.tab == tab ? .show(index: next) : .crossTab(to: step.tab, index: next)
+    }
+
+    /// Where the shell lands when the tour ends by finishing rather than by
+    /// being skipped. The closing card invites the reader to start today's
+    /// study, which lives on 主頁 — so finishing goes there and skipping stays
+    /// put, which is the only difference between the two.
+    static let tabAfterFinishing: MainTab = .today
+}

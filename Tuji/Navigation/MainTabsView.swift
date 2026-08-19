@@ -183,8 +183,15 @@ struct MainTabsView: View {
 
     // MARK: - First-run feature tour
 
+    /// The index machine and its branches — see `FeatureTourFlow`. What stays
+    /// here is the animation, the two beats, and the anchor resolution that
+    /// cannot live anywhere else.
+    private var tour: FeatureTourFlow {
+        FeatureTourFlow(isGuest: self.user == nil)
+    }
+
     private var tourSteps: [TourStep] {
-        TourStep.steps(isGuest: self.user == nil)
+        self.tour.steps
     }
 
     private var tourAnimation: Animation? {
@@ -194,53 +201,57 @@ struct MainTabsView: View {
     private func startTourIfNeeded() async {
         guard !self.onboarding.tourDone else { return }
         // Let RootView's minimum-splash overlay clear and the first layout
-        // settle before resolving anchors.
+        // settle before resolving anchors. Re-asked afterwards, because all
+        // four conditions can change while we wait.
         try? await Task.sleep(for: .milliseconds(900))
-        guard !self.onboarding.tourDone,
-              !self.studyFocus.active,
-              self.deepLinks.pending == nil,
-              self.tourIndex == nil
+        guard FeatureTourFlow.mayStart(
+            tourDone: self.onboarding.tourDone,
+            studyFocusActive: self.studyFocus.active,
+            hasPendingLink: self.deepLinks.pending != nil,
+            alreadyRunning: self.tourIndex != nil
+        )
         else { return }
         withAnimation(self.tourAnimation) { self.tourIndex = 0 }
     }
 
     private func advanceTour() {
         guard let index = self.tourIndex else { return }
-        let steps = self.tourSteps
-        guard index + 1 < steps.count else {
+        switch self.tour.advance(from: index, showing: self.navigator.selected) {
+        case .finish:
             self.finishTour()
-            return
-        }
-        if steps[index + 1].tab == self.navigator.selected {
-            withAnimation(self.tourAnimation) { self.tourIndex = index + 1 }
-            return
-        }
-        // Next step lives on another tab: full dim while the pager slides,
-        // then reveal the step once the page has settled.
-        self.tourTransitioning = true
-        withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = steps[index + 1].tab }
-        Task {
-            try? await Task.sleep(for: .milliseconds(400))
-            withAnimation(self.tourAnimation) {
-                self.tourIndex = index + 1
-                self.tourTransitioning = false
+        case let .show(next):
+            withAnimation(self.tourAnimation) { self.tourIndex = next }
+        case let .crossTab(tab, next):
+            // Full dim while the pager slides, then reveal once it has settled.
+            self.tourTransitioning = true
+            withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = tab }
+            Task {
+                try? await Task.sleep(for: .milliseconds(400))
+                withAnimation(self.tourAnimation) {
+                    self.tourIndex = next
+                    self.tourTransitioning = false
+                }
             }
         }
     }
 
     private func skipTour() {
-        self.onboarding.tourDone = true
-        self.tourTransitioning = false
-        withAnimation(self.tourAnimation) { self.tourIndex = nil }
+        self.endTour(landingOn: nil)
     }
 
     private func finishTour() {
+        self.endTour(landingOn: FeatureTourFlow.tabAfterFinishing)
+    }
+
+    /// Skipping and finishing differ in exactly one thing: where the reader is
+    /// left. They were two near-identical bodies for that one line.
+    private func endTour(landingOn tab: MainTab?) {
         self.onboarding.tourDone = true
         self.tourTransitioning = false
         withAnimation(self.tourAnimation) { self.tourIndex = nil }
-        // The tour ends on 圖鑑; the closing card invites the user to start
-        // today's study, which lives on 主頁.
-        withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = .today }
+        if let tab {
+            withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = tab }
+        }
     }
 
     private func consumePendingLink() {
