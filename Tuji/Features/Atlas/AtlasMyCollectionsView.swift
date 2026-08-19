@@ -137,7 +137,10 @@ struct AtlasMyCollectionsView: View {
             try await self.vm.delete(id: collection.id)
             await LiveAtlasMutationRefresher(feed: self.feedRefresh)
                 .refresh(after: .collectionDeleted(wasPublic: collection.review == .approved))
-            self.pendingDelete = nil
+            // No `pendingDelete = nil` here: `TujiPrompt` sets `isPresented`
+            // false *before* running the action, which fires the binding's
+            // setter and clears it — so this line was already a no-op by the
+            // time the await returned.
         } catch {
             self.deleteError = error.localizedDescription
         }

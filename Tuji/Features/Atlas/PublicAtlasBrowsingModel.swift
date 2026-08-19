@@ -161,7 +161,13 @@ final class PublicAtlasBrowsingModel {
     /// A plain appearance load re-triggers on every return from a detail. Skip it
     /// when a non-empty list for this language is already held and the load is not
     /// deliberate. This preserves the "don't clobber a good list on back" fix.
-    func shouldSkipExploreLoad(language: TargetLanguage, force: Bool) -> Bool {
+    /// `private`: it was internal with exactly one caller — the line below it in
+    /// this same file — and zero test call sites. Interface surface opened for a
+    /// test that was never written is the inverse of the `StudyLadder` lesson
+    /// (*tests that must enter where the app does not*): here nothing entered at
+    /// all. The rule it encodes is asserted through `update(_:)` and a request
+    /// count instead.
+    private func shouldSkipExploreLoad(language: TargetLanguage, force: Bool) -> Bool {
         !force
             && self.exploreRaw.loadedLanguage == language
             && !self.exploreRaw.collections.isEmpty

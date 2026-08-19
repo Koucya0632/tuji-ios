@@ -232,4 +232,65 @@ struct TodayDecisionsTests {
             )).reviewDisabled
         )
     }
+
+    // MARK: - Which hint speaks
+
+    /// The precedence lived in a `private var` on `TodayView`, next to a second,
+    /// hand-written copy of the "wait for stats" guard. Nothing could reach it.
+    @Test
+    func aBlockedNewStageOutranksEverythingElse() {
+        // Themes selected, none of their cards left → .allLearned, and a due
+        // count of 0 would otherwise say 沒有要複習的字.
+        let d = TodayDecisions(self.inputs(
+            stats: StudyStats(total: 120, seen: 120, due: 0, new: 0, todayNew: 0),
+            seenInSelection: 120,
+            totalInSelection: 120
+        ))
+        #expect(d.newBlock == .allLearned)
+        #expect(d.heroHint == .newBlocked)
+    }
+
+    /// Nothing to review is the last thing said, not the first.
+    @Test
+    func anEmptyReviewQueueSpeaksOnlyWhenNothingElseDoes() {
+        let d = TodayDecisions(self.inputs(
+            stats: StudyStats(total: 120, seen: 40, due: 0, new: 80, todayNew: 0)
+        ))
+        #expect(d.reviewDisabled)
+        #expect(d.heroHint == .nothingToReview)
+    }
+
+    /// A hint about today's numbers, shown before today's numbers exist, is a
+    /// guess. `reviewDisabled` is already true for a nil `stats` (due == 0), so
+    /// without this guard the hero would claim there is nothing to review while
+    /// the request was still in the air.
+    @Test
+    func noHintSpeaksBeforeStatsArrive() {
+        let d = TodayDecisions(self.inputs(stats: nil))
+        #expect(d.reviewDisabled)
+        #expect(d.heroHint == nil)
+    }
+
+    /// A guest's verdict is `.nothingToReview` — `reviewDisabled` is true for
+    /// them by definition — and that is *unreachable*, not wrong: the hero
+    /// swaps its whole CTA block for 建立帳號，開始學習 before any hint renders.
+    ///
+    /// Stated rather than asserted-away, because the next reader of
+    /// `heroHint` will wonder, and because it is the kind of thing that stops
+    /// being unreachable the moment someone gives guests a CTA row.
+    @Test
+    func aGuestsVerdictIsNeverRendered() {
+        #expect(TodayDecisions(self.inputs(isGuest: true)).heroHint == .nothingToReview)
+    }
+
+    /// Picking no themes is answered by the theme prompt, not by a caption.
+    @Test
+    func noThemesSelectedIsNotAHint() {
+        let d = TodayDecisions(self.inputs(
+            studyCategories: [],
+            stats: StudyStats(total: 120, seen: 40, due: 3, new: 80, todayNew: 0)
+        ))
+        #expect(d.newBlock == .noThemes)
+        #expect(d.heroHint == nil)
+    }
 }
