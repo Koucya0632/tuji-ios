@@ -71,20 +71,18 @@ final class NewFlowCoordinator {
     /// `new_recognize` write was dropped and could never be recovered.
     let writes: StudySessionWrites
 
-    /// How long the app pauses on a locked answer before resolving it.
+    /// How long the app pauses on a locked answer before resolving it, and the
+    /// resolutions currently waiting out that pause.
     ///
-    /// Injected so the tested surface is the one the app calls. Before this,
-    /// tests drove `resolveRecognize` / `resolveIdentify` / `resolveTiles`
-    /// directly — which the app never calls — so the beats, the locks and
-    /// everything between a tap and an SRS write had no coverage at all. It had
-    /// already cost a duplicate: `resolveIdentify` carried a second latency
-    /// capture whose only caller was the test suite.
-    private let beat: @Sendable (Duration) async -> Void
-
-    /// The answer resolutions in flight. Unstructured `Task`s that outlive the
-    /// view: leaving mid-answer used to still fire the resolution — and its SRS
-    /// write — on a coordinator whose screen was gone.
-    private var pendingBeats: [Task<Void, Never>] = []
+    /// The sleep is injected so the tested surface is the one the app calls.
+    /// Before that, tests drove `resolveRecognize` / `resolveIdentify` /
+    /// `resolveTiles` directly — which the app never calls — so the beats, the
+    /// locks and everything between a tap and an SRS write had no coverage at
+    /// all. It had already cost a duplicate: `resolveIdentify` carried a second
+    /// latency capture whose only caller was the test suite.
+    ///
+    /// See `AnswerBeat`, which 複習 holds too.
+    private let beats: AnswerBeat
 
     init(
         queue: [StudyQueueItem],
@@ -92,7 +90,7 @@ final class NewFlowCoordinator {
         beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.queue = queue
-        self.beat = beat
+        self.beats = AnswerBeat(sleep: beat)
         self.ladder = StudyLadder(queue: queue)
         self.writes = StudySessionWrites(writer: writer)
         self.stampIdentifyShown()
@@ -193,26 +191,24 @@ final class NewFlowCoordinator {
 
     // MARK: - 認識 (recognize)
 
-    /// The self-rating tap. Beats, then resolves — through the injected `beat`
-    /// and tracked in `pendingBeats`, like the other two stages.
+    /// The self-rating tap. Beats, then resolves — through `AnswerBeat`, like the
+    /// other two stages and like 複習's advance.
     ///
-    /// It used to hardcode its sleep and skip `pendingBeats` entirely, so
-    /// `cancelPendingBeats` (wired to 先離開) could not reach it: rating a
-    /// single-unit word 已認識 and leaving immediately still ran the resolution
-    /// — and its SRS write — on a coordinator whose screen was gone. The class
-    /// doc claimed that defect was fixed; it was fixed for 選字 only.
+    /// It used to hardcode its sleep and run an untracked `Task`, so 先離開 could
+    /// not reach it: rating a single-unit word 已認識 and leaving immediately
+    /// still ran the resolution — and its SRS write — on a coordinator whose
+    /// screen was gone. The class doc claimed that defect was fixed; it was
+    /// fixed for 選字 only. That is why the waiting is a module now.
     func recognizeAnswer(rating: SRSRating) {
         guard !self.recLocked, let task = ladder.current, task.kind == .recognize else { return }
         self.recLocked = true
         self.recRating = rating
         UINotificationFeedbackGenerator().notificationOccurred(.success)
-        self.pendingBeats.append(Task {
-            await self.beat(.milliseconds(450))
-            guard !Task.isCancelled else { return }
+        self.beats.schedule(after: .milliseconds(450)) {
             self.recRating = nil
             self.recLocked = false
             self.resolveRecognize(rating: rating)
-        })
+        }
     }
 
     /// Synchronous core, split from the button handler so unit tests can walk
@@ -247,11 +243,9 @@ final class NewFlowCoordinator {
                 Int(Date().timeIntervalSince(shownAt) * 1000)
         }
         let ok = choice == task.item.word.word
-        self.pendingBeats.append(Task {
-            // Correct answers clear faster than wrong ones: momentum for the
-            // fast-learning feel, while a miss keeps time to read the reveal.
-            await self.beat(.milliseconds(ok ? 500 : 800))
-            guard !Task.isCancelled else { return }
+        // Correct answers clear faster than wrong ones: momentum for the
+        // fast-learning feel, while a miss keeps time to read the reveal.
+        self.beats.schedule(after: .milliseconds(ok ? 500 : 800)) {
             if ok {
                 self.idLocked = false
                 self.idPicked = nil
@@ -266,7 +260,7 @@ final class NewFlowCoordinator {
                 self.resolveIdentify(correct: false)
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
             }
-        })
+        }
     }
 
     /// Synchronous core: correct clears the stage; wrong records the mistake
@@ -352,9 +346,7 @@ final class NewFlowCoordinator {
     func tilesAnswer(correct: Bool) {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles else { return }
         self.tiLocked = true
-        self.pendingBeats.append(Task {
-            await self.beat(.milliseconds(correct ? 450 : 800))
-            guard !Task.isCancelled else { return }
+        self.beats.schedule(after: .milliseconds(correct ? 450 : 800)) {
             if correct {
                 self.tiLocked = false
                 self.resolveTiles(correct: true)
@@ -365,7 +357,7 @@ final class NewFlowCoordinator {
                 self.resolveTiles(correct: false)
                 UINotificationFeedbackGenerator().notificationOccurred(.warning)
             }
-        })
+        }
     }
 
     /// Synchronous core, also reachable from tests.
@@ -442,9 +434,6 @@ final class NewFlowCoordinator {
     /// user leaves the session: without it, an answer given moments before ✕
     /// still resolved — and still posted to the SRS — after the screen was gone.
     func cancelPendingBeats() {
-        for task in self.pendingBeats {
-            task.cancel()
-        }
-        self.pendingBeats.removeAll()
+        self.beats.cancelAll()
     }
 }

@@ -92,28 +92,22 @@ final class ReviewFlowCoordinator {
 
     private let queueProvider: StudyQueueProviding
 
-    /// How long the flow pauses before advancing past an answered item.
-    ///
-    /// Injected for the same reason 學新字 injects its own: the advance beats
-    /// are 300–800 ms of real `Task.sleep`, and CI runs every `@MainActor`
-    /// suite in parallel on one actor — a starved run turned a 300 ms beat into
-    /// a minute and failed every assertion after it. This coordinator was the
-    /// one that still had no seam at all, so its tests polled a wall clock and
-    /// carried a nine-line comment about the resulting flake instead of closing
-    /// it.
-    private let beat: @Sendable (Duration) async -> Void
+    // How long the flow pauses before advancing past an answered item.
+    //
+    // Injected for the same reason 學新字 injects its own: the advance beats
+    // are 300–800 ms of real `Task.sleep`, and CI runs every `@MainActor`
+    // suite in parallel on one actor — a starved run turned a 300 ms beat into
+    // a minute and failed every assertion after it. This coordinator was the
+    // one that still had no seam at all, so its tests polled a wall clock and
+    // carried a nine-line comment about the resulting flake instead of closing
+    // it.
 
-    /// The advances in flight. Unstructured `Task`s that outlive the view: 複習
-    /// scheduled its beats and never kept them, so leaving mid-answer still ran
+    /// The advances in flight — see `AnswerBeat`, which 學新字 holds too. 複習
+    /// was the fourth copy of that machinery and the one with no cancellation
+    /// at all: it spawned an untracked `Task`, so leaving mid-answer still ran
     /// `advance()` — and `drainPendingWrites`, and `finished = true` — on a
     /// coordinator whose screen was gone.
-    ///
-    /// 學新字 carries the same array for the same reason, and the comment on
-    /// `NewFlowCoordinator.recognizeAnswer` records that the defect had already
-    /// been declared fixed once while one of its three stages still leaked. This
-    /// was the fourth copy of that stage, in the other flow, and it had no array
-    /// at all.
-    private var pendingBeats: [Task<Void, Never>] = []
+    private let beats: AnswerBeat
 
     init(
         queue: [StudyQueueItem],
@@ -125,7 +119,7 @@ final class ReviewFlowCoordinator {
         self.originalCount = queue.count
         self.writes = StudySessionWrites(writer: writer)
         self.queueProvider = queueProvider
-        self.beat = beat
+        self.beats = AnswerBeat(sleep: beat)
     }
 
     /// Fetch the next round's due queue for 再來一輪; empty ⇒ nothing left. The
@@ -314,22 +308,13 @@ final class ReviewFlowCoordinator {
     }
 
     private func scheduleAdvance(after delay: Duration) {
-        self.pendingBeats.append(Task {
-            if delay > .zero {
-                await self.beat(delay)
-            }
-            guard !Task.isCancelled else { return }
-            self.advance()
-        })
+        self.beats.schedule(after: delay) { self.advance() }
     }
 
     /// Drops every advance still waiting. 先離開 calls this before dismissing;
     /// without it the beat outlives the screen (see `pendingBeats`).
     func cancelPendingBeats() {
-        for task in self.pendingBeats {
-            task.cancel()
-        }
-        self.pendingBeats.removeAll()
+        self.beats.cancelAll()
     }
 
     private func advance() {
