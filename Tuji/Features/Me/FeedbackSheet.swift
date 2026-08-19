@@ -3,7 +3,15 @@ import SwiftUI
 struct FeedbackSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settings
-    private let repository: UserRepository = LiveUserRepository.shared
+    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
+    /// names that shape as the defect it was carved out to fix — *no init seam,
+    /// so no test could substitute it* — and it survived in eight more places.
+    private let repository: UserRepository
+
+    init(repository: UserRepository = LiveUserRepository.shared) {
+        self.repository = repository
+    }
+
     // Stable per presentation so a retry after a network failure stays
     // idempotent server-side (request_id UNIQUE).
     @State private var requestId = UUID()

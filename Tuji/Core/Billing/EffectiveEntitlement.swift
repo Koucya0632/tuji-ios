@@ -59,3 +59,16 @@ struct LiveEffectiveEntitlement: EffectiveEntitlementReading {
         return serverPlan.isPro
     }
 }
+
+#if DEBUG
+/// The second implementation, so the seam is a seam.
+///
+/// Pro state used to be unviewable in a preview: 付費牆, 設定 and 我 all read
+/// `LiveEffectiveEntitlement.shared`, which answers for whoever is signed in on
+/// the machine rendering the canvas — in practice always "not Pro". Every
+/// Pro-side layout was therefore only ever seen on a device with a live
+/// subscription.
+struct PreviewEntitlement: EffectiveEntitlementReading {
+    let isPro: Bool
+}
+#endif

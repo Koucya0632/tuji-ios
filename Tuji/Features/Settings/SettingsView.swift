@@ -12,8 +12,19 @@ struct SettingsView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
-    private let users: UserRepository = LiveUserRepository.shared
-    private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
+    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
+    /// names that shape as the defect it was carved out to fix — *no init seam,
+    /// so no test could substitute it* — and it survived in eight more places.
+    private let users: UserRepository
+    private let entitlement: any EffectiveEntitlementReading
+
+    init(
+        users: UserRepository = LiveUserRepository.shared,
+        entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
+    ) {
+        self.users = users
+        self.entitlement = entitlement
+    }
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteFirst = false
@@ -449,9 +460,17 @@ private struct LearningDirectionPickerView: View {
     }
 }
 
-#Preview {
+#Preview("free") {
     NavigationStack {
-        SettingsView()
+        SettingsView(entitlement: PreviewEntitlement(isPro: false))
+            .environment(SettingsStore.shared)
+            .environment(AuthService.shared)
+    }
+}
+
+#Preview("Pro") {
+    NavigationStack {
+        SettingsView(entitlement: PreviewEntitlement(isPro: true))
             .environment(SettingsStore.shared)
             .environment(AuthService.shared)
     }
