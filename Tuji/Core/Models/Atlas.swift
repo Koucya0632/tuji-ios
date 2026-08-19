@@ -251,7 +251,7 @@ struct AtlasCardsResponse: Decodable {
 struct AtlasSyncResponse: Decodable {
     let serverTime: String
     let images: [AtlasImageSummary]
-    let items: [AtlasItem]
+    @LossyArray var items: [AtlasItem]
 }
 
 // MARK: - Entitlement / quota (GET /api/atlas/entitlement)
