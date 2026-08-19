@@ -57,11 +57,8 @@ struct AtlasAuthorProfileView: View {
                 self.report.begin(.author(handle: self.vm.handle))
             }
             .disabled(self.report.isSent)
-            if self.blocks.isBlocked(self.vm.handle) {
-                Button("解除封鎖") { self.showBlockPrompt = true }
-            } else {
-                Button("封鎖這位作者", role: .destructive) { self.showBlockPrompt = true }
-            }
+            let block = BlockAction(isBlocked: self.blocks.isBlocked(self.vm.handle))
+            Button(block.controlLabel, role: block.controlRole) { self.showBlockPrompt = true }
         } label: {
             Image(systemName: "ellipsis")
                 .font(.tujiIcon(17, weight: .semibold))
@@ -96,25 +93,10 @@ struct AtlasAuthorProfileView: View {
             self.scroll
         }
         .background(.tujiPaper)
-        .tujiPrompt(
+        .blockPrompt(
+            handle: self.vm.handle,
             isPresented: self.$showBlockPrompt,
-            style: .confirmation,
-            title: self.blocks.isBlocked(self.vm.handle) ? "解除封鎖？" : "封鎖這位作者？",
-            detail: self.blocks.isBlocked(self.vm.handle)
-                ? "解除後你會重新看到這個人公開的內容。"
-                : "你不會再看到這個人公開的內容。已經收進圖鑑的字不受影響，隨時可以解除。",
-            primary: self.blocks.isBlocked(self.vm.handle)
-                ? TujiPromptAction("解除封鎖") {
-                    let handle = self.vm.handle
-                    Task { await self.blocks.unblock(handle: handle) }
-                }
-                : TujiPromptAction("封鎖", role: .destructive) {
-                    let handle = self.vm.handle
-                    Task {
-                        if await self.blocks.block(handle: handle) { self.dismiss() }
-                    }
-                },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
+            onBlocked: { self.dismiss() }
         )
         .reportSheet(self.report)
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
