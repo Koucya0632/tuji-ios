@@ -60,8 +60,11 @@ struct LiveEffectiveEntitlement: EffectiveEntitlementReading {
     }
 }
 
-#if DEBUG
 /// The second implementation, so the seam is a seam.
+///
+/// Deliberately **not** behind `#if DEBUG`: `#Preview` bodies are compiled in
+/// release too, so a preview naming a DEBUG-only type breaks the release build
+/// while every Debug build — and CI, which builds Debug — stays green.
 ///
 /// Pro state used to be unviewable in a preview: 付費牆, 設定 and 我 all read
 /// `LiveEffectiveEntitlement.shared`, which answers for whoever is signed in on
@@ -71,4 +74,3 @@ struct LiveEffectiveEntitlement: EffectiveEntitlementReading {
 struct PreviewEntitlement: EffectiveEntitlementReading {
     let isPro: Bool
 }
-#endif

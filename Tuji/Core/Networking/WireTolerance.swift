@@ -22,18 +22,24 @@ import Foundation
 
 /// Reading values the server spells more than one way.
 enum Wire {
-    private static let isoFractional: ISO8601DateFormatter = {
+    /// `nonisolated(unsafe)` for the reason `tujiLProjCache` uses it: these are
+    /// built once and only ever read, and `ISO8601DateFormatter`'s parsing is
+    /// documented as usable from several threads. They cannot be main-actor
+    /// isolated — `JSONDecoder.tuji`'s date strategy runs wherever decoding runs,
+    /// which is off the main actor, and a Debug build does not notice: the
+    /// release WMO build is where that becomes an error.
+    private nonisolated(unsafe) static let isoFractional: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
     }()
 
-    private static let isoPlain = ISO8601DateFormatter()
+    private nonisolated(unsafe) static let isoPlain = ISO8601DateFormatter()
 
     /// An ISO8601 timestamp with or without fractional seconds.
     ///
     /// The server always emits `.SSS`; some fixtures and older rows do not.
-    static func parseISO(_ string: String) -> Date? {
+    nonisolated static func parseISO(_ string: String) -> Date? {
         self.isoFractional.date(from: string) ?? self.isoPlain.date(from: string)
     }
 }

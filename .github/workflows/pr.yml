@@ -118,6 +118,26 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
 
+      # 只有 Debug 綠不代表能出版本。Debug 是 -Onone、逐檔編譯；TestFlight 是
+      # -O -whole-module-optimization，而 MainActor 隔離錯誤與 SIL 最佳化階段的
+      # 問題只在後者才會出現。2026-08-19 三個 PR 各自 CI 全綠地合進 main，而
+      # main 當時已經無法產生 release binary：一個 DEBUG-only 型別被 #Preview
+      # 參照（#Preview 在 release 也會編譯）、一個 nonisolated 情境呼叫了被推導成
+      # MainActor 的靜態方法、以及一個泛型 class 的 deinit 讓 Swift 6.3.3 的
+      # EarlyPerfInliner 直接崩潰。三個都是 Debug 看不到的。
+      #
+      # 不跑測試，只編譯：這一關要答的是「出得了版本嗎」。
+      - name: Build release configuration
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Tuji.xcodeproj \
+            -scheme Tuji-TestFlight \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build-release \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify --renderer github-actions
+
       - name: Select simulator
         # runner image 的機型/OS 會隨 Xcode 版本變，寫死機名容易斷 —
         # 挑最新 iOS runtime 裡第一台可用 iPhone。
