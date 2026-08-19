@@ -420,13 +420,16 @@ struct TodayView: View {
     /// (newBlockHint); otherwise a greyed 複習 gets its own line so neither
     /// button is ever silently dead. Waits for stats so it never claims
     /// "nothing due" before the first fetch answers.
+    /// The words for whichever hint `TodayDecisions` says is talking. Which one
+    /// that is — and that none of them talks before stats land — is the
+    /// module's answer; this is only the sentence.
     private var heroHint: LocalizedStringKey? {
-        if let hint = self.newBlockHint { return hint }
-        if let hint = self.newQuotaAdjustmentHint { return hint }
-        if self.reviewDisabled, self.studyStats.stats != nil {
-            return "今天沒有要複習的字，先學點新的吧"
+        switch self.decisions.heroHint {
+        case .newBlocked: self.newBlockHint
+        case .quotaAdjusted: self.newQuotaAdjustmentHint
+        case .nothingToReview: "今天沒有要複習的字，先學點新的吧"
+        case nil: nil
         }
-        return nil
     }
 
     // MARK: - Themes grid

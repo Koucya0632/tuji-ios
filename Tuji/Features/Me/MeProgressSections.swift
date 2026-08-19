@@ -219,48 +219,17 @@ struct MeProgressSections: View {
 
     // MARK: - Category breakdown (明細)
 
-    private struct CategoryStat: Identifiable {
-        let id: String
-        let nameZh: String
-        let learned: Int
-        let total: Int
-        var ratio: Double {
-            CompletionReadout.ratio(seen: self.learned, total: self.total)
-        }
-    }
-
     /// Per-category seen/total from the server, named + ordered via
     /// CategoriesStore. Categories with no published cards are dropped.
     /// Scoped to the user's selected study categories (empty = all) so the
     /// breakdown matches the completion card above. Falls back to raw
     /// progress rows if the category list hasn't loaded.
     private var categoryStats: [CategoryStat] {
-        let selected = self.settings.current.studyCategories
-        let scoped = selected.isEmpty
-            ? self.progress.categoryProgress
-            : self.progress.categoryProgress.filter { selected.contains($0.category) }
-        let prog = scoped.filter { $0.total > 0 }
-        guard !prog.isEmpty else { return [] }
-        let byId = Dictionary(prog.map { ($0.category, $0) }, uniquingKeysWith: { a, _ in a })
-        if !self.categories.categories.isEmpty {
-            return self.categories.categories.compactMap { c in
-                guard let p = byId[c.id] else { return nil }
-                return CategoryStat(
-                    id: c.id,
-                    nameZh: c.nameZh,
-                    learned: p.seen,
-                    total: p.total
-                )
-            }
-        }
-        return prog.map { p in
-            CategoryStat(
-                id: p.category,
-                nameZh: p.category,
-                learned: p.seen,
-                total: p.total
-            )
-        }
+        CategoryStat.breakdown(
+            progress: self.progress.categoryProgress,
+            selected: self.settings.current.studyCategories,
+            categoryOrder: self.categories.categories
+        )
     }
 
     private var emptyBreakdownMessage: LocalizedStringKey {

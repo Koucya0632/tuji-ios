@@ -46,6 +46,20 @@ enum TodayNewBlock: Equatable {
     case reviewBacklog
 }
 
+/// Which caption the hero shows under its CTAs, when it shows one.
+///
+/// Three sources compete and only one may speak. The ordering — and the rule
+/// that nothing is said until stats have arrived — lived in a `private var` on
+/// `TodayView` alongside a second, hand-written copy of the "wait for stats"
+/// guard that `subtitle` already expresses as `.unknown`.
+///
+/// The *copy* stays in the View: this names which of the three is talking.
+enum TodayHeroHint: Equatable {
+    case newBlocked
+    case quotaAdjusted
+    case nothingToReview
+}
+
 struct TodayDecisions {
     /// Every fact the decisions depend on, read once by the View from its
     /// environment. Long on purpose: this is the honest input set, and it used
@@ -163,6 +177,18 @@ struct TodayDecisions {
     /// The backlog-tapers-new-quota decision + counts. Unchanged rule, moved
     /// here from `TodayView.newQuotaAdjustment` so every 首頁 decision has one
     /// home instead of one having been rescued and the rest left behind.
+    /// Which of the three captions the hero shows, if any.
+    ///
+    /// 新字被擋 wins over 配額調整 wins over 沒有要複習的字, and none of them
+    /// speaks before stats have landed — a hint about today's numbers, shown
+    /// before today's numbers exist, is a guess.
+    var heroHint: TodayHeroHint? {
+        if self.newBlock != .none, self.newBlock != .noThemes { return .newBlocked }
+        if self.quotaAdjustment != nil { return .quotaAdjusted }
+        if self.reviewDisabled, self.inputs.stats != nil { return .nothingToReview }
+        return nil
+    }
+
     var quotaAdjustment: (due: Int, limit: Int)? {
         guard !self.inputs.isGuest, let stats = self.inputs.stats else { return nil }
         let goal = max(1, self.inputs.dailyGoal)
