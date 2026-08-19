@@ -598,24 +598,10 @@ struct AtlasPublicDetailView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
-        .tujiPrompt(
+        .blockPrompt(
+            handle: self.authorHandle,
             isPresented: self.$showBlockPrompt,
-            style: .confirmation,
-            title: "封鎖這位作者？",
-            detail: "你不會再看到這個人公開的內容。已經收進圖鑑的字不受影響，隨時可以解除。",
-            primary: TujiPromptAction("封鎖", role: .destructive) {
-                // TujiPrompt nils its backing state before running the action,
-                // so read the handle into a local first (see CONTEXT.md).
-                guard let handle = self.authorHandle else { return }
-                Task {
-                    if await self.blocks.block(handle: handle) {
-                        // This screen is now showing content the user just asked
-                        // never to see again.
-                        self.dismiss()
-                    }
-                }
-            },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
+            onBlocked: { self.dismiss() }
         )
         .reportSheet(self.report)
     }
