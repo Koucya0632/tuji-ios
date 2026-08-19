@@ -11,50 +11,6 @@ import Observation
 import OSLog
 import SwiftUI
 
-/// UserDefaults key mirroring `SettingsStore.current.uiLang` for nonisolated reads.
-nonisolated let tujiUILangDefaultsKey = "tuji.ui.lang"
-
-private nonisolated let tujiLProjLock = NSLock()
-private nonisolated(unsafe) var tujiLProjCache: [String: Bundle] = [:]
-
-/// The compiled `.lproj` bundle for a uiLang code, cached. Falls back to the
-/// main bundle (whose lookups yield the zh-Hant source strings) for unknown or
-/// missing codes.
-private nonisolated func tujiLProjBundle(_ code: String) -> Bundle {
-    tujiLProjLock.lock()
-    defer { tujiLProjLock.unlock() }
-    if let cached = tujiLProjCache[code] { return cached }
-    let bundle: Bundle =
-        if let path = Bundle.main.path(forResource: code, ofType: "lproj"),
-        let lproj = Bundle(path: path) {
-            lproj
-        } else {
-            .main
-        }
-    tujiLProjCache[code] = bundle
-    return bundle
-}
-
-/// Localize a zh-Hant source string into the user's chosen in-app UI language.
-///
-/// The app overrides only the SwiftUI *environment* locale (see `TujiApp`), not
-/// the process locale. Crucially, `String(localized:locale:)`'s `locale` param
-/// only affects interpolation formatting — it does NOT choose which strings
-/// table is loaded, which still follows the process language. So we resolve the
-/// explicit `.lproj` bundle for the uiLang and look the key up there. Reads the
-/// mirrored uiLang from UserDefaults (thread-safe, usable off the main actor).
-nonisolated func tujiLocalized(_ key: String.LocalizationValue) -> String {
-    let code = UserDefaults.standard.string(forKey: tujiUILangDefaultsKey)
-        ?? UILanguage.deviceDefault.rawValue
-    return tujiLocalized(key, lang: code)
-}
-
-/// As `tujiLocalized`, but for an explicitly supplied uiLang code (e.g. a draft
-/// that carries its own language rather than the live app setting).
-nonisolated func tujiLocalized(_ key: String.LocalizationValue, lang code: String) -> String {
-    String(localized: key, bundle: tujiLProjBundle(code), locale: Locale(identifier: code))
-}
-
 @MainActor
 @Observable
 final class SettingsStore {
