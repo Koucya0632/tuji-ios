@@ -12,28 +12,18 @@ struct SettingsView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
-    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
-    /// names that shape as the defect it was carved out to fix — *no init seam,
-    /// so no test could substitute it* — and it survived in eight more places.
-    private let users: UserRepository
-    private let entitlement: any EffectiveEntitlementReading
+    /// The screen's two writes — 清除學習進度 and 刪除帳號 — plus the entitlement
+    /// read. Both used to live in this `View`, reaching hardcoded `.shared`
+    /// repositories with no seam between them and a test.
+    @State private var vm: SettingsVM
 
-    init(
-        users: UserRepository = LiveUserRepository.shared,
-        entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
-    ) {
-        self.users = users
-        self.entitlement = entitlement
+    init(vm: SettingsVM = SettingsVM()) {
+        self._vm = State(initialValue: vm)
     }
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteFirst = false
     @State private var showDeleteSecond = false
-    @State private var deleting = false
-    @State private var deleteError: Error?
-    // 清除學習進度 (moved here from the Progress tab so a destructive,
-    // account-wide wipe isn't one tap from the stats screen).
-    @State private var progressVM = ProgressVM()
     @State private var showGoalPicker = false
     @State private var showLangPicker = false
     @State private var showAccentPicker = false
@@ -118,14 +108,14 @@ struct SettingsView: View {
         )
         .tujiPrompt(
             isPresented: Binding(
-                get: { self.deleteError != nil },
-                set: { if !$0 { self.deleteError = nil } }
+                get: { self.vm.deleteError != nil },
+                set: { if !$0 { self.vm.dismissDeleteError() } }
             ),
             style: .error,
             title: "刪除失敗",
-            message: "\(self.deleteError?.localizedDescription ?? "")",
+            message: "\(self.vm.deleteError?.localizedDescription ?? "")",
             primary: TujiPromptAction("知道了") {
-                self.deleteError = nil
+                self.vm.dismissDeleteError()
             }
         )
         .tujiPrompt(
@@ -136,12 +126,11 @@ struct SettingsView: View {
             detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
             primary: TujiPromptAction("確認清除", role: .destructive) {
                 Task {
-                    await self.progressVM.clearProgress(
-                        cache: self.cache,
-                        progress: self.progress,
-                        studyStats: self.studyStats
+                    await self.vm.clearProgress(
+                        learned: self.cache,
+                        stores: [self.progress, self.studyStats]
                     )
-                    if self.progressVM.clearError == nil {
+                    if self.vm.clearError == nil {
                         self.showClearSuccess = true
                     }
                 }
@@ -150,12 +139,12 @@ struct SettingsView: View {
         )
         .tujiPrompt(
             isPresented: Binding(
-                get: { self.progressVM.clearError != nil },
-                set: { if !$0 { self.progressVM.clearError = nil } }
+                get: { self.vm.clearError != nil },
+                set: { if !$0 { self.vm.dismissClearError() } }
             ),
             style: .error,
             title: "清除失敗",
-            message: "\(self.progressVM.clearError?.localizedDescription ?? tujiLocalized("請稍後再試一次。"))",
+            message: "\(self.vm.clearError?.localizedDescription ?? tujiLocalized("請稍後再試一次。"))",
             primary: TujiPromptAction("再試一次") {
                 self.showClearConfirm = true
             },
@@ -180,7 +169,7 @@ struct SettingsView: View {
     /// 生效權限, not the device-local StoreKit flag: this row offers 升級, and a
     /// 贈與 account has no StoreKit transaction to read.
     private var isPro: Bool {
-        self.entitlement.isPro
+        self.vm.isPro
     }
 
     // MARK: - List
@@ -270,20 +259,20 @@ struct SettingsView: View {
                     ) {
                         Button { self.showClearConfirm = true } label: {
                             self.dangerRow(
-                                title: self.progressVM.clearing ? "清除中…" : "清除學習進度",
-                                busy: self.progressVM.clearing
+                                title: self.vm.clearing ? "清除中…" : "清除學習進度",
+                                busy: self.vm.clearing
                             )
                         }
                         .tujiRowStyle(destructive: true)
-                        .disabled(self.progressVM.clearing)
+                        .disabled(self.vm.clearing)
                         Button { self.showDeleteFirst = true } label: {
                             self.dangerRow(
-                                title: self.deleting ? "刪除中…" : "刪除帳號",
-                                busy: self.deleting
+                                title: self.vm.deleting ? "刪除中…" : "刪除帳號",
+                                busy: self.vm.deleting
                             )
                         }
                         .tujiRowStyle(destructive: true)
-                        .disabled(self.deleting)
+                        .disabled(self.vm.deleting)
                     }
                 }
 
@@ -386,15 +375,7 @@ struct SettingsView: View {
     // MARK: - Account actions
 
     private func deleteAccount() async {
-        self.deleting = true
-        self.deleteError = nil
-        defer { self.deleting = false }
-        do {
-            try await self.users.deleteAccount()
-            await self.auth.signOut()
-        } catch {
-            self.deleteError = error
-        }
+        await self.vm.deleteAccount { await self.auth.signOut() }
     }
 }
 
@@ -462,7 +443,7 @@ private struct LearningDirectionPickerView: View {
 
 #Preview("free") {
     NavigationStack {
-        SettingsView(entitlement: PreviewEntitlement(isPro: false))
+        SettingsView(vm: SettingsVM(entitlement: PreviewEntitlement(isPro: false)))
             .environment(SettingsStore.shared)
             .environment(AuthService.shared)
     }
@@ -470,7 +451,7 @@ private struct LearningDirectionPickerView: View {
 
 #Preview("Pro") {
     NavigationStack {
-        SettingsView(entitlement: PreviewEntitlement(isPro: true))
+        SettingsView(vm: SettingsVM(entitlement: PreviewEntitlement(isPro: true)))
             .environment(SettingsStore.shared)
             .environment(AuthService.shared)
     }

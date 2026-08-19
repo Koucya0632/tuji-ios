@@ -9,51 +9,6 @@ import Observation
 import OSLog
 import SwiftUI
 
-@MainActor
-@Observable
-final class ProgressVM {
-    var clearing: Bool = false
-    var clearError: Error?
-
-    private let repository: ProgressRepository
-    private let log = Logger(subsystem: "app.tuji.ios", category: "progress")
-
-    init(repository: ProgressRepository = LiveProgressRepository.shared) {
-        self.repository = repository
-    }
-
-    /// Streak + heatmap reads now live on ProgressStore.shared so Today /
-    /// Me / CompleteView share the same fetched copy. This VM just owns
-    /// the "clear progress" action.
-    ///
-    /// Server-side `clearLearningProgress` wipes user_cards too, so the
-    /// stats store has to be invalidated alongside progress — otherwise
-    /// the Study tab shows the pre-wipe due/seen counts for up to 30s.
-    /// Invoked from 設定 → 帳號 → 清除學習進度.
-    func clearProgress(cache: LocalCache, progress: ProgressStore, studyStats: StudyStatsStore) async {
-        self.clearing = true
-        self.clearError = nil
-        defer { self.clearing = false }
-        do {
-            try await self.repository.clearProgress()
-            // Reset the local learned cache too — the completion % and
-            // category breakdown read it, and sync is union-only so a
-            // stale local set would resurrect the cleared ids at next
-            // sign-in.
-            cache.clearLearned()
-            progress.invalidate()
-            studyStats.invalidate()
-            async let p: Void = progress.reload()
-            async let s: Void = studyStats.reload()
-            await p
-            await s
-        } catch {
-            self.clearError = error
-            self.log.error("clear failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-}
-
 /// The 進度 tab's content, now a section stack inside 我 (D.8).
 ///
 /// It stopped being a tab because it was never a *place* — it is a readout
