@@ -24,10 +24,12 @@ struct AtlasMyCollectionsView: View {
         self.vm.collections(for: self.currentLanguage)
     }
 
-    private var emptyTitle: String {
+    /// A `LocalizedStringKey` rather than a resolved `String`: it is handed to a
+    /// `Text` inside this view, whose environment locale already follows uiLang.
+    private var emptyTitle: LocalizedStringKey {
         switch self.currentLanguage {
-        case .ja: tujiLocalized("目前沒有日文合集")
-        case .en: tujiLocalized("目前沒有英文合集")
+        case .ja: "目前沒有日文合集"
+        case .en: "目前沒有英文合集"
         }
     }
 
@@ -107,23 +109,12 @@ struct AtlasMyCollectionsView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: Space.s3) {
-            Image(systemName: "square.stack.3d.up")
-                .font(.tujiIcon(40))
-                .foregroundStyle(.tujiInk3)
-            Text(self.vm.loadError == nil
-                ? self.emptyTitle
-                : tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-                .multilineTextAlignment(.center)
-            if self.vm.loadError != nil {
-                BBtn(title: "重試", fullWidth: false) { Task { await self.vm.load() } }
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, Space.s5)
-        .padding(.horizontal, Space.s4)
+        TujiBlankState(
+            icon: "square.stack.3d.up",
+            emptyText: self.emptyTitle,
+            error: self.vm.loadError,
+            retry: { await self.vm.load() }
+        )
     }
 
     private func deleteMessage(for collection: AtlasMyCollection) -> String {
@@ -611,17 +602,12 @@ struct AtlasCollectionEditView: View {
     }
 
     private var errorState: some View {
-        VStack(spacing: Space.s3) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.tujiIcon(36))
-                .foregroundStyle(.tujiInk3)
-            Text(tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-            BBtn(title: "重試", fullWidth: false) { Task { await self.vm.load() } }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, Space.s5)
+        TujiBlankState(
+            icon: "exclamationmark.triangle",
+            iconSize: 36,
+            kind: .failed,
+            retry: { await self.vm.load() }
+        )
     }
 }
 
@@ -655,18 +641,12 @@ private struct AtlasCollectionItemPicker: View {
                     if self.model.loading {
                         TujiPageLoading()
                     } else if self.model.available.isEmpty {
-                        VStack(spacing: Space.s3) {
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.tujiIcon(36)).foregroundStyle(.tujiInk3)
-                            Text(self.model.loadError == nil
-                                ? tujiLocalized("沒有可加入的項目。完成辨識與確認後，就能直接加入合集。")
-                                : tujiLocalized("載入失敗，請稍後再試"))
-                                .font(.tujiLabel)
-                                .foregroundStyle(.tujiInk3)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.top, Space.s5)
-                        .padding(.horizontal, Space.s4)
+                        TujiBlankState(
+                            icon: "photo.on.rectangle.angled",
+                            iconSize: 36,
+                            emptyText: "沒有可加入的項目。完成辨識與確認後，就能直接加入合集。",
+                            error: self.model.loadError
+                        )
                     } else {
                         VStack(spacing: Space.s3) {
                             if let addError = self.model.addError {

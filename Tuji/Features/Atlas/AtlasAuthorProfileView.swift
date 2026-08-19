@@ -180,35 +180,17 @@ struct AtlasAuthorProfileView: View {
             self.nothingPublishedYet
                 .padding(.top, Space.s5)
         case .notFound:
-            self.plainBlank(
+            TujiBlankState(
                 icon: "person.crop.circle.badge.questionmark",
-                text: tujiLocalized("找不到這個作者"),
-                retry: false
+                kind: .notFound("找不到這個作者")
             )
         default:
-            self.plainBlank(
+            TujiBlankState(
                 icon: "person.crop.circle.badge.exclamationmark",
-                text: tujiLocalized("載入失敗，請稍後再試"),
-                retry: true
+                kind: .failed,
+                retry: { await self.vm.load() }
             )
         }
-    }
-
-    private func plainBlank(icon: String, text: String, retry: Bool) -> some View {
-        VStack(spacing: Space.s3) {
-            Image(systemName: icon)
-                .font(.tujiIcon(40))
-                .foregroundStyle(.tujiInk3)
-            Text(text)
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-            if retry {
-                BBtn(title: "重試", fullWidth: false) {
-                    Task { await self.vm.load() }
-                }
-            }
-        }
-        .padding(.top, Space.s5)
     }
 
     // MARK: Header

@@ -464,19 +464,10 @@ struct AtlasCollectionDetailView: View {
     }
 
     private var errorState: some View {
-        VStack(spacing: Space.s3) {
-            Image(systemName: "square.stack.3d.up.slash")
-                .font(.tujiIcon(40))
-                .foregroundStyle(.tujiInk3)
-            Text(self.vm.isUnavailable
-                ? tujiLocalized("找不到這個合集")
-                : tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-            BBtn(title: "重試", fullWidth: false) {
-                Task { await self.openCollection() }
-            }
-        }
-        .padding(.top, Space.s5)
+        TujiBlankState(
+            icon: "square.stack.3d.up.slash",
+            kind: self.vm.isUnavailable ? .notFound("找不到這個合集") : .failed,
+            retry: { await self.openCollection() }
+        )
     }
 }

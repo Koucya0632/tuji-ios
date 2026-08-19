@@ -134,45 +134,8 @@ struct AtlasPublicFeedView: View {
             }
             .frame(maxWidth: .infinity)
         } else {
-            // Empty and populated states share one ScrollView so pull-to-refresh
-            // works in both — the empty case is exactly when the user needs it.
-            ScrollView {
-                if self.browsing.explore.collections.isEmpty {
-                    self.emptyState
-                        .containerRelativeFrame(.vertical)
-                } else {
-                    LazyVStack(spacing: 0) {
-                        ForEach(
-                            Array(self.browsing.explore.collections.enumerated()),
-                            id: \.element.id
-                        ) { index, collection in
-                            if index > 0 {
-                                Rectangle()
-                                    .fill(.tujiRule)
-                                    .frame(height: Border.bw1)
-                                    .padding(.horizontal, Space.s4)
-                            }
-                            AtlasCollectionCard(collection: collection) {
-                                self.navigator.push(
-                                    .atlasCollectionDetail(
-                                        slug: collection.slug, autoSave: false, preview: collection
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    .padding(.top, Space.s1)
-                    .padding(.bottom, Space.s5)
-                }
-            }
-            // Allow the pull gesture even when the content is shorter than the viewport.
-            .scrollBounceBehavior(.always, axes: .vertical)
-            .refreshable {
-                await self.browsing.refresh(
-                    shelf: .explore,
-                    language: self.targetLanguage,
-                    isSignedIn: !self.auth.isGuest
-                )
+            self.collectionShelf(self.browsing.explore, shelf: .explore) {
+                self.emptyState
             }
         }
     }
@@ -198,48 +161,64 @@ struct AtlasPublicFeedView: View {
                 .tint(.tujiCurrent)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                if self.browsing.saved.collections.isEmpty {
-                    Text(self.browsing.saved.errorMessage == nil
-                        ? self.savedEmptyText
-                        : tujiLocalized("載入失敗，請稍後再試"))
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk3)
-                        .frame(maxWidth: .infinity)
-                        .containerRelativeFrame(.vertical)
-                } else {
-                    LazyVStack(spacing: 0) {
-                        ForEach(
-                            Array(self.browsing.saved.collections.enumerated()),
-                            id: \.element.id
-                        ) { index, collection in
-                            if index > 0 {
-                                Rectangle()
-                                    .fill(.tujiRule)
-                                    .frame(height: Border.bw1)
-                                    .padding(.horizontal, Space.s4)
-                            }
-                            AtlasCollectionCard(collection: collection) {
-                                self.navigator.push(
-                                    .atlasCollectionDetail(
-                                        slug: collection.slug, autoSave: false, preview: collection
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    .padding(.top, Space.s1)
-                    .padding(.bottom, Space.s5)
-                }
-            }
-            .scrollBounceBehavior(.always, axes: .vertical)
-            .refreshable {
-                await self.browsing.refresh(
-                    shelf: .saved,
-                    language: self.targetLanguage,
-                    isSignedIn: !self.auth.isGuest
+            self.collectionShelf(self.browsing.saved, shelf: .saved) {
+                TujiBlankState(
+                    emptyText: self.savedEmptyText,
+                    error: self.browsing.saved.errorMessage
                 )
             }
+        }
+    }
+
+    /// One shelf of 合集, drawn twice before this — 公開 and 已收藏 — as two
+    /// ~30-line blocks whose diff was three keypaths and the blank state.
+    ///
+    /// The copy had already drifted: the empty case shares the `ScrollView` so
+    /// that pull-to-refresh works when there is nothing to pull (which is
+    /// exactly when a reader reaches for it), and that only works with the
+    /// `containerRelativeFrame` giving the empty state something to fill. 公開
+    /// had it; 已收藏, copied from it, did not.
+    private func collectionShelf(
+        _ state: PublicAtlasBrowsingModel.ShelfState,
+        shelf: PublicAtlasBrowsingModel.Shelf,
+        @ViewBuilder blank: () -> some View
+    )
+        -> some View
+    {
+        ScrollView {
+            if state.collections.isEmpty {
+                blank()
+                    .containerRelativeFrame(.vertical)
+            } else {
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(state.collections.enumerated()), id: \.element.id) { index, collection in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(.tujiRule)
+                                .frame(height: Border.bw1)
+                                .padding(.horizontal, Space.s4)
+                        }
+                        AtlasCollectionCard(collection: collection) {
+                            self.navigator.push(
+                                .atlasCollectionDetail(
+                                    slug: collection.slug, autoSave: false, preview: collection
+                                )
+                            )
+                        }
+                    }
+                }
+                .padding(.top, Space.s1)
+                .padding(.bottom, Space.s5)
+            }
+        }
+        // Allow the pull gesture even when the content is shorter than the viewport.
+        .scrollBounceBehavior(.always, axes: .vertical)
+        .refreshable {
+            await self.browsing.refresh(
+                shelf: shelf,
+                language: self.targetLanguage,
+                isSignedIn: !self.auth.isGuest
+            )
         }
     }
 
@@ -265,35 +244,31 @@ struct AtlasPublicFeedView: View {
         }
     }
 
-    private var savedEmptyText: String {
+    /// A `LocalizedStringKey` rather than a resolved `String`: it is handed to a
+    /// `Text` inside this view, whose environment locale already follows uiLang.
+    private var savedEmptyText: LocalizedStringKey {
         switch self.targetLanguage {
-        case .ja: tujiLocalized("目前沒有收藏的日文合集")
-        case .en: tujiLocalized("目前沒有收藏的英文合集")
+        case .ja: "目前沒有收藏的日文合集"
+        case .en: "目前沒有收藏的英文合集"
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: Space.s3) {
+        VStack(spacing: 0) {
             Spacer()
-            Image(systemName: "square.stack.3d.up.slash")
-                .font(.tujiIcon(40))
-                .foregroundStyle(.tujiInk3)
-            Text(self.browsing.explore.errorMessage == nil
-                ? tujiLocalized("這個語言還沒有公開合集")
-                : tujiLocalized("載入失敗，請稍後再試"))
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-            if self.browsing.explore.errorMessage != nil {
-                BBtn(title: "重試", fullWidth: false) {
-                    Task {
-                        await self.browsing.refresh(
-                            shelf: .explore,
-                            language: self.targetLanguage,
-                            isSignedIn: !self.auth.isGuest
-                        )
-                    }
-                }
-            }
+            TujiBlankState(
+                icon: "square.stack.3d.up.slash",
+                emptyText: "這個語言還沒有公開合集",
+                error: self.browsing.explore.errorMessage,
+                retry: {
+                    await self.browsing.refresh(
+                        shelf: .explore,
+                        language: self.targetLanguage,
+                        isSignedIn: !self.auth.isGuest
+                    )
+                },
+                topPadding: 0
+            )
             Spacer()
         }
         .frame(maxWidth: .infinity)
