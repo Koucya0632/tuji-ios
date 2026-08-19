@@ -27,6 +27,15 @@ struct TujiBlankState: View {
     /// Why the shelf has nothing on it. Three states, not a `String?`: 作者主頁
     /// and 合集詳情 both distinguish "this does not exist" from "the fetch
     /// failed", and only the second is worth a 重試 button.
+    /// The one sentence a failed load says, wherever it says it.
+    ///
+    /// Exposed because one caller needs the *words* without the *layout*:
+    /// 圖鑑管理's failed row is left-aligned in `.tujiLabel` inside a list, not a
+    /// centred shelf state. Giving `TujiBlankState` an alignment, a font and a
+    /// vertical padding to absorb it would widen the interface for one caller —
+    /// so the component keeps the sentence and the row keeps its shape.
+    static let failedMessage: LocalizedStringKey = "載入失敗，請稍後再試"
+
     enum Kind {
         /// Nothing here yet — the shelf's own words for that.
         case empty(LocalizedStringKey)
@@ -85,7 +94,7 @@ struct TujiBlankState: View {
         switch self.kind {
         case let .empty(text): text
         case let .notFound(text): text
-        case .failed: "載入失敗，請稍後再試"
+        case .failed: Self.failedMessage
         }
     }
 

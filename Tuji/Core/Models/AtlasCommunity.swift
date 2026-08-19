@@ -299,6 +299,20 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
             publishedAt: self.publishedAt
         )
     }
+
+    /// The 簡介 as something to render, or nil when there is none.
+    ///
+    /// Three places asked this and two of them trimmed first: the create and
+    /// edit models nil a whitespace-only description before sending, and the
+    /// detail view read `description.flatMap { $0.isEmpty ? nil : $0 }` — no
+    /// trim. So a row whose 簡介 is three spaces (an older row, or one written
+    /// by the web client) rendered as *present*, in the has-content ink rather
+    /// than the placeholder grey, showing nothing.
+    var blurb: String? {
+        guard let description else { return nil }
+        let trimmed = description.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }
 
 /// GET /api/atlas/public/collections

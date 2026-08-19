@@ -48,9 +48,13 @@ struct StudyReportSheet: View {
 
     private var formContent: some View {
         VStack(alignment: .leading, spacing: Space.s4) {
-            Text(self.draft.item.word.word)
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
+            // `TujiHeadword`, not a bare `Text`: this is the one screen that
+            // showed a headword at headline size without its reading, and it is
+            // the screen a reader would use to report *that the reading is
+            // wrong*. The five other subject-sized headwords already go through
+            // it; the grids that do not are all 18pt, where ruby would land at
+            // 9pt and the CJK face stops resolving (see FuriganaHeadword).
+            TujiHeadword(word: self.draft.item.word)
 
             VStack(alignment: .leading, spacing: Space.s3) {
                 Text("當前學習遇到什麼問題呢？")

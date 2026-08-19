@@ -16,7 +16,6 @@ struct AvatarCropView: View {
     var cropFrame: ImageCropFrame = .circle
 
     @State private var proxy: UIImage?
-    @State private var loadFailed = false
     @State private var working = false
     @State private var zoom: CGFloat = 1
     @State private var zoomBaseline: CGFloat?
@@ -27,31 +26,14 @@ struct AvatarCropView: View {
     private let maxZoom: CGFloat = 4
 
     var body: some View {
-        ZStack {
-            Color.tujiInk.ignoresSafeArea()
-            Group {
-                if let proxy {
-                    self.cropCanvas(proxy)
-                } else if self.loadFailed {
-                    self.failureView
-                } else {
-                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 120)
-                }
-            }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                self.toolbar
-            }
-        }
-        .task {
-            let data = self.imageData
-            let loaded = await Task.detached(priority: .userInitiated) {
-                ImageCrop.prepareProxy(data: data)
-            }.value
-            if let loaded {
-                self.proxy = loaded
-            } else {
-                self.loadFailed = true
-            }
+        CropScaffold(imageData: self.imageData, proxy: self.$proxy) { proxy in
+            self.cropCanvas(proxy)
+        } toolbar: {
+            self.toolbar
+        } failureAction: {
+            Button("返回") { self.onCancel() }
+                .font(.tujiBody(.strong))
+                .foregroundStyle(.tujiBrandPrimary)
         }
     }
 
@@ -222,21 +204,6 @@ struct AvatarCropView: View {
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
-    }
-
-    private var failureView: some View {
-        VStack(spacing: Space.s3) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.tujiIcon(32, weight: .bold))
-                .foregroundStyle(.white.opacity(0.8))
-            Text("無法載入這張照片")
-                .font(.tujiBody(.strong))
-                .foregroundStyle(.white)
-            Button("返回") { self.onCancel() }
-                .font(.tujiBody(.strong))
-                .foregroundStyle(.tujiBrandPrimary)
-        }
-        .padding(Space.s4)
     }
 
     private func confirm() {

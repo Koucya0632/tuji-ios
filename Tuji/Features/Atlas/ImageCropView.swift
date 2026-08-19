@@ -18,11 +18,10 @@ struct ImageCropView: View {
     let onConfirm: (Data) -> Void
     let onCancel: () -> Void
 
-    @State private var proxy: UIImage?
     @State private var cropN = CGRect(x: 0, y: 0, width: 1, height: 1)
     /// Snapshot of `cropN` captured at the start of a drag; nil while idle.
     @State private var dragBaseline: CGRect?
-    @State private var loadFailed = false
+    @State private var proxy: UIImage?
     @State private var working = false
 
     /// Smallest normalized crop side — keeps a handle from crossing the opposite edge
@@ -34,35 +33,13 @@ struct ImageCropView: View {
     private enum Corner: CaseIterable { case topLeft, topRight, bottomLeft, bottomRight }
 
     var body: some View {
-        ZStack {
-            Color.tujiInk.ignoresSafeArea()
-
-            Group {
-                if let proxy {
-                    self.cropCanvas(proxy)
-                } else if self.loadFailed {
-                    self.failureView
-                } else {
-                    TujiProgressBar(progress: nil, track: .tujiPaper.opacity(0.2), fill: .tujiPaper).frame(width: 120)
-                }
-            }
-            // Reserve the toolbar's height out of the crop area (instead of floating
-            // it over the image) so the bottom crop handles never sit under the
-            // buttons — the failure mode for full-bleed sources like phone
-            // screenshots, whose aspect ratio matches the screen.
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                self.toolbar
-            }
-        }
-        .task {
-            let data = self.imageData
-            let loaded = await Task.detached(priority: .userInitiated) {
-                ImageCrop.prepareProxy(data: data)
-            }.value
-            if let loaded {
-                self.proxy = loaded
-            } else {
-                self.loadFailed = true
+        CropScaffold(imageData: self.imageData, proxy: self.$proxy) { proxy in
+            self.cropCanvas(proxy)
+        } toolbar: {
+            self.toolbar
+        } failureAction: {
+            BBtn(title: "繼續上傳原圖", bg: .tujiBrandPrimary, fg: .tujiInk, icon: "arrow.up") {
+                self.onConfirm(self.imageData)
             }
         }
     }
@@ -308,21 +285,6 @@ struct ImageCropView: View {
         .padding(.horizontal, Space.s4)
         .padding(.top, Space.s3)
         .padding(.bottom, Space.s2)
-    }
-
-    private var failureView: some View {
-        VStack(spacing: Space.s3) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.tujiIcon(32, weight: .bold))
-                .foregroundStyle(.white.opacity(0.8))
-            Text("無法載入這張照片")
-                .font(.tujiBody(.strong))
-                .foregroundStyle(.white)
-            BBtn(title: "繼續上傳原圖", bg: .tujiBrandPrimary, fg: .tujiInk, icon: "arrow.up") {
-                self.onConfirm(self.imageData)
-            }
-        }
-        .padding(Space.s4)
     }
 
     private func confirm() {
