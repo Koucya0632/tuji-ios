@@ -249,7 +249,9 @@ private struct AtlasCardsManagementPane: View {
     /// owns cards that they own none.
     private var failedRow: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text("載入失敗，請稍後再試")
+            // The sentence comes from `TujiBlankState`; the shape does not —
+            // this one is a left-aligned row inside a list, not a centred shelf.
+            Text(TujiBlankState.failedMessage)
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
             BBtn(title: "重試", fullWidth: false) {

@@ -227,30 +227,16 @@ struct AtlasAuthorProfileView: View {
             }
 
             HStack(spacing: Space.s5) {
-                self.stat(value: "\(author.publishedCount)", label: tujiLocalized("公開項目"))
+                TujiInkStat(label: "公開項目", value: author.publishedCount)
                 // The altruistic signal: how much this author's work has helped
                 // others (../docs/COMMUNITY_ATLAS_PLAN.md §3C — FEATURES.md §12.5).
-                self.stat(value: "\(author.saveCount)", label: tujiLocalized("被收藏"))
+                TujiInkStat(label: "被收藏", value: author.saveCount)
             }
             .padding(.top, Space.s1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Space.s4)
         .background(.tujiInk)
-    }
-
-    private func stat(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: value)
-                .font(.tujiMono)
-                .foregroundStyle(.tujiPaper)
-            Text(verbatim: label)
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiPaper.opacity(0.6))
-                .lineLimit(1)
-                .fixedSize()
-        }
     }
 
     // MARK: Segments

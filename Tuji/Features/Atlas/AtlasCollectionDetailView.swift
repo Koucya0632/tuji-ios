@@ -229,8 +229,8 @@ struct AtlasCollectionDetailView: View {
 
     private func actionBar(_ collection: AtlasCollection) -> some View {
         HStack(spacing: Space.s5) {
-            self.stat(title: "內容", value: collection.itemCount)
-            self.stat(title: "被收藏", value: collection.saveCount)
+            TujiInkStat(label: "內容", value: collection.itemCount)
+            TujiInkStat(label: "被收藏", value: collection.saveCount)
             Spacer(minLength: Space.s3)
             self.bookmarkAction
         }
@@ -238,20 +238,6 @@ struct AtlasCollectionDetailView: View {
         .frame(height: 72)
         .frame(maxWidth: .infinity)
         .background(.tujiInk)
-    }
-
-    private func stat(title: LocalizedStringKey, value: Int) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("\(value)")
-                .font(.tujiMono)
-                .foregroundStyle(.tujiPaper)
-            Text(title)
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiPaper.opacity(0.6))
-                .lineLimit(1)
-                .fixedSize()
-        }
     }
 
     @ViewBuilder
@@ -452,7 +438,7 @@ struct AtlasCollectionDetailView: View {
                 .padding(.bottom, Space.s5)
             }
         case .about:
-            let about = collection.description.flatMap { $0.isEmpty ? nil : $0 }
+            let about = collection.blurb
             Text(about ?? tujiLocalized("作者還沒有填寫簡介。"))
                 .font(.tujiBodySm)
                 .foregroundStyle(about == nil ? .tujiInk3 : .tujiInk2)
