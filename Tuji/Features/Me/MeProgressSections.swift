@@ -68,11 +68,6 @@ struct MeProgressSections: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(LocalCache.self) private var cache
 
-    private var isGuest: Bool {
-        if case .signedIn = auth.state { return false }
-        return true
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s5) {
             self.completionCard
@@ -83,7 +78,7 @@ struct MeProgressSections: View {
             self.categoryBreakdownCard
                 .padding(.horizontal, Space.s4)
         }
-        .warmsAccumulation(.progressSections, isGuest: self.isGuest)
+        .warmsAccumulation(.progressSections, isGuest: self.auth.isGuest)
     }
 
     // MARK: - Completion card
@@ -97,7 +92,7 @@ struct MeProgressSections: View {
         let selected = self.settings.current.studyCategories
         return CompletionReadout(
             .init(
-                isGuest: self.isGuest,
+                isGuest: self.auth.isGuest,
                 settingsLoaded: self.settings.hasLoaded,
                 studyCategories: selected,
                 guestLearnedCount: self.cache.learnedIds.count,
@@ -217,7 +212,7 @@ struct MeProgressSections: View {
     private var heatmapEmpty: some View {
         MascotEmptyState(
             pose: .sleep,
-            title: self.isGuest ? "登入後才能看活躍熱力圖" : "還沒有學習紀錄",
+            title: self.auth.isGuest ? "登入後才能看活躍熱力圖" : "還沒有學習紀錄",
             compact: true
         )
     }
@@ -269,7 +264,7 @@ struct MeProgressSections: View {
     }
 
     private var emptyBreakdownMessage: LocalizedStringKey {
-        if self.isGuest { return "登入後顯示分類進度" }
+        if self.auth.isGuest { return "登入後顯示分類進度" }
         return "還沒有學習紀錄"
     }
 

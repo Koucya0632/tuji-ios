@@ -556,6 +556,22 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **Read seams (settings/stats slices).** Modules that used to reach `SettingsStore.shared`
   / `StudyStatsStore.shared` inside their methods now inject a narrow read seam instead, so
   they're hermetically testable:
+  - **ViewerIdentity** — `{ isGuest, uid, owns(handle:), displayName(fallback:) }`, conformed
+    by `AuthService`. Who is looking, and is this theirs. Answered fourteen times before
+    this, in **four** mechanisms that did not agree: `user == nil` (今天, 我), `if case
+    .signedIn` (設定, 圖鑑, 主題, 我的進度), `uid.caseInsensitiveCompare(handle)` (物見 ×2,
+    作者主頁), and three copies of nickname → UID → email-local. Not academic: `MeView` used
+    the first and hosted `MeProgressSections`, which used the second, and **both feed
+    `CompletionReadout.Inputs.isGuest`** — the flag that decides whether 完成度 counts the
+    local learned set or the server rows. They agreed only because `RootView` maps `.guest`
+    to `user: nil` by hand. The consuming half of the seam already existed and was tested
+    (`CompletionReadout.Inputs`, `TodayDecisions.Inputs` both take `isGuest`); what was
+    missing was a producer. `fallback` is the caller's because it is that screen's copy —
+    今天 greets 「探險者」 and 我 titles the row 「Tuji 探險者」. **The rules live on
+    `AuthState`, not on `AuthService`**: the service has a private init and a stored
+    Supabase client that traps without Info.plist keys, so nothing could stand one up —
+    the same reason `AuthSession` was split out of it. `CollectionDetailVM.matchesOwner`
+    stays where it is on purpose: it can only answer *after* the fetch it does itself.
   - **LanguageContext** — `{ uiLang, learningDirection }`, conformed by `SettingsStore`.
     Injected into `LiveStudyRepository` (queue lang), `LiveAtlasRepository`
     (upload/recognize/confirm lang + learning) and `LiveCatalogRepository` (search only —

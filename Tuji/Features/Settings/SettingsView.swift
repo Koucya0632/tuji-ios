@@ -31,14 +31,6 @@ struct SettingsView: View {
     @State private var showFeedback = false
     @State private var showPaywall = false
 
-    /// Guests have no server account, so the 帳號 section (edit profile /
-    /// sign out) and the clear-progress / delete-account section — both of
-    /// which act on a server record — don't apply and are hidden.
-    private var isGuest: Bool {
-        if case .signedIn = self.auth.state { return false }
-        return true
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back)
@@ -230,7 +222,7 @@ struct SettingsView: View {
                     }
                 }
 
-                if self.isGuest {
+                if self.auth.isGuest {
                     // Not an empty space where the account section would be: a
                     // guest is not a blocked user, they are an undecided one, so
                     // the gap becomes one statement and one way out.

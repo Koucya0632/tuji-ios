@@ -264,7 +264,7 @@ struct AtlasCollectionDetailView: View {
         } else {
             Button(action: self.bookmarkTapped) {
                 Group {
-                    if self.vm.bookmarkBusy || (self.isSignedIn && !self.vm.bookmarkLoaded) {
+                    if self.vm.bookmarkBusy || (!self.auth.isGuest && !self.vm.bookmarkLoaded) {
                         TujiProgressBar(
                             progress: nil,
                             track: .tujiPaper.opacity(0.2),
@@ -293,7 +293,7 @@ struct AtlasCollectionDetailView: View {
     }
 
     private func bookmarkTapped() {
-        guard self.isSignedIn else {
+        guard !self.auth.isGuest else {
             self.showSignInPrompt = true
             return
         }
@@ -314,8 +314,8 @@ struct AtlasCollectionDetailView: View {
 
     private func openCollection() async {
         let change = await self.vm.open(context: .init(
-            isSignedIn: self.isSignedIn,
-            username: self.signedInUser?.username,
+            isSignedIn: !self.auth.isGuest,
+            username: self.auth.uid,
             autoSave: self.autoSave
         ))
         if let change {
@@ -343,10 +343,6 @@ struct AtlasCollectionDetailView: View {
     private var signedInUser: SessionUser? {
         if case let .signedIn(user) = self.auth.state { return user }
         return nil
-    }
-
-    private var isSignedIn: Bool {
-        self.signedInUser != nil
     }
 
     private var isOwnCollection: Bool {

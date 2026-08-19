@@ -35,19 +35,14 @@ struct AtlasAuthorProfileView: View {
     /// assigned and immutable, so two accounts cannot collide, and the worst a
     /// stale local value can do is show the menu — exactly today's behaviour.
     private var isOwnProfile: Bool {
-        if self.vm.isSelf { return true }
-        guard case let .signedIn(user) = self.auth.state,
-              let uid = user.username, !uid.isEmpty
-        else { return false }
-        return uid.caseInsensitiveCompare(self.vm.handle) == .orderedSame
+        self.vm.isSelf || self.auth.owns(handle: self.vm.handle)
     }
 
     /// Guests have no account to report or block *with*, and both endpoints
     /// require auth — offering an action that can only 401 is worse than not
     /// offering it.
     private var canModerate: Bool {
-        if case .signedIn = self.auth.state { return !self.isOwnProfile }
-        return false
+        !self.auth.isGuest && !self.isOwnProfile
     }
 
     /// Only ever on someone else's page — there is nothing to protect yourself
