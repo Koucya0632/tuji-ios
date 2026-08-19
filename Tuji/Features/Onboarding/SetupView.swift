@@ -19,7 +19,20 @@ struct SetupView: View {
     @Environment(CategoriesStore.self) private var categories
     @Environment(AuthService.self) private var auth
     @Environment(SettingsStore.self) private var settingsStore
-    private let users: UserRepository = LiveUserRepository.shared
+    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
+    /// names that shape as the defect it was carved out to fix — *no init seam,
+    /// so no test could substitute it* — and it survived in eight more places.
+    private let users: UserRepository
+
+    init(
+        userId: UUID,
+        onDone: @escaping @MainActor () async -> Void,
+        users: UserRepository = LiveUserRepository.shared
+    ) {
+        self.userId = userId
+        self.onDone = onDone
+        self.users = users
+    }
 
     @State private var topicIds: Set<String> = []
     @State private var dailyGoal: Int = 10

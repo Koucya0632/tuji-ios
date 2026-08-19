@@ -15,7 +15,15 @@ struct PaywallView: View {
     /// Separate from `store` on purpose: `store` drives the *purchase* flow
     /// (products, spinners, restore), `entitlement` answers whether this
     /// account already has Pro by any route.
-    private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
+    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
+    /// names that shape as the defect it was carved out to fix — *no init seam,
+    /// so no test could substitute it* — and it survived in eight more places.
+    private let entitlement: any EffectiveEntitlementReading
+
+    init(entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared) {
+        self.entitlement = entitlement
+    }
+
     @State private var errorMessage: String?
     /// True while Product.products(for:) is in flight. Needed because that
     /// call can *succeed with an empty array* (misconfigured store, App Store
@@ -230,6 +238,10 @@ struct PaywallView: View {
     }
 }
 
-#Preview {
-    PaywallView()
+#Preview("not subscribed") {
+    PaywallView(entitlement: PreviewEntitlement(isPro: false))
+}
+
+#Preview("already Pro") {
+    PaywallView(entitlement: PreviewEntitlement(isPro: true))
 }

@@ -53,7 +53,18 @@ struct MeView: View {
     /// StoreKit flag only while it is unknown — now lives in
     /// `LiveEffectiveEntitlement`. 我的 and 設定 both read that same answer, so
     /// the account row cannot disagree with the paywall or quota UI.
-    private let entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
+    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
+    /// names that shape as the defect it was carved out to fix — *no init seam,
+    /// so no test could substitute it* — and it survived in eight more places.
+    private let entitlement: any EffectiveEntitlementReading
+
+    init(
+        user: SessionUser?,
+        entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
+    ) {
+        self.user = user
+        self.entitlement = entitlement
+    }
 
     /// 我 is no longer a directory of six entry points — it *is* your progress
     /// (D.8). The two menu cards are gone and their entries went where the thing

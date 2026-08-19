@@ -4,7 +4,16 @@ struct StudyReportSheet: View {
     let draft: StudyReportDraft
 
     @Environment(\.dismiss) private var dismiss
-    private let repository: StudyRepository = LiveStudyRepository.shared
+    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
+    /// names that shape as the defect it was carved out to fix — *no init seam,
+    /// so no test could substitute it* — and it survived in eight more places.
+    private let repository: StudyRepository
+
+    init(draft: StudyReportDraft, repository: StudyRepository = LiveStudyRepository.shared) {
+        self.draft = draft
+        self.repository = repository
+    }
+
     @State private var issueType: StudyReportIssueType?
     @State private var detail = ""
     @State private var submitting = false
