@@ -52,12 +52,12 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
 struct AtlasPublicByLemmaResponse: Decodable {
     let lemma: String
     let targetLanguage: TargetLanguage
-    let items: [AtlasPublicItem]
+    @LossyArray var items: [AtlasPublicItem]
 }
 
 /// GET /api/atlas/public — the community wall.
 struct AtlasPublicFeedResponse: Decodable {
-    let items: [AtlasPublicItem]
+    @LossyArray var items: [AtlasPublicItem]
 }
 
 /// GET /api/atlas/public/{slug} — one public item.
@@ -92,12 +92,12 @@ struct AtlasAuthor: Decodable, Identifiable, Hashable {
 /// GET /api/atlas/public/authors/{username}
 struct AtlasAuthorResponse: Decodable, Hashable {
     let author: AtlasAuthor
-    let items: [AtlasPublicItem]
+    @LossyArray var items: [AtlasPublicItem]
     /// The author's approved 合集. Defaulted rather than required: this key was
     /// added after 1.0.4 shipped, so a build carrying it can meet a server that
     /// predates it (and the reverse — older clients simply ignore the key). An
     /// author page must not fail to decode over a deploy-ordering accident.
-    let collections: [AtlasCollection]
+    @LossyArray var collections: [AtlasCollection]
 
     init(author: AtlasAuthor, items: [AtlasPublicItem], collections: [AtlasCollection] = []) {
         self.author = author
@@ -317,13 +317,13 @@ struct AtlasCollection: Decodable, Identifiable, Hashable {
 
 /// GET /api/atlas/public/collections
 struct AtlasPublicCollectionsResponse: Decodable {
-    let collections: [AtlasCollection]
+    @LossyArray var collections: [AtlasCollection]
 }
 
 /// GET /api/atlas/public/collections/{slug}
 struct AtlasCollectionDetailResponse: Decodable {
     let collection: AtlasCollection
-    let items: [AtlasPublicItem]
+    @LossyArray var items: [AtlasPublicItem]
     var access: AtlasCollectionAccess?
 }
 
@@ -372,7 +372,7 @@ struct AtlasMyCollection: Decodable, Identifiable, Hashable {
 
 /// GET /api/atlas/collections  and the body of POST create.
 struct AtlasMyCollectionsResponse: Decodable {
-    let collections: [AtlasMyCollection]
+    @LossyArray var collections: [AtlasMyCollection]
 }
 
 struct AtlasMyCollectionResponse: Decodable {
@@ -382,7 +382,7 @@ struct AtlasMyCollectionResponse: Decodable {
 /// GET /api/atlas/collections/{id} — the owner edit view (collection + members).
 struct AtlasCollectionEditResponse: Decodable {
     let collection: AtlasCollectionEdit
-    let items: [AtlasPublicItem]
+    @LossyArray var items: [AtlasPublicItem]
 }
 
 struct AtlasCollectionEdit: Decodable, Hashable {
