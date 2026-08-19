@@ -23,16 +23,12 @@ final class CategoriesStore {
     private let repository: CatalogRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "categories")
 
-    @ObservationIgnored private var latestRequestedContext: CatalogContext?
     @ObservationIgnored private var loadedContext: CatalogContext?
-    @ObservationIgnored private var inFlight: [CatalogContext: LoadFlight] = [:]
+    /// Coalescing, the publish guard and the loading flag — see `LoadFlights`,
+    /// which 單字 and 設定 hold too.
+    @ObservationIgnored private let flights = LoadFlights<CatalogContext>()
     @ObservationIgnored private var categoryCache: [String: [TujiCategory]] = [:]
     @ObservationIgnored private var categoryInFlight: [String: CategoryFlight] = [:]
-
-    private struct LoadFlight {
-        let id: UUID
-        let task: Task<Void, Never>
-    }
 
     private struct CategoryFlight {
         let id: UUID
@@ -63,46 +59,24 @@ final class CategoriesStore {
     }
 
     private func load(for context: CatalogContext, reuseCached: Bool) async {
-        self.latestRequestedContext = context
         self.loading = true
         self.lastError = nil
-
-        if let flight = self.inFlight[context] {
-            await flight.task.value
-            return
-        }
-
-        let flightID = UUID()
-        let task = Task { [weak self] in
-            guard let self else { return }
-            await self.performReload(
-                for: context,
-                flightID: flightID,
-                reuseCached: reuseCached
-            )
-        }
-        self.inFlight[context] = LoadFlight(id: flightID, task: task)
-        await task.value
-
-        if self.inFlight[context]?.id == flightID {
-            self.inFlight[context] = nil
-        }
+        await self.flights.run(
+            context,
+            fetch: {
+                await self.fetchCategories(
+                    language: context.contentLanguageCode,
+                    reuseCached: reuseCached
+                )
+            },
+            publish: { result, _ in self.publish(result, for: context) }
+        )
         self.refreshLoadingState()
     }
 
-    private func performReload(
-        for context: CatalogContext,
-        flightID: UUID,
-        reuseCached: Bool
-    ) async {
-        let result = await self.fetchCategories(
-            language: context.contentLanguageCode,
-            reuseCached: reuseCached
-        )
-
-        guard self.latestRequestedContext == context,
-              self.inFlight[context]?.id == flightID
-        else { return }
+    /// Runs only for a result that is still the one being waited for — the
+    /// staleness guard lives in `LoadFlights`.
+    private func publish(_ result: Result<[TujiCategory], Error>, for context: CatalogContext) {
         self.loadedContext = context
         self.loaded = true
         switch result {
@@ -152,23 +126,15 @@ final class CategoriesStore {
     }
 
     private func refreshLoadingState() {
-        guard let latestRequestedContext else {
-            self.loading = false
-            return
-        }
-        self.loading = self.inFlight[latestRequestedContext] != nil
+        self.loading = self.flights.isLoading
     }
 
     func invalidate() {
-        self.latestRequestedContext = nil
         self.loadedContext = nil
-        for flight in self.inFlight.values {
-            flight.task.cancel()
-        }
+        self.flights.reset()
         for flight in self.categoryInFlight.values {
             flight.task.cancel()
         }
-        self.inFlight.removeAll()
         self.categoryInFlight.removeAll()
         self.categoryCache.removeAll()
         self.categories = []
