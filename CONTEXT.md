@@ -376,6 +376,11 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   its next appearance. Producers (publish flows) call `markNeedsReload()`; the feed
   `consume()`s it once. Replaces the former `AtlasFeedRefreshCenter` global singleton — the
   cross-view coupling is now an explicit environment dependency, not a hidden global.
+- **兩條社群訊號是兩條。** `CommunityFeedRefresh`（一次性旗標，撐過畫面生滅，讀了就沒）
+  與 `CollectionBookmarkStore`（帶值的廣播，送給掛著的畫面，`revision` 讓重複的同一個
+  變更也再觸發）在 `AtlasPublicFeedView` 裡相隔三行、用兩種寫法讀。看起來像沒收乾淨，
+  不是——合併會逼消費端二選一，而兩個方向都是把複雜度推給消費者。理由記在
+  [ADR-0010](docs/adr/0010-two-community-signals.md)。
 - **MyCollectionsCache** — an app-lifetime, account-scoped home for the 我的合集 rows. A
   screen view model is `@State` on a View that SwiftUI throws away on pop, so a
   view-scoped list meant every return to 圖鑑管理 started from an empty list and a
