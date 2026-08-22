@@ -129,7 +129,7 @@ extension WordDetailPage {
             Spacer(minLength: Space.s5)
             TujiErrorState(
                 title: "找不到這個字",
-                message: err.localizedDescription
+                message: tujiUserMessage(for: err)
             ) {
                 BBtn(title: "返回", fullWidth: false, action: { self.dismiss() })
             }

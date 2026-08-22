@@ -398,6 +398,11 @@ final class AuthService {
         {
             return tujiLocalized("Email 格式或網域不被接受")
         }
-        return msg
+        // Anything unrecognised is Supabase's own English, and it is not
+        // addressed to the reader. This arm used to `return msg`, which is how
+        // "Service for this project is restricted due to the following
+        // violations: exceed_cached_egress_quota…" — a billing notice for the
+        // developer — ended up on the sign-in screen during the 2026-08 outage.
+        return tujiUserMessage(for: err, fallback: tujiLocalized("登入沒有成功，請稍後再試"))
     }
 }

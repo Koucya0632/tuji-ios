@@ -26,11 +26,27 @@ enum APIError: LocalizedError {
             // Prefer the server's user-facing copy (e.g. the atlas daily-AI cap);
             // fall back to a generic throttle message.
             if let message, !message.isEmpty { message } else { tujiLocalized("請求太頻繁，請稍後再試") }
-        case let .server(s, b):
-            if let b, !b.isEmpty { "Server \(s): \(b)" } else { "Server error \(s)" }
+        // The body is deliberately NOT shown. For 402/429 above we do prefer
+        // the server's copy, because those carry product text we wrote in
+        // zh-Hant (the atlas daily-AI cap). A 5xx body is a stack trace or an
+        // English infrastructure string, and "Server 500: <raw>" is not
+        // something to put in front of a reader. It still reaches the log via
+        // `diagnostic`.
+        case let .server(s, _):
+            tujiLocalized("伺服器出了點問題（\(s)），請稍後再試")
         case let .decoding(e): tujiLocalized("資料解析失敗：\(e.localizedDescription)")
         case let .transport(e): Self.friendlyTransportMessage(for: e)
         case .missingBaseURL: tujiLocalized("TUJI_BASE_URL 未設定")
+        }
+    }
+
+    /// The raw text, for logs only. Never put this on screen.
+    var diagnostic: String {
+        switch self {
+        case let .server(s, b): "server \(s): \(b ?? "<no body>")"
+        case let .decoding(e): "decoding: \(e)"
+        case let .transport(e): "transport: \(e)"
+        default: String(describing: self)
         }
     }
 

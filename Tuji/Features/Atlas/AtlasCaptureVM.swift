@@ -181,7 +181,7 @@ final class AtlasCaptureVM {
             self.applyCandidates(response.candidates ?? [], mode: .primary)
         } catch {
             self.busy = nil
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = tujiUserMessage(for: error)
         }
     }
 
@@ -234,7 +234,7 @@ final class AtlasCaptureVM {
             if let apiError = error as? APIError, case .paymentRequired = apiError {
                 self.showPaywall = true
             } else {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = tujiUserMessage(for: error)
             }
         }
     }

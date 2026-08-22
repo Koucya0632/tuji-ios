@@ -69,7 +69,7 @@ final class ReportFlow {
             try await self.submitter.submit(target, reason: reason, detail: nil)
             self.phase = .sent
         } catch {
-            self.phase = .failed(error.localizedDescription)
+            self.phase = .failed(tujiUserMessage(for: error))
         }
     }
 }

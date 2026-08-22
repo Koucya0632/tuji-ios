@@ -89,7 +89,7 @@ final class MyCollectionsVM {
             let collections = try await self.repo.myCollections()
             self.cache.replace(collections)
         } catch {
-            self.loadError = error.localizedDescription
+            self.loadError = tujiUserMessage(for: error)
         }
         self.loading = false
     }

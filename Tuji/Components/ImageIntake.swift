@@ -168,7 +168,7 @@ final class ImageIntake {
             self.phase = .idle
             self.pendingCrop = PendingCrop(data: data)
         } catch {
-            self.phase = .failed(error.localizedDescription)
+            self.phase = .failed(tujiUserMessage(for: error))
         }
     }
 

@@ -221,7 +221,7 @@ struct CardsListView: View {
         } else if let error = store.lastError, self.store.words.isEmpty {
             TujiErrorState(
                 title: "載不到單字",
-                message: error.localizedDescription
+                message: tujiUserMessage(for: error)
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     Task { await self.store.reload() }

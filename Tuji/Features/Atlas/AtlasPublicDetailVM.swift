@@ -96,7 +96,7 @@ final class AtlasPublicDetailVM {
             await self.learningRefresher.refreshAfterLearningMutation()
             return response.saved
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
             return nil
         }
     }

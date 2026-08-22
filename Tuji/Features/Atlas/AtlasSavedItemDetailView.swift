@@ -47,7 +47,7 @@ struct AtlasSavedItemDetailView: View {
         do {
             self.item = try await self.repo.publicItem(slug: self.slug)
         } catch {
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = tujiUserMessage(for: error)
         }
     }
 
