@@ -58,7 +58,7 @@ final class CollectionCreateModel {
                 targetLanguage: self.language
             )
         } catch {
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = tujiUserMessage(for: error)
             return nil
         }
     }

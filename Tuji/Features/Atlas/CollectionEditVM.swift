@@ -125,7 +125,7 @@ final class CollectionEditVM {
         } catch {
             // Keep any already-loaded collection on screen; only a first load with
             // nothing to show surfaces the full error state.
-            self.phase = .failed(error.localizedDescription)
+            self.phase = .failed(tujiUserMessage(for: error))
         }
     }
 
@@ -145,7 +145,7 @@ final class CollectionEditVM {
             )
             self.metaSaved = true
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
         }
         self.savingMeta = false
     }
@@ -168,7 +168,7 @@ final class CollectionEditVM {
             self.avatarPreviewURL = URL(string: response.avatarPreviewUrl ?? response.avatarImageUrl)
             return response.avatarColor
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
             return nil
         }
     }
@@ -185,7 +185,7 @@ final class CollectionEditVM {
             await self.reloadMembers()
             return true
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
             return false
         }
     }
@@ -198,7 +198,7 @@ final class CollectionEditVM {
             }
             await self.reloadMembers()
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
         }
     }
 
@@ -208,7 +208,7 @@ final class CollectionEditVM {
             self.members = response.items
             if self.coverId == nil { self.coverId = response.items.first?.publicItemId }
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
         }
     }
 
@@ -235,7 +235,7 @@ final class CollectionEditVM {
             await self.load()
             return response.moderation?.published == true
         } catch {
-            self.submitState = .failed(error.localizedDescription)
+            self.submitState = .failed(tujiUserMessage(for: error))
             return false
         }
     }
@@ -257,7 +257,7 @@ final class CollectionEditVM {
             await self.load()
             return true
         } catch {
-            self.actionError = error.localizedDescription
+            self.actionError = tujiUserMessage(for: error)
             return false
         }
     }

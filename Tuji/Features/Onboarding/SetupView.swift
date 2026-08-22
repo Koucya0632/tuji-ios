@@ -266,7 +266,7 @@ struct SetupView: View {
                 error = tujiLocalized("儲存失敗（\(status)）：\(body ?? "")")
                 showReSignIn = false
             } catch {
-                self.error = error.localizedDescription
+                self.error = tujiUserMessage(for: error)
                 showReSignIn = false
             }
         }

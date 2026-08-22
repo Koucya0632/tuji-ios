@@ -57,7 +57,7 @@ final class CollectionCandidatesModel {
         do {
             self.candidates = try await self.repo.collectionCandidates(lang: self.language)
         } catch {
-            self.loadError = error.localizedDescription
+            self.loadError = tujiUserMessage(for: error)
         }
     }
 

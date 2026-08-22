@@ -142,7 +142,7 @@ struct AtlasMyCollectionsView: View {
             // setter and clears it — so this line was already a no-op by the
             // time the await returned.
         } catch {
-            self.deleteError = error.localizedDescription
+            self.deleteError = tujiUserMessage(for: error)
         }
     }
 }

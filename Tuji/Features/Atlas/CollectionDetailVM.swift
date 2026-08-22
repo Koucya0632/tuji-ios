@@ -125,7 +125,7 @@ final class CollectionDetailVM {
             }
             // Keep any preview header on screen; the error state shows only when
             // there's nothing to render.
-            self.phase = .failed(error.localizedDescription)
+            self.phase = .failed(tujiUserMessage(for: error))
             return false
         }
     }
@@ -145,7 +145,7 @@ final class CollectionDetailVM {
             // missing/newer backend route cannot leave the header spinner
             // running forever or erase an already-loaded detail.
             self.bookmarkLoaded = true
-            self.bookmarkError = error.localizedDescription
+            self.bookmarkError = tujiUserMessage(for: error)
         }
     }
 
@@ -165,8 +165,8 @@ final class CollectionDetailVM {
                 BookmarkChange(collection: $0, isSaved: response.saved)
             }
         } catch {
-            self.bookmarkError = error.localizedDescription
-            self.bookmarkActionError = error.localizedDescription
+            self.bookmarkError = tujiUserMessage(for: error)
+            self.bookmarkActionError = tujiUserMessage(for: error)
             return nil
         }
     }
@@ -187,8 +187,8 @@ final class CollectionDetailVM {
                 BookmarkChange(collection: $0, isSaved: response.saved)
             }
         } catch {
-            self.bookmarkError = error.localizedDescription
-            self.bookmarkActionError = error.localizedDescription
+            self.bookmarkError = tujiUserMessage(for: error)
+            self.bookmarkActionError = tujiUserMessage(for: error)
             return nil
         }
     }
@@ -216,7 +216,7 @@ final class CollectionDetailVM {
             await self.learningRefresher.refreshAfterLearningMutation()
             return true
         } catch {
-            self.learningActionError = error.localizedDescription
+            self.learningActionError = tujiUserMessage(for: error)
             return false
         }
     }

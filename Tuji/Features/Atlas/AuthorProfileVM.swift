@@ -109,7 +109,7 @@ final class AuthorProfileVM {
             self.phase = .notFound
         } catch {
             self.clear()
-            self.phase = .failed(error.localizedDescription)
+            self.phase = .failed(tujiUserMessage(for: error))
         }
     }
 

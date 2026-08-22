@@ -138,7 +138,7 @@ struct StudyLauncherView: View {
         } catch {
             self.log
                 .error("queue load failed: \(error.localizedDescription, privacy: .public)")
-            self.queueFailure = .transport(error.localizedDescription)
+            self.queueFailure = .transport(tujiUserMessage(for: error))
         }
     }
 

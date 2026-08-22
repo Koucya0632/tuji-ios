@@ -190,7 +190,7 @@ final class PublicAtlasBrowsingModel {
             self.exploreRaw.phase = .ready
         } catch {
             if !forceReload { self.exploreRaw.collections = [] }
-            self.exploreRaw.phase = .failed(error.localizedDescription)
+            self.exploreRaw.phase = .failed(tujiUserMessage(for: error))
         }
     }
 
@@ -211,7 +211,7 @@ final class PublicAtlasBrowsingModel {
             self.savedRaw.phase = .ready
         } catch {
             self.savedRaw.loadedLanguage = language
-            self.savedRaw.phase = .failed(error.localizedDescription)
+            self.savedRaw.phase = .failed(tujiUserMessage(for: error))
         }
     }
 

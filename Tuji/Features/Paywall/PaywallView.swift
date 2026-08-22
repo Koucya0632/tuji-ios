@@ -223,7 +223,7 @@ struct PaywallView: View {
             let done = try await self.store.purchase(product)
             if done { self.dismiss() }
         } catch {
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = tujiUserMessage(for: error)
         }
     }
 
@@ -233,7 +233,7 @@ struct PaywallView: View {
             try await self.store.restore()
             if self.store.isPro { self.dismiss() }
         } catch {
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = tujiUserMessage(for: error)
         }
     }
 }

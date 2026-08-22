@@ -340,7 +340,7 @@ struct SearchView: View {
             Spacer(minLength: Space.s5)
             TujiErrorState(
                 title: "搜尋失敗",
-                message: error.localizedDescription
+                message: tujiUserMessage(for: error)
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
                     self.vm.runImmediately(self.vm.query)

@@ -248,7 +248,7 @@ final class AtlasShelfModel {
             await mutations.refresh(after: .itemWithdrawn)
             return true
         } catch {
-            self.errorMessage = error.localizedDescription
+            self.errorMessage = tujiUserMessage(for: error)
             return false
         }
     }
