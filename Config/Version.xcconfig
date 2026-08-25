@@ -12,5 +12,5 @@
 //   手動 bump：agvtool next-version -all
 // =============================================================================
 
-MARKETING_VERSION = 1.1.0
+MARKETING_VERSION = 1.1.1
 CURRENT_PROJECT_VERSION = 2

@@ -3,7 +3,18 @@
 // response — currently no-op on the server but wired client-side so
 // W5 server work can switch it on without a client release.
 //
-// Ink face, cheer pose, the streak number at display size, Share + 繼續.
+// Ink face, cheer pose, the streak number at display size, and 繼續.
+//
+// It used to offer Share as the primary action, and the text it shared carried
+// `https://tuji.app/share/milestone?n=N` — a URL that 404s, because that page
+// was never built and Universal Links are not configured either. So the reward
+// for a 100-day streak was posting a dead link. Removed rather than repaired:
+// the landing page is a product decision, not a client fix, and shipping the
+// broken version while it gets made is worse than not offering it.
+//
+// 繼續 inherits the primary slot the way CompleteView's footer does it — one
+// full-width BBtn when there is only one thing to do, no faint text link left
+// alone as the only way off the screen.
 //
 // The number is teal, not 瞳黃. A streak is accumulated days — the same family
 // as mastery and completion — and 瞳黃 means "now". The pale step rather than the
@@ -19,12 +30,6 @@ import SwiftUI
 struct MilestoneView: View {
     let milestone: Milestone
     let onFinish: () -> Void
-
-    private var shareText: String {
-        tujiLocalized(
-            "我在 Tuji 連勝 \(self.milestone.streak) 天了！\nhttps://tuji.app/share/milestone?n=\(self.milestone.streak)"
-        )
-    }
 
     var body: some View {
         ZStack {
@@ -65,27 +70,16 @@ struct MilestoneView: View {
         }
     }
 
+    /// 瞳黃 rather than 品牌黃: this screen's ground is ink, and 瞳黃 is what
+    /// marks "the thing to do now" against it — the slot Share used to hold.
     private var actions: some View {
-        VStack(spacing: Space.s3) {
-            ShareLink(item: self.shareText) {
-                HStack(spacing: Space.s2) {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("分享")
-                }
-                .font(.tujiIcon(16, weight: .semibold))
-                .foregroundStyle(.tujiInk)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Space.s3)
-                .background(.tujiCurrent, in: .rect(cornerRadius: Radius.r0))
-            }
-            Button(action: self.onFinish) {
-                Text("繼續")
-                    .font(.tujiBodySm(.strong))
-                    .foregroundStyle(.tujiPaper.opacity(0.85))
-                    .padding(.vertical, Space.s3)
-            }
-            .buttonStyle(.plain)
-        }
+        BBtn(
+            title: "繼續",
+            bg: .tujiCurrent,
+            fg: .tujiInk,
+            fullWidth: true,
+            action: self.onFinish
+        )
     }
 }
 

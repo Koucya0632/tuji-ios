@@ -10,7 +10,11 @@
 
 # ---------- 掃描 ----------
 # build = 本機 / CI 的 derivedDataPath（含 SPM checkouts，數千個第三方檔案）
---exclude .build,.swiftpm,DerivedData,build,Pods,Preview\ Content,Tuji/Resources
+# build-release = pr.yml 的 release-build job 用的那一個。`build` 不會連帶
+# 排除它，所以本機跑完「出得了版本嗎」那一步後，repo 根目錄直接跑
+# `swiftformat . --lint`（CI 用的那條指令）會噴 10 萬個第三方檔案的 error，
+# 看起來像 lint 壞了。CI 是乾淨 checkout 所以從沒中過。
+--exclude .build,.swiftpm,DerivedData,build,build-release,Pods,Preview\ Content,Tuji/Resources
 
 # ---------- 通用 ----------
 --indent 4

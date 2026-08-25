@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail when a string a screen can show is missing from the catalogue.
+"""Fail when a string a screen can show renders as 繁體中文 in ja / en / zh-Hans.
 
 A user-visible string and its `Localizable.xcstrings` entry are two unrelated
 edits, and nothing has ever connected them. The code compiles, the tests pass,
@@ -8,8 +8,20 @@ the key, so a missing entry is invisible until someone opens the app in
 Japanese or English. That has shipped three times in the last week.
 
 This is the seam. It reads the Swift sources rather than the built product,
-because the failure is a *missing* entry: there is nothing in the binary to
-inspect.
+because one of the two failures is a *missing* entry: there is nothing in the
+binary to inspect.
+
+**There are two ways to lose a translation, and this check used to ask about
+only one of them.** A literal can be absent from the catalogue entirely, or it
+can sit in the catalogue as a key with no `en` / `ja` / `zh-Hans` under it.
+Both end the same way — iOS falls back to the key, and the key is the 繁體中文
+source string — so a screen reads Chinese in an English UI either way. The
+original version of this script only asked "is the key present?", which let the
+second kind through: v1.1.1 was one signed build away from shipping 15 of them,
+including the signup screen's body copy and the destructive-action footer in
+設定. So the question is now "does this literal resolve in all three?", and
+`Tuji v1.1.0 · 圖記` is the reason the answer has to include the version
+signature too.
 
 Deliberately conservative. It only reports a literal it is confident is a
 `LocalizedStringKey`:
@@ -135,6 +147,28 @@ NOT_PROSE = re.compile(
 )
 
 
+# The three the app ships besides the zh-Hant base. A key that resolves in
+# none of them is as Chinese on screen as a key that was never added.
+TARGETS = ("en", "ja", "zh-Hans")
+
+
+def untranslated(entry: dict) -> list[str]:
+    """Which of TARGETS this catalogue entry cannot answer in.
+
+    `state` matters as much as presence: Xcode writes `"new"` for an entry a
+    translator has not confirmed, and those do not reach the compiled
+    `.lproj` — the entry looks filled in the JSON and is still missing in the
+    binary. Every shipping entry in this catalogue is `translated`, so
+    requiring it costs nothing and closes that door.
+    """
+    localizations = entry.get("localizations", {})
+    return [
+        lang
+        for lang in TARGETS
+        if localizations.get(lang, {}).get("stringUnit", {}).get("state") != "translated"
+    ]
+
+
 def interpolations_to_specifiers(literal: str) -> str:
     """Swift writes `\\(n) 字`; the catalogue stores `%lld 字`.
 
@@ -158,6 +192,7 @@ def main() -> int:
         blind.setdefault(re.sub(r"%(?:lld|@|\d+\$[a-z@]+|\.\d+f|d)", "\x00", key), key)
 
     missing: list[tuple[str, int, str]] = []
+    partial: list[tuple[str, int, str, list[str]]] = []
     seen: set[str] = set()
 
     for root in SOURCES:
@@ -217,30 +252,48 @@ def main() -> int:
                         continue
                     if SKIP.match(collapsed.replace("\x00", "")):
                         continue
-                    if literal in catalog:
-                        continue
-                    if interpolations_to_specifiers(literal) in blind:
-                        continue
+                    key = literal if literal in catalog else blind.get(collapsed)
                     if literal in seen:
                         continue
                     seen.add(literal)
-                    missing.append((str(path.relative_to(ROOT)), number, literal))
+                    where = (str(path.relative_to(ROOT)), number)
+                    if key is None:
+                        missing.append((*where, literal))
+                        continue
+                    gaps = untranslated(catalog[key])
+                    if gaps:
+                        partial.append((*where, key, gaps))
 
     if "--list" in sys.argv:
         print(f"scanned {len(catalog)} catalogue keys")
 
-    if not missing:
-        print("✓ every user-visible string has a catalogue entry")
+    if not missing and not partial:
+        print("✓ every user-visible string resolves in en / ja / zh-Hans")
         return 0
 
-    print(f"✗ {len(missing)} string(s) a screen can show are not in the catalogue.")
-    print("  They will render as Traditional Chinese in ja / en / zh-Hans.\n")
-    for path, number, literal in missing:
-        shown = literal if len(literal) <= 60 else literal[:57] + "…"
-        print(f"  {path}:{number}\n      {shown}")
-    print("\n  Add them to Tuji/Resources/i18n/Localizable.xcstrings, or use the")
-    print("  verbatim initialiser (Text(verbatim:) / BBtn(localized:) / …) if the")
-    print("  value is already resolved.")
+    def show(literal: str) -> str:
+        return literal if len(literal) <= 60 else literal[:57] + "…"
+
+    if missing:
+        print(f"✗ {len(missing)} string(s) a screen can show are not in the catalogue.")
+        print("  They will render as Traditional Chinese in ja / en / zh-Hans.\n")
+        for path, number, literal in missing:
+            print(f"  {path}:{number}\n      {show(literal)}")
+        print("\n  Add them to Tuji/Resources/i18n/Localizable.xcstrings, or use the")
+        print("  verbatim initialiser (Text(verbatim:) / BBtn(localized:) / …) if the")
+        print("  value is already resolved.")
+
+    if partial:
+        if missing:
+            print()
+        print(f"✗ {len(partial)} string(s) are in the catalogue with no translation.")
+        print("  Same symptom: iOS falls back to the key, and the key is 繁體中文.\n")
+        for path, number, key, gaps in partial:
+            print(f"  {path}:{number}  [missing: {', '.join(gaps)}]\n      {show(key)}")
+        print("\n  Fill them in Tuji/Resources/i18n/Localizable.xcstrings. A brand")
+        print("  name or a language code still needs an entry per language — the")
+        print("  translation is just the same string.")
+
     return 1
 
 
