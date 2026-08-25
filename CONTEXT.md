@@ -155,6 +155,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   language question, which it was masquerading as: ねこ is Japanese and its 振假名 is
   itself, so the stage quizzes the 詞形. The two agree on most words and part company on
   exactly the words that make 振假名 subtle.
+- **補充 (enrichment)** — the AI pass that fills a captured item's 釋義, 助記, 詞源 and the
+  per-language gloss. One pass is three to four paid model calls, not one. Its states live in
+  `backfill_status`: `pending` → `filled`, or `failed` (this attempt broke — try again) → after
+  `ATLAS_ENRICH_MAX_ATTEMPTS`, `skipped` (**we have given up on this one**). That second line —
+  transient versus terminal — is the same one iOS already draws in `CaptureFailure`; the server
+  had `skipped` declared in its schema CHECK and never wrote it, so `failed` carried both
+  meanings and the retry decision had no memory. **Whether this item should cost money is one
+  question with one answer: `shouldEnrichAtlasItem` (`lib/atlas/enrich-policy.ts`, kept clear of
+  the AI SDK so a route handler or a test can ask it).** It was written out three times, twice on
+  a paying path, and one of those spellings (`backfill_status !== 'filled'`) was true forever
+  once an item failed, so a reliably-failing item re-ran the whole paid pass on every 詳情 open.
+  A `skipped` item degrades to name-and-image, which is a shape the product already accepts.
+  Raising `ATLAS_ENRICH_VERSION` revives `skipped` and zeroes the count — `skipped` means
+  「用這一版配方試不出來」, so a new recipe earns a fresh round. See docs/adr/0011.
 
 ## Domain — 日文詞條
 
