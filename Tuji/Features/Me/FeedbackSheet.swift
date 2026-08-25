@@ -164,10 +164,8 @@ struct FeedbackSheet: View {
         guard self.canSubmit, let feedbackType else { return }
         self.submitting = true
         self.errorMessage = nil
-        let version =
-            Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
-        let build =
-            Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        let version = AppInfo.shortVersion
+        let build = AppInfo.buildNumber
         let payload = FeedbackPayload(
             requestId: self.requestId.uuidString,
             feedbackType: feedbackType.rawValue,

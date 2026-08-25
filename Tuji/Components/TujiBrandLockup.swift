@@ -112,7 +112,7 @@ struct TujiBrandLockup: View {
                 .offset(y: 5)
 
             HStack(alignment: .firstTextBaseline, spacing: 0) {
-                Text("Tuji")
+                Text(verbatim: "Tuji")
                     .foregroundStyle(.tujiBrandPrimary)
                 Text(".")
                     .foregroundStyle(.tujiAlert)

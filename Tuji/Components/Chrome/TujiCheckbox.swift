@@ -37,7 +37,7 @@ struct TujiCheckbox: View {
         .buttonStyle(CheckboxPress())
         .frame(width: 48, height: 48)
         .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(Text(self.isOn ? "開啟" : "關閉"))
+        .accessibilityValue(Text(self.isOn ? "已開啟" : "已關閉"))
     }
 
     private var ground: Color {

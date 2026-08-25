@@ -346,14 +346,14 @@ private struct DebugSmokeSection: View {
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(.tujiAccumulation)
-                    Text("HTTP 200 · source: \(r.source.rawValue)")
+                    Text(verbatim: "HTTP 200 · source: \(r.source.rawValue)")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                 }
                 if let uid = r.userId {
-                    Text("userId: \(uid)").font(.tujiMono).foregroundStyle(.tujiInk2)
+                    Text(verbatim: "userId: \(uid)").font(.tujiMono).foregroundStyle(.tujiInk2)
                 } else {
-                    Text("userId: nil").font(.tujiMono).foregroundStyle(.tujiInk3)
+                    Text(verbatim: "userId: nil").font(.tujiMono).foregroundStyle(.tujiInk3)
                 }
             }
             .padding(Space.s3)
@@ -363,7 +363,7 @@ private struct DebugSmokeSection: View {
             VStack(alignment: .leading, spacing: Space.s2) {
                 HStack(spacing: Space.s2) {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.tujiAlert)
-                    Text("FAILED").font(.tujiLabel).foregroundStyle(.tujiAlert)
+                    Text(verbatim: "FAILED").font(.tujiLabel).foregroundStyle(.tujiAlert)
                 }
                 Text(e.localizedDescription)
                     .font(.tujiMono)
