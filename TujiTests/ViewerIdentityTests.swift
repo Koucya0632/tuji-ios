@@ -23,7 +23,8 @@ struct ViewerIdentityTests {
     private func user(
         username: String? = "TJ12345678",
         nickname: String? = nil,
-        email: String? = nil
+        email: String? = nil,
+        avatar: String? = nil
     )
         -> SessionUser
     {
@@ -32,7 +33,7 @@ struct ViewerIdentityTests {
             email: email,
             username: username,
             nickname: nickname,
-            avatar: nil
+            avatar: avatar
         )
     }
 
@@ -127,5 +128,56 @@ struct ViewerIdentityTests {
 
         let bare = self.user(username: nil, nickname: nil, email: nil)
         #expect(AuthState.signedIn(bare).displayName(fallback: "探險者") == "探險者")
+    }
+
+    // MARK: - authorRef
+
+    /// The byline 物見 renders for the viewer's own work. Three screens used to
+    /// assemble this by hand: two fields through the seam and the third
+    /// (`avatar`) by pattern-matching `auth.state` again, because the seam did
+    /// not answer it.
+    @Test
+    func authorRefIsTheViewersOwnByline() {
+        let full = self.user(username: "TJ55854015", nickname: "阿貓", avatar: "cat.jpg")
+        let ref = AuthState.signedIn(full).authorRef
+
+        #expect(ref?.handle == "TJ55854015")
+        #expect(ref?.displayName == "阿貓")
+        #expect(ref?.avatar == "cat.jpg")
+    }
+
+    /// A guest has no byline at all — not a byline with an empty handle, which
+    /// would render a link to nowhere.
+    @Test
+    func aGuestHasNoAuthorRef() {
+        #expect(AuthState.guest.authorRef == nil)
+        #expect(AuthState.signedOut.authorRef == nil)
+        #expect(AuthState.checking.authorRef == nil)
+    }
+
+    /// `handle` is the link target for the author route, so an account whose UID
+    /// mirror has not arrived yet has nothing to link to. Better no byline than
+    /// one that 404s — and this is reachable: the mirror lags registration.
+    @Test
+    func anAccountWithoutAUidHasNoAuthorRef() {
+        #expect(AuthState.signedIn(self.user(username: nil)).authorRef == nil)
+        #expect(AuthState.signedIn(self.user(username: "")).authorRef == nil)
+    }
+
+    /// The display name falls back to the UID, never to the email — the same
+    /// rule `displayName` states, applied here so the byline cannot leak an
+    /// address the profile page would never show.
+    @Test
+    func authorRefFallsBackToTheUidNotTheEmail() {
+        let noNickname = self.user(username: "TJ1", nickname: nil, email: "cat@example.com")
+        #expect(AuthState.signedIn(noNickname).authorRef?.displayName == "TJ1")
+    }
+
+    /// An author who has chosen no photo gets the single default black cat, and
+    /// that default lives here rather than in the one `View` that used to spell
+    /// it — the next screen to render a byline gets it for free.
+    @Test
+    func aMissingPhotoIsTheDefaultAvatar() {
+        #expect(AuthState.signedIn(self.user(avatar: nil)).authorRef?.avatar == AtlasAuthorRef.defaultAvatar)
     }
 }

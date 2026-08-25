@@ -50,11 +50,10 @@ struct LearningDirectionOnboardingView: View {
     private func option(_ direction: LearningDirection, subtitle: LocalizedStringKey) -> some View {
         Button {
             self.onboarding.learningDirection = direction
-            let shouldPersist = if case .signedIn = self.auth.state {
-                true
-            } else {
-                false
-            }
+            // A guest has nowhere to persist to; 設定's picker asks the same
+            // question the same way (`ViewerIdentity`), because two hand-written
+            // copies of it is how the question got four answers in the first place.
+            let shouldPersist = !self.auth.isGuest
             // The store owns the consequences (LearningDirectionRefresh). This
             // used to drop only the catalog, so a first-run 日文 learner kept the
             // English mastery, progress and streak the default direction fetched.

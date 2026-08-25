@@ -65,23 +65,17 @@ struct TodayDecisions {
     /// environment. Long on purpose: this is the honest input set, and it used
     /// to be six store reads scattered through a View body.
     struct Inputs {
-        var isGuest: Bool
-        /// `SettingsStore.hasLoaded` — an empty theme list means nothing until
-        /// settings have actually arrived.
-        var settingsLoaded: Bool
-        var studyCategories: [String]
+        /// The 完成度 half, verbatim — *composed*, not restated.
+        ///
+        /// Eight of this struct's eleven fields used to be a field-for-field
+        /// copy of `CompletionReadout.Inputs`, doc comments included, and
+        /// `completion` below copied them across one more time. Three of the
+        /// eleven are genuinely 首頁's own, and those three are what is left.
+        var completion: CompletionReadout.Inputs
         var dailyGoal: Int
         var stats: StudyStats?
-        /// Guests have no SRS state; their progress is the local learned set.
-        var guestLearnedCount: Int
         /// `!ProgressStore.categoryProgress.isEmpty`.
         var progressLoaded: Bool
-        var seenInSelection: Int
-        var totalInSelection: Int
-        /// Whole local dictionary — the denominator when no themes are picked.
-        var dictionaryCount: Int
-        /// Local dictionary scoped to the selection.
-        var dictionaryCountInSelection: Int
     }
 
     let inputs: Inputs
@@ -94,18 +88,29 @@ struct TodayDecisions {
     /// so 我's card asks the same question the same way — it used to carry its
     /// own copy, with a whole-dictionary fallback and no guest branch.
     var completion: CompletionReadout {
-        CompletionReadout(
-            .init(
-                isGuest: self.inputs.isGuest,
-                settingsLoaded: self.inputs.settingsLoaded,
-                studyCategories: self.inputs.studyCategories,
-                guestLearnedCount: self.inputs.guestLearnedCount,
-                seenInSelection: self.inputs.seenInSelection,
-                totalInSelection: self.inputs.totalInSelection,
-                dictionaryCount: self.inputs.dictionaryCount,
-                dictionaryCountInSelection: self.inputs.dictionaryCountInSelection
-            )
-        )
+        CompletionReadout(self.inputs.completion)
+    }
+
+    // The 完成度 facts 首頁 also reasons about directly. Shortcuts, not a second
+    // copy: they read straight through to the one input set.
+    private var isGuest: Bool {
+        self.inputs.completion.isGuest
+    }
+
+    private var studyCategories: [String] {
+        self.inputs.completion.studyCategories
+    }
+
+    private var guestLearnedCount: Int {
+        self.inputs.completion.guestLearnedCount
+    }
+
+    private var seenInSelection: Int {
+        self.inputs.completion.seenInSelection
+    }
+
+    private var totalInSelection: Int {
+        self.inputs.completion.totalInSelection
     }
 
     var showThemePrompt: Bool {
@@ -113,13 +118,13 @@ struct TodayDecisions {
     }
 
     var dailyGoalReached: Bool {
-        guard !self.inputs.isGuest else { return false }
+        guard !self.isGuest else { return false }
         let goal = max(1, self.inputs.dailyGoal)
         return (self.inputs.stats?.todayNew ?? 0) >= goal
     }
 
     var reviewDisabled: Bool {
-        self.inputs.isGuest || (self.inputs.stats?.due ?? 0) == 0
+        self.isGuest || (self.inputs.stats?.due ?? 0) == 0
     }
 
     /// New words still to learn within the selected themes: (total − seen)
@@ -128,19 +133,19 @@ struct TodayDecisions {
     /// before progress loads.
     var newAvailable: Int {
         guard self.inputs.progressLoaded else { return self.inputs.stats?.new ?? 0 }
-        return max(0, self.inputs.totalInSelection - self.inputs.seenInSelection)
+        return max(0, self.totalInSelection - self.seenInSelection)
     }
 
     var newBlock: TodayNewBlock {
         // Guests can't study new words; the prompt to sign in lives elsewhere.
-        if self.inputs.isGuest { return .none }
+        if self.isGuest { return .none }
         // No themes selected → nothing to draw new words from (review stays
         // available — it spans all studied words).
-        if self.inputs.studyCategories.isEmpty { return .noThemes }
+        if self.studyCategories.isEmpty { return .noThemes }
         // total == 0 with progress loaded means the selected themes have no
         // cards in the current deck — e.g. a theme with no 日文 cards yet —
         // a different dead-end from "you've learned them all".
-        if self.inputs.progressLoaded, self.inputs.totalInSelection == 0 { return .noCards }
+        if self.inputs.progressLoaded, self.totalInSelection == 0 { return .noCards }
         if self.newAvailable == 0 { return .allLearned }
         // When the review backlog crowds out the new-card quota
         // (computeNewLimit hits 0 once due > 100), grey the button out instead
@@ -155,12 +160,12 @@ struct TodayDecisions {
     }
 
     var newDisabled: Bool {
-        self.inputs.isGuest || self.newBlock != .none
+        self.isGuest || self.newBlock != .none
     }
 
     var subtitle: TodaySubtitle {
-        if self.inputs.isGuest {
-            let learned = self.inputs.guestLearnedCount
+        if self.isGuest {
+            let learned = self.guestLearnedCount
             return learned > 0 ? .guestLearned(count: learned) : .guestBrowsing
         }
         if self.showThemePrompt { return .pickThemes }
@@ -190,7 +195,7 @@ struct TodayDecisions {
     }
 
     var quotaAdjustment: (due: Int, limit: Int)? {
-        guard !self.inputs.isGuest, let stats = self.inputs.stats else { return nil }
+        guard !self.isGuest, let stats = self.inputs.stats else { return nil }
         let goal = max(1, self.inputs.dailyGoal)
         guard (stats.todayNew ?? 0) < goal else { return nil }
         guard self.newAvailable > 0 else { return nil }

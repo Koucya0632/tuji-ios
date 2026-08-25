@@ -210,14 +210,18 @@ struct EditProfileView: View {
 
     // MARK: - State
 
+    /// The authoritative profile wins over the session mirror — the two homes
+    /// the UID has, and the mirror is the one that lags.
     private var uid: String {
         if let serverUid = self.vm.serverUid, !serverUid.isEmpty { return serverUid }
-        if case let .signedIn(user) = auth.state, let uid = user.username, !uid.isEmpty {
-            return uid
-        }
-        return "—"
+        return self.auth.uid ?? "—"
     }
 
+    /// The one place that still wants the whole session user rather than the
+    /// viewer's identity: this is the *edit form's* current values, so the
+    /// nickname must arrive raw. `ViewerIdentity.displayName` would hand back
+    /// the UID for an author who has not set one, and the form would then offer
+    /// to save it as a nickname.
     private var sessionUser: SessionUser? {
         if case let .signedIn(user) = self.auth.state { return user }
         return nil

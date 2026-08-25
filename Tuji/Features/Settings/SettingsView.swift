@@ -429,11 +429,9 @@ private struct LearningDirectionPickerView: View {
             return
         }
         self.onboarding.learningDirection = direction
-        let shouldPersist = if case .signedIn = self.auth.state {
-            true
-        } else {
-            false
-        }
+        // Same question, same answer as the first-run picker — see
+        // `OnboardingFlow`. It used to be these same five lines, twice.
+        let shouldPersist = !self.auth.isGuest
         // What a direction change drops and re-fetches is the store's to know
         // (LearningDirectionRefresh); this screen only reports the choice.
         self.settings.setLearningDirection(direction, persist: shouldPersist)

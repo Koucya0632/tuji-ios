@@ -223,14 +223,7 @@ struct AtlasPublicFeedView: View {
     }
 
     private var currentAuthorIdentity: AtlasAuthorRef? {
-        guard let handle = self.auth.uid,
-              case let .signedIn(user) = self.auth.state
-        else { return nil }
-        return AtlasAuthorRef(
-            handle: handle,
-            displayName: self.auth.displayName(fallback: handle),
-            avatar: user.avatar ?? "face"
-        )
+        self.auth.authorRef
     }
 
     private var browsingLoadKey: String {

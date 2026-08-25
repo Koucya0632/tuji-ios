@@ -38,20 +38,21 @@ struct TodayView: View {
     /// this one place is also what registers the observation that re-renders
     /// the screen when any of them changes.
     private var decisions: TodayDecisions {
-        let selected = self.settings.current.studyCategories
-        return TodayDecisions(
+        TodayDecisions(
             .init(
-                isGuest: self.auth.isGuest,
-                settingsLoaded: self.settings.hasLoaded,
-                studyCategories: selected,
+                // The eight 完成度 facts, read the one way the app reads them —
+                // 我 calls the same initializer. They used to be assembled here
+                // and again in `MeProgressSections`, both inside `View` bodies.
+                completion: .init(
+                    viewer: self.auth,
+                    settings: self.settings,
+                    progress: self.progress,
+                    words: self.words,
+                    cache: self.cache
+                ),
                 dailyGoal: self.settings.current.dailyGoal,
                 stats: self.studyStats.stats,
-                guestLearnedCount: self.cache.learnedIds.count,
-                progressLoaded: !self.progress.categoryProgress.isEmpty,
-                seenInSelection: self.progress.seenCount(filter: selected),
-                totalInSelection: self.progress.totalCount(filter: selected),
-                dictionaryCount: self.words.words.count,
-                dictionaryCountInSelection: self.words.count(inCategories: selected)
+                progressLoaded: !self.progress.categoryProgress.isEmpty
             )
         )
     }

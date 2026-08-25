@@ -61,7 +61,7 @@ struct FavoriteButton: View {
         // Fire-and-forget for signed-in users; guests stay LocalCache-only
         // until they sign in (AuthService.syncLocalCacheToServer handles
         // that catch-up).
-        guard case .signedIn = auth.state else { return }
+        guard !self.auth.isGuest else { return }
         let nowFav = self.cache.isFavorite(self.wordId)
         Task {
             await self.progress.toggleFavorite(wordId: self.wordId, isFavorite: nowFav)

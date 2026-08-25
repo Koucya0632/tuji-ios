@@ -236,6 +236,9 @@ struct AtlasAuthorRef: Decodable, Hashable {
     let handle: String
     let displayName: String
     let avatar: String
+
+    /// The single default black cat, for an author who has chosen no photo.
+    static let defaultAvatar = "face"
 }
 
 /// A public collection: browse-card meta, and the header of the detail page.

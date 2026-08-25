@@ -10,8 +10,7 @@ struct LaunchCoordinatorTests {
         let coordinator = LaunchCoordinator(
             resolveAuthentication: { .signedOut },
             hydrateProfile: {},
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in },
+            catalog: FakeCatalogWarmer(),
             replayOutbox: {},
             trackAppOpen: {},
             sleep: { duration in
@@ -53,11 +52,13 @@ struct LaunchCoordinatorTests {
                 return .signedIn(userID: userID)
             },
             hydrateProfile: { profileHydrations += 1 },
-            preloadCatalog: { catalogPreloads += 1 },
-            finalizeSignedIn: { finalizedUserID in
-                #expect(finalizedUserID == userID)
-                signedInFinalizations += 1
-            },
+            catalog: FakeCatalogWarmer.splitting(
+                guest: { catalogPreloads += 1 },
+                signedIn: { finalizedUserID in
+                    #expect(finalizedUserID == userID)
+                    signedInFinalizations += 1
+                }
+            ),
             replayOutbox: { outboxReplays += 1 },
             trackAppOpen: { appOpens += 1 }
         )
@@ -89,8 +90,7 @@ struct LaunchCoordinatorTests {
                 return .signedOut
             },
             hydrateProfile: {},
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in },
+            catalog: FakeCatalogWarmer(),
             replayOutbox: {},
             trackAppOpen: { appOpens += 1 }
         )
@@ -121,8 +121,7 @@ struct LaunchCoordinatorTests {
                 profileStarts += 1
                 await profile.wait()
             },
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in },
+            catalog: FakeCatalogWarmer(),
             replayOutbox: {
                 outboxStarts += 1
                 await outbox.wait()
@@ -152,8 +151,9 @@ struct LaunchCoordinatorTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedOut },
             hydrateProfile: { profileHydrations += 1 },
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in signedInFinalizations += 1 },
+            catalog: FakeCatalogWarmer.splitting(
+                signedIn: { _ in signedInFinalizations += 1 }
+            ),
             replayOutbox: { outboxReplays += 1 },
             trackAppOpen: {}
         )

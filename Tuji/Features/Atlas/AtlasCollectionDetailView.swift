@@ -326,17 +326,15 @@ struct AtlasCollectionDetailView: View {
         )
     }
 
-    private var signedInUser: SessionUser? {
-        if case let .signedIn(user) = self.auth.state { return user }
-        return nil
-    }
-
     private var isOwnCollection: Bool {
         self.vm.isOwner
     }
 
+    /// Keyed on the viewer rather than the session UUID: both change when the
+    /// account does, and this way the screen asks "who is looking" the one way
+    /// the app answers it (`ViewerIdentity`) instead of a fifth way.
     private var loadKey: String {
-        "\(self.vm.slug)-\(self.signedInUser?.id.uuidString ?? "guest")"
+        "\(self.vm.slug)-\(self.auth.uid ?? "guest")"
     }
 
     // MARK: Tabs

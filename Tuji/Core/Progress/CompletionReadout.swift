@@ -116,3 +116,92 @@ struct CompletionReadout: Equatable {
         Int((self.ratio * 100).rounded())
     }
 }
+
+/// The 學習主題 selection, and whether it means anything yet.
+///
+/// A settings read seam in the shape `LanguageContext` already uses. Narrow
+/// because it is the *scope* every number below is measured against: the bug
+/// this module was built around is a denominator that stopped being scoped to
+/// the selection, so "what is selected" and "has settings arrived" travel
+/// together or not at all.
+@MainActor
+protocol StudySelectionReading {
+    var studyCategories: [String] { get }
+    /// An empty theme list means nothing until settings have actually arrived.
+    var settingsLoaded: Bool { get }
+}
+
+extension SettingsStore: StudySelectionReading {
+    var studyCategories: [String] {
+        self.current.studyCategories
+    }
+
+    var settingsLoaded: Bool {
+        self.hasLoaded
+    }
+}
+
+/// A guest's progress, which is the local learned set rather than server rows.
+///
+/// A seam for one integer, because `LocalCache.init` is **private**: `.shared`
+/// is the only instance that can exist, so a mapping that took the concrete type
+/// could not be stood up in a test — the trap 圖鑑管理 already recorded ("a
+/// `.shared`-defaulted seam whose init is private is not a seam"). The other
+/// three stores this mapping reads all have an injectable `init(repository:)`
+/// and stay concrete.
+@MainActor
+protocol GuestProgressReading {
+    var learnedCount: Int { get }
+}
+
+extension LocalCache: GuestProgressReading {
+    var learnedCount: Int {
+        self.learnedIds.count
+    }
+}
+
+extension CompletionReadout.Inputs {
+    /// Read the eight facts out of the six stores that hold them.
+    ///
+    /// The *rule* had one home from the start; the *reading* had three — 首頁
+    /// assembling `TodayDecisions.Inputs`, `TodayDecisions` copying eight of its
+    /// eleven fields across field by field, and 我 assembling its own set from
+    /// the same six stores. Two of the three lived in `View` bodies, so nothing
+    /// could verify that the two screens were asking the same question, and
+    /// once they were not: `isGuest` was answered two different ways and only
+    /// agreed because `RootView` maps `.guest` to `user: nil` by hand.
+    /// `ViewerIdentity` collapsed that one field. This collapses the other seven.
+    ///
+    /// **The stores are parameters, not properties.** Reading them inside the
+    /// `View`'s body evaluation is what registers the `@Observable` dependency
+    /// that re-renders 首頁 and 我 when any of them changes; a module that went
+    /// and fetched them itself would read the same numbers and silently stop the
+    /// screen from updating — an error with no compiler warning and no failing
+    /// test. So the call stays in the body and only the mapping moves here.
+    /// (`SettingsVM.clearProgress(learned:stores:)` takes its stores the same
+    /// way, for the same reason.)
+    @MainActor
+    init(
+        viewer: some ViewerIdentity,
+        settings: some StudySelectionReading,
+        progress: ProgressStore,
+        words: WordsStore,
+        cache: some GuestProgressReading
+    ) {
+        // Read once, then used as the filter for all four scoped numbers. It
+        // being *the same* selection in all four places is the rule — 我 used to
+        // fall back to the whole dictionary and print a denominator describing a
+        // selection nobody made.
+        let selected = settings.studyCategories
+        self.init(
+            isGuest: viewer.isGuest,
+            settingsLoaded: settings.settingsLoaded,
+            studyCategories: selected,
+            guestLearnedCount: cache.learnedCount,
+            seenInSelection: progress.seenCount(filter: selected),
+            totalInSelection: progress.totalCount(filter: selected),
+            dictionaryCount: words.words.count,
+            dictionaryCountInSelection: words.count(inCategories: selected)
+        )
+    }
+}

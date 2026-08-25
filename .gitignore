@@ -26,6 +26,9 @@ xcuserdata/
 
 # ---------- Xcode：建置產物 ----------
 build/
+# pr.yml 的 release-build job 用的 derivedDataPath。本機跟著跑
+# 「出得了版本嗎」那一步時會留下來。
+build-release/
 DerivedData/
 *.moved-aside
 *.hmap

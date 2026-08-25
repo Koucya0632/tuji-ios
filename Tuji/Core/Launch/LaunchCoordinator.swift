@@ -19,27 +19,21 @@ final class LaunchCoordinator {
         case signedIn(userID: UUID)
     }
 
-    private enum CatalogOwner: Equatable {
-        case guest
-        case signedIn(userID: UUID)
-    }
-
     private struct CatalogRequest {
         let id: UUID
-        let owner: CatalogOwner
+        let owner: CatalogAudience
         let task: Task<Void, Never>
     }
 
     typealias ResolveAuthentication = @MainActor () async -> SessionResolution
     typealias AsyncWork = @MainActor () async -> Void
-    typealias FinalizeSignedIn = @MainActor (UUID) async -> Void
     typealias TrackAppOpen = @MainActor () -> Void
     typealias Sleep = (Duration) async -> Void
 
     private(set) var state: State = .idle
 
     var guestCatalogReady: Bool {
-        self.activeCatalogOwner == .guest
+        self.activeCatalogAudience == .guest
     }
 
     var launchReady: Bool {
@@ -49,8 +43,9 @@ final class LaunchCoordinator {
     private let minimumSplashDuration: Duration
     private let resolveAuthentication: ResolveAuthentication
     private let hydrateProfile: AsyncWork
-    private let preloadCatalog: AsyncWork
-    private let finalizeSignedIn: FinalizeSignedIn
+    /// What a launch loads, and for whom. Two closures before this, with the
+    /// same eight lines in each.
+    private let catalog: any CatalogWarming
     private let replayOutbox: AsyncWork
     private let trackAppOpen: TrackAppOpen
     private let sleep: Sleep
@@ -60,7 +55,7 @@ final class LaunchCoordinator {
     )
 
     @ObservationIgnored private var startTask: Task<Void, Never>?
-    private var activeCatalogOwner: CatalogOwner?
+    private var activeCatalogAudience: CatalogAudience?
     @ObservationIgnored private var latestCatalogRequest: CatalogRequest?
     @ObservationIgnored private var catalogTasks: [UUID: Task<Void, Never>] = [:]
     @ObservationIgnored private var profileTasks: [UUID: Task<Void, Never>] = [:]
@@ -72,8 +67,7 @@ final class LaunchCoordinator {
         minimumSplashDuration: Duration = .milliseconds(600),
         resolveAuthentication: @escaping ResolveAuthentication,
         hydrateProfile: @escaping AsyncWork,
-        preloadCatalog: @escaping AsyncWork,
-        finalizeSignedIn: @escaping FinalizeSignedIn,
+        catalog: any CatalogWarming = LiveCatalogWarmer(),
         replayOutbox: @escaping AsyncWork,
         trackAppOpen: @escaping TrackAppOpen,
         sleep: @escaping Sleep = { duration in
@@ -83,8 +77,7 @@ final class LaunchCoordinator {
         self.minimumSplashDuration = minimumSplashDuration
         self.resolveAuthentication = resolveAuthentication
         self.hydrateProfile = hydrateProfile
-        self.preloadCatalog = preloadCatalog
-        self.finalizeSignedIn = finalizeSignedIn
+        self.catalog = catalog
         self.replayOutbox = replayOutbox
         self.trackAppOpen = trackAppOpen
         self.sleep = sleep
@@ -135,8 +128,8 @@ final class LaunchCoordinator {
         await self.requestCatalog(
             owner: .signedIn(userID: userID),
             intervalName: "catalog-finalize"
-        ) { [finalizeSignedIn = self.finalizeSignedIn] in
-            await finalizeSignedIn(userID)
+        ) { [catalog = self.catalog] in
+            await catalog.warm(for: .signedIn(userID: userID))
         }.value
     }
 
@@ -145,9 +138,10 @@ final class LaunchCoordinator {
     func prepareGuestSession() async {
         await self.requestCatalog(
             owner: .guest,
-            intervalName: "catalog-preload",
-            work: self.preloadCatalog
-        ).value
+            intervalName: "catalog-preload"
+        ) { [catalog = self.catalog] in
+            await catalog.warm(for: .guest)
+        }.value
     }
 
     /// A choice made before Main is first presented (for example learning
@@ -160,9 +154,10 @@ final class LaunchCoordinator {
     func refreshGuestCatalog() -> Task<Void, Never> {
         self.replaceCatalogRequest(
             owner: .guest,
-            intervalName: "catalog-preload",
-            work: self.preloadCatalog
-        )
+            intervalName: "catalog-preload"
+        ) { [catalog = self.catalog] in
+            await catalog.warm(for: .guest)
+        }
     }
 
     @discardableResult
@@ -171,17 +166,17 @@ final class LaunchCoordinator {
         return self.replaceCatalogRequest(
             owner: .signedIn(userID: userID),
             intervalName: "catalog-finalize"
-        ) { [finalizeSignedIn = self.finalizeSignedIn] in
-            await finalizeSignedIn(userID)
+        ) { [catalog = self.catalog] in
+            await catalog.warm(for: .signedIn(userID: userID))
         }
     }
 
     func catalogReady(for account: LaunchAccountState) -> Bool {
         switch account {
         case .guest:
-            self.activeCatalogOwner == .guest
+            self.activeCatalogAudience == .guest
         case let .signedIn(userID, _):
-            self.activeCatalogOwner == .signedIn(userID: userID)
+            self.activeCatalogAudience == .signedIn(userID: userID)
         case .checking, .signedOut:
             true
         }
@@ -229,8 +224,8 @@ final class LaunchCoordinator {
             _ = self.requestCatalog(
                 owner: .signedIn(userID: userID),
                 intervalName: "catalog-finalize"
-            ) { [finalizeSignedIn = self.finalizeSignedIn] in
-                await finalizeSignedIn(userID)
+            ) { [catalog = self.catalog] in
+                await catalog.warm(for: .signedIn(userID: userID))
             }
         }
 
@@ -255,20 +250,21 @@ final class LaunchCoordinator {
         guard self.latestCatalogRequest == nil else { return }
         _ = self.requestCatalog(
             owner: .guest,
-            intervalName: "catalog-preload",
-            work: self.preloadCatalog
-        )
+            intervalName: "catalog-preload"
+        ) { [catalog = self.catalog] in
+            await catalog.warm(for: .guest)
+        }
     }
 
     private func replaceCatalogRequest(
-        owner: CatalogOwner,
+        owner: CatalogAudience,
         intervalName: StaticString,
         work: @escaping AsyncWork
     )
         -> Task<Void, Never>
     {
         self.latestCatalogRequest = nil
-        self.activeCatalogOwner = nil
+        self.activeCatalogAudience = nil
         return self.requestCatalog(
             owner: owner,
             intervalName: intervalName,
@@ -279,7 +275,7 @@ final class LaunchCoordinator {
     /// Only the latest account request can publish readiness. Older network
     /// work may finish, but cannot route a new session with stale ownership.
     private func requestCatalog(
-        owner: CatalogOwner,
+        owner: CatalogAudience,
         intervalName: StaticString,
         work: @escaping AsyncWork
     )
@@ -291,7 +287,7 @@ final class LaunchCoordinator {
             return request.task
         }
 
-        self.activeCatalogOwner = nil
+        self.activeCatalogAudience = nil
         let requestID = UUID()
         let task = Task { [weak self] in
             guard let self else { return }
@@ -302,7 +298,7 @@ final class LaunchCoordinator {
             )
             await work()
             if self.latestCatalogRequest?.id == requestID {
-                self.activeCatalogOwner = owner
+                self.activeCatalogAudience = owner
             }
             self.signposter.endInterval(intervalName, interval)
             self.catalogTasks[requestID] = nil

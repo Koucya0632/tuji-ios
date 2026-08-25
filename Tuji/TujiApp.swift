@@ -30,29 +30,9 @@ struct TujiApp: App {
             hydrateProfile: {
                 await AuthService.shared.refreshResolvedProfile()
             },
-            preloadCatalog: {
-                let settings = SettingsStore.shared.current
-                let context = CatalogContext(
-                    settings: settings,
-                    userID: nil,
-                    includePersonalization: false
-                )
-                async let words: Void = WordsStore.shared.loadIfNeeded(for: context)
-                async let categories: Void = CategoriesStore.shared.loadIfNeeded(for: context)
-                _ = await (words, categories)
-            },
-            finalizeSignedIn: { userID in
-                await SettingsStore.shared.loadIfNeeded(for: userID)
-                let settings = SettingsStore.shared.current
-                let context = CatalogContext(
-                    settings: settings,
-                    userID: userID,
-                    includePersonalization: true
-                )
-                async let words: Void = WordsStore.shared.loadIfNeeded(for: context)
-                async let categories: Void = CategoriesStore.shared.loadIfNeeded(for: context)
-                _ = await (words, categories)
-            },
+            // Was two closures here, carrying the same eight lines twice —
+            // see `CatalogWarming`, which now owns what a launch loads.
+            catalog: LiveCatalogWarmer(),
             replayOutbox: {
                 await StudyAnswerOutbox.shared.replay()
             },

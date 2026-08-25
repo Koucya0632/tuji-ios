@@ -109,6 +109,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     the user photographed.
   - **全部收進圖鑑 (take a whole collection in)** — the same act, in bulk, over a
     collection already 收藏'd. Available only once unlocked.
+- **刪除合集的警告 (`CollectionDeleteWarning`)** — what deleting a 合集 costs, in the only
+  three kinds the warning must tell apart: `cancelsReview` (in review — the submission is
+  withdrawn before anyone sees it), `takesDownFromPublic` (live on 物見 — it goes for
+  everyone, immediately) and `privateOnly` (nothing outside the account changes). Three
+  *different promises*, and it is the last sentence an author reads before an irreversible
+  button — so it is a decision, not copy, and it lived as a `private func` on a `View`.
+  已收回 (`withdrawn`) is `privateOnly`: warning about a takedown that already happened
+  misdescribes what the button does. Original 圖鑑 cards are never affected, whichever it is.
 - **取消公開 (withdraw)** — the author's own way to pull a public item back. It exists
   because the alternative — deleting the card — destroys **every saver's review progress**,
   not just the author's own history. Withdrawal is reversible and carries no penalty, which
@@ -132,6 +140,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   it rather than computed beside it. One module answers 首頁's 主題進度 and 我's 完成度 card.
   `CompletionReadout.ratio(seen:total:)` is the only seen/total ratio in the app — there
   were five copies and two skipped the clamp.
+  **The reading is one too.** `CompletionReadout.Inputs.init(viewer:settings:progress:words:cache:)`
+  is the single mapping from the stores to the eight facts; it was hand-written three
+  times (首頁 assembling `TodayDecisions.Inputs`, `TodayDecisions` copying eight of its
+  eleven fields across again, 我 assembling its own), two of them inside `View` bodies
+  where nothing could check the two screens asked the same question — and once they did
+  not. `TodayDecisions.Inputs` now *composes* it (`completion` + the three fields that are
+  genuinely 首頁's: `dailyGoal` / `stats` / `progressLoaded`). **The stores are parameters,
+  not properties**: reading them inside the View's body evaluation is what registers the
+  `@Observable` dependency, so a module that fetched them itself would read the same
+  numbers and silently stop the screen from updating. Two of the five are seams —
+  `StudySelectionReading` (the 學習主題 selection + `settingsLoaded`, which travel together
+  because the selection is the scope every number is measured against) and
+  `GuestProgressReading` (one integer, because `LocalCache.init` is private and `.shared`
+  is the only instance that can exist).
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 - **當前圖鑑語言 (`\.targetLanguage`)** — the session's target language as a *screen* sees
@@ -364,6 +386,25 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
   The View is presentation-only; analytics stays in the View (VMs don't reach
   `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`).
+  **A destructive write belongs to the model, not to the `View` that hosts the button.**
+  Its in-flight flag, its error, its re-entrancy guard, the *decision* behind its warning
+  copy, and the mutation-refresh fan-out all live on the VM; the View hands over the
+  environment's feed signal and renders the sentence. `SettingsVM` (刪除帳號 / 清除進度) and
+  `MyCollectionsVM` (刪除合集) are both on this. The VM method is **non-throwing** — the
+  failure has one destination, and a `throws` every caller must remember to catch into the
+  same property is a rule stated at the call site instead of in the module — and it takes
+  the *row*, not its id, because `wasPublic` is a property of the row rather than something
+  the caller re-derives.
+  **`SearchVM`** is the read-seam case: it injected `CatalogRepository` but reached
+  `WordsStore.shared` at three call sites and `LocalCache.shared` at a fourth from inside
+  its methods, so all seven of its tests went to the two `static` ranking functions and
+  **not one constructed a `SearchVM`**. The debounce, the cancel, the stale-answer guard
+  (written twice — once per branch), "keep local results, only surface the error when there
+  is nothing to show" and "only a query that found something is remembered" were verified
+  by nothing. Now `LocalDictionaryReading` + `RecentSearchWriting` + an injected `sleep`,
+  with `settle()` so a test can await the debounced task (*a seam reaches only as far as a
+  test can await* — ADR-0001 amendment). It also moved out of `SearchView.swift`: **a
+  module named after one of its callers does not get found by the next one.**
   **A view model's async work is `async`, and the View owns the `Task`.** Every atlas
   model follows this and `AtlasCaptureVM` was the one that did not: `requestRecognize`
   was synchronous and spawned a `Task {}` it dropped, so the rule protecting the user's
@@ -432,6 +473,22 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   their 30s freshness window. Every direction-scoped request now carries `?learning=`, and
   the server takes the request at its word (the rule `?lang=` already had). A request that
   states nothing still falls back to stored settings, for installs that predate this.
+- **CatalogWarming / 觀眾 (`CatalogAudience`)** — what a launch loads, and for whom.
+  `warm(for:)` over `.guest` / `.signedIn(userID:)`, with `LiveCatalogWarmer` the only
+  place that knows the catalog is `SettingsStore` + `WordsStore` + `CategoriesStore`.
+  `LaunchCoordinator` is deep in *sequencing* (the splash beat, the catalog generation
+  handover, cancelling superseded work, `appOpen` once) and all of that is tested — but its
+  interface was **eight closures** whose bodies lived in `TujiApp.init`, and two of them
+  were the same eight lines twice, differing only in the two fields `CatalogContext`'s
+  precondition exists to relate (`userID` / `includePersonalization`). So "what a launch
+  loads" was an anonymous closure in an `@main` struct: not searchable by name, not
+  callable from a test. **Settings are loaded first and alone for a signed-in audience**,
+  because the context is *derived* from them — loading them alongside would race the
+  request against its own parameters; a guest has none to wait for, which is the whole
+  reason the two paths differ. Switching audience is a new generation but not a new
+  download: `reusePublic` keeps the public 480 and fetches only the personalized overlay.
+  `CatalogContext.current()` stays as-is — six modules read the catalog through the no-arg
+  `loadIfNeeded()`/`reload()` it backs, and retiring it is a separate change.
 - **AccumulationLoading** — the **reader's** counterpart to those four: what a screen needs
   *warm* before its numbers are true, where they name what a write *invalidates*. An
   `AccumulationSurface` (`todayHero` / `progressSections` / `themeIndex`) answers `needs(isGuest:)`
@@ -591,6 +648,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     Supabase client that traps without Info.plist keys, so nothing could stand one up —
     the same reason `AuthSession` was split out of it. `CollectionDetailVM.matchesOwner`
     stays where it is on purpose: it can only answer *after* the fetch it does itself.
+    **`authorRef` is the fifth member, added later and for the reason the seam exists.**
+    The first four covered the consumers of the day, and the next three went *around* them:
+    物見, 作者主頁 and 編輯個人資料 each needed the viewer as an **Author identity**, got
+    `uid` + `displayName` from the seam, and pattern-matched `auth.state` again for the one
+    field it did not answer (`avatar`) — which is how 「沒有頭像就用黑貓」 came to be spelled
+    in a `View` body. A seam is worth what it answers for the *next* consumer. Two other
+    misses went with it: `shouldPersist` (`!isGuest`) was five hand-written lines in both
+    the first-run picker and 設定's, and `FavoriteButton` guarded on `.signedIn` directly.
+    `MainTabsView.user == nil` is deliberately **left**: that view is built on an explicit
+    `user` parameter threaded to 今天/我/`tujiNavDestinations`, and reading the environment
+    beside it would create a second source rather than remove one.
+    `EditProfileView.sessionUser` also stays — it is the *edit form's* current values, so
+    the nickname must arrive raw, where `displayName` would hand back the UID and the form
+    would offer to save that as a nickname.
   - **LanguageContext** — `{ uiLang, learningDirection }`, conformed by `SettingsStore`.
     Injected into `LiveStudyRepository` (queue lang), `LiveAtlasRepository`
     (upload/recognize/confirm lang + learning) and `LiveCatalogRepository` (search only —
