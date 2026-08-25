@@ -43,18 +43,18 @@ struct MeProgressSections: View {
     /// to the whole dictionary when the selected themes held no published
     /// cards, and it had no guest branch at all, so a guest who had learned 37
     /// words read 「0% · 已學 0 / 共 480 字」 while 首頁 said 37 / 480.
+    /// Reading the stores here is also what registers the observation that
+    /// re-renders this card when any of them changes — which is why the six
+    /// stores are handed to the mapping rather than fetched by it. 首頁 builds
+    /// its `TodayDecisions.Inputs.completion` from the same initializer.
     private var completion: CompletionReadout {
-        let selected = self.settings.current.studyCategories
-        return CompletionReadout(
+        CompletionReadout(
             .init(
-                isGuest: self.auth.isGuest,
-                settingsLoaded: self.settings.hasLoaded,
-                studyCategories: selected,
-                guestLearnedCount: self.cache.learnedIds.count,
-                seenInSelection: self.progress.seenCount(filter: selected),
-                totalInSelection: self.progress.totalCount(filter: selected),
-                dictionaryCount: self.words.words.count,
-                dictionaryCountInSelection: self.words.count(inCategories: selected)
+                viewer: self.auth,
+                settings: self.settings,
+                progress: self.progress,
+                words: self.words,
+                cache: self.cache
             )
         )
     }

@@ -29,17 +29,19 @@ struct TodayDecisionsTests {
         -> TodayDecisions.Inputs
     {
         TodayDecisions.Inputs(
-            isGuest: isGuest,
-            settingsLoaded: settingsLoaded,
-            studyCategories: studyCategories,
+            completion: CompletionReadout.Inputs(
+                isGuest: isGuest,
+                settingsLoaded: settingsLoaded,
+                studyCategories: studyCategories,
+                guestLearnedCount: guestLearnedCount,
+                seenInSelection: seenInSelection,
+                totalInSelection: totalInSelection,
+                dictionaryCount: dictionaryCount,
+                dictionaryCountInSelection: dictionaryCountInSelection
+            ),
             dailyGoal: dailyGoal,
             stats: stats,
-            guestLearnedCount: guestLearnedCount,
-            progressLoaded: progressLoaded,
-            seenInSelection: seenInSelection,
-            totalInSelection: totalInSelection,
-            dictionaryCount: dictionaryCount,
-            dictionaryCountInSelection: dictionaryCountInSelection
+            progressLoaded: progressLoaded
         )
     }
 

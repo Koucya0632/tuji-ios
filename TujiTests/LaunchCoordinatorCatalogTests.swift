@@ -14,12 +14,14 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedIn(userID: userID) },
             hydrateProfile: {},
-            preloadCatalog: { preloadCompletions += 1 },
-            finalizeSignedIn: { finalizedUserID in
-                #expect(finalizedUserID == userID)
-                finalizationStarts += 1
-                await catalog.wait()
-            },
+            catalog: FakeCatalogWarmer.splitting(
+                guest: { preloadCompletions += 1 },
+                signedIn: { finalizedUserID in
+                    #expect(finalizedUserID == userID)
+                    finalizationStarts += 1
+                    await catalog.wait()
+                }
+            ),
             replayOutbox: {},
             trackAppOpen: {}
         )
@@ -65,11 +67,12 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedIn(userID: userID) },
             hydrateProfile: {},
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in
-                finalizationStarts += 1
-                await catalog.wait()
-            },
+            catalog: FakeCatalogWarmer.splitting(
+                signedIn: { _ in
+                    finalizationStarts += 1
+                    await catalog.wait()
+                }
+            ),
             replayOutbox: {},
             trackAppOpen: {}
         )
@@ -102,10 +105,11 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedIn(userID: userID) },
             hydrateProfile: {},
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in
-                attemptedCatalogLoad = true
-            },
+            catalog: FakeCatalogWarmer.splitting(
+                signedIn: { _ in
+                    attemptedCatalogLoad = true
+                }
+            ),
             replayOutbox: {},
             trackAppOpen: {}
         )
@@ -138,12 +142,13 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedOut },
             hydrateProfile: { profileHydrations += 1 },
-            preloadCatalog: {},
-            finalizeSignedIn: { finalizedUserID in
-                #expect(finalizedUserID == userID)
-                finalizations += 1
-                await catalog.wait()
-            },
+            catalog: FakeCatalogWarmer.splitting(
+                signedIn: { finalizedUserID in
+                    #expect(finalizedUserID == userID)
+                    finalizations += 1
+                    await catalog.wait()
+                }
+            ),
             replayOutbox: { outboxReplays += 1 },
             trackAppOpen: {}
         )
@@ -186,13 +191,14 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedIn(userID: userID) },
             hydrateProfile: {},
-            preloadCatalog: {},
-            finalizeSignedIn: { _ in
-                finalizations += 1
-                if finalizations == 2 {
-                    await replacement.wait()
+            catalog: FakeCatalogWarmer.splitting(
+                signedIn: { _ in
+                    finalizations += 1
+                    if finalizations == 2 {
+                        await replacement.wait()
+                    }
                 }
-            },
+            ),
             replayOutbox: {},
             trackAppOpen: {}
         )
@@ -234,12 +240,13 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedIn(userID: firstUserID) },
             hydrateProfile: {},
-            preloadCatalog: {},
-            finalizeSignedIn: { userID in
-                if userID == firstUserID {
-                    await firstUserGate.wait()
+            catalog: FakeCatalogWarmer.splitting(
+                signedIn: { userID in
+                    if userID == firstUserID {
+                        await firstUserGate.wait()
+                    }
                 }
-            },
+            ),
             replayOutbox: {},
             trackAppOpen: {}
         )
@@ -273,8 +280,9 @@ struct LaunchCoordinatorCatalogTests {
             minimumSplashDuration: .milliseconds(0),
             resolveAuthentication: { .signedIn(userID: userID) },
             hydrateProfile: {},
-            preloadCatalog: { anonymousLoads += 1 },
-            finalizeSignedIn: { _ in },
+            catalog: FakeCatalogWarmer.splitting(
+                guest: { anonymousLoads += 1 }
+            ),
             replayOutbox: {},
             trackAppOpen: {}
         )

@@ -153,3 +153,252 @@ struct CompletionReadoutTests {
         #expect(!readout.showsThemePrompt)
     }
 }
+
+// MARK: - The mapping
+
+/// Pins the *reading* — the six stores → the eight facts — which used to be
+/// hand-written three times: 首頁 assembling `TodayDecisions.Inputs`,
+/// `TodayDecisions` copying eight of its eleven fields across again, and 我
+/// assembling its own set from the same stores. Two of the three lived in `View`
+/// bodies, so nothing could check that the two screens asked the same question.
+/// They once did not: `isGuest` had two answers and agreed only by accident.
+@MainActor
+struct CompletionInputsMappingTests {
+    private func word(_ id: String, category: String) -> CardWord {
+        CardWord(
+            id: id,
+            word: id,
+            chinese: "",
+            imageUrl: "",
+            category: category,
+            pronunciation: "",
+            reading: nil
+        )
+    }
+
+    private func makeProgress(_ rows: [CategoryProgress]) async -> ProgressStore {
+        let repo = MappingProgressRepository(rows: rows)
+        let store = ProgressStore(repository: repo)
+        await store.reload()
+        return store
+    }
+
+    private func makeWords(_ words: [CardWord]) async -> WordsStore {
+        let repo = MappingCatalogRepository(words: words)
+        let store = WordsStore(repository: repo)
+        await store.reload(for: CatalogContext(
+            contentLanguageCode: "zh-Hant",
+            learningDirectionCode: "zh-en"
+        ))
+        return store
+    }
+
+    /// The selection is the filter for all four scoped numbers. Words and
+    /// progress rows outside the picked themes must not reach the denominator —
+    /// this is the bug the module was built around, and it now has a test on the
+    /// *reading* rather than only on the rule.
+    @Test
+    func everyScopedNumberIsMeasuredAgainstTheSameSelection() async {
+        let progress = await self.makeProgress([
+            CategoryProgress(category: "kitchen", total: 30, seen: 12),
+            CategoryProgress(category: "office", total: 50, seen: 40)
+        ])
+        let words = await self.makeWords([
+            self.word("a", category: "kitchen"),
+            self.word("b", category: "kitchen"),
+            self.word("c", category: "office")
+        ])
+
+        let inputs = CompletionReadout.Inputs(
+            viewer: FakeViewer(isGuest: false),
+            settings: FakeStudySelection(studyCategories: ["kitchen"]),
+            progress: progress,
+            words: words,
+            cache: FakeGuestProgress(learnedCount: 0)
+        )
+
+        #expect(inputs.studyCategories == ["kitchen"])
+        #expect(inputs.seenInSelection == 12)
+        #expect(inputs.totalInSelection == 30)
+        #expect(inputs.dictionaryCountInSelection == 2)
+        // The unscoped one stays unscoped — it is the denominator for "no themes
+        // picked", and nothing else.
+        #expect(inputs.dictionaryCount == 3)
+    }
+
+    /// `isGuest` comes from the viewer seam and nowhere else. It decides whether
+    /// 完成度 counts the local learned set or the server rows, and it is the one
+    /// field the two screens once answered differently.
+    @Test
+    func isGuestComesFromTheViewer() async {
+        let progress = await self.makeProgress([])
+        let words = await self.makeWords([])
+
+        for guest in [true, false] {
+            let inputs = CompletionReadout.Inputs(
+                viewer: FakeViewer(isGuest: guest),
+                settings: FakeStudySelection(studyCategories: []),
+                progress: progress,
+                words: words,
+                cache: FakeGuestProgress(learnedCount: 7)
+            )
+            #expect(inputs.isGuest == guest)
+            // Read regardless of who is looking: the *rule* decides when it is
+            // used, so the reading must not pre-empt it.
+            #expect(inputs.guestLearnedCount == 7)
+        }
+    }
+
+    /// An empty theme list before settings arrive is not a selection — it is an
+    /// unanswered question, and the two are one field apart.
+    @Test
+    func settingsLoadedTravelsWithTheSelection() async {
+        let progress = await self.makeProgress([])
+        let words = await self.makeWords([])
+
+        let cold = CompletionReadout.Inputs(
+            viewer: FakeViewer(isGuest: false),
+            settings: FakeStudySelection(studyCategories: [], settingsLoaded: false),
+            progress: progress,
+            words: words,
+            cache: FakeGuestProgress(learnedCount: 0)
+        )
+        #expect(!cold.settingsLoaded)
+        #expect(!CompletionReadout(cold).showsThemePrompt)
+
+        let warm = CompletionReadout.Inputs(
+            viewer: FakeViewer(isGuest: false),
+            settings: FakeStudySelection(studyCategories: [], settingsLoaded: true),
+            progress: progress,
+            words: words,
+            cache: FakeGuestProgress(learnedCount: 0)
+        )
+        #expect(warm.settingsLoaded)
+        #expect(CompletionReadout(warm).showsThemePrompt)
+    }
+
+    /// 首頁 composes the same input set rather than restating it — the eight
+    /// fields it used to copy across field by field are now one value.
+    @Test
+    func todayComposesTheSameInputsRatherThanRestatingThem() async {
+        let progress = await self.makeProgress([
+            CategoryProgress(category: "kitchen", total: 30, seen: 12)
+        ])
+        let words = await self.makeWords([self.word("a", category: "kitchen")])
+        let shared = CompletionReadout.Inputs(
+            viewer: FakeViewer(isGuest: false),
+            settings: FakeStudySelection(studyCategories: ["kitchen"]),
+            progress: progress,
+            words: words,
+            cache: FakeGuestProgress(learnedCount: 0)
+        )
+
+        let today = TodayDecisions(
+            .init(completion: shared, dailyGoal: 10, stats: nil, progressLoaded: true)
+        )
+
+        #expect(today.completion == CompletionReadout(shared))
+    }
+}
+
+// MARK: - Mapping fakes
+
+@MainActor
+private struct FakeViewer: ViewerIdentity {
+    var isGuest: Bool
+    var uid: String? {
+        nil
+    }
+
+    var authorRef: AtlasAuthorRef? {
+        nil
+    }
+
+    func owns(handle _: String) -> Bool {
+        false
+    }
+
+    func displayName(fallback: String) -> String {
+        fallback
+    }
+}
+
+@MainActor
+private struct FakeStudySelection: StudySelectionReading {
+    var studyCategories: [String]
+    var settingsLoaded: Bool = true
+}
+
+@MainActor
+private struct FakeGuestProgress: GuestProgressReading {
+    var learnedCount: Int
+}
+
+@MainActor
+private final class MappingProgressRepository: ProgressRepository {
+    private let rows: [CategoryProgress]
+
+    init(rows: [CategoryProgress]) {
+        self.rows = rows
+    }
+
+    func loadProgress() async throws -> ProgressResponse {
+        ProgressResponse(
+            streak: StudyStreak(
+                current: 0,
+                longest: 0,
+                totalDays: 0,
+                todayCount: 0,
+                lastStudyDate: nil
+            ),
+            heatmap: nil,
+            categories: self.rows
+        )
+    }
+
+    func clearProgress() async throws {}
+    func loadMastery() async throws -> MasteryListResponse {
+        MasteryListResponse(items: [])
+    }
+
+    func loadTopWords(type _: String, limit _: Int) async throws -> TopWordsResponse {
+        TopWordsResponse(words: [], type: nil)
+    }
+
+    func toggleFavorite(wordId _: String, isFavorite _: Bool) async {}
+}
+
+@MainActor
+private final class MappingCatalogRepository: CatalogRepository {
+    private let words: [CardWord]
+
+    init(words: [CardWord]) {
+        self.words = words
+    }
+
+    struct NotImplemented: Error {}
+
+    func loadWords(lang _: String, learning _: String) async throws -> WordsListResponse {
+        WordsListResponse(words: self.words, total: self.words.count)
+    }
+
+    func loadCategories(lang _: String) async throws -> CategoriesResponse {
+        throw NotImplemented()
+    }
+
+    func loadCustomWords(lang _: String, learning _: String) async throws -> WordsListResponse {
+        throw NotImplemented()
+    }
+
+    func loadSavedWords(lang _: String, learning _: String) async throws -> WordsListResponse {
+        throw NotImplemented()
+    }
+
+    func search(_: String) async throws -> SearchResponse {
+        throw NotImplemented()
+    }
+
+    func word(id _: String, lang _: String, learning _: String) async throws -> Word {
+        throw NotImplemented()
+    }
+}

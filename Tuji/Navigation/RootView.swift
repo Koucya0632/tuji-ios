@@ -196,8 +196,6 @@ private struct OfflineBanner: View {
                 minimumSplashDuration: .milliseconds(0),
                 resolveAuthentication: { .signedOut },
                 hydrateProfile: {},
-                preloadCatalog: {},
-                finalizeSignedIn: { _ in },
                 replayOutbox: {},
                 trackAppOpen: {}
             )

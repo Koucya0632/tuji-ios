@@ -52,6 +52,18 @@ protocol ViewerIdentity {
     /// greets 「探險者」 and 我 titles the row 「Tuji 探險者」, and those are
     /// different sentences rather than a divergence to collapse.
     func displayName(fallback: String) -> String
+
+    /// The viewer as an **Author identity** — the byline shape 物見 renders,
+    /// for the viewer's own work. Nil for a guest, and for an account whose
+    /// UID mirror has not arrived yet (there is nothing to link to).
+    ///
+    /// Here rather than at the call site because the seam answered three of
+    /// this question's four parts and the fourth (`avatar`) it did not, so
+    /// three screens pattern-matched `auth.state` again to reach past it for
+    /// the one field — which is how the 「沒有頭像就用黑貓」 default came to be
+    /// written in a `View` body. A seam is worth what it answers for the *next*
+    /// consumer, not the last one.
+    var authorRef: AtlasAuthorRef? { get }
 }
 
 /// The rules themselves, on the state rather than the service.
@@ -86,6 +98,20 @@ extension AuthState {
         }
         return fallback
     }
+
+    /// Keyed on `uid`, not on the session's UUID: `handle` is the link target
+    /// for the author route, so an account without a mirrored UID has no byline
+    /// to render rather than a broken one. The display name falls back to the
+    /// UID (never the email — see `displayName`), and a missing photo is the
+    /// single default black cat.
+    var authorRef: AtlasAuthorRef? {
+        guard case let .signedIn(user) = self, let uid else { return nil }
+        return AtlasAuthorRef(
+            handle: uid,
+            displayName: self.displayName(fallback: uid),
+            avatar: user.avatar ?? AtlasAuthorRef.defaultAvatar
+        )
+    }
 }
 
 extension AuthService: ViewerIdentity {
@@ -103,5 +129,9 @@ extension AuthService: ViewerIdentity {
 
     func displayName(fallback: String) -> String {
         self.state.displayName(fallback: fallback)
+    }
+
+    var authorRef: AtlasAuthorRef? {
+        self.state.authorRef
     }
 }

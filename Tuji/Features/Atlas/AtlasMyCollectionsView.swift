@@ -15,8 +15,6 @@ struct AtlasMyCollectionsView: View {
 
     @State private var vm = MyCollectionsVM()
     @State private var pendingDelete: AtlasMyCollection?
-    @State private var deleteError: String?
-    @State private var deleting = false
 
     @Binding var showCreate: Bool
 
@@ -37,7 +35,7 @@ struct AtlasMyCollectionsView: View {
         let target = self.pendingDelete
         return ScrollView {
             VStack(spacing: 0) {
-                if let deleteError {
+                if let deleteError = self.vm.deleteError {
                     Text(deleteError)
                         .font(.tujiBodySm)
                         .foregroundStyle(.tujiAlert)
@@ -105,7 +103,7 @@ struct AtlasMyCollectionsView: View {
             },
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
-        .tujiStatusToast(isPresented: self.deleting, style: .deleting)
+        .tujiStatusToast(isPresented: self.vm.deleting, style: .deleting)
     }
 
     private var emptyState: some View {
@@ -117,33 +115,31 @@ struct AtlasMyCollectionsView: View {
         )
     }
 
+    /// The words for whichever warning the VM says is true. Which one that is
+    /// is the module's answer; this is only the sentence.
     private func deleteMessage(for collection: AtlasMyCollection) -> String {
-        switch collection.review {
-        case .pending, .pendingAuto, .pendingReview:
+        switch self.vm.deleteWarning(for: collection) {
+        case .cancelsReview:
             tujiLocalized("這會取消送審並刪除合集，原始圖鑑卡片不受影響。")
-        case .approved:
+        case .takesDownFromPublic:
             tujiLocalized("這會立即將合集從物見下架並刪除，原始圖鑑卡片不受影響。")
-        default:
+        case .privateOnly:
             tujiLocalized("這個合集會被永久刪除，原始圖鑑卡片不受影響。")
         }
     }
 
+    /// The View's only job here is to hand over the environment's feed signal;
+    /// what a deletion refreshes is `AtlasMutationRefresh`'s call.
+    ///
+    /// No `pendingDelete = nil` afterwards: `TujiPrompt` sets `isPresented`
+    /// false *before* running the action, which fires the binding's setter and
+    /// clears it — so the line was already a no-op by the time the await
+    /// returned.
     private func delete(_ collection: AtlasMyCollection) async {
-        guard !self.deleting else { return }
-        self.deleteError = nil
-        self.deleting = true
-        defer { self.deleting = false }
-        do {
-            try await self.vm.delete(id: collection.id)
-            await LiveAtlasMutationRefresher(feed: self.feedRefresh)
-                .refresh(after: .collectionDeleted(wasPublic: collection.review == .approved))
-            // No `pendingDelete = nil` here: `TujiPrompt` sets `isPresented`
-            // false *before* running the action, which fires the binding's
-            // setter and clears it — so this line was already a no-op by the
-            // time the await returned.
-        } catch {
-            self.deleteError = tujiUserMessage(for: error)
-        }
+        await self.vm.delete(
+            collection,
+            refreshing: LiveAtlasMutationRefresher(feed: self.feedRefresh)
+        )
     }
 }
 

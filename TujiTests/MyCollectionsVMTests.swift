@@ -8,14 +8,20 @@ import Testing
 
 @MainActor
 struct MyCollectionsVMTests {
-    private func collection(id: String, language: TargetLanguage = .ja) -> AtlasMyCollection {
+    private func collection(
+        id: String,
+        language: TargetLanguage = .ja,
+        review: AtlasReviewStatus = .draft
+    )
+        -> AtlasMyCollection
+    {
         AtlasMyCollection(
             id: id,
             slug: "slug-\(id)",
             title: "T\(id)",
             description: nil,
             targetLanguage: language,
-            reviewStatus: "draft",
+            reviewStatus: review.rawValue,
             itemCount: 0,
             avatarColor: nil,
             avatarImageUrl: nil,
@@ -140,33 +146,133 @@ struct MyCollectionsVMTests {
         #expect(vm.collections.map(\.id) == ["b", "a"])
     }
 
+    // MARK: - Delete
+
     @Test
-    func deleteRemovesCollectionAfterServerSuccess() async throws {
+    func deleteRemovesCollectionAfterServerSuccess() async {
         let fake = FakeCollectionManaging()
         fake.myResult = .success([self.collection(id: "a"), self.collection(id: "b")])
         let vm = MyCollectionsVM(repo: fake, cache: MyCollectionsCache())
         await vm.load()
+        let target = vm.collections[0]
 
-        try await vm.delete(id: "a")
+        await vm.delete(target, refreshing: SpyAtlasMutationRefreshing())
 
         #expect(fake.deletedIds == ["a"])
         #expect(vm.collections.map(\.id) == ["b"])
+        #expect(vm.deleteError == nil)
+        #expect(!vm.deleting)
     }
 
+    /// A row that vanishes from the list on a failed delete is a lie the next
+    /// refresh silently corrects. The cache is only touched once the server agrees.
     @Test
-    func deleteFailureKeepsCollection() async {
+    func deleteFailureKeepsTheRowAndSurfacesTheError() async {
         let fake = FakeCollectionManaging()
         fake.myResult = .success([self.collection(id: "a")])
         fake.deleteError = FakeError.boom
         let vm = MyCollectionsVM(repo: fake, cache: MyCollectionsCache())
         await vm.load()
+        let target = vm.collections[0]
 
-        do {
-            try await vm.delete(id: "a")
-            Issue.record("Expected delete to throw")
-        } catch {}
+        await vm.delete(target, refreshing: SpyAtlasMutationRefreshing())
 
         #expect(vm.collections.map(\.id) == ["a"])
+        #expect(vm.deleteError != nil)
+        #expect(!vm.deleting)
+    }
+
+    /// A failed delete must not report a mutation: 物見's feed would drop its
+    /// cache and re-fetch to discover nothing had changed.
+    @Test
+    func aFailedDeleteRefreshesNothing() async {
+        let fake = FakeCollectionManaging()
+        fake.myResult = .success([self.collection(id: "a", review: .approved)])
+        fake.deleteError = FakeError.boom
+        let vm = MyCollectionsVM(repo: fake, cache: MyCollectionsCache())
+        await vm.load()
+        let spy = SpyAtlasMutationRefreshing()
+
+        await vm.delete(vm.collections[0], refreshing: spy)
+
+        #expect(spy.reported.isEmpty)
+    }
+
+    /// `wasPublic` is a property of the row, not something the caller re-derives
+    /// — it decides whether 物見's feed is invalidated. The `View` used to spell
+    /// it inline, three lines from the warning copy making the same distinction.
+    @Test
+    func deletingAnApprovedCollectionReportsItAsPublic() async {
+        let fake = FakeCollectionManaging()
+        fake.myResult = .success([self.collection(id: "a", review: .approved)])
+        let vm = MyCollectionsVM(repo: fake, cache: MyCollectionsCache())
+        await vm.load()
+        let spy = SpyAtlasMutationRefreshing()
+
+        await vm.delete(vm.collections[0], refreshing: spy)
+
+        #expect(spy.reported == [.collectionDeleted(wasPublic: true)])
+    }
+
+    @Test
+    func deletingADraftCollectionReportsItAsPrivate() async {
+        let fake = FakeCollectionManaging()
+        fake.myResult = .success([self.collection(id: "a", review: .draft)])
+        let vm = MyCollectionsVM(repo: fake, cache: MyCollectionsCache())
+        await vm.load()
+        let spy = SpyAtlasMutationRefreshing()
+
+        await vm.delete(vm.collections[0], refreshing: spy)
+
+        #expect(spy.reported == [.collectionDeleted(wasPublic: false)])
+    }
+
+    /// The swipe row and the prompt can both be live for a moment. A second
+    /// delete arriving mid-flight must not issue a second request.
+    @Test
+    func aSecondDeleteMidFlightIsIgnored() async {
+        let fake = FakeCollectionManaging()
+        fake.myResult = .success([self.collection(id: "a")])
+        let vm = MyCollectionsVM(repo: fake, cache: MyCollectionsCache())
+        await vm.load()
+        let target = vm.collections[0]
+
+        fake.onDelete = { @MainActor in
+            // Re-entrant call while the first is still awaiting the server.
+            await vm.delete(target, refreshing: SpyAtlasMutationRefreshing())
+        }
+        await vm.delete(target, refreshing: SpyAtlasMutationRefreshing())
+
+        #expect(fake.deletedIds == ["a"])
+    }
+
+    // MARK: - Delete warning
+
+    /// Three different promises to the author, and the one that matters is
+    /// `approved`: it is the only one that takes something down for other
+    /// people. It lived in a `private func` on the `View`.
+    @Test
+    func theWarningTellsApartReviewPublicAndPrivate() {
+        let vm = MyCollectionsVM(repo: FakeCollectionManaging(), cache: MyCollectionsCache())
+
+        #expect(vm.deleteWarning(for: self.collection(id: "a", review: .approved)) == .takesDownFromPublic)
+
+        for pending in [AtlasReviewStatus.pending, .pendingAuto, .pendingReview] {
+            #expect(vm.deleteWarning(for: self.collection(id: "a", review: pending)) == .cancelsReview)
+        }
+
+        for quiet in [AtlasReviewStatus.draft, .rejected, .takedown, .withdrawn] {
+            #expect(vm.deleteWarning(for: self.collection(id: "a", review: quiet)) == .privateOnly)
+        }
+    }
+
+    /// 已收回 is the author's own withdrawal — reversible, no penalty, and not
+    /// public any more. Warning them about a takedown that already happened
+    /// would misdescribe what the button does.
+    @Test
+    func aWithdrawnCollectionIsNotWarnedAboutAsPublic() {
+        let vm = MyCollectionsVM(repo: FakeCollectionManaging(), cache: MyCollectionsCache())
+        #expect(vm.deleteWarning(for: self.collection(id: "a", review: .withdrawn)) == .privateOnly)
     }
 }
 
@@ -180,6 +286,9 @@ private final class FakeCollectionManaging: CollectionManaging {
     var myCallCount = 0
     /// Runs while the load is in flight, so a test can assert on mid-load state.
     var onMyCollections: (() -> Void)?
+    /// Runs while a delete is in flight, so a test can re-enter the VM the way
+    /// a second tap on the swipe row would.
+    var onDelete: (@MainActor () async -> Void)?
 
     struct NotImplemented: Error {}
 
@@ -197,6 +306,7 @@ private final class FakeCollectionManaging: CollectionManaging {
     }
 
     func deleteCollection(id: String) async throws {
+        await self.onDelete?()
         if let deleteError {
             throw deleteError
         }
