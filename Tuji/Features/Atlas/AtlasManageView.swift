@@ -102,10 +102,39 @@ struct AtlasManageView: View {
     }
 }
 
+/// The View-side half of 取消公開, in one place because two screens offer it —
+/// the 卡片 shelf's delete prompt (as the alternative to a delete that would
+/// reach other accounts) and the read-only detail.
+///
+/// The View's only job is to hand the model the environment's feed signal, which
+/// is a root-constructed value a model cannot reach (ADR-0001); *what* a
+/// withdrawal refreshes is `AtlasMutationRefresh`'s call. Analytics stays on this
+/// side by convention — view models do not reach `AnalyticsService`.
+@MainActor
+private func withdrawFromAtlas(
+    _ itemId: String,
+    shelf: AtlasShelfModel,
+    feed: CommunityFeedRefresh
+) {
+    Task {
+        let ok = await shelf.withdraw(
+            itemId: itemId,
+            refreshing: LiveAtlasMutationRefresher(feed: feed)
+        )
+        if ok {
+            AnalyticsService.shared.track(.atlasPublishWithdrawn)
+        }
+    }
+}
+
 private struct AtlasCardsManagementPane: View {
     let shelf: AtlasShelfModel
 
     @Environment(\.targetLanguage) private var targetLanguage
+    /// Only so the 取消公開 escape hatch on the delete prompt can name what a
+    /// withdrawal refreshes — the View's job is to hand over the root-owned
+    /// signal, not to decide the consequences (ADR-0001).
+    @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     @State private var pendingDelete: AtlasShelfRow?
     @State private var showBatchDeleteConfirm = false
@@ -122,6 +151,11 @@ private struct AtlasCardsManagementPane: View {
         // reading it inside the action is always empty — the "刪除沒反應" bug.
         let target = self.pendingDelete
         let batch = Array(self.shelf.selectedIds)
+        // The warning is the model's answer, not this View's: it makes three
+        // different promises and the heaviest one has consequences in other
+        // people's accounts.
+        let targetWarning = target.map { self.shelf.deleteWarning(for: $0) } ?? .privateOnly
+        let batchWarning = self.shelf.deleteWarning(forSelected: self.shelf.selectedIds)
         return ScrollView {
             TujiSection(title: "我的圖鑑卡片") {
                 if let errorMessage = self.shelf.errorMessage {
@@ -166,23 +200,62 @@ private struct AtlasCardsManagementPane: View {
             ),
             style: .destructive,
             title: "刪除這張卡片？",
-            message: "圖片與它生成的卡片都會一起刪除，無法復原。",
+            message: "這張卡片和它的學習紀錄都會一起刪除，無法復原。",
+            detail: Self.warningDetail(targetWarning, batch: false),
             primary: TujiPromptAction("刪除", role: .destructive) {
                 if let target { Task { await self.shelf.delete([target.id]) } }
             },
+            // Only where deleting would reach other accounts. 取消公開 does
+            // everything this user asked for (it comes off 物見) and none of
+            // what they did not (savers keep their progress), so offering it
+            // anywhere else would just be noise.
+            alternative: targetWarning == .takesDownFromPublic
+                ? TujiPromptAction("改為取消公開") {
+                    if let itemId = target?.item?.id {
+                        withdrawFromAtlas(itemId, shelf: self.shelf, feed: self.feedRefresh)
+                    }
+                }
+                : nil,
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
         .tujiPrompt(
             isPresented: self.$showBatchDeleteConfirm,
             style: .destructive,
             title: "刪除所選卡片？",
-            message: "圖片與它們生成的卡片都會一起刪除，無法復原。",
+            message: "這些卡片和它們的學習紀錄都會一起刪除，無法復原。",
+            detail: Self.warningDetail(batchWarning, batch: true),
             primary: TujiPromptAction("刪除", role: .destructive) {
                 Task { await self.shelf.delete(batch) }
             },
+            // No 取消公開 counterpart here on purpose: withdrawal is one item at
+            // a time, and a button that silently did it to some of the selection
+            // would be a third promise nobody made.
             secondary: TujiPromptAction("取消", role: .cancel) {}
         )
         .tujiStatusToast(isPresented: self.shelf.deleting, style: .deleting)
+    }
+
+    /// The extra sentence a warning earns. The first line of both prompts is
+    /// what deletion *always* costs; this is what else goes, and it is the last
+    /// thing read before an irreversible button.
+    private static func warningDetail(
+        _ warning: AtlasItemDeleteWarning,
+        batch: Bool
+    )
+        -> LocalizedStringKey?
+    {
+        switch warning {
+        case .privateOnly:
+            nil
+        case .cancelsReview:
+            batch
+                ? "其中有正在審核中的卡片，刪除會一併撤回送審。"
+                : "這張卡片正在審核中，刪除會一併撤回送審。"
+        case .takesDownFromPublic:
+            batch
+                ? "其中有公開在物見上的卡片。刪除會讓已經收進的人失去複習進度。"
+                : "這張卡片正公開在物見上。刪除會讓已經收進的人失去複習進度——只想下架的話，用取消公開。"
+        }
     }
 
     /// One card row. In selection mode it's a tappable checkbox row; otherwise
@@ -463,17 +536,7 @@ private struct AtlasManageDetailView: View {
 
     private func withdraw() {
         guard let item else { return }
-        Task {
-            // The View's only job here is to hand over the environment's feed
-            // signal; what a withdrawal refreshes is AtlasMutationRefresh's call.
-            let ok = await self.shelf.withdraw(
-                itemId: item.id,
-                refreshing: LiveAtlasMutationRefresher(feed: self.feedRefresh)
-            )
-            if ok {
-                AnalyticsService.shared.track(.atlasPublishWithdrawn)
-            }
-        }
+        withdrawFromAtlas(item.id, shelf: self.shelf, feed: self.feedRefresh)
     }
 
     private func detailRow(_ title: LocalizedStringKey, _ value: String) -> some View {

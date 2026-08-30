@@ -10,6 +10,12 @@ enum APIError: LocalizedError {
     case forbidden // 403 — authed but not allowed
     case notFound // 404
     case rateLimited(message: String?) // 429 — optional server-supplied copy
+    /// 429 `save_limit` — the 收進容量 ceiling (CONTEXT.md). Shares its status
+    /// code with the throttle above but gives the opposite advice: waiting
+    /// never helps, removing something does. Told apart by the body's `error`,
+    /// because changing the status code would land as 「伺服器出了點問題（409）」
+    /// on every shipped client.
+    case atCapacity(limit: Int?, usage: Int?)
     case server(status: Int, body: String?)
     case decoding(Error)
     case transport(Error)
@@ -26,6 +32,16 @@ enum APIError: LocalizedError {
             // Prefer the server's user-facing copy (e.g. the atlas daily-AI cap);
             // fall back to a generic throttle message.
             if let message, !message.isEmpty { message } else { tujiLocalized("請求太頻繁，請稍後再試") }
+        // The app owns this sentence rather than forwarding the server's, which
+        // is zh-Hant only and names the thing 「學習項目」 — a word no screen uses.
+        // It must not offer 升級: the 收進容量 ceiling is an abuse rail, not a
+        // paywall, so the server marks it non-upgradeable.
+        case let .atCapacity(limit, _):
+            if let limit {
+                tujiLocalized("已收進的項目達到上限（\(limit)），移除一些後再加入")
+            } else {
+                tujiLocalized("已收進的項目達到上限，移除一些後再加入")
+            }
         // The body is deliberately NOT shown. For 402/429 above we do prefer
         // the server's copy, because those carry product text we wrote in
         // zh-Hant (the atlas daily-AI cap). A 5xx body is a stack trace or an
@@ -87,7 +103,16 @@ enum APIError: LocalizedError {
         case 404:
             throw APIError.notFound
         case 429:
-            throw APIError.rateLimited(message: Self.serverMessage(from: data))
+            // Two different answers share this status code. `save_limit` is the
+            // 收進容量 ceiling; everything else is a genuine throttle.
+            let body = Self.errorBody(from: data)
+            if Self.string(body, "error") == "save_limit" {
+                throw APIError.atCapacity(
+                    limit: Self.int(body, "limit"),
+                    usage: Self.int(body, "usage")
+                )
+            }
+            throw APIError.rateLimited(message: Self.string(body, "message"))
         default:
             let body = String(data: data, encoding: .utf8)
             throw APIError.server(status: http.statusCode, body: body)
@@ -95,12 +120,34 @@ enum APIError: LocalizedError {
     }
 
     /// Pulls a user-facing `message` string out of a JSON error body, if any.
-    /// Used for 429 so the server owns the copy (e.g. the atlas daily-AI cap).
+    /// Used for 402 so the server owns the copy (e.g. the atlas daily-AI cap).
     private static func serverMessage(from data: Data) -> String? {
-        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let message = object["message"] as? String,
-              !message.isEmpty
-        else { return nil }
-        return message
+        string(errorBody(from: data), "message")
+    }
+
+    /// A JSON error body, parsed once. The 429 branch reads three fields out of
+    /// it — which failure this is, and the two numbers behind the ceiling — and
+    /// parsing per field would decode the same bytes three times.
+    private static func errorBody(from data: Data) -> [String: Any]? {
+        try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    /// One non-empty string out of an error body. An empty value is the same as
+    /// an absent one: it is a sentence nobody can read.
+    private static func string(_ body: [String: Any]?, _ key: String) -> String? {
+        guard let value = body?[key] as? String, !value.isEmpty else { return nil }
+        return value
+    }
+
+    /// One integer out of an error body. Optional all the way down: a body that
+    /// omits it still has to produce a usable sentence, which is why
+    /// `atCapacity` carries `Int?` rather than making the parse a precondition.
+    private static func int(_ body: [String: Any]?, _ key: String) -> Int? {
+        switch body?[key] {
+        case let value as Int: value
+        case let value as Double: Int(value)
+        case let value as String: Int(value)
+        default: nil
+        }
     }
 }

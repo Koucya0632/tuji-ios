@@ -66,6 +66,40 @@ enum AtlasShelfState: Equatable {
     case empty
 }
 
+/// What deleting a 圖鑑卡片 actually costs, in the only three kinds the warning
+/// has to tell apart. Same shape and the same reasoning as
+/// `CollectionDeleteWarning`: it is the last sentence an author reads before an
+/// irreversible button, it makes three *different promises*, so it is a
+/// decision rather than copy.
+///
+/// It matters more here than it does for a 合集, because this delete is the one
+/// that reaches other accounts. `deleteAtlasImageCascade` is a hard DELETE: it
+/// takes `atlas_public_items` and every saver's row with it, destroying review
+/// progress that is not the author's to destroy. 取消公開 exists precisely so
+/// that nobody has to walk down this path to unpublish something — which is why
+/// the warning and that action belong on the same sheet.
+enum AtlasItemDeleteWarning: Equatable {
+    /// Never public and not in flight — nothing outside the account changes.
+    case privateOnly
+    /// In review. Deleting withdraws the submission before anyone sees it.
+    case cancelsReview
+    /// Live on 物見. It goes for everyone, and everyone who 收進'd it loses the
+    /// progress they built on it.
+    case takesDownFromPublic
+
+    /// How much this promise costs, so a batch can take the heaviest one. The
+    /// order is the case order; a batch that mixes a public row with private
+    /// ones must speak for the public row, or the sentence is a lie about the
+    /// most expensive thing the button is about to do.
+    fileprivate var weight: Int {
+        switch self {
+        case .privateOnly: 0
+        case .cancelsReview: 1
+        case .takesDownFromPublic: 2
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class AtlasShelfModel {
@@ -194,6 +228,30 @@ final class AtlasShelfModel {
     }
 
     // MARK: - Delete
+
+    /// Which promise the delete warning may make about this row.
+    ///
+    /// A row with no confirmed item has never been anywhere: an unconfirmed
+    /// capture cannot have entered review, so it is `privateOnly` rather than a
+    /// state we have to guess at.
+    func deleteWarning(for row: AtlasShelfRow) -> AtlasItemDeleteWarning {
+        guard let item = row.item else { return .privateOnly }
+        switch item.review {
+        case .pending, .pendingAuto, .pendingReview: return .cancelsReview
+        case .approved: return .takesDownFromPublic
+        case .draft, .rejected, .takedown, .withdrawn: return .privateOnly
+        }
+    }
+
+    /// The promise a batch delete has to make: the heaviest one among the rows
+    /// it would delete. Selection ids are resolved against the *visible* rows,
+    /// the same set `delete(_:)` acts on.
+    func deleteWarning(forSelected ids: Set<String>) -> AtlasItemDeleteWarning {
+        self.rows
+            .filter { ids.contains($0.id) }
+            .map { self.deleteWarning(for: $0) }
+            .max(by: { $0.weight < $1.weight }) ?? .privateOnly
+    }
 
     /// Deletes every id even if one fails. The old path aborted on the first
     /// error and then cleared the selection, so the undeleted remainder was both

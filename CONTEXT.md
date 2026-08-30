@@ -7,6 +7,15 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 - **自製圖鑑 (custom atlas)** — a user's own captured items. Created via the capture
   pipeline (photo → AI 識別 → 校正 → confirm). Capacity is quota-gated per tier.
+- **一次拍照有四個身分**，而使用者只看得到一個。`image`（`user_atlas_images` 的那一列
+  ——書架列的是它，刪除刪的也是它）→ `item`（東西本身：配額數的是它、mastery 的 key 是
+  `atlas:<itemId>`、公開的也是它）→ `AtlasCard` ×2（`image_recall` 與 `flashcard`，
+  學習佇列抓的單位，所以一個自製字會出現兩次，`StudyQueueStore` 按 `word.id` 去重）→
+  `word`（`atlas:<itemId>`，其他畫面看到的樣子）。**使用者讀到的「卡片」是整個東西**，
+  `AtlasCard` 只活在程式碼與 wire 上——物見 / `community` 那條規則的同一形狀。刪除的確認
+  框曾經在一句話裡用了兩個意思：標題「刪除這張卡片？」說的是整個東西，內文「圖片與它
+  生成的卡片」說的是那兩張題目，而後者是前者的組成部分。
+  _Avoid_：在任何給人看的句子裡用「卡片」指那兩張題目。
 - **生成佇列 (`AtlasCaptureQueue`)** — the durable tail of a capture: confirm →
   createCards → enrich → one reconciling read, run after the sheet closes so the user
   never waits. Jobs are journalled, so an app kill mid-flight resumes on launch. The
@@ -57,6 +66,13 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **公開圖鑑 (public atlas)** — items that entered review with a collection and passed
   the moderation gate, visible to everyone. The app has no separate per-item submission
   action; publishing a collection submits its private members as one batch.
+- **可見性是二值。** 私有或公開，中間只有審核閘門，沒有第三種。資料庫不是這樣長的——
+  `visibility` 有 `'friends'`，`user_friendships` 與 `atlas_item_grants` 兩張表也都在
+  ——但那兩張表在整份應用程式碼裡沒有任何一個 INSERT，也沒有一行把 `visibility` 寫成
+  `'friends'`，所以「朋友圖鑑」對每一個人、在任何時候都保證是空的。讀路徑已經移除，
+  資料表留著（migration 是 append-only）。理由記在
+  [ADR-0012](docs/adr/0012-visibility-is-binary.md)：第三種可見性會讓人在**沒有經過審核
+  閘門**的情況下看到別人的照片，而那是公開側唯一的一條界線。
 - **物見 (the UI name for the public half)** — what the third tab is called on screen,
   and the only name for this area a user ever sees: the tab, the author-side publish and
   withdraw copy, and the saved-cards theme all say 物見. 公開圖鑑 and `community` are the
@@ -109,6 +125,27 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     the user photographed.
   - **全部收進圖鑑 (take a whole collection in)** — the same act, in bulk, over a
     collection already 收藏'd. Available only once unlocked.
+- **收進容量 (saved capacity)** — 收進圖鑑吃的那份額度：`savedItemsLimit`（Free 1000 /
+  Pro 5000），數的是 `atlas_saves`。與自製圖鑑格數是**兩份預算、兩張表**，因為讓收藏
+  別人的照片吃掉免費版的創作格，等於拿掉免費版最值得留下來的東西。它是**防濫用的欄杆，
+  不是賣點**：觸頂不可升級，所以文案不得推 Pro，介面也**不常駐顯示剩餘**——天天提醒還剩
+  幾格，會讓人以為那是要省的東西。在 wire 上它是 429 `save_limit`（帶 `limit` /
+  `usage`），跟「操作過於頻繁」同一個狀態碼卻是相反的建議（等待永遠沒用，移除才有用），
+  所以客戶端讀 body 的 `error` 分流成 `APIError.atCapacity`，而那句話是 App 自己的：
+  伺服器那句只有繁體中文，還把它叫做「學習項目」——產品其他地方都沒用過的第五個名字。
+  改狀態碼不是出路：已上線的 client 會把 409 讀成「伺服器出了點問題」。
+  `AtlasEntitlement` 刻意**沒有** decode 這兩個數字——在有畫面真的要問「還剩幾個」之前，
+  那會是又一組沒有讀者的欄位（`AtlasSyncResponse` 的教訓）。
+- **刪除一張卡片的三種承諾 (`AtlasItemDeleteWarning`)** — 與 `CollectionDeleteWarning`
+  同形（`privateOnly` / `cancelsReview` / `takesDownFromPublic`），理由也是同一條：那是
+  作者按下不可逆按鈕前讀到的最後一句話。差別在於**這個刪除會刪到別人帳號裡的東西**：
+  `deleteAtlasImageCascade` 是硬刪除，連帶帶走 `atlas_public_items` 與每一個收藏者的列，
+  也就是他們建立在這張卡片上的複習進度。**取消公開存在的唯一理由就是不必走這條路**，
+  所以它跟警告出現在同一個 sheet 裡，而不是留在另一個畫面等人自己找到。沒有確認 item 的
+  列是 `privateOnly`——還沒確認的拍照哪裡都沒去過。批次刪除取所選之中**最重**的那一種
+  承諾（混一張公開的進去，卻承諾「帳號外什麼都不會變」，是對唯一要緊的那一列說謊）。
+  收藏人數刻意不說：作者側從來沒拿到過 per-item 的 `saveCount`，為了一句話加一條回傳，
+  會讓警告依賴一個可能沒到的數字。
 - **刪除合集的警告 (`CollectionDeleteWarning`)** — what deleting a 合集 costs, in the only
   three kinds the warning must tell apart: `cancelsReview` (in review — the submission is
   withdrawn before anyone sees it), `takesDownFromPublic` (live on 物見 — it goes for
@@ -191,6 +228,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   A `skipped` item degrades to name-and-image, which is a shape the product already accepts.
   Raising `ATLAS_ENRICH_VERSION` revives `skipped` and zeroes the count — `skipped` means
   「用這一版配方試不出來」, so a new recipe earns a fresh round. See docs/adr/0011.
+  **iOS 端刻意沒有第四套狀態。** `backfill_status` 從不上 wire：`skipped` 在畫面上就是
+  「只有名字和照片」，而那是一種**完整**的卡片，不是壞掉的卡片。已經有三套狀態詞彙
+  （`AtlasImageStatus` / `AtlasReviewStatus` / `CaptureProgress`）互相對得起來，第四套
+  要付的代價遠大於它能多說的那句話。
 
 ## Domain — 日文詞條
 
