@@ -331,4 +331,95 @@ struct AtlasShelfModelTests {
         #expect(model.rows.map(\.id) == ["en"])
         #expect(model.state == .loaded)
     }
+
+    // MARK: - 刪除的三種承諾
+
+    /// The warning is a decision, not copy: deleting a card makes one of three
+    /// different promises, and the heaviest one takes review progress out of
+    /// other people's accounts. Asserted as the decision rather than the
+    /// sentence — CI runs English, the device runs zh-Hant.
+    @Test
+    func aDeleteWarningNamesWhichPromiseThisRowMakes() async {
+        let (store, _) = await self.store(
+            images: [
+                AtlasFixtures.image("draft"),
+                AtlasFixtures.image("pending"),
+                AtlasFixtures.image("live"),
+                AtlasFixtures.image("withdrawn")
+            ],
+            items: [
+                AtlasFixtures.item("t-draft", imageId: "draft", reviewStatus: "draft"),
+                AtlasFixtures.item("t-pending", imageId: "pending", reviewStatus: "pending_review"),
+                AtlasFixtures.item("t-live", imageId: "live", reviewStatus: "approved"),
+                // 已收回 is privateOnly: warning about a takedown that already
+                // happened misdescribes what the button does.
+                AtlasFixtures.item("t-withdrawn", imageId: "withdrawn", reviewStatus: "withdrawn")
+            ]
+        )
+        let model = AtlasShelfModel(store: store, targetLanguage: .ja)
+        let warnings = Dictionary(
+            uniqueKeysWithValues: model.rows.map { ($0.id, model.deleteWarning(for: $0)) }
+        )
+
+        #expect(warnings["draft"] == .privateOnly)
+        #expect(warnings["pending"] == .cancelsReview)
+        #expect(warnings["live"] == .takesDownFromPublic)
+        #expect(warnings["withdrawn"] == .privateOnly)
+    }
+
+    /// An unconfirmed capture has never been anywhere, so it cannot have entered
+    /// review — that is a fact about the row, not a state to guess at.
+    @Test
+    func aCaptureWithNoConfirmedItemPromisesNothingOutsideTheAccount() async {
+        let (store, _) = await self.store(
+            images: [AtlasFixtures.image("raw", status: "uploaded")],
+            items: []
+        )
+        let model = AtlasShelfModel(store: store, targetLanguage: .ja)
+
+        #expect(model.rows.first.map { model.deleteWarning(for: $0) } == .privateOnly)
+    }
+
+    /// A batch has to speak for the most expensive thing the button is about to
+    /// do. Mixing one public row into a private selection and then promising
+    /// 「nothing outside the account changes」 is a lie about the only row that
+    /// matters.
+    @Test
+    func aBatchDeleteWarningTakesTheHeaviestPromiseInTheSelection() async {
+        let (store, _) = await self.store(
+            images: [
+                AtlasFixtures.image("draft"),
+                AtlasFixtures.image("pending"),
+                AtlasFixtures.image("live")
+            ],
+            items: [
+                AtlasFixtures.item("t-draft", imageId: "draft", reviewStatus: "draft"),
+                AtlasFixtures.item("t-pending", imageId: "pending", reviewStatus: "pending_review"),
+                AtlasFixtures.item("t-live", imageId: "live", reviewStatus: "approved")
+            ]
+        )
+        let model = AtlasShelfModel(store: store, targetLanguage: .ja)
+
+        #expect(model.deleteWarning(forSelected: []) == .privateOnly)
+        #expect(model.deleteWarning(forSelected: ["draft"]) == .privateOnly)
+        #expect(model.deleteWarning(forSelected: ["draft", "pending"]) == .cancelsReview)
+        #expect(model.deleteWarning(forSelected: ["draft", "live"]) == .takesDownFromPublic)
+        #expect(
+            model.deleteWarning(forSelected: ["draft", "pending", "live"]) == .takesDownFromPublic
+        )
+    }
+
+    /// Selection ids outlive the rows they name (a direction switch drops rows
+    /// from the shelf), so the warning is resolved against what is visible —
+    /// the same set `delete(_:)` acts on.
+    @Test
+    func aBatchWarningIgnoresIdsThatAreNoLongerOnTheShelf() async {
+        let (store, _) = await self.store(
+            images: [AtlasFixtures.image("draft")],
+            items: [AtlasFixtures.item("t-draft", imageId: "draft", reviewStatus: "draft")]
+        )
+        let model = AtlasShelfModel(store: store, targetLanguage: .ja)
+
+        #expect(model.deleteWarning(forSelected: ["draft", "gone"]) == .privateOnly)
+    }
 }

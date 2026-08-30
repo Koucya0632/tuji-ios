@@ -193,6 +193,87 @@ struct APIClientTests {
         }
     }
 
+    /// Two different answers share status 429. `save_limit` is the 收進容量
+    /// ceiling (CONTEXT.md) and the advice it needs is the opposite of a
+    /// throttle's: waiting never clears it, removing something does. The body's
+    /// `error` is what tells them apart — the status code cannot be changed
+    /// without every shipped client rendering 「伺服器出了點問題（409）」.
+    @Test("a 429 save_limit is a capacity ceiling, not a throttle")
+    func saveLimitIsToldApartFromAThrottle() async {
+        let api = self.client { _ in
+            StubResponse(
+                status: 429,
+                body: #"{"error":"save_limit","message":"學習項目已達上限（1000），移除一些後再加入。","limit":1000,"usage":1000}"#
+            )
+        }
+
+        guard case let .atCapacity(limit, usage)? = await self.thrownAPIError({
+            _ = try await api.get(.atlasEntitlement, as: Ack.self)
+        })
+        else {
+            Issue.record("expected .atCapacity")
+            return
+        }
+        #expect(limit == 1000)
+        #expect(usage == 1000)
+    }
+
+    /// Everything else on 429 is a genuine throttle and keeps the server's copy
+    /// — that is where the atlas daily-AI cap's product text comes from.
+    @Test("every other 429 stays a throttle")
+    func aPlainRateLimitIsUnchanged() async {
+        let api = self.client { _ in
+            StubResponse(status: 429, body: #"{"error":"rate_limited","message":"操作過於頻繁"}"#)
+        }
+
+        guard case let .rateLimited(message)? = await self.thrownAPIError({
+            _ = try await api.get(.atlasEntitlement, as: Ack.self)
+        })
+        else {
+            Issue.record("expected .rateLimited")
+            return
+        }
+        #expect(message == "操作過於頻繁")
+    }
+
+    /// A ceiling with no numbers on it still has to produce a sentence, so the
+    /// parse is optional all the way down rather than a precondition.
+    @Test("a save_limit body without numbers is still a ceiling")
+    func saveLimitSurvivesAMissingLimit() async {
+        let api = self.client { _ in
+            StubResponse(status: 429, body: #"{"error":"save_limit"}"#)
+        }
+
+        guard case let .atCapacity(limit, usage)? = await self.thrownAPIError({
+            _ = try await api.get(.atlasEntitlement, as: Ack.self)
+        })
+        else {
+            Issue.record("expected .atCapacity")
+            return
+        }
+        #expect(limit == nil)
+        #expect(usage == nil)
+    }
+
+    /// Captures the `APIError` a call throws. Written once because three tests
+    /// need to look *inside* the case, which `#expect(throws:)` cannot do.
+    private func thrownAPIError(
+        _ body: () async throws -> Void
+    ) async
+        -> APIError?
+    {
+        do {
+            try await body()
+            Issue.record("expected a throw")
+            return nil
+        } catch let error as APIError {
+            return error
+        } catch {
+            Issue.record("expected an APIError, got \(error)")
+            return nil
+        }
+    }
+
     @Test("the endpoint's query items reach the wire")
     func queryItemsAreSent() async throws {
         let recorder = RequestRecorder()

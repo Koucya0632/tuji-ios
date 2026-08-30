@@ -63,6 +63,7 @@ private struct TujiPromptModifier: ViewModifier {
     let message: LocalizedStringKey?
     let detail: LocalizedStringKey?
     let primary: TujiPromptAction
+    let alternative: TujiPromptAction?
     let secondary: TujiPromptAction?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -155,8 +156,18 @@ private struct TujiPromptModifier: ViewModifier {
 
     /// Stacked, not side by side. Two buttons of equal width read as equally
     /// weighted choices; the decision here has a primary and a way out.
+    ///
+    /// `alternative` is a third shape, used where the destructive action has a
+    /// *cheaper action that achieves most of what the user wanted* — 刪除卡片
+    /// versus 取消公開. It sits above the primary and takes the filled style
+    /// while the destructive primary stays quiet, so the safer path is the loud
+    /// one without the destructive path being hidden: the user asked for it and
+    /// it is still right there.
     private var buttons: some View {
         VStack(spacing: Space.s2) {
+            if let alternative {
+                self.actionButton(alternative)
+            }
             self.actionButton(self.primary)
             if let secondary {
                 self.textButton(secondary)
@@ -228,6 +239,7 @@ extension View {
         message: LocalizedStringKey? = nil,
         detail: LocalizedStringKey? = nil,
         primary: TujiPromptAction,
+        alternative: TujiPromptAction? = nil,
         secondary: TujiPromptAction? = nil
     )
         -> some View
@@ -240,6 +252,7 @@ extension View {
                 message: message,
                 detail: detail,
                 primary: primary,
+                alternative: alternative,
                 secondary: secondary
             )
         )
