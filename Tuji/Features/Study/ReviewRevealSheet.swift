@@ -1,5 +1,5 @@
 // Reveal sheet for ReviewFlow (§III.Q): answer summary + pull-up full word
-// detail, with the pinned action row — SRS rating buttons normally, or a
+// detail (with tappable 詞塊 — see `.glossCard()` below), with the pinned action row — SRS rating buttons normally, or a
 // single 下一題 for a retest-wrong (study material only, no second write).
 // Split from ReviewFlowView for file size; state all lives on the
 // coordinator.
@@ -71,6 +71,12 @@ struct ReviewRevealSheet: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
+        // 複習 was the one surface showing example sentences without a 詞塊 host,
+        // so the same sentence that is tappable on 認識, 圖鑑詳情 and 學新字's
+        // peek sheet went flat here — the feature looked absent in exactly the
+        // place a user has just got the word wrong. An overlay, so hosting it
+        // inside a sheet is fine; on the root, so it does not scroll away.
+        .glossCard()
         .presentationDetents([self.restDetent, .large], selection: self.$detent)
         // The measured detent replaces the fallback one pass after the sheet
         // appears, and a selection that is no longer in the set is undefined —
@@ -129,31 +135,12 @@ struct ReviewRevealSheet: View {
     /// screen in the question above), word + pronunciation + 中文 on the left,
     /// favourite + audio buttons stacked on the right.
     private var summary: some View {
-        HStack(alignment: .top, spacing: Space.s3) {
-            VStack(alignment: .leading, spacing: Space.s1) {
-                TujiHeadword(word: self.item.word)
-                TujiReadingLine(word: self.item.word, ink: .tujiInk3)
-                if self.settings.current.showZh {
-                    Text(self.item.word.chinese)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                        .padding(.top, 2)
-                }
-            }
-            // See WordDetailView.titleRow: beside a `Spacer` the headword is
-            // offered half the row unless it is prioritised.
-            .layoutPriority(1)
-            Spacer()
-            VStack(spacing: Space.s2) {
-                FavoriteButton(wordId: self.item.word.id, size: 44)
-                PronunciationButton(
-                    text: self.item.word.word,
-                    language: self.item.word.taggedLanguage,
-                    audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
-                    size: 44
-                )
-            }
-        }
+        WordSummaryRow(
+            word: self.item.word,
+            wordId: self.item.word.id,
+            gloss: self.settings.current.showZh ? self.item.word.chinese : nil,
+            audioUrls: self.words.find(id: self.item.word.id)?.audioUrls
+        )
     }
 
     /// Stacked full width, not four boxes side by side.

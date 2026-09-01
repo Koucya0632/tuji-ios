@@ -649,6 +649,25 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   tap is not that. It is also the one rule in `pick()` that is stated nowhere in `pick()`:
   capping the suggestion at 困難 is what switches the auto-rate path off, because that path
   requires a suggestion other than 困難.
+- **看完整詳情 — 提示面上的第二次點擊。** 翻面那一**面**仍然只有釋義，上面那條規則沒有變；
+  變的是那一面現在有一個明說的出口，點下去用 `WordDetailSheet` 從下方升起完整詳情——單字
+  本體、讀音、字詞資料、例句都在裡面。**代價刻意不變**：能按到這顆鍵的人已經翻過面，該題
+  早就套上答錯的評分表、自動評級也早就關了，再疊一層懲罰只會把人逼回亂猜（ADR-0007 那句
+  「這顆鍵必須輕到值得按」）。順帶記下一件本來就成立的事：英雄卡片右下角的
+  `PronunciationButton` 在作答階段一直都在，按下去唸的就是答案——「讀音不准出現在提示面」
+  從來只是**畫面**上的規則，不是資訊上的封鎖。
+  兩條讓它不出事的限制：按鈕只在 `phase == .answer` 出現（揭示表 rest detent 開著
+  `presentationBackgroundInteraction`，這一面在它底下仍然可點，留著就會在評分鍵上面再疊一
+  張 sheet——而那張 sheet 往上拉本來就是同一份詳情）；以及提示面要 `.allowsHitTesting(up)`，
+  因為兩面是用 opacity 疊的，透明度 0 的 Button 照樣吃點擊。
+- **例句的 詞塊 要有人接。** `InteractiveSentenceText` 讀 `\.glossSelection`，沒有 host
+  就整句退回純文字——「有連結但沒人接」比沒有這個功能更像壞掉。認識、圖鑑詳情、學新字的
+  peek sheet 一直都有 `.glossCard()`，**複習的揭示表沒有**：同一句例句在剛答錯的那一刻是
+  死的，而那正是最需要點開看的時候。現在揭示表與 `WordDetailSheet` 都有 host。
+  位置有講究：host 要放在 sheet 的**根**、而且在畫標題列的 shell **外面**——`.glossCard()`
+  的遮罩是它所依附那層的 overlay，掛在 `TujiSheetShell` 的 content 裡會停在標題列下面，
+  讓 ✕ 在一張 modal 卡片底下還是亮的、還能按。所以 `ReviewHeroCard` 直接寫
+  `TujiSheetShell { … }.glossCard()`，沒有用 `.tujiSheet(…)` 這個便利函式。
 - **StudyQueueProviding** — 1-method seam (`fetch(mode:)`) over `StudyQueueStore`, injected
   into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
   longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a

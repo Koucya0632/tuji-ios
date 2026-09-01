@@ -7,6 +7,12 @@
 // stalled item offers one line after `nudgeDelay` instead. VoiceOver does not
 // inherit that choice — it gets an explicit custom action, because a user who
 // cannot see the picture also cannot poke at it to find out.
+//
+// The hint face carries one visible affordance of its own: 看完整詳情, which
+// raises the full word detail in a sheet. It is drawn only there, and only a
+// user who has already flipped can reach it — by which point the item is on the
+// wrong-answer rating table anyway, so the look-up adds no further cost
+// (ADR-0007).
 
 import SwiftUI
 
@@ -22,6 +28,10 @@ struct ReviewHeroCard: View {
     /// Armed by the stall timer; only *shown* while the coordinator still has
     /// something to teach on this item.
     @State private var nudgeArmed = false
+
+    /// The 看完整詳情 sheet. Per presentation, like every other piece of
+    /// per-item state — reset where the nudge is re-armed.
+    @State private var showDetail = false
 
     /// How long an item may sit unanswered before the card offers the hint.
     /// Deliberately past the 7s mark where `computeSuggestion` has already
@@ -54,7 +64,28 @@ struct ReviewHeroCard: View {
         .animation(.easeInOut(duration: 0.25), value: self.showNudge)
         // Keyed on the position too: a retest presents the same word id again
         // and must re-arm.
-        .task(id: "\(self.item.id)#\(self.coord.index)") { await self.armNudge() }
+        .task(id: "\(self.item.id)#\(self.coord.index)") {
+            self.showDetail = false
+            await self.armNudge()
+        }
+        // `TujiSheetShell` by hand rather than `.tujiSheet(…)` — the two lines
+        // that convenience saves cost the 詞塊 card its scrim over the title bar,
+        // because `.glossCard()` has to wrap the shell and the closure goes
+        // inside it. Same shape AtlasMyCollectionsView already uses.
+        .sheet(isPresented: self.$showDetail) {
+            TujiSheetShell(title: "單字詳情", height: 520) {
+                WordDetailSheet(
+                    word: self.item.word,
+                    wordId: self.item.word.id,
+                    // Not gated on `showZh`: that switch governs the always-on
+                    // gloss 學新字 prints on a picture, and this sheet is two
+                    // deliberate taps in.
+                    gloss: self.item.word.chinese,
+                    audioUrls: self.words.find(id: self.item.word.id)?.audioUrls
+                )
+            }
+            .glossCard()
+        }
     }
 
     /// Full-bleed, on `tujiPaper2`, with the picture multiplied into it. The
@@ -88,6 +119,10 @@ struct ReviewHeroCard: View {
                             .degrees(self.flipAngle(up ? 0 : -180)),
                             axis: (x: 0, y: 1, z: 0)
                         )
+                        // An opacity-0 Button still takes taps: without this the
+                        // hint face's 看完整詳情 would sit invisibly over the
+                        // picture and swallow the flip.
+                        .allowsHitTesting(up)
                 }
             }
             .clipped()
@@ -96,11 +131,17 @@ struct ReviewHeroCard: View {
                 value: up
             )
             .accessibilityElement()
-            // The label follows the face, so triggering the action below
+            // The label follows the face, so triggering the actions below
             // actually says something.
             .accessibilityLabel(up ? Text(self.item.word.chinese) : Text("這個是什麼？"))
-            .accessibilityAction(named: up ? Text("看圖片") : Text("看提示")) {
-                self.flip()
+            // `.accessibilityElement()` ignores its children, so the button drawn
+            // on the hint face does not exist for VoiceOver unless it is offered
+            // here as well.
+            .accessibilityActions {
+                Button(up ? "看圖片" : "看提示") { self.flip() }
+                if up, self.canOpenDetail {
+                    Button("看完整詳情") { self.showDetail = true }
+                }
             }
     }
 
@@ -114,14 +155,57 @@ struct ReviewHeroCard: View {
     /// Gloss only. `reading` and `pronunciation` are both on the payload and
     /// neither may come here: a kana headword's 振假名 is itself, and an IPA
     /// line is the word read aloud — either one turns the hint into a skip.
+    ///
+    /// That rule is about the *face*. `detailButton` is the way past it, and it
+    /// is a separate, deliberate tap that lands in a sheet — the difference
+    /// between reading the answer and choosing to look it up.
     private var hintFace: some View {
-        Text(self.item.word.chinese)
-            .font(.tujiH2)
-            .foregroundStyle(.tujiInk)
-            .multilineTextAlignment(.center)
-            .lineLimit(4)
-            .minimumScaleFactor(0.6)
-            .padding(.horizontal, Space.s5)
+        VStack(spacing: Space.s4) {
+            Text(self.item.word.chinese)
+                .font(.tujiH2)
+                .foregroundStyle(.tujiInk)
+                .multilineTextAlignment(.center)
+                .lineLimit(4)
+                .minimumScaleFactor(0.6)
+            if self.canOpenDetail {
+                self.detailButton
+            }
+        }
+        .padding(.horizontal, Space.s5)
+    }
+
+    /// Only while the item is unanswered — the same window `toggleHint()` allows
+    /// the flip in, and for a sharper reason. The reveal sheet rests with
+    /// `presentationBackgroundInteraction` enabled, so this face stays tappable
+    /// underneath it: left up, the button would raise a second sheet on top of
+    /// the one asking for a rating and bury both sets of buttons. There is
+    /// nothing lost — that sheet pulls up to the very same detail.
+    private var canOpenDetail: Bool {
+        self.coord.phase == .answer
+    }
+
+    /// An underlined label, not a filled `BBtn`: the hint face is one line of
+    /// text on paper, and a brand-yellow block here would outweigh the four
+    /// options it sits above. Underlined because this system has no colour that
+    /// means tappable — the same mark `TujiNavTextAction` uses.
+    private var detailButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            self.showDetail = true
+        } label: {
+            HStack(spacing: Space.s1) {
+                Text("看完整詳情")
+                Image(systemName: "arrow.up.right")
+                    .font(.tujiIcon(12, weight: .semibold))
+            }
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .underline()
+            .foregroundStyle(.tujiInk2)
+            .frame(height: 44)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
     }
 
     /// Reduce Motion keeps the opacity swap and drops the rotation, so the turn
