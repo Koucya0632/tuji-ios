@@ -13139,6 +13139,28 @@
         }
       }
     },
+    "請先登入，再購買 Tuji Pro。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in before buying Tuji Pro."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuji Proを購入するには、先にログインしてください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录，再购买 Tuji Pro。"
+          }
+        }
+      }
+    },
     "請到「設定」開啟相機權限，或改從相簿選一張照片。" : {
       "localizations" : {
         "en" : {
