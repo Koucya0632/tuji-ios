@@ -4522,6 +4522,28 @@
         }
       }
     },
+    "單字詳情" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word details"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単語の詳細"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单字详情"
+          }
+        }
+      }
+    },
     "單數" : {
       "extractionState" : "stale",
       "localizations" : {

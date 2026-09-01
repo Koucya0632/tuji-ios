@@ -154,31 +154,12 @@ struct WordPeekSheet: View {
     }
 
     private var headerRow: some View {
-        HStack(alignment: .top, spacing: Space.s3) {
-            VStack(alignment: .leading, spacing: Space.s1) {
-                TujiHeadword(word: self.word)
-                TujiReadingLine(word: self.word, ink: .tujiInk3)
-                if self.settings.current.showZh {
-                    Text(self.word.chinese)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                        .padding(.top, 2)
-                }
-            }
-            // See WordDetailView.titleRow: beside a `Spacer` the headword is
-            // offered half the row unless it is prioritised.
-            .layoutPriority(1)
-            Spacer()
-            VStack(spacing: Space.s2) {
-                FavoriteButton(wordId: self.word.id, size: 44)
-                PronunciationButton(
-                    text: self.word.word,
-                    language: self.word.taggedLanguage,
-                    audioUrls: self.word.audioUrls,
-                    size: 44
-                )
-            }
-        }
+        WordSummaryRow(
+            word: self.word,
+            wordId: self.word.id,
+            gloss: self.settings.current.showZh ? self.word.chinese : nil,
+            audioUrls: self.word.audioUrls
+        )
     }
 }
 
