@@ -32,6 +32,8 @@ struct InteractiveSentenceTextTests {
         }
     }
 
+    private static let text = "I look forward to the weekend."
+
     private var sentence: [GlossSpan] {
         [
             self.span("I "),
@@ -86,7 +88,7 @@ struct InteractiveSentenceTextTests {
     @Test
     func theAttributedStringStillSpellsTheSentence() {
         let attributed = InteractiveSentenceText.attributed(self.sentence)
-        #expect(String(attributed.characters) == "I look forward to the weekend.")
+        #expect(String(attributed.characters) == Self.text)
     }
 
     // MARK: - Resolving a tap
@@ -116,11 +118,108 @@ struct InteractiveSentenceTextTests {
     @Test
     func selectionRefusesAnUntappableSpan() {
         let selection = GlossSelection()
-        selection.select(self.span(" the "), language: .en)
+        selection.select(self.span(" the "), at: 2, in: Self.text, language: .en)
         #expect(selection.span == nil)
-        selection.select(self.span("weekend", gloss: "週末"), language: .en)
+        selection.select(self.span("weekend", gloss: "週末"), at: 3, in: Self.text, language: .en)
         #expect(selection.span?.text == "weekend")
         selection.clear()
         #expect(selection.span == nil)
+    }
+
+    // MARK: - Marking the selected 詞塊
+
+    /// Every run that carries a 螢光筆, as plain text.
+    private func highlighted(_ attributed: AttributedString) -> [String] {
+        attributed.runs.compactMap { run in
+            run.backgroundColor == nil ? nil : String(attributed[run.range].characters)
+        }
+    }
+
+    @Test
+    func nothingIsMarkedWithoutASelection() {
+        #expect(self.highlighted(InteractiveSentenceText.attributed(self.sentence)).isEmpty)
+        #expect(InteractiveSentenceText.split(self.sentence, highlighting: nil).selected == nil)
+    }
+
+    @Test
+    func onlyTheSelectedSpanIsMarked() {
+        let attributed = InteractiveSentenceText.attributed(self.sentence, highlighting: 3)
+        #expect(self.highlighted(attributed) == ["weekend"])
+    }
+
+    /// The 螢光筆 the reader sees and the run the renderer measures are the same
+    /// piece — the selected 詞塊 is spliced out precisely so it can be marked,
+    /// so anything lit and unmeasured would be a caret aimed at the wrong word.
+    @Test
+    func theMarkedSpanIsTheOneSplicedOut() throws {
+        let parts = InteractiveSentenceText.split(self.sentence, highlighting: 1)
+        let marked = try #require(parts.selected)
+        #expect(String(marked.characters) == "look forward to")
+        #expect(self.highlighted(marked) == ["look forward to"])
+        #expect(self.highlighted(parts.before).isEmpty)
+        #expect(self.highlighted(parts.after).isEmpty)
+    }
+
+    /// The full-cover invariant again, on the far side of the splice: three
+    /// pieces still have to spell the sentence exactly once.
+    @Test
+    func theSplicedSentenceIsStillTheSentence() {
+        let attributed = InteractiveSentenceText.attributed(self.sentence, highlighting: 1)
+        #expect(String(attributed.characters) == Self.text)
+    }
+
+    /// The splice must not renumber what follows it. Links carry the span's
+    /// index in the *whole* sentence, so a run rebuilt from a slice would send
+    /// every later tap to the word before it.
+    @Test
+    func theSpliceLeavesLaterLinksPointingAtTheirOwnSpan() throws {
+        let parts = InteractiveSentenceText.split(self.sentence, highlighting: 1)
+        let url = try #require(parts.after.runs.compactMap(\.link).first)
+        #expect(InteractiveSentenceText.spanIndex(in: url) == 3)
+        #expect(self.sentence[3].text == "weekend")
+    }
+
+    // MARK: - Anchoring
+
+    @Test
+    func aSelectionBelongsToOneSentence() {
+        let selection = GlossSelection()
+        selection.select(self.sentence[1], at: 1, in: Self.text, language: .en)
+        #expect(selection.selectedIndex(in: Self.text) == 1)
+        #expect(selection.selectedIndex(in: "Another sentence entirely.") == nil)
+    }
+
+    /// A sentence that draws one frame late would otherwise aim the caret at
+    /// the word the user tapped *before* this one.
+    @Test
+    func anAnchorReportedForAnythingButTheLiveSelectionIsDropped() {
+        let anchor = CGRect(x: 12, y: 34, width: 56, height: 20)
+        let selection = GlossSelection()
+        selection.select(self.sentence[1], at: 1, in: Self.text, language: .en)
+
+        selection.report(anchor: anchor, for: .init(sentence: Self.text, index: 0))
+        #expect(selection.anchor == nil)
+        selection.report(anchor: anchor, for: .init(sentence: "Another sentence entirely.", index: 1))
+        #expect(selection.anchor == nil)
+
+        selection.report(anchor: anchor, for: .init(sentence: Self.text, index: 1))
+        #expect(selection.anchor == anchor)
+    }
+
+    /// Keeping the previous word's anchor would point the new card at the old
+    /// word for the frame before the new measurement lands.
+    @Test
+    func selectingAgainForgetsWhereTheLastWordWas() {
+        let selection = GlossSelection()
+        selection.select(self.sentence[1], at: 1, in: Self.text, language: .en)
+        selection.report(anchor: CGRect(x: 1, y: 2, width: 3, height: 4), for: .init(sentence: Self.text, index: 1))
+        #expect(selection.anchor != nil)
+
+        selection.select(self.sentence[3], at: 3, in: Self.text, language: .en)
+        #expect(selection.anchor == nil)
+
+        selection.clear()
+        #expect(selection.target == nil)
+        #expect(selection.anchor == nil)
     }
 }

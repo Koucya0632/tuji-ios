@@ -17,7 +17,10 @@
 
 import CoreGraphics
 
-enum Space {
+/// `nonisolated` because the scale has to be readable from layout-time code.
+/// The project defaults to MainActor isolation, and `Shape.path(in:)` — where
+/// `GlossCalloutShape` measures its caret — is not on the main actor.
+nonisolated enum Space {
     static let s1: CGFloat = 4
     static let s2: CGFloat = 8
     static let s3: CGFloat = 16
