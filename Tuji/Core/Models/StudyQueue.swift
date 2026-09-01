@@ -131,6 +131,9 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
     let responseMs: Int?
     let sessionId: String?
     let activity: String?
+    /// Present for durable replays so the server can reject a request if the
+    /// access token changed accounts while the replay was in flight.
+    var ownerUserId: UUID?
     /// The user asked for the gloss before answering (複習's 求救提示). Optional
     /// so answers parked on disk by an older build still decode — a new
     /// non-optional key would fail every one of them.
@@ -142,6 +145,7 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
         responseMs: Int? = nil,
         sessionId: String? = nil,
         activity: String? = nil,
+        ownerUserId: UUID? = nil,
         hinted: Bool? = nil
     ) {
         self.cardId = cardId
@@ -149,6 +153,7 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
         self.responseMs = responseMs
         self.sessionId = sessionId
         self.activity = activity
+        self.ownerUserId = ownerUserId
         self.hinted = hinted
     }
 }

@@ -1,8 +1,8 @@
 // What has to be forgotten when the account changes.
 //
-// `AuthService.signOut` reset four app-lifetime singletons by name, in a method
+// `AuthService.signOut` reset several app-lifetime singletons by name, in a method
 // whose own comment explained why each one mattered — and nothing anywhere said
-// that a *fifth* account-scoped store would have to come here and enrol. The
+// that a new account-scoped store would have to come here and enrol. The
 // obligation existed only as prose inside the method that discharges it, which
 // is the worst place for it: you have to already be editing sign-out to learn
 // that sign-out is what you must edit.
@@ -28,6 +28,7 @@ extension AtlasStore: AccountScopedStore {}
 extension AtlasCaptureQueue: AccountScopedStore {}
 extension MyCollectionsCache: AccountScopedStore {}
 extension BlockStore: AccountScopedStore {}
+extension StudyAnswerOutbox: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -41,12 +42,15 @@ enum AccountScopedStores {
     ///   the next account this one's 合集 list.
     /// - `BlockStore` — it would hide the next account's feed on this
     ///   account's behalf.
+    /// - `StudyAnswerOutbox` — queued writes carry account state and must not
+    ///   survive a sign-out even though each entry is also owner-tagged.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
             AtlasCaptureQueue.shared,
             MyCollectionsCache.shared,
-            BlockStore.shared
+            BlockStore.shared,
+            StudyAnswerOutbox.shared
         ]
     }
 

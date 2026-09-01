@@ -13,6 +13,17 @@ import Observation
 import OSLog
 import StoreKit
 
+private enum StoreKitServiceError: LocalizedError {
+    case signedOut
+
+    var errorDescription: String? {
+        switch self {
+        case .signedOut:
+            tujiLocalized("請先登入，再購買 Tuji Pro。")
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class StoreKitService {
@@ -63,9 +74,12 @@ final class StoreKitService {
     /// can dismiss the paywall); false for user-cancel / pending.
     @discardableResult
     func purchase(_ product: Product) async throws -> Bool {
+        guard case let .signedIn(user) = AuthService.shared.state else {
+            throw StoreKitServiceError.signedOut
+        }
         self.purchasing = product.id
         defer { self.purchasing = nil }
-        let result = try await product.purchase()
+        let result = try await product.purchase(options: [.appAccountToken(user.id)])
         switch result {
         case let .success(verification):
             let transaction = try self.checkVerified(verification)

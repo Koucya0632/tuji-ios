@@ -2,6 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-09
+- **Security amendment:** 2026-09-01
 
 ## Context
 
@@ -10,8 +11,9 @@ else — the app offers three sign-in providers (email, Google, Apple), and user
 between them.
 
 `PaywallView` calls `refreshFromCurrentEntitlements()` in its `.task`, which forwards the
-device's active StoreKit entitlements to `/api/billing/verify` for **whoever is currently
-signed in**. That is correct behaviour for a fresh install, but it also means:
+device's active StoreKit entitlements to `/api/billing/verify`. A transaction by itself did
+not identify the Tuji account that purchased it, so the old flow effectively accepted it
+for **whoever was currently signed in**. That meant:
 
 1. A user subscribes while signed in as account A.
 2. Later they sign in with a different provider, creating or using account B.
@@ -34,27 +36,32 @@ introduced with no data to reconcile.
 
 ## Decision
 
-Exactly one account may hold a given `original_transaction_id`. This is enforced two ways:
+Exactly one account may hold a given `original_transaction_id`. This is enforced in four
+ways:
 
 - **Structurally** — a UNIQUE partial index on `user_entitlements(original_transaction_id)`.
-- **Behaviourally** — writing a subscription entitlement first *transfers* the binding:
-  any other account holding that transaction id is set back to free, has its transaction id
-  cleared, and gets a `transfer` row in the entitlement ledger. The whole thing runs in one
-  transaction.
+- **At purchase** — iOS supplies the signed-in Tuji UUID as StoreKit's `appAccountToken`.
+  The server accepts the signed transaction only for that UUID.
+- **For legacy purchases** — a transaction without `appAccountToken` may refresh only the
+  account already bound to its `original_transaction_id`. An unbound legacy transaction is
+  rejected and requires an explicit support-side migration.
+- **For state ordering** — the server persists Apple's signed date and transaction ID and
+  rejects stale or ambiguous privilege-raising replays. Each subscription update is
+  serialized in one database transaction.
 
-The semantics are deliberately "the subscription follows the account that most recently
-proved it owns the purchase", not "the second attempt is rejected". Rejecting would leave a
-user who genuinely migrated accounts unable to use the subscription they are paying for,
-with no self-service way out.
+An existing binding moves only when Apple's signed `appAccountToken` proves the destination
+account. It never follows the account that merely submitted the JWS. Account migration for
+an untokened legacy purchase is deliberately a support operation because the bearer JWS
+cannot prove which Tuji account should receive it.
 
 A migration de-duplicates any existing conflicts before the unique index is created, since
 this runs at build time and a failure there would block deploys.
 
 ## Considered options
 
-- **Reject the second binding:** rejected because account migration is a legitimate,
-  self-service-impossible situation. The user would be paying and locked out, and the only
-  fix would be an operator intervention.
+- **Let the most recent submitter take the binding:** rejected after security review because
+  the same signed JWS can be replayed by multiple Tuji accounts and rotate subscription
+  quotas. A signed `appAccountToken`, not possession of the JWS, now authorizes a move.
 - **Allow N accounts per subscription (family-style sharing):** rejected because it is not
   a product we decided to sell, and it arrived by accident rather than by design. Nothing
   prevents revisiting it deliberately later.
@@ -67,10 +74,11 @@ this runs at build time and a failure there would block deploys.
 
 ## Consequences
 
-- A user who signs in to a second account and opens the paywall silently moves their Pro
-  from the first account to the second. This is invisible in the app. The entitlement
-  ledger records it as a `transfer`, and `/admin/members` shows it, which is currently the
-  only way to explain a "my Pro disappeared" report.
+- A user who signs in to a second account cannot silently move Pro by replaying or restoring
+  a transaction bound to the first account. New purchases are permanently tied to the Tuji
+  UUID Apple signed into the transaction.
+- Existing untokened subscriptions continue to renew and restore on their current binding.
+  Unbound legacy purchases need a reviewed support migration instead of first-claim wins.
 - `getUserIdByOriginalTransaction` is now deterministic, so refunds and expirations always
   reach the account that actually holds the subscription.
 - The migration that creates the unique index must keep running de-duplication first; a

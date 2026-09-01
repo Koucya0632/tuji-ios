@@ -12,7 +12,8 @@ struct DurableAnswerWriterTests {
     private func makeOutbox() -> StudyAnswerOutbox {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("writer-outbox-\(UUID().uuidString).json")
-        return StudyAnswerOutbox(fileURL: url)
+        let owner = UUID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!
+        return StudyAnswerOutbox(fileURL: url, activeUserID: { owner })
     }
 
     private func payload(card: String = "c1") -> StudyAnswerPayload {
