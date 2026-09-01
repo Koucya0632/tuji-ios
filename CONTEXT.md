@@ -282,6 +282,21 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **詞塊不連回當前頁面。** 例句與譯義都會提到自己的詞頭（例句正是為了示範它），所以最好點的
   那一塊會讓「看完整詳情」把同一頁再推一次。伺服器端的 `unlinkSelfReference` 拔掉那個
   `wordId`——**塊還是可點的，只是少一顆按鈕**，因為可點與否從來只看有沒有釋義。
+- **卡片指著那個詞。** 點下去升起的是一張浮在該詞塊旁邊、尖角對準它的卡片，而那個詞在句子裡
+  同時上一道黃色螢光筆。這件事一度是做不到的：整句交給 SwiftUI 的文字引擎（一個
+  `AttributedString`、每個詞塊一個 link）換來斷行、Dynamic Type 與禁則，代價是 link 不回報
+  它落在哪裡。`Text.Layout`（iOS 18 的 `TextRenderer`）回報得了，**而且不必把排版拿回來**
+  ——見 [ADR-0013](docs/adr/0013-the-gloss-card-points-at-the-word.md)。兩個實作上的坑值得
+  記在這裡：自訂 `AttributedStringKey` 設在字串上**活不到** `Text.Layout`（run 回來是沒有
+  標記的，在裝置上驗過），所以被選中的詞塊要用 `Text` 串接單獨切出來、掛
+  `Text.customAttribute`；而 renderer **只在該句握有選取時**掛上去——那一刻遮罩已經蓋住句子，
+  所以就算它動到 link 的命中測試也傷不到任何東西。切出來的那一塊**不能重新編號**，否則它
+  後面每一個 link 都會開錯的詞。
+- **量不到錨點就退回底部，而且不畫尖角。** 跟「串不回原句就退回純文字」是同一條精神：這個
+  功能的失敗模式永遠等於它的上一個版本，而不是一個指著錯的詞的尖角。上下都塞不下（大字級 ×
+  小螢幕）也走同一條路。擺放的算術在 `GlossCalloutPlacement`（純函式，有測試，跟
+  `ReviewRevealLayout` 同一個形狀），外框與尖角是同一條 `Path`（`GlossCalloutShape`，本專案
+  第一個 `Shape`——所以 `Space` 現在是 `nonisolated`，`Shape.path(in:)` 不在主執行緒上）。
 - **原形 (`baseForm`)** — `running` 的 `run`。**不叫 `lemma`**：這個 codebase 裡 `lemma` 已經
   是自製圖鑑 item 的詞頭（`atlas_items.lemma`、confirm API 的必填欄位、`AtlasItemRow.lemma`），
   同一個字在同一份程式碼裡有兩個意思，是下一個人一定會踩的坑。
