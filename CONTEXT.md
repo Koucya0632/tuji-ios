@@ -297,6 +297,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   小螢幕）也走同一條路。擺放的算術在 `GlossCalloutPlacement`（純函式，有測試，跟
   `ReviewRevealLayout` 同一個形狀），外框與尖角是同一條 `Path`（`GlossCalloutShape`，本專案
   第一個 `Shape`——所以 `Space` 現在是 `nonisolated`，`Shape.path(in:)` 不在主執行緒上）。
+- **音標比 `wordId` 嚴。** 詞塊上的 `pronunciation` 是目錄自己的 `word_terms.pronunciation`
+  （英文是 IPA、日文是假名的複本），伺服器 join 上去，客戶端不重新推導任何事。閘門不是
+  「有沒有 `wordId`」而是**「這一塊拼得跟詞頭一模一樣嗎」**：`wordId` 是載入腳本拿**原形**
+  比對出來的，所以 `documents` 連到 `document`、`next corner` 連到 `corner`，照印就會在
+  `documents` 底下印 `/ˈdɑː.kjə.mənt/`——不是沒用，是教錯。實測 1,765 個連得到目錄的英文
+  詞塊裡有 132 個是這種。剩下 1,633 個有音標（約五分之一的可點詞塊），其餘沒有那一行——
+  跟它們同樣沒有書籤鍵、沒有「看完整詳情」是同一條規則。**而被擋掉的那些剛好就是原形那行
+  有東西的那些**，所以讀者不是少了資訊，是拿到正確的那一則。
+  卡片上那一行走的是 `HeadwordDisplay`（`GlossSpan` 也是 `Headworded`），不是第四份
+  `if let pronunciation`——那正是那個 enum 當初被抽出來的原因。
 - **原形 (`baseForm`)** — `running` 的 `run`。**不叫 `lemma`**：這個 codebase 裡 `lemma` 已經
   是自製圖鑑 item 的詞頭（`atlas_items.lemma`、confirm API 的必填欄位、`AtlasItemRow.lemma`），
   同一個字在同一份程式碼裡有兩個意思，是下一個人一定會踩的坑。
@@ -690,6 +700,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   連一個從 JSON 解出 `GlossSpan` 的測試都沒有。**它是全 App 第一個同時有系統導覽列與
   `.glossCard()` 的畫面；遮罩會蓋過導覽列（它 `ignoresSafeArea`），但返回鍵仍然可按——按下去
   整頁連卡片一起 pop，所以刻意不處理。
+  **第三次由 CI 擋下**：`scripts/check-gloss-host.py`（跟 `check-localization.py` 同一個 job）
+  要求任何渲染例句的檔案都得有 `.glossCard()`，否則要列進腳本裡的 `HOSTED_BY_CALLER` 並寫
+  下理由。它會剝掉註解才比對——四個談到 `.glossCard()` 的檔案裡有三個只是在散文裡提到它，
+  照原文 grep 會讓每一個「寫下了規則但沒有遵守」的畫面過關。
 - **StudyQueueProviding** — 1-method seam (`fetch(mode:)`) over `StudyQueueStore`, injected
   into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
   longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a

@@ -87,3 +87,30 @@ extension StudyQueueWord: Headworded {
         self.pronunciation
     }
 }
+
+/// A 詞塊 asks the same question a headword does — what line goes underneath —
+/// so it gets the same answer rather than a fourth private copy of it. That is
+/// the whole reason `HeadwordDisplay` exists: five screens once carried five
+/// disagreeing `if let pronunciation`s.
+///
+/// Two witnesses are deliberately empty. A span is a *fragment* — `look forward
+/// to` has no language tag of its own, so the screen supplies the sentence's
+/// language to `headwordDisplay(in:)` — and the server sends no furigana split
+/// for one, so `.ruby` never comes back here.
+extension GlossSpan: Headworded {
+    var word: String {
+        self.text
+    }
+
+    var targetLanguage: TargetLanguage? {
+        nil
+    }
+
+    var readingSegments: [FuriganaSegment]? {
+        nil
+    }
+
+    var headwordPronunciation: String? {
+        self.pronunciation
+    }
+}

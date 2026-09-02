@@ -231,6 +231,11 @@ jobs:
         # ——編譯過、測試過、CI 綠。這一步就是那條接縫。
         run: python3 scripts/check-localization.py
 
+      - name: Check 詞塊 hosts
+        # `.glossCard()` 漏掉時例句只是安靜地退回純文字——看起來跟「這個畫面沒有
+        # 這個功能」一模一樣，所以沒有人會回報。已經漏過兩次。
+        run: python3 scripts/check-gloss-host.py
+
       - name: Check launch assets
         # 原生 Launch Screen 不會被 unit tests 渲染；在 Linux 直接釘住
         # Info.plist、品牌底色與 1x/2x/3x 的像素契約。

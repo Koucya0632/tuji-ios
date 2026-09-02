@@ -173,4 +173,70 @@ struct HeadwordDisplayTests {
         #expect(word.headwordDisplay(in: .en) == .plain)
         #expect(word.readingSegments == nil)
     }
+
+    // MARK: - 詞塊
+
+    private func span(
+        _ text: String,
+        reading: String? = nil,
+        pronunciation: String? = nil
+    )
+        -> GlossSpan
+    {
+        GlossSpan(
+            text: text,
+            gloss: "—",
+            baseForm: nil,
+            partOfSpeech: nil,
+            reading: reading,
+            wordId: nil,
+            pronunciation: pronunciation
+        )
+    }
+
+    /// A 詞塊 is a fragment with no language tag of its own, so the screen
+    /// supplies the sentence's language. That is the whole reason it cannot
+    /// answer this question by itself.
+    @Test
+    func anEnglishSpanShowsItsTranscription() {
+        let span = self.span("bucket", pronunciation: "/ˈbʌk.ɪt/")
+        #expect(span.headwordDisplay(in: .en) == .line("/ˈbʌk.ɪt/"))
+    }
+
+    /// Most 詞塊 will never be catalogue words, so most have no transcription —
+    /// and no line, the same way they have no 書籤.
+    @Test
+    func aSpanWithNoTranscriptionShowsNothing() {
+        #expect(self.span("carefully").headwordDisplay(in: .en) == .plain)
+    }
+
+    /// Japanese answers from the kana, exactly as a headword does — the server
+    /// sends `pronunciation` as a copy of `reading` there, so reaching for the
+    /// transcription instead would give the same answer by luck rather than by
+    /// rule.
+    @Test
+    func aJapaneseSpanShowsItsKana() {
+        let span = self.span("冷蔵庫", reading: "れいぞうこ", pronunciation: "れいぞうこ")
+        #expect(span.headwordDisplay(in: .ja) == .line("れいぞうこ"))
+    }
+
+    /// The bug this whole rule was extracted for, now on the card: a kana 詞塊
+    /// is its own reading, and printing it under itself teaches nothing.
+    @Test
+    func aKanaSpanDoesNotPrintItself() {
+        let span = self.span("バッグ", reading: "バッグ", pronunciation: "バッグ")
+        #expect(span.headwordDisplay(in: .ja) == .plain)
+    }
+
+    /// A span never carries a furigana split, so the card may read `.line` and
+    /// ignore `.ruby` — if that ever stopped being true the card would silently
+    /// drop the line instead of showing ruby.
+    @Test
+    func aSpanNeverAsksForRuby() {
+        let span = self.span("冷蔵庫", reading: "れいぞうこ")
+        #expect(span.readingSegments == nil)
+        if case .ruby = span.headwordDisplay(in: .ja) {
+            Issue.record("a 詞塊 has no segments to build ruby from")
+        }
+    }
 }
