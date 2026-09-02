@@ -47,7 +47,7 @@ struct AtlasPublicItemSpansTests {
               { "text": "I " },
               { "text": "filled", "baseForm": "fill", "partOfSpeech": "verb", "gloss": "注入" },
               { "text": " the " },
-              { "text": "bucket", "baseForm": "bucket", "partOfSpeech": "noun", "gloss": "水桶" },
+              { "text": "bucket", "baseForm": "bucket", "partOfSpeech": "noun", "gloss": "水桶", "pronunciation": "/ˈbʌk.ɪt/" },
               { "text": " with " },
               { "text": "water", "baseForm": "water", "partOfSpeech": "noun", "gloss": "水" },
               { "text": "." }
@@ -95,5 +95,16 @@ struct AtlasPublicItemSpansTests {
     func theBaseFormDecodes() throws {
         let spans = try #require(self.example().spans)
         #expect(spans.first(where: { $0.text == "filled" })?.baseForm == "fill")
+    }
+
+    /// The transcription is attached by the server and only for a span spelled
+    /// exactly like the headword it links to — so `filled`, which links to
+    /// `fill` through its base form, must arrive without one. Both halves are
+    /// the wire's job; the client re-derives neither.
+    @Test
+    func onlyTheSpanSpelledLikeItsHeadwordCarriesATranscription() throws {
+        let spans = try #require(self.example().spans)
+        #expect(spans.first(where: { $0.text == "bucket" })?.pronunciation == "/ˈbʌk.ɪt/")
+        #expect(spans.first(where: { $0.text == "filled" })?.pronunciation == nil)
     }
 }

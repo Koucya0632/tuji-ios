@@ -250,10 +250,12 @@ struct GlossCard: View {
                     .font(.tujiH2)
                     .foregroundStyle(.tujiInk)
                     .fixedSize(horizontal: false, vertical: true)
-                // Same rule the headwords use: a kana span is its own reading,
-                // and printing it under itself says nothing.
-                if let reading = ReadingLine.shown(self.span.reading, for: self.span.text) {
-                    Text(reading)
+                // The same question a headword asks, so the same answer:
+                // kana for Japanese, IPA for English, and nothing when the
+                // 詞塊 already says it (a kana span is its own reading). A span
+                // carries no furigana split, so `.ruby` cannot arrive here.
+                if case let .line(line) = self.span.headwordDisplay(in: self.language) {
+                    Text(line)
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }

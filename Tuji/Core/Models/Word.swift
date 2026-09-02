@@ -171,6 +171,39 @@ nonisolated struct GlossSpan: Codable, Hashable {
     /// offer a way into 圖鑑詳情; nil for the many spans that will never be
     /// dictionary entries.
     let wordId: String?
+    /// The catalogue's transcription — IPA for English, a copy of the kana
+    /// reading for Japanese. Never authored per span and never produced by a
+    /// model: it is `word_terms.pronunciation`, joined on the server.
+    ///
+    /// **A stricter condition than `wordId`**, and the client does not re-derive
+    /// it. `wordId` is resolved from the span's *base form*, so `documents`
+    /// links to `document`; the server only attaches a transcription when the
+    /// span is spelled exactly like the headword, because the headword's
+    /// pronunciation printed under an inflection is not useless but wrong.
+    /// About one tappable span in five has one — the same shape of "sometimes"
+    /// as 書籤 and 看完整詳情, and for the same reason.
+    let pronunciation: String?
+
+    /// Spelled out rather than synthesised so `pronunciation` can default:
+    /// every span built in a test or a preview predates it, and a field the
+    /// server fills has no business rewriting them.
+    init(
+        text: String,
+        gloss: String?,
+        baseForm: String?,
+        partOfSpeech: String?,
+        reading: String?,
+        wordId: String?,
+        pronunciation: String? = nil
+    ) {
+        self.text = text
+        self.gloss = gloss
+        self.baseForm = baseForm
+        self.partOfSpeech = partOfSpeech
+        self.reading = reading
+        self.wordId = wordId
+        self.pronunciation = pronunciation
+    }
 
     /// The one question every consumer asks. Spelled out here so no screen
     /// re-derives it as `span.gloss != nil` and lets the two drift.
