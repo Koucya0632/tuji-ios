@@ -206,7 +206,36 @@ jobs:
             -derivedDataPath build \
             -enableCodeCoverage YES \
             CODE_SIGNING_ALLOWED=NO \
+            | tee "$RUNNER_TEMP/xcodebuild-test.log" \
             | xcbeautify --renderer github-actions
+
+      - name: Assert every test actually ran
+        # 一次崩潰不會讓這個 job 變紅：xcodebuild 照樣印 ✔，**只有測試總數變小**。
+        # 而 xcbeautify 恰好把 Swift Testing 自己那行總結吃掉了，所以綠勾底下少了
+        # 十幾個測試這件事，在 CI 的輸出裡是看不見的（實測每次執行掉的 suite 還不
+        # 一樣）。所以對帳要看 tee 出來的**原始**輸出，而不是印在畫面上的那份。
+        #
+        # 門檻不是寫死的數字，是原始碼裡 @Test 的數量——參數化測試會展開成多個
+        # case，所以只要求「跑到的不少於宣告的」。隔壁 tuji-web 的 CI 早就有這道
+        # 關卡，而有「崩潰會偽裝成綠勾」這條記錄的是這一邊。
+        run: |
+          log="$RUNNER_TEMP/xcodebuild-test.log"
+          if grep -q "Restarting after unexpected exit" "$log"; then
+            echo "::error::a test process crashed mid-run; xcodebuild still reports success when that happens"
+            grep -n "Restarting after unexpected exit" "$log" | head -5
+            exit 1
+          fi
+          ran=$(grep -oE "Test run with [0-9]+ tests" "$log" | grep -oE "[0-9]+" | tail -1)
+          declared=$(grep -rhoE '^[[:space:]]*@Test' TujiTests | wc -l | tr -d ' ')
+          echo "reported by the runner: ${ran:-none}   declared in TujiTests: $declared"
+          if [ -z "$ran" ]; then
+            echo "::error::no Swift Testing summary in the raw log — the run produced no test output at all"
+            exit 1
+          fi
+          if [ "$ran" -lt "$declared" ]; then
+            echo "::error::$ran tests ran but $declared are declared — a suite was dropped"
+            exit 1
+          fi
 
       - name: Upload test results
         if: failure()
