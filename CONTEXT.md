@@ -683,6 +683,13 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   的遮罩是它所依附那層的 overlay，掛在 `TujiSheetShell` 的 content 裡會停在標題列下面，
   讓 ✕ 在一張 modal 卡片底下還是亮的、還能按。所以 `ReviewHeroCard` 直接寫
   `TujiSheetShell { … }.glossCard()`，沒有用 `.tujiSheet(…)` 這個便利函式。
+  **同一個洞後來在物見的詳情頁又出現一次**（`AtlasPublicDetailView`，`AtlasSavedItemDetailView`
+  也是走它）。那頁最容易被當成不適用：自製圖鑑的內容本來就沒有例句。但當一張照片的詞頭剛好
+  也是目錄詞時，`/api/atlas/public/{slug}` 會把那個目錄詞的例句連同標註一起掛上去——所以那
+  一頁一直有可點的資料、沒有人接。教訓寫在 `AtlasPublicItemSpansTests`：**這條線在那之前
+  連一個從 JSON 解出 `GlossSpan` 的測試都沒有。**它是全 App 第一個同時有系統導覽列與
+  `.glossCard()` 的畫面；遮罩會蓋過導覽列（它 `ignoresSafeArea`），但返回鍵仍然可按——按下去
+  整頁連卡片一起 pop，所以刻意不處理。
 - **StudyQueueProviding** — 1-method seam (`fetch(mode:)`) over `StudyQueueStore`, injected
   into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
   longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a
