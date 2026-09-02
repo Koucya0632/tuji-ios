@@ -527,6 +527,14 @@ struct AtlasPublicDetailView: View {
             .padding(Space.s4)
         }
         .background(.tujiPaper)
+        // Hosts the 詞塊 card for the example sentences `WordDetailSections`
+        // renders above. They were never inert data: when a capture's lemma is
+        // also a catalogue word the public-item route hands back that word's
+        // annotated examples, so this page has had tappable 詞塊 all along and
+        // no one to deliver the tap to — which reads as the feature being
+        // broken rather than absent. `AtlasSavedItemDetailView` reaches the
+        // same screen, so both routes are covered by this one line.
+        .glossCard()
         .navigationTitle(self.vm.item.lemma)
         .navigationBarTitleDisplayMode(.inline)
         .task {
