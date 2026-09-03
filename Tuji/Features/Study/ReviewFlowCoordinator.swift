@@ -132,6 +132,22 @@ final class ReviewFlowCoordinator {
     /// question instead of being demoted by the spacing rule.
     private var heardWordIds: Set<String> = []
 
+    /// The user asked for no more listening questions this session.
+    ///
+    /// This is an "I cannot hear right now" escape, not an "this is too hard"
+    /// one — 聽句 is the only question in the app that cannot be answered
+    /// without audio, and no headphones on a train is not a difficulty problem.
+    /// That is also why it carries no rating cost: switching to 選字 reveals
+    /// nothing, it asks a different question.
+    ///
+    /// Session-scoped on purpose, matching what the button says (這輪). 再來一輪
+    /// builds a fresh coordinator, so the next round starts asking again rather
+    /// than silently inheriting a decision made about a different sitting.
+    private(set) var listeningOptedOut: Bool = false
+    /// This presentation is the one the user turned listening off on. Per-item,
+    /// so it resets in `advance()` while `listeningOptedOut` does not.
+    private(set) var convertedFromListening: Bool = false
+
     private let audio: ListeningAudio
 
     /// Everything that happens to an answer after it is handed to the writer:
@@ -199,7 +215,9 @@ final class ReviewFlowCoordinator {
         let alreadyHeard = self.heardWordIds.contains(item.word.id)
         var kind = ListeningQuestion.kind(
             wordId: item.word.id,
-            canHear: example != nil && self.audio.canPlay(clip, online: online),
+            canHear: !self.listeningOptedOut
+                && example != nil
+                && self.audio.canPlay(clip, online: online),
             previous: self.previousKind,
             alreadyHeard: alreadyHeard
         )
@@ -289,6 +307,31 @@ final class ReviewFlowCoordinator {
     private var upcomingWordIds: Set<String> {
         guard self.index < self.queue.count else { return [] }
         return Set(self.queue[self.index...].map(\.word.id))
+    }
+
+    /// 這輪不做聽句題. Turns the card in front of the user into 選字 as well as
+    /// silencing the rest of the session — someone presses this *because* they
+    /// cannot answer the one they are looking at, and leaving it up would be
+    /// answering a question they just said they cannot hear.
+    ///
+    /// The clock restarts, because a different question starts now. The audio
+    /// is cut for the same reason leaving cuts it. Nothing is marked `hinted`:
+    /// no answer was revealed.
+    func optOutOfListening() {
+        guard self.phase == .answer, self.kind == .hearSentence else { return }
+        self.listeningOptedOut = true
+        self.convertedFromListening = true
+        self.audio.stop()
+        self.kind = .pickWord
+        self.listeningExample = nil
+        self.imageOptions = nil
+        self.sentenceRevealed = false
+        self.isPlayingSentence = false
+        self.awaitingAudio = false
+        // `replayCount` and `audioFailed` need no reset: `applyRating` reads
+        // them only when `kind == .hearSentence`, so they stop being sent the
+        // moment the kind changes.
+        self.startedAt = .now
     }
 
     /// Lift the blur. Same cost as 求救提示's flip and for a stronger reason:
@@ -520,7 +563,13 @@ final class ReviewFlowCoordinator {
             // 選字 row's metadata honestly empty rather than claiming zero
             // replays of audio that was never played.
             replayCount: listening ? self.replayCount : nil,
-            audioFailed: listening ? self.audioFailed : nil
+            audioFailed: listening ? self.audioFailed : nil,
+            // These two are **not** gated on `listening`: a session that turned
+            // 聽句 off answers everything else as 選字, and rows that cannot be
+            // told apart from a session that never met a listening question are
+            // what makes an aggregate accuracy lie.
+            listeningOptedOut: self.listeningOptedOut ? true : nil,
+            convertedFromListening: self.convertedFromListening ? true : nil
         )
         self.writes.submit(payload, wordId: item.word.id)
     }
@@ -580,6 +629,8 @@ final class ReviewFlowCoordinator {
             self.isPlayingSentence = false
             self.awaitingAudio = false
             self.questionReady = false
+            // Per-item, unlike `listeningOptedOut`, which is the session's.
+            self.convertedFromListening = false
         }
     }
 }
