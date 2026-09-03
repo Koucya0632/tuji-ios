@@ -46,7 +46,7 @@ struct ReviewListenCard: View {
         Color.tujiPaper2
             .frame(height: self.height)
             .overlay {
-                Text(self.example.sentence)
+                Text(self.sentence)
                     .font(.tujiBody)
                     .foregroundStyle(.tujiInk)
                     .multilineTextAlignment(.center)
@@ -56,30 +56,60 @@ struct ReviewListenCard: View {
                     // it breaks — without leaving a single letter legible.
                     // Enough to say "there is a sentence here", which is what
                     // makes the eye mean something.
-                    .blur(radius: self.coord.sentenceRevealed ? 0 : 12)
+                    .blur(radius: self.isLegible ? 0 : 12)
                     .animation(
                         self.reduceMotion ? .none : .easeOut(duration: 0.28),
-                        value: self.coord.sentenceRevealed
+                        value: self.isLegible
                     )
                     // Even blurred, the glyphs are still selectable/readable to
-                    // the system. Only the revealed sentence exists for
-                    // VoiceOver.
-                    .accessibilityHidden(!self.coord.sentenceRevealed)
+                    // the system. Only a legible sentence exists for VoiceOver.
+                    .accessibilityHidden(!self.isLegible)
             }
             .overlay(alignment: .bottomTrailing) { self.playButton.padding(Space.s3) }
             .overlay(alignment: .bottomLeading) { self.eyeButton.padding(Space.s3) }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(
-                self.coord.sentenceRevealed
-                    ? Text(self.example.sentence)
-                    : Text("例句（已遮蔽）")
+                self.isLegible ? Text(self.example.sentence) : Text("例句（已遮蔽）")
             )
             .accessibilityActions {
                 Button("再聽一次") { self.replay() }
-                if !self.coord.sentenceRevealed {
+                if !self.isLegible {
                     Button("顯示例句") { self.coord.revealSentence() }
                 }
             }
+    }
+
+    /// The sentence is readable once the answer is in, or once the eye bought
+    /// it. Answering removes the reason to hide it: from that moment the
+    /// sentence is study material, exactly like the answer on the reveal sheet,
+    /// and it costs nothing — `hinted` is only ever set by `revealSentence()`,
+    /// which refuses outside `.answer`.
+    private var isLegible: Bool {
+        self.coord.sentenceRevealed || self.coord.phase == .review
+    }
+
+    /// The sentence, with the word being asked about under a 螢光筆.
+    ///
+    /// Marked only while legible: highlighting under the blur would be a
+    /// coloured smudge that tells the reader which shape to guess at. It *is*
+    /// marked on the eye-reveal as well as after answering — that button
+    /// already costs the full wrong-answer rating table, and once the sentence
+    /// spells the word out, pointing at it leaks nothing further.
+    private var sentence: AttributedString {
+        let raw = self.example.sentence
+        guard self.isLegible,
+              let word = self.coord.current?.word.word,
+              let match = SentenceHighlight.range(of: word, in: raw)
+        else { return AttributedString(raw) }
+
+        var marked = AttributedString(String(raw[match]))
+        // 螢光筆, not a fill — the same gesture (and the same ink) the 詞塊 card
+        // uses on the word it is explaining. The text underneath has to stay
+        // readable through it.
+        marked.backgroundColor = .tujiBrandPrimary.opacity(0.45)
+        return AttributedString(String(raw[..<match.lowerBound]))
+            + marked
+            + AttributedString(String(raw[match.upperBound...]))
     }
 
     /// Always available, and unlimited. The clock stops being a stopwatch the

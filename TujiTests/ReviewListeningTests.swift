@@ -293,6 +293,68 @@ struct ReviewListeningTests {
         #expect(a?.map(\.id) == b?.map(\.id))
     }
 
+    // MARK: - Highlighting the word inside its sentence
+
+    private func marked(_ word: String, _ sentence: String) -> String? {
+        SentenceHighlight.range(of: word, in: sentence).map { String(sentence[$0]) }
+    }
+
+    @Test
+    func theHeadwordIsFoundInItsOwnSentence() {
+        #expect(self.marked("fork", "The fork is next to the plate.") == "fork")
+    }
+
+    @Test
+    func theMatchIgnoresCase() {
+        #expect(self.marked("highlighter", "Highlighter ink bleeds through.") == "Highlighter")
+    }
+
+    /// Ten sentences in the live corpus name the word in the plural. Stopping
+    /// at the singular leaves the last letter outside the highlighter, which
+    /// reads as a rendering bug rather than a decision.
+    @Test
+    func aPluralIsHighlightedWhole() {
+        #expect(self.marked("curtain", "Please open the curtains.") == "curtains")
+        #expect(self.marked("traffic cone", "The traffic cones mark the work area.") == "traffic cones")
+        #expect(self.marked("monitor", "I have two monitors at my desk.") == "monitors")
+    }
+
+    /// The reason the plural suffix is `s`/`es` and not "any trailing letters":
+    /// a loose rule points the highlighter at a different word entirely.
+    @Test
+    func aWordIsNeverHighlightedInsideALongerOne() {
+        #expect(self.marked("cup", "The cupboard is above the sink.") == nil)
+        #expect(self.marked("grate", "I bought a new grater.") == nil)
+    }
+
+    @Test
+    func aSecondOccurrenceIsFoundWhenTheFirstIsInsideAnotherWord() {
+        #expect(self.marked("cup", "The cupboard holds one cup.") == "cup")
+    }
+
+    /// Japanese has no word boundaries, so the Latin boundary rule must not be
+    /// applied to it — every kana neighbour is a letter, and requiring a
+    /// non-letter would reject every Japanese sentence there is.
+    @Test
+    func japaneseMatchesAsAPlainSubstring() {
+        #expect(self.marked("エアコン", "エアコンは寝室にあります。") == "エアコン")
+        #expect(self.marked("寝室", "エアコンは寝室にあります。") == "寝室")
+    }
+
+    /// About 1% of sentences never spell their headword. No highlight is the
+    /// right answer there — quieter than a wrong one.
+    @Test
+    func aSentenceThatNeverNamesTheWordGetsNoHighlight() {
+        #expect(self.marked("scanner", "Scan both sides of the document.") == nil)
+        #expect(self.marked("ベッド", "私は夜11時に寝ます。") == nil)
+    }
+
+    @Test
+    func anEmptyWordOrSentenceIsRefusedRatherThanMatchingEverything() {
+        #expect(self.marked("", "The fork is here.") == nil)
+        #expect(self.marked("fork", "") == nil)
+    }
+
     // MARK: - Rating
 
     private func listeningCoordinator(
