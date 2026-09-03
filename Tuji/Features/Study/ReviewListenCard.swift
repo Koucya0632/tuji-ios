@@ -234,14 +234,28 @@ struct ReviewImageChoices: View {
         }
     }
 
-    /// Reveal colours mirror `StudyOptionStyle`: the picked one goes teal when
-    /// it was right and alert when it was not, and a wrong pick also lights the
-    /// answer so the user sees what it was without leaving the question.
+    /// The frame, from the same verdict the MCQ rows use.
+    ///
+    /// Only the *decision* is shared. A photograph has no invert channel, so
+    /// where 選字 says 「這是答案」 with an ink block and 「你點了這個」 with the
+    /// frame, here the one frame has to carry both — which is why `.right` and
+    /// `.answer` land on the same colour rather than being told apart. The
+    /// mapping is this card's; the verdict is `StudyOptionState`'s, and used to
+    /// be re-derived here by comparing an option's *label* against the pick.
     private func border(_ option: ImageChoiceOption) -> Color {
-        guard self.coord.phase == .review else { return .clear }
-        let isAnswer = option.id == self.coord.current?.word.id
-        let isPicked = option.word == self.coord.picked
-        if isAnswer { return .tujiAccumulation }
-        return isPicked ? .tujiAlert : .clear
+        switch self.state(for: option) {
+        case .right, .answer: .tujiAccumulation
+        case .wrong: .tujiAlert
+        case .idle, .dim: .clear
+        }
+    }
+
+    private func state(for option: ImageChoiceOption) -> StudyOptionState {
+        StudyOptionState.forPicture(
+            optionId: option.id,
+            answerId: self.coord.current?.word.id ?? "",
+            pickedId: self.coord.picked?.id,
+            revealed: self.coord.phase == .review
+        )
     }
 }

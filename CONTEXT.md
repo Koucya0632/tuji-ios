@@ -62,7 +62,12 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   deliberately different, because a failed sync claiming 「還沒有卡片」 reads as data loss.
   **Loaded wins**: once rows are on screen a reload must not swap them for a spinner —
   the answer you already have beats the one you are re-fetching. `MyCollectionsVM` is on
-  the same rule (and coalesces the duplicate refresh that returning from 編輯合集 fires).
+  the same rule (and coalesces the duplicate refresh that returning from 編輯合集 fires),
+  and so is `PublicAtlasBrowsingModel.ShelfState.showsPlaceholder` — 物見's two shelves
+  used to answer it in the *View*, three lines apart, and the explore half had no
+  rows-present guard at all. It is the half that reloads most: a pending 物見 refresh
+  (what publishing a 合集 sets) arrives as `pendingForce`, not `forceReload`, so a full
+  shelf blanked to 「載入中…」 on the way back.
 - **公開圖鑑 (public atlas)** — items that entered review with a collection and passed
   the moderation gate, visible to everyone. The app has no separate per-item submission
   action; publishing a collection submits its private members as one batch.
@@ -600,8 +605,47 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   broke the former `StudyRepository ↔ StudyAnswerOutbox` cycle before it could block
   injection.
 
-## Study — the session's three modules
+## Study — the session's modules
 
+- **一題 (`ReviewQuestion`)** — one presentation of one card: what it asks (`kind` /
+  `example` / `imageOptions` / `ready`), what the user has done to it (`phase` /
+  `picked` / `wrongPicks` / `hinted` / `sentenceRevealed` / `replayCount`), and what
+  that adds up to (`suggested` / `rated` / `settled` / `payload(rating:…)`). It was 32
+  stored properties on `ReviewFlowCoordinator`, and `advance()` was a **16-assignment
+  reset** of them with three assertions behind it — so adding a question kind meant
+  adding state and remembering to clear it in a list nothing checked, which is how 聽句's
+  six fields came to sit beside 複習's cursor. **The reset is now a construction**:
+  `advance()` builds the next one and every field is at its start value because the
+  value is new. A value type with no beats, locks, audio or writes in it — the shape
+  `StudyLadder` already has. The coordinator keeps what outlives a card (queue cursor,
+  `retriedIds`, the session's 聽句 opt-out, the primed haptics, `AnswerBeat`, the writer)
+  and everything with a latency: **this decides, the coordinator performs**, which is
+  what lets the whole answering path run synchronously in a test.
+  - **答案只量一次 (`measuredElapsed`)** — the reading taken when the answer lands.
+    `resolve` refused to time an answer given before the clip ended while `applyRating`
+    recomputed it unconditionally 138 lines later, so the *suggestion* said nothing was
+    measured and the row written to SRS claimed a duration including the download, the
+    clip, the 600 ms reveal beat and the user's deliberation over three rating buttons.
+    Unmeasured now sends `nil` (`responseMs` was always `Int?`).
+  - **`settled`** — whether nothing will ask this word again, so the progress bar may
+    count it. One rule for three `passedCount += 1` sites under three conditions: a
+    re-test settles on resolve (it never requeues and is never rated), everything else
+    when a rating lands and only if it was right. `counted` keeps one rule from becoming
+    two counters; the *timing* of the count is deliberately unchanged.
+  - **沒有句子就不是聽句題** — `present` demotes to `.pickWord` itself rather than
+    trusting the caller's eligibility arithmetic to have ruled the combination out.
+- **`ReviewChoice`** — the option the user landed on: `id` (the catalogue word id, when
+  the option had one) + `label`. **A label is not an identity.** 選字's four options are
+  labels and `DistractorPool` guarantees they are distinct; 聽句's two pictures carry
+  ids, and two catalogue words *can* print the same string. `pickImage` said exactly
+  that in a doc comment and then handed on `option.word` alone, so
+  `ReviewImageChoices.border` drew 「你點了這個」 by comparing text — the comparison the
+  comment four lines above rules out. `reportedSelection` stays a `String`: that is copy
+  for 報錯, not identity.
+  `StudyOptionState.forPicture(optionId:answerId:pickedId:revealed:)` is the picture
+  half of the verdict, sharing `verdict(isAnswer:isPicked:)` with `forOption`. Only the
+  *decision* is shared — a photograph has no invert channel, so `.right` and `.answer`
+  land on one colour there and the mapping stays the card's.
 - **`StudySessionWrites`** — what a session does with an answer *after* the writer
   returns: track the task so the completion screen can drain it, fold the mastery
   delta, keep the milestone, count the parks. Both flows hold one. They used to hold
@@ -859,8 +903,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   死的，而那正是最需要點開看的時候。現在揭示表與 `WordDetailSheet` 都有 host。
   位置有講究：host 要放在 sheet 的**根**、而且在畫標題列的 shell **外面**——`.glossCard()`
   的遮罩是它所依附那層的 overlay，掛在 `TujiSheetShell` 的 content 裡會停在標題列下面，
-  讓 ✕ 在一張 modal 卡片底下還是亮的、還能按。所以 `ReviewHeroCard` 直接寫
-  `TujiSheetShell { … }.glossCard()`，沒有用 `.tujiSheet(…)` 這個便利函式。
+  讓 ✕ 在一張 modal 卡片底下還是亮的、還能按。這件事現在**由 `.tujiSheet(…)` 自己做**
+  （掛在 shell 外面），所以 sheet 那條路由結構保證，`ReviewHeroCard` 手寫
+  `TujiSheetShell { … }.glossCard()` 的理由消失了，已經收回去用便利函式。
   **同一個洞後來在物見的詳情頁又出現一次**（`AtlasPublicDetailView`，`AtlasSavedItemDetailView`
   也是走它）。那頁最容易被當成不適用：自製圖鑑的內容本來就沒有例句。但當一張照片的詞頭剛好
   也是目錄詞時，`/api/atlas/public/{slug}` 會把那個目錄詞的例句連同標註一起掛上去——所以那
@@ -872,6 +917,25 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   要求任何渲染例句的檔案都得有 `.glossCard()`，否則要列進腳本裡的 `HOSTED_BY_CALLER` 並寫
   下理由。它會剝掉註解才比對——四個談到 `.glossCard()` 的檔案裡有三個只是在散文裡提到它，
   照原文 grep 會讓每一個「寫下了規則但沒有遵守」的畫面過關。
+- **唸出來這件事 (`SpokenWord` / `SpeechPlaying`)** — 「這個字現在該播哪一段聲音」與
+  「播，並在播完時告訴我」是兩個問題，各有一個模組。
+  - **`SpokenWord`** — 要唸什麼（`text` / `language`），以及去哪裡找它的錄音
+    （`clips` 呼叫端手上有的，否則 `wordId` 問目錄）。`StudyQueueWord` **沒有**
+    `audioUrls`（佇列 payload 刻意精簡），所以每個學習畫面都得往目錄側身去拿——那個
+    `words.find(id:)?.audioUrls` 被寫了八次，而同一張卡片上相隔 28 行的兩個答案不一樣：
+    `RecognizeView.autoPlay` 會退回預抓的 detail，它底下那顆喇叭鍵不會。優先順序現在只
+    寫一次：呼叫端手上有的贏。`WordClipReading` 是那條讀取 seam（`CatalogueClips` 是實
+    作）。**詞塊刻意不帶 `wordId`**：`wordId` 是用原形對出來的，所以 `documents` 連到的
+    是 `document` 的錄音——跟音標那條規則同一個理由。
+  - **`SpeechPlaying`**（`SpeechPlayback`）— 原本叫 `ListeningAudio`、住在 `Core/Study`，
+    而且只有一個呼叫者。裡面沒有一行是聽句專屬的，**module 不該用它唯一的呼叫者命名**。
+    它與 `SpeechService.playback` 的不對稱是刻意的：`PronunciationButton` 要的是**狀態**
+    （播放時底色轉瞳黃），聽句要的是**事件**（await 到播完），照任一邊的形狀去設計服務，
+    就是讓另一邊用不到它的做法。
+  - **底色轉瞳黃是按 request id 判斷的**，不是全域旗標：service 是單例，複習的英雄卡上
+    就有一顆會唸出答案的喇叭鍵，全域旗標會讓一顆的 clip 點亮另一顆。這個洞從
+    `PronunciationButton` 上線起就記在它的檔頭裡，聽句那批工作讓它成立了、
+    `SpeechService` 的檔頭也宣告補上了——但沒有。
 - **StudyQueueProviding** — 1-method seam (`fetch(mode:)`) over `StudyQueueStore`, injected
   into `ReviewFlowCoordinator`. `fetchAnotherRound()` uses it for 再來一輪 so the view no
   longer reaches `StudyQueueStore.shared`; the view still spins up a fresh coordinator (a
@@ -921,11 +985,26 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     misses went with it: `shouldPersist` (`!isGuest`) was five hand-written lines in both
     the first-run picker and 設定's, and `FavoriteButton` guarded on `.signedIn` directly.
     `MainTabsView.user == nil` is deliberately **left**: that view is built on an explicit
-    `user` parameter threaded to 今天/我/`tujiNavDestinations`, and reading the environment
-    beside it would create a second source rather than remove one.
+    `user` parameter threaded to 我/`tujiNavDestinations`, and reading the environment
+    beside it would create a second source rather than remove one. It was threaded to 今天
+    too, and 今天 never read it — the parameter was referenced nowhere in `TodayView`'s
+    body, every identity question there going through this seam. Removed.
     `EditProfileView.sessionUser` also stays — it is the *edit form's* current values, so
     the nickname must arrive raw, where `displayName` would hand back the UID and the form
     would offer to save that as a nickname.
+  - **ViewerRelationship** — `.guest` / `.mine` / `.theirs`, derived from `isGuest` +
+    `owns(handle:)`. The seam answered "is this handle mine"; every consumer needed
+    "what may I do about this person's work" and recombined the two primitives itself —
+    物見詳情 spelled it `!isGuest && !owns` for 檢舉/封鎖 and `owns` alone for the
+    「你的分享」 pill three hundred lines later, and 作者主頁 kept a pair
+    (`isOwnProfile` / `canModerate`) whose third consumer went around both. **That cost a
+    live bug**: the nav bar branched on the route's `isSelf` alone, and every byline in
+    the app pushes `isSelf: false`, so reaching your own profile through one matched
+    neither arm and drew **no control at all**. A signed-in viewer is now always exactly
+    one of `.mine`/`.theirs`, which is what a `switch` can rely on. `isSelf` stays and
+    still has no default — it is the *route's* claim ("the caller opened this as my
+    page", which is also what makes the fetch bypass its caches), a different signal from
+    the UID compare; the union is stated once.
   - **LanguageContext** — `{ uiLang, learningDirection }`, conformed by `SettingsStore`.
     Injected into `LiveStudyRepository` (queue lang), `LiveAtlasRepository`
     (upload/recognize/confirm lang + learning) and `LiveCatalogRepository` (search only —

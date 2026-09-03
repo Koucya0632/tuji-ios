@@ -12,9 +12,9 @@ import Testing
 @testable import Tuji
 
 @MainActor
-private final class FakeListeningAudio: ListeningAudio {
+private final class FakeSpeechPlaying: SpeechPlaying {
     var playable = true
-    var outcome: ListeningPlayback = .finished
+    var outcome: SpeechPlayback = .finished
     private(set) var plays: [String?] = []
     /// Set to hold `play` open so a test can answer mid-sentence.
     var gate: CheckedContinuation<Void, Never>?
@@ -39,7 +39,7 @@ private final class FakeListeningAudio: ListeningAudio {
         voice _: SpeechService.Voice,
         rate: Float
     ) async
-        -> ListeningPlayback
+        -> SpeechPlayback
     {
         self.plays.append(urlString)
         self.rates.append(rate)
@@ -374,7 +374,7 @@ struct ReviewListeningTests {
     // MARK: - Rating
 
     private func listeningCoordinator(
-        audio: FakeListeningAudio,
+        audio: FakeSpeechPlaying,
         writer: ListenAnswerSpy
     ) throws
         -> ReviewFlowCoordinator
@@ -395,7 +395,7 @@ struct ReviewListeningTests {
     /// coin flip, so it must not take the path that writes 熟練 with no sheet.
     @Test
     func aFastCorrectListeningAnswerStillRaisesTheSheet() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
@@ -415,7 +415,7 @@ struct ReviewListeningTests {
     /// that keeps it off the auto-rate path (ADR-0014).
     @Test
     func aWrongListeningAnswerStillResolvesOnTheFirstTap() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         try #require(coord.kind == .hearSentence)
@@ -432,7 +432,7 @@ struct ReviewListeningTests {
 
     @Test
     func theClockOnlyStartsWhenTheSentenceEnds() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         audio.holdsPlayback = true
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
 
@@ -451,7 +451,7 @@ struct ReviewListeningTests {
     /// button must not double as a way to reset the stopwatch.
     @Test
     func aReplayDoesNotResetTheClock() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         let started = coord.startedAt
@@ -467,7 +467,7 @@ struct ReviewListeningTests {
     /// time (ADR-0014).
     @Test
     func slowPlaybackIsAReplayAndDoesNotResetTheClock() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         let started = coord.startedAt
@@ -481,7 +481,7 @@ struct ReviewListeningTests {
 
     @Test
     func theAutomaticFirstPlayIsAlwaysFullSpeed() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         #expect(audio.rates == [1])
@@ -490,7 +490,7 @@ struct ReviewListeningTests {
 
     @Test
     func aNormalReplayStaysAtFullSpeed() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         await coord.replaySentence(voice: .us)
@@ -504,7 +504,7 @@ struct ReviewListeningTests {
     /// question they just said they cannot hear.
     @Test
     func optingOutConvertsTheCardInFrontOfYouToo() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         try #require(coord.kind == .hearSentence)
@@ -519,7 +519,7 @@ struct ReviewListeningTests {
 
     @Test
     func optingOutSilencesTheRestOfTheSession() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         coord.optOutOfListening()
@@ -534,7 +534,7 @@ struct ReviewListeningTests {
     /// only one of them shows you the answer.
     @Test
     func optingOutIsNotAHint() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         coord.optOutOfListening()
@@ -553,7 +553,7 @@ struct ReviewListeningTests {
     /// listening-only metadata must stop being sent with it.
     @Test
     func optingOutRestartsTheClockAndDropsListeningMetadata() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
@@ -582,7 +582,7 @@ struct ReviewListeningTests {
     /// that quietly selected itself.
     @Test
     func everyLaterAnswerInTheSessionCarriesTheOptOut() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let spy = ListenAnswerSpy()
         let coord = try ReviewFlowCoordinator(
             queue: makeQueue(),
@@ -626,7 +626,7 @@ struct ReviewListeningTests {
     /// claim anything about a feature it never met.
     @Test
     func anOrdinarySessionSendsNeitherFlag() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
@@ -641,7 +641,7 @@ struct ReviewListeningTests {
 
     @Test
     func optingOutDoesNothingOnAPickWordCard() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
         try #require(coord.kind == .pickWord)
@@ -652,7 +652,7 @@ struct ReviewListeningTests {
 
     @Test
     func liftingTheBlurCostsTheSameAsTheHintFlip() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
 
@@ -667,7 +667,7 @@ struct ReviewListeningTests {
 
     @Test
     func thePayloadCarriesListeningAndItsMetadata() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         audio.outcome = .fallback
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
@@ -691,7 +691,7 @@ struct ReviewListeningTests {
     /// That card takes 選字 rather than a question it cannot ask honestly.
     @Test
     func offlineFallsBackToPickWord() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
 
@@ -702,7 +702,7 @@ struct ReviewListeningTests {
 
     @Test
     func aListeningCardDoesNotOfferTheEightSecondNudge() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         #expect(!coord.canNudge)
@@ -714,7 +714,7 @@ struct ReviewListeningTests {
     /// be a listening question.
     @Test
     func nothingIsDrawnBeforeTheQuestionIsDecided() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         audio.holdsPlayback = true
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         #expect(!coord.questionReady)
@@ -732,7 +732,7 @@ struct ReviewListeningTests {
 
     @Test
     func aPickWordCardIsAlsoMarkedReady() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
         #expect(coord.kind == .pickWord)
@@ -744,7 +744,7 @@ struct ReviewListeningTests {
     /// audio, and leaving has to say so explicitly.
     @Test
     func leavingStopsTheSentence() async throws {
-        let audio = FakeListeningAudio()
+        let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         try #require(coord.kind == .hearSentence)

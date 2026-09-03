@@ -371,7 +371,7 @@ private struct ReviewQuestionView: View {
         StudyChoiceList(
             item: self.item,
             variant: self.coord.choicesVariant(for: self.item),
-            picked: self.coord.picked,
+            picked: self.coord.picked?.label,
             revealed: self.coord.phase == .review,
             wrongPicks: self.coord.wrongPicks
         ) { self.coord.pick($0) }

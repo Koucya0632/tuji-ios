@@ -20,9 +20,6 @@ struct WordCommunityAtlasSection: View {
 
     @State private var items: [AtlasPublicItem] = []
     @State private var loaded = false
-    /// Slugs saved during this session — the list endpoint is public and
-    /// therefore can't carry a per-user saved flag.
-    @State private var savedSlugs: Set<String> = []
 
     @Environment(BlockStore.self) private var blocks
     @Environment(TabNavigator.self) private var navigator
@@ -110,12 +107,16 @@ struct WordCommunityAtlasSection: View {
                         .lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                // Saving here uses the consumption quota, not the user's 自製
-                // 圖鑑 capacity (../docs/COMMUNITY_ATLAS_PLAN.md §4.1 —
-                // FEATURES.md §12.1).
-                Image(systemName: self.savedSlugs.contains(item.slug) ? "bookmark.fill" : "bookmark")
-                    .font(.tujiIcon(11, weight: .bold))
-                    .foregroundStyle(.tujiCurrent)
+                // No 收藏 marker here. There was one, and it could never fill:
+                // it read a `savedSlugs` set that nothing in the repo ever
+                // wrote to. The list endpoint is public and carries no per-user
+                // saved flag, this section has no save action of its own, and
+                // saving from the detail it pushes reports back through no
+                // channel — `CollectionBookmarkStore` broadcasts 合集
+                // bookmarks, not items. So the glyph promised a state it had no
+                // way to reach, on a tile whose whole affordance is "tap to
+                // open". Giving it a real one means an item-level broadcast,
+                // which is a feature rather than a repair.
             }
             .padding(.horizontal, Space.s2)
             .padding(.vertical, Space.s2)

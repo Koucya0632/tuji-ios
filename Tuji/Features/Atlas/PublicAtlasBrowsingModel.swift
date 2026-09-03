@@ -34,6 +34,23 @@ final class PublicAtlasBrowsingModel {
             if case let .failed(message) = self.phase { return message }
             return nil
         }
+
+        /// Whether the screen should show a placeholder instead of rows.
+        ///
+        /// **Loaded wins**: once rows are on screen a reload must not swap them
+        /// for a spinner — the answer you already have beats the one you are
+        /// re-fetching. `AtlasShelfModel.state` and `MyCollectionsVM` are both
+        /// on this rule and say so; the two shelves here answered it in the
+        /// *View*, three lines and one guard apart, and the explore half had no
+        /// guard at all.
+        ///
+        /// Explore is the half that reloads most: a pending 物見 refresh — what
+        /// publishing a 合集 sets — arrives as `pendingForce`, not
+        /// `forceReload`, so `loadExplore` marked the shelf `.loading` and
+        /// blanked a full screen of rows to 「載入中…」 on the way back.
+        var showsPlaceholder: Bool {
+            self.phase == .loading && self.collections.isEmpty
+        }
     }
 
     // Raw is what the server sent; the published shelves are that minus the

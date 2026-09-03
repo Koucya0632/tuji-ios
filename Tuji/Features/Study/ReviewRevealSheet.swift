@@ -34,7 +34,6 @@ struct ReviewRevealSheet: View {
     let item: StudyQueueItem
 
     @Environment(SettingsStore.self) private var settings
-    @Environment(WordsStore.self) private var words
 
     @State private var summaryHeight: CGFloat?
     @State private var ratingHeight: CGFloat?
@@ -138,8 +137,7 @@ struct ReviewRevealSheet: View {
         WordSummaryRow(
             word: self.item.word,
             wordId: self.item.word.id,
-            gloss: self.settings.current.showZh ? self.item.word.chinese : nil,
-            audioUrls: self.words.find(id: self.item.word.id)?.audioUrls
+            gloss: self.settings.current.showZh ? self.item.word.chinese : nil
         )
     }
 

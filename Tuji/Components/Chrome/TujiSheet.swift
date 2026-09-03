@@ -30,6 +30,23 @@ extension View {
     {
         self.sheet(isPresented: isPresented) {
             TujiSheetShell(title: title, height: height, content: content)
+                // The 詞塊 card, hosted here rather than left to each caller.
+                //
+                // A sheet is its own presentation layer, so a host on the
+                // screen underneath renders *behind* it — which is why this
+                // cannot be done once at the app root, and why every sheet that
+                // shows an example sentence needed its own line. It was missed
+                // twice (複習's reveal sheet, 物見's item detail) and the second
+                // one had live annotated data sitting under dead text for weeks.
+                //
+                // **Outside the shell, not inside the content closure.** The
+                // card's scrim is an overlay on the layer it attaches to, so
+                // hosting it within `TujiSheetShell` stops it at the title bar
+                // and leaves the ✕ lit and tappable under a modal card. That
+                // placement is the one thing `scripts/check-gloss-host.py`
+                // cannot see, and the reason two callers hand-rolled this shell
+                // rather than use this convenience.
+                .glossCard()
         }
     }
 }

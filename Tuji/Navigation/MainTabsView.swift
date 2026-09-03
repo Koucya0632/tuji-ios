@@ -121,7 +121,10 @@ struct MainTabsView: View {
         switch tab {
         case .today:
             NavigationStack(path: self.$navigator.todayPath) {
-                TodayView(user: self.user)
+                // No `user:` — 今天 reads every identity question through
+                // `ViewerIdentity`, and the parameter it was still being handed
+                // was referenced nowhere in its body.
+                TodayView()
                     .tujiNavDestinations(user: self.user)
                     .tracksStackRoot(self.binding(for: .today))
             }

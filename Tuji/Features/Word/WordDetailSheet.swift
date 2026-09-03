@@ -27,7 +27,8 @@ struct WordDetailSheet: View {
     let word: any Headworded
     let wordId: String
     let gloss: String
-    let audioUrls: [String: String]?
+    /// Clips the caller already holds; the catalogue answers when it has none.
+    var audioUrls: [String: String]?
 
     var body: some View {
         ScrollView {
