@@ -16,6 +16,17 @@ struct StudyQueueWord: Decodable, Hashable, Identifiable {
     let readingSegments: [FuriganaSegment]?
     let targetLanguage: TargetLanguage?
     let category: String
+    /// The 釋義 — the explanatory sentence the detail page prints under the
+    /// headline, in the reader's own language. 複習's 求救提示 turns the picture
+    /// over to this rather than to `chinese`, which for a zh reader is the
+    /// answer translated (水桶) rather than a hint.
+    ///
+    /// Optional twice over: the catalogue does not have one for every word, and
+    /// the server deliberately withholds it when it would only repeat the gloss
+    /// (lib/study-hint.ts) — the case where the gloss *is* the definition,
+    /// written in the language being tested. So `nil` is the ordinary state,
+    /// not a decoding failure, and the hint falls back to the gloss.
+    let definition: String?
 
     var imageURL: URL? {
         URL(string: self.imageUrl)
@@ -168,7 +179,10 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
     /// Present for durable replays so the server can reject a request if the
     /// access token changed accounts while the replay was in flight.
     var ownerUserId: UUID?
-    /// The user asked for the gloss before answering (複習's 求救提示). Optional
+    /// The user turned the picture over before answering (複習's 求救提示).
+    /// What they read there is the 釋義 or the gloss depending on the word; what
+    /// this records is that they asked, which is the part the rating cares
+    /// about (ADR-0007). Optional
     /// so answers parked on disk by an older build still decode — a new
     /// non-optional key would fail every one of them.
     let hinted: Bool?

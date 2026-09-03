@@ -9,7 +9,7 @@
 // and the writer.
 //
 // Per card:
-//   .answer — the user may flip the image over for the gloss (求救提示, see
+//   .answer — the user may flip the image over for the 釋義 (求救提示, see
 //     `toggleHint`), then picks among the 4 MCQ choices. In 看圖選字 a wrong
 //     option is only *ruled out* — marked, taken out of play, question still
 //     open — so the item resolves on the pick that lands, down one of three

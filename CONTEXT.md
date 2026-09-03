@@ -872,8 +872,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   渲染成空的話 `.task` 永遠不跑，於是題型永遠不會被決定、骨架變成永久的（`.task` 需要一個
   真的畫得出來的 view，這個 repo 已經踩過一次）。骨架也刻意對兩種題型長得一樣——一個已經長
   得像聽句的骨架，等於用比較小的音量把它要防的那件事講出來。
-- **求救提示 (hint flip)** — the face 複習's hero turns over to: the gloss, and **only** the
-  gloss. `reading` and `pronunciation` are both on the payload and neither may appear there —
+- **求救提示 (hint flip)** — the face 複習's hero turns over to: the **釋義** (`HintFace`), the
+  explanatory sentence the detail page prints under the headline, falling back to the gloss for
+  a word that has none. The gloss alone is what it showed for its whole life, and for a zh
+  reader that is the answer *translated* — 水桶 — so the flip gave away as much as it taught;
+  附提把、開口朝上的圓柱形容器 is a hint. Which of the two a card gets is not decided here: the
+  server sends a 釋義 only when it says something the gloss does not (lib/study-hint.ts), and
+  that equality is exactly monolingual study, where the 釋義 is written in the language being
+  tested. **The de-dupe rule and the leak rule are one rule**, so the client does not re-derive
+  it from uiLang × target — a rule stated in two places is a rule that can disagree with itself.
+  `reading` and `pronunciation` are both on the payload and neither may appear there —
   a kana headword's 振假名 is itself and an IPA line is the word read aloud, so either one
   turns the hint into a skip. Asking for it is the user reporting they could not retrieve the
   word, so it is **sticky within the presentation** (flipping back does not un-see it) and it
@@ -886,7 +894,8 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   tap is not that. It is also the one rule in `pick()` that is stated nowhere in `pick()`:
   capping the suggestion at 困難 is what switches the auto-rate path off, because that path
   requires a suggestion other than 困難.
-- **看完整詳情 — 提示面上的第二次點擊。** 翻面那一**面**仍然只有釋義，上面那條規則沒有變；
+- **看完整詳情 — 提示面上的第二次點擊。** 翻面那一**面**仍然只有一行意思（現在是釋義本身，
+  但仍然是那一行），上面那條規則沒有變；
   變的是那一面現在有一個明說的出口，點下去用 `WordDetailSheet` 從下方升起完整詳情——單字
   本體、讀音、字詞資料、例句都在裡面。**代價刻意不變**：能按到這顆鍵的人已經翻過面，該題
   早就套上答錯的評分表、自動評級也早就關了，再疊一層懲罰只會把人逼回亂猜（ADR-0007 那句
