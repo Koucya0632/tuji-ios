@@ -20,6 +20,12 @@ private final class FakeListeningAudio: ListeningAudio {
     var gate: CheckedContinuation<Void, Never>?
     var holdsPlayback = false
 
+    private(set) var stopped = 0
+
+    func stop() {
+        self.stopped += 1
+    }
+
     func canPlay(_ urlString: String?, online: Bool) -> Bool {
         guard urlString != nil else { return false }
         return self.playable && online
@@ -442,6 +448,20 @@ struct ReviewListeningTests {
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
         #expect(coord.kind == .pickWord)
         #expect(coord.questionReady, "a 選字 card must not sit behind the skeleton forever")
+    }
+
+    /// `awaitTerminal` is built on `withCheckedContinuation`, which ignores
+    /// task cancellation — so cancelling the view's `.task` does not reach the
+    /// audio, and leaving has to say so explicitly.
+    @Test
+    func leavingStopsTheSentence() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        try #require(coord.kind == .hearSentence)
+
+        coord.cancelPendingBeats()
+        #expect(audio.stopped == 1)
     }
 
     /// Answering before the sentence ends leaves nothing timed. The suggestion

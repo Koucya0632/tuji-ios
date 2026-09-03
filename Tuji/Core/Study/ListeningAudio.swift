@@ -37,6 +37,11 @@ protocol ListeningAudio {
 
     /// Play, and return when the audio ends.
     func play(_ urlString: String?, text: String, voice: SpeechService.Voice) async -> ListeningPlayback
+
+    /// Cut playback off. Leaving 複習 mid-sentence must not narrate the screen
+    /// the user went to instead — and 聽句 auto-plays, so unlike the
+    /// pronunciation button this is audio nobody asked to start.
+    func stop()
 }
 
 /// The real one: `SpeechService` for playback and the on-disk clip cache.
@@ -48,6 +53,10 @@ struct LiveListeningAudio: ListeningAudio {
         guard let urlString, !urlString.isEmpty else { return false }
         // Cached beats connected: a clip already on disk plays on a plane.
         return self.speech.hasCachedClip(for: urlString) || online
+    }
+
+    func stop() {
+        self.speech.stop()
     }
 
     func play(

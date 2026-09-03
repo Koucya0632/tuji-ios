@@ -74,7 +74,12 @@ struct ReviewFlowView: View {
             self.studyFocus.enter()
             AnalyticsService.shared.track(.studyStart, category: "review")
         }
-        .onDisappear { self.studyFocus.exit() }
+        // Not only the 先離開 prompt: a swipe-back, a deep link, anything that
+        // removes this view has to take the sentence with it.
+        .onDisappear {
+            self.studyFocus.exit()
+            self.coord.cancelPendingBeats()
+        }
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)
         }

@@ -516,10 +516,17 @@ final class ReviewFlowCoordinator {
         self.beats.schedule(after: delay) { self.advance() }
     }
 
-    /// Drops every advance still waiting. 先離開 calls this before dismissing;
-    /// without it the beat outlives the screen (see `pendingBeats`).
+    /// Drops everything this session still has in flight, and is what leaving
+    /// calls. Without it the beat outlives the screen (see `pendingBeats`) —
+    /// and, since 聽句 auto-plays, so does the sentence: walking out mid-clip
+    /// used to narrate whichever screen the user went to instead.
+    ///
+    /// `awaitTerminal` is built on `withCheckedContinuation`, which is not
+    /// cancellation-aware, so cancelling the view's `.task` does **not** reach
+    /// the audio. It has to be told.
     func cancelPendingBeats() {
         self.beats.cancelAll()
+        self.audio.stop()
     }
 
     private func advance() {
