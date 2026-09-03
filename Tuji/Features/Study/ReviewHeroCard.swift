@@ -2,7 +2,8 @@
 // Split from ReviewFlowView for file size, like ReviewRevealSheet; all state
 // lives on the coordinator, so this file holds presentation only.
 //
-// 求救提示 (hint flip) — tapping the picture turns it over to the gloss. The
+// 求救提示 (hint flip) — tapping the picture turns it over to the 釋義, or to
+// the gloss for a word that has none (`HintFace`). The
 // affordance is deliberately invisible: nothing is drawn on the card, and a
 // stalled item offers one line after `nudgeDelay` instead. VoiceOver does not
 // inherit that choice — it gets an explicit custom action, because a user who
@@ -124,7 +125,7 @@ struct ReviewHeroCard: View {
             .accessibilityElement()
             // The label follows the face, so triggering the actions below
             // actually says something.
-            .accessibilityLabel(up ? Text(self.item.word.chinese) : Text("這個是什麼？"))
+            .accessibilityLabel(up ? Text(HintFace(self.item.word).text) : Text("這個是什麼？"))
             // `.accessibilityElement()` ignores its children, so the button drawn
             // on the hint face does not exist for VoiceOver unless it is offered
             // here as well.
@@ -143,26 +144,39 @@ struct ReviewHeroCard: View {
         )
     }
 
-    /// Gloss only. `reading` and `pronunciation` are both on the payload and
-    /// neither may come here: a kana headword's 振假名 is itself, and an IPA
-    /// line is the word read aloud — either one turns the hint into a skip.
+    /// The 釋義 when the word has one, else the gloss — `HintFace` decides, and
+    /// says why the client does not second-guess the server about it.
+    ///
+    /// `reading` and `pronunciation` are both on the payload and neither may
+    /// come here: a kana headword's 振假名 is itself, and an IPA line is the word
+    /// read aloud — either one turns the hint into a skip.
     ///
     /// That rule is about the *face*. `detailButton` is the way past it, and it
     /// is a separate, deliberate tap that lands in a sheet — the difference
     /// between reading the answer and choosing to look it up.
     private var hintFace: some View {
         VStack(spacing: Space.s4) {
-            Text(self.item.word.chinese)
-                .font(.tujiH2)
-                .foregroundStyle(.tujiInk)
-                .multilineTextAlignment(.center)
-                .lineLimit(4)
-                .minimumScaleFactor(0.6)
+            // A sentence and a word do not set the same way: the gloss keeps the
+            // headline it has always had, while a 釋義 at that size would fill
+            // the card and shrink itself illegible under `minimumScaleFactor`.
+            switch HintFace(self.item.word) {
+            case let .gloss(text): self.hintText(text, font: .tujiH2, lines: 4)
+            case let .definition(text): self.hintText(text, font: .tujiBody, lines: 6)
+            }
             if self.canOpenDetail {
                 self.detailButton
             }
         }
         .padding(.horizontal, Space.s5)
+    }
+
+    private func hintText(_ text: String, font: Font, lines: Int) -> some View {
+        Text(text)
+            .font(font)
+            .foregroundStyle(.tujiInk)
+            .multilineTextAlignment(.center)
+            .lineLimit(lines)
+            .minimumScaleFactor(0.6)
     }
 
     /// Only while the item is unanswered — the same window `toggleHint()` allows
