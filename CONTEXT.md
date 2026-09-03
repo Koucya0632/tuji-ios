@@ -683,6 +683,19 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   **`study_logs.metadata.hinted` 跨題型比較不是同一把尺**。眼睛也**從頭就顯示**，這和 MCQ
   刻意隱形的提示（`ReviewHeroCard`：the affordance is deliberately invisible，卡 8 秒才長
   出一行）方向相反：那 8 秒是用來補償入口看不見的，這裡沒有要補償的東西。
+- **答完之後模糊自動消失，而且目標詞上一道螢光筆。** 解模糊在作答階段要付 `hinted`，答完之
+  後不用——`hinted` 只由 `revealSentence()` 設定，而它 `guard phase == .answer`。答案已經給
+  了，句子從那一刻起就是教材，跟揭示表上的答案同一個身分。螢光筆的位置是
+  **在裝置上用字串比對算的，不是用 spans**——這一條和 `mentionedWordIds` 的理由剛好相反，所
+  以是量過才決定的：對現行語料，字串比對 en 939/952、ja 945/952，而 span 的 `word_id` 只有
+  en 838/952、ja 894/952（span 只在原形解析成功、且那句有標註時才帶 id，而有一批現行例句根
+  本沒有 span 列）。**用伺服器要多一次部署，命中率還更低。** 比對規則有兩個非做不可的地
+  方：拉丁字要求詞邊界，否則 `cup` 會在 `cupboard` 裡亮起來；但**日文不能套這條**，假名漢
+  字都是 letter，要求非 letter 鄰居等於拒絕每一個日文句子。以及吃掉 `s`/`es` 複數字尾——語
+  料裡有十句用複數指涉那個詞（`curtains`、`traffic cones`、`monitors`），只標單數會少一個
+  字母、看起來像畫錯而不像決定；字尾**只吃 `s`/`es`，不吃「任意結尾字母」**，寬鬆版會把
+  `grate` 撐成 `grater`。剩下約 1% 的句子根本沒寫出那個詞（`scanner` 對「Scan both
+  sides」、`ベッド` 對「夜11時に寝ます」），那些不標：**沒有螢光筆比標錯地方安靜。**
 - **哪一句由熟練度決定；分階就是全部的變化。** 主詞條的例句是**成對**授權的
   （`lib/main-word-example-pairs.ts`：`cefrLevel: "A2"` / `"B1"`，
   `validateMainWordExampleCoverage` 兩個方向都檢查），而線上資料是乾淨的全覆蓋：
