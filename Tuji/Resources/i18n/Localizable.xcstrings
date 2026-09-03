@@ -5237,13 +5237,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Learn new words"
+            "value" : "New words"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "新しい単語を学ぶ"
+            "value" : "新出単語"
           }
         },
         "zh-Hans" : {
@@ -15973,13 +15973,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap Learn to meet new words, and Review to revisit ones you're about to forget."
+            "value" : "Tap New words to meet new vocabulary, and Review to revisit ones you're about to forget."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "「新しい単語を学ぶ」で新出単語を覚え、「復習」で忘れかけた単語を復習しましょう。"
+            "value" : "「新出単語」で新しい単語を覚え、「復習」で忘れかけた単語を復習しましょう。"
           }
         },
         "zh-Hans" : {

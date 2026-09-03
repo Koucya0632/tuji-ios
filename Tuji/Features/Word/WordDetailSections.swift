@@ -189,9 +189,9 @@ struct WordDetailSections: View {
                 .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk)
             }
-            // The Chinese explainer stays plain on purpose: glossing Chinese
-            // for a Chinese reader teaches nothing, and a ja/en interface never
-            // renders this line at all.
+            // The explainer stays plain on purpose: it is written in the
+            // reader's own language — the zh 釋義 for a zh reader, the stored
+            // ja explanation for a ja one — and glossing that teaches nothing.
             if self.settings.current.showZh,
                let chineseDef,
                !chineseDef.isEmpty
