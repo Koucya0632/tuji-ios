@@ -21,8 +21,6 @@
 import SwiftUI
 
 struct TodayView: View {
-    let user: SessionUser?
-
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
     @Environment(LocalCache.self) private var cache
@@ -622,7 +620,7 @@ private struct HeroPillStyle: ButtonStyle {
 
 #Preview("Signed in") {
     NavigationStack {
-        TodayView(user: SessionUser.todayPreview)
+        TodayView()
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(LocalCache.shared)
@@ -636,7 +634,7 @@ private struct HeroPillStyle: ButtonStyle {
 
 #Preview("Guest") {
     NavigationStack {
-        TodayView(user: nil)
+        TodayView()
             .environment(WordsStore.shared)
             .environment(CategoriesStore.shared)
             .environment(LocalCache.shared)

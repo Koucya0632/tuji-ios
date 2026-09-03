@@ -35,14 +35,27 @@ struct AtlasAuthorProfileView: View {
     /// assigned and immutable, so two accounts cannot collide, and the worst a
     /// stale local value can do is show the menu — exactly today's behaviour.
     private var isOwnProfile: Bool {
-        self.vm.isSelf || self.auth.owns(handle: self.vm.handle)
+        self.relationship == .mine
+    }
+
+    /// What the viewer is to this page.
+    ///
+    /// The route's `isSelf` and the UID comparison are two different signals on
+    /// purpose — `isSelf` says "the caller opened this as *my* page", which is
+    /// also what makes the fetch bypass its caches, while `owns` compares the
+    /// server-assigned UID. Neither alone is the whole answer, so the union is
+    /// stated once, here, and every control below reads it rather than picking
+    /// one of the two.
+    private var relationship: ViewerRelationship {
+        if self.vm.isSelf { return .mine }
+        return self.auth.relationship(toAuthor: self.vm.handle) ?? .theirs
     }
 
     /// Guests have no account to report or block *with*, and both endpoints
     /// require auth — offering an action that can only 401 is worse than not
     /// offering it.
     private var canModerate: Bool {
-        !self.auth.isGuest && !self.isOwnProfile
+        self.relationship == .theirs
     }
 
     /// Only ever on someone else's page — there is nothing to protect yourself
@@ -84,10 +97,13 @@ struct AtlasAuthorProfileView: View {
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back) {
-                if self.vm.isSelf {
-                    self.editButton
-                } else if self.canModerate {
-                    self.moderationMenu
+                // `isOwnProfile`, not `vm.isSelf`: every byline in the app
+                // pushes `isSelf: false`, so arriving at your own page that
+                // way used to match neither arm and leave the bar empty.
+                switch self.relationship {
+                case .mine: self.editButton
+                case .theirs: self.moderationMenu
+                case .guest: EmptyView()
                 }
             }
             self.scroll

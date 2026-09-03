@@ -180,4 +180,69 @@ struct ViewerIdentityTests {
     func aMissingPhotoIsTheDefaultAvatar() {
         #expect(AuthState.signedIn(self.user(avatar: nil)).authorRef?.avatar == AtlasAuthorRef.defaultAvatar)
     }
+
+    // MARK: - ViewerRelationship
+
+    /// A stub rather than `AuthState`: the relationship is a protocol extension
+    /// derived from `isGuest` and `owns(handle:)`, so what is worth pinning is
+    /// that derivation — any conformer gets the same three answers.
+    private struct Viewer: ViewerIdentity {
+        var isGuest = false
+        var ownedHandle: String?
+
+        var uid: String? {
+            self.ownedHandle
+        }
+
+        func owns(handle: String) -> Bool {
+            guard let ownedHandle, !handle.isEmpty else { return false }
+            return ownedHandle.caseInsensitiveCompare(handle) == .orderedSame
+        }
+
+        func displayName(fallback: String) -> String {
+            fallback
+        }
+
+        var authorRef: AtlasAuthorRef? {
+            nil
+        }
+    }
+
+    @Test
+    @MainActor
+    func theRelationshipIsMineTheirsOrGuest() {
+        let me = Viewer(ownedHandle: "TJ12345678")
+        #expect(me.relationship(toAuthor: "TJ12345678") == .mine)
+        #expect(me.relationship(toAuthor: "tj12345678") == .mine, "the UID compare is case-insensitive")
+        #expect(me.relationship(toAuthor: "TJ87654321") == .theirs)
+
+        let guest = Viewer(isGuest: true, ownedHandle: nil)
+        #expect(guest.relationship(toAuthor: "TJ12345678") == .guest)
+    }
+
+    /// A public item whose byline never resolved is nothing to anybody — which
+    /// is what the empty-handle guards each screen carried already meant.
+    @Test
+    @MainActor
+    func thereIsNoRelationshipWithoutAnAuthor() {
+        let me = Viewer(ownedHandle: "TJ12345678")
+        #expect(me.relationship(toAuthor: nil) == nil)
+        #expect(me.relationship(toAuthor: "") == nil)
+    }
+
+    /// The bug this exists to make unrepresentable: a signed-in viewer is
+    /// always exactly one of `.mine` or `.theirs`, so a screen that branches on
+    /// the relationship cannot fall through both arms and draw nothing. The nav
+    /// bar on 作者主頁 did, for anyone who arrived through a byline — every
+    /// byline in the app pushes `isSelf: false`.
+    @Test
+    @MainActor
+    func aSignedInViewerIsAlwaysOneOrTheOther() {
+        let me = Viewer(ownedHandle: "TJ12345678")
+        for handle in ["TJ12345678", "TJ87654321"] {
+            let relationship = me.relationship(toAuthor: handle)
+            #expect(relationship == .mine || relationship == .theirs)
+            #expect(relationship != .guest)
+        }
+    }
 }

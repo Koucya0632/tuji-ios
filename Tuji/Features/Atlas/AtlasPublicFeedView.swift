@@ -457,14 +457,21 @@ struct AtlasPublicDetailView: View {
         ))
     }
 
+    /// What the viewer is to this item. One answer for both the moderation
+    /// controls and the 「你的分享」 pill, which used to be two computed
+    /// properties three hundred lines apart with different guards — the pill's
+    /// asked `owns` alone.
+    private var relationship: ViewerRelationship? {
+        self.auth.relationship(toAuthor: self.vm.item.author?.handle)
+    }
+
     /// Blocking is keyed by the immutable TJ-UID, so an item whose author never
     /// resolved simply offers no block action rather than a broken one — and an
     /// item of your own offers none either, since blocking yourself would hide
     /// your own 圖鑑 from you.
     private var authorHandle: String? {
-        guard let handle = self.vm.item.author?.handle, !handle.isEmpty else { return nil }
-        guard !self.auth.isGuest, !self.auth.owns(handle: handle) else { return nil }
-        return handle
+        guard self.relationship == .theirs else { return nil }
+        return self.vm.item.author?.handle
     }
 
     var body: some View {
@@ -511,17 +518,24 @@ struct AtlasPublicDetailView: View {
                 // reader's own decision about everything by this author. They
                 // answer different needs, so they sit together.
                 if let handle = self.authorHandle {
+                    // `BlockAction`'s copy, not a third spelling of it. This
+                    // screen used to write its own 「已封鎖這位作者」 — a string
+                    // that exists nowhere in the module — and disable the
+                    // button, so a reader who had blocked someone could undo it
+                    // on 作者主頁 and nowhere else. The module's own header
+                    // names this exact drift; only one of its two callers had
+                    // been moved.
+                    let block = BlockAction(isBlocked: self.blocks.isBlocked(handle))
                     Button {
                         self.showBlockPrompt = true
                     } label: {
-                        Text(self.blocks.isBlocked(handle) ? "已封鎖這位作者" : "封鎖這位作者")
+                        Text(block.controlLabel)
                             .font(.tujiLabel)
                             .foregroundStyle(.tujiInk3)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, Space.s2)
                     }
                     .buttonStyle(.plain)
-                    .disabled(self.blocks.isBlocked(handle))
                 }
             }
             .padding(Space.s4)
@@ -723,8 +737,7 @@ struct AtlasPublicDetailView: View {
     }
 
     private var isOwnItem: Bool {
-        guard let handle = self.vm.item.author?.handle else { return false }
-        return self.auth.owns(handle: handle)
+        self.relationship == .mine
     }
 }
 

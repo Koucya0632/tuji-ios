@@ -20,6 +20,31 @@
 
 import Foundation
 
+/// What the viewer is to a piece of someone's work.
+///
+/// Every moderation affordance in 物見 is a function of these three, and each
+/// screen was recombining `isGuest` and `owns(handle:)` into its own predicate:
+/// 物見詳情 spelled it `!isGuest && !owns` for 檢舉/封鎖 and `owns` alone for the
+/// 「你的分享」 pill three hundred lines later, and 作者主頁 kept a pair
+/// (`isOwnProfile` / `canModerate`) whose *third* consumer — the nav bar —
+/// then went around both and asked a fourth question.
+///
+/// That was not academic: the nav bar branched on the route's `isSelf` alone,
+/// so reaching your own profile through a byline (every byline pushes
+/// `isSelf: false`) matched neither arm and drew **no control at all** — no
+/// edit, no 更多. This is the shape `NavRoute` dropped `isSelf`'s default to
+/// prevent, returning as a hard-coded argument.
+enum ViewerRelationship: Hashable {
+    /// No account. Both moderation endpoints require auth, so offering an
+    /// action that can only 401 is worse than not offering it.
+    case guest
+    /// The viewer's own work. Nothing to report yourself for, and 封鎖 would
+    /// hide your own 圖鑑 from you.
+    case mine
+    /// Someone else's, and the viewer is signed in.
+    case theirs
+}
+
 /// The viewer, as the screens need to know them.
 ///
 /// A read seam in the shape `LanguageContext` already uses: narrow, injected,
@@ -64,6 +89,20 @@ protocol ViewerIdentity {
     /// written in a `View` body. A seam is worth what it answers for the *next*
     /// consumer, not the last one.
     var authorRef: AtlasAuthorRef? { get }
+}
+
+extension ViewerIdentity {
+    /// What the viewer is to work by `handle`.
+    ///
+    /// Nil when there is no author to be anything to — a public item whose
+    /// byline never resolved. Callers read that as "no moderation
+    /// affordances", which is what the empty-handle guards they each carried
+    /// already meant.
+    func relationship(toAuthor handle: String?) -> ViewerRelationship? {
+        guard let handle, !handle.isEmpty else { return nil }
+        if self.isGuest { return .guest }
+        return self.owns(handle: handle) ? .mine : .theirs
+    }
 }
 
 /// The rules themselves, on the state rather than the service.
