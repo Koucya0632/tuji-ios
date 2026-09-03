@@ -11,6 +11,23 @@ import Foundation
 import Testing
 @testable import Tuji
 
+/// A clock the test moves by hand.
+///
+/// The rating suggestion turns on how long an answer took, and the only way to
+/// reach the slow branch used to be to reach into the coordinator and backdate
+/// `startedAt` — one of two properties left mutable purely so a test could.
+/// `ReviewFlowCoordinator(now:)` is the seam those pokes were standing in for;
+/// a clock that never moves also makes "fast" the default rather than a wall
+/// clock nobody controls.
+@MainActor
+private final class ManualClock {
+    var now = Date(timeIntervalSince1970: 1_700_000_000)
+
+    func advance(_ seconds: TimeInterval) {
+        self.now += seconds
+    }
+}
+
 @MainActor
 struct ReviewFlowCoordinatorTests {
     private func makeQueue() throws -> [StudyQueueItem] {
@@ -67,6 +84,27 @@ struct ReviewFlowCoordinatorTests {
     private func awaitReveal(_ c: ReviewFlowCoordinator) async throws {
         try await self.waitUntil { c.revealMode != nil }
         try #require(c.revealMode != nil, "the reveal sheet never rose")
+    }
+
+    /// Drive a word to its in-session re-test the way the app does: miss it,
+    /// rate 重來, and let the requeue land.
+    ///
+    /// Reaching into `retriedIds` used to stand in for this. It cannot any
+    /// more, and that is the point: whether a presentation is a re-test is
+    /// settled when the card becomes current, so a session that has the id in
+    /// its set but has not rebuilt the question is a state the app never
+    /// reaches.
+    private func advanceToRetest(
+        _ c: ReviewFlowCoordinator,
+        rulingOut wrong: String,
+        thenPicking answer: String
+    ) async throws {
+        c.pick(wrong)
+        c.pick(answer)
+        try await self.awaitReveal(c)
+        c.rate(.again)
+        try await self.waitUntil { c.isRetest }
+        try #require(c.isRetest, "the word never came back as a re-test")
     }
 
     @Test
@@ -146,7 +184,17 @@ struct ReviewFlowCoordinatorTests {
         // Instant beats: the advance delays are the coordinator's, not the
         // test's, and a starved CI actor used to stretch a 300ms one past the
         // poll ceiling and fail every assertion after it.
-        let c = ReviewFlowCoordinator(queue: queue, writer: writer, beat: { _ in })
+        // A clock that never advances: every answer here is "fast" by
+        // construction, which is what this test wants to say about the second
+        // item. `slowCorrectStillAsksForManualRating` is the mirror — it moves
+        // the same clock to force the other branch.
+        let clock = ManualClock()
+        let c = ReviewFlowCoordinator(
+            queue: queue,
+            writer: writer,
+            beat: { _ in },
+            now: { clock.now }
+        )
 
         // Item 1 (fork): wrong → find it → manual 重來 → requeued.
         c.pick("spoon")
@@ -157,12 +205,6 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.current?.word.id == "w-cup")
 
         // Item 2 (cup): fast correct → auto-rated (mastery 80 → 熟練).
-        //
-        // "Fast" is still wall-clock — `pick()` reads `Date.now - startedAt` —
-        // so it is stated rather than assumed, the mirror of
-        // `slowCorrectStillAsksForManualRating` backdating it to force the
-        // other branch.
-        c.startedAt = .now
         c.pick("cup")
         #expect(c.flash == .autoRated(.easy))
         try await self.waitUntil { c.current?.word.id == "w-fork" } // 700ms advance beat
@@ -188,8 +230,7 @@ struct ReviewFlowCoordinatorTests {
     func retestWrongShowsContinueOnlySheet() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
-        // Force the retest state directly: mark as already retried.
-        c.retriedIds.insert("w-fork")
+        try await self.advanceToRetest(c, rulingOut: "spoon", thenPicking: "fork")
         // The miss only rules the option out; the item resolves on the pick
         // that lands, and lands *as a miss*.
         c.pick("spoon")
@@ -203,9 +244,15 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func slowCorrectStillAsksForManualRating() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
-        // Simulate a slow answer by backdating the item start.
-        c.startedAt = Date(timeIntervalSinceNow: -10)
+        let clock = ManualClock()
+        let c = ReviewFlowCoordinator(
+            queue: queue,
+            writer: SpyAnswerWriter(),
+            beat: { _ in },
+            now: { clock.now }
+        )
+        // A slow answer: ten seconds between the card appearing and the pick.
+        clock.advance(10)
         c.pick("fork")
         try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
@@ -415,8 +462,12 @@ struct ReviewFlowCoordinatorTests {
     func retestFlipIsFree() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
         let writer = SpyAnswerWriter()
-        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
-        c.retriedIds.insert("w-fork")
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer, beat: { _ in })
+        try await self.advanceToRetest(c, rulingOut: "spoon", thenPicking: "fork")
+        await c.writes.drainPendingWrites(within: .seconds(2))
+        // The first attempt's 重來 is the only write this word ever earns.
+        #expect(writer.answers.map(\.rating) == ["重來"])
+
         // A retest never writes SRS, so there is nothing for the hint to cost.
         #expect(!c.canNudge)
         c.toggleHint()
@@ -425,7 +476,7 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.revealMode == nil)
         #expect(c.rated == nil)
         await c.writes.drainPendingWrites(within: .seconds(2))
-        #expect(writer.answers.isEmpty)
+        #expect(writer.answers.map(\.rating) == ["重來"]) // and the retest added none
     }
 
     // MARK: - 再來一輪 (another round)
@@ -463,8 +514,14 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func theSheetWaitsABeatAfterTheAnswerResolves() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
-        c.startedAt = Date(timeIntervalSinceNow: -10) // slow correct ⇒ sheet path
+        let clock = ManualClock()
+        let c = ReviewFlowCoordinator(
+            queue: queue,
+            writer: SpyAnswerWriter(),
+            beat: { _ in },
+            now: { clock.now }
+        )
+        clock.advance(10) // slow correct ⇒ sheet path
         c.pick("fork")
 
         // Resolved and locked, but not yet asking for anything.
@@ -485,11 +542,17 @@ struct ReviewFlowCoordinatorTests {
     @Test
     func leavingDuringTheRevealBeatDoesNotRaiseTheSheet() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in
-            // Long enough that the cancellation lands first.
-            try? await Task.sleep(for: .milliseconds(200))
-        })
-        c.startedAt = Date(timeIntervalSinceNow: -10)
+        let clock = ManualClock()
+        let c = ReviewFlowCoordinator(
+            queue: queue,
+            writer: SpyAnswerWriter(),
+            beat: { _ in
+                // Long enough that the cancellation lands first.
+                try? await Task.sleep(for: .milliseconds(200))
+            },
+            now: { clock.now }
+        )
+        clock.advance(10)
         c.pick("fork")
         c.cancelPendingBeats()
         try? await Task.sleep(for: .milliseconds(300))

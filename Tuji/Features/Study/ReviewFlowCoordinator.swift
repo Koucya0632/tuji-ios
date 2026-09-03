@@ -1,4 +1,14 @@
-// State machine for SRS review (§III.Q). Per item:
+// The 複習 session (§III.Q): a cursor over the due queue, the beats between
+// cards, and what a finished answer is worth.
+//
+// **One card's own state is not here.** What it asks, what the user has done to
+// it and what that adds up to live in `ReviewQuestion`, which this rebuilds on
+// every advance — see that file for why the per-item reset is a construction.
+// This keeps only what outlives a card: the queue and where we are in it, the
+// requeue set, the session's 聽句 opt-out, the primed haptics, `AnswerBeat`,
+// and the writer.
+//
+// Per card:
 //   .answer — the user may flip the image over for the gloss (求救提示, see
 //     `toggleHint`), then picks among the 4 MCQ choices. In 看圖選字 a wrong
 //     option is only *ruled out* — marked, taken out of play, question still
@@ -15,7 +25,7 @@
 //   the result is readable before a modal covers it.
 //
 //   A hinted item takes the wrong-answer rating table either way — see
-//   `toggleHint` and docs/adr/0007-review-hint-costs-a-downgrade.md.
+//   `ReviewQuestion.toggleHint` and docs/adr/0007-review-hint-costs-a-downgrade.md.
 //
 //   Retests (a word requeued after a wrong first answer) NEVER write SRS —
 //   the first attempt's 重來 already rescheduled the word, and rating a
@@ -23,11 +33,11 @@
 //   retests flash-advance; wrong ones show the sheet as study material with
 //   a single 下一題.
 //
-// Rating writes are optimistic: the UI advances immediately while persist()
-// hands the answer to the DurableAnswerWriter in the background. The writer
-// retries and, on exhaustion, parks the answer in the durable StudyAnswerOutbox
-// (replayed on next launch/foreground) and reports `.parked`, which bumps
-// `unsyncedCount` for CompleteView's notice.
+// Rating writes are optimistic: the UI advances immediately while the write
+// goes to the DurableAnswerWriter in the background. The writer retries and, on
+// exhaustion, parks the answer in the durable StudyAnswerOutbox (replayed on
+// next launch/foreground) and reports `.parked`, which bumps `unsyncedCount`
+// for CompleteView's notice.
 
 import Observation
 import SwiftUI
@@ -56,99 +66,38 @@ enum ReviewFlash: Hashable {
 final class ReviewFlowCoordinator {
     /// Mutable so a wrong first answer can requeue the word once (appended to
     /// the tail for an in-session re-test, mirroring NewFlow).
-    var queue: [StudyQueueItem]
+    private(set) var queue: [StudyQueueItem]
     /// Distinct word count at start — the stable progress denominator so
     /// requeued re-tests don't inflate it.
     let originalCount: Int
-    var index: Int = 0
-    var phase: ReviewPhase = .answer
-    var picked: String?
-    /// Options ruled out on this presentation. 看圖選字 marks a wrong pick and
-    /// leaves the question open instead of ending it, so the user finds the word
-    /// themselves. Only the pick that lands calls `resolve`, and it is graded as
-    /// a miss — the rating table, the requeue and the write are untouched.
-    ///
-    /// Per-item, so it clears in `advance()` alongside `picked`.
-    private(set) var wrongPicks: Set<String> = []
-    /// The user flipped this presentation's image over for the gloss. Sticky
-    /// within the presentation — flipping back does not un-see it — and reset
-    /// in `advance()` along with the rest of the per-item state.
-    private(set) var hinted: Bool = false
-    /// Which face the card is showing right now. Distinct from `hinted`: this
-    /// one goes back and forth, that one only ever turns on. It lives here
-    /// rather than in the view because it has to reset per item, and the view
-    /// is reused across items.
-    private(set) var hintFaceUp: Bool = false
-    var wasCorrect: Bool = false
-    var suggested: SRSRating = .good
-    var rated: SRSRating?
-    var startedAt: Date = .now
+    private(set) var index: Int = 0
     var finished: Bool = false
+
+    /// The card in front of the user. Nil only for an empty queue, which the
+    /// launcher does not present.
+    private(set) var question: ReviewQuestion?
+
     private(set) var revealMode: ReviewRevealMode?
     private(set) var flash: ReviewFlash?
     /// Items the user actually answered (one per cleared item). Drives the
     /// "今天複習" tile row on CompleteView.
-    var answered: [StudyQueueItem] = []
+    private(set) var answered: [StudyQueueItem] = []
     /// Words already requeued once — enforces "one extra re-test per word".
     /// Also CompleteView's 答錯過 marker.
-    var retriedIds: Set<String> = []
+    private(set) var retriedIds: Set<String> = []
     /// Distinct words fully done (won't reappear). Drives the progress bar.
-    var passedCount: Int = 0
+    private(set) var passedCount: Int = 0
     /// Times each word has been presented *and left* — folds into the MCQ
     /// option seed so a re-test reshuffles instead of letting "the answer was
     /// C" stand in for the word, and picks 聽句's sentence so a re-test hears
     /// the *other* one rather than the recording it just failed.
     private var presentedCounts: [String: Int] = [:]
 
-    // MARK: - 聽句
-
-    /// Which question this presentation is asking. Decided in
-    /// `prepareQuestion`, when the card becomes current — not at session start,
-    /// because the network can drop mid-session and take 聽句's eligibility
-    /// with it (ADR-0014).
-    private(set) var kind: ReviewQuestionKind = .pickWord
-    /// The sentence being asked about, when `kind == .hearSentence`.
-    private(set) var listeningExample: StudyExample?
-    /// The two pictures, when `kind == .hearSentence`.
-    private(set) var imageOptions: [ImageChoiceOption]?
-    /// The eye was pressed and the sentence is legible. One-way within the
-    /// presentation, like `hinted` — which it also sets, because reading the
-    /// sentence is reading the answer.
-    private(set) var sentenceRevealed: Bool = false
-    /// Replays before answering. Deliberately does **not** reset the clock:
-    /// with the download and the clip length already excluded, replay time
-    /// points the right way — needing three listens *is* 困難.
-    private(set) var replayCount: Int = 0
-    /// The clip was missing/unreachable (so this was on-device synthesis), or
-    /// nothing came out at all.
-    private(set) var audioFailed: Bool = false
-    /// Whether the sentence is currently being played, for the play button.
-    private(set) var isPlayingSentence: Bool = false
-    /// The clock has not started yet: 聽句 starts it when the audio *ends*.
-    /// Until then an answer cannot be timed, and `pick` refuses.
-    private(set) var awaitingAudio: Bool = false
-    /// Whether `prepareQuestion` has decided what this card asks.
-    ///
-    /// The view must draw a skeleton until it has. `kind` defaults to
-    /// `.pickWord`, and 選字's hero *is the answer's own picture* — so rendering
-    /// the default for the one frame before the decision lands would show the
-    /// answer to a question that turns out to be 聽句. It cannot be solved by
-    /// defaulting the other way either: `.hearSentence` has no sentence to draw
-    /// yet. The honest third state is "not decided".
-    ///
-    /// The skeleton also has to be a real view. A `body` that renders to
-    /// nothing never runs its `.task`, so an `EmptyView` here would mean the
-    /// decision is never made at all.
-    private(set) var questionReady: Bool = false
-    /// The kind the previous presentation used — "no two 聽句 in a row".
-    private var previousKind: ReviewQuestionKind?
-    /// Words already asked as 聽句 this session, so their re-test keeps the
-    /// question instead of being demoted by the spacing rule.
-    private var heardWordIds: Set<String> = []
+    // MARK: - 聽句, the parts that belong to the session
 
     /// The user asked for no more listening questions this session.
     ///
-    /// This is an "I cannot hear right now" escape, not an "this is too hard"
+    /// This is an "I cannot hear right now" escape, not a "this is too hard"
     /// one — 聽句 is the only question in the app that cannot be answered
     /// without audio, and no headphones on a train is not a difficulty problem.
     /// That is also why it carries no rating cost: switching to 選字 reveals
@@ -158,9 +107,11 @@ final class ReviewFlowCoordinator {
     /// builds a fresh coordinator, so the next round starts asking again rather
     /// than silently inheriting a decision made about a different sitting.
     private(set) var listeningOptedOut: Bool = false
-    /// This presentation is the one the user turned listening off on. Per-item,
-    /// so it resets in `advance()` while `listeningOptedOut` does not.
-    private(set) var convertedFromListening: Bool = false
+    /// The kind the previous presentation used — "no two 聽句 in a row".
+    private var previousKind: ReviewQuestionKind?
+    /// Words already asked as 聽句 this session, so their re-test keeps the
+    /// question instead of being demoted by the spacing rule.
+    private var heardWordIds: Set<String> = []
 
     private let audio: ListeningAudio
 
@@ -182,15 +133,24 @@ final class ReviewFlowCoordinator {
 
     private let queueProvider: StudyQueueProviding
 
+    /// Where "now" comes from.
+    ///
+    /// Injected for the same reason the beats are. The rating suggestion turns
+    /// on how long an answer took, and the only way to reach the slow branch
+    /// used to be to reach into the coordinator and backdate `startedAt` — one
+    /// of two properties left mutable purely for that, in tests that then
+    /// carried a comment about it. A clock the caller supplies is the seam
+    /// those pokes were standing in for.
+    ///
+    /// Not `@Sendable`: this class is `@MainActor` and so is every read.
+    @ObservationIgnored private let clock: () -> Date
+
     // How long the flow pauses before advancing past an answered item.
     //
     // Injected for the same reason 學新字 injects its own: the advance beats
     // are 300–800 ms of real `Task.sleep`, and CI runs every `@MainActor`
     // suite in parallel on one actor — a starved run turned a 300 ms beat into
-    // a minute and failed every assertion after it. This coordinator was the
-    // one that still had no seam at all, so its tests polled a wall clock and
-    // carried a nine-line comment about the resulting flake instead of closing
-    // it.
+    // a minute and failed every assertion after it.
 
     /// The advances in flight — see `AnswerBeat`, which 學新字 holds too. 複習
     /// was the fourth copy of that machinery and the one with no cancellation
@@ -204,7 +164,8 @@ final class ReviewFlowCoordinator {
         writer: DurableAnswerWriting = DurableAnswerWriter(),
         queueProvider: StudyQueueProviding = StudyQueueStore.shared,
         audio: ListeningAudio = LiveListeningAudio(),
-        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        now: @escaping () -> Date = { .now }
     ) {
         self.queue = queue
         self.originalCount = queue.count
@@ -212,6 +173,11 @@ final class ReviewFlowCoordinator {
         self.queueProvider = queueProvider
         self.audio = audio
         self.beats = AnswerBeat(sleep: beat)
+        self.clock = now
+        // Nothing has been missed yet, so the first card is never a re-test.
+        self.question = queue.first.map {
+            ReviewQuestion(item: $0, isRetest: false, now: now())
+        }
     }
 
     // MARK: - Choosing the question
@@ -229,7 +195,8 @@ final class ReviewFlowCoordinator {
         online: Bool,
         voice: SpeechService.Voice
     ) async {
-        guard let item = current else { return }
+        guard var q = self.question else { return }
+        let item = q.item
         let presentation = self.choicesVariant(for: item)
         let example = ListeningQuestion.example(
             for: item,
@@ -237,14 +204,13 @@ final class ReviewFlowCoordinator {
             presentation: presentation
         )
         let clip = example?.audioUrls?[voice.rawValue]
-        let alreadyHeard = self.heardWordIds.contains(item.word.id)
         var kind = ListeningQuestion.kind(
             wordId: item.word.id,
             canHear: !self.listeningOptedOut
                 && example != nil
                 && self.audio.canPlay(clip, online: online),
             previous: self.previousKind,
-            alreadyHeard: alreadyHeard
+            alreadyHeard: self.heardWordIds.contains(item.word.id)
         )
 
         // Two pictures or it is not this question. A pool that cannot produce a
@@ -263,25 +229,22 @@ final class ReviewFlowCoordinator {
             if options == nil { kind = .pickWord }
         }
 
-        self.kind = kind
+        // Ready *before* the audio: the card is fully drawn and answerable
+        // while the sentence plays. Only the clock waits for the audio.
+        q.present(kind: kind, example: example, imageOptions: options, awaitsAudio: true)
+        self.question = q
         // The next thing that happens on this card is a tap; warm the engine
         // for it while the question is still being drawn.
         self.primeHaptics()
-        guard kind == .hearSentence, let example else {
-            self.listeningExample = nil
-            self.imageOptions = nil
-            self.questionReady = true
-            return
-        }
-        self.listeningExample = example
-        self.imageOptions = options
+
+        guard q.kind == .hearSentence, let example else { return }
         self.heardWordIds.insert(item.word.id)
-        // Ready *before* the audio: the card is fully drawn and answerable
-        // while the sentence plays. Only the clock waits for the audio.
-        self.questionReady = true
-        // The clock does not run yet. `startedAt` is set when the audio ends.
-        self.awaitingAudio = true
-        await self.playSentence(clip: clip, text: example.sentence, voice: voice, isReplay: false)
+        await self.playSentence(
+            clip: clip,
+            text: example.sentence,
+            voice: voice,
+            isReplay: false
+        )
     }
 
     /// How much slower 慢讀 is than the recording. A time-stretch on the same
@@ -299,8 +262,8 @@ final class ReviewFlowCoordinator {
     /// again says. It carries no *rating* cost for the same reason replays
     /// don't — the clock does not restart (ADR-0014).
     func replaySentence(voice: SpeechService.Voice, slow: Bool = false) async {
-        guard self.kind == .hearSentence, let example = listeningExample else { return }
-        self.replayCount += 1
+        guard var q = self.question, q.willReplay(), let example = q.example else { return }
+        self.question = q
         await self.playSentence(
             clip: example.audioUrls?[voice.rawValue],
             text: example.sentence,
@@ -317,17 +280,16 @@ final class ReviewFlowCoordinator {
         isReplay: Bool,
         rate: Float = 1
     ) async {
-        self.isPlayingSentence = true
+        guard var q = self.question, q.playbackBegan() else { return }
+        // Which card asked. The await below can outlive it — an advance, or
+        // 這輪不做聽句題 — and the outcome belongs to the question that asked
+        // for it, not to whatever is on screen when it lands.
+        let askedBy = q.item.card.id
+        self.question = q
         let outcome = await self.audio.play(clip, text: text, voice: voice, rate: rate)
-        self.isPlayingSentence = false
-        if outcome != .finished { self.audioFailed = true }
-        // Only the first play opens the clock. A replay must not reset it —
-        // that would turn the button into a way to buy time, and the time a
-        // replay costs is exactly the signal that this word was hard.
-        if !isReplay, self.awaitingAudio {
-            self.awaitingAudio = false
-            self.startedAt = .now
-        }
+        guard var settled = self.question, settled.item.card.id == askedBy else { return }
+        settled.playbackEnded(outcome, isReplay: isReplay, now: self.clock())
+        self.question = settled
     }
 
     /// Word ids still to be asked this session. An image distractor drawn from
@@ -337,38 +299,29 @@ final class ReviewFlowCoordinator {
         return Set(self.queue[self.index...].map(\.word.id))
     }
 
-    /// 這輪不做聽句題. Turns the card in front of the user into 選字 as well as
-    /// silencing the rest of the session — someone presses this *because* they
-    /// cannot answer the one they are looking at, and leaving it up would be
-    /// answering a question they just said they cannot hear.
-    ///
-    /// The clock restarts, because a different question starts now. The audio
-    /// is cut for the same reason leaving cuts it. Nothing is marked `hinted`:
-    /// no answer was revealed.
+    /// 這輪不做聽句題. Silences the rest of the session as well as the card in
+    /// front of the user — see `ReviewQuestion.optOutOfListening` for why the
+    /// current card is converted too. The audio is cut for the same reason
+    /// leaving cuts it.
     func optOutOfListening() {
-        guard self.phase == .answer, self.kind == .hearSentence else { return }
+        guard var q = self.question, q.optOutOfListening(now: self.clock()) else { return }
         self.listeningOptedOut = true
-        self.convertedFromListening = true
         self.audio.stop()
-        self.kind = .pickWord
-        self.listeningExample = nil
-        self.imageOptions = nil
-        self.sentenceRevealed = false
-        self.isPlayingSentence = false
-        self.awaitingAudio = false
-        // `replayCount` and `audioFailed` need no reset: `applyRating` reads
-        // them only when `kind == .hearSentence`, so they stop being sent the
-        // moment the kind changes.
-        self.startedAt = .now
+        self.question = q
     }
 
-    /// Lift the blur. Same cost as 求救提示's flip and for a stronger reason:
-    /// the sentence spells the answer out, so from here this is a reading
-    /// question, not a listening one (ADR-0014).
+    /// Lift the blur (ADR-0014).
     func revealSentence() {
-        guard self.phase == .answer, self.kind == .hearSentence else { return }
-        self.sentenceRevealed = true
-        self.hinted = true
+        guard var q = self.question else { return }
+        q.revealSentence()
+        self.question = q
+    }
+
+    /// Flip the image over to read the gloss, and back (ADR-0007).
+    func toggleHint() {
+        guard var q = self.question else { return }
+        q.toggleHint()
+        self.question = q
     }
 
     /// Fetch the next round's due queue for 再來一輪; empty ⇒ nothing left. The
@@ -380,8 +333,7 @@ final class ReviewFlowCoordinator {
     }
 
     var current: StudyQueueItem? {
-        guard self.index < self.queue.count else { return nil }
-        return self.queue[self.index]
+        self.question?.item
     }
 
     var progress: Double {
@@ -399,50 +351,109 @@ final class ReviewFlowCoordinator {
         self.presentedCounts[item.word.id] ?? 0
     }
 
-    /// True while the current presentation is a re-test of a word missed
-    /// earlier this session.
+    // MARK: - What the screen reads
+
+    //
+    // The card's own state lives on `question`; these forward to it so a view
+    // does not have to unwrap an optional that is only ever nil for a queue the
+    // launcher refuses to present. The defaults are the values a fresh
+    // question starts at, which is what an empty session should look like.
+
+    var phase: ReviewPhase {
+        self.question?.phase ?? .answer
+    }
+
+    var picked: String? {
+        self.question?.picked
+    }
+
+    var wrongPicks: Set<String> {
+        self.question?.wrongPicks ?? []
+    }
+
+    var hinted: Bool {
+        self.question?.hinted ?? false
+    }
+
+    var hintFaceUp: Bool {
+        self.question?.hintFaceUp ?? false
+    }
+
+    var wasCorrect: Bool {
+        self.question?.wasCorrect ?? false
+    }
+
+    var suggested: SRSRating {
+        self.question?.suggested ?? .good
+    }
+
+    var rated: SRSRating? {
+        self.question?.rated
+    }
+
+    var startedAt: Date {
+        self.question?.startedAt ?? .distantPast
+    }
+
+    var kind: ReviewQuestionKind {
+        self.question?.kind ?? .pickWord
+    }
+
+    var listeningExample: StudyExample? {
+        self.question?.example
+    }
+
+    var imageOptions: [ImageChoiceOption]? {
+        self.question?.imageOptions
+    }
+
+    var sentenceRevealed: Bool {
+        self.question?.sentenceRevealed ?? false
+    }
+
+    var replayCount: Int {
+        self.question?.replayCount ?? 0
+    }
+
+    var audioFailed: Bool {
+        self.question?.audioFailed ?? false
+    }
+
+    var isPlayingSentence: Bool {
+        self.question?.isPlayingSentence ?? false
+    }
+
+    var awaitingAudio: Bool {
+        self.question?.awaitingAudio ?? false
+    }
+
+    var questionReady: Bool {
+        self.question?.ready ?? false
+    }
+
+    var convertedFromListening: Bool {
+        self.question?.convertedFromListening ?? false
+    }
+
     var isRetest: Bool {
-        guard let curr = current else { return false }
-        return self.retriedIds.contains(curr.word.id)
+        self.question?.isRetest ?? false
     }
 
-    /// Flip the image over to read the gloss, and back. Only while the item is
-    /// still unanswered: the reveal sheet rests at `.fraction(0.4)` with
-    /// background interaction enabled, so the hero stays tappable underneath it
-    /// and an answered item would otherwise still turn.
-    ///
-    /// Asking for the gloss is the user reporting that they could not retrieve
-    /// the word, so it is remembered for the rating (`hinted`) even if they
-    /// flip straight back.
-    func toggleHint() {
-        guard self.phase == .answer, self.kind == .pickWord else { return }
-        self.hintFaceUp.toggle()
-        if self.hintFaceUp { self.hinted = true }
-    }
-
-    /// Whether the 8-second "點一下圖片" nudge still has anything to teach on
-    /// this item. The view owns the timer; this owns the decision.
-    ///
-    /// Never in 聽句. That delay exists to compensate for an affordance drawn
-    /// nowhere — 選字's hint is a tap on a picture with nothing to say so — and
-    /// 聽句's eye is on screen from the first frame. A line telling the user
-    /// about a button they can already see is not a hint, it is noise.
     var canNudge: Bool {
-        self.phase == .answer && !self.hinted && !self.isRetest && self.kind == .pickWord
+        self.question?.canNudge ?? false
     }
 
-    /// Computed once per answer. Fast correct answers auto-apply this; the
-    /// sheet highlights it as 建議 otherwise. Mastery caps the top end: a
-    /// 2-second hit on a barely-known word is normal recall, not 熟練 — only
-    /// well-established words (score ≥ 50) earn the long-interval jump.
-    ///
-    /// A hinted item is capped at 困難 regardless of speed. That cap is also
-    /// what switches off the auto-rate path in `pick()`, which requires a
-    /// suggestion other than 困難 — see ADR-0007.
-    /// `elapsed` is nil when nothing was timed — 聽句 answered before its
-    /// sentence finished. A correct-but-untimed answer suggests 穩定: 熟練 is
-    /// the one rating that rests entirely on the speed signal, and claiming it
-    /// without one would be inventing the evidence.
+    var availableRatings: [SRSRating] {
+        self.question?.availableRatings ?? [.again, .hard]
+    }
+
+    var reportedSelection: String? {
+        self.question?.reportedSelection
+    }
+
+    /// The rating a given answer suggests. Forwards to the rule's home so the
+    /// two cannot drift; kept here because the nudge copy and the tests both
+    /// ask the session.
     func computeSuggestion(
         correct: Bool,
         elapsed: TimeInterval?,
@@ -451,99 +462,65 @@ final class ReviewFlowCoordinator {
     )
         -> SRSRating
     {
-        if !correct { return .again }
-        if hinted { return .hard }
-        guard let elapsed else { return .good }
-        switch elapsed {
-        case ..<3: return (mastery ?? 0) >= 50 ? .easy : .good
-        case ..<7: return .good
-        default: return .hard
-        }
+        ReviewQuestion.suggestion(
+            correct: correct,
+            elapsed: elapsed,
+            mastery: mastery,
+            hinted: hinted
+        )
     }
 
-    /// One of the two pictures in 聽句. Compared by id, not by label: two
-    /// catalogue words can print the same string, they cannot share an id.
+    // MARK: - Answering
+
+    /// One of the two pictures in 聽句.
     func pickImage(_ option: ImageChoiceOption) {
-        guard self.kind == .hearSentence, let curr = current else { return }
-        self.resolve(picked: option.word, correct: option.id == curr.word.id, item: curr)
+        guard var q = self.question else { return }
+        let tap = q.pickImage(option, now: self.clock())
+        self.question = q
+        self.perform(tap)
     }
 
-    /// 看圖選字. A wrong option is marked and taken out of play while the
-    /// question stays open — the user keeps choosing until they find the word.
-    /// Only the pick that lands resolves the item.
-    ///
-    /// What it hands `resolve` is **whether they got it first try**, not
-    /// whether this tap was right: everything downstream reads `wasCorrect`
-    /// and none of it counts taps, so the rating table, the requeue and the
-    /// payload stay exactly the wrong-answer path they have always been.
-    ///
-    /// 聽句 is not on this path. Ruling out one of *two* pictures is the same
-    /// act as answering, so `pickImage` still resolves on the first tap — the
-    /// same 50% that keeps it off the auto-rate path (ADR-0014).
+    /// 看圖選字.
     func pick(_ choice: String) {
-        guard let curr = current, self.phase == .answer else { return }
-        let ok = choice == curr.word.word
-        if !ok, self.kind == .pickWord {
-            // The row is disabled once it is in the set; this keeps a repeat
-            // from being caught by the haptic alone.
-            guard self.wrongPicks.insert(choice).inserted else { return }
+        guard var q = self.question else { return }
+        let tap = q.pick(choice, now: self.clock())
+        self.question = q
+        self.perform(tap)
+    }
+
+    private func perform(_ tap: ReviewTap) {
+        switch tap {
+        case .ignored:
+            break
+        case .ruledOut:
             self.firmTap.impactOccurred()
             // The question is still open, so another tap may be seconds away.
             self.primeHaptics()
-            return
+        case let .resolved(resolution):
+            self.settle(resolution)
         }
-        self.resolve(picked: choice, correct: ok && self.wrongPicks.isEmpty, item: curr)
     }
 
-    private func resolve(picked choice: String, correct ok: Bool, item curr: StudyQueueItem) {
-        guard self.phase == .answer else { return }
-        // Answering before the sentence finished leaves nothing timed — the
-        // clock had not started. It may be genuine (the word was recognised
-        // mid-sentence) or a rush, and the two are indistinguishable, so the
-        // suggestion falls back to correctness rather than claiming a speed
-        // that was never measured.
-        let elapsed = self.awaitingAudio
-            ? nil
-            : Date.now.timeIntervalSince(self.startedAt)
-        self.suggested = self.computeSuggestion(
-            correct: ok,
-            elapsed: elapsed,
-            mastery: curr.mastery,
-            hinted: self.hinted
-        )
-        self.picked = choice
-        self.wasCorrect = ok
-        (ok ? self.softTap : self.firmTap).impactOccurred()
-        self.phase = .review
-        self.recordAnswered(curr)
-
-        if self.retriedIds.contains(curr.word.id) {
-            // Re-test: practice only, never a second SRS write (the first
-            // attempt's 重來 already rescheduled this word).
-            self.passedCount += 1
-            if ok {
-                self.flash = .retestPassed
-                self.scheduleAdvance(after: .milliseconds(700))
-            } else {
-                self.scheduleReveal(.continueOnly)
-            }
-        } else if ok, self.suggested != .hard, self.kind == .pickWord {
-            // Fast correct: the suggestion is unambiguous — apply it and keep
-            // the session moving instead of raising a sheet to confirm it.
-            //
-            // 聽句 is excluded by that very precondition, not by an exception:
-            // its answer is one of *two* pictures, so a fast correct answer is
-            // one coin flip and "unambiguous" is not true of it. It takes the
-            // branch below — the one whose comment already says the user's own
-            // judgment carries signal (ADR-0014).
-            self.passedCount += 1
-            self.applyRating(self.suggested, for: curr)
-            self.flash = .autoRated(self.suggested)
+    private func settle(_ resolution: ReviewResolution) {
+        guard let q = self.question else { return }
+        (q.wasCorrect ? self.softTap : self.firmTap).impactOccurred()
+        self.recordAnswered(q.item)
+        switch resolution {
+        case .flashRetestPassed:
+            self.countSettledWord()
+            self.flash = .retestPassed
             self.scheduleAdvance(after: .milliseconds(700))
-        } else {
-            // Wrong, or correct-but-slow: the user's own judgment carries
-            // signal, so surface the sheet with rating buttons.
-            self.scheduleReveal(.rate)
+        case let .autoRated(rating):
+            self.applyRating(rating)
+            self.countSettledWord()
+            self.flash = .autoRated(rating)
+            self.scheduleAdvance(after: .milliseconds(700))
+        case let .reveal(mode):
+            // A retest is done either way — nothing rates it, so this is the
+            // only moment it can be counted. Everything else waits for the
+            // rating, because a wrong one puts the word back on the tail.
+            self.countSettledWord()
+            self.scheduleReveal(mode)
         }
     }
 
@@ -566,47 +543,21 @@ final class ReviewFlowCoordinator {
         self.beats.schedule(after: Self.revealDelay) { self.revealMode = mode }
     }
 
-    /// Rating buttons in the reveal sheet. Wrong answers offer only 重來/困難
-    /// (困難 = misclick escape hatch) — anything higher would let a missed
-    /// word skip its relearn. Correct-but-slow answers pick among the three
-    /// positive ratings.
-    ///
-    /// A hinted answer takes the wrong-answer table even when it was right:
-    /// the user told us they could not retrieve the word, so 穩定/熟練 are not
-    /// theirs to claim. Only the *suggestion* still tracks correctness.
-    var availableRatings: [SRSRating] {
-        guard self.wasCorrect, !self.hinted else {
-            return [.again, .hard]
-        }
-        return [.hard, .good, .easy]
-    }
-
-    /// What has been chosen so far, for 報錯: the pick that ended the question,
-    /// or the options ruled out while it is still open. `picked` is only set by
-    /// the pick that lands, so without this a report filed mid-question would
-    /// throw away everything the user had already tried.
-    var reportedSelection: String? {
-        self.picked ?? (self.wrongPicks.isEmpty
-            ? nil
-            : self.wrongPicks.sorted().joined(separator: " / "))
-    }
-
     /// Manual rating from the reveal sheet (revealMode == .rate only).
     func rate(_ r: SRSRating) {
-        guard self.phase == .review, self.revealMode == .rate,
-              self.rated == nil, let curr = current
+        guard let q = self.question, q.phase == .review,
+              self.revealMode == .rate, q.rated == nil
         else { return }
         self.softTap.impactOccurred()
         // Wrong first attempt → requeue the word once for an in-session
         // re-test (appended to the tail). The re-test itself never requeues
         // again, and a correct first answer passes straight through.
-        if !self.wasCorrect {
-            self.retriedIds.insert(curr.word.id)
-            self.queue.append(curr)
-        } else {
-            self.passedCount += 1
+        if !q.wasCorrect {
+            self.retriedIds.insert(q.item.word.id)
+            self.queue.append(q.item)
         }
-        self.applyRating(r, for: curr)
+        self.applyRating(r)
+        self.countSettledWord()
         // Fixed, network-independent beat so the button fill registers.
         self.scheduleAdvance(after: .milliseconds(300))
     }
@@ -633,29 +584,29 @@ final class ReviewFlowCoordinator {
         }
     }
 
+    /// Move the progress bar on, if this presentation has finished with its
+    /// word.
+    ///
+    /// It used to be three `passedCount += 1` sites under three different
+    /// conditions. The condition is one — `ReviewQuestion.settled` — and it is
+    /// asked at the two moments a presentation can end: when it resolves, and
+    /// when a rating comes back. The `counted` flag is what keeps one rule from
+    /// becoming two counters.
+    private func countSettledWord() {
+        guard var q = self.question, q.settled, !q.counted else { return }
+        q.markCounted()
+        self.question = q
+        self.passedCount += 1
+    }
+
     /// Record + persist one SRS rating (optimistically, in the background).
-    private func applyRating(_ r: SRSRating, for item: StudyQueueItem) {
-        self.rated = r
-        let listening = self.kind == .hearSentence
-        let payload = StudyAnswerPayload(
-            cardId: item.card.id,
-            rating: r,
-            responseMs: Int(Date.now.timeIntervalSince(self.startedAt) * 1000),
-            activity: self.kind.asActivity,
-            hinted: self.hinted,
-            // Only 聽句 has these, and sending them as nil elsewhere keeps a
-            // 選字 row's metadata honestly empty rather than claiming zero
-            // replays of audio that was never played.
-            replayCount: listening ? self.replayCount : nil,
-            audioFailed: listening ? self.audioFailed : nil,
-            // These two are **not** gated on `listening`: a session that turned
-            // 聽句 off answers everything else as 選字, and rows that cannot be
-            // told apart from a session that never met a listening question are
-            // what makes an aggregate accuracy lie.
-            listeningOptedOut: self.listeningOptedOut ? true : nil,
-            convertedFromListening: self.convertedFromListening ? true : nil
+    private func applyRating(_ r: SRSRating) {
+        guard var q = self.question, q.applyRating(r) else { return }
+        self.question = q
+        self.writes.submit(
+            q.payload(rating: r, listeningOptedOut: self.listeningOptedOut),
+            wordId: q.item.word.id
         )
-        self.writes.submit(payload, wordId: item.word.id)
     }
 
     private func scheduleAdvance(after delay: Duration) {
@@ -663,9 +614,9 @@ final class ReviewFlowCoordinator {
     }
 
     /// Drops everything this session still has in flight, and is what leaving
-    /// calls. Without it the beat outlives the screen (see `pendingBeats`) —
-    /// and, since 聽句 auto-plays, so does the sentence: walking out mid-clip
-    /// used to narrate whichever screen the user went to instead.
+    /// calls. Without it the beat outlives the screen — and, since 聽句
+    /// auto-plays, so does the sentence: walking out mid-clip used to narrate
+    /// whichever screen the user went to instead.
     ///
     /// `awaitTerminal` is built on `withCheckedContinuation`, which is not
     /// cancellation-aware, so cancelling the view's `.task` does **not** reach
@@ -676,12 +627,13 @@ final class ReviewFlowCoordinator {
     }
 
     private func advance() {
-        if let leaving = current {
-            self.presentedCounts[leaving.word.id, default: 0] += 1
+        if let leaving = self.question {
+            self.presentedCounts[leaving.item.word.id, default: 0] += 1
+            // Remembered across the rebuild below: "no two 聽句 in a row" is
+            // the one piece of per-item state whose whole job is to outlive
+            // its item.
+            self.previousKind = leaving.kind
         }
-        // Remembered across the reset below: "no two 聽句 in a row" is the one
-        // piece of per-item state whose whole job is to outlive its item.
-        self.previousKind = self.kind
         if self.index + 1 >= self.queue.count {
             // Last item: give outstanding SRS writes a brief window to land so
             // CompleteView's mastery deltas are populated, but cap it so a slow
@@ -692,30 +644,17 @@ final class ReviewFlowCoordinator {
             }
         } else {
             self.index += 1
-            self.phase = .answer
-            self.picked = nil
-            self.wrongPicks = []
-            self.hinted = false
-            self.hintFaceUp = false
-            self.rated = nil
             self.revealMode = nil
             self.flash = nil
-            self.startedAt = .now
-            // 聽句 state. `kind` returns to the default rather than carrying
-            // over: `prepareQuestion` decides it for the new card, and leaving
-            // the old value up would let one frame render two pictures for a
-            // word that has none.
-            self.kind = .pickWord
-            self.listeningExample = nil
-            self.imageOptions = nil
-            self.sentenceRevealed = false
-            self.replayCount = 0
-            self.audioFailed = false
-            self.isPlayingSentence = false
-            self.awaitingAudio = false
-            self.questionReady = false
-            // Per-item, unlike `listeningOptedOut`, which is the session's.
-            self.convertedFromListening = false
+            // The whole per-item reset. A new value starts at its start values,
+            // so there is no list of fields to keep in step with the next
+            // question kind someone adds.
+            let item = self.queue[self.index]
+            self.question = ReviewQuestion(
+                item: item,
+                isRetest: self.retriedIds.contains(item.word.id),
+                now: self.clock()
+            )
         }
     }
 }
