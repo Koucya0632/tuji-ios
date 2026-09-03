@@ -82,8 +82,57 @@ final class ReviewFlowCoordinator {
     var passedCount: Int = 0
     /// Times each word has been presented *and left* — folds into the MCQ
     /// option seed so a re-test reshuffles instead of letting "the answer was
-    /// C" stand in for the word.
+    /// C" stand in for the word, and picks 聽句's sentence so a re-test hears
+    /// the *other* one rather than the recording it just failed.
     private var presentedCounts: [String: Int] = [:]
+
+    // MARK: - 聽句
+
+    /// Which question this presentation is asking. Decided in
+    /// `prepareQuestion`, when the card becomes current — not at session start,
+    /// because the network can drop mid-session and take 聽句's eligibility
+    /// with it (ADR-0014).
+    private(set) var kind: ReviewQuestionKind = .pickWord
+    /// The sentence being asked about, when `kind == .hearSentence`.
+    private(set) var listeningExample: StudyExample?
+    /// The two pictures, when `kind == .hearSentence`.
+    private(set) var imageOptions: [ImageChoiceOption]?
+    /// The eye was pressed and the sentence is legible. One-way within the
+    /// presentation, like `hinted` — which it also sets, because reading the
+    /// sentence is reading the answer.
+    private(set) var sentenceRevealed: Bool = false
+    /// Replays before answering. Deliberately does **not** reset the clock:
+    /// with the download and the clip length already excluded, replay time
+    /// points the right way — needing three listens *is* 困難.
+    private(set) var replayCount: Int = 0
+    /// The clip was missing/unreachable (so this was on-device synthesis), or
+    /// nothing came out at all.
+    private(set) var audioFailed: Bool = false
+    /// Whether the sentence is currently being played, for the play button.
+    private(set) var isPlayingSentence: Bool = false
+    /// The clock has not started yet: 聽句 starts it when the audio *ends*.
+    /// Until then an answer cannot be timed, and `pick` refuses.
+    private(set) var awaitingAudio: Bool = false
+    /// Whether `prepareQuestion` has decided what this card asks.
+    ///
+    /// The view must draw a skeleton until it has. `kind` defaults to
+    /// `.pickWord`, and 選字's hero *is the answer's own picture* — so rendering
+    /// the default for the one frame before the decision lands would show the
+    /// answer to a question that turns out to be 聽句. It cannot be solved by
+    /// defaulting the other way either: `.hearSentence` has no sentence to draw
+    /// yet. The honest third state is "not decided".
+    ///
+    /// The skeleton also has to be a real view. A `body` that renders to
+    /// nothing never runs its `.task`, so an `EmptyView` here would mean the
+    /// decision is never made at all.
+    private(set) var questionReady: Bool = false
+    /// The kind the previous presentation used — "no two 聽句 in a row".
+    private var previousKind: ReviewQuestionKind?
+    /// Words already asked as 聽句 this session, so their re-test keeps the
+    /// question instead of being demoted by the spacing rule.
+    private var heardWordIds: Set<String> = []
+
+    private let audio: ListeningAudio
 
     /// Everything that happens to an answer after it is handed to the writer:
     /// the drain, the mastery fold, the milestone, the parked count. Shared with
@@ -113,13 +162,129 @@ final class ReviewFlowCoordinator {
         queue: [StudyQueueItem],
         writer: DurableAnswerWriting = DurableAnswerWriter(),
         queueProvider: StudyQueueProviding = StudyQueueStore.shared,
+        audio: ListeningAudio = LiveListeningAudio(),
         beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.queue = queue
         self.originalCount = queue.count
         self.writes = StudySessionWrites(writer: writer)
         self.queueProvider = queueProvider
+        self.audio = audio
         self.beats = AnswerBeat(sleep: beat)
+    }
+
+    // MARK: - Choosing the question
+
+    /// Decide what to ask about the current card, and start its audio if the
+    /// answer is 聽句.
+    ///
+    /// The catalogue, the session language and connectivity arrive as arguments
+    /// rather than injected stores because all three move: freezing them at
+    /// `init` would decide the whole session's questions against the network as
+    /// it was when the queue loaded.
+    func prepareQuestion(
+        pool: [CardWord],
+        session: TargetLanguage,
+        online: Bool,
+        voice: SpeechService.Voice
+    ) async {
+        guard let item = current else { return }
+        let presentation = self.choicesVariant(for: item)
+        let example = ListeningQuestion.example(
+            for: item,
+            mastery: item.mastery,
+            presentation: presentation
+        )
+        let clip = example?.audioUrls?[voice.rawValue]
+        let alreadyHeard = self.heardWordIds.contains(item.word.id)
+        var kind = ListeningQuestion.kind(
+            wordId: item.word.id,
+            canHear: example != nil && self.audio.canPlay(clip, online: online),
+            previous: self.previousKind,
+            alreadyHeard: alreadyHeard
+        )
+
+        // Two pictures or it is not this question. A pool that cannot produce a
+        // fair distractor sends the card to 選字 — the same fallback every
+        // other ineligible card takes.
+        var options: [ImageChoiceOption]?
+        if kind == .hearSentence {
+            options = ImageChoicePair.options(
+                for: item,
+                pool: pool,
+                session: session,
+                mentionedWordIds: Set(example?.mentionedWordIds ?? []),
+                queuedWordIds: self.upcomingWordIds,
+                variant: presentation
+            )
+            if options == nil { kind = .pickWord }
+        }
+
+        self.kind = kind
+        guard kind == .hearSentence, let example else {
+            self.listeningExample = nil
+            self.imageOptions = nil
+            self.questionReady = true
+            return
+        }
+        self.listeningExample = example
+        self.imageOptions = options
+        self.heardWordIds.insert(item.word.id)
+        // Ready *before* the audio: the card is fully drawn and answerable
+        // while the sentence plays. Only the clock waits for the audio.
+        self.questionReady = true
+        // The clock does not run yet. `startedAt` is set when the audio ends.
+        self.awaitingAudio = true
+        await self.playSentence(clip: clip, text: example.sentence, voice: voice, isReplay: false)
+    }
+
+    /// The play button, and the first automatic play. Replays are free by
+    /// design: the suggestion no longer turns on a stopwatch the user can game,
+    /// so hearing it again should never feel expensive.
+    func replaySentence(voice: SpeechService.Voice) async {
+        guard self.kind == .hearSentence, let example = listeningExample else { return }
+        self.replayCount += 1
+        await self.playSentence(
+            clip: example.audioUrls?[voice.rawValue],
+            text: example.sentence,
+            voice: voice,
+            isReplay: true
+        )
+    }
+
+    private func playSentence(
+        clip: String?,
+        text: String,
+        voice: SpeechService.Voice,
+        isReplay: Bool
+    ) async {
+        self.isPlayingSentence = true
+        let outcome = await self.audio.play(clip, text: text, voice: voice)
+        self.isPlayingSentence = false
+        if outcome != .finished { self.audioFailed = true }
+        // Only the first play opens the clock. A replay must not reset it —
+        // that would turn the button into a way to buy time, and the time a
+        // replay costs is exactly the signal that this word was hard.
+        if !isReplay, self.awaitingAudio {
+            self.awaitingAudio = false
+            self.startedAt = .now
+        }
+    }
+
+    /// Word ids still to be asked this session. An image distractor drawn from
+    /// them would be a free look at a question the user has not reached.
+    private var upcomingWordIds: Set<String> {
+        guard self.index < self.queue.count else { return [] }
+        return Set(self.queue[self.index...].map(\.word.id))
+    }
+
+    /// Lift the blur. Same cost as 求救提示's flip and for a stronger reason:
+    /// the sentence spells the answer out, so from here this is a reading
+    /// question, not a listening one (ADR-0014).
+    func revealSentence() {
+        guard self.phase == .answer, self.kind == .hearSentence else { return }
+        self.sentenceRevealed = true
+        self.hinted = true
     }
 
     /// Fetch the next round's due queue for 再來一輪; empty ⇒ nothing left. The
@@ -166,15 +331,20 @@ final class ReviewFlowCoordinator {
     /// the word, so it is remembered for the rating (`hinted`) even if they
     /// flip straight back.
     func toggleHint() {
-        guard self.phase == .answer else { return }
+        guard self.phase == .answer, self.kind == .pickWord else { return }
         self.hintFaceUp.toggle()
         if self.hintFaceUp { self.hinted = true }
     }
 
     /// Whether the 8-second "點一下圖片" nudge still has anything to teach on
     /// this item. The view owns the timer; this owns the decision.
+    ///
+    /// Never in 聽句. That delay exists to compensate for an affordance drawn
+    /// nowhere — 選字's hint is a tap on a picture with nothing to say so — and
+    /// 聽句's eye is on screen from the first frame. A line telling the user
+    /// about a button they can already see is not a hint, it is noise.
     var canNudge: Bool {
-        self.phase == .answer && !self.hinted && !self.isRetest
+        self.phase == .answer && !self.hinted && !self.isRetest && self.kind == .pickWord
     }
 
     /// Computed once per answer. Fast correct answers auto-apply this; the
@@ -185,9 +355,13 @@ final class ReviewFlowCoordinator {
     /// A hinted item is capped at 困難 regardless of speed. That cap is also
     /// what switches off the auto-rate path in `pick()`, which requires a
     /// suggestion other than 困難 — see ADR-0007.
+    /// `elapsed` is nil when nothing was timed — 聽句 answered before its
+    /// sentence finished. A correct-but-untimed answer suggests 穩定: 熟練 is
+    /// the one rating that rests entirely on the speed signal, and claiming it
+    /// without one would be inventing the evidence.
     func computeSuggestion(
         correct: Bool,
-        elapsed: TimeInterval,
+        elapsed: TimeInterval?,
         mastery: Int?,
         hinted: Bool = false
     )
@@ -195,6 +369,7 @@ final class ReviewFlowCoordinator {
     {
         if !correct { return .again }
         if hinted { return .hard }
+        guard let elapsed else { return .good }
         switch elapsed {
         case ..<3: return (mastery ?? 0) >= 50 ? .easy : .good
         case ..<7: return .good
@@ -202,10 +377,28 @@ final class ReviewFlowCoordinator {
         }
     }
 
+    /// One of the two pictures in 聽句. Compared by id, not by label: two
+    /// catalogue words can print the same string, they cannot share an id.
+    func pickImage(_ option: ImageChoiceOption) {
+        guard self.kind == .hearSentence, let curr = current else { return }
+        self.resolve(picked: option.word, correct: option.id == curr.word.id, item: curr)
+    }
+
     func pick(_ choice: String) {
-        guard self.phase == .answer, let curr = current else { return }
-        let ok = choice == curr.word.word
-        let elapsed = Date.now.timeIntervalSince(self.startedAt)
+        guard let curr = current else { return }
+        self.resolve(picked: choice, correct: choice == curr.word.word, item: curr)
+    }
+
+    private func resolve(picked choice: String, correct ok: Bool, item curr: StudyQueueItem) {
+        guard self.phase == .answer else { return }
+        // Answering before the sentence finished leaves nothing timed — the
+        // clock had not started. It may be genuine (the word was recognised
+        // mid-sentence) or a rush, and the two are indistinguishable, so the
+        // suggestion falls back to correctness rather than claiming a speed
+        // that was never measured.
+        let elapsed = self.awaitingAudio
+            ? nil
+            : Date.now.timeIntervalSince(self.startedAt)
         self.suggested = self.computeSuggestion(
             correct: ok,
             elapsed: elapsed,
@@ -230,9 +423,15 @@ final class ReviewFlowCoordinator {
             } else {
                 self.revealMode = .continueOnly
             }
-        } else if ok, self.suggested != .hard {
+        } else if ok, self.suggested != .hard, self.kind == .pickWord {
             // Fast correct: the suggestion is unambiguous — apply it and keep
             // the session moving instead of raising a sheet to confirm it.
+            //
+            // 聽句 is excluded by that very precondition, not by an exception:
+            // its answer is one of *two* pictures, so a fast correct answer is
+            // one coin flip and "unambiguous" is not true of it. It takes the
+            // branch below — the one whose comment already says the user's own
+            // judgment carries signal (ADR-0014).
             self.passedCount += 1
             self.applyRating(self.suggested, for: curr)
             self.flash = .autoRated(self.suggested)
@@ -297,12 +496,18 @@ final class ReviewFlowCoordinator {
     /// Record + persist one SRS rating (optimistically, in the background).
     private func applyRating(_ r: SRSRating, for item: StudyQueueItem) {
         self.rated = r
+        let listening = self.kind == .hearSentence
         let payload = StudyAnswerPayload(
             cardId: item.card.id,
             rating: r,
             responseMs: Int(Date.now.timeIntervalSince(self.startedAt) * 1000),
-            activity: "mcq",
-            hinted: self.hinted
+            activity: self.kind.asActivity,
+            hinted: self.hinted,
+            // Only 聽句 has these, and sending them as nil elsewhere keeps a
+            // 選字 row's metadata honestly empty rather than claiming zero
+            // replays of audio that was never played.
+            replayCount: listening ? self.replayCount : nil,
+            audioFailed: listening ? self.audioFailed : nil
         )
         self.writes.submit(payload, wordId: item.word.id)
     }
@@ -321,6 +526,9 @@ final class ReviewFlowCoordinator {
         if let leaving = current {
             self.presentedCounts[leaving.word.id, default: 0] += 1
         }
+        // Remembered across the reset below: "no two 聽句 in a row" is the one
+        // piece of per-item state whose whole job is to outlive its item.
+        self.previousKind = self.kind
         if self.index + 1 >= self.queue.count {
             // Last item: give outstanding SRS writes a brief window to land so
             // CompleteView's mastery deltas are populated, but cap it so a slow
@@ -339,6 +547,19 @@ final class ReviewFlowCoordinator {
             self.revealMode = nil
             self.flash = nil
             self.startedAt = .now
+            // 聽句 state. `kind` returns to the default rather than carrying
+            // over: `prepareQuestion` decides it for the new card, and leaving
+            // the old value up would let one frame render two pictures for a
+            // word that has none.
+            self.kind = .pickWord
+            self.listeningExample = nil
+            self.imageOptions = nil
+            self.sentenceRevealed = false
+            self.replayCount = 0
+            self.audioFailed = false
+            self.isPlayingSentence = false
+            self.awaitingAudio = false
+            self.questionReady = false
         }
     }
 }

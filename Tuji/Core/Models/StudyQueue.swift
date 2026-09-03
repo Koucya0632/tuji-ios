@@ -52,12 +52,46 @@ struct StudyCard: Decodable, Hashable {
     }
 }
 
+/// One authored example sentence, with everything 聽句 needs to ask about it.
+///
+/// Attached to the queue item rather than fetched per card: the question has to
+/// be ready the moment the card appears, and a hundred-item queue cannot pay a
+/// detail round-trip each. What is deliberately *not* here is `spans` — the
+/// tappable version of this sentence is one pull-up away in the reveal sheet
+/// (`WordDetailSheet` fetches it on demand), so carrying the annotation for
+/// every card would ship a hundred copies to serve the one the user opens.
+struct StudyExample: Decodable, Hashable {
+    /// The sentence in the language being learned. Rendered blurred, and never
+    /// through `InteractiveSentenceText` — without spans there is nothing to
+    /// tap, and a live-looking sentence that is dead is worse than a plain one.
+    let sentence: String
+    /// `A2` (the simpler of the authored pair) or `B1` (the harder). Every
+    /// published word has exactly one of each; `ListeningQuestion` picks
+    /// between them by mastery.
+    let cefrLevel: String?
+    /// Pre-generated clips keyed by locale, same shape as a word's. Nil when
+    /// the sentence has no recording yet — such a card simply is not asked as
+    /// 聽句, because the on-device fallback would be reading kanji by a guess
+    /// the app cannot correct.
+    let audioUrls: [String: String]?
+    /// Every catalogue word this sentence names, the target included. The
+    /// image distractor must avoid all of them: 46% of the English sentences
+    /// name two catalogue nouns, and drawing the other one makes both pictures
+    /// correct. Resolved server-side from the sentence's own 詞塊, which is the
+    /// only place the base-form → word id mapping exists.
+    let mentionedWordIds: [String]?
+}
+
 struct StudyQueueItem: Decodable, Hashable, Identifiable {
     let card: StudyCard
     let word: StudyQueueWord
     let choices: [String]?
     let spellingChoices: [String]?
     let mastery: Int?
+    /// The word's authored example pair. Absent for 自製圖鑑 and 物見 cards,
+    /// which have no example sentences at all — the reason 聽句 needs a
+    /// fallback question rather than a gate at the session's entrance.
+    let examples: [StudyExample]?
 
     var id: String {
         self.word.id
@@ -138,6 +172,16 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
     /// so answers parked on disk by an older build still decode — a new
     /// non-optional key would fail every one of them.
     let hinted: Bool?
+    /// 聽句 only: how many times the sentence was replayed before answering.
+    /// Lands in `study_logs.metadata` for the same reason `hinted` does —
+    /// the table is append-only, so a signal not written now is unrecoverable —
+    /// and by the same mechanism, because `activity` has a closed enum at both
+    /// ends while `metadata` has no constraint and needs no migration.
+    let replayCount: Int?
+    /// 聽句 only: the clip was missing or unreachable and the sentence was read
+    /// by on-device synthesis instead. That answer is not evidence about
+    /// listening in either direction, so the analysis has to be able to drop it.
+    let audioFailed: Bool?
 
     init(
         cardId: String,
@@ -146,7 +190,9 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
         sessionId: String? = nil,
         activity: String? = nil,
         ownerUserId: UUID? = nil,
-        hinted: Bool? = nil
+        hinted: Bool? = nil,
+        replayCount: Int? = nil,
+        audioFailed: Bool? = nil
     ) {
         self.cardId = cardId
         self.rating = rating.rawValue
@@ -155,6 +201,8 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
         self.activity = activity
         self.ownerUserId = ownerUserId
         self.hinted = hinted
+        self.replayCount = replayCount
+        self.audioFailed = audioFailed
     }
 }
 
