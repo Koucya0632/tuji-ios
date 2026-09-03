@@ -31,14 +31,18 @@ private final class FakeListeningAudio: ListeningAudio {
         return self.playable && online
     }
 
+    private(set) var rates: [Float] = []
+
     func play(
         _ urlString: String?,
         text _: String,
-        voice _: SpeechService.Voice
+        voice _: SpeechService.Voice,
+        rate: Float
     ) async
         -> ListeningPlayback
     {
         self.plays.append(urlString)
+        self.rates.append(rate)
         if self.holdsPlayback {
             await withCheckedContinuation { self.gate = $0 }
         }
@@ -422,6 +426,42 @@ struct ReviewListeningTests {
         await coord.replaySentence(voice: .us)
         #expect(coord.startedAt == started)
         #expect(coord.replayCount == 1)
+    }
+
+    /// Reaching for 慢讀 says the sentence did not land at speed — the same
+    /// thing pressing play again says — so it counts as a replay. And like any
+    /// replay it must not restart the clock, or the button becomes a way to buy
+    /// time (ADR-0014).
+    @Test
+    func slowPlaybackIsAReplayAndDoesNotResetTheClock() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        let started = coord.startedAt
+
+        await coord.replaySentence(voice: .us, slow: true)
+
+        #expect(coord.replayCount == 1)
+        #expect(coord.startedAt == started)
+        #expect(audio.rates.last == ReviewFlowCoordinator.slowRate)
+    }
+
+    @Test
+    func theAutomaticFirstPlayIsAlwaysFullSpeed() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        #expect(audio.rates == [1])
+        #expect(coord.replayCount == 0, "the card playing itself is not the user asking again")
+    }
+
+    @Test
+    func aNormalReplayStaysAtFullSpeed() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        await coord.replaySentence(voice: .us)
+        #expect(audio.rates.last == 1)
     }
 
     @Test

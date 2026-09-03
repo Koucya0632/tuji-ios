@@ -7202,6 +7202,28 @@
         }
       }
     },
+    "慢速播放" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play slowly"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ゆっくり再生"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "慢速播放"
+          }
+        }
+      }
+    },
     "我" : {
       "localizations" : {
         "en" : {

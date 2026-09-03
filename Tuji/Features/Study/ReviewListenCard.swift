@@ -65,7 +65,13 @@ struct ReviewListenCard: View {
                     // the system. Only a legible sentence exists for VoiceOver.
                     .accessibilityHidden(!self.isLegible)
             }
-            .overlay(alignment: .bottomTrailing) { self.playButton.padding(Space.s3) }
+            .overlay(alignment: .bottomTrailing) {
+                HStack(spacing: Space.s2) {
+                    self.slowButton
+                    self.playButton
+                }
+                .padding(Space.s3)
+            }
             .overlay(alignment: .bottomLeading) { self.eyeButton.padding(Space.s3) }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(
@@ -73,6 +79,7 @@ struct ReviewListenCard: View {
             )
             .accessibilityActions {
                 Button("再聽一次") { self.replay() }
+                Button("慢速播放") { self.replay(slow: true) }
                 if !self.isLegible {
                     Button("顯示例句") { self.coord.revealSentence() }
                 }
@@ -134,6 +141,31 @@ struct ReviewListenCard: View {
         .accessibilityLabel(Text("再聽一次"))
     }
 
+    /// 慢讀, at `ReviewFlowCoordinator.slowRate`.
+    ///
+    /// Drawn as a sibling of the speaker rather than hidden behind a long-press
+    /// on it. The same reasoning the eye follows: an affordance nobody can see
+    /// is found only by people who did not need it, and the person who needs a
+    /// sentence read slowly is the least likely to go hunting for a gesture.
+    ///
+    /// The label is the number, not a tortoise — `0.8×` says exactly how much
+    /// slower, in a form that needs no translating.
+    private var slowButton: some View {
+        Button {
+            self.replay(slow: true)
+        } label: {
+            ZStack {
+                Rectangle().fill(.tujiPaper)
+                Text(verbatim: "0.8×")
+                    .font(.tujiMono)
+                    .foregroundStyle(.tujiInk2)
+            }
+            .frame(width: 48, height: 48)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("慢速播放"))
+    }
+
     /// Drawn from the first frame, unlike 選字's hint which is deliberately
     /// invisible for 8 seconds. That delay compensates for an affordance with
     /// nothing on screen to announce it; this one is on screen.
@@ -156,9 +188,9 @@ struct ReviewListenCard: View {
         }
     }
 
-    private func replay() {
+    private func replay(slow: Bool = false) {
         let voice = self.voice
-        Task { await self.coord.replaySentence(voice: voice) }
+        Task { await self.coord.replaySentence(voice: voice, slow: slow) }
     }
 }
 

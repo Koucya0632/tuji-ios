@@ -238,17 +238,29 @@ final class ReviewFlowCoordinator {
         await self.playSentence(clip: clip, text: example.sentence, voice: voice, isReplay: false)
     }
 
+    /// How much slower 慢讀 is than the recording. A time-stretch on the same
+    /// clip rather than a second recording — it costs nothing, and if it turns
+    /// out to sound wrong it can be swapped for a Chirp-generated slow take
+    /// behind this same number.
+    static let slowRate: Float = 0.8
+
     /// The play button, and the first automatic play. Replays are free by
     /// design: the suggestion no longer turns on a stopwatch the user can game,
     /// so hearing it again should never feel expensive.
-    func replaySentence(voice: SpeechService.Voice) async {
+    ///
+    /// 慢讀 counts as a replay, because it is one: reaching for it says the
+    /// sentence did not land at speed, which is the same thing pressing play
+    /// again says. It carries no *rating* cost for the same reason replays
+    /// don't — the clock does not restart (ADR-0014).
+    func replaySentence(voice: SpeechService.Voice, slow: Bool = false) async {
         guard self.kind == .hearSentence, let example = listeningExample else { return }
         self.replayCount += 1
         await self.playSentence(
             clip: example.audioUrls?[voice.rawValue],
             text: example.sentence,
             voice: voice,
-            isReplay: true
+            isReplay: true,
+            rate: slow ? Self.slowRate : 1
         )
     }
 
@@ -256,10 +268,11 @@ final class ReviewFlowCoordinator {
         clip: String?,
         text: String,
         voice: SpeechService.Voice,
-        isReplay: Bool
+        isReplay: Bool,
+        rate: Float = 1
     ) async {
         self.isPlayingSentence = true
-        let outcome = await self.audio.play(clip, text: text, voice: voice)
+        let outcome = await self.audio.play(clip, text: text, voice: voice, rate: rate)
         self.isPlayingSentence = false
         if outcome != .finished { self.audioFailed = true }
         // Only the first play opens the clock. A replay must not reset it —
