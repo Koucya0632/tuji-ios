@@ -464,6 +464,159 @@ struct ReviewListeningTests {
         #expect(audio.rates.last == 1)
     }
 
+    // MARK: - 這輪不做聽句題
+
+    /// Someone presses this *because* they cannot answer the card in front of
+    /// them, so leaving that card as a listening question would be answering a
+    /// question they just said they cannot hear.
+    @Test
+    func optingOutConvertsTheCardInFrontOfYouToo() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        try #require(coord.kind == .hearSentence)
+
+        coord.optOutOfListening()
+
+        #expect(coord.kind == .pickWord)
+        #expect(coord.imageOptions == nil)
+        #expect(coord.listeningExample == nil)
+        #expect(audio.stopped == 1, "the sentence must not keep playing")
+    }
+
+    @Test
+    func optingOutSilencesTheRestOfTheSession() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        coord.optOutOfListening()
+
+        // The same card, prepared again, must not come back as 聽句.
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        #expect(coord.kind == .pickWord)
+    }
+
+    /// No answer was revealed, so nothing is owed. This is the one place the
+    /// distinction matters: the eye and this button are both "I am stuck", but
+    /// only one of them shows you the answer.
+    @Test
+    func optingOutIsNotAHint() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        coord.optOutOfListening()
+        #expect(!coord.hinted)
+
+        // Assert it through the thing that actually consumes `hinted`: answer
+        // correctly and check the full positive table is still on offer. The
+        // earlier version of this test compared `availableRatings` before
+        // answering, which passes whatever `hinted` says.
+        coord.pick("mug")
+        #expect(coord.wasCorrect)
+        #expect(coord.availableRatings == [.hard, .good, .easy])
+    }
+
+    /// The card is now a different question, so its clock starts now — and the
+    /// listening-only metadata must stop being sent with it.
+    @Test
+    func optingOutRestartsTheClockAndDropsListeningMetadata() async throws {
+        let audio = FakeListeningAudio()
+        let spy = ListenAnswerSpy()
+        let coord = try self.listeningCoordinator(audio: audio, writer: spy)
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        await coord.replaySentence(voice: .us)
+        let before = coord.startedAt
+
+        coord.optOutOfListening()
+        #expect(coord.startedAt > before)
+
+        coord.pick("mug")
+        coord.rate(.good)
+        try await self.waitUntil { spy.answers.isEmpty == false }
+        let payload = try #require(spy.answers.first)
+        #expect(payload.activity == "mcq")
+        #expect(payload.replayCount == nil, "a 選字 row must not claim replays of audio")
+        #expect(payload.audioFailed == nil)
+        // But the fact that this card *was* a listening question has to survive
+        // somewhere: `activity` truthfully says mcq, so this is the only place.
+        #expect(payload.convertedFromListening == true)
+        #expect(payload.listeningOptedOut == true)
+    }
+
+    /// The rest of the session answers as 選字, and those rows must stay
+    /// distinguishable from a session that never met a listening question —
+    /// otherwise an aggregate listening accuracy is computed over a population
+    /// that quietly selected itself.
+    @Test
+    func everyLaterAnswerInTheSessionCarriesTheOptOut() async throws {
+        let audio = FakeListeningAudio()
+        let spy = ListenAnswerSpy()
+        let coord = try ReviewFlowCoordinator(
+            queue: makeQueue(),
+            writer: spy,
+            queueProvider: EmptyQueueProvider(),
+            audio: audio,
+            beat: { _ in }
+        )
+        // A wider pool than `pool()`: with both queue items present, `w-cup` is
+        // excluded as still-queued and `w-plate` as named by the sentence, so
+        // the shared pool has no distractor left and the card would quietly
+        // demote to 選字 — leaving nothing to opt out of.
+        let wide = self.pool() + [
+            CardWord(
+                id: "w-bowl", word: "bowl", chinese: "碗",
+                imageUrl: "https://x/bowl.webp", category: "kitchen",
+                pronunciation: "", targetLanguage: .en
+            )
+        ]
+        await coord.prepareQuestion(pool: wide, session: .en, online: true, voice: .us)
+        try #require(coord.kind == .hearSentence)
+        coord.optOutOfListening()
+        coord.pick("mug")
+        coord.rate(.good)
+        try await self.waitUntil { coord.index == 1 }
+
+        await coord.prepareQuestion(pool: wide, session: .en, online: true, voice: .us)
+        coord.pick("cup")
+        coord.rate(.good)
+        try await self.waitUntil { spy.answers.count == 2 }
+
+        let second = try #require(spy.answers.last)
+        #expect(second.listeningOptedOut == true, "the session is still opted out")
+        #expect(
+            second.convertedFromListening == nil,
+            "only the card they bailed on carries this"
+        )
+    }
+
+    /// Absent rather than `false`: a 選字 row in an ordinary session should not
+    /// claim anything about a feature it never met.
+    @Test
+    func anOrdinarySessionSendsNeitherFlag() async throws {
+        let audio = FakeListeningAudio()
+        let spy = ListenAnswerSpy()
+        let coord = try self.listeningCoordinator(audio: audio, writer: spy)
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
+        coord.pick("mug")
+        coord.rate(.good)
+        try await self.waitUntil { spy.answers.isEmpty == false }
+
+        let payload = try #require(spy.answers.first)
+        #expect(payload.listeningOptedOut == nil)
+        #expect(payload.convertedFromListening == nil)
+    }
+
+    @Test
+    func optingOutDoesNothingOnAPickWordCard() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
+        try #require(coord.kind == .pickWord)
+
+        coord.optOutOfListening()
+        #expect(!coord.listeningOptedOut, "nothing to opt out of")
+    }
+
     @Test
     func liftingTheBlurCostsTheSameAsTheHintFlip() async throws {
         let audio = FakeListeningAudio()

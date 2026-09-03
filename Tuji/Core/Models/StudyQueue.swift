@@ -182,6 +182,20 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
     /// by on-device synthesis instead. That answer is not evidence about
     /// listening in either direction, so the analysis has to be able to drop it.
     let audioFailed: Bool?
+    /// 這輪不做聽句題 was on when this was answered.
+    ///
+    /// Sent on **every** activity, not just 聽句 — that is the point. A session
+    /// with listening turned off answers the rest of its cards as 選字, and
+    /// without this flag those rows are indistinguishable from a session that
+    /// never had a listening question to begin with. That difference is exactly
+    /// what makes an aggregate listening accuracy honest or not.
+    let listeningOptedOut: Bool?
+    /// This card was a 聽句 question until the user turned listening off on it.
+    ///
+    /// Its `activity` now says `mcq`, truthfully — that is what was answered.
+    /// But the card the user *bailed on* is the sharpest datum here, and it is
+    /// the one place the fact is otherwise unrecoverable.
+    let convertedFromListening: Bool?
 
     init(
         cardId: String,
@@ -192,7 +206,9 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
         ownerUserId: UUID? = nil,
         hinted: Bool? = nil,
         replayCount: Int? = nil,
-        audioFailed: Bool? = nil
+        audioFailed: Bool? = nil,
+        listeningOptedOut: Bool? = nil,
+        convertedFromListening: Bool? = nil
     ) {
         self.cardId = cardId
         self.rating = rating.rawValue
@@ -203,6 +219,8 @@ nonisolated struct StudyAnswerPayload: Codable, Sendable {
         self.hinted = hinted
         self.replayCount = replayCount
         self.audioFailed = audioFailed
+        self.listeningOptedOut = listeningOptedOut
+        self.convertedFromListening = convertedFromListening
     }
 }
 

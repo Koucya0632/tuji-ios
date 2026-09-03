@@ -295,6 +295,20 @@ private struct ReviewQuestionView: View {
                     )
                     ReviewImageChoices(coord: self.coord, options: options)
                         .padding(.horizontal, Space.s4)
+                    // The way out for someone who cannot hear right now — no
+                    // headphones, a train, company. 聽句 is the only question
+                    // in the app that is unanswerable without audio, so it is
+                    // the only one that needs this. Drawn under the options
+                    // rather than up by the play button: it is the last resort,
+                    // and it should read after them, not compete with them.
+                    if self.coord.phase == .answer {
+                        Button("這輪不做聽句題") {
+                            self.coord.optOutOfListening()
+                        }
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                        .padding(.top, Space.s2)
+                    }
                 } else {
                     ReviewHeroCard(coord: self.coord, item: self.item, height: self.heroHeight)
                     self.choicesList
