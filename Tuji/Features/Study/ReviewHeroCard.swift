@@ -65,22 +65,17 @@ struct ReviewHeroCard: View {
             self.showDetail = false
             await self.armNudge()
         }
-        // `TujiSheetShell` by hand rather than `.tujiSheet(…)` — the two lines
-        // that convenience saves cost the 詞塊 card its scrim over the title bar,
-        // because `.glossCard()` has to wrap the shell and the closure goes
-        // inside it. Same shape AtlasMyCollectionsView already uses.
-        .sheet(isPresented: self.$showDetail) {
-            TujiSheetShell(title: "單字詳情", height: 520) {
-                WordDetailSheet(
-                    word: self.item.word,
-                    wordId: self.item.word.id,
-                    // Not gated on `showZh`: that switch governs the always-on
-                    // gloss 學新字 prints on a picture, and this sheet is two
-                    // deliberate taps in.
-                    gloss: self.item.word.chinese
-                )
-            }
-            .glossCard()
+        // Back on the convenience: it hosts the 詞塊 card outside the shell
+        // itself now, which is the only reason this was hand-rolled.
+        .tujiSheet(isPresented: self.$showDetail, title: "單字詳情", height: 520) {
+            WordDetailSheet(
+                word: self.item.word,
+                wordId: self.item.word.id,
+                // Not gated on `showZh`: that switch governs the always-on
+                // gloss 學新字 prints on a picture, and this sheet is two
+                // deliberate taps in.
+                gloss: self.item.word.chinese
+            )
         }
     }
 

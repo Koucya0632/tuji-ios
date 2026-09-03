@@ -22,6 +22,7 @@
 // custom renderer does to link hit-testing cannot matter; every other render
 // in the app is the same plain `Text` it has always been.
 
+import OSLog
 import SwiftUI
 
 struct InteractiveSentenceText: View {
@@ -80,6 +81,10 @@ struct InteractiveSentenceText: View {
                 ))
         } else {
             Text(self.sentence)
+                .modifier(UnhostedGlossWarning(
+                    isUnhosted: self.selection == nil
+                        && SentenceAnnotation.spans(self.spans, for: self.sentence) != nil
+                ))
         }
     }
 
@@ -263,4 +268,55 @@ private struct GlossRunMeasure: ViewModifier {
     .environment(TabNavigator())
     .environment(LocalCache.shared)
     .environment(AuthService.shared)
+}
+
+/// Says so, loudly, when a sentence with usable 詞塊 renders with nobody to
+/// deliver a tap to.
+///
+/// The plain-text fallback is correct — it is what the feature looked like
+/// before it existed — but it is *silent*: a screen that forgot `.glossCard()`
+/// looks exactly like a screen the feature was never meant to reach, so nobody
+/// reports it. It has been missed three times, and the second one had live
+/// annotated data sitting under dead text for weeks.
+///
+/// `scripts/check-gloss-host.py` catches it in CI without anyone opening the
+/// screen, which is why it stays. What it cannot do is see a *render*: it
+/// matches text at file level, so a host applied to the wrong subview passes,
+/// and its `HOSTED_BY_CALLER` list is three files it never checks at all. This
+/// half answers the question where it is actually asked.
+///
+/// DEBUG only, and deliberately **not** an `assertionFailure`: a trap here would
+/// take the simulator down over a rendering fault, and — because a crashed test
+/// process still prints ✔ and only shrinks the total — it would be the one kind
+/// of failure this repo has learned to distrust. A red rule under the sentence
+/// is unmissable and costs nothing. In a shipping build an unhosted sentence
+/// stays exactly what it is today: plain text, the failure mode this feature
+/// chose.
+private struct UnhostedGlossWarning: ViewModifier {
+    let isUnhosted: Bool
+
+    func body(content: Content) -> some View {
+        #if DEBUG
+        content
+            .overlay(alignment: .bottomLeading) {
+                if self.isUnhosted {
+                    Rectangle()
+                        .fill(.tujiAlert)
+                        .frame(height: Border.bw2)
+                        .allowsHitTesting(false)
+                }
+            }
+            .onAppear {
+                guard self.isUnhosted else { return }
+                Logger(subsystem: "app.tuji.ios", category: "gloss")
+                    .error("""
+                    an example sentence with usable 詞塊 rendered with no \
+                    .glossCard() host — the taps have nowhere to go. Add one to \
+                    this screen's root, outside whatever shell draws its title bar.
+                    """)
+            }
+        #else
+        content
+        #endif
+    }
 }
