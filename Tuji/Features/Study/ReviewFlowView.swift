@@ -129,7 +129,7 @@ struct ReviewFlowView: View {
             item: item,
             mode: "review",
             phase: self.coord.phase == .answer ? "answer" : "reveal",
-            selectedAnswer: self.coord.picked,
+            selectedAnswer: self.coord.reportedSelection,
             uiLang: self.settings.current.uiLang
         )
     }
@@ -166,6 +166,9 @@ struct ReviewFlowView: View {
             // Keep the MCQ option recolour on pick smooth (previously carried
             // by the footer's ZStack animation).
             .animation(.spring(duration: 0.35), value: self.coord.phase)
+            // Ruling an option out does not move `phase`, so the alert frame
+            // would otherwise snap in with no motion at all.
+            .animation(Motion.ease(Motion.d1), value: self.coord.wrongPicks)
             .background(.tujiPaper)
             // MainTabsView normally reserves 78pt for the custom TujiTabBar;
             // that ancestor inset doesn't propagate into pushed views, so we
@@ -369,7 +372,8 @@ private struct ReviewQuestionView: View {
             item: self.item,
             variant: self.coord.choicesVariant(for: self.item),
             picked: self.coord.picked,
-            revealed: self.coord.phase == .review
+            revealed: self.coord.phase == .review,
+            wrongPicks: self.coord.wrongPicks
         ) { self.coord.pick($0) }
     }
 }

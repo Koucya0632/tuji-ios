@@ -656,6 +656,50 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   target). `TilesView` reads `tilePicked` and forwards taps; only the flat-index-to-row
   *layout* stays in the view. The coordinator resets `tilePicked` on a correct advance /
   wrong requeue.
+- **選錯一個選項不是作答，是把它排除掉。** 複習的看圖選字，錯的那一下只把該選項標上紅框、
+  停掉它的點擊，題目留在原地讓人繼續選；只有**落地的那一次**才走 `resolve`。承重的是
+  `pick()` 交給 `resolve` 的 `correct:` 是**「有沒有一次就中」**（`ok && wrongPicks.isEmpty`），
+  不是「這一下對不對」——`resolve` 下游全部只讀 `wasCorrect` / `hinted` / `suggested` /
+  `retriedIds`，沒有一處數過點擊次數，所以「評分不變」是靠這一行把事實講對達成的，不是靠在評分
+  裡加分支。**聽句刻意不在這條路上**：兩張圖排除掉一張就等於拿到答案，和它不自動評級是同一個
+  50%（ADR-0014），所以 `pickImage` 仍然第一次點擊就結算。連帶兩件事：`.wrong` 的紅色從左側
+  邊條改成整圈框，因為它現在會出現在**旁邊沒有正確答案反白**的時刻，一條側線讀不出「不是這
+  個」（學新字的答錯跟著改，「答錯了」在全 App 只該有一種標記）；以及 `picked` 從此只由落地的
+  那一次設定，所以 報錯 改讀 `reportedSelection`，否則題目還開著時送出的報告會把使用者已經試
+  過的東西整個丟掉。
+- **揭示表晚一拍升起，因為它蓋住的正是答案本身。** 揭示表本來和選項在同一個 frame 出現，
+  於是墨塊與框——畫面上唯一在講「剛剛發生了什麼」的兩個東西——一幀都沒被看到就被 modal 蓋掉，
+  等於要使用者為一個他沒看到的答案評分。現在 `resolve` 立刻定案（`phase`、`wasCorrect`、
+  `suggested`、鎖住選項都不變），只有 `revealMode` 隔 `revealDelay`（600ms）才設。這一拍走
+  `AnswerBeat` 而不是裸 `Task`，理由就是那個模組存在的理由：**先離開**時它必須取消，否則會在
+  使用者已經離開的畫面上升起一張表。比自動前進的 700ms 短一點是刻意的——那一拍在結束一題，
+  這一拍是在通往「還要動手」的路上。`rate()` 本來就守著 `revealMode == .rate`，所以這 600ms
+  裡點不到評分鍵，不需要另一道鎖。
+  **代價落在測試上**：`revealMode` 從此不可能和 `pick()` 同一輪被觀察到，所以每個看揭示表或
+  對它評分的測試都要先 `awaitReveal`。那個 helper 用 `#require` 而不只是輪詢：`waitUntil`
+  逾時是**安靜返回**的，所以在一條自動評級（根本不升表）的路徑上等它，會燒完 60 秒然後照樣
+  綠——這個坑當場踩過一次，三個聽句測試各慢了 60 秒。
+- **選錯的那一列會晃一下。** 框是**狀態**（這一輪它都在），晃動是**事件**。狀態自己出現很容
+  易沒被看見，尤其在複習：整個畫面只有被點的那一列變了，題目其他部分原封不動地繼續。晃動掛
+  在「進入 `.wrong`」這個轉換上，所以答案落地時，先前被排除掉的那幾列**不會跟著再晃**——把舊
+  的錯誤重播一次，看起來會像它們剛剛才被點錯。**它必須用 keyframe 不能用
+  `phaseAnimator`**：後者是「動到某一相位，然後等下一個相位被排程」，那個空檔正好落在動作已經
+  停住的地方——也就是最遠點。實測（60fps 錄影）那一版**一個畫格就彈到 −7.3pt，然後在那裡停了
+  約 95ms**，另一側也一樣，讀起來是「先橫移過去停住，然後才抖」，而不是抖一下。keyframe 是單
+  一條時間軸、每個畫格取樣一次，0 → −7.3pt 花 29ms，中間沒有一格是靜止的，整體 195ms。
+  投擲段用 `LinearKeyframe` 而不是 `CubicKeyframe`：cubic 是穿過那些值而不是落在上面，旁邊有
+  一個往反方向拉的鄰居時它會把角磨掉——全 cubic 版實測第一下只到 −3.3pt（目標 −7），變成先弱
+  後強，跟阻尼剛好相反。`Shake` 刻意**不進 `Motion`**：那個尺度是
+  全 App 的三段時長，這只是一個元件的錯誤回饋，在那裡加第四個值等於邀請下一個人用「晃動速
+  度」去 animate 別的東西。它仍然只用系統那一條 `easeOut`，而且起點與終點都是 0，不越過靜止位
+  置。
+- **底色講「哪個是答案」，框講「你點了哪個」。** 選項列上這兩個訊號是各自獨立的：反白成墨塊
+  ＝正確答案，3pt 框＝使用者的那一下。所以答對是**兩個都有**（墨塊 + 積累色框）、答錯只有紅
+  框、`.answer`（是答案但他沒點）**刻意沒有框**——在他沒點過的那一列畫一個框，等於宣稱一次不
+  存在的點擊。答對用 `tujiAccumulation` 而不是新增一個綠色：紙與墨只有六種意義而其中沒有綠，
+  **而聽句的兩張圖片本來就用這個顏色畫答對的框**。對比度四條邊都過 3:1（霧藍對墨塊 3.60、對
+  紙 4.72）。聽句那邊的規則**不跟著改，而且不是漏掉**：照片沒有「反白」這個通道，所以它的積累
+  色框只能拿去講「哪個是答案」，同一個顏色在那裡承擔的是另一件事。
 - **`StudyOptionRow` / `StudyOptionStyle`** — one shared MCQ option row + its
   right/wrong/answer/dim reveal logic (`StudyOptionStyle.forOption`), used by both
   `IdentifyView` (選字) and `ReviewFlowView` (複習). Replaced the two near-identical private

@@ -19,6 +19,10 @@ struct StudyChoiceList: View {
     let picked: String?
     /// Locked: the answer is showing and the rows stop responding.
     let revealed: Bool
+    /// Options ruled out this presentation: 複習's 看圖選字 marks a wrong pick
+    /// and leaves the question open, so those rows go dead while the rest stay
+    /// live. Empty for 學新字, whose first pick ends the question either way.
+    var wrongPicks: Set<String> = []
     let onPick: (String) -> Void
 
     @Environment(WordsStore.self) private var words
@@ -37,9 +41,10 @@ struct StudyChoiceList: View {
                         label: choice,
                         answer: self.item.word.word,
                         picked: self.picked,
-                        revealed: self.revealed
+                        revealed: self.revealed,
+                        wrongPicks: self.wrongPicks
                     ),
-                    disabled: self.revealed
+                    disabled: self.revealed || self.wrongPicks.contains(choice)
                 ) { self.onPick(choice) }
             }
         }

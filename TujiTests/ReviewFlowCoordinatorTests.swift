@@ -56,6 +56,19 @@ struct ReviewFlowCoordinatorTests {
         }
     }
 
+    /// The sheet no longer goes up in the same turn as the pick — the
+    /// coordinator holds the answered options uncovered for `revealDelay`
+    /// first. Every test that observes a reveal, or rates one, waits here.
+    ///
+    /// Requires the sheet rather than just polling for it: `waitUntil` returns
+    /// quietly when it times out, so calling this on a path that auto-rates —
+    /// which raises no sheet at all — would spend the whole 60s ceiling and
+    /// still pass.
+    private func awaitReveal(_ c: ReviewFlowCoordinator) async throws {
+        try await self.waitUntil { c.revealMode != nil }
+        try #require(c.revealMode != nil, "the reveal sheet never rose")
+    }
+
     @Test
     func suggestionCapsEasyForLowMastery() throws {
         let queue = try self.makeQueue()
@@ -103,12 +116,20 @@ struct ReviewFlowCoordinatorTests {
         #expect(c.writes.masteryByWord["w-fork"] == nil)
     }
 
+    /// 評分模式不變, stated as a test: a miss is graded exactly as it was before
+    /// the option could be ruled out. The only difference is that the item
+    /// resolves on the pick that *lands*, and it lands as a miss because
+    /// something was ruled out first.
     @Test
-    func wrongAnswerRestrictsRatingsAndRequeues() throws {
+    func wrongAnswerRestrictsRatingsAndRequeues() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.pick("spoon")
+        c.pick("fork")
+        #expect(c.wasCorrect == false)
+        try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
+        #expect(c.flash == nil) // never the auto-rate path
         #expect(c.suggested == .again)
         #expect(c.availableRatings == [.again, .hard])
         c.rate(.again)
@@ -127,8 +148,10 @@ struct ReviewFlowCoordinatorTests {
         // poll ceiling and fail every assertion after it.
         let c = ReviewFlowCoordinator(queue: queue, writer: writer, beat: { _ in })
 
-        // Item 1 (fork): wrong → manual 重來 → requeued.
+        // Item 1 (fork): wrong → find it → manual 重來 → requeued.
         c.pick("spoon")
+        c.pick("fork")
+        try await self.awaitReveal(c)
         c.rate(.again)
         try await self.waitUntil { c.current?.word.id == "w-cup" } // 300ms advance beat
         #expect(c.current?.word.id == "w-cup")
@@ -162,27 +185,103 @@ struct ReviewFlowCoordinatorTests {
     }
 
     @Test
-    func retestWrongShowsContinueOnlySheet() throws {
+    func retestWrongShowsContinueOnlySheet() async throws {
         let queue = try Array(self.makeQueue().prefix(1))
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         // Force the retest state directly: mark as already retried.
         c.retriedIds.insert("w-fork")
+        // The miss only rules the option out; the item resolves on the pick
+        // that lands, and lands *as a miss*.
         c.pick("spoon")
+        c.pick("fork")
+        try await self.awaitReveal(c)
         #expect(c.revealMode == .continueOnly)
         #expect(c.passedCount == 1) // leaves the session either way
         #expect(c.rated == nil) // no write path taken
     }
 
     @Test
-    func slowCorrectStillAsksForManualRating() throws {
+    func slowCorrectStillAsksForManualRating() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         // Simulate a slow answer by backdating the item start.
         c.startedAt = Date(timeIntervalSinceNow: -10)
         c.pick("fork")
+        try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
         #expect(c.suggested == .hard)
         #expect(c.availableRatings == [.hard, .good, .easy])
+    }
+
+    // MARK: - 看圖選字：選錯只是排除一個選項
+
+    @Test
+    func wrongPickRulesTheOptionOutAndLeavesTheQuestionOpen() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.pick("spoon")
+        #expect(c.wrongPicks == ["spoon"])
+        // Nothing about the item has been decided: no reveal, no rating, no
+        // requeue, and the option list is still live.
+        #expect(c.phase == .answer)
+        #expect(c.revealMode == nil)
+        #expect(c.flash == nil)
+        #expect(c.picked == nil)
+        #expect(c.rated == nil)
+        #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup"])
+        #expect(c.passedCount == 0)
+    }
+
+    @Test
+    func rulingOutASecondOptionStillDoesNotGrade() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.pick("spoon")
+        c.pick("ladle")
+        // Re-tapping one already ruled out changes nothing (the row is
+        // disabled, but the coordinator must not depend on that).
+        c.pick("spoon")
+        #expect(c.wrongPicks == ["spoon", "ladle"])
+        #expect(c.phase == .answer)
+        #expect(c.revealMode == nil)
+    }
+
+    /// The other half: someone who never missed sees nothing new.
+    @Test
+    func aCleanFirstPickStillAutoRates() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        c.pick("fork")
+        #expect(c.wrongPicks.isEmpty)
+        #expect(c.wasCorrect)
+        #expect(c.revealMode == nil)
+        #expect(c.flash == .autoRated(.good))
+    }
+
+    @Test
+    func ruledOutOptionsResetOnAdvance() async throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
+        c.pick("spoon")
+        c.pick("fork")
+        try await self.awaitReveal(c)
+        c.rate(.again)
+        try await self.waitUntil { c.current?.word.id == "w-cup" }
+        #expect(c.wrongPicks.isEmpty)
+    }
+
+    /// 報錯 filed while the question is still open must carry what the user has
+    /// already tried — `picked` is only set by the pick that lands.
+    @Test
+    func reportedSelectionCoversAnOpenQuestion() throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        #expect(c.reportedSelection == nil)
+        c.pick("spoon")
+        c.pick("ladle")
+        #expect(c.reportedSelection == "ladle / spoon")
+        c.pick("fork")
+        #expect(c.reportedSelection == "fork")
     }
 
     // MARK: - 求救提示 (hint flip)
@@ -203,15 +302,16 @@ struct ReviewFlowCoordinatorTests {
     /// at 困難 is what switches it off. If someone later relaxes the cap, the
     /// sheet silently stops appearing — this test is the tripwire.
     @Test
-    func hintedCorrectRaisesSheetInsteadOfAutoRating() throws {
+    func hintedCorrectRaisesSheetInsteadOfAutoRating() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.toggleHint()
         #expect(c.hintFaceUp)
         #expect(c.hinted)
         // Answered immediately and correctly — without the hint this would have
         // auto-rated 穩定 and flash-advanced.
         c.pick("fork")
+        try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
         #expect(c.flash == nil)
         #expect(c.rated == nil)
@@ -220,11 +320,12 @@ struct ReviewFlowCoordinatorTests {
     }
 
     @Test
-    func hintedCorrectDoesNotRequeue() throws {
+    func hintedCorrectDoesNotRequeue() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.toggleHint()
         c.pick("fork")
+        try await self.awaitReveal(c)
         // 重來 is offered on a hinted answer, but requeueing still keys off
         // "did they pick the wrong option", which they did not.
         c.rate(.again)
@@ -234,13 +335,15 @@ struct ReviewFlowCoordinatorTests {
     }
 
     @Test
-    func hintedWrongMatchesThePlainWrongPath() throws {
+    func hintedWrongMatchesThePlainWrongPath() async throws {
         let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.toggleHint()
         c.pick("spoon")
+        c.pick("fork")
         #expect(c.suggested == .again)
         #expect(c.availableRatings == [.again, .hard])
+        try await self.awaitReveal(c)
         c.rate(.again)
         #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup", "w-fork"])
         #expect(c.retriedIds.contains("w-fork"))
@@ -276,6 +379,7 @@ struct ReviewFlowCoordinatorTests {
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.toggleHint()
         c.pick("fork")
+        try await self.awaitReveal(c)
         c.rate(.hard)
         try await self.waitUntil { c.current?.word.id == "w-cup" } // 300ms beat
         #expect(!c.hinted)
@@ -287,9 +391,10 @@ struct ReviewFlowCoordinatorTests {
     func hintedFlagReachesThePayload() async throws {
         let queue = try self.makeQueue()
         let writer = SpyAnswerWriter()
-        let c = ReviewFlowCoordinator(queue: queue, writer: writer)
+        let c = ReviewFlowCoordinator(queue: queue, writer: writer, beat: { _ in })
         c.toggleHint()
         c.pick("fork")
+        try await self.awaitReveal(c)
         c.rate(.hard)
         await c.writes.drainPendingWrites(within: .seconds(10))
         #expect(writer.answers.map(\.hinted) == [true])
@@ -347,6 +452,49 @@ struct ReviewFlowCoordinatorTests {
         let next = await c.fetchAnotherRound()
 
         #expect(next.isEmpty)
+    }
+
+    // MARK: - 揭示表晚一拍才升起
+
+    /// The sheet used to go up in the same frame the answer resolved, so the
+    /// ink block and the frame that say what just happened were covered before
+    /// they could be read. The item still resolves immediately — only the ask
+    /// for a rating waits.
+    @Test
+    func theSheetWaitsABeatAfterTheAnswerResolves() async throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
+        c.startedAt = Date(timeIntervalSinceNow: -10) // slow correct ⇒ sheet path
+        c.pick("fork")
+
+        // Resolved and locked, but not yet asking for anything.
+        #expect(c.phase == .review)
+        #expect(c.wasCorrect)
+        #expect(c.revealMode == nil)
+        // And un-rateable while it holds: `rate` guards on the sheet being up,
+        // so the pause cannot be raced by a tap that lands under it.
+        c.rate(.hard)
+        #expect(c.rated == nil)
+
+        try await self.awaitReveal(c)
+        #expect(c.revealMode == .rate)
+    }
+
+    /// The reason the pause goes through `AnswerBeat` and not a bare `Task`:
+    /// 先離開 during it must not raise a sheet over the screen the user left for.
+    @Test
+    func leavingDuringTheRevealBeatDoesNotRaiseTheSheet() async throws {
+        let queue = try self.makeQueue()
+        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in
+            // Long enough that the cancellation lands first.
+            try? await Task.sleep(for: .milliseconds(200))
+        })
+        c.startedAt = Date(timeIntervalSinceNow: -10)
+        c.pick("fork")
+        c.cancelPendingBeats()
+        try? await Task.sleep(for: .milliseconds(300))
+
+        #expect(c.revealMode == nil)
     }
 
     // MARK: - 先離開 during the advance beat
