@@ -65,6 +65,47 @@ struct PublicAtlasBrowsingModelTests {
         #expect(explore.calls.dropFirst().map(\.forceReload) == [true, true])
     }
 
+    /// **Loaded wins.** Once rows are on screen a reload must not swap them for
+    /// a placeholder — the rule `AtlasShelfModel` and `MyCollectionsVM` already
+    /// state, and the one the explore shelf missed. It was answered in the
+    /// *View*, three lines from the saved shelf's answer and without its guard,
+    /// so returning to 物見 after publishing — which arrives as a pending
+    /// refresh, not a force — blanked a full shelf to 「載入中…」.
+    @Test
+    func aLoadedExploreShelfIsNeverReplacedByAPlaceholder() async {
+        let explore = FakeCollectionsBrowsing()
+        explore.result = .success([self.collection("a")])
+        let model = self.model(explore: explore)
+
+        #expect(model.explore.showsPlaceholder, "a cold shelf has nothing to keep")
+
+        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        #expect(!model.explore.showsPlaceholder)
+
+        // The publish-then-return path.
+        await model.update(
+            shelf: .explore,
+            language: .ja,
+            isSignedIn: false,
+            pendingExploreRefresh: true
+        )
+        #expect(!model.explore.showsPlaceholder)
+        #expect(model.explore.collections.map(\.id) == ["a"])
+    }
+
+    /// Both shelves are on the one rule now, so the saved half keeps the
+    /// behaviour it already had rather than inheriting the explore half's.
+    @Test
+    func aSavedShelfWithRowsAlsoKeepsThem() async {
+        let saved = FakeCollectionBookmarking()
+        saved.saved = [self.collection("a")]
+        let model = self.model(saved: saved)
+
+        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
+        #expect(!model.saved.showsPlaceholder)
+        #expect(model.saved.collections.map(\.id) == ["a"])
+    }
+
     @Test
     func failedInitialExploreLoadClearsListAndSurfacesError() async {
         let explore = FakeCollectionsBrowsing()
