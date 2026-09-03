@@ -124,6 +124,18 @@ struct ReviewListeningTests {
         ]
     }
 
+    /// The rating sheet rises a beat (`revealDelay`) after an answer resolves,
+    /// so it is never observable in the same turn as the pick.
+    ///
+    /// Requires the sheet rather than just polling for it: `waitUntil` returns
+    /// quietly when it times out, so calling this on a path that auto-rates —
+    /// which raises no sheet at all — would spend the whole 60s ceiling and
+    /// still pass.
+    private func awaitReveal(_ c: ReviewFlowCoordinator) async throws {
+        try await self.waitUntil { c.revealMode != nil }
+        try #require(c.revealMode != nil, "the reveal sheet never rose")
+    }
+
     private func waitUntil(
         timeout: Duration = .seconds(60),
         _ condition: () -> Bool
@@ -394,7 +406,28 @@ struct ReviewListeningTests {
 
         #expect(coord.wasCorrect)
         #expect(coord.flash == nil, "a two-option answer must not flash-advance")
+        try await self.awaitReveal(coord)
         #expect(coord.revealMode == .rate)
+    }
+
+    /// 看圖選字 rules a wrong option out and keeps the question open. 聽句 must
+    /// not: with two pictures, ruling one out *is* answering — the same 50%
+    /// that keeps it off the auto-rate path (ADR-0014).
+    @Test
+    func aWrongListeningAnswerStillResolvesOnTheFirstTap() async throws {
+        let audio = FakeListeningAudio()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        try #require(coord.kind == .hearSentence)
+
+        let distractor = try #require(coord.imageOptions?.first { $0.id != "w-mug" })
+        coord.pickImage(distractor)
+
+        #expect(coord.wasCorrect == false)
+        #expect(coord.phase == .review)
+        try await self.awaitReveal(coord)
+        #expect(coord.revealMode == .rate)
+        #expect(coord.wrongPicks.isEmpty, "聽句 never rules options out")
     }
 
     @Test
@@ -643,6 +676,7 @@ struct ReviewListeningTests {
 
         let answer = try #require(coord.imageOptions?.first { $0.id == "w-mug" })
         coord.pickImage(answer)
+        try await self.awaitReveal(coord)
         coord.rate(.good)
         try await self.waitUntil { spy.answers.isEmpty == false }
 

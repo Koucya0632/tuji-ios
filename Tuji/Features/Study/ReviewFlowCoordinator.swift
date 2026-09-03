@@ -1,12 +1,19 @@
 // State machine for SRS review (§III.Q). Per item:
 //   .answer — the user may flip the image over for the gloss (求救提示, see
-//     `toggleHint`), then picks one of 4 MCQ choices, then one of three paths:
+//     `toggleHint`), then picks among the 4 MCQ choices. In 看圖選字 a wrong
+//     option is only *ruled out* — marked, taken out of play, question still
+//     open — so the item resolves on the pick that lands, down one of three
+//     paths (聽句 has two pictures, so its first tap resolves either way):
 //     • fast correct  → the suggested rating is applied automatically and a
 //       flash capsule confirms it — no reveal sheet, no extra tap. Manual
 //       rating only remains where the user's judgment adds signal.
 //     • slow correct  → reveal sheet with rating buttons (困難/穩定/熟練).
 //     • wrong         → reveal sheet with 重來/困難 (困難 = "按錯了，其實記得";
-//       anything higher would let a missed word skip its relearn).
+//       anything higher would let a missed word skip its relearn). "Wrong"
+//       means anything was ruled out first, not that the final tap missed.
+//   Either sheet arrives a beat (`revealDelay`) after the options resolve, so
+//   the result is readable before a modal covers it.
+//
 //   A hinted item takes the wrong-answer rating table either way — see
 //   `toggleHint` and docs/adr/0007-review-hint-costs-a-downgrade.md.
 //
@@ -56,6 +63,13 @@ final class ReviewFlowCoordinator {
     var index: Int = 0
     var phase: ReviewPhase = .answer
     var picked: String?
+    /// Options ruled out on this presentation. 看圖選字 marks a wrong pick and
+    /// leaves the question open instead of ending it, so the user finds the word
+    /// themselves. Only the pick that lands calls `resolve`, and it is graded as
+    /// a miss — the rating table, the requeue and the write are untouched.
+    ///
+    /// Per-item, so it clears in `advance()` alongside `picked`.
+    private(set) var wrongPicks: Set<String> = []
     /// The user flipped this presentation's image over for the gloss. Sticky
     /// within the presentation — flipping back does not un-see it — and reset
     /// in `advance()` along with the rest of the per-item state.
@@ -150,6 +164,17 @@ final class ReviewFlowCoordinator {
 
     private let audio: ListeningAudio
 
+    /// Held and primed rather than built at the tap.
+    ///
+    /// `UIImpactFeedbackGenerator(style:).impactOccurred()` on a fresh instance
+    /// has to wake the Taptic Engine first, and that wake is the slow part: the
+    /// buzz lands well after the row has already moved, which reads as the
+    /// whole reaction being late even though the animation starts in the first
+    /// frame after the tap (measured). `prepare()` keeps the engine warm across
+    /// the window where an answer is likely.
+    @ObservationIgnored private let softTap = UIImpactFeedbackGenerator(style: .light)
+    @ObservationIgnored private let firmTap = UIImpactFeedbackGenerator(style: .medium)
+
     /// Everything that happens to an answer after it is handed to the writer:
     /// the drain, the mastery fold, the milestone, the parked count. Shared with
     /// 學新字 — see StudySessionWrites.
@@ -239,6 +264,9 @@ final class ReviewFlowCoordinator {
         }
 
         self.kind = kind
+        // The next thing that happens on this card is a tap; warm the engine
+        // for it while the question is still being drawn.
+        self.primeHaptics()
         guard kind == .hearSentence, let example else {
             self.listeningExample = nil
             self.imageOptions = nil
@@ -440,9 +468,31 @@ final class ReviewFlowCoordinator {
         self.resolve(picked: option.word, correct: option.id == curr.word.id, item: curr)
     }
 
+    /// 看圖選字. A wrong option is marked and taken out of play while the
+    /// question stays open — the user keeps choosing until they find the word.
+    /// Only the pick that lands resolves the item.
+    ///
+    /// What it hands `resolve` is **whether they got it first try**, not
+    /// whether this tap was right: everything downstream reads `wasCorrect`
+    /// and none of it counts taps, so the rating table, the requeue and the
+    /// payload stay exactly the wrong-answer path they have always been.
+    ///
+    /// 聽句 is not on this path. Ruling out one of *two* pictures is the same
+    /// act as answering, so `pickImage` still resolves on the first tap — the
+    /// same 50% that keeps it off the auto-rate path (ADR-0014).
     func pick(_ choice: String) {
-        guard let curr = current else { return }
-        self.resolve(picked: choice, correct: choice == curr.word.word, item: curr)
+        guard let curr = current, self.phase == .answer else { return }
+        let ok = choice == curr.word.word
+        if !ok, self.kind == .pickWord {
+            // The row is disabled once it is in the set; this keeps a repeat
+            // from being caught by the haptic alone.
+            guard self.wrongPicks.insert(choice).inserted else { return }
+            self.firmTap.impactOccurred()
+            // The question is still open, so another tap may be seconds away.
+            self.primeHaptics()
+            return
+        }
+        self.resolve(picked: choice, correct: ok && self.wrongPicks.isEmpty, item: curr)
     }
 
     private func resolve(picked choice: String, correct ok: Bool, item curr: StudyQueueItem) {
@@ -463,9 +513,7 @@ final class ReviewFlowCoordinator {
         )
         self.picked = choice
         self.wasCorrect = ok
-        UIImpactFeedbackGenerator(
-            style: ok ? .light : .medium
-        ).impactOccurred()
+        (ok ? self.softTap : self.firmTap).impactOccurred()
         self.phase = .review
         self.recordAnswered(curr)
 
@@ -477,7 +525,7 @@ final class ReviewFlowCoordinator {
                 self.flash = .retestPassed
                 self.scheduleAdvance(after: .milliseconds(700))
             } else {
-                self.revealMode = .continueOnly
+                self.scheduleReveal(.continueOnly)
             }
         } else if ok, self.suggested != .hard, self.kind == .pickWord {
             // Fast correct: the suggestion is unambiguous — apply it and keep
@@ -495,8 +543,27 @@ final class ReviewFlowCoordinator {
         } else {
             // Wrong, or correct-but-slow: the user's own judgment carries
             // signal, so surface the sheet with rating buttons.
-            self.revealMode = .rate
+            self.scheduleReveal(.rate)
         }
+    }
+
+    /// How long the answered options stay uncovered before the sheet rises.
+    ///
+    /// The sheet used to go up in the same frame the options resolved, so the
+    /// ink block and the frame that say *what just happened* were on screen for
+    /// no time at all before a modal slid over them — the user was asked to
+    /// rate an answer they had not been shown. It is shorter than the 700 ms
+    /// flash-advance on purpose: that beat ends an item, this one is a pause on
+    /// the way to something the user still has to act on.
+    static let revealDelay: Duration = .milliseconds(600)
+
+    /// Raise the sheet, a beat after the options have shown their result.
+    ///
+    /// Through `AnswerBeat` rather than a bare `Task` for the reason the beat
+    /// exists: 先離開 during the pause must not raise a sheet over the screen
+    /// the user just left for.
+    private func scheduleReveal(_ mode: ReviewRevealMode) {
+        self.beats.schedule(after: Self.revealDelay) { self.revealMode = mode }
     }
 
     /// Rating buttons in the reveal sheet. Wrong answers offer only 重來/困難
@@ -514,12 +581,22 @@ final class ReviewFlowCoordinator {
         return [.hard, .good, .easy]
     }
 
+    /// What has been chosen so far, for 報錯: the pick that ended the question,
+    /// or the options ruled out while it is still open. `picked` is only set by
+    /// the pick that lands, so without this a report filed mid-question would
+    /// throw away everything the user had already tried.
+    var reportedSelection: String? {
+        self.picked ?? (self.wrongPicks.isEmpty
+            ? nil
+            : self.wrongPicks.sorted().joined(separator: " / "))
+    }
+
     /// Manual rating from the reveal sheet (revealMode == .rate only).
     func rate(_ r: SRSRating) {
         guard self.phase == .review, self.revealMode == .rate,
               self.rated == nil, let curr = current
         else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        self.softTap.impactOccurred()
         // Wrong first attempt → requeue the word once for an in-session
         // re-test (appended to the tail). The re-test itself never requeues
         // again, and a correct first answer passes straight through.
@@ -541,6 +618,13 @@ final class ReviewFlowCoordinator {
     }
 
     // MARK: - Internals
+
+    /// Warm the Taptic Engine for the tap that is coming. Cheap, and idempotent
+    /// — the system lets the readiness lapse on its own after a few seconds.
+    private func primeHaptics() {
+        self.softTap.prepare()
+        self.firmTap.prepare()
+    }
 
     /// One row per word on CompleteView, even when re-tested twice.
     private func recordAnswered(_ item: StudyQueueItem) {
@@ -610,6 +694,7 @@ final class ReviewFlowCoordinator {
             self.index += 1
             self.phase = .answer
             self.picked = nil
+            self.wrongPicks = []
             self.hinted = false
             self.hintFaceUp = false
             self.rated = nil
