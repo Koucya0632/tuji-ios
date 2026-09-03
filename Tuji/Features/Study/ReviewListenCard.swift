@@ -177,10 +177,19 @@ struct ReviewImageChoices: View {
                 Button {
                     self.coord.pickImage(option)
                 } label: {
-                    WordPicture(url: option.imageURL, kind: option.imageKind)
-                        .frame(maxWidth: .infinity)
+                    // The *container* holds the square, not the picture.
+                    // `WordPicture` fits its image whole and never crops, so
+                    // putting `.aspectRatio` on it lets each picture's own
+                    // proportions through — a wide MRT photo sat short beside a
+                    // square intersection and the two options came out ragged.
+                    // `WordTile` had already learned this and written it down;
+                    // this is the same rule, and copying the idiom rather than
+                    // re-deriving it is the point.
+                    Color.tujiPaper2
                         .aspectRatio(1, contentMode: .fit)
-                        .background(.tujiPaper2)
+                        .frame(maxWidth: .infinity)
+                        .overlay { WordPicture(url: option.imageURL, kind: option.imageKind) }
+                        .clipped()
                         .overlay {
                             Rectangle()
                                 .strokeBorder(self.border(option), lineWidth: 3)
