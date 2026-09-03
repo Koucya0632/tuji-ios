@@ -35,8 +35,15 @@ protocol ListeningAudio {
     /// connection to fetch it. False sends the card to 選字 instead.
     func canPlay(_ urlString: String?, online: Bool) -> Bool
 
-    /// Play, and return when the audio ends.
-    func play(_ urlString: String?, text: String, voice: SpeechService.Voice) async -> ListeningPlayback
+    /// Play, and return when the audio ends. `rate` is a multiplier on normal
+    /// speed — 慢讀 passes 0.8.
+    func play(
+        _ urlString: String?,
+        text: String,
+        voice: SpeechService.Voice,
+        rate: Float
+    ) async
+        -> ListeningPlayback
 
     /// Cut playback off. Leaving 複習 mid-sentence must not narrate the screen
     /// the user went to instead — and 聽句 auto-plays, so unlike the
@@ -62,11 +69,17 @@ struct LiveListeningAudio: ListeningAudio {
     func play(
         _ urlString: String?,
         text: String,
-        voice: SpeechService.Voice
+        voice: SpeechService.Voice,
+        rate: Float
     ) async
         -> ListeningPlayback
     {
-        let request = self.speech.play(urlString: urlString, fallbackText: text, voice: voice)
+        let request = self.speech.play(
+            urlString: urlString,
+            fallbackText: text,
+            voice: voice,
+            rate: rate
+        )
         return await self.awaitTerminal(request)
     }
 

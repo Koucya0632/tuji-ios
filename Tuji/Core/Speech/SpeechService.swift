@@ -132,11 +132,29 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
     /// clock) keep it and ignore any `playback` whose `requestID` differs —
     /// otherwise the hero's own pronunciation button, which shares this
     /// singleton, would resolve their wait.
+    /// `rate` is a multiplier on normal speed. 聽句's 慢讀 passes 0.8; everything
+    /// else leaves it at 1. It applies to **both** paths — a clip is
+    /// time-stretched (pitch preserved), and a synthesized fallback is spoken
+    /// slower — because a button that silently does nothing on the fallback
+    /// path is worse than one that is not there.
     @discardableResult
-    func play(urlString: String?, fallbackText: String, voice: Voice = .us) -> Int {
+    func play(
+        urlString: String?,
+        fallbackText: String,
+        voice: Voice = .us,
+        rate: Float = 1
+    )
+        -> Int
+    {
         let request = self.beginRequest()
         guard let urlString, let url = URL(string: urlString) else {
-            self.synthesize(fallbackText, voice: voice, request: request, isFallback: true)
+            self.synthesize(
+                fallbackText,
+                voice: voice,
+                request: request,
+                isFallback: true,
+                rate: rate
+            )
             return request
         }
 
@@ -147,7 +165,13 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
 
         let local = self.cacheURL(for: url)
         if FileManager.default.fileExists(atPath: local.path) {
-            self.playFile(local, fallbackText: fallbackText, voice: voice, request: request)
+            self.playFile(
+                local,
+                fallbackText: fallbackText,
+                voice: voice,
+                request: request,
+                rate: rate
+            )
             return request
         }
 
@@ -164,25 +188,48 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
                 try Task.checkCancellation()
                 try data.write(to: local, options: .atomic)
                 await MainActor.run {
-                    self?.playFile(local, fallbackText: fallbackText, voice: voice, request: request)
+                    self?.playFile(
+                        local,
+                        fallbackText: fallbackText,
+                        voice: voice,
+                        request: request,
+                        rate: rate
+                    )
                 }
             } catch is CancellationError {
                 // Superseded by a newer tap — nothing to do.
             } catch {
                 await MainActor.run {
                     self?.log.error("clip download failed: \(error.localizedDescription, privacy: .public)")
-                    self?.synthesize(fallbackText, voice: voice, request: request, isFallback: true)
+                    self?.synthesize(
+                        fallbackText,
+                        voice: voice,
+                        request: request,
+                        isFallback: true,
+                        rate: rate
+                    )
                 }
             }
         }
         return request
     }
 
-    private func playFile(_ file: URL, fallbackText: String, voice: Voice, request: Int) {
+    private func playFile(
+        _ file: URL,
+        fallbackText: String,
+        voice: Voice,
+        request: Int,
+        rate: Float
+    ) {
         self.activateSession()
         do {
             let player = try AVAudioPlayer(contentsOf: file)
             player.delegate = self
+            // `enableRate` has to be set before playback starts, and the rate
+            // is a time-stretch: the pitch is preserved, so a slowed sentence
+            // is the same voice reading more slowly rather than a lower one.
+            player.enableRate = true
+            player.rate = rate
             self.player = player
             player.play()
             self.publish(request, .playing, usedFallback: false)
@@ -233,22 +280,34 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
     }
 
     @discardableResult
-    func speak(_ text: String, voice: Voice = .us) -> Int {
+    func speak(_ text: String, voice: Voice = .us, rate: Float = 1) -> Int {
         let request = self.beginRequest()
-        self.synthesize(text, voice: voice, request: request, isFallback: false)
+        self.synthesize(text, voice: voice, request: request, isFallback: false, rate: rate)
         return request
     }
 
     /// The synthesis half, reusable by `play`'s fallback so a clip that could
     /// not be fetched keeps the *caller's* request id instead of minting a new
     /// one the caller is not waiting on.
-    private func synthesize(_ text: String, voice: Voice, request: Int, isFallback: Bool) {
+    private func synthesize(
+        _ text: String,
+        voice: Voice,
+        request: Int,
+        isFallback: Bool,
+        rate: Float = 1
+    ) {
         self.player?.stop()
         self.synth.stopSpeaking(at: .immediate)
         self.activateSession()
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: voice.rawValue)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
+        // 0.92 is this app's normal reading speed; `rate` scales it further.
+        // Clamped because the synthesizer's own range is 0…1 and a value
+        // outside it is silently ignored rather than refused.
+        utterance.rate = min(
+            max(AVSpeechUtteranceDefaultSpeechRate * 0.92 * rate, AVSpeechUtteranceMinimumSpeechRate),
+            AVSpeechUtteranceMaximumSpeechRate
+        )
         utterance.pitchMultiplier = 1.0
         self.synth.speak(utterance)
         self.publish(request, .playing, usedFallback: isFallback)
