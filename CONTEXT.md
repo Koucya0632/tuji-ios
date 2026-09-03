@@ -660,6 +660,100 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   right/wrong/answer/dim reveal logic (`StudyOptionStyle.forOption`), used by both
   `IdentifyView` (選字) and `ReviewFlowView` (複習). Replaced the two near-identical private
   `OptStyle` / `OptionStyle` copies.
+- **聽句 (`hearSentence`)** — 複習的第二個題型：題目是那個字的例句**模糊**加上它的音檔，答
+  案是兩張圖片二選一。不是新的 `StudyMode`——`模式` 已經被 `new` / `review` 佔走而且是
+  `?mode=` 的 wire value；這是**題型**，也就是 `activity`，wire value 用早就在 CHECK 約束
+  裡的 `"listening"`（零 migration）。Swift 那一側是
+  `ReviewQuestionKind { pickWord, hearSentence }`，case 名刻意不跟 wire value 同名：`mcq`
+  講的是題目形式、`listening` 講的是感官通道，同一個列舉裡混兩種命名軸，下一個加題型的人不
+  知道該挑哪一軸。句子的音檔存在 `word_example_media`、**不在 `word_media`**——理由與那個無
+  聲的壞法見 [ADR-0015](docs/adr/0015-sentence-audio-is-not-word-media.md)。 _Avoid_：在任
+  何句子裡用「模式」指這個東西。
+- **聽句永遠不自動評級。** `pick()` 的自動路徑寫著它的前提是「建議值毫無疑義」，而
+  **二選一的猜對率是 50%**：一次擲硬幣猜中、兩秒內按下去，在 MCQ 那條路上會自動寫入「熟
+  練」而使用者連評分畫面都沒看到。一次五五開的正確不是毫無疑義，它就是同一個 `pick()` 裡另
+  一個分支說的「使用者自己的判斷帶有訊號」，所以聽句一律出揭示表
+  （[ADR-0014](docs/adr/0014-listening-changes-the-rating-preconditions.md)）。代價是每題
+  多一次點擊，這是二選一換來的，不是額外的。
+- **聽句的提示只花得起一半的錢。** 眼睛圖案解模糊走的是同一個 `hinted`、同一份答錯評分表
+  `[重來, 困難]`（`availableRatings` 一個字都不用改），理由是解模糊之後這題已經不是聽力題
+  而是「讀句子選圖」，句子裡就印著那個字。但
+  [ADR-0007](docs/adr/0007-review-hint-costs-a-downgrade.md) 的提示花的是**兩樣**東西——評
+  分表，加上關掉自動評級——而第二樣在聽句裡本來就是關的。所以
+  **`study_logs.metadata.hinted` 跨題型比較不是同一把尺**。眼睛也**從頭就顯示**，這和 MCQ
+  刻意隱形的提示（`ReviewHeroCard`：the affordance is deliberately invisible，卡 8 秒才長
+  出一行）方向相反：那 8 秒是用來補償入口看不見的，這裡沒有要補償的東西。
+- **哪一句由熟練度決定；分階就是全部的變化。** 主詞條的例句是**成對**授權的
+  （`lib/main-word-example-pairs.ts`：`cefrLevel: "A2"` / `"B1"`，
+  `validateMainWordExampleCoverage` 兩個方向都檢查），而線上資料是乾淨的全覆蓋：
+  `word_examples` 共 952 列、476 個字，
+  **每個字剛好一句 A2 一句 B1，`cefr_level` 零缺漏**——難度階不是發明出來的，是已經寫好而
+  **全 App 沒有一行讀過**的欄位。門檻沿用 `computeSuggestion` 已經在用的 50，不新增第二個
+  沒人知道為什麼是那個數字的常數。
+  **因為每個字只有兩句，「同一階內輪播」永遠不會觸發，所以不要寫它**——一條打不到的規則沒有
+  人驗得了。（`data/example-spans.json` 裡 `bag` / `basil` / `basket` 各三句是**授權檔**的
+  內容，含被取代的舊句，不是資料表。）**熟練度上升本身就是變化的來源**：句子換掉的那一刻正
+  好是那個字變熟的那一刻。**這個不變量是被守著的，不是剛好乾淨的。**
+  `validateMainWordExampleCoverage` 只比對 pair 與 published 兩個集合，但同一個交易接著跑
+  `classifyMainWordExamplePair`，而 `isTargetExamplePair` 要求 `current.length === 2` 且兩
+  句的 `cefrLevel` 都對得上，對不上就是 conflict、`main-word-example-pair-apply.ts` 直接
+  throw。整條掛在 `migrate.ts:2667`，**每次正式部署都跑**——少一個 `cefr_level` 或多出第三
+  句，deploy 就停。所以不要再補第四份檢查。（2026-09-03 順手刪掉 4 個 `archived` 的字留下
+  的 6 列孤兒例句，其中 2 列沒有 `cefr_level`；那批在守衛的射程外，因為它只看
+  published。）
+- **干擾圖片不能是句子裡的另一個詞。** 例句是刻意同時提到兩個目錄詞的——「The air
+  conditioner is in the bedroom.」——而
+  **en 有 46%、ja 有 47% 的例句提到兩個以上不同的目錄名詞**。抽到那一個，兩張圖就都是對
+  的，使用者聽得完全正確然後被 SRS 記一次答錯。伺服器本來就知道是哪些（`wordId` 是它從
+  span 的原形解析的，它甚至有 `unlinkSelfReference` 專門拿掉「這個字自己」那一個），所以佇
+  列隨例句附一份 `mentionedWordIds`；**送的是那一點而不是整份 spans**，便宜兩個數量級。干
+  擾項本身仍由 client 從 `WordsStore`（整本字典常駐）抽，因為重考要換得掉——伺服器發佇列時
+  還不知道誰會答錯。另外兩條排除規則：`imageKind` 必須相同（去背圖配生活照，用看的就知道是
+  哪張，這條同時擋掉抽到自製卡），以及不從當前佇列抽（等一下自己也要考的字，先讓他看過那張
+  圖是白給的提示）。
+- **聽句的碼表從音檔播完才起算，但重播不歸零。** `advance()` 每題設 `startedAt = .now`，而
+  `computeSuggestion` 的 3 秒 / 7 秒門檻是為「圖片出現 → 作答」校準的。音檔會往那個碼表裡
+  混進三樣跟提取速度無關的東西：第一次播放的下載延遲、句子本身的長度（聽完前答不了，而
+  A2/B1 兩階不同長）、以及重播。不扣掉的話每一次聽句作答都會超過 7 秒，
+  **建議值永遠是困難**——把使用者往下拉間隔的方向推，對象是他聽得懂的字。扣掉前兩樣之後，剩
+  下的重播時間指向的方向是對的：聽三遍才答得出來的字，建議困難是正確的，不是被污染；從
+  **最後一次**播完起算才是壞的，那等於把碼表歸零、獎勵猶豫。重播次數與 `audioFailed` 記進
+  `study_logs.metadata`，理由同 `hinted`：append-only，沒記下來就補不回來。這條規則要求
+  `SpeechService` 發布播放狀態（`@Observable`，不是為這一個呼叫者加的 `onFinish` 閉包），
+  順手補掉 `PronunciationButton` header 裡記著的洞。整條見
+  [ADR-0014](docs/adr/0014-listening-changes-the-rating-preconditions.md)。擋路的**不是**
+  `NSObject`（那沒問題），是 `lazy`：`@Observable` 把每一個儲存屬性改寫成計算屬性，而
+  `lazy` 不能用在計算屬性上——`SpeechService` 的 `synth`（41 行）與 `cacheDir`（55 行）各要
+  補一個 `@ObservationIgnored`。已實際編譯驗證。
+- **對 VoiceOver 要重現的是模糊的「效果」，不是模糊這個「視覺」。** 模糊是畫面上的東西，
+  VoiceOver 會直接把整句唸出來——那是**免費解模糊**：拿到答案而沒有經過眼睛那顆鍵，所以
+  `hinted` 是 false、評分表照樣是 `[困難, 穩定, 熟練]`，那批人的 SRS 資料靜悄悄地跟其他人
+  不是同一種東西。所以句子那一塊 `.accessibilityHidden(true)`，區域標籤說得出「這裡有東西
+  而且遮著」，眼睛是 `.accessibilityActions` 裡一顆真的按鈕、按了付同一份 `hinted`——形狀直
+  接照抄 `ReviewHeroCard`：翻面前 VoiceOver 拿不到釋義，要拿就得觸發那個動作，而那個動作走
+  的是 `flip()`。**但兩張圖片的標籤照常唸出那個詞。** 遮句子遮的是「不用聽就能讀到答案」的
+  捷徑；圖片的內容不是捷徑，它就是選項本身。只唸「選項一 / 選項二」的結果是全盲使用者在猜
+  硬幣，而 SRS 照樣記帳。代價是這條路徑上聽句實際變成「聽句子選詞」——題目仍是聲音、仍在考
+  聽力，只是答案的載體從圖片換成文字。也因此**不能**用「VoiceOver 開著就不出聽句」來閃過：
+  聽句很可能是全 App 對盲用使用者最友善的題型，而且 `UIAccessibility.isVoiceOverRunning`
+  可以在場次中途被切換。
+- **離線時聽句要讓位給 MCQ，因為它的退路對它有毒。** `SpeechService.play` 抓不到 clip 就退
+  回 `AVSpeechSynthesizer`，而那正是預生成句子音檔的唯一理由——日文漢字讀音由 iOS 猜、無處
+  可改。它還特別難抓：它不是「失敗」，它會**成功地**唸出可能是錯的東西，所以 `audioFailed`
+  標記碰不到它。所以資格閘門多一條「音檔此刻播得出來」（`NetworkMonitor.isConnected` ＋
+  `SpeechService` 那個私有快取查詢暴露成 `hasCachedClip(for:)`），不合格就出 MCQ——fallback
+  早就在，成本是零。連帶：**題型在那張卡成為 `current` 的當下才決定**，不是場次開始時一次
+  分配完，因為網路會在中途斷；Q10 的間隔規則（連續兩張不得都是聽句）在逐張決定下照樣成立，
+  它本來就只看前一張。**學新字和詳情頁的離線合成不用跟著改**：那兩處句子攤在眼前、聲音是配
+  菜，唸錯是瑕疵；這裡句子是遮住的、聲音就是題目——同一個退路在兩種承重狀況下該有兩種待遇
+  （[ADR-0014](docs/adr/0014-listening-changes-the-rating-preconditions.md)）。
+- **題型定下來之前，畫面上不准有答案。** `kind` 的預設值是 `.pickWord`，而選字的英雄卡片
+  **就是答案本身的圖片**——所以在 `prepareQuestion` 回來之前照預設值渲染，會把答案閃給一張
+  結果是聽句的卡片看。倒過來預設成 `.hearSentence` 也不行：那時還沒有句子可畫。誠實的第三
+  個狀態是「還沒決定」（`questionReady`），未決定時畫骨架。骨架**必須是真的 view**：body
+  渲染成空的話 `.task` 永遠不跑，於是題型永遠不會被決定、骨架變成永久的（`.task` 需要一個
+  真的畫得出來的 view，這個 repo 已經踩過一次）。骨架也刻意對兩種題型長得一樣——一個已經長
+  得像聽句的骨架，等於用比較小的音量把它要防的那件事講出來。
 - **求救提示 (hint flip)** — the face 複習's hero turns over to: the gloss, and **only** the
   gloss. `reading` and `pronunciation` are both on the payload and neither may appear there —
   a kana headword's 振假名 is itself and an IPA line is the word read aloud, so either one

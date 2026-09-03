@@ -9,11 +9,60 @@
 // it stays audible even when the hardware silent switch is on (the
 // default category obeys the mute switch and produces no sound).
 
+// It publishes what it is doing (`playback`), which 聽句 needs: its clock may
+// only start once the sentence has finished playing, or the 3s/7s thresholds
+// end up measuring a download and a sentence rather than recall (ADR-0014).
+// That also closes the gap `PronunciationButton` has been documenting since it
+// shipped — the ground was meant to turn 瞳黃 while a clip plays, and could not,
+// because this service said nothing.
+//
+// The state is **per request**, not a single "am I playing" flag. This is a
+// singleton and 複習's hero already has a `PronunciationButton` on it that
+// speaks the answer word; a global flag would let that button's clip finish and
+// start the listening clock. Callers keep the id `play`/`speak` hands back and
+// ignore any state that is not theirs.
+//
+// `@ObservationIgnored` on the stored properties is not decoration: `@Observable`
+// rewrites stored properties into computed ones and `lazy` cannot be applied to
+// a computed property, so `synth` and `cacheDir` do not compile without it.
+
 import AVFoundation
+import Observation
 import OSLog
 
 @MainActor
+@Observable
 final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDelegate {
+    /// Where one playback request has got to.
+    ///
+    /// `finished` means the audio reached its end on its own. A request that is
+    /// superseded by a newer tap never reaches it and never will — the caller
+    /// finds out because the newer request has a different id.
+    struct PlaybackState: Equatable {
+        enum Phase: Equatable {
+            /// Downloading the clip. Only pre-generated clips pass through here.
+            case loading
+            case playing
+            /// Reached the end on its own.
+            case finished
+            /// Nothing came out at all.
+            case failed
+        }
+
+        let requestID: Int
+        let phase: Phase
+        /// The pre-generated clip was missing or unreachable, so this is
+        /// on-device synthesis. 聽句 records it as `audioFailed`: the sentence
+        /// was still read aloud, but by a reading nothing can correct, so the
+        /// answer is not evidence about listening either way.
+        let usedFallback: Bool
+    }
+
+    /// The most recent request's state. Nil before anything has been asked for.
+    private(set) var playback: PlaybackState?
+
+    @ObservationIgnored private var lastRequestID = 0
+
     enum Voice: String, CaseIterable {
         case us = "en-US"
         case uk = "en-GB"
@@ -34,11 +83,13 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
 
     static let shared = SpeechService()
 
-    private let log = Logger(subsystem: "app.tuji.ios", category: "speech")
+    @ObservationIgnored private let log = Logger(subsystem: "app.tuji.ios", category: "speech")
 
     /// Lazy so `self` is available to wire up the finish delegate without a
-    /// custom initializer.
-    private lazy var synth: AVSpeechSynthesizer = {
+    /// custom initializer. `@ObservationIgnored` is load-bearing — see the file
+    /// header: `@Observable` turns stored properties computed, and `lazy` on a
+    /// computed property does not compile.
+    @ObservationIgnored private lazy var synth: AVSpeechSynthesizer = {
         let synth = AVSpeechSynthesizer()
         synth.delegate = self
         return synth
@@ -46,13 +97,13 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
 
     /// Holds the currently-playing pre-generated clip. Retained so playback
     /// isn't cut short by deallocation.
-    private var player: AVAudioPlayer?
+    @ObservationIgnored private var player: AVAudioPlayer?
     /// In-flight clip download; cancelled when a newer tap supersedes it.
-    private var downloadTask: Task<Void, Never>?
+    @ObservationIgnored private var downloadTask: Task<Void, Never>?
 
     /// On-disk cache for downloaded clips so the second tap is instant and
     /// repeat plays work offline. Lives under Caches (purgeable by the OS).
-    private lazy var cacheDir: URL = {
+    @ObservationIgnored private lazy var cacheDir: URL = {
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let dir = base.appendingPathComponent("word-audio", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -61,13 +112,32 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
 
     // MARK: - Pre-generated clip playback
 
+    /// Whether this clip is already on disk, i.e. whether it will play with no
+    /// network at all.
+    ///
+    /// 聽句 asks before it commits to the question: offline with nothing cached,
+    /// `play` falls through to on-device synthesis, and a sentence read by a
+    /// kanji reading the app cannot correct is not a harder question but an
+    /// unanswerable one. That card takes 選字 instead (ADR-0014).
+    func hasCachedClip(for urlString: String?) -> Bool {
+        guard let urlString, let url = URL(string: urlString) else { return false }
+        return FileManager.default.fileExists(atPath: self.cacheURL(for: url).path)
+    }
+
     /// Play a pre-generated Chirp clip, falling back to on-device synthesis
     /// when the URL is missing/invalid or the download/decode fails. `voice`
     /// is only used for the fallback so its accent matches the request.
-    func play(urlString: String?, fallbackText: String, voice: Voice = .us) {
+    ///
+    /// Returns the request id. Callers that care when this finishes (聽句's
+    /// clock) keep it and ignore any `playback` whose `requestID` differs —
+    /// otherwise the hero's own pronunciation button, which shares this
+    /// singleton, would resolve their wait.
+    @discardableResult
+    func play(urlString: String?, fallbackText: String, voice: Voice = .us) -> Int {
+        let request = self.beginRequest()
         guard let urlString, let url = URL(string: urlString) else {
-            self.speak(fallbackText, voice: voice)
-            return
+            self.synthesize(fallbackText, voice: voice, request: request, isFallback: true)
+            return request
         }
 
         // Cancel any prior speech/clip so rapid taps don't overlap.
@@ -77,10 +147,11 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
 
         let local = self.cacheURL(for: url)
         if FileManager.default.fileExists(atPath: local.path) {
-            self.playFile(local, fallbackText: fallbackText, voice: voice)
-            return
+            self.playFile(local, fallbackText: fallbackText, voice: voice, request: request)
+            return request
         }
 
+        self.publish(request, .loading, usedFallback: false)
         self.downloadTask = Task { [weak self] in
             do {
                 // Raw audio-clip download from an absolute (storage) URL — not an
@@ -93,31 +164,64 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
                 try Task.checkCancellation()
                 try data.write(to: local, options: .atomic)
                 await MainActor.run {
-                    self?.playFile(local, fallbackText: fallbackText, voice: voice)
+                    self?.playFile(local, fallbackText: fallbackText, voice: voice, request: request)
                 }
             } catch is CancellationError {
                 // Superseded by a newer tap — nothing to do.
             } catch {
                 await MainActor.run {
                     self?.log.error("clip download failed: \(error.localizedDescription, privacy: .public)")
-                    self?.speak(fallbackText, voice: voice)
+                    self?.synthesize(fallbackText, voice: voice, request: request, isFallback: true)
                 }
             }
         }
+        return request
     }
 
-    private func playFile(_ file: URL, fallbackText: String, voice: Voice) {
+    private func playFile(_ file: URL, fallbackText: String, voice: Voice, request: Int) {
         self.activateSession()
         do {
             let player = try AVAudioPlayer(contentsOf: file)
             player.delegate = self
             self.player = player
             player.play()
+            self.publish(request, .playing, usedFallback: false)
             self.log.info("play clip \(file.lastPathComponent, privacy: .public)")
         } catch {
             self.log.error("clip play failed: \(error.localizedDescription, privacy: .public)")
-            self.speak(fallbackText, voice: voice)
+            self.synthesize(fallbackText, voice: voice, request: request, isFallback: true)
         }
+    }
+
+    // MARK: - Request bookkeeping
+
+    private func beginRequest() -> Int {
+        self.lastRequestID += 1
+        return self.lastRequestID
+    }
+
+    /// Only the newest request may write state. A superseded download that
+    /// lands late would otherwise overwrite the state of the tap that replaced
+    /// it — and the waiter is keyed on the id, so it would wait forever.
+    private func publish(_ request: Int, _ phase: PlaybackState.Phase, usedFallback: Bool) {
+        guard request == self.lastRequestID else { return }
+        self.playback = PlaybackState(
+            requestID: request,
+            phase: phase,
+            usedFallback: usedFallback
+        )
+    }
+
+    /// Resolve whichever request is outstanding. The delegates fire without
+    /// knowing which request they belong to; the newest is the only one that
+    /// can still be playing, because starting a new one stops the old.
+    private func finishCurrent(_ phase: PlaybackState.Phase) {
+        guard let current = self.playback, current.phase == .playing else { return }
+        self.playback = PlaybackState(
+            requestID: current.requestID,
+            phase: phase,
+            usedFallback: current.usedFallback
+        )
     }
 
     /// Stable, collision-free cache name: the last two path components keep
@@ -128,7 +232,17 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
         return self.cacheDir.appendingPathComponent(name.isEmpty ? remote.lastPathComponent : name)
     }
 
-    func speak(_ text: String, voice: Voice = .us) {
+    @discardableResult
+    func speak(_ text: String, voice: Voice = .us) -> Int {
+        let request = self.beginRequest()
+        self.synthesize(text, voice: voice, request: request, isFallback: false)
+        return request
+    }
+
+    /// The synthesis half, reusable by `play`'s fallback so a clip that could
+    /// not be fetched keeps the *caller's* request id instead of minting a new
+    /// one the caller is not waiting on.
+    private func synthesize(_ text: String, voice: Voice, request: Int, isFallback: Bool) {
         self.player?.stop()
         self.synth.stopSpeaking(at: .immediate)
         self.activateSession()
@@ -137,6 +251,7 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.pitchMultiplier = 1.0
         self.synth.speak(utterance)
+        self.publish(request, .playing, usedFallback: isFallback)
         self.log.info("speak \(text, privacy: .public) voice=\(voice.rawValue, privacy: .public)")
     }
 
@@ -174,11 +289,22 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
     /// at the top of `speak`) is followed immediately by a new utterance, so
     /// leaving the session active there avoids a deactivate/reactivate churn.
     nonisolated func speechSynthesizer(_: AVSpeechSynthesizer, didFinish _: AVSpeechUtterance) {
-        Task { @MainActor in self.deactivateSession() }
+        Task { @MainActor in
+            self.finishCurrent(.finished)
+            self.deactivateSession()
+        }
     }
 
     /// Mirror of the synthesizer finish handler for pre-generated clips.
-    nonisolated func audioPlayerDidFinishPlaying(_: AVAudioPlayer, successfully _: Bool) {
-        Task { @MainActor in self.deactivateSession() }
+    ///
+    /// `successfully == false` still ends the request — the audio is over
+    /// either way, and 聽句 must not sit waiting for a finish that will never
+    /// arrive. It resolves as `.failed` so the answer is not read as evidence
+    /// about listening.
+    nonisolated func audioPlayerDidFinishPlaying(_: AVAudioPlayer, successfully ok: Bool) {
+        Task { @MainActor in
+            self.finishCurrent(ok ? .finished : .failed)
+            self.deactivateSession()
+        }
     }
 }

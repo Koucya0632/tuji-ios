@@ -74,7 +74,12 @@ struct ReviewFlowView: View {
             self.studyFocus.enter()
             AnalyticsService.shared.track(.studyStart, category: "review")
         }
-        .onDisappear { self.studyFocus.exit() }
+        // Not only the 先離開 prompt: a swipe-back, a deep link, anything that
+        // removes this view has to take the sentence with it.
+        .onDisappear {
+            self.studyFocus.exit()
+            self.coord.cancelPendingBeats()
+        }
         .fullScreenCover(item: self.$reportDraft) { draft in
             StudyReportSheet(draft: draft)
         }
@@ -259,6 +264,8 @@ private struct ReviewQuestionView: View {
 
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(WordsStore.self) private var words
+    @Environment(SettingsStore.self) private var settings
+    @Environment(NetworkMonitor.self) private var network
     @Environment(\.targetLanguage) private var session
 
     /// The cat used to sit here on *every* question asking 這個是什麼？, with its
@@ -271,14 +278,76 @@ private struct ReviewQuestionView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s3) {
-                ReviewHeroCard(coord: self.coord, item: self.item, height: self.heroHeight)
-                self.choicesList
-                    .padding(.horizontal, Space.s4)
+                if !self.coord.questionReady {
+                    // Nothing of the answer may be drawn yet. 選字's hero is the
+                    // answer's own picture, so rendering the default `kind` for
+                    // the frame before `prepareQuestion` returns would show the
+                    // answer to a question that turns out to be 聽句.
+                    self.skeleton
+                } else if self.coord.kind == .hearSentence,
+                          let example = self.coord.listeningExample,
+                          let options = self.coord.imageOptions
+                {
+                    ReviewListenCard(
+                        coord: self.coord,
+                        example: example,
+                        height: self.heroHeight
+                    )
+                    ReviewImageChoices(coord: self.coord, options: options)
+                        .padding(.horizontal, Space.s4)
+                } else {
+                    ReviewHeroCard(coord: self.coord, item: self.item, height: self.heroHeight)
+                    self.choicesList
+                        .padding(.horizontal, Space.s4)
+                }
             }
             // PR #46: in study mode the tab bar is gone so we can trim the
             // big s24 scroll buffer that previously kept the footer clear.
             .padding(.bottom, self.studyFocus.active ? Space.s3 : Space.s6)
         }
+        // Which question this card asks is decided *here*, as it becomes
+        // current — not once for the whole session. The network can drop
+        // mid-session, and 聽句 without a playable clip degrades to on-device
+        // synthesis of a sentence the app cannot correct (ADR-0014). Keyed on
+        // the position too, so a re-test of the same word re-decides (and
+        // re-draws its sentence and its distractor).
+        .task(id: "\(self.item.id)#\(self.coord.index)") {
+            await self.coord.prepareQuestion(
+                pool: self.words.words,
+                session: self.session,
+                online: self.network.isConnected,
+                voice: .preferred(
+                    for: self.settings.current,
+                    language: self.item.word.taggedLanguage
+                )
+            )
+        }
+    }
+
+    /// The shape of a question, with none of its content. Deliberately the same
+    /// blocks at the same sizes for either kind — a skeleton that already looked
+    /// like 聽句 would announce the question before it was decided, which is a
+    /// smaller version of the leak it exists to prevent.
+    ///
+    /// It has to render something: a `body` that resolves to nothing never runs
+    /// its `.task`, so an empty branch here would mean the question is never
+    /// decided and the skeleton is permanent.
+    private var skeleton: some View {
+        VStack(spacing: Space.s3) {
+            Rectangle()
+                .fill(.tujiPaper2)
+                .frame(height: self.heroHeight)
+            HStack(spacing: Space.s2) {
+                ForEach(0..<2, id: \.self) { _ in
+                    Rectangle()
+                        .fill(.tujiPaper2)
+                        .frame(maxWidth: .infinity)
+                        .aspectRatio(1, contentMode: .fit)
+                }
+            }
+            .padding(.horizontal, Space.s4)
+        }
+        .accessibilityHidden(true)
     }
 
     private var choicesList: some View {
