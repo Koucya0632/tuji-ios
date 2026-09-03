@@ -113,7 +113,7 @@ final class ReviewFlowCoordinator {
     /// question instead of being demoted by the spacing rule.
     private var heardWordIds: Set<String> = []
 
-    private let audio: ListeningAudio
+    private let audio: SpeechPlaying
 
     /// Held and primed rather than built at the tap.
     ///
@@ -163,7 +163,7 @@ final class ReviewFlowCoordinator {
         queue: [StudyQueueItem],
         writer: DurableAnswerWriting = DurableAnswerWriter(),
         queueProvider: StudyQueueProviding = StudyQueueStore.shared,
-        audio: ListeningAudio = LiveListeningAudio(),
+        audio: SpeechPlaying = LiveSpeechPlaying(),
         beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         now: @escaping () -> Date = { .now }
     ) {

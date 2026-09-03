@@ -199,7 +199,7 @@ struct ReviewQuestion {
     /// A play has ended. Only the first opens the clock — a replay must not
     /// reset it, or the button becomes a way to buy time, and the time a replay
     /// costs is exactly the signal that this word was hard.
-    mutating func playbackEnded(_ outcome: ListeningPlayback, isReplay: Bool, now: Date = .now) {
+    mutating func playbackEnded(_ outcome: SpeechPlayback, isReplay: Bool, now: Date = .now) {
         self.isPlayingSentence = false
         if outcome != .finished { self.audioFailed = true }
         if !isReplay, self.awaitingAudio {

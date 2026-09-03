@@ -17,6 +17,11 @@ struct RecognizeView: View {
     /// without the teach sections rather than showing a spinner.
     var detail: Word?
 
+    /// Where the catalogue's recordings come from, and the service that plays
+    /// them. Defaulted `.shared` per ADR-0001.
+    var catalogue: WordClipReading = CatalogueClips()
+    var speech: SpeechService = .shared
+
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
     @Environment(\.targetLanguage) private var session
@@ -59,16 +64,32 @@ struct RecognizeView: View {
         return nil
     }
 
+    /// This card's headword, and where to find its recording.
+    ///
+    /// The prefetched detail answers before the catalogue: it carries the
+    /// server tag the queue payload may lack, and it may hold clips the
+    /// catalogue has not merged. The auto-play and the speaker button below it
+    /// both read this — they used to resolve it separately, and only one of
+    /// them consulted the detail at all.
+    private var spokenHeadword: SpokenWord {
+        SpokenWord(self.item.word, clips: self.detail?.audioUrls)
+    }
+
     /// Hearing the word is the cheapest teach signal, so play it as the card
     /// settles (the delay keeps the transition from swallowing the clip).
+    ///
+    /// The beat stays in the view rather than moving to a module: it is
+    /// `.task`'s, so SwiftUI cancels it when the card goes — unlike the
+    /// unstructured `Task {}` that `AnswerBeat` exists to replace.
     private func autoPlay() async {
         try? await Task.sleep(for: .milliseconds(300))
         guard !Task.isCancelled else { return }
-        let voice = SpeechService.Voice.preferred(for: self.settings.current, language: self.wordLanguage)
-        let audioUrls = self.words.find(id: self.item.word.id)?.audioUrls
-            ?? self.detail?.audioUrls
-        SpeechService.shared.play(
-            urlString: audioUrls?[voice.rawValue],
+        let voice = SpeechService.Voice.preferred(
+            for: self.settings.current,
+            language: self.wordLanguage
+        )
+        self.speech.play(
+            urlString: self.spokenHeadword.clip(voice: voice, catalogue: self.catalogue),
             fallbackText: self.item.word.word,
             voice: voice
         )
@@ -91,9 +112,7 @@ struct RecognizeView: View {
                         .layoutPriority(1)
                     Spacer(minLength: Space.s2)
                     PronunciationButton(
-                        text: self.item.word.word,
-                        language: self.wordLanguage,
-                        audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
+                        subject: self.spokenHeadword,
                         size: 48
                     )
                 }
@@ -140,8 +159,7 @@ struct RecognizeView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: Space.s2)
                 PronunciationButton(
-                    text: example.sentence,
-                    language: self.wordLanguage,
+                    subject: .sentence(example.sentence, language: self.wordLanguage),
                     size: 32
                 )
             }

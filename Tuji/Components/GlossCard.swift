@@ -262,9 +262,13 @@ struct GlossCard: View {
             }
             .layoutPriority(1)
             Spacer(minLength: Space.s2)
+            // Deliberately no `wordId`, so this is always synthesised rather
+            // than played from the catalogue. `wordId` is matched on the 原形,
+            // so a 詞塊 reading `documents` carries `document`'s id — and
+            // `document`'s recording, which is not what is written here. It is
+            // the same rule the 音標 line already follows.
             PronunciationButton(
-                text: self.span.text,
-                language: self.language,
+                subject: .headword(self.span.text, language: self.language),
                 size: Self.buttonSize
             )
             // 書籤 needs a catalogue word to hang on, and most 詞塊 will never be

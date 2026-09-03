@@ -637,9 +637,11 @@ struct AtlasPublicDetailView: View {
             .layoutPriority(1)
             Spacer()
             PronunciationButton(
-                text: word.word,
-                language: word.taggedLanguage,
-                audioUrls: word.audioUrls,
+                subject: .headword(
+                    word.word,
+                    language: word.taggedLanguage,
+                    clips: word.audioUrls
+                ),
                 size: 48
             )
         }

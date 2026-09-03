@@ -201,9 +201,7 @@ extension WordDetailPage {
             .layoutPriority(1)
             Spacer()
             PronunciationButton(
-                text: w.word,
-                language: w.taggedLanguage,
-                audioUrls: w.audioUrls,
+                subject: SpokenWord(w),
                 size: 48,
                 wordId: self.id.hasPrefix("atlas:") ? nil : w.id
             )

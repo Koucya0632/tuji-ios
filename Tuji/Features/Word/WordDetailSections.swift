@@ -269,8 +269,10 @@ struct WordDetailSections: View {
                         .foregroundStyle(.tujiInk)
                         Spacer(minLength: Space.s2)
                         PronunciationButton(
-                            text: sentence,
-                            language: word.language(in: self.session),
+                            subject: .sentence(
+                                sentence,
+                                language: word.language(in: self.session)
+                            ),
                             size: 32
                         )
                     }

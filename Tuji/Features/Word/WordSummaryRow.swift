@@ -23,7 +23,10 @@ struct WordSummaryRow: View {
     let gloss: String?
     /// Pre-generated clips, when the caller has them. `PronunciationButton`
     /// falls back to on-device synthesis without them.
-    let audioUrls: [String: String]?
+    /// Clips the caller already holds. Optional: the row builds a `SpokenWord`
+    /// around `wordId`, so a caller with nothing to pass gets the catalogue's
+    /// answer rather than hand-writing the lookup itself.
+    var audioUrls: [String: String]?
     var buttonSize: CGFloat = 44
 
     var body: some View {
@@ -45,9 +48,12 @@ struct WordSummaryRow: View {
             VStack(spacing: Space.s2) {
                 FavoriteButton(wordId: self.wordId, size: self.buttonSize)
                 PronunciationButton(
-                    text: self.word.word,
-                    language: self.word.taggedLanguage,
-                    audioUrls: self.audioUrls,
+                    subject: .headword(
+                        self.word.word,
+                        language: self.word.taggedLanguage,
+                        wordId: self.wordId,
+                        clips: self.audioUrls
+                    ),
                     size: self.buttonSize
                 )
             }

@@ -1,24 +1,27 @@
-// 聽句's one reach into the world: can this sentence be played right now, and
-// tell me when it has finished.
+// Playing a recording, and being told when it has ended.
 //
-// It is a seam rather than a `SpeechService.shared` call inside the coordinator
-// because the coordinator's clock hangs off the answer — "started" is when the
-// audio *ended* (ADR-0014) — and a rule that only fires after a real 2-second
-// clip is a rule no test can reach. The `async` shape is the point: awaiting is
-// what the coordinator actually wants to express, and a fake satisfies it in a
-// single line.
+// A seam rather than a `SpeechService.shared` call inside the caller, because
+// 聽句's clock hangs off the answer — "started" is when the audio *ended*
+// (ADR-0014) — and a rule that only fires after a real 2-second clip is a rule
+// no test can reach. The `async` shape is the point: awaiting is what a caller
+// actually wants to express, and a fake satisfies it in a single line.
+//
+// It was `ListeningAudio`, in `Core/Study`, and it had one caller. **A module
+// named after one of its callers does not get found by the next one** — the
+// lesson `ImageIntake` learned from `AvatarPicker` and `TileBoard` from
+// `NewFlowCoordinator`. Nothing here was ever specific to 聽句.
 //
 // `SpeechService` publishes state rather than taking a completion handler, so
 // the adapter below is where the two shapes meet. That asymmetry is deliberate:
 // `PronunciationButton` wants the state (to tint its ground while a clip
-// plays) and this wants the event, and building the service around this one
-// caller's shape is how a module ends up unusable by the next one.
+// plays) and this wants the event, and building the service around either one
+// caller's shape is how a module ends up unusable by the other.
 
 import Foundation
 import Observation
 
 /// How a sentence's audio ended.
-enum ListeningPlayback: Equatable {
+enum SpeechPlayback: Equatable {
     /// The pre-generated clip played to its end.
     case finished
     /// No clip, so this was on-device synthesis. Recorded as `audioFailed`:
@@ -30,7 +33,7 @@ enum ListeningPlayback: Equatable {
 }
 
 @MainActor
-protocol ListeningAudio {
+protocol SpeechPlaying {
     /// Whether this clip plays with no network — cached on disk, or a live
     /// connection to fetch it. False sends the card to 選字 instead.
     func canPlay(_ urlString: String?, online: Bool) -> Bool
@@ -43,7 +46,7 @@ protocol ListeningAudio {
         voice: SpeechService.Voice,
         rate: Float
     ) async
-        -> ListeningPlayback
+        -> SpeechPlayback
 
     /// Cut playback off. Leaving 複習 mid-sentence must not narrate the screen
     /// the user went to instead — and 聽句 auto-plays, so unlike the
@@ -53,7 +56,7 @@ protocol ListeningAudio {
 
 /// The real one: `SpeechService` for playback and the on-disk clip cache.
 @MainActor
-struct LiveListeningAudio: ListeningAudio {
+struct LiveSpeechPlaying: SpeechPlaying {
     var speech: SpeechService = .shared
 
     func canPlay(_ urlString: String?, online: Bool) -> Bool {
@@ -72,7 +75,7 @@ struct LiveListeningAudio: ListeningAudio {
         voice: SpeechService.Voice,
         rate: Float
     ) async
-        -> ListeningPlayback
+        -> SpeechPlayback
     {
         let request = self.speech.play(
             urlString: urlString,
@@ -99,10 +102,10 @@ struct LiveListeningAudio: ListeningAudio {
     /// capture — accepted by the Debug build and rejected outright by the
     /// whole-module release build. The only thing this closure captures is the
     /// `Sendable` box.
-    private func awaitTerminal(_ request: Int) async -> ListeningPlayback {
+    private func awaitTerminal(_ request: Int) async -> SpeechPlayback {
         let speech = self.speech
         while true {
-            var terminal: ListeningPlayback?
+            var terminal: SpeechPlayback?
             await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
                 let box = ResumeOnce(continuation)
                 withObservationTracking {
@@ -121,7 +124,7 @@ struct LiveListeningAudio: ListeningAudio {
         _ state: SpeechService.PlaybackState?,
         request: Int
     )
-        -> ListeningPlayback?
+        -> SpeechPlayback?
     {
         guard let state else { return nil }
         // A newer request superseded ours. It will never reach a terminal phase

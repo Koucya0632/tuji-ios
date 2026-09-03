@@ -21,7 +21,6 @@ struct ReviewHeroCard: View {
     let item: StudyQueueItem
     let height: CGFloat
 
-    @Environment(WordsStore.self) private var words
     @Environment(OnboardingState.self) private var onboarding
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -44,9 +43,7 @@ struct ReviewHeroCard: View {
             self.card
 
             PronunciationButton(
-                text: self.item.word.word,
-                language: self.item.word.taggedLanguage,
-                audioUrls: self.words.find(id: self.item.word.id)?.audioUrls,
+                subject: SpokenWord(self.item.word),
                 size: 48,
                 ground: .tujiPaper
             )
@@ -80,8 +77,7 @@ struct ReviewHeroCard: View {
                     // Not gated on `showZh`: that switch governs the always-on
                     // gloss 學新字 prints on a picture, and this sheet is two
                     // deliberate taps in.
-                    gloss: self.item.word.chinese,
-                    audioUrls: self.words.find(id: self.item.word.id)?.audioUrls
+                    gloss: self.item.word.chinese
                 )
             }
             .glossCard()
