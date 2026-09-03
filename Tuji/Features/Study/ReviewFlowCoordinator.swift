@@ -363,7 +363,7 @@ final class ReviewFlowCoordinator {
         self.question?.phase ?? .answer
     }
 
-    var picked: String? {
+    var picked: ReviewChoice? {
         self.question?.picked
     }
 

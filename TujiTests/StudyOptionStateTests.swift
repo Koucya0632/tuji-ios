@@ -80,4 +80,56 @@ struct StudyOptionStateTests {
             ) == .idle
         )
     }
+
+    // MARK: - 聽句's two pictures
+
+    /// The reason `forPicture` exists at all: an option that prints the same
+    /// string as the answer is not the answer. The picture card used to compare
+    /// its picked option by label, so an impostor would have taken the frame
+    /// that says 「你點了這個」 *and* the one that says 「這是答案」.
+    @Test
+    func aPictureIsJudgedByIdEvenWhenTheLabelsMatch() {
+        // The impostor was picked: wrong, however it reads.
+        #expect(
+            StudyOptionState.forPicture(
+                optionId: "w-other", answerId: "w-fork", pickedId: "w-other", revealed: true
+            ) == .wrong
+        )
+        // And the real answer still lights up beside it.
+        #expect(
+            StudyOptionState.forPicture(
+                optionId: "w-fork", answerId: "w-fork", pickedId: "w-other", revealed: true
+            ) == .answer
+        )
+    }
+
+    @Test
+    func aCorrectPictureIsRightAndTheOtherRecedes() {
+        #expect(
+            StudyOptionState.forPicture(
+                optionId: "w-fork", answerId: "w-fork", pickedId: "w-fork", revealed: true
+            ) == .right
+        )
+        #expect(
+            StudyOptionState.forPicture(
+                optionId: "w-spoon", answerId: "w-fork", pickedId: "w-fork", revealed: true
+            ) == .dim
+        )
+    }
+
+    /// Nothing is marked while the question is open — ruling out one of *two*
+    /// pictures is the same act as answering (ADR-0014).
+    @Test
+    func picturesCarryNoMarkBeforeTheReveal() {
+        #expect(
+            StudyOptionState.forPicture(
+                optionId: "w-fork", answerId: "w-fork", pickedId: nil, revealed: false
+            ) == .idle
+        )
+        #expect(
+            StudyOptionState.forPicture(
+                optionId: "w-fork", answerId: "w-fork", pickedId: "w-fork", revealed: false
+            ) == .idle
+        )
+    }
 }

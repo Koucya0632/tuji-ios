@@ -176,8 +176,35 @@ enum StudyOptionState: Equatable {
     {
         if wrongPicks.contains(label) { return .wrong }
         guard revealed, let picked else { return .idle }
-        let isAnswer = label == answer
-        let isPicked = label == picked
+        return self.verdict(isAnswer: label == answer, isPicked: label == picked)
+    }
+
+    /// The same decision for 聽句's two pictures.
+    ///
+    /// It exists separately because the two surfaces identify an option
+    /// differently, and that difference is the whole point: 選字's options are
+    /// labels, which `DistractorPool` has already made unique, while a picture
+    /// carries the catalogue id — **two catalogue words can print the same
+    /// string, they cannot share an id.** The picture card used to compare its
+    /// picked option by label, four lines under a doc comment on `pickImage`
+    /// saying why that is wrong, in a `private func` with no test.
+    ///
+    /// There is no `wrongPicks` here: ruling out one of *two* pictures is the
+    /// same act as answering, so a picture is never marked while the question
+    /// is still open (ADR-0014).
+    static func forPicture(
+        optionId: String,
+        answerId: String,
+        pickedId: String?,
+        revealed: Bool
+    )
+        -> StudyOptionState
+    {
+        guard revealed, let pickedId else { return .idle }
+        return self.verdict(isAnswer: optionId == answerId, isPicked: optionId == pickedId)
+    }
+
+    private static func verdict(isAnswer: Bool, isPicked: Bool) -> StudyOptionState {
         if isPicked, isAnswer { return .right }
         if isPicked, !isAnswer { return .wrong }
         if isAnswer { return .answer }

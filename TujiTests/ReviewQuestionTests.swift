@@ -257,6 +257,31 @@ struct ReviewQuestionTests {
         #expect(q.reportedSelection == "fork")
     }
 
+    /// 選字's options are labels and carry no id; a picture carries the
+    /// catalogue id, and that is what the frame has to match on.
+    @Test
+    func aPickCarriesAnIdOnlyWhenTheOptionHadOne() throws {
+        var mcq = try self.makeQuestion()
+        _ = mcq.pick("fork", now: self.start)
+        #expect(mcq.picked == ReviewChoice(id: nil, label: "fork"))
+
+        var listening = try self.makeQuestion()
+        try listening.present(
+            kind: .hearSentence,
+            example: self.makeExample(),
+            imageOptions: nil,
+            awaitsAudio: false
+        )
+        let option = ImageChoiceOption(
+            id: "w-fork",
+            word: "fork",
+            imageUrl: "",
+            imageKind: .cutout
+        )
+        _ = listening.pickImage(option, now: self.start)
+        #expect(listening.picked == ReviewChoice(id: "w-fork", label: "fork"))
+    }
+
     /// Ruling out one of *two* pictures is the same act as answering, so 聽句
     /// resolves on the first tap (ADR-0014).
     @Test

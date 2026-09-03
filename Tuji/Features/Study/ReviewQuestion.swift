@@ -32,6 +32,21 @@ enum ReviewResolution: Hashable {
     case reveal(ReviewRevealMode)
 }
 
+/// The option the user landed on.
+///
+/// A label is not an identity. 選字's four options are labels — `DistractorPool`
+/// guarantees no two of them print the same string — but 聽句's two pictures
+/// carry catalogue ids, and two catalogue words *can* print the same string.
+/// `pickImage` has always said so in a doc comment and then handed the label on
+/// alone, which is how the picture card came to draw its「你點了這個」frame by
+/// comparing text.
+struct ReviewChoice: Hashable {
+    /// The catalogue word id, when the option had one. 選字's labels do not.
+    let id: String?
+    /// What the option said. What 報錯 quotes, and what the MCQ rows match on.
+    let label: String
+}
+
 /// What one tap on an option did.
 enum ReviewTap: Hashable {
     /// Guard refused it — wrong phase, or an option already ruled out.
@@ -71,7 +86,7 @@ struct ReviewQuestion {
     // MARK: - Answering
 
     private(set) var phase: ReviewPhase = .answer
-    private(set) var picked: String?
+    private(set) var picked: ReviewChoice?
     /// Options ruled out on this presentation. 看圖選字 marks a wrong pick and
     /// leaves the question open instead of ending it, so the user finds the
     /// word themselves. Only the pick that lands resolves, and it is graded as
@@ -262,7 +277,7 @@ struct ReviewQuestion {
     mutating func pickImage(_ option: ImageChoiceOption, now: Date = .now) -> ReviewTap {
         guard self.kind == .hearSentence else { return .ignored }
         return self.resolve(
-            picked: option.word,
+            picked: ReviewChoice(id: option.id, label: option.word),
             correct: option.id == self.item.word.id,
             now: now
         )
@@ -288,10 +303,20 @@ struct ReviewQuestion {
             guard self.wrongPicks.insert(choice).inserted else { return .ignored }
             return .ruledOut
         }
-        return self.resolve(picked: choice, correct: ok && self.wrongPicks.isEmpty, now: now)
+        return self.resolve(
+            picked: ReviewChoice(id: nil, label: choice),
+            correct: ok && self.wrongPicks.isEmpty,
+            now: now
+        )
     }
 
-    private mutating func resolve(picked choice: String, correct ok: Bool, now: Date) -> ReviewTap {
+    private mutating func resolve(
+        picked choice: ReviewChoice,
+        correct ok: Bool,
+        now: Date
+    )
+        -> ReviewTap
+    {
         guard self.phase == .answer else { return .ignored }
         // Answering before the sentence finished leaves nothing timed — the
         // clock had not started. It may be genuine (the word was recognised
@@ -352,7 +377,7 @@ struct ReviewQuestion {
     /// the pick that lands, so without this a report filed mid-question would
     /// throw away everything the user had already tried.
     var reportedSelection: String? {
-        self.picked ?? (self.wrongPicks.isEmpty
+        self.picked?.label ?? (self.wrongPicks.isEmpty
             ? nil
             : self.wrongPicks.sorted().joined(separator: " / "))
     }
