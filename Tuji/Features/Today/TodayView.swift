@@ -258,22 +258,31 @@ struct TodayView: View {
                         .foregroundStyle(.tujiPaper.opacity(0.6))
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
+                    // The pair is one control, so the two pills are one height:
+                    // 複習 is two characters in every language and its neighbour
+                    // is not, so the moment the longer label wraps — a large
+                    // Dynamic Type size, a language that needs the room — an
+                    // unconstrained HStack draws a short button beside a tall
+                    // one and the row reads as two unrelated things. Each label
+                    // fills the row's height, `fixedSize` keeps that height at
+                    // the taller label's ideal rather than the parent's.
                     HStack(spacing: Space.s3) {
                         NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
                             Text("複習")
-                                .frame(maxWidth: .infinity)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                         .buttonStyle(HeroPillStyle(role: self.reviewDisabled ? .secondary : .primary))
                         .disabled(self.reviewDisabled)
 
                         NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
                             Text("學新字")
-                                .frame(maxWidth: .infinity)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                         .buttonStyle(HeroPillStyle(role: self.reviewDisabled && !self
                                 .newDisabled ? .primary : .secondary))
                         .disabled(self.newDisabled)
                     }
+                    .fixedSize(horizontal: false, vertical: true)
                     .tourAnchor(.heroCTAs)
 
                     if let hint = self.heroHint {
