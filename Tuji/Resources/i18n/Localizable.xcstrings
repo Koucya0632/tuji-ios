@@ -447,6 +447,28 @@
         }
       }
     },
+    "App Store 上已經有 %@ 了。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ is on the App Store."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store には %@ が出ています。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 上已经有 %@ 了。"
+          }
+        }
+      }
+    },
     "Apple 沒回傳登入憑證，請重試" : {
       "localizations" : {
         "en" : {
@@ -3868,6 +3890,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除这张卡片？"
+          }
+        }
+      }
+    },
+    "前往更新" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アップデート"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往更新"
           }
         }
       }
@@ -8904,6 +8948,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有印象，但要再看几次"
+          }
+        }
+      }
+    },
+    "有新版本可用" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new version is available"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいバージョンがあります"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有新版本可用"
           }
         }
       }
