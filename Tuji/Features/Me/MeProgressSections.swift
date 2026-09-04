@@ -22,10 +22,17 @@ struct MeProgressSections: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(SettingsStore.self) private var settings
     @Environment(LocalCache.self) private var cache
+    @Environment(MasteryStore.self) private var mastery
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s5) {
             self.completionCard
+            // Directly under 完成度 on purpose. That card answers how *wide*
+            // the account has gone and this one how *deep*; they were only ever
+            // half an answer apart, and the whole reason this section exists is
+            // that the deep half was missing from the screen.
+            self.masterySection
+                .padding(.horizontal, Space.s4)
             self.streakRow
                 .padding(.horizontal, Space.s4)
             self.heatmapSection
@@ -96,6 +103,123 @@ struct MeProgressSections: View {
         .padding(Space.s4)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiInk)
+    }
+
+    // MARK: - Mastery distribution (熟練度)
+
+    private var distribution: MasteryDistribution {
+        MasteryDistribution.of(scores: self.mastery.byId)
+    }
+
+    /// 精通 as the headline, the spread as the evidence.
+    ///
+    /// On paper, with no ink block: the 完成度 card above is "the one number on
+    /// this tab", and a second dark slab would leave the screen with two of
+    /// them and no hierarchy. The count borrows `streakColumn`'s shape instead,
+    /// which is what the tab already uses for a plain accumulated fact.
+    private var masterySection: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("熟練度")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            self.masteryBody
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Three states, and the middle one is the reason this is not a plain
+    /// `isEmpty` branch.
+    ///
+    /// An empty score map means "nothing studied" only *after* the store has
+    /// answered. Before that it means "not known yet", and rendering
+    /// 「還沒有學習紀錄」 over it states something about the account that may be
+    /// false — on a slow network, for exactly the long-standing user this
+    /// section exists to reassure. So an unanswered store draws the bar's track
+    /// and says nothing. A guest is different again: their store is never
+    /// warmed (`AccumulationSurface.needs` drops it), so waiting on `loaded`
+    /// would leave them on that track forever.
+    @ViewBuilder
+    private var masteryBody: some View {
+        if self.auth.isGuest {
+            self.masteryNotice("登入後顯示熟練度")
+        } else if !self.mastery.loaded {
+            MasteryStackedBar(distribution: .empty)
+        } else {
+            let spread = self.distribution
+            if spread.isEmpty {
+                self.masteryNotice("還沒有學習紀錄")
+            } else {
+                self.expertHeadline(spread.expert)
+                MasteryStackedBar(distribution: spread)
+                self.masteryLegend(spread)
+            }
+        }
+    }
+
+    private func masteryNotice(_ message: LocalizedStringKey) -> some View {
+        Text(message)
+            .font(.tujiLabel)
+            .foregroundStyle(.tujiInk3)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, Space.s3)
+    }
+
+    /// The prestige tier, counted. Same shape as `streakColumn` — label, display
+    /// number, unit — because it is the same kind of fact about the account.
+    private func expertHeadline(_ count: Int) -> some View {
+        VStack(alignment: .leading, spacing: Space.s1) {
+            Text(MasteryLevel.expert.name)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text("\(count)")
+                    .font(.tujiDisplay)
+                    .foregroundStyle(.tujiInk)
+                    .contentTransition(.numericText())
+                Text(verbatim: tujiLocalized("字"))
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+            }
+        }
+    }
+
+    /// Swatch + tier + count, one per tier, in ladder order — two columns, read
+    /// left to right and then down, so the ladder order survives the wrap.
+    ///
+    /// Two columns rather than the heatmap legend's single row, because the
+    /// four tiers do not fit on one line outside 繁中: measured at
+    /// `tujiLabel` 13pt, the English row needs 387pt against 354pt on an
+    /// iPhone 17 Pro, and the Japanese row overflows an iPhone SE. Development
+    /// happens in 繁中 and CI runs English, which is precisely the pairing that
+    /// ships an overflow nobody saw. Split in two, the widest cell in any of
+    /// the four languages is 103pt against 155pt on the narrowest phone.
+    private func masteryLegend(_ spread: MasteryDistribution) -> some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: Space.s3, alignment: .leading),
+                GridItem(.flexible(), spacing: Space.s3, alignment: .leading)
+            ],
+            alignment: .leading,
+            spacing: Space.s2
+        ) {
+            ForEach(spread.segments) { segment in
+                HStack(spacing: Space.s1) {
+                    Rectangle()
+                        .fill(segment.level.background)
+                        .frame(width: 8, height: 8)
+                    Text(segment.level.name)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                    Text("\(segment.words)")
+                        .font(.tujiMono)
+                        .foregroundStyle(.tujiInk2)
+                        .contentTransition(.numericText())
+                    Spacer(minLength: 0)
+                }
+            }
+        }
     }
 
     // MARK: - Streak row (2 stat cards)

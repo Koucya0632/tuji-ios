@@ -31,7 +31,8 @@ enum AccumulationStore: CaseIterable {
     case progress
     /// `StudyStatsStore` — due / new / todayNew.
     case stats
-    /// `MasteryStore` — per-word scores behind the 全精通 badge.
+    /// `MasteryStore` — per-word scores behind the 全精通 badge, the tile
+    /// frames and the 熟練度 distribution.
     case mastery
 }
 
@@ -39,7 +40,8 @@ enum AccumulationStore: CaseIterable {
 enum AccumulationSurface {
     /// 首頁 — the hero's 今日目標 + 主題進度, the streak chip, the theme strip.
     case todayHero
-    /// 我 · 進度 — the 完成度 card, streak columns, heatmap, 明細.
+    /// 我 · 進度 — the 完成度 card, the 熟練度 distribution, streak columns,
+    /// heatmap, 明細.
     case progressSections
     /// 主題 — the theme index grid and its 完成 / 全精通 badges.
     case themeIndex
@@ -58,9 +60,15 @@ enum AccumulationSurface {
             // 主題進度 needs progress, the theme tiles need mastery.
             stores.formUnion([.progress, .stats, .mastery])
         case .progressSections:
-            // No stats: nothing on 我 reads due / new. Mastery likewise — the
-            // 明細 rows are seen/total, not scores.
-            stores.insert(.progress)
+            // No stats: nothing on 我 reads due / new. Mastery *is* read now —
+            // the 熟練度 section counts the score map into tiers. It used to be
+            // excluded on the grounds that "the 明細 rows are seen/total, not
+            // scores", which was true of every number on the screen until that
+            // section was added; leaving it out would have reproduced this
+            // file's own founding bug one screen over, with the distribution
+            // reading all-zero on a cold open and filling in only once some
+            // other surface had warmed the store.
+            stores.formUnion([.progress, .mastery])
         case .themeIndex:
             // Both badges: 全精通 from mastery, 完成 from progress. The second
             // one is the fix — this surface used to omit it.
