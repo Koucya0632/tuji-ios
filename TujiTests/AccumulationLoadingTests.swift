@@ -23,13 +23,23 @@ struct AccumulationSurfaceNeedsTests {
         #expect(needs == Set(AccumulationStore.allCases))
     }
 
-    @Test("我 · 進度 asks for nothing it does not render")
-    func progressSectionsSkipsStatsAndMastery() {
+    @Test("我 · 進度 needs mastery — the 熟練度 spread is drawn from it")
+    func progressSectionsNeedsMastery() {
         let needs = AccumulationSurface.progressSections.needs(isGuest: false)
         #expect(needs.contains(.progress))
-        // Nothing on the 進度 sections reads due/new, or a per-word score.
+        // The 熟練度 section counts per-word scores into tiers. Before it
+        // existed this surface deliberately skipped mastery; leaving it skipped
+        // afterwards is this module's founding bug one screen over — the
+        // distribution reads all-zero on a cold open and fills in only once
+        // some other surface has warmed the store.
+        #expect(needs.contains(.mastery))
+    }
+
+    @Test("我 · 進度 still asks for nothing it does not render")
+    func progressSectionsSkipsStats() {
+        let needs = AccumulationSurface.progressSections.needs(isGuest: false)
+        // Nothing on the 進度 sections reads due/new.
         #expect(!needs.contains(.stats))
-        #expect(!needs.contains(.mastery))
     }
 
     @Test("a guest never reaches for account-scoped data")
@@ -51,7 +61,7 @@ struct AccumulationWarmerTests {
 
         await warmer.warm(.progressSections, isGuest: false)
 
-        #expect(Set(warmed) == [.dictionary, .themes, .settings, .progress])
+        #expect(Set(warmed) == [.dictionary, .themes, .settings, .progress, .mastery])
     }
 
     @Test("settings is warmed before anything that a direction switch would drop")
