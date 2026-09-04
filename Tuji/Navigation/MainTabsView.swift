@@ -75,6 +75,9 @@ struct MainTabsView: View {
             self.consumePendingLink()
         }
         .task { await self.startTourIfNeeded() }
+        // 更新提示掛在殼上，不在任何一個分頁裡：它跟使用者站在哪一頁無關。
+        // 導覽正在跑的時候不會出現 —— 見 `AppUpdatePolicy.mayPresent`。
+        .appUpdatePrompt(tourRunning: self.tourIndex != nil)
     }
 
     /// Horizontally-paged container so the four tabs can be switched by
