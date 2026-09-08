@@ -375,34 +375,22 @@ final class AuthService {
     // MARK: - Helpers
 
     private func friendly(_ err: Error) -> String {
-        let msg = err.localizedDescription
-        if msg.localizedCaseInsensitiveContains("invalid login credentials") {
-            return tujiLocalized("Email 或密碼錯誤")
-        }
-        if msg.localizedCaseInsensitiveContains("user already registered") {
-            return tujiLocalized("此 Email 已註冊，請改用登入")
-        }
-        if msg.localizedCaseInsensitiveContains("rate limit") {
-            return tujiLocalized("嘗試太頻繁，請稍後再試")
-        }
-        if msg.localizedCaseInsensitiveContains("provider"),
-           msg.localizedCaseInsensitiveContains("not enabled")
-        {
-            return tujiLocalized("Apple 登入尚未啟用，請稍後再試")
-        }
-        if msg.localizedCaseInsensitiveContains("password should be") {
-            return tujiLocalized("密碼太短（至少 8 字）")
-        }
-        if msg.localizedCaseInsensitiveContains("email address"),
-           msg.localizedCaseInsensitiveContains("invalid")
-        {
-            return tujiLocalized("Email 格式或網域不被接受")
+        // The seven messages this app can explain live in `AuthFailureReason`,
+        // where they can be tested — this class cannot be constructed in a test
+        // process, so every branch that used to sit here was unverified. One of
+        // them was missing: `email_not_confirmed` fell through to the arm below
+        // and told the user 「請稍後再試」, which can never work when the fix is
+        // an unopened inbox.
+        if let reason = AuthFailureReason(serverMessage: err.localizedDescription) {
+            return reason.message
         }
         // Anything unrecognised is Supabase's own English, and it is not
         // addressed to the reader. This arm used to `return msg`, which is how
         // "Service for this project is restricted due to the following
         // violations: exceed_cached_egress_quota…" — a billing notice for the
         // developer — ended up on the sign-in screen during the 2026-08 outage.
+        // `tujiUserMessage` still does real work here: it recognises APIError
+        // and URLError and produces the offline wording.
         return tujiUserMessage(for: err, fallback: tujiLocalized("登入沒有成功，請稍後再試"))
     }
 }
