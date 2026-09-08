@@ -14187,6 +14187,28 @@
         }
       }
     },
+    "這個 Email 還沒確認。收信點一下連結，就能登入了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This email hasn't been confirmed yet. Open the link we sent and you're in"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメールアドレスはまだ確認されていません。届いたリンクを開くとログインできます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个 Email 还没确认。收信点一下链接，就能登录了"
+          }
+        }
+      }
+    },
     "這個主題目前還沒有可學的字" : {
       "localizations" : {
         "en" : {
