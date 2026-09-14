@@ -50,15 +50,20 @@ struct LiveProgressRepository: ProgressRepository {
     func toggleFavorite(wordId: String, isFavorite: Bool) async {
         await self.api.fireAndForget(
             .usersFavorites,
-            body: FavoritePayload(wordId: wordId, op: isFavorite ? "add" : "remove")
+            body: FavoritePayload(wordId: wordId, favorite: isFavorite)
         )
     }
 }
 
+/// `favorite`, a boolean — what POST /api/users/favorites requires. This sent
+/// `op: "add" | "remove"`, which the route answers with a 400, and the call is
+/// fire-and-forget: every bookmark toggled on iOS since this shape was written
+/// failed silently, and only the bulk upload at sign-in ever reached the server.
+///
 /// nonisolated so Encodable conformance escapes MainActor isolation;
 /// needed because APIClient.fireAndForget requires Body: Sendable.
 // swiftformat:disable:next redundantSendable
-private nonisolated struct FavoritePayload: Encodable, Sendable {
+nonisolated struct FavoritePayload: Encodable, Sendable {
     let wordId: String
-    let op: String
+    let favorite: Bool
 }

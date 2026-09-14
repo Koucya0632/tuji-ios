@@ -17,9 +17,9 @@ import Testing
 @MainActor
 struct AccountScopedStoreTests {
     @Test
-    func theRosterIsExactlyTheFiveAccountScopedStores() {
+    func theRosterIsExactlyTheElevenAccountScopedStores() {
         let roster = AccountScopedStores.all
-        #expect(roster.count == 5)
+        #expect(roster.count == 11)
 
         // Named rather than counted: a swap that kept the count would pass a
         // count assertion, and each of these is on the list for its own reason
@@ -29,6 +29,14 @@ struct AccountScopedStoreTests {
         #expect(roster.contains { $0 is MyCollectionsCache })
         #expect(roster.contains { $0 is BlockStore })
         #expect(roster.contains { $0 is StudyAnswerOutbox })
+        // The six that held account data without conforming, so the roster
+        // test above could not notice them.
+        #expect(roster.contains { $0 is SettingsStore })
+        #expect(roster.contains { $0 is MasteryStore })
+        #expect(roster.contains { $0 is ProgressStore })
+        #expect(roster.contains { $0 is StudyStatsStore })
+        #expect(roster.contains { $0 is StudyQueueStore })
+        #expect(roster.contains { $0 is LocalCache })
     }
 
     @Test
@@ -42,6 +50,83 @@ struct AccountScopedStoreTests {
             visited += 1
         }
         #expect(visited == AccountScopedStores.all.count)
+    }
+}
+
+@MainActor
+struct LocalCacheAccountBoundaryTests {
+    private struct Harness {
+        let cache: LocalCache
+        let defaults: UserDefaults
+        let suite: String
+
+        func tearDown() {
+            self.defaults.removePersistentDomain(forName: self.suite)
+        }
+    }
+
+    private func harness() throws -> Harness {
+        let suite = "LocalCacheAccountBoundaryTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        return Harness(
+            cache: LocalCache(defaults: defaults, learningDirection: { .zhJa }),
+            defaults: defaults,
+            suite: suite
+        )
+    }
+
+    /// The next sign-in uploads whatever is here into *that* account, so the
+    /// previous account's bookmarks must be gone before it can.
+    @Test
+    func signOutDropsTheBookmarksButKeepsTheSearchHistory() throws {
+        let harness = try self.harness()
+        defer { harness.tearDown() }
+        let cache = harness.cache
+        cache.toggleFavorite("kettle")
+        cache.pushRecentSearch("やかん")
+
+        cache.reset()
+
+        #expect(cache.favoriteIds.isEmpty)
+        #expect(cache.syncSnapshot.favorites.isEmpty)
+        #expect(cache.recentSearches == ["やかん"])
+        // Persisted, not just in memory: a relaunch must not bring them back.
+        #expect(LocalCache(defaults: harness.defaults, learningDirection: { .zhJa }).favoriteIds.isEmpty)
+    }
+
+    @Test
+    func serverBookmarksAreMergedInWithoutDroppingOnesOnScreen() throws {
+        let harness = try self.harness()
+        defer { harness.tearDown() }
+        let cache = harness.cache
+        cache.toggleFavorite("kettle")
+
+        cache.mergeServerFavorites(["ladle", "kettle"])
+
+        #expect(cache.favoriteIds == ["kettle", "ladle"])
+    }
+
+    @Test
+    func theSyncSnapshotCarriesTheInjectedDirection() throws {
+        let harness = try self.harness()
+        defer { harness.tearDown() }
+        let cache = harness.cache
+        #expect(cache.syncSnapshot.learningDirection == .zhJa)
+    }
+}
+
+@MainActor
+struct FavoritePayloadWireTests {
+    /// POST /api/users/favorites requires a boolean `favorite`. The payload sent
+    /// `op: "add" | "remove"`, got a 400 every time, and nobody saw it because
+    /// the call is fire-and-forget.
+    @Test
+    func aBookmarkToggleSendsTheBooleanTheRouteRequires() throws {
+        let data = try JSONEncoder().encode(FavoritePayload(wordId: "kettle", favorite: true))
+        let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        #expect(object["favorite"] as? Bool == true)
+        #expect(object["op"] == nil)
     }
 }
 

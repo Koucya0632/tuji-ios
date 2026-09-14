@@ -21,8 +21,15 @@ final class ProgressStore {
     private(set) var streak: StudyStreak?
     private(set) var heatmap: [HeatmapCell] = []
     private(set) var categoryProgress: [CategoryProgress] = []
-    private(set) var loading: Bool = false
     private(set) var lastError: Error?
+
+    /// Whether what is on screen is the account's answer — see `LoadPhase`.
+    /// Screens used to guess this from the data (`isEmpty`, `== nil`).
+    private(set) var phase: LoadPhase = .idle
+
+    var loading: Bool {
+        self.phase == .loading
+    }
 
     private var lastFetch: Date?
     /// Filtered-row cache; see `rows(filter:)`. `@ObservationIgnored` because a
@@ -48,9 +55,9 @@ final class ProgressStore {
     }
 
     func reload() async {
-        loading = true
+        let started = self.phase
+        self.phase = started.reloading
         lastError = nil
-        defer { loading = false }
         do {
             let resp = try await self.repository.loadProgress()
             streak = resp.streak
@@ -58,8 +65,10 @@ final class ProgressStore {
             categoryProgress = resp.categories ?? []
             self.rowsByFilter.removeAll()
             lastFetch = Date()
+            self.phase = .loaded
         } catch {
             lastError = error
+            self.phase = started.afterFailure
             log.error("progress load failed: \(error.localizedDescription, privacy: .public)")
         }
     }
@@ -68,6 +77,17 @@ final class ProgressStore {
     /// that affects streak / heatmap (study/answer success, clearProgress).
     func invalidate() {
         lastFetch = nil
+    }
+
+    /// The account changed: none of this is the next account's.
+    func reset() {
+        self.streak = nil
+        self.heatmap = []
+        self.categoryProgress = []
+        self.rowsByFilter.removeAll()
+        self.lastFetch = nil
+        self.lastError = nil
+        self.phase = .idle
     }
 
     // MARK: - Category-scoped totals

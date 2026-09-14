@@ -144,6 +144,39 @@ struct SettingsStoreWriteTests {
         #expect(repository.saved.isEmpty)
     }
 
+    /// Sign-out. The themes, goal and accent were the previous account's; the
+    /// interface language and direction are the device's and stay.
+    @Test
+    func resetKeepsWhatBelongsToTheDeviceAndForgetsTheAccount() async throws {
+        let repository = SettingsWriteRepositoryFake()
+        let account = self.accountSettings
+        repository.loadHandler = { account }
+        let alice = self.alice
+        var who: SessionUser? = alice
+        let harness = try self.harness(repository) { who }
+        defer { harness.tearDown() }
+        let store = harness.store
+        await store.loadIfNeeded(for: alice.id)
+        #expect(store.loadedForCurrentAccount)
+        let direction = store.current.learningDirection
+        let uiLang = store.current.uiLang
+
+        store.reset()
+        who = nil
+
+        #expect(!store.hasLoaded)
+        #expect(!store.loadedForCurrentAccount)
+        #expect(store.current.studyCategories == UserSettings.default.studyCategories)
+        #expect(store.current.dailyGoal == UserSettings.default.dailyGoal)
+        #expect(store.current.learningDirection == direction)
+        #expect(store.current.uiLang == uiLang)
+
+        // Bob signs in: nothing Alice loaded counts as his.
+        who = self.bob
+        #expect(!store.loadedForCurrentAccount)
+        #expect(!store.isEditable)
+    }
+
     @Test
     func theRuleItself() {
         #expect(SettingsWrite.decide(signedIn: true, loaded: false) == .refuse)

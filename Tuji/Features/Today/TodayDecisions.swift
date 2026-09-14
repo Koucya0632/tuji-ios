@@ -74,7 +74,9 @@ struct TodayDecisions {
         var completion: CompletionReadout.Inputs
         var dailyGoal: Int
         var stats: StudyStats?
-        /// `!ProgressStore.categoryProgress.isEmpty`.
+        /// `ProgressStore.phase == .loaded`. It was `!categoryProgress.isEmpty`,
+        /// which an account with no themes answered the same way as a read
+        /// that had not arrived.
         var progressLoaded: Bool
     }
 

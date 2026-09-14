@@ -50,7 +50,7 @@ struct TodayView: View {
                 ),
                 dailyGoal: self.settings.current.dailyGoal,
                 stats: self.studyStats.stats,
-                progressLoaded: !self.progress.categoryProgress.isEmpty
+                progressLoaded: self.progress.phase == .loaded
             )
         )
     }

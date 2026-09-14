@@ -123,11 +123,28 @@ struct AccumulationStoreStalenessTests {
         await store.loadIfNeeded()
 
         #expect(repo.masteryLoads == 1)
-        #expect(store.loaded)
+        #expect(store.phase == .loaded)
     }
 
-    /// The once-flag is set on *failure* too — a user with a legitimately empty
-    /// map must not re-fetch forever — so invalidation is the only way back.
+    /// An empty map that *arrived* is an answer and is not re-fetched. A read
+    /// that failed is not an answer: it used to set the same once-flag, so one
+    /// failed read left 我 saying 「還沒有學習紀錄」 for the rest of the session.
+    @Test
+    func aFailedMasteryReadIsRetriedAndNotShownAsEmpty() async {
+        let repo = SpyProgressRepository()
+        repo.failing = true
+        let store = MasteryStore(repository: repo)
+
+        await store.loadIfNeeded()
+        #expect(store.phase == .failed)
+
+        repo.failing = false
+        await store.loadIfNeeded()
+
+        #expect(repo.masteryLoads == 2)
+        #expect(store.phase == .loaded)
+    }
+
     @Test
     func masteryReloadsOnlyAfterInvalidation() async {
         let repo = SpyProgressRepository()
@@ -149,6 +166,58 @@ struct AccumulationStoreStalenessTests {
 
         #expect(store.score(for: "w-apple") == 42)
         #expect(store.score(for: "w-nothing") == nil)
+    }
+
+    // MARK: - The account boundary
+
+    /// Sign-out resets these through `AccountScopedStores`. Before they were on
+    /// the roster, the next account saw the previous one's scores, streak and
+    /// due counts — mastery until a study session ended, the others for up to
+    /// thirty seconds.
+    @Test
+    func resetDropsEverythingTheLearningStoresHeld() async {
+        let progressRepo = SpyProgressRepository()
+        let mastery = MasteryStore(repository: progressRepo)
+        let progress = ProgressStore(repository: progressRepo)
+        let stats = StudyStatsStore(repository: SpyStudyRepository())
+        await mastery.loadIfNeeded()
+        await progress.loadIfStale()
+        await stats.loadIfStale()
+
+        mastery.reset()
+        progress.reset()
+        stats.reset()
+
+        #expect(mastery.phase == .idle)
+        #expect(mastery.score(for: "w-apple") == nil)
+        #expect(progress.phase == .idle)
+        #expect(progress.streak == nil)
+        #expect(stats.phase == .idle)
+        #expect(stats.stats == nil)
+
+        // And the next warm is a real fetch, not a cache hit on the old account.
+        await mastery.loadIfNeeded()
+        await progress.loadIfStale()
+        #expect(progressRepo.masteryLoads == 2)
+        #expect(progressRepo.progressLoads == 2)
+    }
+
+    /// A reload that fails over data already on screen keeps showing it: the
+    /// old answer is still this account's. Only a first answer that never came
+    /// is `.failed`.
+    @Test
+    func aFailedReloadOverShownProgressStaysLoaded() async {
+        let repo = SpyProgressRepository()
+        let store = ProgressStore(repository: repo)
+        await store.loadIfStale()
+
+        repo.failing = true
+        store.invalidate()
+        await store.loadIfStale()
+
+        #expect(store.phase == .loaded)
+        #expect(store.streak?.current == 3)
+        #expect(store.lastError != nil)
     }
 
     // MARK: - StudyStatsStore

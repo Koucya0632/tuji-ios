@@ -29,6 +29,12 @@ extension AtlasCaptureQueue: AccountScopedStore {}
 extension MyCollectionsCache: AccountScopedStore {}
 extension BlockStore: AccountScopedStore {}
 extension StudyAnswerOutbox: AccountScopedStore {}
+extension SettingsStore: AccountScopedStore {}
+extension MasteryStore: AccountScopedStore {}
+extension ProgressStore: AccountScopedStore {}
+extension StudyStatsStore: AccountScopedStore {}
+extension StudyQueueStore: AccountScopedStore {}
+extension LocalCache: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -44,13 +50,33 @@ enum AccountScopedStores {
     ///   account's behalf.
     /// - `StudyAnswerOutbox` — queued writes carry account state and must not
     ///   survive a sign-out even though each entry is also owner-tagged.
+    ///
+    /// The six below were missing until 2026-09-15, which is how the roster's
+    /// own promise ("a store that conforms without enrolling fails rather than
+    /// leaking") went unkept: they never conformed, so nothing failed.
+    ///
+    /// - `SettingsStore` — the themes, goal and accent in hand were the previous
+    ///   account's; a guest after sign-out studied from them.
+    /// - `MasteryStore` — once loaded it never re-fetched, so the next account
+    ///   saw the previous one's scores until a study session ended.
+    /// - `ProgressStore`, `StudyStatsStore` — streak, heatmap and due counts,
+    ///   served from a 30-second cache that has no account in it.
+    /// - `StudyQueueStore` — a prefetched queue whose signature has no account.
+    /// - `LocalCache` — the device's bookmarks, uploaded into whichever account
+    ///   signs in next.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
             AtlasCaptureQueue.shared,
             MyCollectionsCache.shared,
             BlockStore.shared,
-            StudyAnswerOutbox.shared
+            StudyAnswerOutbox.shared,
+            SettingsStore.shared,
+            MasteryStore.shared,
+            ProgressStore.shared,
+            StudyStatsStore.shared,
+            StudyQueueStore.shared,
+            LocalCache.shared
         ]
     }
 

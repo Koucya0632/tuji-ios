@@ -5,8 +5,9 @@
 //
 // Decay is applied server-side at read, so the scores here are "as of the
 // last load". After a study session CompleteView calls invalidate() + reload()
-// so the grid/detail reflect the just-earned changes. Guests / load failures
-// leave the map empty → every word renders as 未學.
+// so the grid/detail reflect the just-earned changes. Guests leave the map
+// empty → every word renders as 未學. A failed load is `.failed`, not an empty
+// answer, and the next warm asks again.
 
 import Foundation
 import Observation
@@ -21,12 +22,19 @@ final class MasteryStore {
     /// wordId → soonest next-review date, for the 圖鑑 countdown. Only words
     /// with a scheduled card appear here.
     private(set) var nextReviewById: [String: Date] = [:]
-    private(set) var loading: Bool = false
     private(set) var lastError: Error?
 
-    /// True once the first load attempt finishes (success *or* failure). Used
-    /// to avoid re-fetching for users who legitimately have an empty map.
-    private(set) var loaded: Bool = false
+    /// Whether the map on screen is the account's answer — see `LoadPhase`.
+    /// An empty map that *arrived* is `.loaded` and is not re-fetched; one that
+    /// failed to arrive is `.failed` and is.
+    private(set) var phase: LoadPhase = .idle
+
+    var loading: Bool {
+        self.phase == .loading
+    }
+
+    /// Set by `invalidate()`: the map on screen stays, the next warm re-fetches.
+    private var stale = false
 
     private let repository: ProgressRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "mastery-store")
@@ -64,17 +72,14 @@ final class MasteryStore {
     /// here until this one is relaunched or pull-to-refreshed. 首頁 has that
     /// pull; 我 does not.
     func loadIfNeeded() async {
-        guard !self.loaded else { return }
+        guard self.phase != .loaded || self.stale else { return }
         await self.reload()
     }
 
     func reload() async {
-        self.loading = true
+        let started = self.phase
+        self.phase = started.reloading
         self.lastError = nil
-        defer {
-            self.loading = false
-            self.loaded = true
-        }
         do {
             let resp = try await self.repository.loadMastery()
             self.byId = Dictionary(
@@ -88,9 +93,12 @@ final class MasteryStore {
                 }
             }
             self.nextReviewById = schedule
+            self.phase = .loaded
+            self.stale = false
             self.log.info("loaded \(resp.items.count, privacy: .public) mastery rows")
         } catch {
             self.lastError = error
+            self.phase = started.afterFailure
             self.log.error("mastery load failed: \(error.localizedDescription, privacy: .public)")
         }
     }
@@ -98,7 +106,16 @@ final class MasteryStore {
     /// Mark the next loadIfNeeded as a guaranteed miss. Call after a study
     /// session so the grid/detail re-fetch fresh scores.
     func invalidate() {
-        self.loaded = false
+        self.stale = true
+    }
+
+    /// The account changed: none of this is the next account's.
+    func reset() {
+        self.byId = [:]
+        self.nextReviewById = [:]
+        self.lastError = nil
+        self.phase = .idle
+        self.stale = false
     }
 }
 

@@ -334,13 +334,16 @@ final class AuthService {
     /// an offline launch.
     private func hydrateProfile() async {
         guard case let .signedIn(user) = state else { return }
-        guard let me = try? await users.loadMe().user else { return }
+        guard let response = try? await users.loadMe(), let me = response.user else { return }
         // The request runs off the launch-critical path. The account may have
         // signed out or switched while it was in flight, so only publish into
         // the same session that initiated the refresh.
         guard case let .signedIn(currentUser) = state,
               currentUser.id == user.id
         else { return }
+        // Bookmarks made on another device, or before a reinstall. Decoded and
+        // dropped until now, so 書籤 showed only what this device remembered.
+        LocalCache.shared.mergeServerFavorites(response.favorites ?? [])
         let merged = currentUser.merging(
             username: me.username,
             nickname: me.nickname,

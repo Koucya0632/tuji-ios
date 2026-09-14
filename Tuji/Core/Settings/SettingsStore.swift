@@ -302,6 +302,14 @@ final class SettingsStore {
         )
     }
 
+    /// Whether the settings in hand arrived for the account signed in now.
+    /// `hasLoaded` alone survives a sign-out until the next load starts, so a
+    /// reader that asks it is asking about whoever was here before.
+    var loadedForCurrentAccount: Bool {
+        guard let user = self.signedInUserProvider() else { return false }
+        return self.hasLoaded && self.loadedContext == LoadContext(userID: user.id)
+    }
+
     /// Whether the settings on screen may be changed. 設定 and 學習主題 leave
     /// their controls inert until they may: a control drawn from the defaults
     /// invites exactly the change `update(_:)` refuses.
@@ -376,6 +384,27 @@ final class SettingsStore {
             get: { self.current[keyPath: keyPath] },
             set: { newValue in self.update { $0[keyPath: keyPath] = newValue } }
         )
+    }
+
+    /// The account changed. What stays is what belongs to the device: the
+    /// interface language and the learning direction, both mirrored in
+    /// UserDefaults and read before any account exists. Everything else — the
+    /// themes, the goal, the accent — was the previous account's.
+    ///
+    /// A pending save is dropped rather than flushed: it carries the previous
+    /// account's object, and its token is gone.
+    func reset() {
+        self.saveTask?.cancel()
+        self.saveTask = nil
+        self.flights.reset()
+        self.loadedContext = nil
+        self.hasLoaded = false
+        self.lastError = nil
+        self.refreshLoadingState()
+        var seed = UserSettings.default
+        seed.learningDirection = self.current.learningDirection
+        seed.uiLang = self.current.uiLang
+        self.current = seed
     }
 
     /// Wait for the debounced save in flight, if any — so a test can tell

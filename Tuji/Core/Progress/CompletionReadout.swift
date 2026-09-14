@@ -136,8 +136,11 @@ extension SettingsStore: StudySelectionReading {
         self.current.studyCategories
     }
 
+    /// For *this* account — see `loadedForCurrentAccount`. The write gate
+    /// asked that question and this readout asked a looser one, so after an
+    /// account switch 首頁 could decide 「pick themes」 from someone else's list.
     var settingsLoaded: Bool {
-        self.hasLoaded
+        self.loadedForCurrentAccount
     }
 }
 
