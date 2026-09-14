@@ -174,51 +174,78 @@ struct SettingsView: View {
 
     // MARK: - List
 
+    /// A row's value, or nothing while the settings on screen are the defaults.
+    private func editableValue(_ value: String) -> String? {
+        self.store.isEditable ? value : nil
+    }
+
     private var list: some View {
         ScrollView {
             VStack(spacing: 0) {
                 TujiScreenTitle("設定")
                 TujiSection(title: "學習") {
+                    SettingsLoadStatus()
+                        .padding(.horizontal, Space.s4)
+                    // Values are hidden, not just dimmed, until they are the
+                    // account's: 「未選主題」 drawn from the defaults is a claim
+                    // that the themes are gone.
                     NavigationLink { LearningDirectionPickerView() } label: {
                         TujiRow(
                             "學習語言",
                             subtitle: "英文與日文的學習進度會分開保留",
-                            value: self.store.current.learningDirection.shortTitle
+                            value: self.editableValue(self.store.current.learningDirection.shortTitle),
+                            showsArrow: self.store.isEditable
                         )
                     }
                     .tujiRowStyle()
+                    .settingsInert(!self.store.isEditable)
                     Button { self.showGoalPicker = true } label: {
                         TujiRow(
                             "每日目標題數",
                             subtitle: "每天想新學的題數，複習多時會自動調降",
-                            value: tujiLocalized("\(self.store.current.dailyGoal) 題")
+                            value: self.editableValue(tujiLocalized("\(self.store.current.dailyGoal) 題")),
+                            showsArrow: self.store.isEditable
                         )
                     }
                     .tujiRowStyle()
+                    .settingsInert(!self.store.isEditable)
                     NavigationLink { StudyCategoriesPickerView() } label: {
                         TujiRow(
                             "學習主題",
                             subtitle: "學新字與主題進度只涵蓋你選的主題",
-                            value: self.studyCategoriesLabel
+                            value: self.editableValue(self.studyCategoriesLabel),
+                            showsArrow: self.store.isEditable
                         )
                     }
                     .tujiRowStyle()
+                    .settingsInert(!self.store.isEditable)
                     TujiRow(
                         leading: { TujiRowLabel(label: "中文釋義") },
-                        trailing: { TujiCheckbox(isOn: self.store.binding(\.showZh)) }
+                        trailing: {
+                            if self.store.isEditable {
+                                TujiCheckbox(isOn: self.store.binding(\.showZh))
+                            }
+                        }
                     )
+                    .settingsInert(!self.store.isEditable)
                 }
 
                 TujiSection(title: "顯示") {
                     Button { self.showLangPicker = true } label: {
-                        TujiRow("語言", value: self.langLabel)
+                        TujiRow("語言", value: self.editableValue(self.langLabel), showsArrow: self.store.isEditable)
                     }
                     .tujiRowStyle()
+                    .settingsInert(!self.store.isEditable)
                     if self.store.current.learningDirection == .zhEn {
                         Button { self.showAccentPicker = true } label: {
-                            TujiRow("發音口音", value: self.accentLabel)
+                            TujiRow(
+                                "發音口音",
+                                value: self.editableValue(self.accentLabel),
+                                showsArrow: self.store.isEditable
+                            )
                         }
                         .tujiRowStyle()
+                        .settingsInert(!self.store.isEditable)
                     }
                 }
 
@@ -452,5 +479,13 @@ private struct LearningDirectionPickerView: View {
         SettingsView(vm: SettingsVM(entitlement: PreviewEntitlement(isPro: true)))
             .environment(SettingsStore.shared)
             .environment(AuthService.shared)
+    }
+}
+
+private extension View {
+    /// Shown, dimmed and untappable: a control whose value is not the
+    /// account's yet — see `SettingsWrite`.
+    func settingsInert(_ inert: Bool) -> some View {
+        self.disabled(inert).opacity(inert ? 0.45 : 1)
     }
 }

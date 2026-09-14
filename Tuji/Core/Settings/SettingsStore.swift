@@ -75,7 +75,7 @@ final class SettingsStore {
     }
 
     /// Coalesce rapid changes (e.g. toggling back and forth) into one POST.
-    private let saveDebounce: Duration = .milliseconds(400)
+    private let saveDebounce: Duration
 
     private let learningDirectionKey = "tuji.learning.direction"
 
@@ -89,8 +89,10 @@ final class SettingsStore {
                 nil
             }
         },
-        directionRefresh: LearningDirectionRefreshing = LiveLearningDirectionRefresher()
+        directionRefresh: LearningDirectionRefreshing = LiveLearningDirectionRefresher(),
+        saveDebounce: Duration = .milliseconds(400)
     ) {
+        self.saveDebounce = saveDebounce
         self.repository = repository
         self.defaults = defaults
         self.signedInUserProvider = signedInUserProvider
@@ -289,18 +291,46 @@ final class SettingsStore {
 
     // MARK: - Immediate edits
 
+    /// What a change made right now would do — see `SettingsWrite`. Loaded means
+    /// loaded *for this account*: `hasLoaded` survives a sign-out until the next
+    /// load starts, and the previous account's settings are not this one's.
+    private var write: SettingsWrite {
+        let user = self.signedInUserProvider()
+        return SettingsWrite.decide(
+            signedIn: user != nil,
+            loaded: self.hasLoaded && self.loadedContext == LoadContext(userID: user?.id)
+        )
+    }
+
+    /// Whether the settings on screen may be changed. 設定 and 學習主題 leave
+    /// their controls inert until they may: a control drawn from the defaults
+    /// invites exactly the change `update(_:)` refuses.
+    var isEditable: Bool {
+        self.write != .refuse
+    }
+
     /// Mutate the live settings and persist automatically. The change is
     /// applied to `current` synchronously so the UI reflects it at once; the
     /// network write is debounced so quick successive edits collapse into a
     /// single POST.
+    ///
+    /// Refused, not queued, while a signed-in account's settings have not
+    /// arrived — see `SettingsWrite`.
     func update(_ mutate: (inout UserSettings) -> Void) {
+        let write = self.write
+        guard write != .refuse else {
+            self.log.error("settings change refused: the account's settings have not arrived")
+            return
+        }
         var next = self.current
         mutate(&next)
         guard next != self.current else { return }
         let uiLangChanged = next.uiLang != self.current.uiLang
         self.current = next
         self.defaults.set(next.uiLang, forKey: tujiUILangDefaultsKey)
-        self.scheduleSave()
+        if write == .applyAndSave {
+            self.scheduleSave()
+        }
         // Static UI chrome switches live via the environment locale, but the
         // category names (`nameZh`) and word Chinese (`chinese`) are localized
         // server-side and cached per uiLang. Refetch them so 圖鑑 themes and
@@ -324,11 +354,16 @@ final class SettingsStore {
     /// the first-run picker left the previous direction's mastery, progress and
     /// streak on screen. Fire-and-forget: the picker dismisses immediately and
     /// the stores publish as they land.
+    ///
+    /// Unlike `update(_:)`, never refused: the first-run picker must be able to
+    /// move on. But it saves only once the account's settings are here — the
+    /// save sends the whole object, and before then the rest of it is defaults.
+    /// A first-run choice made earlier is kept by `reconcileServerSettings`.
     func setLearningDirection(_ direction: LearningDirection, persist: Bool) {
         guard self.current.learningDirection != direction else { return }
         self.current.learningDirection = direction
         self.defaults.set(direction.rawValue, forKey: self.learningDirectionKey)
-        if persist {
+        if persist, self.write == .applyAndSave {
             self.scheduleSave()
         }
         self.trackDirectionRefresh(after: .userPicked)
@@ -341,6 +376,12 @@ final class SettingsStore {
             get: { self.current[keyPath: keyPath] },
             set: { newValue in self.update { $0[keyPath: keyPath] = newValue } }
         )
+    }
+
+    /// Wait for the debounced save in flight, if any — so a test can tell
+    /// "nothing was sent" from "not sent yet".
+    func awaitPendingSave() async {
+        await self.saveTask?.value
     }
 
     private func scheduleSave() {

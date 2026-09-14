@@ -24,6 +24,9 @@ struct StudyCategoriesPickerView: View {
         .navigationTitle("學習主題")
         .toolbar(.hidden, for: .navigationBar)
         .task { await self.categories.loadIfNeeded() }
+        // Reachable from 今日 as well as 設定, so it cannot count on 設定 having
+        // asked. A launch whose read failed asks nowhere else.
+        .task { await self.store.loadIfNeeded() }
     }
 
     private var list: some View {
@@ -33,7 +36,12 @@ struct StudyCategoriesPickerView: View {
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
 
-                if self.categories.categories.isEmpty {
+                if !self.store.isEditable {
+                    // The grid computes each new selection from the one on
+                    // screen, so a grid drawn from the defaults would turn
+                    // 「add one」 into 「replace them all」.
+                    SettingsLoadStatus()
+                } else if self.categories.categories.isEmpty {
                     HStack {
                         TujiPageLoading()
                         Text("載入主題中…")
