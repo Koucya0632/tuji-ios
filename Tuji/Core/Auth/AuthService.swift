@@ -301,6 +301,13 @@ final class AuthService {
         return session.accessToken
     }
 
+    /// Refresh regardless of what the device's clock says about expiry — the
+    /// server has refused the token. supabase-swift joins concurrent refreshes
+    /// into one request, so a burst of 401s spends the refresh token once.
+    func refreshSession() async throws -> String {
+        try await supabase.auth.refreshSession().accessToken
+    }
+
     // MARK: - Profile
 
     /// Optimistically reflect a profile edit in the in-memory session so the
