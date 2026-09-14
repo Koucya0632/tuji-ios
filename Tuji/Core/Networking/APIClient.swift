@@ -1,6 +1,6 @@
 // Typed HTTP client. Every protected request automatically picks up
 // the current access token via AuthService.validAccessToken(). On 401
-// retries once after the supabase-swift SDK refreshes the session.
+// retries once with a replacement for the token the server refused.
 //
 // Public endpoints usually skip auth. Optional-auth reads attach a token when
 // one is already available, while remaining usable by signed-out guests.
@@ -217,17 +217,17 @@ final class APIClient {
             throw APIError.transport(error)
         }
 
-        // One-shot 401 retry. supabase-swift refreshes the session as a
-        // side effect of validAccessToken(), so re-fetching the token
-        // post-refresh is enough.
+        // One-shot 401 retry, with a token replaced because the server refused
+        // it — not re-read in the hope that the device now agrees it expired.
+        // See `AccessTokenProviding.refreshedAccessToken(rejected:)`.
         if let http = resp as? HTTPURLResponse, http.statusCode == 401,
            ep.descriptor.policy.access.mayRetryUnauthorized
         {
             log.info("401 on \(ep.path, privacy: .public) — retrying once with refreshed token")
-            // Same request, fresh Authorization. validAccessToken() refreshes
-            // the session as a side effect, so re-reading it is enough.
             var retryReq = req
-            let token = try await auth.validAccessToken()
+            let rejected = req.value(forHTTPHeaderField: "Authorization")
+                .map { String($0.dropFirst("Bearer ".count)) }
+            let token = try await auth.refreshedAccessToken(rejected: rejected)
             retryReq.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (retryData, retryResp): (Data, URLResponse)
             do {

@@ -103,6 +103,10 @@ struct APIClientTests {
         _ = try await api.get(.usersMe, as: Ack.self)
 
         #expect(recorder.authorizations == ["Bearer stale", "Bearer fresh"])
+        // The replacement names the refused token rather than asking for "a
+        // valid token" again, which a device whose clock runs behind answers
+        // with the same one.
+        #expect(auth.refused == ["stale"])
     }
 
     @Test("a public endpoint's 401 is not retried")
@@ -399,10 +403,15 @@ private final class RequestRecorder: @unchecked Sendable {
     }
 }
 
+/// Behaves like the real session: asking again returns the same token. The fake
+/// this replaces handed out the next token on every ask, which is how the 401
+/// retry passed here while re-sending the refused token on devices whose clock
+/// ran behind.
 @MainActor
 private final class FakeAuth: AccessTokenProviding {
     private var tokens: [String]
     let isSignedIn: Bool
+    private(set) var refused: [String?] = []
 
     init(tokens: [String] = ["stale"], isSignedIn: Bool = true) {
         self.tokens = tokens
@@ -410,10 +419,15 @@ private final class FakeAuth: AccessTokenProviding {
     }
 
     func validAccessToken() async throws -> String {
-        guard !self.tokens.isEmpty else { throw APIError.unauthorized }
-        // Each ask yields the next token, so a test can assert the retry picked
-        // up a refreshed one.
-        return self.tokens.count == 1 ? self.tokens[0] : self.tokens.removeFirst()
+        guard let token = self.tokens.first else { throw APIError.unauthorized }
+        return token
+    }
+
+    func refreshedAccessToken(rejected: String?) async throws -> String {
+        self.refused.append(rejected)
+        if self.tokens.count > 1 { self.tokens.removeFirst() }
+        guard let token = self.tokens.first else { throw APIError.unauthorized }
+        return token
     }
 }
 
