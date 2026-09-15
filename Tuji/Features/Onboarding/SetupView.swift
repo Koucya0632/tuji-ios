@@ -19,19 +19,9 @@ struct SetupView: View {
     @Environment(CategoriesStore.self) private var categories
     @Environment(AuthService.self) private var auth
     @Environment(SettingsStore.self) private var settingsStore
-    /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
-    /// names that shape as the defect it was carved out to fix — *no init seam,
-    /// so no test could substitute it* — and it survived in eight more places.
-    private let users: UserRepository
-
-    init(
-        userId: UUID,
-        onDone: @escaping @MainActor () async -> Void,
-        users: UserRepository = LiveUserRepository.shared
-    ) {
+    init(userId: UUID, onDone: @escaping @MainActor () async -> Void) {
         self.userId = userId
         self.onDone = onDone
-        self.users = users
     }
 
     @State private var topicIds: Set<String> = []
@@ -41,7 +31,6 @@ struct SetupView: View {
     @State private var showReSignIn: Bool = false
     @State private var initializedDefaults = false
 
-    private static let defaultTopicIds: [String] = StudyCategoryDefaults.beginnerCategoryIDs
     private let goals = [5, 10, 20]
 
     var body: some View {
@@ -138,7 +127,11 @@ struct SetupView: View {
         }
         .background(.tujiPaper)
         .task {
-            await categories.loadIfNeeded()
+            // Settings too: a returning account on a new device starts from its
+            // own themes and goal, and those are on the account, not here.
+            async let categoriesLoad: Void = categories.loadIfNeeded()
+            async let settingsLoad: Void = settingsStore.loadIfNeeded()
+            _ = await (categoriesLoad, settingsLoad)
             seedDefaults()
         }
         .onChange(of: categories.categories) { _, _ in
@@ -203,22 +196,18 @@ struct SetupView: View {
         }
     }
 
-    /// Sets the initial selection once categories have loaded. Prefer the
-    /// hand-picked beginner trio; fall back to the first three categories
-    /// if any of those IDs don't exist in the dataset.
+    /// Sets the initial selection once categories have loaded — from the
+    /// account when it has been set up before, otherwise from the beginner
+    /// themes. See `SetupChoices`.
     private func seedDefaults() {
         guard !initializedDefaults, !categories.categories.isEmpty else { return }
-        let allIds = Set(categories.categories.map(\.id))
-        let preferred = Self.defaultTopicIds.filter { allIds.contains($0) }
-        let atlasDefaults = StudyCategoryDefaults.atlasCategoryIDs.filter {
-            allIds.contains($0)
-        }
-        if preferred.count == Self.defaultTopicIds.count {
-            topicIds = Set(preferred).union(atlasDefaults)
-        } else {
-            topicIds = Set(categories.categories.prefix(3).map(\.id))
-                .union(atlasDefaults)
-        }
+        let seed = SetupChoices.seed(
+            account: settingsStore.loadedForCurrentAccount ? settingsStore.current : nil,
+            catalogIds: Set(categories.categories.map(\.id)),
+            firstThemesFallback: categories.categories.map(\.id)
+        )
+        topicIds = seed.topicIds
+        dailyGoal = seed.dailyGoal
         initializedDefaults = true
     }
 
@@ -228,26 +217,10 @@ struct SetupView: View {
             error = nil
             defer { saving = false }
 
-            let settings = UserSettings(
-                dailyGoal: dailyGoal,
-                accent: "us",
-                showZh: true,
-                studyCategories: topicIds.sorted(),
-                studyDecks: [],
-                learningDirection: onboarding.learningDirection ?? settingsStore.current.learningDirection,
-                // The live value: device-detected on first run, or whatever
-                // the user already picked in-app. Never hardcode — the server
-                // clamps unknown codes, so what we send here sticks.
-                uiLang: settingsStore.current.uiLang,
-                fontSize: "md"
-            )
-
             do {
-                try await self.users.saveSettings(settings)
-                // Seed the shared store too — the study-queue params and
-                // Today's theme grid read SettingsStore.current, which would
-                // otherwise stay at defaults until the next server load.
-                settingsStore.adoptPersisted(settings)
+                // Onto the account's own settings, through the store — see
+                // `SettingsStore.completeSetup`.
+                try await settingsStore.completeSetup(topicIds: topicIds, dailyGoal: dailyGoal)
                 // The main shell needs the catalog for this newly persisted
                 // direction. Keep Setup mounted (and its existing saving
                 // state visible) until that attempt completes, rather than

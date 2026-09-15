@@ -13,6 +13,7 @@ struct SettingsStoreWriteTests {
     private let alice = SessionUser(id: UUID(), email: nil, username: "TJ00000001", nickname: nil, avatar: nil)
     private let bob = SessionUser(id: UUID(), email: nil, username: "TJ00000002", nickname: nil, avatar: nil)
     private let learningRefresh = SettingsWriteSpyRefresh()
+    private let onboarding = OnboardingRecordFake()
 
     /// What the server holds for the account: themes someone chose.
     private var accountSettings: UserSettings {
@@ -36,6 +37,7 @@ struct SettingsStoreWriteTests {
             signedInUserProvider: signedIn,
             directionRefresh: SettingsWriteInertRefresher(),
             learningRefresh: self.learningRefresh,
+            onboarding: self.onboarding,
             saveDebounce: .zero
         )
         return SettingsWriteHarness(store: store, defaults: defaults, suiteName: suiteName)
@@ -200,6 +202,44 @@ struct SettingsStoreWriteTests {
         }
 
         #expect(self.learningRefresh.causes == [.uiLanguageChanged])
+    }
+
+    // MARK: - 完成設定
+
+    /// A returning account on a new device runs Setup again. Saving used to
+    /// build a whole object from literals, replacing the account's accent and
+    /// 中文釋義 along with its themes.
+    @Test
+    func completingSetupKeepsWhatTheAccountAlreadyHad() async throws {
+        let repository = SettingsWriteRepositoryFake()
+        var account = self.accountSettings
+        account.accent = "uk"
+        account.showZh = false
+        repository.loadHandler = { account }
+        let alice = self.alice
+        let harness = try self.harness(repository) { alice }
+        defer { harness.tearDown() }
+
+        try await harness.store.completeSetup(topicIds: ["kitchen"], dailyGoal: 5)
+
+        let saved = try #require(repository.saved.last)
+        #expect(saved.accent == "uk")
+        #expect(saved.showZh == false)
+        #expect(saved.studyCategories == ["kitchen"])
+        #expect(saved.dailyGoal == 5)
+    }
+
+    @Test
+    func completingSetupRefusesWhileTheAccountsSettingsCannotBeRead() async throws {
+        let repository = SettingsWriteRepositoryFake() // every load fails
+        let alice = self.alice
+        let harness = try self.harness(repository) { alice }
+        defer { harness.tearDown() }
+
+        await #expect(throws: (any Error).self) {
+            try await harness.store.completeSetup(topicIds: ["kitchen"], dailyGoal: 5)
+        }
+        #expect(repository.saved.isEmpty)
     }
 
     @Test
