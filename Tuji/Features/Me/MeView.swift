@@ -96,8 +96,10 @@ struct MeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .refreshable {
+            // Mastery too: 我 · 進度 draws the 熟練度 bar, and this pull used to
+            // re-read progress alone.
+            await LiveLearningRefresher().refresh(after: .pulledMe(isGuest: self.auth.isGuest))
             if !self.auth.isGuest {
-                self.progress.invalidate()
                 await self.vm.load(progress: self.progress)
             }
         }

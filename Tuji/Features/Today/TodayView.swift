@@ -50,7 +50,7 @@ struct TodayView: View {
                 ),
                 dailyGoal: self.settings.current.dailyGoal,
                 stats: self.studyStats.stats,
-                progressLoaded: !self.progress.categoryProgress.isEmpty
+                progressLoaded: self.progress.phase == .loaded
             )
         )
     }
@@ -76,23 +76,9 @@ struct TodayView: View {
         .navigationTitle("主頁")
         .toolbar(.hidden, for: .navigationBar)
         .refreshable {
-            if !self.auth.isGuest {
-                self.progress.invalidate()
-                self.studyStats.invalidate()
-                self.mastery.invalidate()
-                // Concurrent, unlike the warm path: the user is watching a
-                // spinner here, and these are concrete `@MainActor` stores
-                // rather than the existentials `AccumulationWarmer` holds, so
-                // `async let` is available.
-                async let progressReload: Void = self.progress.reload()
-                async let statsReload: Void = self.studyStats.reload()
-                async let masteryReload: Void = self.mastery.reload()
-                await progressReload
-                await statsReload
-                await masteryReload
-            }
-            await self.words.reload()
-            await self.categories.reload()
+            // What a pull re-reads is `LearningRefresh`'s to say. This list was
+            // written here, and 我 and 清除學習進度 each wrote their own.
+            await LiveLearningRefresher().refresh(after: .pulledToday(isGuest: self.auth.isGuest))
         }
         .warmsAccumulation(.todayHero, isGuest: self.auth.isGuest) {
             guard !self.auth.isGuest else { return }

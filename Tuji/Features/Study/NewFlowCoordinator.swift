@@ -23,7 +23,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-final class NewFlowCoordinator {
+final class NewFlowCoordinator: StudySession {
     /// The session's words, in server order. NewDoneView renders this grid.
     let queue: [StudyQueueItem]
 
@@ -84,16 +84,32 @@ final class NewFlowCoordinator {
     /// See `AnswerBeat`, which 複習 holds too.
     private let beats: AnswerBeat
 
+    /// Where "now" comes from — 選字's first-attempt latency is the one number
+    /// here the scheduler learns from, and with `Date()` read inline a test
+    /// could only assert that it was not nil. Same seam 複習 has.
+    @ObservationIgnored private let clock: () -> Date
+
+    /// Only ever told to stop: 認識 plays the headword as each card arrives,
+    /// and leaving mid-word must not finish saying it over the next screen.
+    private let audio: SpeechPlaying
+
+    /// Held and primed rather than built at each resolution — see `StudyHaptics`.
+    @ObservationIgnored private let haptics = StudyHaptics()
+
     init(
         queue: [StudyQueueItem],
         writer: DurableAnswerWriting = DurableAnswerWriter(),
-        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        audio: SpeechPlaying = LiveSpeechPlaying(),
+        beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        now: @escaping () -> Date = { .now }
     ) {
         self.queue = queue
         self.beats = AnswerBeat(sleep: beat)
         self.ladder = StudyLadder(queue: queue)
         self.writes = StudySessionWrites(writer: writer)
-        self.stampIdentifyShown()
+        self.audio = audio
+        self.clock = now
+        self.taskSurfaced()
     }
 
     var current: NewStudyTask? {
@@ -110,6 +126,18 @@ final class NewFlowCoordinator {
 
     var clearedWords: Int {
         self.ladder.clearedWords
+    }
+
+    /// 報錯: the task on screen, which stage it is, and what the user chose on
+    /// it — the self-rating in 認識, the pick in 選字, nothing for 拼字.
+    var reportSubject: StudyReportSubject? {
+        guard let task = self.ladder.current else { return nil }
+        let answer: String? = switch task.kind {
+        case .recognize: self.recRating?.rawValue
+        case .identify: self.idPicked
+        case .spellTiles: nil
+        }
+        return StudyReportSubject(item: task.item, phase: task.kind.rawValue, selectedAnswer: answer)
     }
 
     /// Stable identity for the current presentation: same task shown again
@@ -171,22 +199,24 @@ final class NewFlowCoordinator {
         if let cleared = self.ladder.completeCurrent() {
             self.commitLearned(cleared)
         }
-        self.stampIdentifyShown()
+        self.taskSurfaced()
     }
 
     private func requeueCurrentTask() {
         self.ladder.requeueCurrent()
-        self.stampIdentifyShown()
+        self.taskSurfaced()
     }
 
-    /// Start the first-attempt clock the moment a 選字 task reaches the head.
-    /// Latency capture is this coordinator's business, not the ladder's, which
-    /// is why it sits beside the mutation rather than inside it.
-    private func stampIdentifyShown() {
+    /// A task reached the head. Warm the engine for the tap it asks for, and
+    /// start the first-attempt clock if it is a 選字. Latency capture is this
+    /// coordinator's business, not the ladder's, which is why it sits beside
+    /// the mutation rather than inside it.
+    private func taskSurfaced() {
+        self.haptics.prime()
         guard let task = ladder.current, task.kind == .identify,
               self.identifyShownAt[task.item.word.id] == nil
         else { return }
-        self.identifyShownAt[task.item.word.id] = Date()
+        self.identifyShownAt[task.item.word.id] = self.clock()
     }
 
     // MARK: - 認識 (recognize)
@@ -203,7 +233,7 @@ final class NewFlowCoordinator {
         guard !self.recLocked, let task = ladder.current, task.kind == .recognize else { return }
         self.recLocked = true
         self.recRating = rating
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        self.haptics.success()
         self.beats.schedule(after: .milliseconds(450)) {
             self.recRating = nil
             self.recLocked = false
@@ -240,7 +270,7 @@ final class NewFlowCoordinator {
            self.identifyResponseMs[task.item.word.id] == nil
         {
             self.identifyResponseMs[task.item.word.id] =
-                Int(Date().timeIntervalSince(shownAt) * 1000)
+                Int(self.clock().timeIntervalSince(shownAt) * 1000)
         }
         let ok = choice == task.item.word.word
         // Correct answers clear faster than wrong ones: momentum for the
@@ -250,7 +280,7 @@ final class NewFlowCoordinator {
                 self.idLocked = false
                 self.idPicked = nil
                 self.resolveIdentify(correct: true)
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.haptics.success()
             } else {
                 // Wrong: stay frozen on this item (keep idLocked / idPicked so
                 // the wrong + answer highlight stays) and surface the peek
@@ -258,7 +288,7 @@ final class NewFlowCoordinator {
                 // deferred to advanceFromPeek(), fired when the user taps
                 // 下一題 / dismisses the sheet.
                 self.resolveIdentify(correct: false)
-                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                self.haptics.warning()
             }
         }
     }
@@ -318,6 +348,7 @@ final class NewFlowCoordinator {
         guard !self.tiLocked, let task = current, task.kind == .spellTiles,
               !self.tilePicked.contains(idx)
         else { return }
+        self.haptics.soft()
         self.tilePicked.append(idx)
         let units = self.tileUnits(for: task.item)
         if self.tilePicked.count == units.count {
@@ -350,12 +381,12 @@ final class NewFlowCoordinator {
             if correct {
                 self.tiLocked = false
                 self.resolveTiles(correct: true)
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                self.haptics.success()
             } else {
                 // Stay frozen (tiles show red) and surface the peek; the
                 // requeue + rescramble happen on advanceFromPeek().
                 self.resolveTiles(correct: false)
-                UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                self.haptics.warning()
             }
         }
     }
@@ -430,10 +461,15 @@ final class NewFlowCoordinator {
         self.writes.submit(payload, wordId: item.word.id)
     }
 
-    /// Drop the answer resolutions still waiting on their beat. Called when the
-    /// user leaves the session: without it, an answer given moments before ✕
-    /// still resolved — and still posted to the SRS — after the screen was gone.
-    func cancelPendingBeats() {
+    /// The user left. Drop the answer resolutions still waiting on their beat —
+    /// without it, an answer given moments before ✕ still resolved, and still
+    /// posted to the SRS, after the screen was gone — and stop the headword
+    /// 認識 may still be saying.
+    ///
+    /// It used to be reached only from the ✕ prompt. A swipe-back skipped it;
+    /// 複習 had covered that case since #189. The shell now calls this for both.
+    func leave() {
         self.beats.cancelAll()
+        self.audio.stop()
     }
 }

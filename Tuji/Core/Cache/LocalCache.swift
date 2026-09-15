@@ -22,6 +22,9 @@ final class LocalCache {
     private(set) var recentSearches: [String]
     let sessionId: String
 
+    private let defaults: UserDefaults
+    /// Read at call time: the cache outlives every direction switch.
+    private let learningDirection: @MainActor () -> LearningDirection
     private let favsKey = "tuji.cache.favorites"
     private let legacyLearnedKey = "tuji.cache.learned"
     private let recentKey = "tuji.cache.recentSearches"
@@ -33,8 +36,18 @@ final class LocalCache {
         "tuji.cache.learned.\(language.rawValue)"
     }
 
-    private init() {
-        let d = UserDefaults.standard
+    /// Internal so a test can stand one up over its own defaults — the account
+    /// boundary below is the part worth asserting, and a `private init` over
+    /// `.standard` made it unreachable.
+    init(
+        defaults: UserDefaults = .standard,
+        learningDirection: @escaping @MainActor () -> LearningDirection = {
+            SettingsStore.shared.current.learningDirection
+        }
+    ) {
+        self.defaults = defaults
+        self.learningDirection = learningDirection
+        let d = defaults
         favoriteIds = Set((d.array(forKey: favsKey) as? [String]) ?? [])
         var learned: [TargetLanguage: Set<String>] = [:]
         for language in TargetLanguage.allCases {
@@ -102,54 +115,70 @@ final class LocalCache {
         if recentSearches.count > maxRecent {
             recentSearches = Array(recentSearches.prefix(maxRecent))
         }
-        UserDefaults.standard.set(recentSearches, forKey: recentKey)
+        self.defaults.set(recentSearches, forKey: recentKey)
     }
 
     func clearRecentSearches() {
         recentSearches = []
-        UserDefaults.standard.set(recentSearches, forKey: recentKey)
+        self.defaults.set(recentSearches, forKey: recentKey)
     }
 
-    // MARK: - Sync
+    // MARK: - Account boundary
 
-    /// Server-side data merges INTO local — union semantics so the user
-    /// never loses anything from the device.
-    func mergeFromServer(favorites: [String], learned: [String]) {
-        favoriteIds.formUnion(favorites)
-        var current = self.learnedIds
-        current.formUnion(learned)
-        self.learnedByLanguage[self.currentTargetLanguage] = current
+    /// The account's server bookmarks, merged in after sign-in's upload. Union:
+    /// a guest's bookmarks were uploaded a moment ago and are in `favorites`
+    /// anyway, and nothing here may drop one the user can see.
+    ///
+    /// Before this existed the server's list was decoded and ignored, so a
+    /// fresh install showed no bookmarks for an account that had them, and the
+    /// device list was the only one that ever looked right.
+    func mergeServerFavorites(_ favorites: [String]) {
+        let merged = self.favoriteIds.union(favorites)
+        guard merged != self.favoriteIds else { return }
+        self.favoriteIds = merged
+        persistFavorites()
+    }
+
+    /// Sign-out. The bookmarks and learned ids here were this account's, and
+    /// the next sign-in uploads whatever is here into *that* account — so
+    /// keeping them handed one person's 書籤 to the next. Recent searches stay:
+    /// they are this device's history, not an account's.
+    func reset() {
+        self.favoriteIds = []
+        self.learnedByLanguage = [:]
         persistFavorites()
         persistLearned()
     }
+
+    // MARK: - Sync
 
     /// Snapshot uploaded to POST /api/users/sync at sign-in time.
     var syncSnapshot: SyncPayload {
         SyncPayload(
             favorites: Array(favoriteIds).sorted(),
             learned: Array(self.learnedIds).sorted(),
-            learningDirection: SettingsStore.shared.current.learningDirection
+            learningDirection: self.learningDirection()
         )
     }
 
     // MARK: - Private
 
     private func persistFavorites() {
-        UserDefaults.standard.set(Array(favoriteIds), forKey: favsKey)
+        self.defaults.set(Array(favoriteIds), forKey: favsKey)
     }
 
     private func persistLearned() {
         for language in TargetLanguage.allCases {
-            UserDefaults.standard.set(
+            self.defaults.set(
                 Array(self.learnedByLanguage[language] ?? []),
                 forKey: Self.learnedKey(for: language)
             )
         }
-        UserDefaults.standard.removeObject(forKey: self.legacyLearnedKey)
+        self.defaults.removeObject(forKey: self.legacyLearnedKey)
     }
 
     private var currentTargetLanguage: TargetLanguage {
-        SettingsStore.shared.current.learningDirection.targetLanguage
+        self.learningDirection().targetLanguage
     }
 }
 

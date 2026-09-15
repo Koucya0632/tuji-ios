@@ -9,9 +9,22 @@
 import Foundation
 import Observation
 
+/// What `SettingsStore` needs from onboarding: where the device stands on the
+/// first-run questions. A seam because the store reached `OnboardingState.shared`
+/// from inside four methods, so its loading tests quietly wrote the real
+/// UserDefaults.
+@MainActor
+protocol OnboardingRecord: AnyObject {
+    /// The learning direction chosen on this device, or nil before the picker.
+    var learningDirection: LearningDirection? { get }
+    /// Mirror a direction the settings store decided. Only the store calls this.
+    func recordLearningDirection(_ direction: LearningDirection)
+    func setupDone(for userId: UUID) -> Bool
+}
+
 @MainActor
 @Observable
-final class OnboardingState {
+final class OnboardingState: OnboardingRecord {
     static let shared = OnboardingState()
 
     private let introKey = "tuji.onboarding.introDone"
@@ -35,17 +48,15 @@ final class OnboardingState {
         didSet { UserDefaults.standard.set(reviewHintTaught, forKey: reviewHintKey) }
     }
 
-    var learningDirection: LearningDirection? {
-        didSet {
-            if let learningDirection {
-                UserDefaults.standard.set(
-                    learningDirection.rawValue,
-                    forKey: self.learningDirectionKey
-                )
-            } else {
-                UserDefaults.standard.removeObject(forKey: self.learningDirectionKey)
-            }
-        }
+    /// Read here — launch routing asks it before any settings exist — but
+    /// written by `SettingsStore` alone, through `recordLearningDirection`. Both
+    /// pickers used to set this *and* call the store, two writers of one
+    /// UserDefaults key agreeing only because every call site remembered to.
+    private(set) var learningDirection: LearningDirection?
+
+    func recordLearningDirection(_ direction: LearningDirection) {
+        guard self.learningDirection != direction else { return }
+        self.learningDirection = direction
     }
 
     /// Per-user: ".setupDone.<uuid>". Reading via setupDone(for:) avoids

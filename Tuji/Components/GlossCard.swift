@@ -130,6 +130,13 @@ extension View {
 
 private struct GlossCardHost: ViewModifier {
     @State private var selection = GlossSelection()
+    /// The 詞塊 whose 看完整詳情 was opened as a sheet, and whether that sheet is
+    /// up. Two fields so the sheet keeps its content while it animates away.
+    @State private var detailSpan: GlossSpan?
+    @State private var showsDetail = false
+    @Environment(\.wordDetailPresentation) private var detailPresentation
+    @Environment(TabNavigator.self) private var navigator
+    @Environment(WordsStore.self) private var words
     /// Last measured card. Kept across selections on purpose: a stale size is a
     /// better first guess than none, and the card is invisible until it has one.
     @State private var cardSize: CGSize = .zero
@@ -157,6 +164,34 @@ private struct GlossCardHost: ViewModifier {
                 }
             }
             .animation(Motion.ease(Motion.d2, reduceMotion: self.reduceMotion), value: self.selection.span)
+            // Word detail as a sheet, for the screens that must not be pushed
+            // over — see `WordDetailPresentation`. It hosts its own card, so a
+            // 詞塊 inside it opens the same way.
+            .tujiSheet(isPresented: self.$showsDetail, title: "單字詳情", height: 520) {
+                if let span = self.detailSpan, let wordId = span.wordId {
+                    let word = self.words.find(id: wordId)
+                    WordDetailSheet(
+                        word: word ?? span,
+                        wordId: wordId,
+                        gloss: word?.chinese ?? span.gloss ?? ""
+                    )
+                }
+            }
+    }
+
+    /// 看完整詳情 on the card.
+    private func openDetail(for span: GlossSpan, wordId: String) {
+        switch self.detailPresentation {
+        case .push:
+            // The card is going away either way; push first so the dismissal
+            // animation runs behind the navigation rather than racing it.
+            self.navigator.push(.wordDetail(id: wordId))
+            self.selection.clear()
+        case .sheet:
+            self.selection.clear()
+            self.detailSpan = span
+            self.showsDetail = true
+        }
     }
 
     private func card(for span: GlossSpan) -> some View {
@@ -180,7 +215,8 @@ private struct GlossCardHost: ViewModifier {
                     span: span,
                     language: self.selection.language,
                     callout: placement,
-                    onDismiss: { self.selection.clear() }
+                    onDismiss: { self.selection.clear() },
+                    onOpenDetail: { self.openDetail(for: span, wordId: $0) }
                 )
                 .frame(width: GlossCalloutPlacement.cardWidth(in: proxy.size))
                 .onGeometryChange(for: CGSize.self) { $0.size } action: { self.cardSize = $0 }
@@ -206,9 +242,10 @@ struct GlossCard: View {
     /// nil ⇒ no caret and no aim; the host is parking the card at the bottom.
     let callout: GlossCalloutPlacement.Result?
     let onDismiss: () -> Void
+    /// 看完整詳情. The host decides how the detail opens.
+    let onOpenDetail: (_ wordId: String) -> Void
 
     @Environment(SettingsStore.self) private var settings
-    @Environment(TabNavigator.self) private var navigator
 
     /// Reserved on the bottom when there is no caret, so the measured height
     /// never depends on which way the caret points.
@@ -330,11 +367,7 @@ struct GlossCard: View {
                 .fill(.tujiRule)
                 .frame(height: Border.bw1)
             Button {
-                // The card is going away either way; push first so the
-                // dismissal animation runs behind the navigation rather
-                // than racing it.
-                self.navigator.push(.wordDetail(id: wordId))
-                self.onDismiss()
+                self.onOpenDetail(wordId)
             } label: {
                 HStack(spacing: Space.s2) {
                     Text("看完整詳情")
@@ -366,7 +399,8 @@ struct GlossCard: View {
             ),
             language: .en,
             callout: GlossCalloutPlacement.Result(top: 0, caretX: 80, pointsDown: true),
-            onDismiss: {}
+            onDismiss: {},
+            onOpenDetail: { _ in }
         )
         .padding(.horizontal, GlossCalloutPlacement.sideMargin)
         GlossCard(
@@ -380,7 +414,8 @@ struct GlossCard: View {
             ),
             language: .en,
             callout: nil,
-            onDismiss: {}
+            onDismiss: {},
+            onOpenDetail: { _ in }
         )
         .padding(.horizontal, GlossCalloutPlacement.sideMargin)
     }

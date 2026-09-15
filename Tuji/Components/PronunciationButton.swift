@@ -50,7 +50,7 @@ struct PronunciationButton: View {
         else { return false }
         switch playback.phase {
         case .loading, .playing: return true
-        case .finished, .failed: return false
+        case .finished, .failed, .stopped: return false
         }
     }
 

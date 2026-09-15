@@ -37,9 +37,9 @@ struct WordDetailVMTests {
     func publicIdRoutesToCatalogue() async {
         let catalog = FakeCatalog(word: self.full("w1", word: "full cup"))
         let atlas = FakeAtlasDetail()
-        let vm = WordDetailVM(catalog: catalog, atlas: atlas, words: FakeLookup())
+        let vm = WordDetailVM(catalog: catalog, atlas: atlas, words: FakeLookup(), language: FakeLanguageContext())
 
-        await vm.load(id: "w1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "w1")
 
         #expect(catalog.requested == ["w1"])
         #expect(atlas.requested.isEmpty)
@@ -49,9 +49,9 @@ struct WordDetailVMTests {
     func atlasIdRoutesToAtlas() async {
         let catalog = FakeCatalog(word: self.full("x", word: "x"))
         let atlas = FakeAtlasDetail(word: self.full("uuid-1", word: "my photo"))
-        let vm = WordDetailVM(catalog: catalog, atlas: atlas, words: FakeLookup())
+        let vm = WordDetailVM(catalog: catalog, atlas: atlas, words: FakeLookup(), language: FakeLanguageContext())
 
-        await vm.load(id: "atlas:uuid-1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "atlas:uuid-1")
 
         #expect(atlas.requested == ["uuid-1"])
         #expect(catalog.requested.isEmpty)
@@ -63,9 +63,14 @@ struct WordDetailVMTests {
         // The VM returns the word worth logging; private content returns nil so
         // the View has nothing to track.
         let atlas = FakeAtlasDetail(word: self.full("uuid-1", word: "my photo"))
-        let vm = WordDetailVM(catalog: FakeCatalog(), atlas: atlas, words: FakeLookup())
+        let vm = WordDetailVM(
+            catalog: FakeCatalog(),
+            atlas: atlas,
+            words: FakeLookup(),
+            language: FakeLanguageContext()
+        )
 
-        let logged = await vm.load(id: "atlas:uuid-1", lang: "zh-Hant", learning: "en")
+        let logged = await vm.load(id: "atlas:uuid-1")
 
         #expect(logged == nil)
     }
@@ -75,9 +80,9 @@ struct WordDetailVMTests {
         let embedded = self.full("atlas:uuid-1", word: "already enriched")
         let lookup = FakeLookup(word: self.lite("atlas:uuid-1", category: "custom", detail: embedded))
         let atlas = FakeAtlasDetail()
-        let vm = WordDetailVM(catalog: FakeCatalog(), atlas: atlas, words: lookup)
+        let vm = WordDetailVM(catalog: FakeCatalog(), atlas: atlas, words: lookup, language: FakeLanguageContext())
 
-        await vm.load(id: "atlas:uuid-1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "atlas:uuid-1")
 
         #expect(vm.word?.word == "already enriched")
         #expect(atlas.requested.isEmpty, "the embedded payload is the whole point")
@@ -86,9 +91,14 @@ struct WordDetailVMTests {
     @Test("the grid's lite payload renders before the full one arrives")
     func provisionalRendersFirst() async {
         let lookup = FakeLookup(word: self.lite("w1"))
-        let vm = WordDetailVM(catalog: FakeCatalog(), atlas: FakeAtlasDetail(), words: lookup)
+        let vm = WordDetailVM(
+            catalog: FakeCatalog(),
+            atlas: FakeAtlasDetail(),
+            words: lookup,
+            language: FakeLanguageContext()
+        )
 
-        await vm.load(id: "w1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "w1")
 
         // FakeCatalog with no word throws, so what remains on screen is the
         // provisional card — which is exactly the rule below.
@@ -100,9 +110,14 @@ struct WordDetailVMTests {
         let lookup = FakeLookup(word: self.lite("w1"))
         let catalog = FakeCatalog()
         catalog.result = .failure(WordFakeError.boom)
-        let vm = WordDetailVM(catalog: catalog, atlas: FakeAtlasDetail(), words: lookup)
+        let vm = WordDetailVM(
+            catalog: catalog,
+            atlas: FakeAtlasDetail(),
+            words: lookup,
+            language: FakeLanguageContext()
+        )
 
-        await vm.load(id: "w1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "w1")
 
         #expect(vm.word != nil, "the provisional card must survive")
         #expect(vm.error == nil, "an error state would replace readable content")
@@ -112,9 +127,14 @@ struct WordDetailVMTests {
     func failureWithNoContentSurfacesError() async {
         let catalog = FakeCatalog()
         catalog.result = .failure(WordFakeError.boom)
-        let vm = WordDetailVM(catalog: catalog, atlas: FakeAtlasDetail(), words: FakeLookup())
+        let vm = WordDetailVM(
+            catalog: catalog,
+            atlas: FakeAtlasDetail(),
+            words: FakeLookup(),
+            language: FakeLanguageContext()
+        )
 
-        await vm.load(id: "w1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "w1")
 
         #expect(vm.word == nil)
         #expect(vm.error != nil)
@@ -123,10 +143,15 @@ struct WordDetailVMTests {
     @Test("a second load is a no-op once the word is in hand")
     func loadIsIdempotent() async {
         let catalog = FakeCatalog(word: self.full("w1", word: "full cup"))
-        let vm = WordDetailVM(catalog: catalog, atlas: FakeAtlasDetail(), words: FakeLookup())
+        let vm = WordDetailVM(
+            catalog: catalog,
+            atlas: FakeAtlasDetail(),
+            words: FakeLookup(),
+            language: FakeLanguageContext()
+        )
 
-        await vm.load(id: "w1", lang: "zh-Hant", learning: "en")
-        await vm.load(id: "w1", lang: "zh-Hant", learning: "en")
+        await vm.load(id: "w1")
+        await vm.load(id: "w1")
 
         #expect(catalog.requested == ["w1"])
     }
@@ -134,12 +159,17 @@ struct WordDetailVMTests {
     @Test("the language pair reaches the catalogue call")
     func languageIsForwarded() async {
         let catalog = FakeCatalog(word: self.full("w1", word: "full cup"))
-        let vm = WordDetailVM(catalog: catalog, atlas: FakeAtlasDetail(), words: FakeLookup())
+        let vm = WordDetailVM(
+            catalog: catalog,
+            atlas: FakeAtlasDetail(),
+            words: FakeLookup(),
+            language: FakeLanguageContext(uiLang: "ja", learningDirection: .zhEn)
+        )
 
-        await vm.load(id: "w1", lang: "ja", learning: "en")
+        await vm.load(id: "w1")
 
-        #expect(catalog.lastLang == "ja")
-        #expect(catalog.lastLearning == "en")
+        #expect(catalog.lastLang == UILanguage.ja.contentLanguageCode)
+        #expect(catalog.lastLearning == "zh-en")
     }
 }
 

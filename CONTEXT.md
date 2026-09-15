@@ -582,7 +582,37 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   streak turns over). `MasteryStore` uses `loadIfNeeded` — no TTL — because a score only
   changes when *this* user answers something, and every path that does already invalidates it
   through `SessionRefresh`. The cost: another device's session shows up only after a relaunch
-  or a pull-to-refresh, and 我 has no pull.
+  or a pull-to-refresh. Mastery marks itself `stale` rather than carrying a TTL, and a failed
+  load is retried rather than kept as the answer.
+- **讀到了沒 (`LoadPhase`)** — `idle` / `loading` / `loaded` / `failed`, one value per learning
+  store in place of four private answers: two stores counted a failure as loaded and never
+  retried, and two had no flag at all, so the screen guessed from `isEmpty` / `nil` — and a
+  failed mastery read on 我 said 「還沒有學習紀錄」. `reloading` / `afterFailure` keep a loaded
+  copy on screen through a re-read that fails. `LoadFlights` stays: it is how one request
+  runs, this is what the screen may conclude.
+- **是誰的 (`AccountScopedStore` / `AccountScopedStores.all`)** — what sign-out forgets. The
+  roster promised that a store conforming without enrolling fails a test; six account-scoped
+  stores simply never conformed, so nothing failed. It is 11 now (settings, mastery,
+  progress, stats, study queue and `LocalCache` joined). `SettingsStore.loadedForCurrentAccount`
+  is the one readiness question for settings — the write gate asked it and 完成度 asked a
+  looser one. **`LocalCache` is on the list because sign-in uploads it**: whatever it still
+  held from the previous account was pushed into the next one. After sign-in the server's
+  bookmarks merge back into it (`mergeServerFavorites`) — they used to be decoded and dropped.
+- **重讀的原因 (`LearningRefreshCause`)** — `pulledToday` / `pulledMe` / `progressCleared` /
+  `uiLanguageChanged`, each mapped to a set of `RefreshTarget`s in one table
+  (`LiveLearningRefresher` invalidates, then re-reads concurrently). The shape of
+  `AccumulationSurface.needs`. Four call sites listed their own stores and two had drifted:
+  清除學習進度 left mastery — which has no TTL — showing the cleared scores until relaunch,
+  and 我's pull did not re-read the 熟練度 bar it draws. The fifth refresh module, for the
+  causes the other four don't own; the account changing is `AccountScopedStores`'.
+- **學習方向只有一個寫入者 (`OnboardingRecord`)** — `SettingsStore` records the direction (the
+  UserDefaults key and the onboarding mirror); `OnboardingState.learningDirection` is
+  `private(set)` and persists nothing. Two owners of one key meant two reactions to one
+  switch. **Setup writes through the gate too**: `SettingsStore.completeSetup(topicIds:dailyGoal:)`
+  loads first, refuses on a failed load, and saves from the account's current settings —
+  Setup used to POST a whole default `UserSettings` (入門三主題, accent `us`) straight to the
+  repository, so an existing account re-running Setup on a new phone lost its themes and
+  accent. `SetupChoices.seed` pre-fills the picker from the account.
 - **Cache identity ≠ fetch authorisation** (`URL.signedStorageObjectID`). 自製圖鑑 lives in
   a private Supabase bucket, so every API response signs a fresh URL: same object, new
   `token=`. Nuke keys both cache tiers on the URL, so the 500 MB DataCache never scored a
@@ -634,6 +664,23 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     two counters; the *timing* of the count is deliberately unchanged.
   - **沒有句子就不是聽句題** — `present` demotes to `.pickWord` itself rather than
     trusting the caller's eligibility arithmetic to have ruled the combination out.
+  - **The cards read this, not the coordinator.** The coordinator forwarded 23 of its
+    properties (six read by nothing) while the cards re-derived the rules from them. So
+    the rules are on the value: `sentenceLegible`, `canRevealSentence`, `canOpenDetail`,
+    `canOptOutOfListening`, `acceptsAnswer`, `pictureState(for:)`, the `voice` the sentence
+    was decided with (`sentenceClip`), and `variant`. `ReviewListenCard` / `ReviewImageChoices`
+    / `ReviewHeroCard` take a `ReviewQuestion` and intent closures and need no session to
+    exist. One rule had already drifted in its view copy: the eye stayed drawn after
+    answering, over a sentence that was legible anyway, and pressing it did nothing.
+    `.task` ids are `presentationId`, not `"id#index"`.
+- **一題聽句的播放 (`SentencePlayback`)** — the sentence's audio for one question: request
+  tokens, first play vs replay, the start timeout, stop. `ReviewQuestion` owns one and only
+  hands it outcome events. **Superseded is not failed**: `SpeechPlaying` used to report a
+  play replaced by a newer request as `.failed`, so pressing replay during the first play
+  recorded `audioFailed` and started the clock from the replay. `SpeechPlayback` now has
+  `.superseded` and `.stopped`; `onStart` is reported once, when sound comes out, which is
+  what makes ADR-0014's 3-second start timeout (written, never implemented) implementable.
+  A replay after answering is not counted.
 - **`ReviewChoice`** — the option the user landed on: `id` (the catalogue word id, when
   the option had one) + `label`. **A label is not an identity.** 選字's four options are
   labels and `DistractorPool` guarantees they are distinct; 聽句's two pictures carry
@@ -685,6 +732,22 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   celebrated stayed stale and the study queue was never dropped. The three home
   stores and the queue invalidation are read inside the modifier; assembling them
   was the duplication that survived deduping the sequence itself.
+- **學習 session 的外殼 (`StudySession` / `StudySessionShell`)** — what 複習 and 學新字 share as
+  sessions: leaving, 報錯, study focus + analytics, and the finish screen
+  (`.studySessionShell(_:)`, `StudySessionNavBar`, `StudySessionFinish`). The seam is three
+  members: `writes`, `reportSubject`, `leave()`. Each flow carried a copy of all of it and the
+  copies had drifted where it mattered — 複習 cancelled its beats and audio when its screen
+  went away (#189), 學新字 only from the ✕ prompt, so a swipe-back still resolved the answer in
+  flight and posted its write. **Leaving keys on `onDisappear` and that is only safe because
+  nothing in a session pushes over it**: a sheet and a full-screen cover do not fire it
+  (probed on iOS 26). `StudyHaptics` is the primed generator pair both coordinators hold;
+  `NewFlowCoordinator` takes `now:` so 選字's first-attempt latency is asserted exactly.
+- **看完整詳情 (`WordDetailPresentation`)** — `.push` everywhere, `.sheet` inside a study session,
+  read by the 詞塊 card's host. A session is shown through the launcher's
+  `navigationDestination(item:)`, and **appending to the tab's path while an item destination
+  is on screen pops it** — the launcher sees its item go nil and dismisses. So 看完整詳情 on a
+  詞塊 in 認識, in 複習's reveal sheet or in the peek sheet ended the session. The sheet is what
+  複習's hint-face 看完整詳情 always did.
 - **`TileBoard` owns how a tile board is made.** `spellSubject` / `of(_:)` /
   `units(for:attempt:)` used to hang off `NewFlowCoordinator` as a `nonisolated
   static` extension purely to borrow its name, and `TilesView` had to `typealias
@@ -1015,6 +1078,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     page", which is also what makes the fetch bypass its caches), a different signal from
     the UID compare; the union is stated once.
   - **LanguageContext** — `{ uiLang, learningDirection }`, conformed by `SettingsStore`.
+    `contentLanguageCode` is derived on the seam, and `WordDetailVM` takes one rather than
+    each of its three hosts assembling lang/learning. **`String.atlasItemId`** is the one
+    reading of the `atlas:` prefix — five screens re-spelled it.
     Injected into `LiveStudyRepository` (queue lang), `LiveAtlasRepository`
     (upload/recognize/confirm lang + learning) and `LiveCatalogRepository` (search only —
     the other calls carry a `CatalogContext` the caller already assembled). Read live at

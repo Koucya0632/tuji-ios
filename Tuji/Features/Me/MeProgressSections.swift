@@ -136,14 +136,15 @@ struct MeProgressSections: View {
     /// 「還沒有學習紀錄」 over it states something about the account that may be
     /// false — on a slow network, for exactly the long-standing user this
     /// section exists to reassure. So an unanswered store draws the bar's track
-    /// and says nothing. A guest is different again: their store is never
-    /// warmed (`AccumulationSurface.needs` drops it), so waiting on `loaded`
-    /// would leave them on that track forever.
+    /// and says nothing — and a *failed* store is unanswered too, not empty.
+    /// A guest is different again: their store is never warmed
+    /// (`AccumulationSurface.needs` drops it), so waiting on `.loaded` would
+    /// leave them on that track forever.
     @ViewBuilder
     private var masteryBody: some View {
         if self.auth.isGuest {
             self.masteryNotice("登入後顯示熟練度")
-        } else if !self.mastery.loaded {
+        } else if self.mastery.phase != .loaded {
             MasteryStackedBar(distribution: .empty)
         } else {
             let spread = self.distribution

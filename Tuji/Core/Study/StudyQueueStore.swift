@@ -95,6 +95,13 @@ final class StudyQueueStore {
         self.entries.removeAll()
     }
 
+    /// The account changed. The cache signature carries direction and themes
+    /// but not the account, so a prefetched queue would otherwise be served to
+    /// whoever signs in next within the TTL.
+    func reset() {
+        self.entries.removeAll()
+    }
+
     // MARK: - Internals
 
     private func fetch(mode: StudyMode, params: Params) async throws -> [StudyQueueItem] {

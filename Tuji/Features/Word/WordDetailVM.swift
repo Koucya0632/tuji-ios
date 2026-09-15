@@ -43,10 +43,6 @@ extension AtlasStore: AtlasItemDetailReading {}
 @MainActor
 @Observable
 final class WordDetailVM {
-    /// Ids of 自製圖鑑 words carry this prefix; everything else is a catalogue
-    /// word. The prefix is the routing decision, so it lives with the routing.
-    static let atlasPrefix = "atlas:"
-
     private(set) var word: Word?
     private(set) var loading = false
     private(set) var error: Error?
@@ -54,15 +50,20 @@ final class WordDetailVM {
     private let catalog: WordReading
     private let atlas: AtlasItemDetailReading
     private let words: WordLookup
+    /// Which language pair to read in. Both callers assembled it from
+    /// `settings.current` and passed it on every call.
+    private let language: LanguageContext
 
     init(
         catalog: WordReading = LiveCatalogRepository.shared,
         atlas: AtlasItemDetailReading = AtlasStore.shared,
-        words: WordLookup = WordsStore.shared
+        words: WordLookup = WordsStore.shared,
+        language: LanguageContext = SettingsStore.shared
     ) {
         self.catalog = catalog
         self.atlas = atlas
         self.words = words
+        self.language = language
     }
 
     /// Loads `id`, rendering whatever can be shown immediately first.
@@ -71,13 +72,13 @@ final class WordDetailVM {
     /// View (view models don't reach `AnalyticsService`), and 自製圖鑑 is
     /// private content that is deliberately never counted.
     @discardableResult
-    func load(id: String, lang: String, learning: String) async -> Word? {
+    func load(id: String) async -> Word? {
         guard self.word == nil, !self.loading else { return nil }
         self.loading = true
         defer { self.loading = false }
 
-        if id.hasPrefix(Self.atlasPrefix) {
-            await self.loadAtlasItem(id: id)
+        if let itemId = id.atlasItemId {
+            await self.loadAtlasItem(id: id, itemId: itemId)
             return nil
         }
         // Public words: the grid already knows the word / image / 中文, so
@@ -88,7 +89,11 @@ final class WordDetailVM {
             self.word = Self.provisionalWord(from: lite, tags: [])
         }
         do {
-            self.word = try await self.catalog.word(id: id, lang: lang, learning: learning)
+            self.word = try await self.catalog.word(
+                id: id,
+                lang: self.language.contentLanguageCode,
+                learning: self.language.learningDirection.rawValue
+            )
         } catch {
             // A failure that arrives after the provisional card is on screen is
             // not worth blanking the page for.
@@ -97,7 +102,7 @@ final class WordDetailVM {
         return self.word
     }
 
-    private func loadAtlasItem(id: String) async {
+    private func loadAtlasItem(id: String, itemId: String) async {
         // /api/users/custom-words now embeds the full detail (definition /
         // synonyms / forms / etymology) enriched at capture time, so the common
         // path renders with zero extra round-trips.
@@ -112,9 +117,7 @@ final class WordDetailVM {
             self.word = Self.provisionalWord(from: lite, tags: ["custom"])
         }
         do {
-            self.word = try await self.atlas.detail(
-                itemId: String(id.dropFirst(Self.atlasPrefix.count))
-            )
+            self.word = try await self.atlas.detail(itemId: itemId)
         } catch {
             if self.word == nil { self.error = error }
         }

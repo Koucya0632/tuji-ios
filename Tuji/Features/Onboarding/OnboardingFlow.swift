@@ -9,7 +9,6 @@
 import SwiftUI
 
 struct LearningDirectionOnboardingView: View {
-    @Environment(OnboardingState.self) private var onboarding
     @Environment(SettingsStore.self) private var settings
     @Environment(AuthService.self) private var auth
 
@@ -49,7 +48,8 @@ struct LearningDirectionOnboardingView: View {
 
     private func option(_ direction: LearningDirection, subtitle: LocalizedStringKey) -> some View {
         Button {
-            self.onboarding.learningDirection = direction
+            // The store writes the direction down and mirrors it into
+            // onboarding — this view used to set both itself.
             // A guest has nowhere to persist to; 設定's picker asks the same
             // question the same way (`ViewerIdentity`), because two hand-written
             // copies of it is how the question got four answers in the first place.

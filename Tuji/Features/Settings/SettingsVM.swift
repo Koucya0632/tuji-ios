@@ -33,16 +33,19 @@ final class SettingsVM {
     private let users: UserRepository
     private let progressRepository: ProgressRepository
     private let entitlement: any EffectiveEntitlementReading
+    private let refresh: LearningRefreshing
     private let log = Logger(subsystem: "app.tuji.ios", category: "settings")
 
     init(
         users: UserRepository = LiveUserRepository.shared,
         progressRepository: ProgressRepository = LiveProgressRepository.shared,
-        entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
+        entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared,
+        refresh: LearningRefreshing = LiveLearningRefresher()
     ) {
         self.users = users
         self.progressRepository = progressRepository
         self.entitlement = entitlement
+        self.refresh = refresh
     }
 
     /// Whether this account has Pro by any route — server entitlement first,
@@ -63,20 +66,15 @@ final class SettingsVM {
     /// The stores are parameters because a screen holds them in its environment
     /// and this object does not; they are `RefreshableStore` so a test can pass
     /// spies.
-    func clearProgress(learned: LearnedSetClearing, stores: [RefreshableStore]) async {
+    func clearProgress(learned: LearnedSetClearing) async {
         self.clearing = true
         self.clearError = nil
         defer { self.clearing = false }
         do {
             try await self.progressRepository.clearProgress()
             learned.clearLearned()
-            for store in stores {
-                store.invalidate()
-            }
-            let reloads = stores.map { store in Task { await store.reload() } }
-            for reload in reloads {
-                await reload.value
-            }
+            // The View used to pass the stores, and left mastery out.
+            await self.refresh.refresh(after: .progressCleared)
         } catch {
             self.clearError = error
             self.log.error("clear failed: \(error.localizedDescription, privacy: .public)")

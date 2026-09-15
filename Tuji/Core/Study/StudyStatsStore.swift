@@ -25,8 +25,15 @@ final class StudyStatsStore {
     static let shared = StudyStatsStore()
 
     private(set) var stats: StudyStats?
-    private(set) var loading: Bool = false
     private(set) var lastError: Error?
+
+    /// Whether what is on screen is the account's answer — see `LoadPhase`.
+    /// Screens used to guess this from the data (`isEmpty`, `== nil`).
+    private(set) var phase: LoadPhase = .idle
+
+    var loading: Bool {
+        self.phase == .loading
+    }
 
     private var lastFetch: Date?
     private let repository: StudyRepository
@@ -45,20 +52,30 @@ final class StudyStatsStore {
     }
 
     func reload() async {
-        loading = true
+        let started = self.phase
+        self.phase = started.reloading
         lastError = nil
-        defer { loading = false }
         do {
             let resp = try await self.repository.loadStats()
             stats = resp.stats
             lastFetch = Date()
+            self.phase = .loaded
         } catch {
             lastError = error
+            self.phase = started.afterFailure
             log.error("study stats load failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     func invalidate() {
         lastFetch = nil
+    }
+
+    /// The account changed: none of this is the next account's.
+    func reset() {
+        self.stats = nil
+        self.lastFetch = nil
+        self.lastError = nil
+        self.phase = .idle
     }
 }

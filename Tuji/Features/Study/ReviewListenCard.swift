@@ -27,20 +27,16 @@
 import SwiftUI
 
 struct ReviewListenCard: View {
-    let coord: ReviewFlowCoordinator
+    /// Everything this card draws from. The rules — legible, whether the eye
+    /// does anything — are the question's; this only maps them to pixels.
+    let question: ReviewQuestion
     let example: StudyExample
     let height: CGFloat
+    let onRevealSentence: () -> Void
+    /// `true` for 慢讀.
+    let onReplay: (_ slow: Bool) -> Void
 
-    @Environment(SettingsStore.self) private var settings
-    @Environment(\.targetLanguage) private var session
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var voice: SpeechService.Voice {
-        .preferred(
-            for: self.settings.current,
-            language: self.coord.current?.word.taggedLanguage
-        )
-    }
 
     var body: some View {
         Color.tujiPaper2
@@ -80,19 +76,15 @@ struct ReviewListenCard: View {
             .accessibilityActions {
                 Button("再聽一次") { self.replay() }
                 Button("慢速播放") { self.replay(slow: true) }
-                if !self.isLegible {
-                    Button("顯示例句") { self.coord.revealSentence() }
+                if self.question.canRevealSentence {
+                    Button("顯示例句") { self.onRevealSentence() }
                 }
             }
     }
 
-    /// The sentence is readable once the answer is in, or once the eye bought
-    /// it. Answering removes the reason to hide it: from that moment the
-    /// sentence is study material, exactly like the answer on the reveal sheet,
-    /// and it costs nothing — `hinted` is only ever set by `revealSentence()`,
-    /// which refuses outside `.answer`.
+    /// See `ReviewQuestion.sentenceLegible`.
     private var isLegible: Bool {
-        self.coord.sentenceRevealed || self.coord.phase == .review
+        self.question.sentenceLegible
     }
 
     /// The sentence, with the word being asked about under a 螢光筆.
@@ -105,8 +97,7 @@ struct ReviewListenCard: View {
     private var sentence: AttributedString {
         let raw = self.example.sentence
         guard self.isLegible,
-              let word = self.coord.current?.word.word,
-              let match = SentenceHighlight.range(of: word, in: raw)
+              let match = SentenceHighlight.range(of: self.question.item.word.word, in: raw)
         else { return AttributedString(raw) }
 
         var marked = AttributedString(String(raw[match]))
@@ -129,7 +120,7 @@ struct ReviewListenCard: View {
         } label: {
             ZStack {
                 Rectangle().fill(
-                    self.coord.isPlayingSentence ? Color.tujiCurrent : Color.tujiPaper
+                    self.question.isPlayingSentence ? Color.tujiCurrent : Color.tujiPaper
                 )
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.tujiIcon(18, weight: .semibold))
@@ -168,12 +159,13 @@ struct ReviewListenCard: View {
 
     /// Drawn from the first frame, unlike 選字's hint which is deliberately
     /// invisible for 8 seconds. That delay compensates for an affordance with
-    /// nothing on screen to announce it; this one is on screen.
+    /// nothing on screen to announce it; this one is on screen — for exactly as
+    /// long as pressing it would do something.
     @ViewBuilder
     private var eyeButton: some View {
-        if !self.coord.sentenceRevealed {
+        if self.question.canRevealSentence {
             Button {
-                self.coord.revealSentence()
+                self.onRevealSentence()
             } label: {
                 ZStack {
                     Rectangle().fill(.tujiPaper)
@@ -189,8 +181,7 @@ struct ReviewListenCard: View {
     }
 
     private func replay(slow: Bool = false) {
-        let voice = self.voice
-        Task { await self.coord.replaySentence(voice: voice, slow: slow) }
+        self.onReplay(slow)
     }
 }
 
@@ -200,14 +191,15 @@ struct ReviewListenCard: View {
 /// never auto-rates (ADR-0014) — the trade is a 50% floor on guessing bought
 /// with a mandatory reveal sheet.
 struct ReviewImageChoices: View {
-    let coord: ReviewFlowCoordinator
+    let question: ReviewQuestion
     let options: [ImageChoiceOption]
+    let onPick: (ImageChoiceOption) -> Void
 
     var body: some View {
         HStack(spacing: Space.s2) {
             ForEach(self.options) { option in
                 Button {
-                    self.coord.pickImage(option)
+                    self.onPick(option)
                 } label: {
                     // The *container* holds the square, not the picture.
                     // `WordPicture` fits its image whole and never crops, so
@@ -228,7 +220,7 @@ struct ReviewImageChoices: View {
                         }
                 }
                 .buttonStyle(.plain)
-                .disabled(self.coord.phase != .answer)
+                .disabled(!self.question.acceptsAnswer)
                 .accessibilityLabel(Text(option.word))
             }
         }
@@ -243,19 +235,10 @@ struct ReviewImageChoices: View {
     /// mapping is this card's; the verdict is `StudyOptionState`'s, and used to
     /// be re-derived here by comparing an option's *label* against the pick.
     private func border(_ option: ImageChoiceOption) -> Color {
-        switch self.state(for: option) {
+        switch self.question.pictureState(for: option) {
         case .right, .answer: .tujiAccumulation
         case .wrong: .tujiAlert
         case .idle, .dim: .clear
         }
-    }
-
-    private func state(for option: ImageChoiceOption) -> StudyOptionState {
-        StudyOptionState.forPicture(
-            optionId: option.id,
-            answerId: self.coord.current?.word.id ?? "",
-            pickedId: self.coord.picked?.id,
-            revealed: self.coord.phase == .review
-        )
     }
 }

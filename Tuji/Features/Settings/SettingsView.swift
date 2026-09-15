@@ -126,10 +126,7 @@ struct SettingsView: View {
             detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
             primary: TujiPromptAction("確認清除", role: .destructive) {
                 Task {
-                    await self.vm.clearProgress(
-                        learned: self.cache,
-                        stores: [self.progress, self.studyStats]
-                    )
+                    await self.vm.clearProgress(learned: self.cache)
                     if self.vm.clearError == nil {
                         self.showClearSuccess = true
                     }
@@ -408,7 +405,6 @@ struct SettingsView: View {
 
 private struct LearningDirectionPickerView: View {
     @Environment(SettingsStore.self) private var settings
-    @Environment(OnboardingState.self) private var onboarding
     @Environment(AuthService.self) private var auth
     @Environment(\.dismiss) private var dismiss
 
@@ -455,7 +451,6 @@ private struct LearningDirectionPickerView: View {
             self.dismiss()
             return
         }
-        self.onboarding.learningDirection = direction
         // Same question, same answer as the first-run picker — see
         // `OnboardingFlow`. It used to be these same five lines, twice.
         let shouldPersist = !self.auth.isGuest

@@ -12,7 +12,7 @@
 // — so pulling this sheet up on a custom card during 複習 or 學新字 asked
 // `/api/words/atlas:…` for a word that route has never heard of and rendered
 // 「詳情載入失敗」. Custom cards are in both study flows: `ReviewFlowView`
-// guards `card.id.hasPrefix("atlas:")` for exactly that reason.
+// checks `card.id.atlasItemId` for exactly that reason.
 //
 // **The prefix is the routing decision, so it lives with the routing** — the
 // sentence `WordDetailVM` already carried, with one caller that ignored it.
@@ -41,7 +41,6 @@ struct ExpandableWordDetail: View {
     let wordId: String
     let expanded: Bool
 
-    @Environment(SettingsStore.self) private var settings
     @State private var vm = WordDetailVM()
 
     var body: some View {
@@ -73,11 +72,6 @@ struct ExpandableWordDetail: View {
     /// No analytics: the sheet is a peek inside a study session, and the return
     /// value `WordDetailVM.load` offers exists for 圖鑑詳情's page view.
     private func load() async {
-        let current = self.settings.current
-        await self.vm.load(
-            id: self.wordId,
-            lang: current.uiLanguage.contentLanguageCode,
-            learning: current.learningDirection.rawValue
-        )
+        await self.vm.load(id: self.wordId)
     }
 }

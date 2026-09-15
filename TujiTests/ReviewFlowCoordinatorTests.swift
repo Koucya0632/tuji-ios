@@ -103,20 +103,8 @@ struct ReviewFlowCoordinatorTests {
         c.pick(answer)
         try await self.awaitReveal(c)
         c.rate(.again)
-        try await self.waitUntil { c.isRetest }
-        try #require(c.isRetest, "the word never came back as a re-test")
-    }
-
-    @Test
-    func suggestionCapsEasyForLowMastery() throws {
-        let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
-        // Fast + wobbly word → good, not easy; fast + established word → easy.
-        #expect(c.computeSuggestion(correct: true, elapsed: 1, mastery: 10) == .good)
-        #expect(c.computeSuggestion(correct: true, elapsed: 1, mastery: 80) == .easy)
-        #expect(c.computeSuggestion(correct: true, elapsed: 5, mastery: 80) == .good)
-        #expect(c.computeSuggestion(correct: true, elapsed: 10, mastery: 80) == .hard)
-        #expect(c.computeSuggestion(correct: false, elapsed: 1, mastery: 80) == .again)
+        try await self.waitUntil { c.question?.isRetest == true }
+        try #require(c.question?.isRetest == true, "the word never came back as a re-test")
     }
 
     @Test
@@ -128,7 +116,7 @@ struct ReviewFlowCoordinatorTests {
         // No sheet, flash capsule instead, suggested applied (mastery 10 → 穩定).
         #expect(c.revealMode == nil)
         #expect(c.flash == .autoRated(.good))
-        #expect(c.rated == .good)
+        #expect(c.question?.rated == .good)
         #expect(c.passedCount == 1)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.map(\.rating) == ["穩定"])
@@ -147,7 +135,7 @@ struct ReviewFlowCoordinatorTests {
         // reports as parked (offline). The coordinator must count it, not merge
         // a (non-existent) mastery delta.
         c.pick("fork")
-        #expect(c.rated == .good)
+        #expect(c.question?.rated == .good)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.count == 1)
         #expect(c.writes.parkedCount == 1)
@@ -164,12 +152,12 @@ struct ReviewFlowCoordinatorTests {
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.pick("spoon")
         c.pick("fork")
-        #expect(c.wasCorrect == false)
+        #expect(c.question?.wasCorrect == false)
         try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
         #expect(c.flash == nil) // never the auto-rate path
-        #expect(c.suggested == .again)
-        #expect(c.availableRatings == [.again, .hard])
+        #expect(c.question?.suggested == .again)
+        #expect(c.question?.availableRatings == [.again, .hard])
         c.rate(.again)
         // Requeued to the tail exactly once; not counted as passed yet.
         #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup", "w-fork"])
@@ -211,8 +199,8 @@ struct ReviewFlowCoordinatorTests {
 
         // Retest of fork: options reshuffle (variant bumped on first leave)…
         #expect(c.current?.word.id == "w-fork")
-        #expect(c.isRetest)
-        #expect(c.choicesVariant(for: queue[0]) == 1)
+        #expect(c.question?.isRetest == true)
+        #expect(c.question?.variant == 1)
         // …a correct answer flash-advances with NO rating step…
         c.pick("fork")
         #expect(c.flash == .retestPassed)
@@ -238,7 +226,7 @@ struct ReviewFlowCoordinatorTests {
         try await self.awaitReveal(c)
         #expect(c.revealMode == .continueOnly)
         #expect(c.passedCount == 1) // leaves the session either way
-        #expect(c.rated == nil) // no write path taken
+        #expect(c.question?.rated == nil) // no write path taken
     }
 
     @Test
@@ -256,8 +244,8 @@ struct ReviewFlowCoordinatorTests {
         c.pick("fork")
         try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
-        #expect(c.suggested == .hard)
-        #expect(c.availableRatings == [.hard, .good, .easy])
+        #expect(c.question?.suggested == .hard)
+        #expect(c.question?.availableRatings == [.hard, .good, .easy])
     }
 
     // MARK: - 看圖選字：選錯只是排除一個選項
@@ -267,14 +255,14 @@ struct ReviewFlowCoordinatorTests {
         let queue = try self.makeQueue()
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         c.pick("spoon")
-        #expect(c.wrongPicks == ["spoon"])
+        #expect(c.question?.wrongPicks == ["spoon"])
         // Nothing about the item has been decided: no reveal, no rating, no
         // requeue, and the option list is still live.
-        #expect(c.phase == .answer)
+        #expect(c.question?.phase == .answer)
         #expect(c.revealMode == nil)
         #expect(c.flash == nil)
-        #expect(c.picked == nil)
-        #expect(c.rated == nil)
+        #expect(c.question?.picked == nil)
+        #expect(c.question?.rated == nil)
         #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup"])
         #expect(c.passedCount == 0)
     }
@@ -288,8 +276,8 @@ struct ReviewFlowCoordinatorTests {
         // Re-tapping one already ruled out changes nothing (the row is
         // disabled, but the coordinator must not depend on that).
         c.pick("spoon")
-        #expect(c.wrongPicks == ["spoon", "ladle"])
-        #expect(c.phase == .answer)
+        #expect(c.question?.wrongPicks == ["spoon", "ladle"])
+        #expect(c.question?.phase == .answer)
         #expect(c.revealMode == nil)
     }
 
@@ -299,8 +287,8 @@ struct ReviewFlowCoordinatorTests {
         let queue = try self.makeQueue()
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         c.pick("fork")
-        #expect(c.wrongPicks.isEmpty)
-        #expect(c.wasCorrect)
+        #expect(c.question?.wrongPicks.isEmpty == true)
+        #expect(c.question?.wasCorrect == true)
         #expect(c.revealMode == nil)
         #expect(c.flash == .autoRated(.good))
     }
@@ -314,7 +302,7 @@ struct ReviewFlowCoordinatorTests {
         try await self.awaitReveal(c)
         c.rate(.again)
         try await self.waitUntil { c.current?.word.id == "w-cup" }
-        #expect(c.wrongPicks.isEmpty)
+        #expect(c.question?.wrongPicks.isEmpty == true)
     }
 
     /// 報錯 filed while the question is still open must carry what the user has
@@ -323,26 +311,15 @@ struct ReviewFlowCoordinatorTests {
     func reportedSelectionCoversAnOpenQuestion() throws {
         let queue = try self.makeQueue()
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
-        #expect(c.reportedSelection == nil)
+        #expect(c.question?.reportedSelection == nil)
         c.pick("spoon")
         c.pick("ladle")
-        #expect(c.reportedSelection == "ladle / spoon")
+        #expect(c.question?.reportedSelection == "ladle / spoon")
         c.pick("fork")
-        #expect(c.reportedSelection == "fork")
+        #expect(c.question?.reportedSelection == "fork")
     }
 
     // MARK: - 求救提示 (hint flip)
-
-    @Test
-    func suggestionCapsHintedAnswersAtHard() throws {
-        let queue = try self.makeQueue()
-        let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
-        // Speed and mastery stop mattering once the gloss was read.
-        #expect(c.computeSuggestion(correct: true, elapsed: 1, mastery: 80, hinted: true) == .hard)
-        #expect(c.computeSuggestion(correct: true, elapsed: 5, mastery: 80, hinted: true) == .hard)
-        // Wrong is still 重來 — the hint cannot make a miss look better.
-        #expect(c.computeSuggestion(correct: false, elapsed: 1, mastery: 80, hinted: true) == .again)
-    }
 
     /// The load-bearing one. Nothing in `pick()` mentions the hint: the auto-rate
     /// branch requires a suggestion other than 困難, and capping a hinted answer
@@ -353,17 +330,17 @@ struct ReviewFlowCoordinatorTests {
         let queue = try self.makeQueue()
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter(), beat: { _ in })
         c.toggleHint()
-        #expect(c.hintFaceUp)
-        #expect(c.hinted)
+        #expect(c.question?.hintFaceUp == true)
+        #expect(c.question?.hinted == true)
         // Answered immediately and correctly — without the hint this would have
         // auto-rated 穩定 and flash-advanced.
         c.pick("fork")
         try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
         #expect(c.flash == nil)
-        #expect(c.rated == nil)
-        #expect(c.suggested == .hard)
-        #expect(c.availableRatings == [.again, .hard])
+        #expect(c.question?.rated == nil)
+        #expect(c.question?.suggested == .hard)
+        #expect(c.question?.availableRatings == [.again, .hard])
     }
 
     @Test
@@ -388,8 +365,8 @@ struct ReviewFlowCoordinatorTests {
         c.toggleHint()
         c.pick("spoon")
         c.pick("fork")
-        #expect(c.suggested == .again)
-        #expect(c.availableRatings == [.again, .hard])
+        #expect(c.question?.suggested == .again)
+        #expect(c.question?.availableRatings == [.again, .hard])
         try await self.awaitReveal(c)
         c.rate(.again)
         #expect(c.queue.map(\.word.id) == ["w-fork", "w-cup", "w-fork"])
@@ -402,9 +379,9 @@ struct ReviewFlowCoordinatorTests {
         let c = ReviewFlowCoordinator(queue: queue, writer: SpyAnswerWriter())
         c.toggleHint()
         c.toggleHint()
-        #expect(!c.hintFaceUp) // showing the picture again…
-        #expect(c.hinted) // …but the gloss cannot be un-seen
-        #expect(!c.canNudge)
+        #expect(c.question?.hintFaceUp == false) // showing the picture again…
+        #expect(c.question?.hinted == true) // …but the gloss cannot be un-seen
+        #expect(c.question?.canNudge == false)
     }
 
     @Test
@@ -415,9 +392,9 @@ struct ReviewFlowCoordinatorTests {
         // an answered item must refuse the flip rather than rewrite its rating.
         c.pick("fork")
         c.toggleHint()
-        #expect(!c.hintFaceUp)
-        #expect(!c.hinted)
-        #expect(!c.canNudge)
+        #expect(c.question?.hintFaceUp == false)
+        #expect(c.question?.hinted == false)
+        #expect(c.question?.canNudge == false)
     }
 
     @Test
@@ -429,9 +406,9 @@ struct ReviewFlowCoordinatorTests {
         try await self.awaitReveal(c)
         c.rate(.hard)
         try await self.waitUntil { c.current?.word.id == "w-cup" } // 300ms beat
-        #expect(!c.hinted)
-        #expect(!c.hintFaceUp)
-        #expect(c.canNudge)
+        #expect(c.question?.hinted == false)
+        #expect(c.question?.hintFaceUp == false)
+        #expect(c.question?.canNudge == true)
     }
 
     @Test
@@ -469,12 +446,12 @@ struct ReviewFlowCoordinatorTests {
         #expect(writer.answers.map(\.rating) == ["重來"])
 
         // A retest never writes SRS, so there is nothing for the hint to cost.
-        #expect(!c.canNudge)
+        #expect(c.question?.canNudge == false)
         c.toggleHint()
         c.pick("fork")
         #expect(c.flash == .retestPassed)
         #expect(c.revealMode == nil)
-        #expect(c.rated == nil)
+        #expect(c.question?.rated == nil)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.map(\.rating) == ["重來"]) // and the retest added none
     }
@@ -525,13 +502,13 @@ struct ReviewFlowCoordinatorTests {
         c.pick("fork")
 
         // Resolved and locked, but not yet asking for anything.
-        #expect(c.phase == .review)
-        #expect(c.wasCorrect)
+        #expect(c.question?.phase == .review)
+        #expect(c.question?.wasCorrect == true)
         #expect(c.revealMode == nil)
         // And un-rateable while it holds: `rate` guards on the sheet being up,
         // so the pause cannot be raced by a tap that lands under it.
         c.rate(.hard)
-        #expect(c.rated == nil)
+        #expect(c.question?.rated == nil)
 
         try await self.awaitReveal(c)
         #expect(c.revealMode == .rate)
@@ -554,7 +531,7 @@ struct ReviewFlowCoordinatorTests {
         )
         clock.advance(10)
         c.pick("fork")
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
 
         #expect(c.revealMode == nil)
@@ -562,7 +539,7 @@ struct ReviewFlowCoordinatorTests {
 
     // MARK: - 先離開 during the advance beat
 
-    /// 學新字 has carried `cancelPendingBeats` for a while, and the comment on
+    /// 學新字 has carried `leave()` (then `cancelPendingBeats`) for a while, and the comment on
     /// `NewFlowCoordinator.recognizeAnswer` records that the guarantee had been
     /// declared complete once while one of its three stages still leaked. 複習
     /// was a fourth copy of that stage in the other flow, and it had no array to
@@ -578,7 +555,7 @@ struct ReviewFlowCoordinatorTests {
         })
 
         c.pick("fork") // fast + correct ⇒ auto-rate ⇒ scheduleAdvance
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
 
         #expect(!c.finished)
@@ -612,7 +589,7 @@ struct ReviewFlowCoordinatorTests {
         let before = c.current?.word.id
 
         c.pick("fork")
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
 
         #expect(c.current?.word.id == before)

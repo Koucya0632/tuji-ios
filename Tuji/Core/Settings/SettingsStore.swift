@@ -49,10 +49,16 @@ final class SettingsStore {
     }
 
     private let signedInUserProvider: @MainActor () -> SessionUser?
+    /// Where the device stands on the first-run questions. Injected: it was
+    /// `OnboardingState.shared`, reached from inside four methods.
+    private let onboarding: OnboardingRecord
     /// What a 學習語言 change costs. This store is the only place the direction
     /// can change, so it is the only place that has to notice — see
     /// LearningDirectionRefresh.swift for why the callers stopped saying.
     private let directionRefresh: LearningDirectionRefreshing
+    /// What an interface-language change re-reads — `LearningRefresh`. It was
+    /// two `.shared` reloads inline here, which no test could observe.
+    private let learningRefresh: LearningRefreshing
     /// The direction refresh in flight, if any.
     ///
     /// It stays detached — awaiting it inline would extend the signed-in launch
@@ -90,8 +96,12 @@ final class SettingsStore {
             }
         },
         directionRefresh: LearningDirectionRefreshing = LiveLearningDirectionRefresher(),
+        learningRefresh: LearningRefreshing = LiveLearningRefresher(),
+        onboarding: OnboardingRecord = OnboardingState.shared,
         saveDebounce: Duration = .milliseconds(400)
     ) {
+        self.onboarding = onboarding
+        self.learningRefresh = learningRefresh
         self.saveDebounce = saveDebounce
         self.repository = repository
         self.defaults = defaults
@@ -185,18 +195,18 @@ final class SettingsStore {
             // no direction has been selected yet, leave OnboardingState nil so
             // RootView still presents the language picker.
             let setupDone = context.userID.map {
-                OnboardingState.shared.setupDone(for: $0)
+                self.onboarding.setupDone(for: $0)
             } ?? true
             settings = Self.reconcileServerSettings(
                 settings,
                 current: self.current,
-                selectedDirection: OnboardingState.shared.learningDirection,
+                selectedDirection: self.onboarding.learningDirection,
                 setupDone: setupDone
             )
             var migrationUserID: UUID?
             var migrationNeedsSave = false
             if let userID = context.userID,
-               OnboardingState.shared.setupDone(for: userID),
+               self.onboarding.setupDone(for: userID),
                !self.communityCategoryMigration.hasApplied(for: userID)
             {
                 let migrated = self.communityCategoryMigration.migrated(settings)
@@ -209,7 +219,7 @@ final class SettingsStore {
             self.current = settings
             self.defaults.set(settings.uiLang, forKey: tujiUILangDefaultsKey)
             if setupDone {
-                OnboardingState.shared.learningDirection = settings.learningDirection
+                self.recordDirection(settings.learningDirection)
             }
             self.loadedContext = context
             self.hasLoaded = true
@@ -302,6 +312,14 @@ final class SettingsStore {
         )
     }
 
+    /// Whether the settings in hand arrived for the account signed in now.
+    /// `hasLoaded` alone survives a sign-out until the next load starts, so a
+    /// reader that asks it is asking about whoever was here before.
+    var loadedForCurrentAccount: Bool {
+        guard let user = self.signedInUserProvider() else { return false }
+        return self.hasLoaded && self.loadedContext == LoadContext(userID: user.id)
+    }
+
     /// Whether the settings on screen may be changed. 設定 and 學習主題 leave
     /// their controls inert until they may: a control drawn from the defaults
     /// invites exactly the change `update(_:)` refuses.
@@ -338,11 +356,8 @@ final class SettingsStore {
         // dataset is identical (only Traditional vs Simplified differs), so the
         // old text stays on screen until the new payload lands — no empty flash.
         if uiLangChanged {
-            Task {
-                async let categories: Void = CategoriesStore.shared.reload()
-                async let words: Void = WordsStore.shared.reload()
-                _ = await (categories, words)
-            }
+            let refresh = self.learningRefresh
+            Task { await refresh.refresh(after: .uiLanguageChanged) }
         }
     }
 
@@ -360,13 +375,46 @@ final class SettingsStore {
     /// save sends the whole object, and before then the rest of it is defaults.
     /// A first-run choice made earlier is kept by `reconcileServerSettings`.
     func setLearningDirection(_ direction: LearningDirection, persist: Bool) {
-        guard self.current.learningDirection != direction else { return }
+        guard self.current.learningDirection != direction || self.onboarding.learningDirection != direction else {
+            return
+        }
+        let changed = self.current.learningDirection != direction
         self.current.learningDirection = direction
-        self.defaults.set(direction.rawValue, forKey: self.learningDirectionKey)
+        self.recordDirection(direction)
+        guard changed else { return }
         if persist, self.write == .applyAndSave {
             self.scheduleSave()
         }
         self.trackDirectionRefresh(after: .userPicked)
+    }
+
+    /// The one place the learning direction is written down: the device key
+    /// launch reads before settings exist, and the onboarding mirror routing
+    /// observes.
+    private func recordDirection(_ direction: LearningDirection) {
+        self.defaults.set(direction.rawValue, forKey: self.learningDirectionKey)
+        self.onboarding.recordLearningDirection(direction)
+    }
+
+    /// 完成設定. Saves the choices onto the account's own settings — not onto a
+    /// fresh object built from literals, which replaced a returning account's
+    /// accent, 中文釋義 and font size along with its themes (see `SetupChoices`).
+    ///
+    /// Refuses while this account's settings have not arrived, for the same
+    /// reason `update(_:)` does: the object in hand would be the defaults.
+    func completeSetup(topicIds: Set<String>, dailyGoal: Int) async throws {
+        if !self.loadedForCurrentAccount {
+            await self.load()
+        }
+        guard self.loadedForCurrentAccount else {
+            throw self.lastError ?? SettingsNotLoaded()
+        }
+        var settings = self.current
+        settings.studyCategories = topicIds.sorted()
+        settings.dailyGoal = dailyGoal
+        settings.learningDirection = self.onboarding.learningDirection ?? settings.learningDirection
+        try await self.repository.saveSettings(settings)
+        self.adoptPersisted(settings)
     }
 
     /// Two-way binding for SwiftUI controls (e.g. Toggle). Reading returns the
@@ -376,6 +424,27 @@ final class SettingsStore {
             get: { self.current[keyPath: keyPath] },
             set: { newValue in self.update { $0[keyPath: keyPath] = newValue } }
         )
+    }
+
+    /// The account changed. What stays is what belongs to the device: the
+    /// interface language and the learning direction, both mirrored in
+    /// UserDefaults and read before any account exists. Everything else — the
+    /// themes, the goal, the accent — was the previous account's.
+    ///
+    /// A pending save is dropped rather than flushed: it carries the previous
+    /// account's object, and its token is gone.
+    func reset() {
+        self.saveTask?.cancel()
+        self.saveTask = nil
+        self.flights.reset()
+        self.loadedContext = nil
+        self.hasLoaded = false
+        self.lastError = nil
+        self.refreshLoadingState()
+        var seed = UserSettings.default
+        seed.learningDirection = self.current.learningDirection
+        seed.uiLang = self.current.uiLang
+        self.current = seed
     }
 
     /// Wait for the debounced save in flight, if any — so a test can tell
@@ -408,3 +477,6 @@ final class SettingsStore {
         }
     }
 }
+
+/// `completeSetup` was asked to save before this account's settings arrived.
+struct SettingsNotLoaded: Error {}

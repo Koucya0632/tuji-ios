@@ -79,6 +79,23 @@ struct LearningDirectionRefreshTests {
         #expect(store.current.learningDirection == .zhJa)
     }
 
+    /// The first-run picker used to write the direction into onboarding itself
+    /// and then call the store. Now the store is the only writer — so picking
+    /// the direction the store already holds must still record it, or launch
+    /// routing would never leave the picker.
+    @Test
+    func pickingTheDefaultOnTheFirstRunStillRecordsIt() async throws {
+        let spy = SpyLearningDirectionRefresher()
+        let onboarding = OnboardingRecordFake()
+        let store = try self.store(refresh: spy, onboarding: onboarding)
+
+        store.setLearningDirection(.zhEn, persist: false) // the store's default
+        await spy.settle()
+
+        #expect(onboarding.learningDirection == .zhEn)
+        #expect(spy.origins.isEmpty)
+    }
+
     @Test
     func pickingTheDirectionAlreadyInUseCostsNothing() async throws {
         let spy = SpyLearningDirectionRefresher()
@@ -150,7 +167,8 @@ struct LearningDirectionRefreshTests {
 
     private func store(
         refresh: LearningDirectionRefreshing,
-        repository: UserRepository = DirectionUserRepositoryFake()
+        repository: UserRepository = DirectionUserRepositoryFake(),
+        onboarding: OnboardingRecordFake = OnboardingRecordFake()
     ) throws
         -> SettingsStore
     {
@@ -160,7 +178,8 @@ struct LearningDirectionRefreshTests {
             repository: repository,
             defaults: defaults,
             signedInUserProvider: { nil },
-            directionRefresh: refresh
+            directionRefresh: refresh,
+            onboarding: onboarding
         )
     }
 }

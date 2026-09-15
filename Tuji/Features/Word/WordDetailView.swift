@@ -159,7 +159,7 @@ extension WordDetailPage {
                 HStack {
                     self.barControl(systemImage: "arrow.left", label: "返回") { self.dismiss() }
                     Spacer()
-                    if !w.id.hasPrefix("atlas:") {
+                    if w.id.atlasItemId == nil {
                         FavoriteButton(wordId: w.id)
                     }
                 }
@@ -203,7 +203,7 @@ extension WordDetailPage {
             PronunciationButton(
                 subject: SpokenWord(w),
                 size: 48,
-                wordId: self.id.hasPrefix("atlas:") ? nil : w.id
+                wordId: self.id.atlasItemId == nil ? w.id : nil
             )
         }
     }
@@ -231,12 +231,7 @@ extension WordDetailPage {
     /// Analytics stays in the View: the VM returns the word worth logging (nil
     /// for 自製圖鑑, which is private content and deliberately never counted).
     private func load() async {
-        let current = self.settings.current
-        let logged = await self.vm.load(
-            id: self.id,
-            lang: current.uiLanguage.contentLanguageCode,
-            learning: current.learningDirection.rawValue
-        )
+        let logged = await self.vm.load(id: self.id)
         if let logged {
             AnalyticsService.shared.track(.view, wordId: logged.id, category: logged.category)
         }

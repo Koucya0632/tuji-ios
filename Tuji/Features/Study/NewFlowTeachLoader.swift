@@ -21,13 +21,14 @@ final class NewFlowTeachLoader {
     func preload(
         queue: [StudyQueueItem],
         words: WordsStore,
-        catalog: CatalogRepository = LiveCatalogRepository.shared
+        catalog: CatalogRepository = LiveCatalogRepository.shared,
+        language: LanguageContext = SettingsStore.shared
     ) async {
         var pendingIds: [String] = []
         for item in queue {
             let id = item.word.id
             guard self.details[id] == nil else { continue }
-            if id.hasPrefix("atlas:") {
+            if id.atlasItemId != nil {
                 // 自制圖鑑 words carry their enriched detail in the store.
                 if let detail = words.find(id: id)?.detail {
                     self.details[id] = detail
@@ -40,14 +41,13 @@ final class NewFlowTeachLoader {
         // Sequential on purpose: queue order matches teaching order, each
         // fetch is one small cached payload, and a session is ~10 words —
         // fan-out would buy little and costs Sendable gymnastics.
-        let settings = SettingsStore.shared.current
         for id in pendingIds {
             guard !Task.isCancelled else { return }
             do {
                 self.details[id] = try await catalog.word(
                     id: id,
-                    lang: settings.uiLanguage.contentLanguageCode,
-                    learning: settings.learningDirection.rawValue
+                    lang: language.contentLanguageCode,
+                    learning: language.learningDirection.rawValue
                 )
             } catch {
                 self.log.info("teach detail miss for \(id, privacy: .public)")

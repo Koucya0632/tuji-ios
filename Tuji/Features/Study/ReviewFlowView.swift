@@ -11,15 +11,10 @@ import SwiftUI
 struct ReviewFlowView: View {
     let queue: [StudyQueueItem]
     @State private var coord: ReviewFlowCoordinator
+    /// Leaving, 報錯 and the finish screen — see `StudySession`.
+    @State private var shell: StudySessionShell
     @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
-    @Environment(SettingsStore.self) private var settings
-    @State private var showExitConfirm = false
-    /// Latched when the user confirms leaving, so the reveal sheet stays down
-    /// through the pop instead of flashing back up when the confirm closes.
-    @State private var leaving = false
-    @State private var reportDraft: StudyReportDraft?
-    @State private var showCustomCardNotice = false
     /// Set when the post-session refresh lands. CompleteView's 還有 N 個 CTA
     /// waits for it — before that round-trip the store holds the pre-session
     /// due count.
@@ -27,18 +22,30 @@ struct ReviewFlowView: View {
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
-        self._coord = State(initialValue: ReviewFlowCoordinator(queue: queue))
+        let coord = ReviewFlowCoordinator(queue: queue)
+        self._coord = State(initialValue: coord)
+        self._shell = State(initialValue: StudySessionShell(kind: .review, session: coord))
     }
 
     var body: some View {
         Group {
             if self.coord.finished {
-                // The refresh hangs off the finish, not off whichever screen
-                // celebrates it — a milestone session used to refresh nothing.
-                self.finishedSurface
-                    .refreshesFinishedSession(draining: self.coord.writes) {
-                        self.sessionRefreshed = true
+                StudySessionFinish(
+                    shell: self.shell,
+                    onFinish: { self.dismiss() },
+                    onRefreshed: { self.sessionRefreshed = true },
+                    summary: {
+                        CompleteView(
+                            answered: self.coord.answered,
+                            masteryByWord: self.coord.writes.masteryByWord,
+                            wrongIds: self.coord.retriedIds,
+                            unsyncedCount: self.coord.writes.parkedCount,
+                            onFinish: { self.dismiss() },
+                            onAnotherRound: { await self.startAnotherRound() },
+                            refreshed: self.sessionRefreshed
+                        )
                     }
+                )
             } else {
                 self.flowSurface
             }
@@ -49,62 +56,7 @@ struct ReviewFlowView: View {
         // on iOS 26 a toolbar item is a floating glass circle, and two white
         // discs at the top of a study screen are the platform talking over it.
         .toolbar(.hidden, for: .navigationBar)
-        .tujiPrompt(
-            isPresented: self.$showExitConfirm,
-            style: .confirmation,
-            title: "要離開這次複習嗎？",
-            message: "已答的進度會保留，未完成的字下次還會出現。",
-            primary: TujiPromptAction("先離開") {
-                // Drop the scheduled advance first, or it fires after teardown.
-                // Then drop the reveal sheet (and keep it down), then leave.
-                self.coord.cancelPendingBeats()
-                self.leaving = true
-                self.dismiss()
-            },
-            secondary: TujiPromptAction("繼續複習", role: .cancel) {}
-        )
-        .tujiPrompt(
-            isPresented: self.$showCustomCardNotice,
-            style: .confirmation,
-            title: "自制卡片暫不支援報錯",
-            message: "報錯僅適用於官方單字內容。自制卡片如有問題，可以到自制圖鑑刪除重拍，或透過「我的」頁的意見收集告訴我們。",
-            primary: TujiPromptAction("知道了") {}
-        )
-        .onAppear {
-            self.studyFocus.enter()
-            AnalyticsService.shared.track(.studyStart, category: "review")
-        }
-        // Not only the 先離開 prompt: a swipe-back, a deep link, anything that
-        // removes this view has to take the sentence with it.
-        .onDisappear {
-            self.studyFocus.exit()
-            self.coord.cancelPendingBeats()
-        }
-        .fullScreenCover(item: self.$reportDraft) { draft in
-            StudyReportSheet(draft: draft)
-        }
-    }
-
-    /// Which celebration a finished session shows. A streak milestone wins:
-    /// it happens at most a few times a year and the summary is always one tap
-    /// away behind it.
-    @ViewBuilder
-    private var finishedSurface: some View {
-        if let milestone = coord.writes.milestone {
-            MilestoneView(milestone: milestone, onFinish: { self.dismiss() })
-                .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
-        } else {
-            CompleteView(
-                answered: self.coord.answered,
-                masteryByWord: self.coord.writes.masteryByWord,
-                wrongIds: self.coord.retriedIds,
-                unsyncedCount: self.coord.writes.parkedCount,
-                onFinish: { self.dismiss() },
-                onAnotherRound: { await self.startAnotherRound() },
-                refreshed: self.sessionRefreshed
-            )
-            .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
-        }
+        .studySessionShell(self.shell)
     }
 
     /// 再來一輪 from CompleteView: fetch a fresh due queue (via the coordinator's
@@ -114,48 +66,20 @@ struct ReviewFlowView: View {
     private func startAnotherRound() async {
         let queue = await self.coord.fetchAnotherRound()
         guard !queue.isEmpty else { return }
-        self.coord = ReviewFlowCoordinator(queue: queue)
-    }
-
-    private func captureReport() {
-        guard let item = self.coord.current else { return }
-        // Custom cards have no cards-table row, so /api/study/reports
-        // can't accept them — explain instead of silently dropping the tap.
-        guard !item.card.id.hasPrefix("atlas:") else {
-            self.showCustomCardNotice = true
-            return
-        }
-        self.reportDraft = StudyReportDraft(
-            item: item,
-            mode: "review",
-            phase: self.coord.phase == .answer ? "answer" : "reveal",
-            selectedAnswer: self.coord.reportedSelection,
-            uiLang: self.settings.current.uiLang
-        )
+        let coord = ReviewFlowCoordinator(queue: queue)
+        self.coord = coord
+        self.shell.session = coord
     }
 
     private var flowSurface: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
-                TujiNavBar(leading: .close, onLeading: { self.showExitConfirm = true }) {
-                    Menu {
-                        Button("報錯", systemImage: "exclamationmark.bubble") {
-                            self.captureReport()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.tujiIcon(19, weight: .semibold))
-                            .foregroundStyle(.tujiInk)
-                            .frame(width: 44, height: 48)
-                            .contentShape(.rect)
-                    }
-                    .accessibilityLabel(Text("更多"))
-                }
+                StudySessionNavBar(shell: self.shell)
                 self.header
-                if let item = coord.current {
+                if let question = self.coord.question {
                     ReviewQuestionView(
                         coord: self.coord,
-                        item: item,
+                        question: question,
                         heroHeight: self.heroHeight(in: geo)
                     )
                 } else {
@@ -165,10 +89,10 @@ struct ReviewFlowView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Keep the MCQ option recolour on pick smooth (previously carried
             // by the footer's ZStack animation).
-            .animation(.spring(duration: 0.35), value: self.coord.phase)
+            .animation(.spring(duration: 0.35), value: self.coord.question?.phase)
             // Ruling an option out does not move `phase`, so the alert frame
             // would otherwise snap in with no motion at all.
-            .animation(Motion.ease(Motion.d1), value: self.coord.wrongPicks)
+            .animation(Motion.ease(Motion.d1), value: self.coord.question?.wrongPicks)
             .background(.tujiPaper)
             // MainTabsView normally reserves 78pt for the custom TujiTabBar;
             // that ancestor inset doesn't propagate into pushed views, so we
@@ -202,13 +126,11 @@ struct ReviewFlowView: View {
             .sheet(isPresented: Binding(
                 get: {
                     self.coord.revealMode != nil && !self.coord.finished
-                        && !self.showExitConfirm && !self.leaving
+                        && !self.shell.confirmingExit && !self.shell.leaving
                 },
                 set: { _ in }
             )) {
-                if let item = self.coord.current {
-                    ReviewRevealSheet(coord: self.coord, item: item)
-                }
+                ReviewRevealSheet(coord: self.coord)
             }
         }
     }
@@ -261,8 +183,9 @@ struct ReviewFlowView: View {
 // MARK: - Question (image + bubble + 4 options)
 
 private struct ReviewQuestionView: View {
+    /// For intents only. What is drawn comes from `question`.
     let coord: ReviewFlowCoordinator
-    let item: StudyQueueItem
+    let question: ReviewQuestion
     let heroHeight: CGFloat
 
     @Environment(StudyFocus.self) private var studyFocus
@@ -281,30 +204,36 @@ private struct ReviewQuestionView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s3) {
-                if !self.coord.questionReady {
+                if !self.question.ready {
                     // Nothing of the answer may be drawn yet. 選字's hero is the
                     // answer's own picture, so rendering the default `kind` for
                     // the frame before `prepareQuestion` returns would show the
                     // answer to a question that turns out to be 聽句.
                     self.skeleton
-                } else if self.coord.kind == .hearSentence,
-                          let example = self.coord.listeningExample,
-                          let options = self.coord.imageOptions
+                } else if self.question.kind == .hearSentence,
+                          let example = self.question.example,
+                          let options = self.question.imageOptions
                 {
                     ReviewListenCard(
-                        coord: self.coord,
+                        question: self.question,
                         example: example,
-                        height: self.heroHeight
+                        height: self.heroHeight,
+                        onRevealSentence: { self.coord.revealSentence() },
+                        onReplay: { slow in
+                            Task { await self.coord.replaySentence(slow: slow) }
+                        }
                     )
-                    ReviewImageChoices(coord: self.coord, options: options)
-                        .padding(.horizontal, Space.s4)
+                    ReviewImageChoices(question: self.question, options: options) {
+                        self.coord.pickImage($0)
+                    }
+                    .padding(.horizontal, Space.s4)
                     // The way out for someone who cannot hear right now — no
                     // headphones, a train, company. 聽句 is the only question
                     // in the app that is unanswerable without audio, so it is
                     // the only one that needs this. Drawn under the options
                     // rather than up by the play button: it is the last resort,
                     // and it should read after them, not compete with them.
-                    if self.coord.phase == .answer {
+                    if self.question.canOptOutOfListening {
                         Button("這輪不做聽句題") {
                             self.coord.optOutOfListening()
                         }
@@ -313,7 +242,9 @@ private struct ReviewQuestionView: View {
                         .padding(.top, Space.s2)
                     }
                 } else {
-                    ReviewHeroCard(coord: self.coord, item: self.item, height: self.heroHeight)
+                    ReviewHeroCard(question: self.question, height: self.heroHeight) {
+                        self.coord.toggleHint()
+                    }
                     self.choicesList
                         .padding(.horizontal, Space.s4)
                 }
@@ -326,16 +257,16 @@ private struct ReviewQuestionView: View {
         // current — not once for the whole session. The network can drop
         // mid-session, and 聽句 without a playable clip degrades to on-device
         // synthesis of a sentence the app cannot correct (ADR-0014). Keyed on
-        // the position too, so a re-test of the same word re-decides (and
+        // the presentation, so a re-test of the same word re-decides (and
         // re-draws its sentence and its distractor).
-        .task(id: "\(self.item.id)#\(self.coord.index)") {
+        .task(id: self.question.presentationId) {
             await self.coord.prepareQuestion(
                 pool: self.words.words,
                 session: self.session,
                 online: self.network.isConnected,
                 voice: .preferred(
                     for: self.settings.current,
-                    language: self.item.word.taggedLanguage
+                    language: self.question.item.word.taggedLanguage
                 )
             )
         }
@@ -369,11 +300,11 @@ private struct ReviewQuestionView: View {
 
     private var choicesList: some View {
         StudyChoiceList(
-            item: self.item,
-            variant: self.coord.choicesVariant(for: self.item),
-            picked: self.coord.picked?.label,
-            revealed: self.coord.phase == .review,
-            wrongPicks: self.coord.wrongPicks
+            item: self.question.item,
+            variant: self.question.variant,
+            picked: self.question.picked?.label,
+            revealed: !self.question.acceptsAnswer,
+            wrongPicks: self.question.wrongPicks
         ) { self.coord.pick($0) }
     }
 }
