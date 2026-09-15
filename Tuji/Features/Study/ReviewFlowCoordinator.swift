@@ -158,6 +158,9 @@ final class ReviewFlowCoordinator {
     /// `advance()` — and `drainPendingWrites`, and `finished = true` — on a
     /// coordinator whose screen was gone.
     private let beats: AnswerBeat
+    /// ADR-0014: a first play that has not started by now starts the clock and
+    /// marks the answer as not evidence about listening.
+    private let audioStartTimeout: Duration
 
     init(
         queue: [StudyQueueItem],
@@ -165,8 +168,10 @@ final class ReviewFlowCoordinator {
         queueProvider: StudyQueueProviding = StudyQueueStore.shared,
         audio: SpeechPlaying = LiveSpeechPlaying(),
         beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
-        now: @escaping () -> Date = { .now }
+        now: @escaping () -> Date = { .now },
+        audioStartTimeout: Duration = .seconds(3)
     ) {
+        self.audioStartTimeout = audioStartTimeout
         self.queue = queue
         self.originalCount = queue.count
         self.writes = StudySessionWrites(writer: writer)
@@ -262,8 +267,7 @@ final class ReviewFlowCoordinator {
     /// again says. It carries no *rating* cost for the same reason replays
     /// don't — the clock does not restart (ADR-0014).
     func replaySentence(voice: SpeechService.Voice, slow: Bool = false) async {
-        guard var q = self.question, q.willReplay(), let example = q.example else { return }
-        self.question = q
+        guard let example = self.question?.example else { return }
         await self.playSentence(
             clip: example.audioUrls?[voice.rawValue],
             text: example.sentence,
@@ -280,16 +284,36 @@ final class ReviewFlowCoordinator {
         isReplay: Bool,
         rate: Float = 1
     ) async {
-        guard var q = self.question, q.playbackBegan() else { return }
-        // Which card asked. The await below can outlive it — an advance, or
-        // 這輪不做聽句題 — and the outcome belongs to the question that asked
-        // for it, not to whatever is on screen when it lands.
-        let askedBy = q.item.card.id
+        guard var q = self.question, let token = q.beginPlayback(isReplay: isReplay) else { return }
+        // Which presentation asked. The await below can outlive it — an
+        // advance, a re-test of the same card, or 這輪不做聽句題 — and the
+        // outcome belongs to the question that asked, not to whatever is on
+        // screen when it lands.
+        let askedBy = q.presentationId
         self.question = q
-        let outcome = await self.audio.play(clip, text: text, voice: voice, rate: rate)
-        guard var settled = self.question, settled.item.card.id == askedBy else { return }
-        settled.playbackEnded(outcome, isReplay: isReplay, now: self.clock())
-        self.question = settled
+        if !isReplay, q.awaitingAudio {
+            self.beats.schedule(after: self.audioStartTimeout) { [weak self] in
+                guard let self else { return }
+                let now = self.clock()
+                self.updateQuestion(askedBy) { $0.audioStartTimedOut(now: now) }
+            }
+        }
+        let outcome = await self.audio.play(
+            clip,
+            text: text,
+            voice: voice,
+            rate: rate,
+            onStart: { [weak self] in self?.updateQuestion(askedBy) { $0.playbackStarted(token) } }
+        )
+        let now = self.clock()
+        self.updateQuestion(askedBy) { $0.playbackEnded(token: token, outcome, now: now) }
+    }
+
+    /// Apply `change` to the question on screen, if it is still `presentation`.
+    private func updateQuestion(_ presentation: UUID, _ change: (inout ReviewQuestion) -> Void) {
+        guard var q = self.question, q.presentationId == presentation else { return }
+        change(&q)
+        self.question = q
     }
 
     /// Word ids still to be asked this session. An image distractor drawn from
@@ -628,6 +652,9 @@ final class ReviewFlowCoordinator {
 
     private func advance() {
         if let leaving = self.question {
+            // A sentence still playing belongs to the card being left. The next
+            // card may be 選字 and start nothing, and it would narrate over it.
+            if leaving.isPlayingSentence { self.audio.stop() }
             self.presentedCounts[leaving.item.word.id, default: 0] += 1
             // Remembered across the rebuild below: "no two 聽句 in a row" is
             // the one piece of per-item state whose whole job is to outlive

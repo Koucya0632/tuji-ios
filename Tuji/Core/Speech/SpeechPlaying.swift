@@ -30,6 +30,11 @@ enum SpeechPlayback: Equatable {
     case fallback
     /// Nothing came out.
     case failed
+    /// A newer request took the speaker before this one ended. Not a failure:
+    /// the audio that replaced it may be this question's own replay.
+    case superseded
+    /// `stop()` cut it off.
+    case stopped
 }
 
 @MainActor
@@ -39,12 +44,14 @@ protocol SpeechPlaying {
     func canPlay(_ urlString: String?, online: Bool) -> Bool
 
     /// Play, and return when the audio ends. `rate` is a multiplier on normal
-    /// speed — 慢讀 passes 0.8.
+    /// speed — 慢讀 passes 0.8. `onStart` runs once, when sound comes out: a
+    /// clip still downloading has not started, and ADR-0014 times out on that.
     func play(
         _ urlString: String?,
         text: String,
         voice: SpeechService.Voice,
-        rate: Float
+        rate: Float,
+        onStart: @escaping @MainActor () -> Void
     ) async
         -> SpeechPlayback
 
@@ -73,7 +80,8 @@ struct LiveSpeechPlaying: SpeechPlaying {
         _ urlString: String?,
         text: String,
         voice: SpeechService.Voice,
-        rate: Float
+        rate: Float,
+        onStart: @escaping @MainActor () -> Void
     ) async
         -> SpeechPlayback
     {
@@ -83,7 +91,7 @@ struct LiveSpeechPlaying: SpeechPlaying {
             voice: voice,
             rate: rate
         )
-        return await self.awaitTerminal(request)
+        return await self.awaitTerminal(request, onStart: onStart)
     }
 
     /// Bridges the observable state back to one `await`.
@@ -102,18 +110,30 @@ struct LiveSpeechPlaying: SpeechPlaying {
     /// capture — accepted by the Debug build and rejected outright by the
     /// whole-module release build. The only thing this closure captures is the
     /// `Sendable` box.
-    private func awaitTerminal(_ request: Int) async -> SpeechPlayback {
+    private func awaitTerminal(
+        _ request: Int,
+        onStart: @MainActor () -> Void
+    ) async
+        -> SpeechPlayback
+    {
         let speech = self.speech
+        var reportedStart = false
         while true {
             var terminal: SpeechPlayback?
+            var playing = false
             await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
                 let box = ResumeOnce(continuation)
                 withObservationTracking {
                     terminal = Self.terminal(speech.playback, request: request)
+                    playing = speech.playback?.requestID == request && speech.playback?.phase == .playing
                 } onChange: {
                     box.resume()
                 }
-                if terminal != nil { box.resume() }
+                if terminal != nil || (playing && !reportedStart) { box.resume() }
+            }
+            if playing, !reportedStart {
+                reportedStart = true
+                onStart()
             }
             if let terminal { return terminal }
         }
@@ -128,11 +148,13 @@ struct LiveSpeechPlaying: SpeechPlaying {
     {
         guard let state else { return nil }
         // A newer request superseded ours. It will never reach a terminal phase
-        // now, so stop waiting for one — the card that asked has moved on.
-        guard state.requestID == request else { return .failed }
+        // now, so stop waiting for one. `.superseded`, not `.failed`: a replay
+        // superseding its own first play is the most common way this happens.
+        guard state.requestID == request else { return .superseded }
         switch state.phase {
         case .finished: return state.usedFallback ? .fallback : .finished
         case .failed: return .failed
+        case .stopped: return .stopped
         case .loading, .playing: return nil
         }
     }

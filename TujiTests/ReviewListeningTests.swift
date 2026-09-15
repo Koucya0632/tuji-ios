@@ -11,19 +11,30 @@ import Foundation
 import Testing
 @testable import Tuji
 
+/// Behaves like the one speaker the app has: a new play cuts the previous one
+/// off, and the previous one learns it was superseded. The fake this replaces
+/// returned each play's own outcome, so a replay during the first play looked
+/// harmless here while it marked the audio failed on devices.
 @MainActor
 private final class FakeSpeechPlaying: SpeechPlaying {
     var playable = true
     var outcome: SpeechPlayback = .finished
     private(set) var plays: [String?] = []
     /// Set to hold `play` open so a test can answer mid-sentence.
-    var gate: CheckedContinuation<Void, Never>?
     var holdsPlayback = false
+    /// False models a clip still downloading when the timeout comes round.
+    var startsImmediately = true
+    private var held: CheckedContinuation<SpeechPlayback, Never>?
+
+    var isHolding: Bool {
+        self.held != nil
+    }
 
     private(set) var stopped = 0
 
     func stop() {
         self.stopped += 1
+        self.release(.stopped)
     }
 
     func canPlay(_ urlString: String?, online: Bool) -> Bool {
@@ -33,20 +44,28 @@ private final class FakeSpeechPlaying: SpeechPlaying {
 
     private(set) var rates: [Float] = []
 
+    /// Ends the held play with `outcome`.
+    func release(_ outcome: SpeechPlayback? = nil) {
+        let pending = self.held
+        self.held = nil
+        pending?.resume(returning: outcome ?? self.outcome)
+    }
+
     func play(
         _ urlString: String?,
         text _: String,
         voice _: SpeechService.Voice,
-        rate: Float
+        rate: Float,
+        onStart: @escaping @MainActor () -> Void
     ) async
         -> SpeechPlayback
     {
         self.plays.append(urlString)
         self.rates.append(rate)
-        if self.holdsPlayback {
-            await withCheckedContinuation { self.gate = $0 }
-        }
-        return self.outcome
+        self.release(.superseded)
+        if self.startsImmediately { onStart() }
+        guard self.holdsPlayback else { return self.outcome }
+        return await withCheckedContinuation { self.held = $0 }
     }
 }
 
@@ -439,10 +458,10 @@ struct ReviewListeningTests {
         let prepare = Task { await coord.prepareQuestion(
             pool: self.pool(), session: .en, online: true, voice: .us
         ) }
-        try await self.waitUntil { audio.gate != nil }
+        try await self.waitUntil { audio.isHolding }
         #expect(coord.awaitingAudio, "the clock must not run while the sentence plays")
 
-        audio.gate?.resume()
+        audio.release()
         await prepare.value
         #expect(!coord.awaitingAudio)
     }
@@ -459,6 +478,81 @@ struct ReviewListeningTests {
         await coord.replaySentence(voice: .us)
         #expect(coord.startedAt == started)
         #expect(coord.replayCount == 1)
+    }
+
+    /// The defect: the adapter reported a play cut off by a replay as
+    /// `.failed`, so replaying before the first play ended marked the audio
+    /// failed and started the clock at the replay tap.
+    @Test
+    func replayingBeforeTheFirstPlayEndsIsNotAnAudioFailure() async throws {
+        let audio = FakeSpeechPlaying()
+        audio.holdsPlayback = true
+        let times = Clock(Date(timeIntervalSince1970: 1000))
+        let queue = try [makeQueue()[0]]
+        let coord = ReviewFlowCoordinator(
+            queue: queue,
+            writer: ListenAnswerSpy(),
+            queueProvider: EmptyQueueProvider(),
+            audio: audio,
+            beat: { _ in },
+            now: { times.now }
+        )
+        let first = Task { await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us) }
+        try await self.waitUntil { audio.isHolding }
+
+        times.now = Date(timeIntervalSince1970: 1002)
+        let replay = Task { await coord.replaySentence(voice: .us) }
+        await first.value
+        #expect(!coord.audioFailed, "a play the user cut off by replaying did not fail")
+        #expect(coord.awaitingAudio, "the clock waits for the sentence the user is hearing")
+
+        times.now = Date(timeIntervalSince1970: 1005)
+        try await self.waitUntil { audio.isHolding }
+        audio.release(.finished)
+        await replay.value
+
+        #expect(!coord.audioFailed)
+        #expect(!coord.awaitingAudio)
+        #expect(coord.startedAt == Date(timeIntervalSince1970: 1005))
+        #expect(coord.replayCount == 1)
+    }
+
+    /// ADR-0014: 「超過 3 秒還沒開始播，碼表直接起算並標 audioFailed」. It had
+    /// no code, so a clip stuck downloading left the clock waiting forever.
+    @Test
+    func aFirstPlayThatNeverStartsStartsTheClockAndMarksTheAudio() async throws {
+        let audio = FakeSpeechPlaying()
+        audio.holdsPlayback = true
+        audio.startsImmediately = false
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+
+        let prepare = Task { await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us) }
+        // Held first: before the question is presented `awaitingAudio` is false
+        // too, and waiting on it alone returns before anything has played.
+        try await self.waitUntil { audio.isHolding }
+        try await self.waitUntil { !coord.awaitingAudio }
+
+        #expect(coord.audioFailed)
+        audio.release(.stopped)
+        await prepare.value
+    }
+
+    @Test
+    func aFirstPlayThatStartedIsNotTimedOut() async throws {
+        let audio = FakeSpeechPlaying()
+        audio.holdsPlayback = true
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+
+        let prepare = Task { await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us) }
+        try await self.waitUntil { audio.isHolding }
+        for _ in 0..<20 {
+            await Task.yield()
+        }
+
+        #expect(coord.awaitingAudio, "a long sentence still playing must keep the clock waiting")
+        #expect(!coord.audioFailed)
+        audio.release(.finished)
+        await prepare.value
     }
 
     /// Reaching for 慢讀 says the sentence did not land at speed — the same
@@ -726,7 +820,8 @@ struct ReviewListeningTests {
         // sentence plays, only the clock waits.
         try await self.waitUntil { coord.questionReady }
         #expect(coord.kind == .hearSentence)
-        audio.gate?.resume()
+        try await self.waitUntil { audio.isHolding }
+        audio.release()
         await prepare.value
     }
 
@@ -792,5 +887,14 @@ private final class EmptyQueueProvider: StudyQueueProviding {
 
     func take(mode _: StudyMode) -> [StudyQueueItem]? {
         nil
+    }
+}
+
+@MainActor
+private final class Clock {
+    var now: Date
+
+    init(_ now: Date) {
+        self.now = now
     }
 }

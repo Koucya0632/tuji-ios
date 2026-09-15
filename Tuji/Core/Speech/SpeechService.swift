@@ -47,6 +47,10 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
             case finished
             /// Nothing came out at all.
             case failed
+            /// Cut off by `stop()`. Terminal, so a caller waiting on this
+            /// request is released — it used to stay parked until some later
+            /// request happened to publish.
+            case stopped
         }
 
         let requestID: Int
@@ -318,6 +322,13 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
         self.downloadTask?.cancel()
         self.player?.stop()
         self.synth.stopSpeaking(at: .immediate)
+        if let current = self.playback, current.phase == .loading || current.phase == .playing {
+            self.playback = PlaybackState(
+                requestID: current.requestID,
+                phase: .stopped,
+                usedFallback: current.usedFallback
+            )
+        }
     }
 
     // MARK: - Audio session

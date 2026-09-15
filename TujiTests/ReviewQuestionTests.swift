@@ -120,17 +120,16 @@ struct ReviewQuestionTests {
             imageOptions: nil,
             awaitsAudio: true
         )
-        let began = q.playbackBegan()
-        #expect(began)
-        q.playbackEnded(.finished, isReplay: false, now: self.start.addingTimeInterval(2))
+        let firstPlay = q.beginPlayback(isReplay: false)
+        let first = try #require(firstPlay)
+        q.playbackEnded(token: first, .finished, now: self.start.addingTimeInterval(2))
         #expect(!q.awaitingAudio)
         #expect(q.startedAt == self.start.addingTimeInterval(2))
 
-        let replaying = q.willReplay()
-        #expect(replaying)
+        let replayPlay = q.beginPlayback(isReplay: true)
+        let replay = try #require(replayPlay)
         #expect(q.replayCount == 1)
-        _ = q.playbackBegan()
-        q.playbackEnded(.finished, isReplay: true, now: self.start.addingTimeInterval(9))
+        q.playbackEnded(token: replay, .finished, now: self.start.addingTimeInterval(9))
         #expect(q.startedAt == self.start.addingTimeInterval(2), "a replay must not reset the clock")
     }
 
@@ -145,8 +144,9 @@ struct ReviewQuestionTests {
             imageOptions: nil,
             awaitsAudio: true
         )
-        _ = q.playbackBegan()
-        q.playbackEnded(.fallback, isReplay: false, now: self.start)
+        let play = q.beginPlayback(isReplay: false)
+        let token = try #require(play)
+        q.playbackEnded(token: token, .fallback, now: self.start)
         #expect(q.audioFailed)
         #expect(!q.isPlayingSentence)
 
@@ -462,8 +462,23 @@ struct ReviewQuestionTests {
         #expect(q.kind == .pickWord, "a sentence is what makes it a listening question")
         #expect(q.example == nil)
         #expect(!q.awaitingAudio)
-        let nothingToPlay = q.playbackBegan()
-        #expect(!nothingToPlay, "and nothing to play")
+        let nothingToPlay = q.beginPlayback(isReplay: false)
+        #expect(nothingToPlay == nil, "and nothing to play")
+    }
+
+    /// The payload is built at the rating, after the sheet. Listening again
+    /// while reading the answer is not 「needed another listen」.
+    @Test
+    func aReplayAfterAnsweringIsNotCounted() throws {
+        var q = try self.makeQuestion()
+        try q.present(kind: .hearSentence, example: self.makeExample(), imageOptions: nil, awaitsAudio: false)
+        _ = q.beginPlayback(isReplay: true)
+        #expect(q.replayCount == 1)
+
+        _ = q.pick("fork", now: self.start)
+        _ = q.beginPlayback(isReplay: true)
+
+        #expect(q.replayCount == 1)
     }
 
     // MARK: - The suggestion table

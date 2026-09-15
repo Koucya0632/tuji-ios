@@ -59,6 +59,9 @@ enum ReviewTap: Hashable {
 
 struct ReviewQuestion {
     let item: StudyQueueItem
+    /// This presentation, and no other. A re-test shares the card id, so an
+    /// audio outcome or a timeout keyed on the card could land on the retest.
+    let presentationId = UUID()
     /// A re-test of a word missed earlier this session. Re-tests never write
     /// SRS and never requeue again, which is why so many rules read it.
     let isRetest: Bool
@@ -108,7 +111,10 @@ struct ReviewQuestion {
     /// 聽句 starts it when the audio *ends*; everything else at construction.
     private(set) var startedAt: Date
     /// The clock has not started yet. Until it does an answer cannot be timed.
-    private(set) var awaitingAudio: Bool = false
+    var awaitingAudio: Bool {
+        self.playback.awaitingClock
+    }
+
     /// How long the answer took, measured **once**, when it landed.
     ///
     /// It used to be spelled twice — `resolve` computed it against
@@ -126,15 +132,27 @@ struct ReviewQuestion {
     /// presentation, like `hinted` — which it also sets, because reading the
     /// sentence is reading the answer.
     private(set) var sentenceRevealed: Bool = false
+    /// The sentence's audio — requests, the clock, what counts against the
+    /// evidence. See `SentencePlayback`.
+    private(set) var playback = SentencePlayback(awaitsClock: false)
     /// Replays before answering. Deliberately does **not** reset the clock:
     /// with the download and the clip length already excluded, replay time
     /// points the right way — needing three listens *is* 困難.
-    private(set) var replayCount: Int = 0
-    /// The clip was missing/unreachable (so this was on-device synthesis), or
-    /// nothing came out at all.
-    private(set) var audioFailed: Bool = false
+    var replayCount: Int {
+        self.playback.replayCount
+    }
+
+    /// The clip was missing/unreachable (so this was on-device synthesis),
+    /// nothing came out at all, or nothing started in time.
+    var audioFailed: Bool {
+        self.playback.audioFailed
+    }
+
     /// Whether the sentence is playing right now, for the play button.
-    private(set) var isPlayingSentence: Bool = false
+    var isPlayingSentence: Bool {
+        self.playback.isPlaying
+    }
+
     /// This presentation is the one the user turned listening off on.
     private(set) var convertedFromListening: Bool = false
 
@@ -177,7 +195,7 @@ struct ReviewQuestion {
             self.kind = .hearSentence
             self.example = example
             self.imageOptions = imageOptions
-            self.awaitingAudio = awaitsAudio
+            self.playback = SentencePlayback(awaitsClock: awaitsAudio)
         } else {
             self.kind = .pickWord
             self.example = nil
@@ -188,33 +206,36 @@ struct ReviewQuestion {
 
     // MARK: - 聽句 controls
 
-    /// A play has begun. Returns false when this question has no sentence, so
-    /// the caller does not start audio for a 選字 card.
-    mutating func playbackBegan() -> Bool {
-        guard self.kind == .hearSentence else { return false }
-        self.isPlayingSentence = true
-        return true
+    /// A play is about to begin. Returns the token its outcome must carry, or
+    /// nil when this question has no sentence, so the caller does not start
+    /// audio for a 選字 card.
+    ///
+    /// A replay counts only before answering: after it, the user is listening
+    /// while reading the answer, which is not 「needed another listen」.
+    mutating func beginPlayback(isReplay: Bool) -> Int? {
+        guard self.kind == .hearSentence, self.example != nil else { return nil }
+        return self.playback.begin(countsAsReplay: isReplay && self.phase == .answer)
     }
 
-    /// A play has ended. Only the first opens the clock — a replay must not
-    /// reset it, or the button becomes a way to buy time, and the time a replay
-    /// costs is exactly the signal that this word was hard.
-    mutating func playbackEnded(_ outcome: SpeechPlayback, isReplay: Bool, now: Date = .now) {
-        self.isPlayingSentence = false
-        if outcome != .finished { self.audioFailed = true }
-        if !isReplay, self.awaitingAudio {
-            self.awaitingAudio = false
+    /// Sound came out for `token`.
+    mutating func playbackStarted(_ token: Int) {
+        self.playback.started(token)
+    }
+
+    /// A play ended. The clock opens when the first audio the user hears ends —
+    /// usually the first play; the replay, if the user cut the first one off. A
+    /// replay never *resets* it, or the button becomes a way to buy time.
+    mutating func playbackEnded(token: Int, _ outcome: SpeechPlayback, now: Date = .now) {
+        if self.playback.ended(token, outcome) {
             self.startedAt = now
         }
     }
 
-    /// 慢讀 counts as a replay, because it is one: reaching for it says the
-    /// sentence did not land at speed. Returns false when there is nothing to
-    /// replay.
-    mutating func willReplay() -> Bool {
-        guard self.kind == .hearSentence, self.example != nil else { return false }
-        self.replayCount += 1
-        return true
+    /// The first play has had its chance to start (ADR-0014).
+    mutating func audioStartTimedOut(now: Date = .now) {
+        if self.playback.startTimedOut() {
+            self.startedAt = now
+        }
     }
 
     /// Lift the blur. Same cost as 求救提示's flip and for a stronger reason:
@@ -243,8 +264,7 @@ struct ReviewQuestion {
         self.example = nil
         self.imageOptions = nil
         self.sentenceRevealed = false
-        self.isPlayingSentence = false
-        self.awaitingAudio = false
+        self.playback.abandon()
         self.startedAt = now
         return true
     }
