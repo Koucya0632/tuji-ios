@@ -531,7 +531,7 @@ struct ReviewFlowCoordinatorTests {
         )
         clock.advance(10)
         c.pick("fork")
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
 
         #expect(c.revealMode == nil)
@@ -539,7 +539,7 @@ struct ReviewFlowCoordinatorTests {
 
     // MARK: - 先離開 during the advance beat
 
-    /// 學新字 has carried `cancelPendingBeats` for a while, and the comment on
+    /// 學新字 has carried `leave()` (then `cancelPendingBeats`) for a while, and the comment on
     /// `NewFlowCoordinator.recognizeAnswer` records that the guarantee had been
     /// declared complete once while one of its three stages still leaked. 複習
     /// was a fourth copy of that stage in the other flow, and it had no array to
@@ -555,7 +555,7 @@ struct ReviewFlowCoordinatorTests {
         })
 
         c.pick("fork") // fast + correct ⇒ auto-rate ⇒ scheduleAdvance
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
 
         #expect(!c.finished)
@@ -589,7 +589,7 @@ struct ReviewFlowCoordinatorTests {
         let before = c.current?.word.id
 
         c.pick("fork")
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
 
         #expect(c.current?.word.id == before)

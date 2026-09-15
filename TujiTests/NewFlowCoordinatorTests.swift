@@ -307,16 +307,22 @@ struct NewFlowCoordinatorTests {
         // `resolveIdentify` grew a second capture whose only caller was a test.
         //
         // With the beat injected, the tested surface is the shipped one.
+        //
+        // With the clock injected too, the number itself is asserted — it used
+        // to be read from `Date()` inline, and the most a test could say was
+        // that it was not nil.
         let queue = try self.makeMultiWordQueue()
         let spy = SpyAnswerWriter()
-        let c = NewFlowCoordinator(queue: queue, writer: spy, beat: { _ in })
-        c.resolveRecognize(rating: .hard)
+        let clock = NewFlowTestClock()
+        let c = NewFlowCoordinator(queue: queue, writer: spy, beat: { _ in }, now: { clock.now })
+        c.resolveRecognize(rating: .hard) // 選字 surfaces now, and its clock starts
+        clock.now += 2.5
         try c.identifyPick(#require(c.current).item.word.word)
         // Let the (now instant) beat run.
         await Task.yield()
         c.resolveTiles(correct: true)
         await c.writes.drainPendingWrites(within: .seconds(2))
-        #expect(spy.answers.first?.responseMs != nil)
+        #expect(spy.answers.first?.responseMs == 2500)
     }
 
     @Test
@@ -332,7 +338,7 @@ struct NewFlowCoordinatorTests {
         c.resolveRecognize(rating: .hard)
         let before = c.clearedWords
         try c.identifyPick(#require(c.current).item.word.word)
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
         #expect(c.clearedWords == before)
         #expect(spy.answers.isEmpty)
@@ -353,7 +359,7 @@ struct NewFlowCoordinatorTests {
         let before = c.clearedWords
 
         c.recognizeAnswer(rating: .good)
-        c.cancelPendingBeats()
+        c.leave()
         try? await Task.sleep(for: .milliseconds(300))
         await c.writes.drainPendingWrites(within: .milliseconds(200))
 
@@ -557,6 +563,11 @@ struct NewFlowCoordinatorTests {
         #expect(c.writes.masteryByWord["w-apple"]?.after == 12)
         #expect(c.writes.parkedCount == 0)
     }
+}
+
+@MainActor
+private final class NewFlowTestClock {
+    var now = Date(timeIntervalSince1970: 1000)
 }
 
 /// Records the held-back recognize writes the coordinator commits, and returns

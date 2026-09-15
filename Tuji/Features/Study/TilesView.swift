@@ -218,7 +218,6 @@ struct TilesView: View {
         let used = tile.used
         return Button {
             guard !locked, !used else { return }
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             self.coord.pickTile(index)
         } label: {
             Text(tile.unit)

@@ -265,6 +265,7 @@ private struct GlossRunMeasure: ViewModifier {
     .background(.tujiPaper)
     .glossCard()
     .environment(SettingsStore.shared)
+    .environment(WordsStore.shared)
     .environment(TabNavigator())
     .environment(LocalCache.shared)
     .environment(AuthService.shared)

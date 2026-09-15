@@ -861,7 +861,7 @@ struct ReviewListeningTests {
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         try #require(coord.question?.kind == .hearSentence)
 
-        coord.cancelPendingBeats()
+        coord.leave()
         #expect(audio.stopped == 1)
     }
 }

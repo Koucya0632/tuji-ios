@@ -63,7 +63,7 @@ enum ReviewFlash: Hashable {
 
 @MainActor
 @Observable
-final class ReviewFlowCoordinator {
+final class ReviewFlowCoordinator: StudySession {
     /// Mutable so a wrong first answer can requeue the word once (appended to
     /// the tail for an in-session re-test, mirroring NewFlow).
     private(set) var queue: [StudyQueueItem]
@@ -113,16 +113,8 @@ final class ReviewFlowCoordinator {
 
     private let audio: SpeechPlaying
 
-    /// Held and primed rather than built at the tap.
-    ///
-    /// `UIImpactFeedbackGenerator(style:).impactOccurred()` on a fresh instance
-    /// has to wake the Taptic Engine first, and that wake is the slow part: the
-    /// buzz lands well after the row has already moved, which reads as the
-    /// whole reaction being late even though the animation starts in the first
-    /// frame after the tap (measured). `prepare()` keeps the engine warm across
-    /// the window where an answer is likely.
-    @ObservationIgnored private let softTap = UIImpactFeedbackGenerator(style: .light)
-    @ObservationIgnored private let firmTap = UIImpactFeedbackGenerator(style: .medium)
+    /// Held and primed rather than built at the tap — see `StudyHaptics`.
+    @ObservationIgnored private let haptics = StudyHaptics()
 
     /// Everything that happens to an answer after it is handed to the writer:
     /// the drain, the mastery fold, the milestone, the parked count. Shared with
@@ -244,7 +236,7 @@ final class ReviewFlowCoordinator {
         self.question = q
         // The next thing that happens on this card is a tap; warm the engine
         // for it while the question is still being drawn.
-        self.primeHaptics()
+        self.haptics.prime()
 
         guard q.kind == .hearSentence else { return }
         self.heardWordIds.insert(item.word.id)
@@ -353,6 +345,17 @@ final class ReviewFlowCoordinator {
         self.question?.item
     }
 
+    /// 報錯: the card on screen, whether it has been answered, and what was
+    /// chosen — the pick that ended it, or the options ruled out so far.
+    var reportSubject: StudyReportSubject? {
+        guard let q = self.question else { return nil }
+        return StudyReportSubject(
+            item: q.item,
+            phase: q.phase == .answer ? "answer" : "reveal",
+            selectedAnswer: q.reportedSelection
+        )
+    }
+
     var progress: Double {
         guard self.originalCount > 0 else { return 0 }
         // Based on distinct words completed (passedCount) so requeued re-tests
@@ -385,9 +388,9 @@ final class ReviewFlowCoordinator {
         case .ignored:
             break
         case .ruledOut:
-            self.firmTap.impactOccurred()
+            self.haptics.firm()
             // The question is still open, so another tap may be seconds away.
-            self.primeHaptics()
+            self.haptics.prime()
         case let .resolved(resolution):
             self.settle(resolution)
         }
@@ -395,7 +398,7 @@ final class ReviewFlowCoordinator {
 
     private func settle(_ resolution: ReviewResolution) {
         guard let q = self.question else { return }
-        (q.wasCorrect ? self.softTap : self.firmTap).impactOccurred()
+        if q.wasCorrect { self.haptics.soft() } else { self.haptics.firm() }
         self.recordAnswered(q.item)
         switch resolution {
         case .flashRetestPassed:
@@ -440,7 +443,7 @@ final class ReviewFlowCoordinator {
         guard let q = self.question, q.phase == .review,
               self.revealMode == .rate, q.rated == nil
         else { return }
-        self.softTap.impactOccurred()
+        self.haptics.soft()
         // Wrong first attempt → requeue the word once for an in-session
         // re-test (appended to the tail). The re-test itself never requeues
         // again, and a correct first answer passes straight through.
@@ -461,13 +464,6 @@ final class ReviewFlowCoordinator {
     }
 
     // MARK: - Internals
-
-    /// Warm the Taptic Engine for the tap that is coming. Cheap, and idempotent
-    /// — the system lets the readiness lapse on its own after a few seconds.
-    private func primeHaptics() {
-        self.softTap.prepare()
-        self.firmTap.prepare()
-    }
 
     /// One row per word on CompleteView, even when re-tested twice.
     private func recordAnswered(_ item: StudyQueueItem) {
@@ -513,7 +509,7 @@ final class ReviewFlowCoordinator {
     /// `awaitTerminal` is built on `withCheckedContinuation`, which is not
     /// cancellation-aware, so cancelling the view's `.task` does **not** reach
     /// the audio. It has to be told.
-    func cancelPendingBeats() {
+    func leave() {
         self.beats.cancelAll()
         self.audio.stop()
     }

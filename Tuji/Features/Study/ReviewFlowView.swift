@@ -11,15 +11,10 @@ import SwiftUI
 struct ReviewFlowView: View {
     let queue: [StudyQueueItem]
     @State private var coord: ReviewFlowCoordinator
+    /// Leaving, 報錯 and the finish screen — see `StudySession`.
+    @State private var shell: StudySessionShell
     @Environment(\.dismiss) private var dismiss
     @Environment(StudyFocus.self) private var studyFocus
-    @Environment(SettingsStore.self) private var settings
-    @State private var showExitConfirm = false
-    /// Latched when the user confirms leaving, so the reveal sheet stays down
-    /// through the pop instead of flashing back up when the confirm closes.
-    @State private var leaving = false
-    @State private var reportDraft: StudyReportDraft?
-    @State private var showCustomCardNotice = false
     /// Set when the post-session refresh lands. CompleteView's 還有 N 個 CTA
     /// waits for it — before that round-trip the store holds the pre-session
     /// due count.
@@ -27,18 +22,30 @@ struct ReviewFlowView: View {
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
-        self._coord = State(initialValue: ReviewFlowCoordinator(queue: queue))
+        let coord = ReviewFlowCoordinator(queue: queue)
+        self._coord = State(initialValue: coord)
+        self._shell = State(initialValue: StudySessionShell(kind: .review, session: coord))
     }
 
     var body: some View {
         Group {
             if self.coord.finished {
-                // The refresh hangs off the finish, not off whichever screen
-                // celebrates it — a milestone session used to refresh nothing.
-                self.finishedSurface
-                    .refreshesFinishedSession(draining: self.coord.writes) {
-                        self.sessionRefreshed = true
+                StudySessionFinish(
+                    shell: self.shell,
+                    onFinish: { self.dismiss() },
+                    onRefreshed: { self.sessionRefreshed = true },
+                    summary: {
+                        CompleteView(
+                            answered: self.coord.answered,
+                            masteryByWord: self.coord.writes.masteryByWord,
+                            wrongIds: self.coord.retriedIds,
+                            unsyncedCount: self.coord.writes.parkedCount,
+                            onFinish: { self.dismiss() },
+                            onAnotherRound: { await self.startAnotherRound() },
+                            refreshed: self.sessionRefreshed
+                        )
                     }
+                )
             } else {
                 self.flowSurface
             }
@@ -49,62 +56,7 @@ struct ReviewFlowView: View {
         // on iOS 26 a toolbar item is a floating glass circle, and two white
         // discs at the top of a study screen are the platform talking over it.
         .toolbar(.hidden, for: .navigationBar)
-        .tujiPrompt(
-            isPresented: self.$showExitConfirm,
-            style: .confirmation,
-            title: "要離開這次複習嗎？",
-            message: "已答的進度會保留，未完成的字下次還會出現。",
-            primary: TujiPromptAction("先離開") {
-                // Drop the scheduled advance first, or it fires after teardown.
-                // Then drop the reveal sheet (and keep it down), then leave.
-                self.coord.cancelPendingBeats()
-                self.leaving = true
-                self.dismiss()
-            },
-            secondary: TujiPromptAction("繼續複習", role: .cancel) {}
-        )
-        .tujiPrompt(
-            isPresented: self.$showCustomCardNotice,
-            style: .confirmation,
-            title: "自制卡片暫不支援報錯",
-            message: "報錯僅適用於官方單字內容。自制卡片如有問題，可以到自制圖鑑刪除重拍，或透過「我的」頁的意見收集告訴我們。",
-            primary: TujiPromptAction("知道了") {}
-        )
-        .onAppear {
-            self.studyFocus.enter()
-            AnalyticsService.shared.track(.studyStart, category: "review")
-        }
-        // Not only the 先離開 prompt: a swipe-back, a deep link, anything that
-        // removes this view has to take the sentence with it.
-        .onDisappear {
-            self.studyFocus.exit()
-            self.coord.cancelPendingBeats()
-        }
-        .fullScreenCover(item: self.$reportDraft) { draft in
-            StudyReportSheet(draft: draft)
-        }
-    }
-
-    /// Which celebration a finished session shows. A streak milestone wins:
-    /// it happens at most a few times a year and the summary is always one tap
-    /// away behind it.
-    @ViewBuilder
-    private var finishedSurface: some View {
-        if let milestone = coord.writes.milestone {
-            MilestoneView(milestone: milestone, onFinish: { self.dismiss() })
-                .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
-        } else {
-            CompleteView(
-                answered: self.coord.answered,
-                masteryByWord: self.coord.writes.masteryByWord,
-                wrongIds: self.coord.retriedIds,
-                unsyncedCount: self.coord.writes.parkedCount,
-                onFinish: { self.dismiss() },
-                onAnotherRound: { await self.startAnotherRound() },
-                refreshed: self.sessionRefreshed
-            )
-            .onAppear { AnalyticsService.shared.track(.studyComplete, category: "review") }
-        }
+        .studySessionShell(self.shell)
     }
 
     /// 再來一輪 from CompleteView: fetch a fresh due queue (via the coordinator's
@@ -114,44 +66,15 @@ struct ReviewFlowView: View {
     private func startAnotherRound() async {
         let queue = await self.coord.fetchAnotherRound()
         guard !queue.isEmpty else { return }
-        self.coord = ReviewFlowCoordinator(queue: queue)
-    }
-
-    private func captureReport() {
-        guard let question = self.coord.question else { return }
-        let item = question.item
-        // Custom cards have no cards-table row, so /api/study/reports
-        // can't accept them — explain instead of silently dropping the tap.
-        guard item.card.id.atlasItemId == nil else {
-            self.showCustomCardNotice = true
-            return
-        }
-        self.reportDraft = StudyReportDraft(
-            item: item,
-            mode: "review",
-            phase: question.phase == .answer ? "answer" : "reveal",
-            selectedAnswer: question.reportedSelection,
-            uiLang: self.settings.current.uiLang
-        )
+        let coord = ReviewFlowCoordinator(queue: queue)
+        self.coord = coord
+        self.shell.session = coord
     }
 
     private var flowSurface: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
-                TujiNavBar(leading: .close, onLeading: { self.showExitConfirm = true }) {
-                    Menu {
-                        Button("報錯", systemImage: "exclamationmark.bubble") {
-                            self.captureReport()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.tujiIcon(19, weight: .semibold))
-                            .foregroundStyle(.tujiInk)
-                            .frame(width: 44, height: 48)
-                            .contentShape(.rect)
-                    }
-                    .accessibilityLabel(Text("更多"))
-                }
+                StudySessionNavBar(shell: self.shell)
                 self.header
                 if let question = self.coord.question {
                     ReviewQuestionView(
@@ -203,7 +126,7 @@ struct ReviewFlowView: View {
             .sheet(isPresented: Binding(
                 get: {
                     self.coord.revealMode != nil && !self.coord.finished
-                        && !self.showExitConfirm && !self.leaving
+                        && !self.shell.confirmingExit && !self.shell.leaving
                 },
                 set: { _ in }
             )) {
