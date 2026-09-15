@@ -53,6 +53,9 @@ final class SettingsStore {
     /// can change, so it is the only place that has to notice — see
     /// LearningDirectionRefresh.swift for why the callers stopped saying.
     private let directionRefresh: LearningDirectionRefreshing
+    /// What an interface-language change re-reads — `LearningRefresh`. It was
+    /// two `.shared` reloads inline here, which no test could observe.
+    private let learningRefresh: LearningRefreshing
     /// The direction refresh in flight, if any.
     ///
     /// It stays detached — awaiting it inline would extend the signed-in launch
@@ -90,8 +93,10 @@ final class SettingsStore {
             }
         },
         directionRefresh: LearningDirectionRefreshing = LiveLearningDirectionRefresher(),
+        learningRefresh: LearningRefreshing = LiveLearningRefresher(),
         saveDebounce: Duration = .milliseconds(400)
     ) {
+        self.learningRefresh = learningRefresh
         self.saveDebounce = saveDebounce
         self.repository = repository
         self.defaults = defaults
@@ -346,11 +351,8 @@ final class SettingsStore {
         // dataset is identical (only Traditional vs Simplified differs), so the
         // old text stays on screen until the new payload lands — no empty flash.
         if uiLangChanged {
-            Task {
-                async let categories: Void = CategoriesStore.shared.reload()
-                async let words: Void = WordsStore.shared.reload()
-                _ = await (categories, words)
-            }
+            let refresh = self.learningRefresh
+            Task { await refresh.refresh(after: .uiLanguageChanged) }
         }
     }
 

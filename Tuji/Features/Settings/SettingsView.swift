@@ -126,10 +126,7 @@ struct SettingsView: View {
             detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
             primary: TujiPromptAction("確認清除", role: .destructive) {
                 Task {
-                    await self.vm.clearProgress(
-                        learned: self.cache,
-                        stores: [self.progress, self.studyStats]
-                    )
+                    await self.vm.clearProgress(learned: self.cache)
                     if self.vm.clearError == nil {
                         self.showClearSuccess = true
                     }

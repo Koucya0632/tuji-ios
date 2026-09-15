@@ -181,8 +181,6 @@ extension CompletionReadout.Inputs {
     /// and fetched them itself would read the same numbers and silently stop the
     /// screen from updating — an error with no compiler warning and no failing
     /// test. So the call stays in the body and only the mapping moves here.
-    /// (`SettingsVM.clearProgress(learned:stores:)` takes its stores the same
-    /// way, for the same reason.)
     @MainActor
     init(
         viewer: some ViewerIdentity,

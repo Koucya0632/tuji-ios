@@ -12,6 +12,7 @@ import Testing
 struct SettingsStoreWriteTests {
     private let alice = SessionUser(id: UUID(), email: nil, username: "TJ00000001", nickname: nil, avatar: nil)
     private let bob = SessionUser(id: UUID(), email: nil, username: "TJ00000002", nickname: nil, avatar: nil)
+    private let learningRefresh = SettingsWriteSpyRefresh()
 
     /// What the server holds for the account: themes someone chose.
     private var accountSettings: UserSettings {
@@ -34,6 +35,7 @@ struct SettingsStoreWriteTests {
             defaults: defaults,
             signedInUserProvider: signedIn,
             directionRefresh: SettingsWriteInertRefresher(),
+            learningRefresh: self.learningRefresh,
             saveDebounce: .zero
         )
         return SettingsWriteHarness(store: store, defaults: defaults, suiteName: suiteName)
@@ -177,12 +179,44 @@ struct SettingsStoreWriteTests {
         #expect(!store.isEditable)
     }
 
+    /// The interface language re-reads the catalogue through `LearningRefresh`.
+    /// It was two `.shared` reloads inline in `update`, which no test could see.
+    @Test
+    func changingTheInterfaceLanguageAsksForTheCatalogueAgain() async throws {
+        let repository = SettingsWriteRepositoryFake()
+        let account = self.accountSettings
+        repository.loadHandler = { account }
+        let alice = self.alice
+        let harness = try self.harness(repository) { alice }
+        defer { harness.tearDown() }
+        let store = harness.store
+        await store.loadIfNeeded(for: alice.id)
+        let other = store.current.uiLang == "ja" ? "en" : "ja"
+
+        store.update { $0.dailyGoal = 30 }
+        store.update { $0.uiLang = other }
+        for _ in 0..<50 where self.learningRefresh.causes.isEmpty {
+            await Task.yield()
+        }
+
+        #expect(self.learningRefresh.causes == [.uiLanguageChanged])
+    }
+
     @Test
     func theRuleItself() {
         #expect(SettingsWrite.decide(signedIn: true, loaded: false) == .refuse)
         #expect(SettingsWrite.decide(signedIn: true, loaded: true) == .applyAndSave)
         #expect(SettingsWrite.decide(signedIn: false, loaded: false) == .applyLocally)
         #expect(SettingsWrite.decide(signedIn: false, loaded: true) == .applyLocally)
+    }
+}
+
+@MainActor
+private final class SettingsWriteSpyRefresh: LearningRefreshing {
+    private(set) var causes: [LearningRefreshCause] = []
+
+    func refresh(after cause: LearningRefreshCause) async {
+        self.causes.append(cause)
     }
 }
 

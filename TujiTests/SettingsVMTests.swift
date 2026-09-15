@@ -67,6 +67,14 @@ struct SettingsVMTests {
         func toggleFavorite(wordId _: String, isFavorite _: Bool) async {}
     }
 
+    private final class SpyRefresh: LearningRefreshing {
+        private(set) var causes: [LearningRefreshCause] = []
+
+        func refresh(after cause: LearningRefreshCause) async {
+            self.causes.append(cause)
+        }
+    }
+
     private final class SpyLearned: LearnedSetClearing {
         var cleared = 0
         func clearLearned() {
@@ -74,31 +82,18 @@ struct SettingsVMTests {
         }
     }
 
-    private final class SpyStore: RefreshableStore {
-        private(set) var order: [String] = []
-        func invalidate() {
-            self.order.append("invalidate")
-        }
-
-        func reload() async {
-            self.order.append("reload")
-        }
-    }
-
     // MARK: - 清除學習進度
 
-    /// The order is the rule: invalidate first, then reload. Reloading a store
-    /// that still holds its pre-wipe copy just refills it with what was there.
+    /// The stores are `LearningRefresh`'s to name — the View used to pass
+    /// `[progress, studyStats]` and leave mastery out.
     @Test
-    func clearingInvalidatesEveryStoreBeforeReloadingIt() async {
-        let vm = SettingsVM(progressRepository: SpyProgress())
-        let a = SpyStore()
-        let b = SpyStore()
+    func aClearHandsTheRefreshToThePolicy() async {
+        let refresh = SpyRefresh()
+        let vm = SettingsVM(progressRepository: SpyProgress(), refresh: refresh)
 
-        await vm.clearProgress(learned: SpyLearned(), stores: [a, b])
+        await vm.clearProgress(learned: SpyLearned())
 
-        #expect(a.order == ["invalidate", "reload"])
-        #expect(b.order == ["invalidate", "reload"])
+        #expect(refresh.causes == [.progressCleared])
     }
 
     /// The local learned set goes too: 完成度 and the category breakdown read it,
@@ -107,8 +102,8 @@ struct SettingsVMTests {
     @Test
     func clearingAlsoDropsTheLocalLearnedSet() async {
         let learned = SpyLearned()
-        await SettingsVM(progressRepository: SpyProgress())
-            .clearProgress(learned: learned, stores: [])
+        await SettingsVM(progressRepository: SpyProgress(), refresh: SpyRefresh())
+            .clearProgress(learned: learned)
         #expect(learned.cleared == 1)
     }
 
@@ -119,13 +114,13 @@ struct SettingsVMTests {
         let repo = SpyProgress()
         repo.clearResult = .failure(Boom())
         let learned = SpyLearned()
-        let store = SpyStore()
-        let vm = SettingsVM(progressRepository: repo)
+        let refresh = SpyRefresh()
+        let vm = SettingsVM(progressRepository: repo, refresh: refresh)
 
-        await vm.clearProgress(learned: learned, stores: [store])
+        await vm.clearProgress(learned: learned)
 
         #expect(learned.cleared == 0)
-        #expect(store.order.isEmpty)
+        #expect(refresh.causes.isEmpty)
         #expect(vm.clearError != nil)
         #expect(!vm.clearing)
     }
@@ -134,8 +129,8 @@ struct SettingsVMTests {
     func clearErrorIsDismissible() async {
         let repo = SpyProgress()
         repo.clearResult = .failure(Boom())
-        let vm = SettingsVM(progressRepository: repo)
-        await vm.clearProgress(learned: SpyLearned(), stores: [])
+        let vm = SettingsVM(progressRepository: repo, refresh: SpyRefresh())
+        await vm.clearProgress(learned: SpyLearned())
         #expect(vm.clearError != nil)
         vm.dismissClearError()
         #expect(vm.clearError == nil)
