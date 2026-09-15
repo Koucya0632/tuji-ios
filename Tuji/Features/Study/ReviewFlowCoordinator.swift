@@ -87,10 +87,8 @@ final class ReviewFlowCoordinator {
     private(set) var retriedIds: Set<String> = []
     /// Distinct words fully done (won't reappear). Drives the progress bar.
     private(set) var passedCount: Int = 0
-    /// Times each word has been presented *and left* — folds into the MCQ
-    /// option seed so a re-test reshuffles instead of letting "the answer was
-    /// C" stand in for the word, and picks 聽句's sentence so a re-test hears
-    /// the *other* one rather than the recording it just failed.
+    /// Times each word has been presented *and left* — becomes the next
+    /// question's `variant`.
     private var presentedCounts: [String: Int] = [:]
 
     // MARK: - 聽句, the parts that belong to the session
@@ -181,7 +179,7 @@ final class ReviewFlowCoordinator {
         self.clock = now
         // Nothing has been missed yet, so the first card is never a re-test.
         self.question = queue.first.map {
-            ReviewQuestion(item: $0, isRetest: false, now: now())
+            ReviewQuestion(item: $0, isRetest: false, variant: 0, now: now())
         }
     }
 
@@ -202,7 +200,7 @@ final class ReviewFlowCoordinator {
     ) async {
         guard var q = self.question else { return }
         let item = q.item
-        let presentation = self.choicesVariant(for: item)
+        let presentation = q.variant
         let example = ListeningQuestion.example(
             for: item,
             mastery: item.mastery,
@@ -236,20 +234,21 @@ final class ReviewFlowCoordinator {
 
         // Ready *before* the audio: the card is fully drawn and answerable
         // while the sentence plays. Only the clock waits for the audio.
-        q.present(kind: kind, example: example, imageOptions: options, awaitsAudio: true)
+        q.present(
+            kind: kind,
+            example: example,
+            voice: voice,
+            imageOptions: options,
+            awaitsAudio: true
+        )
         self.question = q
         // The next thing that happens on this card is a tap; warm the engine
         // for it while the question is still being drawn.
         self.primeHaptics()
 
-        guard q.kind == .hearSentence, let example else { return }
+        guard q.kind == .hearSentence else { return }
         self.heardWordIds.insert(item.word.id)
-        await self.playSentence(
-            clip: clip,
-            text: example.sentence,
-            voice: voice,
-            isReplay: false
-        )
+        await self.playSentence(isReplay: false)
     }
 
     /// How much slower 慢讀 is than the recording. A time-stretch on the same
@@ -266,25 +265,19 @@ final class ReviewFlowCoordinator {
     /// sentence did not land at speed, which is the same thing pressing play
     /// again says. It carries no *rating* cost for the same reason replays
     /// don't — the clock does not restart (ADR-0014).
-    func replaySentence(voice: SpeechService.Voice, slow: Bool = false) async {
-        guard let example = self.question?.example else { return }
-        await self.playSentence(
-            clip: example.audioUrls?[voice.rawValue],
-            text: example.sentence,
-            voice: voice,
-            isReplay: true,
-            rate: slow ? Self.slowRate : 1
-        )
+    ///
+    /// No voice argument: the question resolved it once when it was decided,
+    /// so a replay cannot come out in a different recording from the first play.
+    func replaySentence(slow: Bool = false) async {
+        await self.playSentence(isReplay: true, rate: slow ? Self.slowRate : 1)
     }
 
-    private func playSentence(
-        clip: String?,
-        text: String,
-        voice: SpeechService.Voice,
-        isReplay: Bool,
-        rate: Float = 1
-    ) async {
-        guard var q = self.question, let token = q.beginPlayback(isReplay: isReplay) else { return }
+    private func playSentence(isReplay: Bool, rate: Float = 1) async {
+        guard var q = self.question,
+              let example = q.example,
+              let voice = q.voice,
+              let token = q.beginPlayback(isReplay: isReplay)
+        else { return }
         // Which presentation asked. The await below can outlive it — an
         // advance, a re-test of the same card, or 這輪不做聽句題 — and the
         // outcome belongs to the question that asked, not to whatever is on
@@ -299,8 +292,8 @@ final class ReviewFlowCoordinator {
             }
         }
         let outcome = await self.audio.play(
-            clip,
-            text: text,
+            q.sentenceClip,
+            text: example.sentence,
             voice: voice,
             rate: rate,
             onStart: { [weak self] in self?.updateQuestion(askedBy) { $0.playbackStarted(token) } }
@@ -365,133 +358,8 @@ final class ReviewFlowCoordinator {
         // Based on distinct words completed (passedCount) so requeued re-tests
         // never push the bar backward. A half-step while revealing keeps it
         // feeling responsive.
-        let boost = self.phase == .review ? 0.5 : 0
+        let boost = self.question?.phase == .review ? 0.5 : 0
         return min(1, (Double(self.passedCount) + boost) / Double(self.originalCount))
-    }
-
-    /// MCQ option variant: bumps each time the word leaves the screen, so its
-    /// re-test presents a fresh shuffle.
-    func choicesVariant(for item: StudyQueueItem) -> Int {
-        self.presentedCounts[item.word.id] ?? 0
-    }
-
-    // MARK: - What the screen reads
-
-    //
-    // The card's own state lives on `question`; these forward to it so a view
-    // does not have to unwrap an optional that is only ever nil for a queue the
-    // launcher refuses to present. The defaults are the values a fresh
-    // question starts at, which is what an empty session should look like.
-
-    var phase: ReviewPhase {
-        self.question?.phase ?? .answer
-    }
-
-    var picked: ReviewChoice? {
-        self.question?.picked
-    }
-
-    var wrongPicks: Set<String> {
-        self.question?.wrongPicks ?? []
-    }
-
-    var hinted: Bool {
-        self.question?.hinted ?? false
-    }
-
-    var hintFaceUp: Bool {
-        self.question?.hintFaceUp ?? false
-    }
-
-    var wasCorrect: Bool {
-        self.question?.wasCorrect ?? false
-    }
-
-    var suggested: SRSRating {
-        self.question?.suggested ?? .good
-    }
-
-    var rated: SRSRating? {
-        self.question?.rated
-    }
-
-    var startedAt: Date {
-        self.question?.startedAt ?? .distantPast
-    }
-
-    var kind: ReviewQuestionKind {
-        self.question?.kind ?? .pickWord
-    }
-
-    var listeningExample: StudyExample? {
-        self.question?.example
-    }
-
-    var imageOptions: [ImageChoiceOption]? {
-        self.question?.imageOptions
-    }
-
-    var sentenceRevealed: Bool {
-        self.question?.sentenceRevealed ?? false
-    }
-
-    var replayCount: Int {
-        self.question?.replayCount ?? 0
-    }
-
-    var audioFailed: Bool {
-        self.question?.audioFailed ?? false
-    }
-
-    var isPlayingSentence: Bool {
-        self.question?.isPlayingSentence ?? false
-    }
-
-    var awaitingAudio: Bool {
-        self.question?.awaitingAudio ?? false
-    }
-
-    var questionReady: Bool {
-        self.question?.ready ?? false
-    }
-
-    var convertedFromListening: Bool {
-        self.question?.convertedFromListening ?? false
-    }
-
-    var isRetest: Bool {
-        self.question?.isRetest ?? false
-    }
-
-    var canNudge: Bool {
-        self.question?.canNudge ?? false
-    }
-
-    var availableRatings: [SRSRating] {
-        self.question?.availableRatings ?? [.again, .hard]
-    }
-
-    var reportedSelection: String? {
-        self.question?.reportedSelection
-    }
-
-    /// The rating a given answer suggests. Forwards to the rule's home so the
-    /// two cannot drift; kept here because the nudge copy and the tests both
-    /// ask the session.
-    func computeSuggestion(
-        correct: Bool,
-        elapsed: TimeInterval?,
-        mastery: Int?,
-        hinted: Bool = false
-    )
-        -> SRSRating
-    {
-        ReviewQuestion.suggestion(
-            correct: correct,
-            elapsed: elapsed,
-            mastery: mastery,
-            hinted: hinted
-        )
     }
 
     // MARK: - Answering
@@ -588,7 +456,7 @@ final class ReviewFlowCoordinator {
 
     /// 下一題 on the retest-wrong sheet (revealMode == .continueOnly).
     func continueFromReveal() {
-        guard self.phase == .review, self.revealMode == .continueOnly else { return }
+        guard self.question?.phase == .review, self.revealMode == .continueOnly else { return }
         self.scheduleAdvance(after: .zero)
     }
 
@@ -680,6 +548,7 @@ final class ReviewFlowCoordinator {
             self.question = ReviewQuestion(
                 item: item,
                 isRetest: self.retriedIds.contains(item.word.id),
+                variant: self.presentedCounts[item.word.id] ?? 0,
                 now: self.clock()
             )
         }

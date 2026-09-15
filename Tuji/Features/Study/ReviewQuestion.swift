@@ -18,6 +18,15 @@
 // this decides, the coordinator performs. That split is what lets the whole
 // answering path be exercised synchronously, with no `awaitReveal` and no clock
 // to poll.
+//
+// **The cards read this, not the coordinator.** The coordinator used to forward
+// 23 of these properties one by one — six of which nothing in the app read —
+// while the rules the cards drew from them were re-derived in the views: whether
+// the sentence is legible, whether the eye still does anything, whether 看完整
+// 詳情 may open, which presentation a `.task` belongs to. One of those had
+// already drifted: the eye stayed on screen after answering, over a sentence
+// that was legible anyway, and pressing it did nothing. A rule on the value is
+// a rule a test can ask.
 
 import Foundation
 
@@ -65,6 +74,11 @@ struct ReviewQuestion {
     /// A re-test of a word missed earlier this session. Re-tests never write
     /// SRS and never requeue again, which is why so many rules read it.
     let isRetest: Bool
+    /// How many times this word has already been presented and left. Seeds the
+    /// MCQ shuffle and picks 聽句's sentence, so a re-test reshuffles instead of
+    /// letting 「the answer was C」 stand in for the word, and hears the *other*
+    /// recording rather than the one it just failed.
+    let variant: Int
 
     // MARK: - What is being asked
 
@@ -74,6 +88,10 @@ struct ReviewQuestion {
     private(set) var kind: ReviewQuestionKind = .pickWord
     /// The sentence being asked about, when `kind == .hearSentence`.
     private(set) var example: StudyExample?
+    /// Who reads it, resolved once when the question is decided. The first play
+    /// and every replay must be the same recording — the view resolving it
+    /// again from settings at each tap was a third copy of that lookup.
+    private(set) var voice: SpeechService.Voice?
     /// The two pictures, when `kind == .hearSentence`.
     private(set) var imageOptions: [ImageChoiceOption]?
     /// Whether the question has been decided.
@@ -166,9 +184,10 @@ struct ReviewQuestion {
     /// two counters.
     private(set) var counted: Bool = false
 
-    init(item: StudyQueueItem, isRetest: Bool, now: Date = .now) {
+    init(item: StudyQueueItem, isRetest: Bool, variant: Int = 0, now: Date = .now) {
         self.item = item
         self.isRetest = isRetest
+        self.variant = variant
         self.startedAt = now
     }
 
@@ -188,20 +207,31 @@ struct ReviewQuestion {
     mutating func present(
         kind: ReviewQuestionKind,
         example: StudyExample?,
+        voice: SpeechService.Voice,
         imageOptions: [ImageChoiceOption]?,
         awaitsAudio: Bool
     ) {
         if kind == .hearSentence, let example {
             self.kind = .hearSentence
             self.example = example
+            self.voice = voice
             self.imageOptions = imageOptions
             self.playback = SentencePlayback(awaitsClock: awaitsAudio)
         } else {
             self.kind = .pickWord
             self.example = nil
+            self.voice = nil
             self.imageOptions = nil
         }
         self.ready = true
+    }
+
+    /// The recording for the sentence in the voice it was decided with. Nil
+    /// for 選字, or for a sentence with no clip in that voice (on-device
+    /// synthesis, recorded as `audioFailed`).
+    var sentenceClip: String? {
+        guard let example = self.example, let voice = self.voice else { return nil }
+        return example.audioUrls?[voice.rawValue]
     }
 
     // MARK: - 聽句 controls
@@ -238,13 +268,35 @@ struct ReviewQuestion {
         }
     }
 
+    /// Whether the sentence can be read: once the answer is in, or once the eye
+    /// bought it. Answering removes the reason to hide it — from that moment the
+    /// sentence is study material, exactly like the answer on the reveal sheet,
+    /// and it costs nothing, because `hinted` is only ever set by
+    /// `revealSentence()`, which refuses outside `.answer`.
+    var sentenceLegible: Bool {
+        self.sentenceRevealed || self.phase == .review
+    }
+
+    /// Whether the eye does anything. The card draws it exactly when this is
+    /// true: it used to test `sentenceRevealed` alone, so after answering the
+    /// eye sat over an already-legible sentence and pressing it did nothing.
+    var canRevealSentence: Bool {
+        self.phase == .answer && self.kind == .hearSentence && !self.sentenceRevealed
+    }
+
     /// Lift the blur. Same cost as 求救提示's flip and for a stronger reason:
     /// the sentence spells the answer out, so from here this is a reading
     /// question, not a listening one (ADR-0014).
     mutating func revealSentence() {
-        guard self.phase == .answer, self.kind == .hearSentence else { return }
+        guard self.canRevealSentence else { return }
         self.sentenceRevealed = true
         self.hinted = true
+    }
+
+    /// Whether 這輪不做聽句題 applies to this card: a listening question still
+    /// waiting for its answer. After answering there is nothing left to hear.
+    var canOptOutOfListening: Bool {
+        self.phase == .answer && self.kind == .hearSentence
     }
 
     /// 這輪不做聽句題, applied to the card in front of the user.
@@ -258,10 +310,11 @@ struct ReviewQuestion {
     /// only when `kind == .hearSentence`, so they stop being sent the moment
     /// the kind changes.
     mutating func optOutOfListening(now: Date = .now) -> Bool {
-        guard self.phase == .answer, self.kind == .hearSentence else { return false }
+        guard self.canOptOutOfListening else { return false }
         self.convertedFromListening = true
         self.kind = .pickWord
         self.example = nil
+        self.voice = nil
         self.imageOptions = nil
         self.sentenceRevealed = false
         self.playback.abandon()
@@ -290,7 +343,36 @@ struct ReviewQuestion {
         self.phase == .answer && !self.hinted && !self.isRetest && self.kind == .pickWord
     }
 
+    /// Whether the hint face's 看完整詳情 may raise the word detail.
+    ///
+    /// Only while unanswered — the same window `toggleHint()` allows the flip
+    /// in, and for a sharper reason. The reveal sheet rests with background
+    /// interaction enabled, so the hint face stays tappable underneath it: left
+    /// up, the button would raise a second sheet on top of the one asking for a
+    /// rating and bury both sets of buttons. Nothing is lost — that sheet pulls
+    /// up to the very same detail.
+    var canOpenDetail: Bool {
+        self.phase == .answer
+    }
+
     // MARK: - Answering
+
+    /// Whether the options still take taps.
+    var acceptsAnswer: Bool {
+        self.phase == .answer
+    }
+
+    /// How one of 聽句's pictures is drawn. The verdict is
+    /// `StudyOptionState`'s; this supplies it the answer's id and the pick, so
+    /// the card does not reach past the question to find either.
+    func pictureState(for option: ImageChoiceOption) -> StudyOptionState {
+        StudyOptionState.forPicture(
+            optionId: option.id,
+            answerId: self.item.word.id,
+            pickedId: self.picked?.id,
+            revealed: self.phase == .review
+        )
+    }
 
     /// One of the two pictures in 聽句. Compared by id, not by label: two
     /// catalogue words can print the same string, they cannot share an id.

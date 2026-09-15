@@ -118,7 +118,8 @@ struct ReviewFlowView: View {
     }
 
     private func captureReport() {
-        guard let item = self.coord.current else { return }
+        guard let question = self.coord.question else { return }
+        let item = question.item
         // Custom cards have no cards-table row, so /api/study/reports
         // can't accept them — explain instead of silently dropping the tap.
         guard item.card.id.atlasItemId == nil else {
@@ -128,8 +129,8 @@ struct ReviewFlowView: View {
         self.reportDraft = StudyReportDraft(
             item: item,
             mode: "review",
-            phase: self.coord.phase == .answer ? "answer" : "reveal",
-            selectedAnswer: self.coord.reportedSelection,
+            phase: question.phase == .answer ? "answer" : "reveal",
+            selectedAnswer: question.reportedSelection,
             uiLang: self.settings.current.uiLang
         )
     }
@@ -152,10 +153,10 @@ struct ReviewFlowView: View {
                     .accessibilityLabel(Text("更多"))
                 }
                 self.header
-                if let item = coord.current {
+                if let question = self.coord.question {
                     ReviewQuestionView(
                         coord: self.coord,
-                        item: item,
+                        question: question,
                         heroHeight: self.heroHeight(in: geo)
                     )
                 } else {
@@ -165,10 +166,10 @@ struct ReviewFlowView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Keep the MCQ option recolour on pick smooth (previously carried
             // by the footer's ZStack animation).
-            .animation(.spring(duration: 0.35), value: self.coord.phase)
+            .animation(.spring(duration: 0.35), value: self.coord.question?.phase)
             // Ruling an option out does not move `phase`, so the alert frame
             // would otherwise snap in with no motion at all.
-            .animation(Motion.ease(Motion.d1), value: self.coord.wrongPicks)
+            .animation(Motion.ease(Motion.d1), value: self.coord.question?.wrongPicks)
             .background(.tujiPaper)
             // MainTabsView normally reserves 78pt for the custom TujiTabBar;
             // that ancestor inset doesn't propagate into pushed views, so we
@@ -206,9 +207,7 @@ struct ReviewFlowView: View {
                 },
                 set: { _ in }
             )) {
-                if let item = self.coord.current {
-                    ReviewRevealSheet(coord: self.coord, item: item)
-                }
+                ReviewRevealSheet(coord: self.coord)
             }
         }
     }
@@ -261,8 +260,9 @@ struct ReviewFlowView: View {
 // MARK: - Question (image + bubble + 4 options)
 
 private struct ReviewQuestionView: View {
+    /// For intents only. What is drawn comes from `question`.
     let coord: ReviewFlowCoordinator
-    let item: StudyQueueItem
+    let question: ReviewQuestion
     let heroHeight: CGFloat
 
     @Environment(StudyFocus.self) private var studyFocus
@@ -281,30 +281,36 @@ private struct ReviewQuestionView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s3) {
-                if !self.coord.questionReady {
+                if !self.question.ready {
                     // Nothing of the answer may be drawn yet. 選字's hero is the
                     // answer's own picture, so rendering the default `kind` for
                     // the frame before `prepareQuestion` returns would show the
                     // answer to a question that turns out to be 聽句.
                     self.skeleton
-                } else if self.coord.kind == .hearSentence,
-                          let example = self.coord.listeningExample,
-                          let options = self.coord.imageOptions
+                } else if self.question.kind == .hearSentence,
+                          let example = self.question.example,
+                          let options = self.question.imageOptions
                 {
                     ReviewListenCard(
-                        coord: self.coord,
+                        question: self.question,
                         example: example,
-                        height: self.heroHeight
+                        height: self.heroHeight,
+                        onRevealSentence: { self.coord.revealSentence() },
+                        onReplay: { slow in
+                            Task { await self.coord.replaySentence(slow: slow) }
+                        }
                     )
-                    ReviewImageChoices(coord: self.coord, options: options)
-                        .padding(.horizontal, Space.s4)
+                    ReviewImageChoices(question: self.question, options: options) {
+                        self.coord.pickImage($0)
+                    }
+                    .padding(.horizontal, Space.s4)
                     // The way out for someone who cannot hear right now — no
                     // headphones, a train, company. 聽句 is the only question
                     // in the app that is unanswerable without audio, so it is
                     // the only one that needs this. Drawn under the options
                     // rather than up by the play button: it is the last resort,
                     // and it should read after them, not compete with them.
-                    if self.coord.phase == .answer {
+                    if self.question.canOptOutOfListening {
                         Button("這輪不做聽句題") {
                             self.coord.optOutOfListening()
                         }
@@ -313,7 +319,9 @@ private struct ReviewQuestionView: View {
                         .padding(.top, Space.s2)
                     }
                 } else {
-                    ReviewHeroCard(coord: self.coord, item: self.item, height: self.heroHeight)
+                    ReviewHeroCard(question: self.question, height: self.heroHeight) {
+                        self.coord.toggleHint()
+                    }
                     self.choicesList
                         .padding(.horizontal, Space.s4)
                 }
@@ -326,16 +334,16 @@ private struct ReviewQuestionView: View {
         // current — not once for the whole session. The network can drop
         // mid-session, and 聽句 without a playable clip degrades to on-device
         // synthesis of a sentence the app cannot correct (ADR-0014). Keyed on
-        // the position too, so a re-test of the same word re-decides (and
+        // the presentation, so a re-test of the same word re-decides (and
         // re-draws its sentence and its distractor).
-        .task(id: "\(self.item.id)#\(self.coord.index)") {
+        .task(id: self.question.presentationId) {
             await self.coord.prepareQuestion(
                 pool: self.words.words,
                 session: self.session,
                 online: self.network.isConnected,
                 voice: .preferred(
                     for: self.settings.current,
-                    language: self.item.word.taggedLanguage
+                    language: self.question.item.word.taggedLanguage
                 )
             )
         }
@@ -369,11 +377,11 @@ private struct ReviewQuestionView: View {
 
     private var choicesList: some View {
         StudyChoiceList(
-            item: self.item,
-            variant: self.coord.choicesVariant(for: self.item),
-            picked: self.coord.picked?.label,
-            revealed: self.coord.phase == .review,
-            wrongPicks: self.coord.wrongPicks
+            item: self.question.item,
+            variant: self.question.variant,
+            picked: self.question.picked?.label,
+            revealed: !self.question.acceptsAnswer,
+            wrongPicks: self.question.wrongPicks
         ) { self.coord.pick($0) }
     }
 }

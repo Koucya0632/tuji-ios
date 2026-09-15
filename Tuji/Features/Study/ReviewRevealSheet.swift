@@ -1,8 +1,8 @@
 // Reveal sheet for ReviewFlow (§III.Q): answer summary + pull-up full word
 // detail (with tappable 詞塊 — see `.glossCard()` below), with the pinned action row — SRS rating buttons normally, or a
 // single 下一題 for a retest-wrong (study material only, no second write).
-// Split from ReviewFlowView for file size; state all lives on the
-// coordinator.
+// Split from ReviewFlowView for file size. What the sheet asks comes from the
+// current `ReviewQuestion`; the mode (rate, or 下一題) is the session's.
 
 import SwiftUI
 
@@ -30,8 +30,10 @@ enum ReviewRevealLayout {
 }
 
 struct ReviewRevealSheet: View {
+    /// Read in this view's own body rather than handed in as a value: a sheet's
+    /// content closure is not somewhere to rely on for observation, and the
+    /// rating row has to follow `rated` while the sheet stays up.
     let coord: ReviewFlowCoordinator
-    let item: StudyQueueItem
 
     @Environment(SettingsStore.self) private var settings
 
@@ -49,13 +51,19 @@ struct ReviewRevealSheet: View {
     }
 
     var body: some View {
+        if let question = self.coord.question {
+            self.content(question)
+        }
+    }
+
+    private func content(_ question: ReviewQuestion) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.s3) {
-                self.summary
+                self.summary(question.item)
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
                         self.summaryHeight = $0
                     }
-                ExpandableWordDetail(wordId: self.item.word.id, expanded: self.detent == .large)
+                ExpandableWordDetail(wordId: question.item.word.id, expanded: self.detent == .large)
                     .padding(.top, self.detent == .large ? 0 : Space.s3)
             }
             .padding(.horizontal, Space.s4)
@@ -63,7 +71,7 @@ struct ReviewRevealSheet: View {
             .padding(.bottom, Space.s3)
         }
         .safeAreaInset(edge: .bottom) {
-            self.ratingSection
+            self.ratingSection(question)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
                     self.ratingHeight = $0
                 }
@@ -98,7 +106,7 @@ struct ReviewRevealSheet: View {
     /// Pinned "CTA" for review, always reachable at either detent. Manual
     /// rating buttons normally; a retest-wrong sheet is study material only
     /// (no second SRS write), so it pins a single 下一題 instead.
-    private var ratingSection: some View {
+    private func ratingSection(_ question: ReviewQuestion) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Rectangle().fill(.tujiRule).frame(height: Border.bw1)
             if self.coord.revealMode == .continueOnly {
@@ -116,11 +124,11 @@ struct ReviewRevealSheet: View {
                     self.coord.continueFromReveal()
                 }
             } else {
-                Text(self.coord.wasCorrect ? LocalizedStringKey("記得多牢？") : LocalizedStringKey("沒關係，標記一下"))
+                Text(question.wasCorrect ? LocalizedStringKey("記得多牢？") : LocalizedStringKey("沒關係，標記一下"))
                     .font(.tujiLabel)
                     .tracking(0.5)
                     .foregroundStyle(.tujiInk3)
-                self.ratingRow
+                self.ratingRow(question)
             }
         }
         .padding(.horizontal, Space.s4)
@@ -133,11 +141,11 @@ struct ReviewRevealSheet: View {
     /// Header laid out like the new-word peek sheet: no image (it's already on
     /// screen in the question above), word + pronunciation + 中文 on the left,
     /// favourite + audio buttons stacked on the right.
-    private var summary: some View {
+    private func summary(_ item: StudyQueueItem) -> some View {
         WordSummaryRow(
-            word: self.item.word,
-            wordId: self.item.word.id,
-            gloss: self.settings.current.showZh ? self.item.word.chinese : nil
+            word: item.word,
+            wordId: item.word.id,
+            gloss: self.settings.current.showZh ? item.word.chinese : nil
         )
     }
 
@@ -153,19 +161,19 @@ struct ReviewRevealSheet: View {
     /// right, 重來/困難 when it was wrong. Adding 重來 to a correct answer would
     /// send a different rating and reschedule the card — which is exactly the
     /// scoring behaviour this redesign is not allowed to touch.
-    private var ratingRow: some View {
+    private func ratingRow(_ question: ReviewQuestion) -> some View {
         VStack(spacing: Space.s2) {
-            ForEach(self.coord.availableRatings, id: \.self) { r in
-                self.rateButton(r)
+            ForEach(question.availableRatings, id: \.self) { r in
+                self.rateButton(r, question)
             }
         }
     }
 
-    private func rateButton(_ r: SRSRating) -> some View {
+    private func rateButton(_ r: SRSRating, _ question: ReviewQuestion) -> some View {
         // The suggestion is pre-inverted rather than badged: the ink block is
         // already this app's "this is the one", so a 建議 caption over the label
         // was a second, weaker way of saying it.
-        let filled = self.coord.rated == r || (self.coord.rated == nil && r == self.coord.suggested)
+        let filled = question.rated == r || (question.rated == nil && r == question.suggested)
         return Button {
             self.coord.rate(r)
         } label: {
@@ -191,6 +199,6 @@ struct ReviewRevealSheet: View {
             }
         }
         .buttonStyle(.plain)
-        .disabled(self.coord.rated != nil)
+        .disabled(question.rated != nil)
     }
 }

@@ -1,6 +1,7 @@
 // The 複習 hero: the picture the question is about, and the card it turns into.
-// Split from ReviewFlowView for file size, like ReviewRevealSheet; all state
-// lives on the coordinator, so this file holds presentation only.
+// Split from ReviewFlowView for file size, like ReviewRevealSheet. It draws a
+// `ReviewQuestion` and hands the flip back as an intent, so it holds
+// presentation only and needs no session to exist.
 //
 // 求救提示 (hint flip) — tapping the picture turns it over to the 釋義, or to
 // the gloss for a word that has none (`HintFace`). The
@@ -18,15 +19,15 @@
 import SwiftUI
 
 struct ReviewHeroCard: View {
-    let coord: ReviewFlowCoordinator
-    let item: StudyQueueItem
+    let question: ReviewQuestion
     let height: CGFloat
+    let onFlip: () -> Void
 
     @Environment(OnboardingState.self) private var onboarding
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// Armed by the stall timer; only *shown* while the coordinator still has
-    /// something to teach on this item.
+    /// Armed by the stall timer; only *shown* while the question still has
+    /// something to teach (`canNudge`).
     @State private var nudgeArmed = false
 
     /// The 看完整詳情 sheet. Per presentation, like every other piece of
@@ -34,7 +35,7 @@ struct ReviewHeroCard: View {
     @State private var showDetail = false
 
     /// How long an item may sit unanswered before the card offers the hint.
-    /// Deliberately past the 7s mark where `computeSuggestion` has already
+    /// Deliberately past the 7s mark where `ReviewQuestion.suggestion` has already
     /// dropped the suggestion to 困難 — by the time the line appears, the only
     /// thing flipping still costs is the 穩定/熟練 option.
     private static let nudgeDelay: Duration = .seconds(8)
@@ -44,7 +45,7 @@ struct ReviewHeroCard: View {
             self.card
 
             PronunciationButton(
-                subject: SpokenWord(self.item.word),
+                subject: SpokenWord(self.question.item.word),
                 size: 48,
                 ground: .tujiPaper
             )
@@ -60,22 +61,27 @@ struct ReviewHeroCard: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: self.showNudge)
-        // Keyed on the position too: a retest presents the same word id again
-        // and must re-arm.
-        .task(id: "\(self.item.id)#\(self.coord.index)") {
+        // Keyed on the presentation, not the word: a retest presents the same
+        // word id again and must re-arm.
+        .task(id: self.question.presentationId) {
             self.showDetail = false
             await self.armNudge()
+        }
+        // Marked when the card actually turns, not when the line appears:
+        // someone who ignored the nudge has not learned anything yet.
+        .onChange(of: self.question.hinted) { _, hinted in
+            if hinted { self.onboarding.reviewHintTaught = true }
         }
         // Back on the convenience: it hosts the 詞塊 card outside the shell
         // itself now, which is the only reason this was hand-rolled.
         .tujiSheet(isPresented: self.$showDetail, title: "單字詳情", height: 520) {
             WordDetailSheet(
-                word: self.item.word,
-                wordId: self.item.word.id,
+                word: self.question.item.word,
+                wordId: self.question.item.word.id,
                 // Not gated on `showZh`: that switch governs the always-on
                 // gloss 學新字 prints on a picture, and this sheet is two
                 // deliberate taps in.
-                gloss: self.item.word.chinese
+                gloss: self.question.item.word.chinese
             )
         }
     }
@@ -94,7 +100,7 @@ struct ReviewHeroCard: View {
     /// meaning is given the question is no longer 「這張圖是什麼字」 but 「這個
     /// 意思是哪個字」, and a card asks one question at a time.
     private var card: some View {
-        let up = self.coord.hintFaceUp
+        let up = self.question.hintFaceUp
         return Color.tujiPaper2
             .frame(height: self.height)
             .overlay {
@@ -125,13 +131,13 @@ struct ReviewHeroCard: View {
             .accessibilityElement()
             // The label follows the face, so triggering the actions below
             // actually says something.
-            .accessibilityLabel(up ? Text(HintFace(self.item.word).text) : Text("這個是什麼？"))
+            .accessibilityLabel(up ? Text(HintFace(self.question.item.word).text) : Text("這個是什麼？"))
             // `.accessibilityElement()` ignores its children, so the button drawn
             // on the hint face does not exist for VoiceOver unless it is offered
             // here as well.
             .accessibilityActions {
                 Button(up ? "看圖片" : "看提示") { self.flip() }
-                if up, self.canOpenDetail {
+                if up, self.question.canOpenDetail {
                     Button("看完整詳情") { self.showDetail = true }
                 }
             }
@@ -139,8 +145,8 @@ struct ReviewHeroCard: View {
 
     private var pictureFace: some View {
         WordPicture(
-            url: self.item.word.imageURL,
-            kind: self.item.word.imageKind
+            url: self.question.item.word.imageURL,
+            kind: self.question.item.word.imageKind
         )
     }
 
@@ -159,11 +165,11 @@ struct ReviewHeroCard: View {
             // A sentence and a word do not set the same way: the gloss keeps the
             // headline it has always had, while a 釋義 at that size would fill
             // the card and shrink itself illegible under `minimumScaleFactor`.
-            switch HintFace(self.item.word) {
+            switch HintFace(self.question.item.word) {
             case let .gloss(text): self.hintText(text, font: .tujiH2, lines: 4)
             case let .definition(text): self.hintText(text, font: .tujiBody, lines: 6)
             }
-            if self.canOpenDetail {
+            if self.question.canOpenDetail {
                 self.detailButton
             }
         }
@@ -177,16 +183,6 @@ struct ReviewHeroCard: View {
             .multilineTextAlignment(.center)
             .lineLimit(lines)
             .minimumScaleFactor(0.6)
-    }
-
-    /// Only while the item is unanswered — the same window `toggleHint()` allows
-    /// the flip in, and for a sharper reason. The reveal sheet rests with
-    /// `presentationBackgroundInteraction` enabled, so this face stays tappable
-    /// underneath it: left up, the button would raise a second sheet on top of
-    /// the one asking for a rating and bury both sets of buttons. There is
-    /// nothing lost — that sheet pulls up to the very same detail.
-    private var canOpenDetail: Bool {
-        self.coord.phase == .answer
     }
 
     /// An underlined label, not a filled `BBtn`: the hint face is one line of
@@ -220,16 +216,11 @@ struct ReviewHeroCard: View {
     }
 
     private func flip() {
-        self.coord.toggleHint()
-        // Marked when the card actually turns, not when the line appears:
-        // someone who ignored the nudge has not learned anything yet.
-        if self.coord.hinted {
-            self.onboarding.reviewHintTaught = true
-        }
+        self.onFlip()
     }
 
     private var showNudge: Bool {
-        self.nudgeArmed && self.coord.canNudge && !self.onboarding.reviewHintTaught
+        self.nudgeArmed && self.question.canNudge && !self.onboarding.reviewHintTaught
     }
 
     /// Same slot the gloss occupies during 學新字 (IdentifyView) — the place the

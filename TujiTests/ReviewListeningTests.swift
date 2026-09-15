@@ -43,6 +43,7 @@ private final class FakeSpeechPlaying: SpeechPlaying {
     }
 
     private(set) var rates: [Float] = []
+    private(set) var voices: [SpeechService.Voice] = []
 
     /// Ends the held play with `outcome`.
     func release(_ outcome: SpeechPlayback? = nil) {
@@ -54,7 +55,7 @@ private final class FakeSpeechPlaying: SpeechPlaying {
     func play(
         _ urlString: String?,
         text _: String,
-        voice _: SpeechService.Voice,
+        voice: SpeechService.Voice,
         rate: Float,
         onStart: @escaping @MainActor () -> Void
     ) async
@@ -62,6 +63,7 @@ private final class FakeSpeechPlaying: SpeechPlaying {
     {
         self.plays.append(urlString)
         self.rates.append(rate)
+        self.voices.append(voice)
         self.release(.superseded)
         if self.startsImmediately { onStart() }
         guard self.holdsPlayback else { return self.outcome }
@@ -418,12 +420,12 @@ struct ReviewListeningTests {
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        try #require(coord.kind == .hearSentence)
+        try #require(coord.question?.kind == .hearSentence)
 
-        let answer = try #require(coord.imageOptions?.first { $0.id == "w-mug" })
+        let answer = try #require(coord.question?.imageOptions?.first { $0.id == "w-mug" })
         coord.pickImage(answer)
 
-        #expect(coord.wasCorrect)
+        #expect(coord.question?.wasCorrect == true)
         #expect(coord.flash == nil, "a two-option answer must not flash-advance")
         try await self.awaitReveal(coord)
         #expect(coord.revealMode == .rate)
@@ -437,16 +439,16 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        try #require(coord.kind == .hearSentence)
+        try #require(coord.question?.kind == .hearSentence)
 
-        let distractor = try #require(coord.imageOptions?.first { $0.id != "w-mug" })
+        let distractor = try #require(coord.question?.imageOptions?.first { $0.id != "w-mug" })
         coord.pickImage(distractor)
 
-        #expect(coord.wasCorrect == false)
-        #expect(coord.phase == .review)
+        #expect(coord.question?.wasCorrect == false)
+        #expect(coord.question?.phase == .review)
         try await self.awaitReveal(coord)
         #expect(coord.revealMode == .rate)
-        #expect(coord.wrongPicks.isEmpty, "聽句 never rules options out")
+        #expect(coord.question?.wrongPicks.isEmpty == true, "聽句 never rules options out")
     }
 
     @Test
@@ -459,11 +461,11 @@ struct ReviewListeningTests {
             pool: self.pool(), session: .en, online: true, voice: .us
         ) }
         try await self.waitUntil { audio.isHolding }
-        #expect(coord.awaitingAudio, "the clock must not run while the sentence plays")
+        #expect(coord.question?.awaitingAudio == true, "the clock must not run while the sentence plays")
 
         audio.release()
         await prepare.value
-        #expect(!coord.awaitingAudio)
+        #expect(coord.question?.awaitingAudio == false)
     }
 
     /// Replays spend time on purpose — needing three listens *is* 困難 — so the
@@ -473,11 +475,11 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        let started = coord.startedAt
+        let started = try #require(coord.question?.startedAt)
 
-        await coord.replaySentence(voice: .us)
-        #expect(coord.startedAt == started)
-        #expect(coord.replayCount == 1)
+        await coord.replaySentence()
+        #expect(coord.question?.startedAt == started)
+        #expect(coord.question?.replayCount == 1)
     }
 
     /// The defect: the adapter reported a play cut off by a replay as
@@ -501,20 +503,20 @@ struct ReviewListeningTests {
         try await self.waitUntil { audio.isHolding }
 
         times.now = Date(timeIntervalSince1970: 1002)
-        let replay = Task { await coord.replaySentence(voice: .us) }
+        let replay = Task { await coord.replaySentence() }
         await first.value
-        #expect(!coord.audioFailed, "a play the user cut off by replaying did not fail")
-        #expect(coord.awaitingAudio, "the clock waits for the sentence the user is hearing")
+        #expect(coord.question?.audioFailed == false, "a play the user cut off by replaying did not fail")
+        #expect(coord.question?.awaitingAudio == true, "the clock waits for the sentence the user is hearing")
 
         times.now = Date(timeIntervalSince1970: 1005)
         try await self.waitUntil { audio.isHolding }
         audio.release(.finished)
         await replay.value
 
-        #expect(!coord.audioFailed)
-        #expect(!coord.awaitingAudio)
-        #expect(coord.startedAt == Date(timeIntervalSince1970: 1005))
-        #expect(coord.replayCount == 1)
+        #expect(coord.question?.audioFailed == false)
+        #expect(coord.question?.awaitingAudio == false)
+        #expect(coord.question?.startedAt == Date(timeIntervalSince1970: 1005))
+        #expect(coord.question?.replayCount == 1)
     }
 
     /// ADR-0014: 「超過 3 秒還沒開始播，碼表直接起算並標 audioFailed」. It had
@@ -530,9 +532,9 @@ struct ReviewListeningTests {
         // Held first: before the question is presented `awaitingAudio` is false
         // too, and waiting on it alone returns before anything has played.
         try await self.waitUntil { audio.isHolding }
-        try await self.waitUntil { !coord.awaitingAudio }
+        try await self.waitUntil { coord.question?.awaitingAudio == false }
 
-        #expect(coord.audioFailed)
+        #expect(coord.question?.audioFailed == true)
         audio.release(.stopped)
         await prepare.value
     }
@@ -549,8 +551,8 @@ struct ReviewListeningTests {
             await Task.yield()
         }
 
-        #expect(coord.awaitingAudio, "a long sentence still playing must keep the clock waiting")
-        #expect(!coord.audioFailed)
+        #expect(coord.question?.awaitingAudio == true, "a long sentence still playing must keep the clock waiting")
+        #expect(coord.question?.audioFailed == false)
         audio.release(.finished)
         await prepare.value
     }
@@ -564,12 +566,12 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        let started = coord.startedAt
+        let started = try #require(coord.question?.startedAt)
 
-        await coord.replaySentence(voice: .us, slow: true)
+        await coord.replaySentence(slow: true)
 
-        #expect(coord.replayCount == 1)
-        #expect(coord.startedAt == started)
+        #expect(coord.question?.replayCount == 1)
+        #expect(coord.question?.startedAt == started)
         #expect(audio.rates.last == ReviewFlowCoordinator.slowRate)
     }
 
@@ -579,7 +581,21 @@ struct ReviewListeningTests {
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         #expect(audio.rates == [1])
-        #expect(coord.replayCount == 0, "the card playing itself is not the user asking again")
+        #expect(coord.question?.replayCount == 0, "the card playing itself is not the user asking again")
+    }
+
+    /// The play button used to resolve the voice again from settings at each
+    /// tap, a third copy of the lookup the first play had already done. A
+    /// replay now reads the voice the question was decided with.
+    @Test
+    func aReplayIsTheSameRecordingAsTheFirstPlay() async throws {
+        let audio = FakeSpeechPlaying()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        await coord.replaySentence(slow: true)
+        #expect(audio.voices == [.us, .us])
+        #expect(audio.plays.count == 2)
+        #expect(Set(audio.plays).count == 1)
     }
 
     @Test
@@ -587,7 +603,7 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        await coord.replaySentence(voice: .us)
+        await coord.replaySentence()
         #expect(audio.rates.last == 1)
     }
 
@@ -601,13 +617,13 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        try #require(coord.kind == .hearSentence)
+        try #require(coord.question?.kind == .hearSentence)
 
         coord.optOutOfListening()
 
-        #expect(coord.kind == .pickWord)
-        #expect(coord.imageOptions == nil)
-        #expect(coord.listeningExample == nil)
+        #expect(coord.question?.kind == .pickWord)
+        #expect(coord.question?.imageOptions == nil)
+        #expect(coord.question?.example == nil)
         #expect(audio.stopped == 1, "the sentence must not keep playing")
     }
 
@@ -620,7 +636,7 @@ struct ReviewListeningTests {
 
         // The same card, prepared again, must not come back as 聽句.
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        #expect(coord.kind == .pickWord)
+        #expect(coord.question?.kind == .pickWord)
     }
 
     /// No answer was revealed, so nothing is owed. This is the one place the
@@ -632,15 +648,15 @@ struct ReviewListeningTests {
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
         coord.optOutOfListening()
-        #expect(!coord.hinted)
+        #expect(coord.question?.hinted == false)
 
         // Assert it through the thing that actually consumes `hinted`: answer
         // correctly and check the full positive table is still on offer. The
         // earlier version of this test compared `availableRatings` before
         // answering, which passes whatever `hinted` says.
         coord.pick("mug")
-        #expect(coord.wasCorrect)
-        #expect(coord.availableRatings == [.hard, .good, .easy])
+        #expect(coord.question?.wasCorrect == true)
+        #expect(coord.question?.availableRatings == [.hard, .good, .easy])
     }
 
     /// The card is now a different question, so its clock starts now — and the
@@ -651,11 +667,12 @@ struct ReviewListeningTests {
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        await coord.replaySentence(voice: .us)
-        let before = coord.startedAt
+        await coord.replaySentence()
+        let before = try #require(coord.question?.startedAt)
 
         coord.optOutOfListening()
-        #expect(coord.startedAt > before)
+        let after = try #require(coord.question?.startedAt)
+        #expect(after > before)
 
         coord.pick("mug")
         coord.rate(.good)
@@ -697,7 +714,7 @@ struct ReviewListeningTests {
             )
         ]
         await coord.prepareQuestion(pool: wide, session: .en, online: true, voice: .us)
-        try #require(coord.kind == .hearSentence)
+        try #require(coord.question?.kind == .hearSentence)
         coord.optOutOfListening()
         coord.pick("mug")
         coord.rate(.good)
@@ -738,7 +755,7 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
-        try #require(coord.kind == .pickWord)
+        try #require(coord.question?.kind == .pickWord)
 
         coord.optOutOfListening()
         #expect(!coord.listeningOptedOut, "nothing to opt out of")
@@ -751,12 +768,12 @@ struct ReviewListeningTests {
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
 
         coord.revealSentence()
-        #expect(coord.sentenceRevealed)
-        #expect(coord.hinted)
+        #expect(coord.question?.sentenceRevealed == true)
+        #expect(coord.question?.hinted == true)
 
-        let answer = try #require(coord.imageOptions?.first { $0.id == "w-mug" })
+        let answer = try #require(coord.question?.imageOptions?.first { $0.id == "w-mug" })
         coord.pickImage(answer)
-        #expect(coord.availableRatings == [.again, .hard], "a read answer cannot claim 穩定")
+        #expect(coord.question?.availableRatings == [.again, .hard], "a read answer cannot claim 穩定")
     }
 
     @Test
@@ -766,9 +783,9 @@ struct ReviewListeningTests {
         let spy = ListenAnswerSpy()
         let coord = try self.listeningCoordinator(audio: audio, writer: spy)
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        await coord.replaySentence(voice: .us)
+        await coord.replaySentence()
 
-        let answer = try #require(coord.imageOptions?.first { $0.id == "w-mug" })
+        let answer = try #require(coord.question?.imageOptions?.first { $0.id == "w-mug" })
         coord.pickImage(answer)
         try await self.awaitReveal(coord)
         coord.rate(.good)
@@ -789,8 +806,8 @@ struct ReviewListeningTests {
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
 
-        #expect(coord.kind == .pickWord)
-        #expect(coord.imageOptions == nil)
+        #expect(coord.question?.kind == .pickWord)
+        #expect(coord.question?.imageOptions == nil)
         #expect(audio.plays.isEmpty)
     }
 
@@ -799,7 +816,7 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        #expect(!coord.canNudge)
+        #expect(coord.question?.canNudge == false)
     }
 
     /// The view draws a skeleton until this flips. `kind` defaults to
@@ -811,15 +828,15 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         audio.holdsPlayback = true
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
-        #expect(!coord.questionReady)
+        #expect(coord.question?.ready == false)
 
         let prepare = Task { await coord.prepareQuestion(
             pool: self.pool(), session: .en, online: true, voice: .us
         ) }
         // Ready before the audio finishes: the card is answerable while the
         // sentence plays, only the clock waits.
-        try await self.waitUntil { coord.questionReady }
-        #expect(coord.kind == .hearSentence)
+        try await self.waitUntil { coord.question?.ready == true }
+        #expect(coord.question?.kind == .hearSentence)
         try await self.waitUntil { audio.isHolding }
         audio.release()
         await prepare.value
@@ -830,8 +847,8 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
-        #expect(coord.kind == .pickWord)
-        #expect(coord.questionReady, "a 選字 card must not sit behind the skeleton forever")
+        #expect(coord.question?.kind == .pickWord)
+        #expect(coord.question?.ready == true, "a 選字 card must not sit behind the skeleton forever")
     }
 
     /// `awaitTerminal` is built on `withCheckedContinuation`, which ignores
@@ -842,26 +859,10 @@ struct ReviewListeningTests {
         let audio = FakeSpeechPlaying()
         let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
         await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
-        try #require(coord.kind == .hearSentence)
+        try #require(coord.question?.kind == .hearSentence)
 
         coord.cancelPendingBeats()
         #expect(audio.stopped == 1)
-    }
-
-    /// Answering before the sentence ends leaves nothing timed. The suggestion
-    /// falls back to correctness rather than inventing a speed.
-    @Test
-    func anUntimedCorrectAnswerSuggestsGoodNotEasy() throws {
-        let coord = try ReviewFlowCoordinator(
-            queue: makeQueue(),
-            writer: ListenAnswerSpy(),
-            queueProvider: EmptyQueueProvider(),
-            beat: { _ in }
-        )
-        let suggestion = coord.computeSuggestion(
-            correct: true, elapsed: nil, mastery: 90, hinted: false
-        )
-        #expect(suggestion == .good)
     }
 }
 

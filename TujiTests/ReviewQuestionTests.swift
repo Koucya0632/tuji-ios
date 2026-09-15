@@ -54,6 +54,18 @@ struct ReviewQuestionTests {
 
     private let start = Date(timeIntervalSince1970: 1_700_000_000)
 
+    private func makeListeningQuestion(voice: SpeechService.Voice = .us) throws -> ReviewQuestion {
+        var q = try self.makeQuestion()
+        try q.present(
+            kind: .hearSentence,
+            example: self.makeExample(),
+            voice: voice,
+            imageOptions: nil,
+            awaitsAudio: false
+        )
+        return q
+    }
+
     private func makeQuestion(
         isRetest: Bool = false,
         mastery: Int = 10
@@ -95,6 +107,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: true
         )
@@ -117,6 +130,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: true
         )
@@ -141,6 +155,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: true
         )
@@ -269,6 +284,7 @@ struct ReviewQuestionTests {
         try listening.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: false
         )
@@ -290,6 +306,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: false
         )
@@ -313,6 +330,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: false
         )
@@ -325,6 +343,86 @@ struct ReviewQuestionTests {
         )
         _ = q.pickImage(impostor, now: self.start)
         #expect(!q.wasCorrect)
+    }
+
+    /// The frame a picture gets comes from the question's own answer and pick,
+    /// so the card no longer reaches past the question for the answer's id.
+    @Test
+    func aPicturesFrameComesFromTheQuestionsAnswerAndPick() throws {
+        var q = try self.makeListeningQuestion()
+        let answer = ImageChoiceOption(id: "w-fork", word: "fork", imageUrl: "", imageKind: .cutout)
+        let other = ImageChoiceOption(id: "w-spoon", word: "spoon", imageUrl: "", imageKind: .cutout)
+        #expect(q.pictureState(for: answer) == .idle)
+
+        _ = q.pickImage(other, now: self.start)
+        #expect(q.pictureState(for: other) == .wrong)
+        #expect(q.pictureState(for: answer) == .answer)
+    }
+
+    // MARK: - What the card offers
+
+    /// The eye used to be drawn whenever the sentence had not been revealed, so
+    /// after answering it sat over a sentence that was legible anyway and
+    /// pressing it did nothing. It is offered exactly while it does something.
+    @Test
+    func theEyeIsGoneOnceTheAnswerIsIn() throws {
+        var q = try self.makeListeningQuestion()
+        #expect(q.canRevealSentence)
+        #expect(!q.sentenceLegible)
+
+        _ = q.pick("fork", now: self.start)
+        #expect(q.sentenceLegible, "answering makes the sentence study material")
+        #expect(!q.canRevealSentence, "and leaves the eye nothing to do")
+        q.revealSentence()
+        #expect(!q.hinted, "reading the sentence after answering costs nothing")
+    }
+
+    @Test
+    func pressingTheEyeMakesTheSentenceLegibleAndRetiresTheEye() throws {
+        var q = try self.makeListeningQuestion()
+        q.revealSentence()
+        #expect(q.sentenceLegible)
+        #expect(!q.canRevealSentence)
+        #expect(q.hinted)
+    }
+
+    /// 選字 has no sentence to reveal and no listening to opt out of.
+    @Test
+    func aPickWordCardOffersNoListeningControls() throws {
+        let q = try self.makeQuestion()
+        #expect(!q.canRevealSentence)
+        #expect(!q.canOptOutOfListening)
+        #expect(q.voice == nil)
+        #expect(q.sentenceClip == nil)
+    }
+
+    /// The reveal sheet leaves the card tappable underneath it, so everything
+    /// the card can raise closes when the answer lands.
+    @Test
+    func answeringClosesTheCardsControls() throws {
+        var q = try self.makeListeningQuestion()
+        #expect(q.acceptsAnswer)
+        #expect(q.canOpenDetail)
+        #expect(q.canOptOutOfListening)
+
+        _ = q.pick("fork", now: self.start)
+        #expect(!q.acceptsAnswer)
+        #expect(!q.canOpenDetail)
+        #expect(!q.canOptOutOfListening)
+    }
+
+    /// The clip is the one for the voice the question was decided with — and
+    /// opting out drops the voice with the sentence.
+    @Test
+    func theClipFollowsTheVoiceTheQuestionWasDecidedWith() throws {
+        var us = try self.makeListeningQuestion(voice: .us)
+        #expect(us.sentenceClip == "https://example.test/a2.mp3")
+        let uk = try self.makeListeningQuestion(voice: .uk)
+        #expect(uk.sentenceClip == nil, "no clip in that voice, so on-device synthesis")
+
+        _ = us.optOutOfListening(now: self.start)
+        #expect(us.voice == nil)
+        #expect(us.sentenceClip == nil)
     }
 
     // MARK: - 求救提示 and the blur
@@ -354,6 +452,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: false
         )
@@ -373,6 +472,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: false
         )
@@ -392,6 +492,7 @@ struct ReviewQuestionTests {
         try q.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: true
         )
@@ -441,6 +542,7 @@ struct ReviewQuestionTests {
         try answered.present(
             kind: .hearSentence,
             example: self.makeExample(),
+            voice: .us,
             imageOptions: nil,
             awaitsAudio: false
         )
@@ -457,7 +559,7 @@ struct ReviewQuestionTests {
     func presentingWithoutASentenceLeavesAPickWordCard() throws {
         var q = try self.makeQuestion()
         #expect(!q.ready)
-        q.present(kind: .hearSentence, example: nil, imageOptions: nil, awaitsAudio: true)
+        q.present(kind: .hearSentence, example: nil, voice: .us, imageOptions: nil, awaitsAudio: true)
         #expect(q.ready)
         #expect(q.kind == .pickWord, "a sentence is what makes it a listening question")
         #expect(q.example == nil)
@@ -470,8 +572,7 @@ struct ReviewQuestionTests {
     /// while reading the answer is not 「needed another listen」.
     @Test
     func aReplayAfterAnsweringIsNotCounted() throws {
-        var q = try self.makeQuestion()
-        try q.present(kind: .hearSentence, example: self.makeExample(), imageOptions: nil, awaitsAudio: false)
+        var q = try self.makeListeningQuestion()
         _ = q.beginPlayback(isReplay: true)
         #expect(q.replayCount == 1)
 
@@ -491,8 +592,16 @@ struct ReviewQuestionTests {
         #expect(ReviewQuestion.suggestion(correct: true, elapsed: 10, mastery: 80) == .hard)
         #expect(ReviewQuestion.suggestion(correct: false, elapsed: 1, mastery: 80) == .again)
         #expect(ReviewQuestion.suggestion(correct: true, elapsed: nil, mastery: 80) == .good)
+        // Speed and mastery stop mattering once the gloss was read, and the hint
+        // cannot make a miss look better.
         #expect(
             ReviewQuestion.suggestion(correct: true, elapsed: 1, mastery: 80, hinted: true) == .hard
+        )
+        #expect(
+            ReviewQuestion.suggestion(correct: true, elapsed: 5, mastery: 80, hinted: true) == .hard
+        )
+        #expect(
+            ReviewQuestion.suggestion(correct: false, elapsed: 1, mastery: 80, hinted: true) == .again
         )
     }
 }
