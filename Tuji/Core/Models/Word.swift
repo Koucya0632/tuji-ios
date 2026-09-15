@@ -10,6 +10,20 @@
 import Foundation
 
 extension String {
+    /// The item id when this is one of the user's own 自製圖鑑 word ids
+    /// (`atlas:<itemId>`), else nil.
+    ///
+    /// The prefix is a routing decision — a captured word opens its atlas detail,
+    /// has no cards-table row to report against, and is never bookmarked — and
+    /// it was spelled out as `hasPrefix("atlas:")` at five call sites beside the
+    /// constant `WordDetailVM` said owned it.
+    var atlasItemId: String? {
+        let prefix = "atlas:"
+        guard self.hasPrefix(prefix) else { return nil }
+        let itemId = String(self.dropFirst(prefix.count))
+        return itemId.isEmpty ? nil : itemId
+    }
+
     /// The public slug when this is a saved 物見 word id (`saved:<slug>`),
     /// else nil. The prefix is the routing decision: these belong to someone
     /// else, so they open on the public detail rather than the word screen —

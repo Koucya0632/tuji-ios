@@ -103,7 +103,7 @@ struct NewFlowView: View {
         guard let task = self.coord.current else { return }
         // Custom cards have no cards-table row, so /api/study/reports
         // can't accept them — explain instead of silently dropping the tap.
-        guard !task.item.card.id.hasPrefix("atlas:") else {
+        guard task.item.card.id.atlasItemId == nil else {
             self.showCustomCardNotice = true
             return
         }

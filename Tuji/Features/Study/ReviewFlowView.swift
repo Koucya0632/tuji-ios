@@ -121,7 +121,7 @@ struct ReviewFlowView: View {
         guard let item = self.coord.current else { return }
         // Custom cards have no cards-table row, so /api/study/reports
         // can't accept them — explain instead of silently dropping the tap.
-        guard !item.card.id.hasPrefix("atlas:") else {
+        guard item.card.id.atlasItemId == nil else {
             self.showCustomCardNotice = true
             return
         }

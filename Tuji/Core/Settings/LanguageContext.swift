@@ -13,6 +13,14 @@ protocol LanguageContext {
     var learningDirection: LearningDirection { get }
 }
 
+extension LanguageContext {
+    /// The `lang` a content read asks for — the interface language, mapped to
+    /// the codes the server keeps glosses in.
+    var contentLanguageCode: String {
+        UILanguage(code: self.uiLang).contentLanguageCode
+    }
+}
+
 extension SettingsStore: LanguageContext {
     var uiLang: String {
         self.current.uiLang

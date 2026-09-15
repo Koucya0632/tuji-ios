@@ -127,7 +127,9 @@ struct LiveAtlasRepository {
         let response: AtlasPublicItemResponse = try await self.api.get(
             .atlasPublicItem(
                 slug: slug,
-                lang: SettingsStore.shared.current.uiLanguage.contentLanguageCode
+                // The injected context, like every other read in this struct.
+                // This one reached `SettingsStore.shared` beside it.
+                lang: self.settings.contentLanguageCode
             )
         )
         return response.item
