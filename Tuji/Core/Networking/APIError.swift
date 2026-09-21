@@ -146,16 +146,12 @@ enum APIError: LocalizedError {
     /// to that copy rather than to a generic line — a sentence in the wrong
     /// language still says more than 「這個動作現在無法完成」.
     ///
-    /// The reasons come from tuji-web `lib/atlas/collection-membership.ts`. The
-    /// 合集 ones are a backstop: 加入項目 greys these tiles out before they can
-    /// be tapped (`CollectionCandidatesModel`), and this is what a race or an
-    /// older client lands on.
+    /// The reasons come from tuji-web `lib/atlas/collection-membership.ts`.
+    /// There used to be two more here — a 合集 that was live or in review
+    /// refused an unpublished item outright — and they are gone because the
+    /// refusal is: such a member now joins and reviews on its own.
     private static func conflictCopy(for reason: String?) -> String? {
         switch reason {
-        case "collection_live":
-            tujiLocalized("合集已公開，只能加入已公開的項目。先取消公開，加入後再重新公開。")
-        case "collection_in_review":
-            tujiLocalized("合集正在審核中，審核結束後才能加入未公開的項目。")
         case "already_member":
             tujiLocalized("這個項目已經在合集裡了。")
         default:

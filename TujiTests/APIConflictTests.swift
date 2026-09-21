@@ -39,22 +39,22 @@ struct APIConflictTests {
     func conflictCarriesReasonAndMessage() throws {
         guard case let .conflict(reason, message)? = try self.thrown(
             status: 409,
-            body: #"{"error":"collection_live","message":"合集已公開，只能加入已公開的項目。"}"#
+            body: #"{"error":"already_member","message":"這個項目已經在合集裡了。"}"#
         )
         else {
             Issue.record("expected .conflict")
             return
         }
 
-        #expect(reason == "collection_live")
-        #expect(message == "合集已公開，只能加入已公開的項目。")
+        #expect(reason == "already_member")
+        #expect(message == "這個項目已經在合集裡了。")
     }
 
     /// The reason exists so the sentence can be this app's, in this app's UI
     /// language. The server's copy is the fallback, not the answer.
     @Test("a known reason is said in the app's own words")
     func knownReasonsUseTheAppsCopy() {
-        let error = APIError.conflict(reason: "collection_live", message: "伺服器說的話")
+        let error = APIError.conflict(reason: "already_member", message: "伺服器說的話")
 
         #expect(error.errorDescription != "伺服器說的話")
         #expect(error.errorDescription?.isEmpty == false)

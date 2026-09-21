@@ -42,16 +42,17 @@ struct AtlasReviewStatusTests {
         #expect(AtlasReviewStatus.withdrawn.label != AtlasReviewStatus.takedown.label)
     }
 
-    /// Read on a collection. Mirrors the server's guard: only a collection that
-    /// is off the shelf and not in flight can take a member that isn't public
-    /// yet, because such a member joins by being submitted *with* it.
+    /// Read on a collection: can it carry a member that isn't public yet
+    /// through review *with* it? Only while it is off the shelf and not in
+    /// flight. A live one cannot, so such a member reviews on its own instead —
+    /// which is a different path, not a refusal.
     @Test
-    func onlyAnOffShelfCollectionTakesUnpublishedMembers() {
+    func onlyAnOffShelfCollectionCarriesUnpublishedMembers() {
         for status: AtlasReviewStatus in [.draft, .rejected, .withdrawn] {
-            #expect(status.acceptsUnpublishedMembers, "expected \(status.rawValue) to accept")
+            #expect(status.acceptsUnpublishedMembers, "expected \(status.rawValue) to carry")
         }
         for status: AtlasReviewStatus in [.approved, .pending, .pendingAuto, .pendingReview, .takedown] {
-            #expect(!status.acceptsUnpublishedMembers, "expected \(status.rawValue) to refuse")
+            #expect(!status.acceptsUnpublishedMembers, "expected \(status.rawValue) not to carry")
         }
     }
 

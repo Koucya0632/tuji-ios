@@ -168,7 +168,7 @@ struct CollectionCandidatesModelTests {
         let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: [], repo: fake)
         await model.load()
 
-        await model.add("a", using: { _ in "合集已公開，只能加入已公開的項目。" })
+        await model.add("a", using: { _ in "這個項目現在不能加入這個合集。" })
 
         #expect(!model.isAdded("a"))
         #expect(model.addError != nil)
@@ -190,13 +190,14 @@ struct CollectionCandidatesModelTests {
         #expect(calls == 1)
     }
 
-    // MARK: - What the 合集 can take
+    // MARK: - Which review path a new member takes
 
-    /// The 409 this came from: the picker offered a private item, the author
-    /// tapped it, and an already-public 合集 refused it. Eligibility is a pair —
-    /// the item is fine, the collection is what cannot take it.
+    /// Nothing is blocked any more — a 合集 that is already public takes an
+    /// unpublished item too, and that item goes through the item gate on its
+    /// own, invisible in the collection until it passes. What the picker owes
+    /// the author is that promise, not a lock.
     @Test
-    func aPublishedCollectionCannotTakeUnpublishedItems() async {
+    func addingToALiveCollectionStartsTheItemsOwnReview() async {
         let fake = FakeCollectionManaging()
         fake.candidates = [
             self.candidate("public", publicationState: "public"),
@@ -212,34 +213,33 @@ struct CollectionCandidatesModelTests {
 
         await model.load()
 
-        #expect(model.blocksUnpublished)
-        // Still listed — dropping them answers 「我的圖鑑呢？」 with silence.
+        #expect(model.submitsMembersOnTheirOwn)
         #expect(model.available.count == 3)
-        #expect(model.isAddable(self.candidate("public", publicationState: "public")))
-        #expect(!model.isAddable(self.candidate("private", publicationState: "private")))
-        #expect(!model.isAddable(self.candidate("pending", publicationState: "pending")))
+        // Already public: it just joins, and there is nothing to review.
+        #expect(!model.entersReviewOnAdd(self.candidate("public", publicationState: "public")))
+        #expect(model.entersReviewOnAdd(self.candidate("private", publicationState: "private")))
+        #expect(model.entersReviewOnAdd(self.candidate("pending", publicationState: "pending")))
     }
 
-    /// A collection in review is just as closed, and for the same reason: it
-    /// cannot carry a new member through a gate it is already inside.
+    /// A collection inside the gate cannot carry anyone through it either, so
+    /// its new members go on their own the same way.
     @Test
-    func aCollectionInReviewIsClosedToo() {
-        let fake = FakeCollectionManaging()
+    func aCollectionInReviewAlsoSendsMembersOnTheirOwn() {
         let model = CollectionCandidatesModel(
             language: .ja,
             collectionReview: .pendingReview,
             existingIds: [],
-            repo: fake
+            repo: FakeCollectionManaging()
         )
 
-        #expect(model.blocksUnpublished)
-        #expect(!model.isAddable(self.candidate("a", publicationState: "private")))
+        #expect(model.submitsMembersOnTheirOwn)
+        #expect(model.entersReviewOnAdd(self.candidate("a", publicationState: "private")))
     }
 
-    /// Draft, 未通過 and 已收回 all still take anything: an unpublished member
-    /// joins by being submitted *with* the collection.
+    /// Draft, 未通過 and 已收回 carry their members: an unpublished item rides
+    /// along when the collection is published, so adding it reviews nothing yet.
     @Test
-    func anOffShelfCollectionTakesEverything() {
+    func anOffShelfCollectionCarriesItsMembers() {
         for review in [AtlasReviewStatus.draft, .rejected, .withdrawn] {
             let model = CollectionCandidatesModel(
                 language: .ja,
@@ -248,15 +248,18 @@ struct CollectionCandidatesModelTests {
                 repo: FakeCollectionManaging()
             )
 
-            #expect(!model.blocksUnpublished, "\(review)")
-            #expect(model.isAddable(self.candidate("a", publicationState: "private")), "\(review)")
+            #expect(!model.submitsMembersOnTheirOwn, "\(review)")
+            #expect(
+                !model.entersReviewOnAdd(self.candidate("a", publicationState: "private")),
+                "\(review)"
+            )
         }
     }
 
-    /// An older server omits the field. Treating that as "not addable" would
-    /// empty the picker for everyone on it; the server still has the final say.
+    /// An older server omits the field. Promising a review that may not happen
+    /// is worse than staying quiet; the server still has the final say.
     @Test
-    func aCandidateWithoutAPublicationStateStaysAddable() {
+    func aCandidateWithoutAPublicationStatePromisesNothing() {
         let model = CollectionCandidatesModel(
             language: .ja,
             collectionReview: .approved,
@@ -264,7 +267,7 @@ struct CollectionCandidatesModelTests {
             repo: FakeCollectionManaging()
         )
 
-        #expect(model.isAddable(self.candidate("a")))
+        #expect(!model.entersReviewOnAdd(self.candidate("a")))
     }
 
     /// The picker is the sheet on top, so the refusal has to surface *here* —
@@ -282,9 +285,9 @@ struct CollectionCandidatesModelTests {
         )
         await model.load()
 
-        await model.add("a", using: { _ in "合集正在審核中，審核結束後才能加入未公開的項目。" })
+        await model.add("a", using: { _ in "這個項目現在不能加入這個合集。" })
 
-        #expect(model.addError == "合集正在審核中，審核結束後才能加入未公開的項目。")
+        #expect(model.addError == "這個項目現在不能加入這個合集。")
         #expect(!model.isAdded("a"))
     }
 }

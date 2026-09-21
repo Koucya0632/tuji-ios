@@ -4052,6 +4052,52 @@
         }
       }
     },
+    "加入後會自動送審" : {
+      "comment" : "VoiceOver hint for a not-yet-public item in the 加入項目 grid.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent for review when added"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加すると審査に出されます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入后会自动送审"
+          }
+        }
+      }
+    },
+    "加入後送審" : {
+      "comment" : "Badge on a not-yet-public item in the 加入項目 grid, for a live collection.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review on add"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加で審査へ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入后送审"
+          }
+        }
+      }
+    },
     "加入書籤" : {
       "localizations" : {
         "en" : {
@@ -4385,52 +4431,6 @@
         }
       }
     },
-    "合集已公開，只能加入已公開的項目。先取消公開才能加入其他的。" : {
-      "comment" : "Notice above the 加入項目 grid when the collection is already public.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This collection is public, so it can only take items that are already public. Unpublish it first to add others."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コレクションは公開中のため、すでに公開されている項目しか追加できません。ほかを追加するには、まず公開を取り消してください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合集已公开，只能加入已公开的项目。先取消公开才能加入其他的。"
-          }
-        }
-      }
-    },
-    "合集已公開，只能加入已公開的項目。先取消公開，加入後再重新公開。" : {
-      "comment" : "409 reason: the collection is live and cannot take an unpublished item.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This collection is public, so it can only take items that are already public. Unpublish it, add them, then publish again."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コレクションは公開中のため、すでに公開されている項目しか追加できません。公開を取り消してから追加し、もう一度公開してください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合集已公开，只能加入已公开的项目。先取消公开，加入后再重新公开。"
-          }
-        }
-      }
-    },
     "合集會從物見移除，裡面的項目仍然是公開的。" : {
       "localizations" : {
         "en" : {
@@ -4449,29 +4449,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "合集会从物见移除，里面的项目仍然是公开的。"
-          }
-        }
-      }
-    },
-    "合集正在審核中，審核結束後才能加入未公開的項目。" : {
-      "comment" : "409 reason: the collection is in review.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This collection is in review. Once that finishes you can add items that aren't public yet."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コレクションは審査中です。審査が終わると、未公開の項目も追加できます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合集正在审核中，审核结束后才能加入未公开的项目。"
           }
         }
       }
@@ -9042,6 +9019,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未公开"
+          }
+        }
+      }
+    },
+    "未公開的項目加入後會自動送審，通過才會出現在合集裡。" : {
+      "comment" : "Notice above the 加入項目 grid when the collection is live or in review.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Items that aren't public yet are sent for review when you add them, and appear in the collection once they pass."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未公開の項目は追加すると自動で審査に出され、通過するとコレクションに表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未公开的项目加入后会自动送审，通过才会出现在合集里。"
           }
         }
       }
