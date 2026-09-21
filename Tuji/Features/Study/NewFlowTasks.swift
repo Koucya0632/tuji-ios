@@ -8,7 +8,10 @@ import Foundation
 enum NewTaskKind: String, Hashable {
     case recognize
     case identify
-    case spellTiles = "spell_tiles"
+    /// 拼字. The raw value stays `spell_tiles` because it travels to the server
+    /// as a 報錯 snapshot's `phase`; the case is no longer named after tiles
+    /// because most words no longer get them (see SpellForm).
+    case spell = "spell_tiles"
 }
 
 struct NewStudyTask: Hashable, Identifiable {
@@ -92,6 +95,64 @@ nonisolated enum SpellSubject: Equatable {
     var isReading: Bool {
         if case .reading = self { return true }
         return false
+    }
+}
+
+/// Which board the 拼字 stage draws for this word.
+///
+/// English replaced the from-scratch tile board with a gap-fill: re-assembling
+/// every letter quizzes "do you remember each character", while English
+/// spelling goes wrong in a handful of places worth cutting out. Japanese keeps
+/// the tiles — its 拼字 asks for a kana reading, which has no orthographic
+/// confusables to cut.
+///
+/// The split is decided on the subject's *script*, not on `targetLanguage`:
+/// that field is optional, and バスマット is a `.term` too, so a Latin-letter
+/// test leaves kana on the tile board without having to trust the tag.
+enum SpellForm: Equatable {
+    case gaps(SpellGaps)
+    case tiles(TileBoard)
+}
+
+extension SpellForm {
+    /// nil when the word carries no 拼字 stage at all — a single-unit subject,
+    /// which is the rule the ladder has always gated on.
+    ///
+    /// Deliberately *not* `nonisolated`, unlike the placement inside SpellGaps:
+    /// it reads `TileBoard.unitCount`, a computed property the module's default
+    /// isolation puts on the main actor. `-Onone` lets a `nonisolated` version
+    /// through and the whole-module release build does not — the same trap
+    /// `TileBoard.units` carries a note about. Every caller (the ladder, the
+    /// coordinator, the task views) is already main-actor, so this costs
+    /// nothing.
+    static func of(_ item: StudyQueueItem) -> SpellForm? {
+        if case let .term(term) = TileBoard.spellSubject(for: item),
+           self.isLatinScript(term),
+           let gaps = SpellGaps.of(term: term)
+        {
+            return .gaps(gaps)
+        }
+        let board = TileBoard.of(item)
+        return board.unitCount >= 2 ? .tiles(board) : nil
+    }
+
+    /// How many slots the learner has to fill. The pool is longer than this on
+    /// a gap-fill (it carries distractors) and exactly this long on a tile
+    /// board, which is why "is the board full" has to ask the form and not the
+    /// pool.
+    var slotCount: Int {
+        switch self {
+        case let .gaps(plan): plan.gaps.count
+        case let .tiles(board): board.unitCount
+        }
+    }
+
+    /// ASCII letters plus the separators a headword may carry ("air
+    /// conditioner", "T-shirt", "children's"). Anything else — kana, kanji,
+    /// accented Latin — belongs on the tile board.
+    private nonisolated static func isLatinScript(_ term: String) -> Bool {
+        guard let first = term.first, first.isASCII, first.isLetter else { return false }
+        return term.allSatisfy { $0.isASCII && ($0.isLetter || $0 == " " || $0 == "-" || $0 == "'") }
     }
 }
 
@@ -183,10 +244,10 @@ extension TileBoard {
 
 /// The spell board as the view should draw it.
 ///
-/// `tilePicked` is one flat `[Int]` shared across every word, indexing a
+/// `spellPicked` is one flat `[Int]` shared across every word, indexing a
 /// per-item, per-attempt unit list. Handing the view those two raw pieces
 /// meant both sides had to subscript one with the other — and they disagreed
-/// about what an out-of-range index means: `tilesMatch` bounds-checks and
+/// about what an out-of-range index means: `spellMatches` bounds-checks and
 /// returns `false`, `TilesView.slotBox` did not and would trap. One frame
 /// during the `.id(currentPresentationId)` swap between a 7-tile board and a
 /// 3-tile board hits both readers at once.
@@ -219,5 +280,48 @@ struct SpellBoard: Equatable {
 
     var isLocked: Bool {
         self.verdict != nil
+    }
+}
+
+/// The gap-fill board as the view should draw it.
+///
+/// Same contract as `SpellBoard` above and for the same reason: the view reads
+/// one resolved value instead of subscripting a pick list by a pool list, which
+/// is where the two readers used to disagree about bounds.
+struct SpellGapBoard: Equatable {
+    struct Slot: Equatable {
+        /// What belongs here. The view needs it to mark each slot individually
+        /// once the answer is out — a wrong board should say *which* chunk
+        /// missed, not just that the word is wrong.
+        var answer: String
+        /// nil = still empty.
+        var filled: String?
+
+        var isCorrect: Bool {
+            self.filled == self.answer
+        }
+    }
+
+    /// The whole word, for the 正解 reveal.
+    var term: String
+    /// Visible text around the slots; `segments.count == slots.count + 1`.
+    var segments: [String]
+    var slots: [Slot]
+    var pool: [SpellBoard.Tile]
+    /// The longest option in the pool. Blank boxes size to this rather than to
+    /// their own answer, so the width of a hole never tells you how many
+    /// letters go in it.
+    var widestOption: String
+    /// nil until the board fills and locks.
+    var verdict: Bool?
+
+    var isLocked: Bool {
+        self.verdict != nil
+    }
+
+    /// Where the next tap lands — the view draws a cursor there.
+    var activeSlot: Int? {
+        guard !self.isLocked else { return nil }
+        return self.slots.firstIndex { $0.filled == nil }
     }
 }

@@ -37,13 +37,14 @@ final class NewFlowCoordinator: StudySession {
     var recLocked: Bool = false
     var idPicked: String?
     var idLocked: Bool = false
-    var tiLocked: Bool = false
+    var spellLocked: Bool = false
 
-    /// Tiles tapped into slots, in tap order — indices into `tileUnits(for:)`.
-    /// Index-based so duplicate units stay distinguishable. Owned here (not in
-    /// TilesView) so the assemble-and-compare is a testable coordinator decision;
-    /// reset when the spell task advances (correct) or requeues (wrong).
-    private(set) var tilePicked: [Int] = []
+    /// Pool entries tapped into slots, in tap order — indices into
+    /// `spellPool(for:)`, shared by both 拼字 boards. Index-based so duplicate
+    /// units stay distinguishable. Owned here (not in the task views) so the
+    /// assemble-and-compare is a testable coordinator decision; reset when the
+    /// spell task advances (correct) or requeues (wrong).
+    private(set) var spellPicked: [Int] = []
 
     /// Surface to NewFlowView so it can present WordPeek for wrong answers.
     var peek: StudyQueueWord?
@@ -57,9 +58,10 @@ final class NewFlowCoordinator: StudySession {
     /// took. First-attempt-only: retries after the peek sheet aren't timed.
     private var identifyShownAt: [String: Date] = [:]
     private var identifyResponseMs: [String: Int] = [:]
-    /// Wrong-attempt counts per word id: reshuffles MCQ options, re-seeds the
-    /// spell variant, and re-scrambles the tiles on each retry so position
-    /// memory doesn't stand in for the word.
+    /// Wrong-attempt counts per word id: reshuffles MCQ options and re-seeds the
+    /// 拼字 pool on each retry so position memory doesn't stand in for the word.
+    /// The board itself does not move — a gap-fill re-cuts the same chunks,
+    /// because the chunk they missed is the one worth asking again.
     private var identifyAttempts: [String: Int] = [:]
     private var spellAttempts: [String: Int] = [:]
 
@@ -76,7 +78,7 @@ final class NewFlowCoordinator: StudySession {
     ///
     /// The sleep is injected so the tested surface is the one the app calls.
     /// Before that, tests drove `resolveRecognize` / `resolveIdentify` /
-    /// `resolveTiles` directly — which the app never calls — so the beats, the
+    /// `resolveSpell` directly — which the app never calls — so the beats, the
     /// locks and everything between a tap and an SRS write had no coverage at
     /// all. It had already cost a duplicate: `resolveIdentify` carried a second
     /// latency capture whose only caller was the test suite.
@@ -129,13 +131,14 @@ final class NewFlowCoordinator: StudySession {
     }
 
     /// 報錯: the task on screen, which stage it is, and what the user chose on
-    /// it — the self-rating in 認識, the pick in 選字, nothing for 拼字.
+    /// it — the self-rating in 認識, the pick in 選字, whatever is on the board
+    /// in 拼字.
     var reportSubject: StudyReportSubject? {
         guard let task = self.ladder.current else { return nil }
         let answer: String? = switch task.kind {
         case .recognize: self.recRating?.rawValue
         case .identify: self.idPicked
-        case .spellTiles: nil
+        case .spell: self.spellAttemptText
         }
         return StudyReportSubject(item: task.item, phase: task.kind.rawValue, selectedAnswer: answer)
     }
@@ -148,7 +151,7 @@ final class NewFlowCoordinator: StudySession {
         let attempt = switch task.kind {
         case .recognize: 0
         case .identify: self.identifyAttempts[task.item.word.id] ?? 0
-        case .spellTiles: self.spellAttempts[task.item.word.id] ?? 0
+        case .spell: self.spellAttempts[task.item.word.id] ?? 0
         }
         return "\(task.id)#\(attempt)"
     }
@@ -184,7 +187,7 @@ final class NewFlowCoordinator: StudySession {
             )
         ]
         if self.ladder.hasSpellStage(item) {
-            steps.append(NewStageStep(kind: .spellTiles, state: state(.spellTiles, done: false)))
+            steps.append(NewStageStep(kind: .spell, state: state(.spell, done: false)))
         }
         return steps
     }
@@ -312,95 +315,168 @@ final class NewFlowCoordinator: StudySession {
         self.identifyAttempts[item.word.id] ?? 0
     }
 
-    // MARK: - 拼字塊 (letter tiles)
+    // MARK: - 拼字
 
     /// Latched when the board fills, cleared when it resets. Also what the view
-    /// used to reconstruct as `boardFull && tiLocked`.
-    private(set) var tilesVerdict: Bool?
+    /// used to reconstruct as `boardFull && spellLocked`.
+    private(set) var spellVerdict: Bool?
 
+    /// 拼字塊 — the whole-string tile board. Japanese readings only now: English
+    /// words take the gap-fill below.
     var spellBoard: SpellBoard? {
-        guard let task = ladder.current, task.kind == .spellTiles else { return nil }
+        guard let task = ladder.current, task.kind == .spell,
+              let form = SpellForm.of(task.item),
+              case let .tiles(board) = form
+        else { return nil }
         let item = task.item
-        let units = self.tileUnits(for: item)
-        let placed = self.tilePicked.filter { units.indices.contains($0) }
+        let units = self.spellPool(for: item)
+        let placed = self.spellPicked.filter { units.indices.contains($0) }
         return SpellBoard(
             slots: (0..<units.count).map { slot in
                 SpellBoard.Slot(unit: slot < placed.count ? units[placed[slot]] : nil)
             },
             pool: units.enumerated().map { index, unit in
-                SpellBoard.Tile(unit: unit, used: self.tilePicked.contains(index))
+                SpellBoard.Tile(unit: unit, used: self.spellPicked.contains(index))
             },
             subject: TileBoard.spellSubject(for: item),
-            tokenUnits: TileBoard.of(item).tokenUnits,
-            verdict: self.tilesVerdict
+            tokenUnits: board.tokenUnits,
+            verdict: self.spellVerdict
         )
     }
 
-    /// Scrambled tiles, seeded per (item, attempt) — see the core in
-    /// NewFlowTasks.swift.
-    func tileUnits(for item: StudyQueueItem) -> [String] {
-        TileBoard.units(for: item, attempt: self.spellAttempts[item.word.id] ?? 0)
+    /// 挖空拼字 — the English board: the word with a few chunks cut out of it.
+    var gapBoard: SpellGapBoard? {
+        guard let task = ladder.current, task.kind == .spell,
+              let form = SpellForm.of(task.item),
+              case let .gaps(plan) = form
+        else { return nil }
+        let options = self.spellPool(for: task.item)
+        let placed = self.spellPicked.filter { options.indices.contains($0) }
+        return SpellGapBoard(
+            term: plan.term,
+            segments: plan.segments,
+            slots: plan.gaps.enumerated().map { index, gap in
+                SpellGapBoard.Slot(
+                    answer: gap.answer,
+                    filled: index < placed.count ? options[placed[index]] : nil
+                )
+            },
+            pool: options.enumerated().map { index, option in
+                SpellBoard.Tile(unit: option, used: self.spellPicked.contains(index))
+            },
+            widestOption: options.max { $0.count < $1.count } ?? "",
+            verdict: self.spellVerdict
+        )
     }
 
-    /// Tap a pool tile into the next slot. Auto-checks when the board fills. A
-    /// no-op once locked, off a non-spell task, or if the tile is already placed.
-    func pickTile(_ idx: Int) {
-        guard !self.tiLocked, let task = current, task.kind == .spellTiles,
-              !self.tilePicked.contains(idx)
-        else { return }
-        self.haptics.soft()
-        self.tilePicked.append(idx)
-        let units = self.tileUnits(for: task.item)
-        if self.tilePicked.count == units.count {
-            let correct = self.tilesMatch(self.tilePicked, for: task.item)
-            self.tilesVerdict = correct
-            self.tilesAnswer(correct: correct)
+    /// What the learner can tap, in display order — scrambled tiles for a tile
+    /// board, shuffled chunks for a gap-fill. Seeded per (item, attempt): a
+    /// re-render keeps the order, a retry gets a fresh one.
+    func spellPool(for item: StudyQueueItem) -> [String] {
+        let attempt = self.spellAttempts[item.word.id] ?? 0
+        return switch SpellForm.of(item) {
+        case .tiles: TileBoard.units(for: item, attempt: attempt)
+        case .gaps: SpellGaps.options(for: item, attempt: attempt)
+        case nil: []
         }
     }
 
-    /// Tap a filled slot to take that tile back out (before the board locks).
-    func unpickTile(atSlot slot: Int) {
-        guard !self.tiLocked, slot < self.tilePicked.count else { return }
-        self.tilePicked.remove(at: slot)
+    /// Tap a pool entry into the next empty slot. Auto-checks when the last slot
+    /// fills. A no-op once locked, off a non-spell task, or if already placed.
+    ///
+    /// One path serves both boards on purpose: filling a gap is the same gesture
+    /// as laying a tile — a shuffled pool, slots filled left to right, tap a
+    /// filled slot to take it back. Only the slot count differs, and the form
+    /// answers that; the pool cannot, because a gap-fill's pool carries
+    /// distractors that belong in no slot at all.
+    func pickSpell(_ idx: Int) {
+        guard !self.spellLocked, let task = current, task.kind == .spell,
+              let form = SpellForm.of(task.item),
+              !self.spellPicked.contains(idx)
+        else { return }
+        self.haptics.soft()
+        self.spellPicked.append(idx)
+        if self.spellPicked.count == form.slotCount {
+            let correct = self.spellMatches(self.spellPicked, for: task.item)
+            self.spellVerdict = correct
+            self.spellAnswer(correct: correct)
+        }
     }
 
-    /// Does this pick sequence spell the target? Pure — the correctness decision
+    /// Tap a filled slot to take that entry back out (before the board locks).
+    func unpickSpell(atSlot slot: Int) {
+        guard !self.spellLocked, slot < self.spellPicked.count else { return }
+        self.spellPicked.remove(at: slot)
+    }
+
+    /// Does this pick sequence spell the word? Pure — the correctness decision
     /// the production step turns on, testable without driving the board.
-    func tilesMatch(_ picked: [Int], for item: StudyQueueItem) -> Bool {
-        let units = self.tileUnits(for: item)
-        let assembled = picked.compactMap { units.indices.contains($0) ? units[$0] : nil }.joined()
-        return assembled == TileBoard.of(item).target
+    ///
+    /// The two forms ask different questions of the same picks: a tile board
+    /// wants the assembled string, a gap-fill wants each chunk in its own slot.
+    /// Joining a gap-fill's picks would accept them in any order.
+    func spellMatches(_ picked: [Int], for item: StudyQueueItem) -> Bool {
+        let pool = self.spellPool(for: item)
+        let chosen = picked.compactMap { pool.indices.contains($0) ? pool[$0] : nil }
+        return switch SpellForm.of(item) {
+        case let .tiles(board): chosen.joined() == board.target
+        case let .gaps(plan): chosen == plan.answers
+        case nil: false
+        }
     }
 
-    /// Locks the board and, after a beat, resolves. Called by pickTile when the
+    /// What is on the board right now, as one readable string — the 報錯
+    /// snapshot's "what did they choose". 拼字 used to report nothing, because a
+    /// half-assembled tile board had no obvious answer to name; a gap-fill does,
+    /// so the report can finally say what the learner put in the holes.
+    var spellAttemptText: String? {
+        guard let task = ladder.current, task.kind == .spell,
+              let form = SpellForm.of(task.item), !self.spellPicked.isEmpty
+        else { return nil }
+        let pool = self.spellPool(for: task.item)
+        let chosen = self.spellPicked.compactMap { pool.indices.contains($0) ? pool[$0] : nil }
+        switch form {
+        case .tiles:
+            return chosen.joined()
+        case let .gaps(plan):
+            return plan.segments.enumerated().reduce(into: "") { out, pair in
+                let (index, segment) = pair
+                out += segment
+                guard index < plan.gaps.count else { return }
+                out += index < chosen.count ? chosen[index] : "_"
+            }
+        }
+    }
+
+    /// Locks the board and, after a beat, resolves. Called by pickSpell when the
     /// last slot fills.
-    func tilesAnswer(correct: Bool) {
-        guard !self.tiLocked, let task = current, task.kind == .spellTiles else { return }
-        self.tiLocked = true
+    func spellAnswer(correct: Bool) {
+        guard !self.spellLocked, let task = current, task.kind == .spell else { return }
+        self.spellLocked = true
         self.beats.schedule(after: .milliseconds(correct ? 450 : 800)) {
             if correct {
-                self.tiLocked = false
-                self.resolveTiles(correct: true)
+                self.spellLocked = false
+                self.resolveSpell(correct: true)
                 self.haptics.success()
             } else {
-                // Stay frozen (tiles show red) and surface the peek; the
-                // requeue + rescramble happen on advanceFromPeek().
-                self.resolveTiles(correct: false)
+                // Stay frozen (the board shows red) and surface the peek; the
+                // requeue + reshuffle happen on advanceFromPeek().
+                self.resolveSpell(correct: false)
                 self.haptics.warning()
             }
         }
     }
 
     /// Synchronous core, also reachable from tests.
-    func resolveTiles(correct: Bool) {
-        guard let task = ladder.current, task.kind == .spellTiles else { return }
+    func resolveSpell(correct: Bool) {
+        guard let task = ladder.current, task.kind == .spell else { return }
         if correct {
             self.completeCurrentTask()
             // The next spell task (whenever it surfaces) starts from an empty
             // board. Wrong answers keep the picks so the red board stays until
             // advanceFromPeek() requeues + clears.
-            self.tilePicked = []
-            self.tilesVerdict = nil
+            self.spellPicked = []
+            self.spellVerdict = nil
         } else {
             self.mistakes[task.item.word.id, default: 0] += 1
             self.peek = task.item.word
@@ -422,10 +498,10 @@ final class NewFlowCoordinator: StudySession {
             self.idLocked = false
             self.identifyAttempts[task.item.word.id, default: 0] += 1
             self.requeueCurrentTask()
-        case .spellTiles:
-            self.tiLocked = false
-            self.tilePicked = []
-            self.tilesVerdict = nil
+        case .spell:
+            self.spellLocked = false
+            self.spellPicked = []
+            self.spellVerdict = nil
             self.spellAttempts[task.item.word.id, default: 0] += 1
             self.requeueCurrentTask()
         case .recognize:

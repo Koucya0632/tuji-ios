@@ -168,8 +168,16 @@ struct NewFlowView: View {
                     )
                 case .identify:
                     IdentifyView(coord: self.coord, item: task.item)
-                case .spellTiles:
-                    TilesView(coord: self.coord, item: task.item)
+                case .spell:
+                    // Which 拼字 board this word takes is SpellForm's call, and
+                    // the ladder gated the stage on the same predicate — so a
+                    // task that got scheduled always has one of the two.
+                    switch SpellForm.of(task.item) {
+                    case .gaps:
+                        SpellGapView(coord: self.coord, item: task.item)
+                    case .tiles, nil:
+                        TilesView(coord: self.coord, item: task.item)
+                    }
                 }
             }
             // Keyed per (task, attempt): a requeued task returns as a fresh
@@ -247,7 +255,7 @@ private struct NewStagePips: View {
         switch kind {
         case .recognize: "認識"
         case .identify: "選字"
-        case .spellTiles: "拼字"
+        case .spell: "拼字"
         }
     }
 

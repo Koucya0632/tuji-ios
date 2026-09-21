@@ -2,7 +2,7 @@
 //
 // These assertions used to be reachable only by constructing a whole
 // NewFlowCoordinator and calling `resolveRecognize` / `resolveIdentify` /
-// `resolveTiles` — three internal methods that exist for the tests and that the
+// `resolveSpell` — three internal methods that exist for the tests and that the
 // app never calls. The queue algebra is a value type now, so a test states a
 // queue and reads an answer.
 
@@ -45,7 +45,7 @@ struct StudyLadderTests {
         // Every word's own stages stay in order…
         for wordId in ["w1", "w2"] {
             let kinds = ladder.tasks.filter { $0.item.word.id == wordId }.map(\.kind)
-            #expect(kinds == [.recognize, .identify, .spellTiles])
+            #expect(kinds == [.recognize, .identify, .spell])
         }
         // …and the two words interleave rather than blocking.
         #expect(ids.first == "w1.recognize")
@@ -134,7 +134,7 @@ struct StudyLadderTests {
                     wrongOnce.insert(wordId)
                     ladder.requeueCurrent()
                 }
-            case .spellTiles:
+            case .spell:
                 // This is the assertion: reaching a 拼字 head at all means the
                 // word had already cleared 選字.
                 #expect(ladder.identifyCleared.contains(wordId))
@@ -157,7 +157,7 @@ struct StudyLadderTests {
         #expect(ladder.skippedIdentify.contains("w1"))
         #expect(!ladder.tasks.contains { $0.item.word.id == "w1" && $0.kind == .identify })
         // Marking it cleared is what lets the word's 拼字 ever reach the head.
-        #expect(ladder.tasks.contains { $0.item.word.id == "w1" && $0.kind == .spellTiles })
+        #expect(ladder.tasks.contains { $0.item.word.id == "w1" && $0.kind == .spell })
     }
 
     @Test
