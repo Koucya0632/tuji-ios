@@ -1,5 +1,5 @@
 // The theme-tile completion rule. It was a private method on TodayView until
-// 主題 (CategoryIndexView) needed the same answer; extracting it is what makes
+// the 圖鑑·官方 shelf needed the same answer; extracting it is what makes
 // it testable, and the ordering between 全精通 and 完成 is the part worth
 // pinning down — they can both be true at once.
 

@@ -5,7 +5,7 @@ struct CardsListThemeVisibilityTests {
     /// `custom` and `community` are sources, not themes. They used to be pinned
     /// into 圖鑑's theme chip row so they stayed reachable with no cards in them;
     /// that job belongs to the source row, which offers them unconditionally.
-    /// The theme row is gone entirely now and this rule moved to 主題, where it
+    /// The theme row is gone and the themes are 官方 itself now, where the rule
     /// still has to hold: listing them there would present one filter twice
     /// under two different meanings.
     @Test
@@ -16,7 +16,7 @@ struct CardsListThemeVisibilityTests {
             self.category(id: "kitchen", nameZh: "廚房")
         ]
 
-        let visible = CategoryIndexView.visibleThemeCategories(
+        let visible = ThemeCatalog.themes(
             from: categories,
             presentIds: ["kitchen", "custom", "community"]
         )
@@ -24,7 +24,7 @@ struct CardsListThemeVisibilityTests {
         #expect(visible.map(\.id) == ["kitchen"])
     }
 
-    /// A theme with nothing behind it is a dead end, so it stays off the index.
+    /// A theme with nothing behind it is a dead end, so it stays off the shelf.
     @Test
     func themesWithoutWordsAreHidden() {
         let categories = [
@@ -32,7 +32,7 @@ struct CardsListThemeVisibilityTests {
             self.category(id: "zodiac", nameZh: "生肖")
         ]
 
-        let visible = CategoryIndexView.visibleThemeCategories(
+        let visible = ThemeCatalog.themes(
             from: categories,
             presentIds: ["kitchen"]
         )
@@ -62,6 +62,15 @@ struct CardsListThemeVisibilityTests {
     func thereIsNoAllCase() {
         #expect(CardsSource(rawValue: "all") == nil)
         #expect(CardsSource.allCases == [.official, .mine, .taken, .bookmarked])
+    }
+
+    /// Only 官方 has themes to show. A photographed card or one taken in from
+    /// 物見 belongs to no theme, so those three sources stay word grids — the
+    /// two layouts are one decision, and this is it.
+    @Test
+    func onlyTheOfficialSourceShowsThemes() {
+        #expect(CardsSource.official.showsThemes)
+        #expect(CardsSource.allCases.filter(\.showsThemes) == [.official])
     }
 
     private func category(id: String, nameZh: String) -> TujiCategory {

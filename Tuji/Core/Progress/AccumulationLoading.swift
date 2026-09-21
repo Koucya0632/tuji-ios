@@ -5,12 +5,13 @@
 // `SessionRefresh` (a finished study session), `LearningDirectionRefresh` (a
 // 學習語言 switch), `AtlasMutationRefresh` (a 圖鑑管理 mutation). Nothing named
 // the reader's side, so each screen hand-wrote its own fan-out in `.task` and
-// the three disagreed. `CategoryIndexView` was the one that got it wrong: it
-// renders `ThemeStatus.of(… progress: progress.categoryProgress …)` but never
-// loaded `ProgressStore`, so on a cold open of 主題 the 完成 badge was missing
-// from every theme and appeared only if some other screen had warmed the store
-// first. 全精通 kept working, because mastery *was* loaded — which is why the
-// badge looked intermittent rather than broken.
+// the three disagreed. The theme grid was the one that got it wrong (it lived
+// on a screen of its own then, and is 圖鑑·官方 now): it renders
+// `ThemeStatus.of(… progress: progress.categoryProgress …)` but never loaded
+// `ProgressStore`, so on a cold open the 完成 badge was missing from every
+// theme and appeared only if some other screen had warmed the store first.
+// 全精通 kept working, because mastery *was* loaded — which is why the badge
+// looked intermittent rather than broken.
 //
 // The policy (`needs`) is a pure function over the surface and the guest flag.
 // The warming itself is glue.
@@ -43,7 +44,7 @@ enum AccumulationSurface {
     /// 我 · 進度 — the 完成度 card, the 熟練度 distribution, streak columns,
     /// heatmap, 明細.
     case progressSections
-    /// 主題 — the theme index grid and its 完成 / 全精通 badges.
+    /// 圖鑑·官方 — the shelf of themes and its 完成 / 全精通 badges.
     case themeIndex
 
     /// Which stores must be warm for this surface's numbers to be true.

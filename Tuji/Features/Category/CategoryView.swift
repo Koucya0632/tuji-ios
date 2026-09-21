@@ -5,8 +5,6 @@
 // tile to push WordDetailView (handled at MainTabsView's NavigationStack
 // level via NavRoute).
 
-import Nuke
-import NukeUI
 import SwiftUI
 
 struct CategoryView: View {
@@ -76,7 +74,7 @@ struct CategoryView: View {
     private var hero: some View {
         if let c = self.category {
             ZStack(alignment: .bottomLeading) {
-                self.categoryArtwork(c)
+                CategoryArtwork(category: c)
 
                 // One-way scrim for legibility, not decoration: ink at the
                 // bottom fading to nothing by 60% height.
@@ -123,26 +121,6 @@ struct CategoryView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Space.s4)
             .padding(.top, Space.s4)
-        }
-    }
-
-    @ViewBuilder
-    private func categoryArtwork(_ category: TujiCategory) -> some View {
-        if category.id == "kitchen" {
-            Image("category-kitchen-hero")
-                .resizable()
-                .scaledToFill()
-        } else if let url = category.imageURL {
-            LazyImage(url: url) { state in
-                if let image = state.image {
-                    image.resizable().scaledToFill()
-                } else {
-                    TujiImagePlaceholder()
-                }
-            }
-            .pipeline(.shared)
-        } else {
-            Color.tujiPaper2
         }
     }
 
