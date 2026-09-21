@@ -300,6 +300,55 @@ struct AuthorProfileVMTests {
         #expect(decoded.author.handle == "mika_k")
     }
 
+    // MARK: - Authoring entry
+
+    /// The author who most needs 建立合集 is the one whose page is empty, and on
+    /// an own page that arrives as `notFound` — an empty portfolio, not a
+    /// missing one. Offering it only on `.ready` would have hidden it from
+    /// exactly that person.
+    @Test
+    func authoringIsOfferedOnAnEmptyProfile() async {
+        let fake = FakeAuthorProfileLoading()
+        fake.result = .failure(APIError.notFound)
+        let vm = AuthorProfileVM(handle: "TJ00000042", isSelf: true, profiles: fake)
+
+        await vm.load()
+
+        #expect(vm.phase == .notFound)
+        #expect(vm.offersAuthoring)
+    }
+
+    @Test
+    func authoringIsOfferedOnceTheProfileIsReady() async {
+        let fake = FakeAuthorProfileLoading()
+        fake.result = .success(.init(
+            author: self.author(),
+            items: [self.item(id: "a")],
+            collections: [self.collection(id: "c1")]
+        ))
+        let vm = AuthorProfileVM(handle: "mika_k", isSelf: true, profiles: fake)
+
+        await vm.load()
+
+        #expect(vm.offersAuthoring)
+    }
+
+    /// Neither before the page can say what is already on it, nor when it never
+    /// found out: a control under a spinner flashes, and one under a failure
+    /// invites more work onto a page that cannot show the work already there.
+    @Test
+    func authoringIsWithheldWhileLoadingAndAfterAFailure() async {
+        let fake = FakeAuthorProfileLoading()
+        let vm = AuthorProfileVM(handle: "mika_k", isSelf: true, profiles: fake)
+
+        #expect(vm.offersAuthoring == false) // still .loading
+
+        fake.result = .failure(FakeError.boom)
+        await vm.load()
+
+        #expect(vm.offersAuthoring == false)
+    }
+
     @Test
     func oneLanguageProducesOneGroup() async {
         let fake = FakeAuthorProfileLoading()

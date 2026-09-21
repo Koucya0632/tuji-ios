@@ -1,7 +1,10 @@
 // 作者端「我的合集」：列出自己的合集 + 建立，並在編輯頁更換公開頭像、挑選成員、送審。
 //
-// 成員只能來自作者自己「已通過」的公開項目（後端強制）；合集背景圖不再顯示，
-// 合集頭像照片則用於列表與詳情。送審只審標題 + 簡介的文字。
+// 成員是作者自己已確認的圖鑑——公開、審核中、私人的都能加，被拒絕與下架的不行
+// （後端 `eligible` 強制）；合集背景圖不再顯示，合集頭像照片則用於列表與詳情。
+// 送審只審標題 + 簡介的文字，成員的圖各自過圖片閘。
+//
+// 建立合集的 sheet 搬到 AtlasCollectionCreateSheet.swift：作者主頁也有入口了。
 
 import Nuke
 import NukeUI
@@ -172,82 +175,25 @@ private struct AtlasMyCollectionRow: View {
     }
 }
 
-// MARK: - 建立合集
-
-private struct AtlasCollectionCreateSheet: View {
-    let onCreated: (AtlasMyCollection) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var model: CollectionCreateModel
-
-    init(
-        language: TargetLanguage,
-        repo: CollectionManaging = LiveAtlasRepository.shared,
-        onCreated: @escaping (AtlasMyCollection) -> Void
-    ) {
-        _model = State(initialValue: CollectionCreateModel(language: language, repo: repo))
-        self.onCreated = onCreated
-    }
-
-    var body: some View {
-        TujiSheetShell(title: "建立合集") {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.s5) {
-                    TujiField(label: "標題") {
-                        TujiTextField(placeholder: "例如：生活日常", text: self.$model.title)
-                    }
-                    TujiField(
-                        label: "簡介（選填）",
-                        footer: "合集可直接加入這個語言中已確認完成的圖鑑；公開合集時會一起送審。"
-                    ) {
-                        TujiTextField(
-                            placeholder: "簡單描述這個合集",
-                            text: self.$model.description,
-                            lineLimit: 2...4,
-                            errorMessage: self.model.errorMessage
-                        )
-                    }
-                    TujiField(label: "語言") {
-                        Text(self.model.language == .ja ? "日文" : "英文")
-                            .font(.tujiBody)
-                            .foregroundStyle(.tujiInk2)
-                    }
-
-                    BBtn(
-                        title: self.model.creating ? "建立中…" : "建立",
-                        fullWidth: true
-                    ) {
-                        Task {
-                            guard let collection = await self.model.create() else { return }
-                            self.onCreated(collection)
-                            self.dismiss()
-                        }
-                    }
-                    .disabled(!self.model.canCreate)
-                    .padding(.horizontal, Space.s4)
-                }
-                .padding(.top, Space.s4)
-                .padding(.bottom, Space.s6)
-            }
-        }
-    }
-}
-
 // MARK: - 成員挑選
 
 struct AtlasCollectionItemPicker: View {
-    let onAdd: (String) async -> Bool
+    /// nil when the server took the item, otherwise the sentence to show
+    /// (`CollectionEditVM.addMember`).
+    let onAdd: (String) async -> String?
 
     @State private var model: CollectionCandidatesModel
 
     init(
         language: TargetLanguage,
+        collectionReview: AtlasReviewStatus,
         existingIds: Set<String>,
         repo: CollectionManaging = LiveAtlasRepository.shared,
-        onAdd: @escaping (String) async -> Bool
+        onAdd: @escaping (String) async -> String?
     ) {
         _model = State(initialValue: CollectionCandidatesModel(
             language: language,
+            collectionReview: collectionReview,
             existingIds: existingIds,
             repo: repo
         ))
@@ -277,6 +223,15 @@ struct AtlasCollectionItemPicker: View {
                                     .foregroundStyle(.tujiAlert)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
+                            // Said once, above the grid, rather than on each
+                            // greyed tile: it is one fact about the 合集, not a
+                            // property of eight photos.
+                            if self.model.blocksUnpublished {
+                                Text(self.blockedNotice)
+                                    .font(.tujiLabel)
+                                    .foregroundStyle(.tujiInk3)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                             LazyVGrid(
                                 columns: Array(repeating: GridItem(.flexible(), spacing: Space.s3), count: 3),
                                 spacing: Space.s3
@@ -298,8 +253,17 @@ struct AtlasCollectionItemPicker: View {
         }
     }
 
+    /// Why the grid is half-disabled. 已公開 offers the way out (取消公開);
+    /// 審核中 cannot, so it says what to wait for instead.
+    private var blockedNotice: LocalizedStringKey {
+        self.model.collectionReview == .approved
+            ? "合集已公開，只能加入已公開的項目。先取消公開才能加入其他的。"
+            : "合集正在審核中，審核結束後才能加入未公開的項目。"
+    }
+
     private func cell(_ item: AtlasPublicItem) -> some View {
         let isAdded = self.model.isAdded(item.id)
+        let isAddable = self.model.isAddable(item)
         return Button {
             Task { await self.model.add(item.id, using: self.onAdd) }
         } label: {
@@ -319,7 +283,7 @@ struct AtlasCollectionItemPicker: View {
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
                 .overlay(alignment: .bottomLeading) {
-                    if let label = item.collectionPublicationLabel {
+                    if let label = self.badge(for: item, isAddable: isAddable) {
                         Text(label)
                             .font(.tujiLabel)
                             .foregroundStyle(.white)
@@ -330,9 +294,9 @@ struct AtlasCollectionItemPicker: View {
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
+                    Image(systemName: self.cornerIcon(isAdded: isAdded, isAddable: isAddable))
                         .font(.tujiIcon(18))
-                        .foregroundStyle(isAdded ? .white : .white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
+                        .foregroundStyle(.white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
                         .padding(4)
                 }
                 Text(item.lemma)
@@ -340,9 +304,24 @@ struct AtlasCollectionItemPicker: View {
                     .foregroundStyle(.tujiInk2)
                     .lineLimit(1)
             }
-            .opacity(isAdded ? 0.6 : 1)
+            .opacity(isAdded || !isAddable ? 0.6 : 1)
         }
         .buttonStyle(.plain)
-        .disabled(isAdded)
+        .disabled(isAdded || !isAddable)
+        .accessibilityHint(isAddable ? Text(verbatim: "") : Text(self.blockedNotice))
+    }
+
+    private func cornerIcon(isAdded: Bool, isAddable: Bool) -> String {
+        if isAdded { return "checkmark.circle.fill" }
+        return isAddable ? "plus.circle.fill" : "lock.circle.fill"
+    }
+
+    /// 「將隨合集送審」 is a promise a live 合集 cannot keep, so a blocked tile
+    /// states the item's own status instead of what would happen to it.
+    private func badge(for item: AtlasPublicItem, isAddable: Bool) -> String? {
+        if isAddable { return item.collectionPublicationLabel }
+        return item.publicationState == "pending"
+            ? tujiLocalized("審核中")
+            : tujiLocalized("未公開")
     }
 }

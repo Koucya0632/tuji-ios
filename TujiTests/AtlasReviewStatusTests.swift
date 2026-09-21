@@ -42,6 +42,19 @@ struct AtlasReviewStatusTests {
         #expect(AtlasReviewStatus.withdrawn.label != AtlasReviewStatus.takedown.label)
     }
 
+    /// Read on a collection. Mirrors the server's guard: only a collection that
+    /// is off the shelf and not in flight can take a member that isn't public
+    /// yet, because such a member joins by being submitted *with* it.
+    @Test
+    func onlyAnOffShelfCollectionTakesUnpublishedMembers() {
+        for status: AtlasReviewStatus in [.draft, .rejected, .withdrawn] {
+            #expect(status.acceptsUnpublishedMembers, "expected \(status.rawValue) to accept")
+        }
+        for status: AtlasReviewStatus in [.approved, .pending, .pendingAuto, .pendingReview, .takedown] {
+            #expect(!status.acceptsUnpublishedMembers, "expected \(status.rawValue) to refuse")
+        }
+    }
+
     /// The server sends raw strings; an unknown one must not silently decode as
     /// something publishable.
     @Test

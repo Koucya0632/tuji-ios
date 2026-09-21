@@ -200,6 +200,25 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
     var canWithdraw: Bool {
         self == .approved
     }
+
+    /// Read on a **collection**: whether it can still take a member that is not
+    /// public yet. Only while the collection is off the shelf and not in
+    /// flight — an unpublished member joins by being submitted *with* the
+    /// collection, and a live one cannot re-enter review to carry it, so
+    /// slipping it in would put an unscreened photo straight onto 物見.
+    ///
+    /// Mirrors the server's guard (tuji-web `ATLAS_COLLECTION_OPEN_STATUSES`,
+    /// enforced in `addAtlasCollectionItem`'s INSERT); it is stated here so
+    /// 加入項目 can grey the tile out instead of letting the tap become a 409.
+    /// The set happens to equal `canSubmit`'s today — that is a coincidence of
+    /// the same three states, not one question: 「可以送審嗎」 and 「還收得下
+    /// 未公開的成員嗎」 would part ways the moment either gains a state.
+    var acceptsUnpublishedMembers: Bool {
+        switch self {
+        case .draft, .rejected, .withdrawn: true
+        case .pending, .pendingAuto, .pendingReview, .approved, .takedown: false
+        }
+    }
 }
 
 extension AtlasItem {

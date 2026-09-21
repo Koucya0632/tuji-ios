@@ -62,12 +62,17 @@ struct AtlasCollectionEditView: View {
             self.connectAvatarUpload()
             await self.vm.load()
         }
-        // Only the loaded screen can open this, so the collection's language is
-        // known by the time it does — no default stands in for it.
+        // Only the loaded screen can open this, so the collection's language and
+        // review status are known by the time it does — no default stands in for
+        // either. A `.ja` default here once scoped an 英文 author's picker to 日文.
         .sheet(isPresented: self.$showPicker) {
-            if let language = self.vm.language {
+            if let collection = self.vm.collection {
                 AtlasCollectionItemPicker(
-                    language: language,
+                    language: collection.targetLanguage,
+                    // What the 合集 can still take depends on where it sits in
+                    // review, so the picker is told — otherwise it offers items
+                    // the server will refuse (the 409 this screen used to show).
+                    collectionReview: collection.review,
                     existingIds: Set(self.vm.members.map(\.id))
                 ) { publicItemId in
                     await self.vm.addMember(publicItemId)

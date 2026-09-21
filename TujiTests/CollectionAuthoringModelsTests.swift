@@ -79,7 +79,13 @@ struct CollectionCreateModelTests {
 
 @MainActor
 struct CollectionCandidatesModelTests {
-    private func candidate(_ id: String, eligible: Bool? = nil) -> AtlasPublicItem {
+    private func candidate(
+        _ id: String,
+        eligible: Bool? = nil,
+        publicationState: String? = nil
+    )
+        -> AtlasPublicItem
+    {
         var item = AtlasPublicItem(
             id: id,
             slug: "slug-\(id)",
@@ -92,6 +98,7 @@ struct CollectionCandidatesModelTests {
             publishedAt: nil
         )
         item.eligible = eligible
+        item.publicationState = publicationState
         return item
     }
 
@@ -105,7 +112,7 @@ struct CollectionCandidatesModelTests {
             self.candidate("rejected", eligible: false),
             self.candidate("unknown")
         ]
-        let model = CollectionCandidatesModel(language: .ja, existingIds: [], repo: fake)
+        let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: [], repo: fake)
 
         await model.load()
 
@@ -118,7 +125,7 @@ struct CollectionCandidatesModelTests {
     func currentMembersDropOut() async {
         let fake = FakeCollectionManaging()
         fake.candidates = [self.candidate("a"), self.candidate("b")]
-        let model = CollectionCandidatesModel(language: .ja, existingIds: ["a"], repo: fake)
+        let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: ["a"], repo: fake)
 
         await model.load()
 
@@ -130,7 +137,7 @@ struct CollectionCandidatesModelTests {
     func aFailedLoadSurfacesTheErrorAndClearsLoading() async {
         let fake = FakeCollectionManaging()
         fake.candidatesError = AtlasFakeError.boom
-        let model = CollectionCandidatesModel(language: .ja, existingIds: [], repo: fake)
+        let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: [], repo: fake)
 
         await model.load()
 
@@ -143,10 +150,10 @@ struct CollectionCandidatesModelTests {
     func addTicksTheTileImmediately() async {
         let fake = FakeCollectionManaging()
         fake.candidates = [self.candidate("a")]
-        let model = CollectionCandidatesModel(language: .ja, existingIds: [], repo: fake)
+        let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: [], repo: fake)
         await model.load()
 
-        await model.add("a", using: { _ in true })
+        await model.add("a", using: { _ in nil })
 
         #expect(model.isAdded("a"))
         #expect(model.addError == nil)
@@ -158,10 +165,10 @@ struct CollectionCandidatesModelTests {
     func aFailedAddUnticksTheTileAndSaysSo() async {
         let fake = FakeCollectionManaging()
         fake.candidates = [self.candidate("a")]
-        let model = CollectionCandidatesModel(language: .ja, existingIds: [], repo: fake)
+        let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: [], repo: fake)
         await model.load()
 
-        await model.add("a", using: { _ in false })
+        await model.add("a", using: { _ in "合集已公開，只能加入已公開的項目。" })
 
         #expect(!model.isAdded("a"))
         #expect(model.addError != nil)
@@ -170,17 +177,115 @@ struct CollectionCandidatesModelTests {
     @Test
     func addingTheSameItemTwiceOnlyCallsThroughOnce() async {
         let fake = FakeCollectionManaging()
-        let model = CollectionCandidatesModel(language: .ja, existingIds: [], repo: fake)
+        let model = CollectionCandidatesModel(language: .ja, collectionReview: .draft, existingIds: [], repo: fake)
         var calls = 0
 
         await model.add("a", using: { _ in calls += 1
-            return true
+            return nil
         })
         await model.add("a", using: { _ in calls += 1
-            return true
+            return nil
         })
 
         #expect(calls == 1)
+    }
+
+    // MARK: - What the 合集 can take
+
+    /// The 409 this came from: the picker offered a private item, the author
+    /// tapped it, and an already-public 合集 refused it. Eligibility is a pair —
+    /// the item is fine, the collection is what cannot take it.
+    @Test
+    func aPublishedCollectionCannotTakeUnpublishedItems() async {
+        let fake = FakeCollectionManaging()
+        fake.candidates = [
+            self.candidate("public", publicationState: "public"),
+            self.candidate("private", publicationState: "private"),
+            self.candidate("pending", publicationState: "pending")
+        ]
+        let model = CollectionCandidatesModel(
+            language: .ja,
+            collectionReview: .approved,
+            existingIds: [],
+            repo: fake
+        )
+
+        await model.load()
+
+        #expect(model.blocksUnpublished)
+        // Still listed — dropping them answers 「我的圖鑑呢？」 with silence.
+        #expect(model.available.count == 3)
+        #expect(model.isAddable(self.candidate("public", publicationState: "public")))
+        #expect(!model.isAddable(self.candidate("private", publicationState: "private")))
+        #expect(!model.isAddable(self.candidate("pending", publicationState: "pending")))
+    }
+
+    /// A collection in review is just as closed, and for the same reason: it
+    /// cannot carry a new member through a gate it is already inside.
+    @Test
+    func aCollectionInReviewIsClosedToo() {
+        let fake = FakeCollectionManaging()
+        let model = CollectionCandidatesModel(
+            language: .ja,
+            collectionReview: .pendingReview,
+            existingIds: [],
+            repo: fake
+        )
+
+        #expect(model.blocksUnpublished)
+        #expect(!model.isAddable(self.candidate("a", publicationState: "private")))
+    }
+
+    /// Draft, 未通過 and 已收回 all still take anything: an unpublished member
+    /// joins by being submitted *with* the collection.
+    @Test
+    func anOffShelfCollectionTakesEverything() {
+        for review in [AtlasReviewStatus.draft, .rejected, .withdrawn] {
+            let model = CollectionCandidatesModel(
+                language: .ja,
+                collectionReview: review,
+                existingIds: [],
+                repo: FakeCollectionManaging()
+            )
+
+            #expect(!model.blocksUnpublished, "\(review)")
+            #expect(model.isAddable(self.candidate("a", publicationState: "private")), "\(review)")
+        }
+    }
+
+    /// An older server omits the field. Treating that as "not addable" would
+    /// empty the picker for everyone on it; the server still has the final say.
+    @Test
+    func aCandidateWithoutAPublicationStateStaysAddable() {
+        let model = CollectionCandidatesModel(
+            language: .ja,
+            collectionReview: .approved,
+            existingIds: [],
+            repo: FakeCollectionManaging()
+        )
+
+        #expect(model.isAddable(self.candidate("a")))
+    }
+
+    /// The picker is the sheet on top, so the refusal has to surface *here* —
+    /// it used to say 「加入失敗，請再試一次。」 over a rule that retrying could
+    /// never satisfy, while the real sentence sat on the screen underneath.
+    @Test
+    func aRefusalShowsTheServersReasonRatherThanRetryAdvice() async {
+        let fake = FakeCollectionManaging()
+        fake.candidates = [self.candidate("a")]
+        let model = CollectionCandidatesModel(
+            language: .ja,
+            collectionReview: .draft,
+            existingIds: [],
+            repo: fake
+        )
+        await model.load()
+
+        await model.add("a", using: { _ in "合集正在審核中，審核結束後才能加入未公開的項目。" })
+
+        #expect(model.addError == "合集正在審核中，審核結束後才能加入未公開的項目。")
+        #expect(!model.isAdded("a"))
     }
 }
 

@@ -1961,28 +1961,6 @@
         }
       }
     },
-    "你的合集" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your collection"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自分のコレクション"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的合集"
-          }
-        }
-      }
-    },
     "你還沒有公開任何圖鑑" : {
       "localizations" : {
         "en" : {
@@ -4052,28 +4030,6 @@
         }
       }
     },
-    "加入失敗，請再試一次。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Couldn't add it. Please try again."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "追加できませんでした。もう一度お試しください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "加入失败，请再试一次。"
-          }
-        }
-      }
-    },
     "加入學習" : {
       "localizations" : {
         "en" : {
@@ -4429,6 +4385,52 @@
         }
       }
     },
+    "合集已公開，只能加入已公開的項目。先取消公開才能加入其他的。" : {
+      "comment" : "Notice above the 加入項目 grid when the collection is already public.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This collection is public, so it can only take items that are already public. Unpublish it first to add others."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コレクションは公開中のため、すでに公開されている項目しか追加できません。ほかを追加するには、まず公開を取り消してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合集已公开，只能加入已公开的项目。先取消公开才能加入其他的。"
+          }
+        }
+      }
+    },
+    "合集已公開，只能加入已公開的項目。先取消公開，加入後再重新公開。" : {
+      "comment" : "409 reason: the collection is live and cannot take an unpublished item.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This collection is public, so it can only take items that are already public. Unpublish it, add them, then publish again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コレクションは公開中のため、すでに公開されている項目しか追加できません。公開を取り消してから追加し、もう一度公開してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合集已公开，只能加入已公开的项目。先取消公开，加入后再重新公开。"
+          }
+        }
+      }
+    },
     "合集會從物見移除，裡面的項目仍然是公開的。" : {
       "localizations" : {
         "en" : {
@@ -4447,6 +4449,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "合集会从物见移除，里面的项目仍然是公开的。"
+          }
+        }
+      }
+    },
+    "合集正在審核中，審核結束後才能加入未公開的項目。" : {
+      "comment" : "409 reason: the collection is in review.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This collection is in review. Once that finishes you can add items that aren't public yet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コレクションは審査中です。審査が終わると、未公開の項目も追加できます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合集正在审核中，审核结束后才能加入未公开的项目。"
           }
         }
       }
@@ -7780,6 +7805,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拼字"
+          }
+        }
+      }
+    },
+    "挑幾張自己的圖鑑組成一組，公開後會出現在物見。" : {
+      "comment" : "Hint above the 建立合集 button on your own author profile.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group a few of your own atlas cards into a set — once published, it appears in Sightings."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分の図鑑を何枚か選んでひとまとめに。公開すると物見に表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "挑几张自己的图鉴组成一组，公开后会出现在物见。"
           }
         }
       }
@@ -14347,6 +14395,29 @@
         }
       }
     },
+    "這個動作現在無法完成，請重新整理後再試" : {
+      "comment" : "Generic 409 conflict fallback.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That can't be done right now — refresh and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在この操作は完了できません。再読み込みしてからお試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个动作现在无法完成，请重新整理后再试"
+          }
+        }
+      }
+    },
     "這個合集會被永久刪除，原始圖鑑卡片不受影響。" : {
       "localizations" : {
         "en" : {
@@ -14505,6 +14576,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这个语言还没有公开合集"
+          }
+        }
+      }
+    },
+    "這個項目已經在合集裡了。" : {
+      "comment" : "409 reason: the item is already a member.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That item is already in this collection."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この項目はすでにコレクションに入っています。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个项目已经在合集里了。"
           }
         }
       }

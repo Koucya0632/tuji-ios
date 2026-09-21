@@ -90,15 +90,6 @@ final class CollectionEditVM {
         return self.actionError
     }
 
-    /// The member picker is scoped to this collection's language — nil until the
-    /// collection loads, because the model has no way to know it before then.
-    /// This used to answer `.ja` while loading, which is a guess wearing a fact's
-    /// clothes: an 英文 author's picker would have been scoped to 日文 had the
-    /// sheet ever opened first.
-    var language: TargetLanguage? {
-        self.collection?.targetLanguage
-    }
-
     private var trimmedTitle: String {
         self.title.trimmingCharacters(in: .whitespaces)
     }
@@ -175,18 +166,26 @@ final class CollectionEditVM {
 
     // MARK: - Members
 
-    /// Returns whether the server took the item, so the picker can un-tick a
-    /// tile it optimistically ticked. Swallowing the failure into `actionError`
-    /// alone left the picker showing a ✓ for an item that was never added.
+    /// Returns nil when the server took the item, otherwise the sentence to
+    /// show — the picker un-ticks the tile it optimistically ticked *and* says
+    /// why. Swallowing the failure into `actionError` alone left the picker
+    /// showing a ✓ for an item that was never added; returning only `false`
+    /// left it showing 「加入失敗，請再試一次。」 over a refusal that no amount
+    /// of retrying would clear (a 合集 that is already public cannot take an
+    /// unpublished item — see `CollectionCandidatesModel`).
+    ///
+    /// `actionError` is still set, so the reason is also there on the screen
+    /// underneath once the sheet closes.
     @discardableResult
-    func addMember(_ publicItemId: String) async -> Bool {
+    func addMember(_ publicItemId: String) async -> String? {
         do {
             try await self.repo.addCollectionItem(id: self.collectionId, publicItemId: publicItemId)
             await self.reloadMembers()
-            return true
+            return nil
         } catch {
-            self.actionError = tujiUserMessage(for: error)
-            return false
+            let message = tujiUserMessage(for: error)
+            self.actionError = message
+            return message
         }
     }
 

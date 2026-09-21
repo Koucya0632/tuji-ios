@@ -91,6 +91,22 @@ final class AuthorProfileVM {
         self.showsSegmentedControl ? self.segment : .items
     }
 
+    /// Whether the page has settled into a state where an authoring entry means
+    /// something. `notFound` counts on purpose: an author with nothing public
+    /// yet is exactly who needs 建立合集, and on their own page that phase is the
+    /// empty portfolio rather than a missing one. A failed load does not — the
+    /// page cannot say what is already there, so it must not invite more — and
+    /// neither does `loading`, which would flash a control under a spinner.
+    ///
+    /// Whether the viewer *owns* this page is a separate question the view
+    /// answers (`isSelf` alone is not it — see `AtlasAuthorProfileView`).
+    var offersAuthoring: Bool {
+        switch self.phase {
+        case .ready, .notFound: true
+        case .loading, .failed: false
+        }
+    }
+
     func load() async {
         self.phase = .loading
         do {
