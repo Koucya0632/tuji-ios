@@ -224,10 +224,10 @@ struct AtlasCollectionItemPicker: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             // Said once, above the grid, rather than on each
-                            // greyed tile: it is one fact about the 合集, not a
+                            // tile: it is one fact about the 合集, not a
                             // property of eight photos.
-                            if self.model.blocksUnpublished {
-                                Text(self.blockedNotice)
+                            if self.model.submitsMembersOnTheirOwn {
+                                Text("未公開的項目加入後會自動送審，通過才會出現在合集裡。")
                                     .font(.tujiLabel)
                                     .foregroundStyle(.tujiInk3)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -253,17 +253,9 @@ struct AtlasCollectionItemPicker: View {
         }
     }
 
-    /// Why the grid is half-disabled. 已公開 offers the way out (取消公開);
-    /// 審核中 cannot, so it says what to wait for instead.
-    private var blockedNotice: LocalizedStringKey {
-        self.model.collectionReview == .approved
-            ? "合集已公開，只能加入已公開的項目。先取消公開才能加入其他的。"
-            : "合集正在審核中，審核結束後才能加入未公開的項目。"
-    }
-
     private func cell(_ item: AtlasPublicItem) -> some View {
         let isAdded = self.model.isAdded(item.id)
-        let isAddable = self.model.isAddable(item)
+        let entersReview = self.model.entersReviewOnAdd(item)
         return Button {
             Task { await self.model.add(item.id, using: self.onAdd) }
         } label: {
@@ -283,7 +275,7 @@ struct AtlasCollectionItemPicker: View {
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
                 .overlay(alignment: .bottomLeading) {
-                    if let label = self.badge(for: item, isAddable: isAddable) {
+                    if let label = self.badge(for: item, entersReview: entersReview) {
                         Text(label)
                             .font(.tujiLabel)
                             .foregroundStyle(.white)
@@ -294,7 +286,7 @@ struct AtlasCollectionItemPicker: View {
                     }
                 }
                 .overlay(alignment: .topTrailing) {
-                    Image(systemName: self.cornerIcon(isAdded: isAdded, isAddable: isAddable))
+                    Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
                         .font(.tujiIcon(18))
                         .foregroundStyle(.white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
                         .padding(4)
@@ -304,24 +296,18 @@ struct AtlasCollectionItemPicker: View {
                     .foregroundStyle(.tujiInk2)
                     .lineLimit(1)
             }
-            .opacity(isAdded || !isAddable ? 0.6 : 1)
+            .opacity(isAdded ? 0.6 : 1)
         }
         .buttonStyle(.plain)
-        .disabled(isAdded || !isAddable)
-        .accessibilityHint(isAddable ? Text(verbatim: "") : Text(self.blockedNotice))
+        .disabled(isAdded)
+        .accessibilityHint(entersReview ? Text("加入後會自動送審") : Text(verbatim: ""))
     }
 
-    private func cornerIcon(isAdded: Bool, isAddable: Bool) -> String {
-        if isAdded { return "checkmark.circle.fill" }
-        return isAddable ? "plus.circle.fill" : "lock.circle.fill"
-    }
-
-    /// 「將隨合集送審」 is a promise a live 合集 cannot keep, so a blocked tile
-    /// states the item's own status instead of what would happen to it.
-    private func badge(for item: AtlasPublicItem, isAddable: Bool) -> String? {
-        if isAddable { return item.collectionPublicationLabel }
-        return item.publicationState == "pending"
-            ? tujiLocalized("審核中")
-            : tujiLocalized("未公開")
+    /// What adding this tile would do, which is not the same sentence in both
+    /// 合集 states. 「將隨合集送審」 is true only while the 合集 can still carry
+    /// a member through review; once it is live, the item goes on its own.
+    private func badge(for item: AtlasPublicItem, entersReview: Bool) -> String? {
+        if entersReview { return tujiLocalized("加入後送審") }
+        return item.collectionPublicationLabel
     }
 }

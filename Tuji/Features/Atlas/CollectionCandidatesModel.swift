@@ -11,11 +11,12 @@
 // **Eligibility is a pair, not a property.** `eligible` answers 「這個項目本身壞了
 // 嗎」 — and it is the only question `/collections/candidates` *can* answer,
 // because it is scoped by language and never told which 合集 you are filling.
-// The other half belongs to the collection: once it is public or in review it
-// can only take items that are already public. The picker used to offer those
-// tiles anyway, and the tap came back as 「伺服器出了點問題（409）」. So the
-// collection's review status is now an input, and a tile that cannot be taken
-// says so before it is tapped.
+// The other half belongs to the collection, and it is no longer about *whether*
+// an unpublished item can join but about *what happens when it does*: an
+// unpublished 合集 carries it at publish time, a live one sends it through the
+// item gate on its own, and until it passes it sits in the collection unseen.
+// So the collection's review status is still an input — it decides what the
+// tile promises, not whether the tile works.
 
 import Foundation
 import Observation
@@ -55,33 +56,29 @@ final class CollectionCandidatesModel {
     /// server never blocks the whole picker. Members already in the collection
     /// drop out.
     ///
-    /// Items the *collection* cannot take stay on the list — see `isAddable`.
-    /// Dropping them would answer 「我的圖鑑呢？」 with silence; showing them
-    /// disabled answers it with the rule.
     var available: [AtlasPublicItem] {
         self.candidates.filter { item in
             item.eligible != false && !self.existingIds.contains(item.id)
         }
     }
 
-    /// True while the 合集 is public or in review, when an unpublished item
-    /// cannot join it. The picker says this once, above the grid.
-    var blocksUnpublished: Bool {
+    /// True while the 合集 is public or in review, when a member that isn't
+    /// public yet goes through the item gate by itself instead of riding along
+    /// with the collection. Nothing is blocked by it — it is what the picker
+    /// promises about the tiles that aren't public yet, said once above the
+    /// grid.
+    var submitsMembersOnTheirOwn: Bool {
         !self.collectionReview.acceptsUnpublishedMembers
     }
 
-    /// Whether this tile can be tapped. An item already carrying an approved
-    /// public row is always addable; anything else needs a collection that is
-    /// still off the shelf.
-    ///
-    /// `publicationState` is the server's word for the same three states the
-    /// grid's badge shows (public / pending / private). A payload that omits it
-    /// is treated as public — the old contract, and the server still has the
-    /// final say.
-    func isAddable(_ item: AtlasPublicItem) -> Bool {
-        guard self.blocksUnpublished else { return true }
-        guard let state = item.publicationState else { return true }
-        return state == "public"
+    /// Whether adding this item starts a review of its own. `publicationState`
+    /// is the server's word for the three states the badge shows (public /
+    /// pending / private); a payload that omits it is treated as public — the
+    /// old contract, and the server still has the final say.
+    func entersReviewOnAdd(_ item: AtlasPublicItem) -> Bool {
+        guard self.submitsMembersOnTheirOwn else { return false }
+        guard let state = item.publicationState else { return false }
+        return state != "public"
     }
 
     func isAdded(_ id: String) -> Bool {

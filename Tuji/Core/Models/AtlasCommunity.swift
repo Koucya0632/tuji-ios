@@ -201,17 +201,18 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
         self == .approved
     }
 
-    /// Read on a **collection**: whether it can still take a member that is not
-    /// public yet. Only while the collection is off the shelf and not in
-    /// flight — an unpublished member joins by being submitted *with* the
-    /// collection, and a live one cannot re-enter review to carry it, so
-    /// slipping it in would put an unscreened photo straight onto 物見.
+    /// Read on a **collection**: whether it can still carry a member that is not
+    /// public yet through review *with* it. True only while the collection is
+    /// off the shelf and not in flight. A live collection cannot re-enter the
+    /// gate, so a member joining one goes through the item gate on its own and
+    /// stays invisible to everyone else until it passes — it is never slipped
+    /// onto 物見 unscreened either way.
     ///
-    /// Mirrors the server's guard (tuji-web `ATLAS_COLLECTION_OPEN_STATUSES`,
-    /// enforced in `addAtlasCollectionItem`'s INSERT); it is stated here so
-    /// 加入項目 can grey the tile out instead of letting the tap become a 409.
+    /// Mirrors tuji-web `ATLAS_COLLECTION_OPEN_STATUSES`. It decides what
+    /// 加入項目 promises about a tile, not whether the tile works: requiring
+    /// 取消公開 to add one photo took the whole 合集 off 物見 to do it.
     /// The set happens to equal `canSubmit`'s today — that is a coincidence of
-    /// the same three states, not one question: 「可以送審嗎」 and 「還收得下
+    /// the same three states, not one question: 「可以送審嗎」 and 「還帶得動
     /// 未公開的成員嗎」 would part ways the moment either gains a state.
     var acceptsUnpublishedMembers: Bool {
         switch self {
