@@ -16,6 +16,14 @@ enum APIError: LocalizedError {
     /// because changing the status code would land as 「伺服器出了點問題（409）」
     /// on every shipped client.
     case atCapacity(limit: Int?, usage: Int?)
+    /// 409 — refused because of the *state* of the thing, not the shape of the
+    /// request. Unlike a 5xx body, a 409 body is product copy: the server names
+    /// the reason (`error`) and carries a zh-Hant sentence (`message`) for a
+    /// client that doesn't know that name. This app prefers its own localized
+    /// copy for the reasons it knows — the server's sentence is zh-Hant only,
+    /// and the app ships in four UI languages (the same argument `atCapacity`
+    /// makes above).
+    case conflict(reason: String?, message: String?)
     case server(status: Int, body: String?)
     case decoding(Error)
     case transport(Error)
@@ -42,6 +50,8 @@ enum APIError: LocalizedError {
             } else {
                 tujiLocalized("已收進的項目達到上限，移除一些後再加入")
             }
+        case let .conflict(reason, message):
+            Self.conflictCopy(for: reason) ?? message ?? tujiLocalized("這個動作現在無法完成，請重新整理後再試")
         // The body is deliberately NOT shown. For 402/429 above we do prefer
         // the server's copy, because those carry product text we wrote in
         // zh-Hant (the atlas daily-AI cap). A 5xx body is a stack trace or an
@@ -113,6 +123,12 @@ enum APIError: LocalizedError {
                 )
             }
             throw APIError.rateLimited(message: Self.string(body, "message"))
+        case 409:
+            let body = Self.errorBody(from: data)
+            throw APIError.conflict(
+                reason: Self.string(body, "error"),
+                message: Self.string(body, "message")
+            )
         default:
             let body = String(data: data, encoding: .utf8)
             throw APIError.server(status: http.statusCode, body: body)
@@ -123,6 +139,28 @@ enum APIError: LocalizedError {
     /// Used for 402 so the server owns the copy (e.g. the atlas daily-AI cap).
     private static func serverMessage(from data: Data) -> String? {
         string(errorBody(from: data), "message")
+    }
+
+    /// This app's own sentence for a refusal reason it recognizes, so an en/ja
+    /// reader doesn't get the server's zh-Hant copy. Unknown reasons fall back
+    /// to that copy rather than to a generic line — a sentence in the wrong
+    /// language still says more than 「這個動作現在無法完成」.
+    ///
+    /// The reasons come from tuji-web `lib/atlas/collection-membership.ts`. The
+    /// 合集 ones are a backstop: 加入項目 greys these tiles out before they can
+    /// be tapped (`CollectionCandidatesModel`), and this is what a race or an
+    /// older client lands on.
+    private static func conflictCopy(for reason: String?) -> String? {
+        switch reason {
+        case "collection_live":
+            tujiLocalized("合集已公開，只能加入已公開的項目。先取消公開，加入後再重新公開。")
+        case "collection_in_review":
+            tujiLocalized("合集正在審核中，審核結束後才能加入未公開的項目。")
+        case "already_member":
+            tujiLocalized("這個項目已經在合集裡了。")
+        default:
+            nil
+        }
     }
 
     /// A JSON error body, parsed once. The 429 branch reads three fields out of

@@ -4,8 +4,8 @@
 // + 累計被收藏數（../docs/COMMUNITY_ATLAS_PLAN.md §3B/§3C — FEATURES.md §12.5）。
 // 公開、吃 CDN 快取。
 //
-// 同一個畫面服務兩種讀者。`isSelf` 只加一個直接開公開身分 sheet 的編輯入口
-// ——看到問題能當場改，迴圈是閉的。
+// 同一個畫面服務兩種讀者。自己的那一份多兩個作者動作：編輯個人資料，以及建立合集
+// ——同一個理由，看到問題（或看到空的）能當場動手，迴圈是閉的。
 // 其餘完全一致，因為這頁的價值就在於它就是別人看到的那一頁。
 
 import Nuke
@@ -18,10 +18,16 @@ struct AtlasAuthorProfileView: View {
     @State private var vm: AuthorProfileVM
     @State private var editing = false
     @State private var showBlockPrompt = false
+    @State private var creating = false
+    /// The 合集 the sheet just created, held until the sheet is *gone* — pushing
+    /// the editor from inside `onCreated` races the dismissal. `onDismiss` is
+    /// the reliable moment (a sheet's `onDisappear` does not fire on iOS 26).
+    @State private var createdCollectionId: String?
     @State private var report = ReportFlow()
     @Environment(BlockStore.self) private var blocks
     @Environment(TabNavigator.self) private var navigator
     @Environment(AuthService.self) private var auth
+    @Environment(\.targetLanguage) private var targetLanguage
     @Environment(\.dismiss) private var dismiss
 
     /// `vm.isSelf` answers "did the caller open this as *my* page" — it is passed
@@ -115,6 +121,16 @@ struct AtlasAuthorProfileView: View {
             onBlocked: { self.dismiss() }
         )
         .reportSheet(self.report)
+        // 建立合集 shares the sheet 圖鑑管理 presents; what differs is what
+        // happens next. There the new row appears in the list behind it, so the
+        // sheet closing *is* the feedback. Here it cannot: a fresh 合集 is a
+        // draft, and this page shows only what is public. So the editor is
+        // pushed — which is also where the members and 公開合集 are.
+        .sheet(isPresented: self.$creating, onDismiss: self.openCreatedCollection) {
+            AtlasCollectionCreateSheet(language: self.targetLanguage) { collection in
+                self.createdCollectionId = collection.id
+            }
+        }
         .navigationTitle(self.vm.author?.displayName ?? self.vm.handle)
         .toolbar(.hidden, for: .navigationBar)
         // Refetch on the way back: the page renders the very fields that screen
@@ -158,6 +174,15 @@ struct AtlasAuthorProfileView: View {
                 } else {
                     self.blankState.padding(Space.s4)
                 }
+
+                // One site, deliberately: the page has three own-profile shapes
+                // (合集 + 圖鑑, 圖鑑 only, nothing published yet) and the author
+                // who most needs this entry is the one in the third, where the
+                // 合集 segment does not exist to hang it off. A block below
+                // whatever is showing is the only placement all three reach.
+                if self.isOwnProfile, self.vm.offersAuthoring {
+                    self.createCollectionEntry
+                }
             }
             .padding(.bottom, Space.s6)
         }
@@ -172,12 +197,46 @@ struct AtlasAuthorProfileView: View {
         TujiNavTextAction(title: "編輯") { self.editing = true }
     }
 
+    /// The quiet button rather than the brand fill, and no heading above it:
+    /// this page is a portfolio, so the loudest thing on it stays the work
+    /// rather than the control that makes more of it. It is also not in the
+    /// bar — 編輯 is already the bar's one text action, and the bar takes two
+    /// icons *or* one text action, never both (`TujiNavIcon`).
+    private var createCollectionEntry: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("挑幾張自己的圖鑑組成一組，公開後會出現在物見。")
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
+                .fixedSize(horizontal: false, vertical: true)
+            BBtn(
+                title: "建立合集",
+                bg: .tujiPaper2,
+                fg: .tujiInk,
+                fullWidth: true,
+                icon: "plus"
+            ) {
+                self.creating = true
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, Space.s4)
+        .padding(.top, Space.s2)
+    }
+
+    /// Runs once the create sheet is off screen. A nil id is the ordinary case:
+    /// the sheet was closed without creating anything.
+    private func openCreatedCollection() {
+        guard let id = self.createdCollectionId else { return }
+        self.createdCollectionId = nil
+        self.navigator.push(.atlasCollectionEdit(id: id))
+    }
+
     // MARK: Blank states
 
     /// Three different nothings, and they mean different things: the author has
     /// published nothing yet, no such author exists, or the request failed.
-    /// Own page, nothing published. Shown under the header so the title states
-    /// the situation without adding another authoring shortcut.
+    /// Own page, nothing published. States the situation; the way out of it is
+    /// `createCollectionEntry`, which renders below this in the same scroll.
     private var nothingPublishedYet: some View {
         MascotEmptyState(
             pose: .think,

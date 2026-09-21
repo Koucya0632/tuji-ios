@@ -7,20 +7,23 @@ import Nuke
 import NukeUI
 import SwiftUI
 
-/// The saved state is an ink-on-eye inversion like every other "this is the one
-/// you picked" surface; unsaved is the plain primary button.
-private struct CollectionSaveStyle: ButtonStyle {
-    let saved: Bool
+/// The ink bar's one trailing action, in its two weights. `inverted` is the
+/// ink-on-eye treatment every other "this is the one you picked" surface uses
+/// (已收藏) — and it is also what the owner's 編輯合集 wears, because editing your
+/// own 合集 is a utility rather than the page's invitation. The loud variant is
+/// the plain primary button that asks a visitor to 收藏.
+private struct CollectionActionStyle: ButtonStyle {
+    let inverted: Bool
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(self.saved ? Color.tujiPaper : .tujiInk)
+            .foregroundStyle(self.inverted ? Color.tujiPaper : .tujiInk)
             .background(self.ground(pressed: configuration.isPressed))
             .animation(Motion.ease(Motion.d1), value: configuration.isPressed)
     }
 
     private func ground(pressed: Bool) -> Color {
-        if self.saved { return pressed ? .tujiInk2 : .tujiPaper.opacity(0.2) }
+        if self.inverted { return pressed ? .tujiInk2 : .tujiPaper.opacity(0.2) }
         return pressed ? .tujiCurrentDeep : .tujiCurrent
     }
 }
@@ -232,7 +235,7 @@ struct AtlasCollectionDetailView: View {
             TujiInkStat(label: "內容", value: collection.itemCount)
             TujiInkStat(label: "被收藏", value: collection.saveCount)
             Spacer(minLength: Space.s3)
-            self.bookmarkAction
+            self.trailingAction(collection)
         }
         .padding(.horizontal, Space.s4)
         .frame(height: 72)
@@ -240,13 +243,12 @@ struct AtlasCollectionDetailView: View {
         .background(.tujiInk)
     }
 
+    /// What this page lets *you* do with this 合集 — 收藏 for a visitor, 編輯 for
+    /// its author. One slot, because the two are never both true.
     @ViewBuilder
-    private var bookmarkAction: some View {
+    private func trailingAction(_ collection: AtlasCollection) -> some View {
         if self.isOwnCollection {
-            Text("你的合集")
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiPaper.opacity(0.6))
+            self.editAction(collection)
         } else {
             Button(action: self.bookmarkTapped) {
                 Group {
@@ -271,11 +273,33 @@ struct AtlasCollectionDetailView: View {
                 .frame(height: 44)
                 .padding(.horizontal, Space.s3)
             }
-            .buttonStyle(CollectionSaveStyle(saved: self.vm.isSaved))
+            .buttonStyle(CollectionActionStyle(inverted: self.vm.isSaved))
             .disabled(self.vm.bookmarkBusy)
             .accessibilityLabel(self.vm.isSaved ? "已收藏" : "收藏")
             .accessibilityAddTraits(self.vm.isSaved ? [.isSelected] : [])
         }
+    }
+
+    /// 「你的合集」 used to sit here as a flat label: true, and dead. The one
+    /// thing an author wants from their own 合集 page is to change what is on
+    /// it, and 編輯合集 was reachable only by backing out to 圖鑑管理 → 合集.
+    /// The label's other job — saying whose this is — the destination's name
+    /// does by itself: nobody else is offered it.
+    ///
+    /// `collection.id` is the owner-side collection id (the public payload
+    /// carries `atlas_collections.id`), which is exactly what 編輯合集 loads.
+    private func editAction(_ collection: AtlasCollection) -> some View {
+        Button {
+            self.navigator.push(.atlasCollectionEdit(id: collection.id))
+        } label: {
+            Text("編輯合集")
+                .font(.tujiH3)
+                .frame(minWidth: 96)
+                .frame(height: 44)
+                .padding(.horizontal, Space.s3)
+        }
+        .buttonStyle(CollectionActionStyle(inverted: true))
+        .accessibilityLabel(Text("編輯合集"))
     }
 
     private func bookmarkTapped() {
