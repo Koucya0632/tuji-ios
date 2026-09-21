@@ -56,33 +56,57 @@ struct TodayView: View {
     }
 
     var body: some View {
-        ScrollView {
-            // No shared horizontal padding: the ink block bleeds to the screen
-            // edges, so each section owns its own margin. A block with 24pt of
-            // paper on either side is "a card"; one that reaches the edges is
-            // "this part of the screen", and the difference in weight is large.
-            VStack(alignment: .leading, spacing: Space.s5) {
-                self.greeting.padding(.horizontal, Space.s4)
-                self.hero
-                self.themesSection
+        // The page is measured so that it comes out one screen tall: the themes
+        // strip is the section that stretches, and it can only take the slack if
+        // something works out how much slack there is. `maxHeight: .infinity`
+        // cannot do it — inside a ScrollView the proposal is unbounded, so a
+        // flexible child takes its *ideal* height (the whole grid) and the page
+        // grows instead. So the strip is given a measured height, and the
+        // measurement is the page's own: everything that is not the strip is
+        // `total - strip`, and what is left of the screen after that is the
+        // strip's. It settles in one extra layout pass and re-settles whenever
+        // the text size moves it.
+        GeometryReader { screen in
+            ScrollView {
+                // No shared horizontal padding: the ink block bleeds to the screen
+                // edges, so each section owns its own margin. A block with 24pt of
+                // paper on either side is "a card"; one that reaches the edges is
+                // "this part of the screen", and the difference in weight is large.
+                VStack(alignment: .leading, spacing: Space.s5) {
+                    self.greeting.padding(.horizontal, Space.s4)
+                    self.hero
+                    self.themesSection
+                }
+                .padding(.top, Space.s3)
+                .padding(.bottom, Space.s4)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { total in
+                    // The tab bar's inset comes off the screen: content is free
+                    // to scroll under the bar, but the strip is not free to end
+                    // under it.
+                    let page = screen.size.height - screen.safeAreaInsets.bottom
+                    self.themeStripSpace = page - (total - self.themeStripHeight)
+                }
             }
-            .padding(.top, Space.s3)
-            .padding(.bottom, Space.s6)
-        }
-        .background(.tujiPaper)
-        // Metadata only (VoiceOver, back-button label on pushed screens,
-        // multitasking window title) — the greeting is the visible title, so
-        // the system nav bar itself stays hidden.
-        .navigationTitle("主頁")
-        .toolbar(.hidden, for: .navigationBar)
-        .refreshable {
-            // What a pull re-reads is `LearningRefresh`'s to say. This list was
-            // written here, and 我 and 清除學習進度 each wrote their own.
-            await LiveLearningRefresher().refresh(after: .pulledToday(isGuest: self.auth.isGuest))
-        }
-        .warmsAccumulation(.todayHero, isGuest: self.auth.isGuest) {
-            guard !self.auth.isGuest else { return }
-            self.prefetchStudyQueues()
+            // A new screen size (rotation, Stage Manager) invalidates the
+            // measurement, and the content's own height may not change with it,
+            // so nothing above would fire. Dropping back to the floor makes the
+            // strip re-measure from scratch.
+            .onChange(of: screen.size.height) { self.themeStripSpace = nil }
+            .background(.tujiPaper)
+            // Metadata only (VoiceOver, back-button label on pushed screens,
+            // multitasking window title) — the greeting is the visible title, so
+            // the system nav bar itself stays hidden.
+            .navigationTitle("主頁")
+            .toolbar(.hidden, for: .navigationBar)
+            .refreshable {
+                // What a pull re-reads is `LearningRefresh`'s to say. This list was
+                // written here, and 我 and 清除學習進度 each wrote their own.
+                await LiveLearningRefresher().refresh(after: .pulledToday(isGuest: self.auth.isGuest))
+            }
+            .warmsAccumulation(.todayHero, isGuest: self.auth.isGuest) {
+                guard !self.auth.isGuest else { return }
+                self.prefetchStudyQueues()
+            }
         }
     }
 
@@ -426,6 +450,15 @@ struct TodayView: View {
         }
     }
 
+    /// One theme tile's height, scaled with the text size. Only the window's
+    /// floor is computed from it, so an estimate is enough — a measurement
+    /// would have to happen before the tiles it measures are laid out.
+    @ScaledMetric(relativeTo: .body) private var themeTileHeight: CGFloat = 68
+
+    /// The height the page's measurement leaves for the strip. Nil until the
+    /// first pass, which is what `themeStripHeight`'s floor stands in for.
+    @State private var themeStripSpace: CGFloat?
+
     // MARK: - Themes grid
 
     @ViewBuilder
@@ -442,14 +475,15 @@ struct TodayView: View {
                             .tracking(0.5)
                             .foregroundStyle(.tujiInk3)
                         Spacer()
-                        // Named for where it goes. The strip shows the themes
+                        // Named for what it does. The strip shows the themes
                         // *you picked*, so the action beside it is changing
-                        // that pick — but it used to be labelled "全部 →",
-                        // which promises the whole catalogue and delivers a
-                        // settings multi-select. Browsing every theme is 主題's
-                        // job, on 圖鑑.
+                        // that pick — it used to be labelled "全部 →", which
+                        // promises the whole catalogue and delivers a settings
+                        // multi-select, and then "學習主題 →", which names the
+                        // destination but not the verb. Browsing every theme is
+                        // 主題's job, on 圖鑑.
                         NavigationLink(value: NavRoute.studyCategories) {
-                            Text("學習主題 →")
+                            Text("更換學習主題")
                                 .font(.tujiLabel)
                                 .tracking(0.5)
                                 .foregroundStyle(.tujiInk)
@@ -459,11 +493,21 @@ struct TodayView: View {
                     }
                     .padding(.horizontal, Space.s4)
 
-                    // Horizontal, not a 3-up grid. Three tiles filled the row and
-                    // the screen simply stopped; scrolling says "there is more"
-                    // and hands the vertical space back to the ink block.
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: Space.s2) {
+                    // Two across, in a window that scrolls on its own and
+                    // takes whatever the page has left — which is why the page
+                    // is measured. It was a horizontal strip, which hid every
+                    // theme past the third behind a sideways swipe; it is not
+                    // the page that grows either, because twenty themes would
+                    // then push everything below them off the bottom. The
+                    // section keeps its height and the tiles move inside it.
+                    ScrollView(.vertical) {
+                        LazyVGrid(
+                            columns: [
+                                GridItem(.flexible(), spacing: Space.s2),
+                                GridItem(.flexible(), spacing: Space.s2)
+                            ],
+                            spacing: Space.s2
+                        ) {
                             ForEach(tiles, id: \.id) { c in
                                 NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
                                     CategoryTile(
@@ -471,16 +515,23 @@ struct TodayView: View {
                                         wordCount: self.words.byCategory(c.id).count,
                                         status: self.themeStatus(for: c.id)
                                     )
-                                    .frame(width: 160)
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, Space.s4)
                     }
+                    .frame(height: self.themeStripHeight)
                 }
             }
         }
+    }
+
+    /// What the page's measurement left for the strip, clamped to a floor of two
+    /// rows and the gap between them — below that the page scrolls instead, the
+    /// way it does at the largest text sizes.
+    private var themeStripHeight: CGFloat {
+        max(self.themeStripSpace ?? 0, self.themeTileHeight * 2 + Space.s2)
     }
 
     /// Signed-in user has loaded settings but picked no study themes — nudge
