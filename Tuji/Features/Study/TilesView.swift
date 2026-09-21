@@ -1,14 +1,16 @@
-// 拼字塊 — the production step of NewFlow. Shows the image + 中文 (never the
-// word) and a scrambled tile per unit; the user taps tiles into slots to
-// spell the word from recall. Auto-checks when every slot is filled: correct
-// advances (and commits the word's SRS write upstream), wrong freezes the
-// board red and surfaces the WordPeek sheet — the retry comes back later with
-// a fresh scramble (coordinator bumps the attempt on advanceFromPeek).
+// 拼字塊 — the 拼字 board for Japanese readings. Shows the image + 中文 (never
+// the string being asked for) and a scrambled tile per unit; the user taps
+// tiles into slots to assemble it from recall. Auto-checks when every slot is
+// filled: correct advances (and commits the word's SRS write upstream), wrong
+// freezes the board red and surfaces the WordPeek sheet — the retry comes back
+// later with a fresh scramble (coordinator bumps the attempt on
+// advanceFromPeek).
 //
-// Every word takes this task: the TileBoard splits the subject per whitespace
-// token (one slot row each — spaces are never tiles) and re-chunks units so
-// long subjects stay within a 10-tile board. Single-unit subjects skip the
-// spell stage entirely (see NewFlowCoordinator.initialSchedule).
+// English words no longer come here. Re-assembling every letter quizzes "do you
+// remember each character", and English spelling goes wrong in a handful of
+// places worth cutting out instead — those words take SpellGapView. A kana
+// reading has no such places, so it still gets the whole string. SpellForm
+// makes the call; StudyLadder gates the stage on the same predicate.
 
 import SwiftUI
 
@@ -16,14 +18,10 @@ struct TilesView: View {
     let coord: NewFlowCoordinator
     let item: StudyQueueItem
 
-    @Environment(SettingsStore.self) private var settings
-    @Environment(WordsStore.self) private var words
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     /// One value from the coordinator, already resolved.
     ///
-    /// This view used to hold six derived properties over `tilePicked` and
-    /// `tileUnits(for:)` — including the verdict, which the coordinator had
+    /// This view used to hold six derived properties over `spellPicked` and
+    /// `spellPool(for:)` — including the verdict, which the coordinator had
     /// already computed and discarded. Two readers of the same index pair, and
     /// they disagreed about bounds: the coordinator's was checked, this one's
     /// was a trap.
@@ -42,7 +40,7 @@ struct TilesView: View {
     private func content(_ board: SpellBoard) -> some View {
         VStack(spacing: Space.s3) {
             self.bubble(board)
-            self.card
+            SpellPromptCard(word: self.item.word, showsGloss: true)
             Spacer(minLength: 0)
             self.slotsRow(board)
             self.tilePool(board)
@@ -75,50 +73,6 @@ struct TilesView: View {
             .foregroundStyle(.tujiInk3)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-
-    private var card: some View {
-        VStack(spacing: Space.s3) {
-            self.hero
-            HStack {
-                if self.settings.current.showZh {
-                    Text(self.item.word.chinese)
-                        .font(.tujiBodySm(.strong))
-                        .foregroundStyle(.tujiInk)
-                }
-                Spacer()
-                PronunciationButton(
-                    subject: SpokenWord(self.item.word),
-                    size: 36
-                )
-            }
-            .padding(.horizontal, Space.s3)
-            .padding(.bottom, Space.s3)
-        }
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(.tujiRule.opacity(0.15), lineWidth: 1)
-        )
-    }
-
-    private var hero: some View {
-        ZStack {
-            Rectangle().fill(.tujiPaper)
-            // This screen used to hard-code `.fit` with no blend mode at all,
-            // so a dictionary cut-out kept the white rectangle every other
-            // screen multiplies away — the one place the 紙與墨 fix never
-            // reached.
-            WordPicture(
-                url: self.item.word.imageURL,
-                kind: self.item.word.imageKind,
-                inset: Space.s2,
-                glyphSize: 28
-            )
-        }
-        .frame(height: 168)
-        .clipped()
-        .clipShape(.rect(topLeadingRadius: Radius.r0, topTrailingRadius: Radius.r0))
     }
 
     /// Answer slots — one box per unit, one row per token (the visual stand-in
@@ -156,7 +110,7 @@ struct TilesView: View {
 
     private func slotBox(_ slot: SpellBoard.Slot, at index: Int, verdict: Bool?) -> some View {
         Button {
-            self.coord.unpickTile(atSlot: index)
+            self.coord.unpickSpell(atSlot: index)
         } label: {
             Text(slot.unit ?? " ")
                 .font(.tujiHeadword(22))
@@ -218,7 +172,7 @@ struct TilesView: View {
         let used = tile.used
         return Button {
             guard !locked, !used else { return }
-            self.coord.pickTile(index)
+            self.coord.pickSpell(index)
         } label: {
             Text(tile.unit)
                 .font(.tujiHeadword(22))

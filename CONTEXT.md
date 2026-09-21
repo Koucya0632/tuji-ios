@@ -219,6 +219,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   language question, which it was masquerading as: ねこ is Japanese and its 振假名 is
   itself, so the stage quizzes the 詞形. The two agree on most words and part company on
   exactly the words that make 振假名 subtle.
+- **拼字板 (`SpellForm`)** — *how* the stage asks it, which is a second question the subject
+  does not answer. `.gaps` is 挖空拼字: the word shown whole with one to three confusable
+  chunks cut out of it, refilled from a shuffled pool (`SpellGaps`). `.tiles` is 拼字塊, the
+  whole string scrambled. English takes the gaps because its spelling goes wrong in a
+  handful of places worth cutting — the r-controlled vowels, the vowel teams, the suffix
+  families, the doubled consonants — while re-assembling every letter asks whether you
+  remember each character. A kana reading has no such places, so it still gets the tiles.
+  The split reads the subject's *script*, not `targetLanguage`: that field is optional, and
+  バスマット is a `.term` too. The ladder gates the stage on the same value, so a scheduled
+  拼字 task always has a board.
 - **補充 (enrichment)** — the AI pass that fills a captured item's 釋義, 助記, 詞源 and the
   per-language gloss. One pass is three to four paid model calls, not one. Its states live in
   `backfill_status`: `pending` → `filled`, or `failed` (this attempt broke — try again) → after
@@ -250,7 +260,8 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   a range is one character long; 熟字訓 like 時計 cannot be divided at all and take one
   range across both characters, so "one range, one ruby" is the shape and 逐字 is an
   outcome, not a guarantee. Derived from the 振假名 against a dictionary and never a
-  substitute for it — the 拼字 stage still quizzes the whole string.
+  substitute for it — 拼字 cuts its own chunks (see 拼字板), and for a kana reading it still
+  quizzes the whole string.
   _Avoid_: furigana (ambiguous — it names the 振假名 as often as the split).
 - **`TujiHeadword` / `TujiReadingLine`** — the one home for how a headword is presented:
   ruby vs line vs nothing, the single 26pt size, whether the word may wrap, and the

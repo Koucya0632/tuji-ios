@@ -124,10 +124,10 @@ struct NewFlowCoordinatorTests {
             ("w-apple", .identify),
             ("w-neko", .recognize),
             ("w-ringo", .identify),
-            ("w-apple", .spellTiles),
+            ("w-apple", .spell),
             ("w-neko", .identify),
-            ("w-ringo", .spellTiles),
-            ("w-neko", .spellTiles)
+            ("w-ringo", .spell),
+            ("w-neko", .spell)
         ]
         #expect(c.ladder.tasks.map(\.item.word.id) == expected.map(\.0))
         #expect(c.ladder.tasks.map(\.kind) == expected.map(\.1))
@@ -214,13 +214,13 @@ struct NewFlowCoordinatorTests {
         #expect(c.current?.item.word.id == "w-ringo")
         c.resolveIdentify(correct: true)
         expectMonotone()
-        #expect(c.current?.kind == .spellTiles)
+        #expect(c.current?.kind == .spell)
         #expect(c.current?.item.word.id == "w-apple")
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         expectMonotone()
         // Denominator shrank to 5 (6 scheduled − 1 skipped): 4 clears in.
         #expect(abs(c.progress - 4.0 / 5.0) < 0.0001)
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         #expect(c.clearedWords == 2)
         #expect(c.progress == 1.0)
@@ -235,13 +235,13 @@ struct NewFlowCoordinatorTests {
         let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .good)
         // Identify skipped → straight to production.
-        #expect(c.current?.kind == .spellTiles)
-        c.resolveTiles(correct: false)
+        #expect(c.current?.kind == .spell)
+        c.resolveSpell(correct: false)
         #expect(c.peek?.id == "w-apple")
         c.advanceFromPeek()
         // Requeued tiles must come back (not be deferred by normalizeHead).
-        #expect(c.current?.kind == .spellTiles)
-        c.resolveTiles(correct: true)
+        #expect(c.current?.kind == .spell)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         await c.writes.drainPendingWrites(within: .seconds(2))
         // The tile miss corrects the overconfident self-rating: 穩定 → 困難.
@@ -291,7 +291,7 @@ struct NewFlowCoordinatorTests {
         let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .hard)
         c.resolveIdentify(correct: true)
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         #expect(c.clearedWords == 1)
         await c.writes.drainPendingWrites(within: .seconds(2))
@@ -320,7 +320,7 @@ struct NewFlowCoordinatorTests {
         try c.identifyPick(#require(c.current).item.word.word)
         // Let the (now instant) beat run.
         await Task.yield()
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.first?.responseMs == 2500)
     }
@@ -389,9 +389,9 @@ struct NewFlowCoordinatorTests {
         let c = NewFlowCoordinator(queue: queue, writer: spy)
         // .good fast-paths to tiles; the one tile miss drops 穩定 → 困難.
         c.resolveRecognize(rating: .good)
-        c.resolveTiles(correct: false)
+        c.resolveSpell(correct: false)
         c.advanceFromPeek()
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["困難"])
@@ -406,7 +406,7 @@ struct NewFlowCoordinatorTests {
         c.resolveIdentify(correct: false)
         c.advanceFromPeek()
         c.resolveIdentify(correct: true)
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["重來"])
@@ -418,11 +418,11 @@ struct NewFlowCoordinatorTests {
         let spy = SpyAnswerWriter()
         let c = NewFlowCoordinator(queue: queue, writer: spy)
         c.resolveRecognize(rating: .good)
-        c.resolveTiles(correct: false)
+        c.resolveSpell(correct: false)
         c.advanceFromPeek()
-        c.resolveTiles(correct: false)
+        c.resolveSpell(correct: false)
         c.advanceFromPeek()
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(spy.answers.map(\.rating) == ["重來"])
@@ -436,7 +436,7 @@ struct NewFlowCoordinatorTests {
         #expect(SRSRating.again.downgraded == .again)
     }
 
-    // MARK: - Tile spell-check (the production step's correctness decision)
+    // MARK: - 拼字 (the production step's correctness decision)
 
     /// Advance past whatever stage is on screen, without answering wrongly —
     /// enough to walk the interleaved queue to the first 拼字 task.
@@ -444,35 +444,47 @@ struct NewFlowCoordinatorTests {
         switch c.current?.kind {
         case .recognize: c.resolveRecognize(rating: .hard)
         case .identify: c.resolveIdentify(correct: true)
-        case .spellTiles, .none: break
+        case .spell, .none: break
+        }
+    }
+
+    /// Walk to one particular word's 拼字 task, clearing everything in front of
+    /// it. Which board that task draws depends on the word — English takes the
+    /// gap-fill and a kana reading the tile board — so a test has to name the
+    /// word it means instead of taking the first 拼字 it reaches.
+    private func walkToSpell(_ c: NewFlowCoordinator, wordId: String) {
+        while let task = c.current, !(task.kind == .spell && task.item.word.id == wordId) {
+            switch task.kind {
+            case .recognize: c.resolveRecognize(rating: .hard)
+            case .identify: c.resolveIdentify(correct: true)
+            case .spell: c.resolveSpell(correct: true)
+            }
         }
     }
 
     @Test
     func pickingTilesFillsSlotsAndDimsThePool() throws {
         // The board the view draws had no value to assert on: it was six
-        // computed properties over `tilePicked` × `tileUnits(for:)`, private to
-        // TilesView. `pickTile` and `unpickTile` had no tests at all.
+        // computed properties over `spellPicked` × `spellPool(for:)`, private to
+        // TilesView. `pickSpell` and `unpickSpell` had no tests at all.
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
-        // Walk to the first spell task.
-        while c.current?.kind != .spellTiles, c.current != nil {
-            self.clearCurrentStage(c)
-        }
+        // 林檎 is quizzed on its kana reading, which still takes tiles.
+        self.walkToSpell(c, wordId: "w-ringo")
         let board = try #require(c.spellBoard)
         #expect(board.slots.allSatisfy { $0.unit == nil })
         #expect(board.pool.allSatisfy { !$0.used })
         #expect(board.verdict == nil)
 
-        c.pickTile(0)
+        c.pickSpell(0)
         let afterPick = try #require(c.spellBoard)
         #expect(afterPick.slots[0].unit == board.pool[0].unit)
         #expect(afterPick.pool[0].used)
         // A tile already placed cannot be placed twice.
-        c.pickTile(0)
+        c.pickSpell(0)
         #expect(try #require(c.spellBoard).slots[1].unit == nil)
 
-        c.unpickTile(atSlot: 0)
+        c.unpickSpell(atSlot: 0)
         let afterUnpick = try #require(c.spellBoard)
         #expect(afterUnpick.slots[0].unit == nil)
         #expect(!afterUnpick.pool[0].used)
@@ -482,15 +494,13 @@ struct NewFlowCoordinatorTests {
     func aWrongBoardFreezesWithItsVerdictAndTheAnswerUnderIt() throws {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
-        while c.current?.kind != .spellTiles, c.current != nil {
-            self.clearCurrentStage(c)
-        }
+        self.walkToSpell(c, wordId: "w-ringo")
         let item = try #require(c.current).item
-        let units = c.tileUnits(for: item)
+        let units = c.spellPool(for: item)
         // The scramble's own order is never the answer (pinned above), so
         // filling the board in index order is a guaranteed miss.
         for index in units.indices {
-            c.pickTile(index)
+            c.pickSpell(index)
         }
 
         let board = try #require(c.spellBoard)
@@ -505,12 +515,12 @@ struct NewFlowCoordinatorTests {
     func tilesMatchScoresTheSpelling() throws {
         let queue = try self.makeQueue()
         let c = NewFlowCoordinator(queue: queue)
-        let apple = queue[0]
-        let units = TileBoard.units(for: apple, attempt: 0)
-        let board = TileBoard.of(apple)
+        let ringo = queue[1]
+        let units = TileBoard.units(for: ringo, attempt: 0)
+        let board = TileBoard.of(ringo)
 
         // The pick order that spells the target: consume each ordered unit from
-        // the scramble by first-available index (handles the duplicate "p").
+        // the scramble by first-available index (handles duplicate units).
         var pool = Array(units.enumerated())
         var correct: [Int] = []
         for unit in board.orderedUnits {
@@ -518,9 +528,175 @@ struct NewFlowCoordinatorTests {
             correct.append(pool[pos].offset)
             pool.remove(at: pos)
         }
-        #expect(c.tilesMatch(correct, for: apple))
+        #expect(c.spellMatches(correct, for: ringo))
         // The scramble's own order is, by construction, never the answer.
-        #expect(!c.tilesMatch(Array(units.indices), for: apple))
+        #expect(!c.spellMatches(Array(units.indices), for: ringo))
+    }
+
+    // MARK: - 挖空拼字 (the English board)
+
+    @Test
+    func anEnglishWordTakesTheGapBoardAndAKanaReadingTheTiles() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+
+        self.walkToSpell(c, wordId: "w-apple")
+        #expect(c.gapBoard != nil)
+        #expect(c.spellBoard == nil)
+
+        self.walkToSpell(c, wordId: "w-ringo")
+        #expect(c.spellBoard != nil)
+        #expect(c.gapBoard == nil)
+    }
+
+    @Test
+    func aGapBoardShowsTheWordAroundItsHoles() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        self.walkToSpell(c, wordId: "w-apple")
+        let board = try #require(c.gapBoard)
+
+        #expect(board.term == "apple")
+        #expect(board.segments.count == board.slots.count + 1)
+        #expect(board.slots.allSatisfy { $0.filled == nil })
+        #expect(board.verdict == nil)
+        // The visible text plus the answers rebuilds the word — the view draws
+        // exactly these pieces, so a mismatch here is a mis-spelled prompt.
+        let rebuilt = zip(board.segments, board.slots.map(\.answer) + [""])
+            .map { $0 + $1 }
+            .joined()
+        #expect(rebuilt == "apple")
+        // The pool carries every answer plus distractors to choose against.
+        #expect(board.slots.allSatisfy { slot in board.pool.contains { $0.unit == slot.answer } })
+        #expect(board.pool.count > board.slots.count)
+    }
+
+    @Test
+    func pickingAnOptionFillsTheGapAndDimsIt() throws {
+        // "cutting board" carries two holes, so the board does not auto-check
+        // on the first pick. A one-hole word cannot be tested here at all —
+        // see the next test for why.
+        let queue = try self.makeMultiWordQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        self.walkToSpell(c, wordId: "w-board")
+        let item = try #require(c.current).item
+        let options = c.spellPool(for: item)
+        let board = try #require(c.gapBoard)
+        #expect(board.slots.count == 2)
+        #expect(board.activeSlot == 0)
+
+        c.pickSpell(0)
+        let afterPick = try #require(c.gapBoard)
+        #expect(afterPick.slots[0].filled == options[0])
+        #expect(afterPick.pool[0].used)
+        #expect(afterPick.slots[1].filled == nil)
+        #expect(afterPick.activeSlot == 1)
+
+        // An option already placed cannot be placed twice.
+        c.pickSpell(0)
+        let afterDoubleTap = try #require(c.gapBoard)
+        #expect(afterDoubleTap.slots[1].filled == nil)
+
+        c.unpickSpell(atSlot: 0)
+        let afterUnpick = try #require(c.gapBoard)
+        #expect(afterUnpick.slots[0].filled == nil)
+        #expect(!afterUnpick.pool[0].used)
+        #expect(afterUnpick.activeSlot == 0)
+    }
+
+    @Test
+    func aSingleGapBoardCommitsOnTheFirstTap() throws {
+        // With one hole the first tap is the answer, so the board locks and the
+        // pick cannot be taken back — the same contract as 選字, where the first
+        // pick ends the question either way.
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        self.walkToSpell(c, wordId: "w-apple")
+        #expect(try #require(c.gapBoard).slots.count == 1)
+
+        c.pickSpell(0)
+        let board = try #require(c.gapBoard)
+        #expect(board.isLocked)
+        #expect(board.activeSlot == nil)
+        c.unpickSpell(atSlot: 0)
+        #expect(try #require(c.gapBoard).slots[0].filled != nil)
+    }
+
+    @Test
+    func spellMatchesScoresAGapFillSlotBySlot() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        let apple = queue[0]
+        let options = c.spellPool(for: apple)
+        guard case let .gaps(plan) = try #require(SpellForm.of(apple)) else {
+            Issue.record("apple should take the gap board")
+            return
+        }
+
+        let correct = try plan.answers.map { answer in
+            try #require(options.firstIndex(of: answer))
+        }
+        #expect(c.spellMatches(correct, for: apple))
+
+        let wrong = try #require(options.indices.first { !plan.answers.contains(options[$0]) })
+        #expect(!c.spellMatches([wrong], for: apple))
+    }
+
+    @Test
+    func aWrongGapFreezesTheBoardAndMarksTheSlotThatMissed() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        self.walkToSpell(c, wordId: "w-apple")
+        let item = try #require(c.current).item
+        let options = c.spellPool(for: item)
+        let answers = try #require(c.gapBoard).slots.map(\.answer)
+
+        // Fill every slot with something that is not its answer.
+        for slot in answers.indices {
+            let wrong = try #require(options.indices.first {
+                options[$0] != answers[slot] && !c.spellPicked.contains($0)
+            })
+            c.pickSpell(wrong)
+        }
+
+        let board = try #require(c.gapBoard)
+        #expect(board.verdict == false)
+        #expect(board.isLocked)
+        #expect(board.slots.allSatisfy { !$0.isCorrect })
+        // 正解 renders from the board, not re-derived by the view.
+        #expect(board.term == "apple")
+    }
+
+    @Test
+    func aRetryReshufflesTheOptionsButNeverMovesTheGaps() throws {
+        let queue = try self.makeQueue()
+        let c = NewFlowCoordinator(queue: queue)
+        self.walkToSpell(c, wordId: "w-apple")
+        let item = try #require(c.current).item
+        let before = try #require(c.gapBoard)
+        let firstPool = c.spellPool(for: item)
+
+        // Miss it, then take the peek's advance — the retry path.
+        let answers = before.slots.map(\.answer)
+        for slot in answers.indices {
+            let wrong = try #require(firstPool.indices.first {
+                firstPool[$0] != answers[slot] && !c.spellPicked.contains($0)
+            })
+            c.pickSpell(wrong)
+        }
+        c.resolveSpell(correct: false)
+        c.advanceFromPeek()
+        self.walkToSpell(c, wordId: "w-apple")
+
+        let after = try #require(c.gapBoard)
+        // The chunk they missed is the one worth asking again, so the holes
+        // stay put; only the order of the options changes.
+        #expect(after.segments == before.segments)
+        #expect(after.slots.map(\.answer) == answers)
+        let secondPool = c.spellPool(for: item)
+        #expect(Set(secondPool) == Set(firstPool))
+        #expect(secondPool != firstPool)
+        #expect(after.slots.allSatisfy { $0.filled == nil })
     }
 
     @Test
@@ -532,7 +708,7 @@ struct NewFlowCoordinatorTests {
         // .good fast-paths past 選字 to tiles; clearing tiles commits the one
         // held-back write, which the writer reports as parked (offline).
         c.resolveRecognize(rating: .good)
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         #expect(c.finished)
         await c.writes.drainPendingWrites(within: .seconds(2))
         #expect(writer.answers.count == 1)
@@ -556,7 +732,7 @@ struct NewFlowCoordinatorTests {
         )
         let c = NewFlowCoordinator(queue: queue, writer: writer)
         c.resolveRecognize(rating: .good)
-        c.resolveTiles(correct: true)
+        c.resolveSpell(correct: true)
         await c.writes.drainPendingWrites(within: .seconds(2))
 
         #expect(c.writes.milestone?.streak == 30)

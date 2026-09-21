@@ -9,7 +9,7 @@
 // It was already a module; it just had no interface. Living inside
 // `NewFlowCoordinator` alongside six other responsibilities and twelve
 // dictionaries, the only way to exercise it was through three internal methods
-// — `resolveRecognize` / `resolveIdentify` / `resolveTiles` — that exist for the
+// — `resolveRecognize` / `resolveIdentify` / `resolveSpell` — that exist for the
 // tests and that the app never calls. Eleven test call sites went through that
 // door. **The interface is the test surface**: if the tests have to enter
 // somewhere the app doesn't, the module is the wrong shape.
@@ -66,7 +66,7 @@ struct StudyLadder: Equatable {
 
     /// Whether this word still has a 拼字 stage on its ladder.
     func hasSpellStage(_ item: StudyQueueItem) -> Bool {
-        TileBoard.of(item).unitCount >= 2
+        SpellForm.of(item) != nil
     }
 
     // MARK: - Mutating
@@ -125,8 +125,9 @@ struct StudyLadder: Equatable {
 
     /// rec@3i, id@3i+4, spell@3i+8, stable-sorted by position. Guarantees each
     /// word's stages stay ordered while neighbouring words interleave between
-    /// them (for w₀: 認識, then ~2 other tasks, then 選字, …). Words whose tile
-    /// board has a single unit skip the 拼字 stage entirely.
+    /// them (for w₀: 認識, then ~2 other tasks, then 選字, …). Words that can
+    /// carry neither a gap-fill nor a two-tile board skip 拼字 entirely — the
+    /// one predicate lives in SpellForm so the gate and the board agree.
     private static func initialSchedule(for queue: [StudyQueueItem]) -> [NewStudyTask] {
         struct Slot {
             let pos: Int
@@ -140,8 +141,8 @@ struct StudyLadder: Equatable {
         for (i, item) in queue.enumerated() {
             add(3 * i, NewStudyTask(item: item, kind: .recognize))
             add(3 * i + 4, NewStudyTask(item: item, kind: .identify))
-            if TileBoard.of(item).unitCount >= 2 {
-                add(3 * i + 8, NewStudyTask(item: item, kind: .spellTiles))
+            if SpellForm.of(item) != nil {
+                add(3 * i + 8, NewStudyTask(item: item, kind: .spell))
             }
         }
         return scheduled
@@ -156,7 +157,7 @@ struct StudyLadder: Equatable {
     private mutating func normalizeHead() {
         var moved = 0
         while let head = tasks.first,
-              head.kind == .spellTiles,
+              head.kind == .spell,
               !self.identifyCleared.contains(head.item.word.id),
               moved <= self.tasks.count
         {
