@@ -29,7 +29,6 @@ extension View {
                     WordDetailView(id: id)
                 }
             case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
-            case .categoryIndex: CategoryIndexView()
             case let .categoryDetail(id): CategoryView(id: id)
             }
         }

@@ -50,18 +50,29 @@ enum ThemeStatus {
     }
 }
 
-struct CategoryTile: View {
-    let category: TujiCategory
-    let wordCount: Int
-    var status: ThemeStatus = .none
-
-    private var accent: Color {
-        switch self.status {
+extension ThemeStatus {
+    /// The frame a tile in this state wears. Two tiles draw it now — the plain
+    /// one below and `CategoryCoverTile` — so the colour and the weight are the
+    /// status's own answer rather than each tile's.
+    var accent: Color {
+        switch self {
         case .mastered: .tujiInk
         case .completed: .tujiAccumulation
         case .none: .tujiPaper3
         }
     }
+
+    /// A marked tile's frame is half a point heavier, which is the whole of the
+    /// difference at rest — see Border.swift on why it is not a colour step.
+    var frameWidth: CGFloat {
+        self == .none ? 1 : 1.5
+    }
+}
+
+struct CategoryTile: View {
+    let category: TujiCategory
+    let wordCount: Int
+    var status: ThemeStatus = .none
 
     var body: some View {
         VStack(spacing: 3) {
@@ -80,7 +91,61 @@ struct CategoryTile: View {
         .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(
             RoundedRectangle(cornerRadius: Radius.r0)
-                .stroke(self.accent, lineWidth: self.status == .none ? 1 : 1.5)
+                .stroke(self.status.accent, lineWidth: self.status.frameWidth)
+        )
+        .overlay(alignment: .topTrailing) {
+            ThemeStatusBadge(status: self.status)
+                .padding(5)
+        }
+    }
+}
+
+/// The same theme, with its picture: 圖鑑·官方 is a shelf of themes rather than
+/// a flat run of 757 words, and a shelf that shows nothing but names is a list.
+///
+/// Separate from `CategoryTile` rather than a flag on it because 今天's strip
+/// wants the opposite thing — two rows of themes in the height this tile gives
+/// one — and a tile that draws a cover only sometimes would owe both callers an
+/// explanation. What they share (the frame, the badge, the picture rule) they
+/// share by name: `ThemeStatus.accent`, `ThemeStatusBadge`, `CategoryArtwork`.
+struct CategoryCoverTile: View {
+    let category: TujiCategory
+    let wordCount: Int
+    var status: ThemeStatus = .none
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // The *container* owns the shape, the way WordTile's square does:
+            // a 16:9 box measured from the cell, with the artwork filling it
+            // from inside. Asking the picture for the aspect ratio instead lets
+            // a 1280-wide cover negotiate its own size and push the grid apart.
+            // 16:9 because that is the crop 主題's hero shows, so a theme looks
+            // like itself on both screens.
+            Color.tujiPaper2
+                .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                .overlay {
+                    CategoryArtwork(category: self.category)
+                }
+                .clipped()
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(self.category.nameZh)
+                    .font(.tujiBodySm(.strong))
+                    .foregroundStyle(.tujiInk)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text("\(self.wordCount) 字")
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Space.s2)
+            .padding(.vertical, Space.s3)
+        }
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+        .overlay(
+            RoundedRectangle(cornerRadius: Radius.r0)
+                .stroke(self.status.accent, lineWidth: self.status.frameWidth)
         )
         .overlay(alignment: .topTrailing) {
             ThemeStatusBadge(status: self.status)

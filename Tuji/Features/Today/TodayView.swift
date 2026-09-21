@@ -587,7 +587,7 @@ struct TodayView: View {
     }
 
     /// Completion state for a theme tile. The rule itself lives on ThemeStatus
-    /// so 主題 (CategoryIndexView) asks the same question the same way.
+    /// so 圖鑑·官方's shelf asks the same question the same way.
     private func themeStatus(for id: String) -> ThemeStatus {
         ThemeStatus.of(
             words: self.words.byCategory(id),

@@ -1,15 +1,23 @@
-// 2-column grid of every word, filterable by where the word came from.
+// 2-column grid, filterable by where a word came from.
 //
 // One filter row, not two. The theme row that used to sit under it is gone:
 // chips are a horizontal strip, and a strip cannot be browsed once the
-// catalogue has forty themes in it. Theme browsing moved to CategoryIndexView,
-// reachable from the count row — and picking a theme there lands on the theme's
-// own page, which is a better answer than filtering this grid in place.
+// catalogue has forty themes in it.
+//
+// 官方 does not show words at all — it shows the themes, each with its cover,
+// and the words behind one are on the theme's own page (CategoryView). The
+// dictionary is 757 words long; a flat grid of it was a list you paged through
+// sixty at a time, with the themes hidden behind a small 主題 → link that had
+// its own screen. That screen is retired: this *is* it, at the top of the tab
+// where browsing starts. The other three sources still show word tiles — a
+// photographed card or one taken in from 物見 belongs to no theme.
 
 import SwiftUI
 
 struct CardsListView: View {
     @Environment(WordsStore.self) private var store
+    @Environment(CategoriesStore.self) private var categories
+    @Environment(ProgressStore.self) private var progress
     @Environment(MasteryStore.self) private var mastery
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
@@ -48,10 +56,12 @@ struct CardsListView: View {
         // so the system nav bar itself stays hidden.
         .navigationTitle("圖鑑")
         .toolbar(.hidden, for: .navigationBar)
-        .task {
-            await self.store.loadIfNeeded()
-            await self.mastery.loadIfNeeded()
-        }
+        // 官方's tiles carry 完成 / 全精通, so this screen reads progress and
+        // mastery as well as the dictionary — the same set 主題 used to warm,
+        // asked for by name instead of hand-written here. (A hand-written
+        // `.task` is what left the old 主題 screen rendering 完成 from a store
+        // it never loaded; see AccumulationLoading.)
+        .warmsAccumulation(.themeIndex, isGuest: self.auth.isGuest)
         .onChange(of: self.sourceRequest, initial: true) { _, requested in
             guard let requested else { return }
             self.source = requested
@@ -116,16 +126,16 @@ struct CardsListView: View {
     }
 
     /// Count on the left, one action on the right — whichever the current
-    /// source has. 主題 belongs to 官方 because a theme only ever describes a
-    /// dictionary word: the ones you photographed and the ones you took in from
-    /// the community have no theme to browse by. 管理 belongs to 我做的 for the
-    /// same reason, and it keeps 圖鑑管理 out of the nav bar (already full) and
-    /// out of 我 (which is no longer a directory). The two are mutually
-    /// exclusive, so the row never carries both.
+    /// source has. Only 我做的 has one now: 管理 keeps 圖鑑管理 out of the nav
+    /// bar (already full) and out of 我 (which is no longer a directory). 官方
+    /// used to carry 主題 → beside it; the themes are the grid itself now, so
+    /// the link would point at the screen the user is already on.
+    ///
+    /// The count stays in words even on 官方 — 757 字 is what the official
+    /// half of the catalogue has, which is the number worth knowing, and it
+    /// reuses the one `%lld 字` key rather than minting a second concept.
     private var countRow: some View {
         HStack(spacing: Space.s3) {
-            // Reuses the existing `%lld 字` key rather than minting `%lld 個字`
-            // beside it — one concept, one string.
             Text(tujiLocalized("\(self.page.matchCount) 字"))
                 .font(.tujiLabel)
                 .tracking(0.5)
@@ -137,12 +147,7 @@ struct CardsListView: View {
                     self.rowAction("管理 →")
                 }
                 .buttonStyle(.plain)
-            case .official:
-                NavigationLink(value: NavRoute.categoryIndex) {
-                    self.rowAction("主題 →")
-                }
-                .buttonStyle(.plain)
-            case .taken, .bookmarked:
+            case .official, .taken, .bookmarked:
                 EmptyView()
             }
         }
@@ -158,12 +163,15 @@ struct CardsListView: View {
             .underline()
     }
 
+    /// 官方 empties differently from the other three: what is missing is the
+    /// catalogue itself, not a word of yours, so it says so in the theme grid's
+    /// own words.
     private var emptyTitle: LocalizedStringKey {
         switch self.source {
         case .bookmarked: "還沒有書籤"
         case .mine: "還沒有自製圖鑑"
         case .taken: "還沒有收進的字"
-        case .official: "這個分類還沒有字"
+        case .official: "還沒有主題"
         }
     }
 
@@ -199,7 +207,7 @@ struct CardsListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if self.store.loading, self.store.words.isEmpty {
+        if self.isLoadingFirstContent {
             // Two-column skeleton in the shape of the grid that is coming —
             // the point of a skeleton over a spinner is that the layout does
             // not jump when the real tiles land.
@@ -218,17 +226,19 @@ struct CardsListView: View {
             .padding(.top, Space.s3)
             .frame(maxWidth: .infinity, alignment: .top)
             .accessibilityLabel(Text("載入中"))
-        } else if let error = store.lastError, self.store.words.isEmpty {
+        } else if let error = self.blockingError {
             TujiErrorState(
-                title: "載不到單字",
+                title: self.source.showsThemes ? "載入失敗" : "載不到單字",
                 message: tujiUserMessage(for: error)
             ) {
                 BBtn(title: "重試", fullWidth: false, action: {
-                    Task { await self.store.reload() }
+                    Task { await self.reloadContent() }
                 })
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.horizontal, Space.s4)
+        } else if self.source.showsThemes {
+            self.themeShelf
         } else {
             ScrollView {
                 LazyVGrid(
@@ -268,15 +278,90 @@ struct CardsListView: View {
                     }
                     .padding(.top, Space.s3)
                 } else if self.page.matchCount == 0 {
-                    // The message has to name what is actually empty. With a
-                    // source filter on, "這個分類還沒有字" is simply wrong — the
-                    // user filtered by where words come from, not by theme —
-                    // and C.6 asks empty states to say what *will* be here.
+                    // The message has to name what is actually empty. A source
+                    // filter empties for a reason of its own — the user filtered
+                    // by where words come from, not by theme — and C.6 asks
+                    // empty states to say what *will* be here.
                     MascotEmptyState(pose: .sleep, title: self.emptyTitle, message: self.emptyHint)
                         .tujiEmptyStatePlacement()
                         .frame(minHeight: 320)
                 }
             }
+        }
+    }
+
+    /// 官方: the themes, each with its cover.
+    ///
+    /// No 顯示更多 — the catalogue is a dozen themes, not 757 words — and no
+    /// capture-queue tiles either: a card being made is not a theme, and it
+    /// still heads the grid on 我做的, where it was always going to land.
+    private var themeShelf: some View {
+        ScrollView {
+            LazyVGrid(columns: Self.gridColumns, spacing: Space.s2) {
+                ForEach(self.themes) { c in
+                    NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
+                        CategoryCoverTile(
+                            category: c,
+                            wordCount: self.store.byCategory(c.id).count,
+                            status: self.themeStatus(for: c.id)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, Space.s4)
+
+            if self.themes.isEmpty {
+                MascotEmptyState(pose: .sleep, title: self.emptyTitle, message: self.emptyHint)
+                    .tujiEmptyStatePlacement()
+                    .frame(minHeight: 320)
+            }
+        }
+    }
+
+    /// Which categories are themes is `ThemeCatalog`'s answer, not this
+    /// screen's — 今天's strip asks a different question (the ones *you* picked)
+    /// and the two must not drift into two rules.
+    private var themes: [TujiCategory] {
+        ThemeCatalog.themes(
+            from: self.categories.categories,
+            presentIds: Set(self.store.categories)
+        )
+    }
+
+    /// The badge rule, asked the same way 今天 asks it.
+    private func themeStatus(for id: String) -> ThemeStatus {
+        ThemeStatus.of(
+            words: self.store.byCategory(id),
+            masteryScore: { self.mastery.score(for: $0) },
+            progress: self.progress.categoryProgress,
+            categoryId: id
+        )
+    }
+
+    /// The skeleton covers whichever store this source is waiting on: the
+    /// dictionary for the word grid, and the catalogue too for the shelf — the
+    /// tiles need a name and a cover before they are worth drawing.
+    private var isLoadingFirstContent: Bool {
+        if self.store.loading, self.store.words.isEmpty { return true }
+        return self.source.showsThemes
+            && self.categories.categories.isEmpty
+            && self.categories.loading
+    }
+
+    /// An error is only worth the whole screen when there is nothing behind it.
+    private var blockingError: Error? {
+        if let error = self.store.lastError, self.store.words.isEmpty { return error }
+        if self.source.showsThemes, self.categories.categories.isEmpty {
+            return self.categories.lastError
+        }
+        return nil
+    }
+
+    private func reloadContent() async {
+        await self.store.reload()
+        if self.source.showsThemes {
+            await self.categories.reload()
         }
     }
 
