@@ -419,6 +419,101 @@ struct CollectionEditVMTests {
         #expect(vm.errorMessage == nil)
         #expect(vm.title == "T2")
     }
+
+    // MARK: - 刪除（從 MyCollectionsVM 搬來：刪除現在住在這個畫面）
+
+    @Test
+    func deleteReportsWhatItTookDownAndLeavesTheScreen() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "approved"), items: [self.item(id: "a")])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        let spy = SpyMutationRefreshing()
+
+        let deleted = await vm.delete(refreshing: spy)
+
+        #expect(deleted)
+        #expect(fake.callLog.contains("delete"))
+        // 物見 has to be told, because this one was on the wall.
+        #expect(spy.events == [.collectionDeleted(wasPublic: true)])
+    }
+
+    @Test
+    func deletingADraftDoesNotClaimItWasPublic() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "draft"), items: [self.item(id: "a")])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        let spy = SpyMutationRefreshing()
+
+        _ = await vm.delete(refreshing: spy)
+
+        #expect(spy.events == [.collectionDeleted(wasPublic: false)])
+    }
+
+    /// A failed delete must not report a mutation: 物見's feed would drop its
+    /// cache for a 合集 that is still there.
+    @Test
+    func aFailedDeleteSurfacesTheErrorAndReportsNothing() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "approved"), items: [self.item(id: "a")])
+        )
+        fake.deleteError = FakeError.boom
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        let spy = SpyMutationRefreshing()
+
+        let deleted = await vm.delete(refreshing: spy)
+
+        #expect(!deleted)
+        #expect(vm.errorMessage != nil)
+        #expect(spy.events.isEmpty)
+    }
+
+    /// Two taps on an irreversible button must not send two deletes.
+    @Test
+    func aSecondDeleteMidFlightIsIgnored() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(status: "draft"), items: [self.item(id: "a")])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        fake.onDelete = { [weak vm] in
+            _ = await vm?.delete(refreshing: SpyMutationRefreshing())
+        }
+
+        _ = await vm.delete(refreshing: SpyMutationRefreshing())
+
+        #expect(fake.callLog.count { $0 == "delete" } == 1)
+    }
+
+    @Test
+    func theDeleteWarningFollowsWhereTheCollectionStands() async {
+        for (status, warning) in [
+            ("approved", CollectionDeleteWarning.takesDownFromPublic),
+            ("pending_review", .cancelsReview),
+            ("draft", .privateOnly),
+            ("withdrawn", .privateOnly)
+        ] {
+            let fake = FakeCollectionEditing(
+                response: .init(collection: self.edit(status: status), items: [])
+            )
+            let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+            await vm.load()
+            #expect(vm.deleteWarning == warning)
+        }
+    }
+}
+
+@MainActor
+private final class SpyMutationRefreshing: AtlasMutationRefreshing {
+    private(set) var events: [AtlasMutation] = []
+
+    func refresh(after event: AtlasMutation) async {
+        self.events.append(event)
+    }
 }
 
 // MARK: - Fake
@@ -436,6 +531,8 @@ private final class FakeCollectionEditing: CollectionEditing {
     var withdrawError: Error?
     var updateError: Error?
     var removeError: Error?
+    var deleteError: Error?
+    var onDelete: (() async -> Void)?
     /// Fails the *reload*, not the first load: set it after `load()` to model a
     /// server that takes the write and then cannot be read back.
     var editError: Error?
@@ -489,6 +586,14 @@ private final class FakeCollectionEditing: CollectionEditing {
         self.callLog.append("publish")
         if let publishError { throw publishError }
         return AtlasCollectionPublishResponse(moderation: self.moderation)
+    }
+
+    func deleteCollection(id _: String) async throws {
+        self.callLog.append("delete")
+        // Runs while a delete is in flight, so a test can re-enter the VM the
+        // way a second tap would.
+        if let onDelete { await onDelete() }
+        if let deleteError { throw deleteError }
     }
 
     func withdrawCollection(id _: String) async throws -> AtlasWithdrawResponse {

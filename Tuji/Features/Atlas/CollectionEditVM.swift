@@ -7,6 +7,21 @@
 import Foundation
 import Observation
 
+/// What deleting a 合集 actually costs, in the only three kinds the warning has
+/// to tell apart. It is the last sentence an author reads before an irreversible
+/// button, and it makes three *different promises* — so it is a decision, not
+/// copy, and it lived as a `private func` on a `View` where nothing could reach
+/// it. The screen still owns the sentences (`TodayDecisions` / `TodayView`
+/// split); this owns which one is true.
+enum CollectionDeleteWarning: Equatable {
+    /// In review. Deleting withdraws the submission before it is ever seen.
+    case cancelsReview
+    /// Live on 物見. Deleting takes it down for everyone, immediately.
+    case takesDownFromPublic
+    /// Never public and not in flight — nothing outside the account changes.
+    case privateOnly
+}
+
 @MainActor
 @Observable
 final class CollectionEditVM {
@@ -40,6 +55,7 @@ final class CollectionEditVM {
     private(set) var metaSaved = false
     private(set) var submitState: SubmitState = .idle
     private(set) var withdrawing = false
+    private(set) var deleting = false
     /// Shared error line for meta-save and avatar upload; a failed publish takes
     /// precedence (see `errorMessage`).
     private(set) var actionError: String?
@@ -73,6 +89,16 @@ final class CollectionEditVM {
         if case .submitting = self.submitState { return false }
         guard self.collection?.review.canSubmit ?? true else { return false }
         return !self.members.isEmpty
+    }
+
+    /// What deleting this 合集 costs, in the only three kinds the warning has to
+    /// tell apart. The sentence is the view's; which one is true is this.
+    var deleteWarning: CollectionDeleteWarning {
+        switch self.collection?.review {
+        case .pending, .pendingAuto, .pendingReview: .cancelsReview
+        case .approved: .takesDownFromPublic
+        default: .privateOnly
+        }
     }
 
     /// 取消公開 shows only for a collection that is actually on the browse feed.
@@ -292,6 +318,29 @@ final class CollectionEditVM {
             return response.moderation?.published == true
         } catch {
             self.submitState = .failed(tujiUserMessage(for: error))
+            return false
+        }
+    }
+
+    /// Delete the whole 合集. Returns whether it went, so the view can leave the
+    /// screen — and `wasPublic` is read here rather than at the call site,
+    /// because what a deletion changes elsewhere is this module's answer.
+    ///
+    /// The original 圖鑑卡片 are not touched: a 合集 is a shelf, not the photos.
+    @discardableResult
+    func delete(refreshing: AtlasMutationRefreshing) async -> Bool {
+        guard !self.deleting, let collection = self.collection else { return false }
+        self.deleting = true
+        self.actionError = nil
+        defer { self.deleting = false }
+        do {
+            try await self.repo.deleteCollection(id: self.collectionId)
+            await refreshing.refresh(
+                after: .collectionDeleted(wasPublic: collection.review == .approved)
+            )
+            return true
+        } catch {
+            self.actionError = tujiUserMessage(for: error)
             return false
         }
     }

@@ -3825,6 +3825,29 @@
         }
       }
     },
+    "刪除這個合集" : {
+      "comment" : "Destructive button on 編輯合集 that deletes the whole collection.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this collection"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このコレクションを削除"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这个合集"
+          }
+        }
+      }
+    },
     "刪除這個合集？" : {
       "localizations" : {
         "en" : {

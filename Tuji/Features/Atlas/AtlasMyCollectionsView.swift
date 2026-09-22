@@ -17,7 +17,6 @@ struct AtlasMyCollectionsView: View {
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
     @State private var vm = MyCollectionsVM()
-    @State private var pendingDelete: AtlasMyCollection?
 
     @Binding var showCreate: Bool
 
@@ -35,17 +34,8 @@ struct AtlasMyCollectionsView: View {
     }
 
     var body: some View {
-        let target = self.pendingDelete
-        return ScrollView {
+        ScrollView {
             VStack(spacing: 0) {
-                if let deleteError = self.vm.deleteError {
-                    Text(deleteError)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiAlert)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, Space.s4)
-                        .padding(.vertical, Space.s3)
-                }
                 if self.vm.showsPlaceholder {
                     TujiSkeletonRows(count: 3, height: 88)
                         .padding(.top, Space.s3)
@@ -60,24 +50,20 @@ struct AtlasMyCollectionsView: View {
                                 .frame(height: Border.bw1)
                                 .padding(.horizontal, Space.s4)
                         }
-                        TujiSwipeRow(
-                            actionLabel: "刪除",
-                            systemImage: "trash",
-                            action: { self.pendingDelete = collection }
-                        ) {
-                            NavigationLink {
-                                // Kept even though `.task` re-runs on pop: that is
-                                // SwiftUI's teardown behaviour, not a contract. The VM
-                                // coalesces whichever of the two arrives second.
-                                AtlasCollectionEditView(collectionId: collection.id)
-                                    .onDisappear { Task { await self.vm.load() } }
-                            } label: {
-                                AtlasMyCollectionRow(collection: collection)
-                                    .padding(.horizontal, Space.s4)
-                                    .padding(.vertical, Space.s3)
-                            }
-                            .tujiRowStyle()
+                        NavigationLink {
+                            // Kept even though `.task` re-runs on pop: that is
+                            // SwiftUI's teardown behaviour, not a contract. The VM
+                            // coalesces whichever of the two arrives second — and
+                            // it is also how a 合集 deleted in there leaves this
+                            // list.
+                            AtlasCollectionEditView(collectionId: collection.id)
+                                .onDisappear { Task { await self.vm.load() } }
+                        } label: {
+                            AtlasMyCollectionRow(collection: collection)
+                                .padding(.horizontal, Space.s4)
+                                .padding(.vertical, Space.s3)
                         }
+                        .tujiRowStyle()
                     }
                 }
             }
@@ -91,22 +77,6 @@ struct AtlasMyCollectionsView: View {
                 self.vm.prepend(collection)
             }
         }
-        .tujiPrompt(
-            isPresented: Binding(
-                get: { self.pendingDelete != nil },
-                set: { if !$0 { self.pendingDelete = nil } }
-            ),
-            style: .destructive,
-            title: "刪除這個合集？",
-            message: LocalizedStringKey(target.map(self.deleteMessage) ?? ""),
-            primary: TujiPromptAction("刪除", role: .destructive) {
-                if let target {
-                    Task { await self.delete(target) }
-                }
-            },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
-        )
-        .tujiStatusToast(isPresented: self.vm.deleting, style: .deleting)
     }
 
     private var emptyState: some View {
@@ -115,33 +85,6 @@ struct AtlasMyCollectionsView: View {
             emptyText: self.emptyTitle,
             error: self.vm.loadError,
             retry: { await self.vm.load() }
-        )
-    }
-
-    /// The words for whichever warning the VM says is true. Which one that is
-    /// is the module's answer; this is only the sentence.
-    private func deleteMessage(for collection: AtlasMyCollection) -> String {
-        switch self.vm.deleteWarning(for: collection) {
-        case .cancelsReview:
-            tujiLocalized("這會取消送審並刪除合集，原始圖鑑卡片不受影響。")
-        case .takesDownFromPublic:
-            tujiLocalized("這會立即將合集從物見下架並刪除，原始圖鑑卡片不受影響。")
-        case .privateOnly:
-            tujiLocalized("這個合集會被永久刪除，原始圖鑑卡片不受影響。")
-        }
-    }
-
-    /// The View's only job here is to hand over the environment's feed signal;
-    /// what a deletion refreshes is `AtlasMutationRefresh`'s call.
-    ///
-    /// No `pendingDelete = nil` afterwards: `TujiPrompt` sets `isPresented`
-    /// false *before* running the action, which fires the binding's setter and
-    /// clears it — so the line was already a no-op by the time the await
-    /// returned.
-    private func delete(_ collection: AtlasMyCollection) async {
-        await self.vm.delete(
-            collection,
-            refreshing: LiveAtlasMutationRefresher(feed: self.feedRefresh)
         )
     }
 }

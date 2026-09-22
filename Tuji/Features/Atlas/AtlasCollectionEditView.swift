@@ -26,6 +26,7 @@ struct AtlasCollectionEditView: View {
     @State private var showConfirm = false
     @State private var showWithdrawConfirm = false
     @State private var showDiscardConfirm = false
+    @State private var showDeleteConfirm = false
     @State private var showPicker = false
     @State private var showsAllMembers = false
     @State private var avatar = ImageIntake(encoding: .collection, crop: .square(mask: .square))
@@ -141,6 +142,20 @@ struct AtlasCollectionEditView: View {
         )
         // 頭像與成員存在伺服器上的那一刻就已經存了；只有這兩個欄位會跟著離開一起
         // 消失，所以只有它們需要被攔下來問。
+        // 刪除 lives here because this is the 合集's own screen. It used to be a
+        // swipe on the list row — the only route to it, and one that fought the
+        // list's own scrolling.
+        .tujiPrompt(
+            isPresented: self.$showDeleteConfirm,
+            style: .destructive,
+            title: "刪除這個合集？",
+            message: self.deleteMessage,
+            primary: TujiPromptAction("刪除", role: .destructive) {
+                Task { await self.deleteCollection() }
+            },
+            secondary: TujiPromptAction("取消", role: .cancel) {}
+        )
+        .tujiStatusToast(isPresented: self.vm.deleting, style: .deleting)
         .tujiPrompt(
             isPresented: self.$showDiscardConfirm,
             style: .destructive,
@@ -177,6 +192,21 @@ struct AtlasCollectionEditView: View {
         } else {
             self.dismiss()
         }
+    }
+
+    /// The words for whichever warning the VM says is true. Which one that is is
+    /// the module's answer; this is only the sentence.
+    private var deleteMessage: LocalizedStringKey {
+        switch self.vm.deleteWarning {
+        case .cancelsReview: "這會取消送審並刪除合集，原始圖鑑卡片不受影響。"
+        case .takesDownFromPublic: "這會立即將合集從物見下架並刪除，原始圖鑑卡片不受影響。"
+        case .privateOnly: "這個合集會被永久刪除，原始圖鑑卡片不受影響。"
+        }
+    }
+
+    private func deleteCollection() async {
+        guard await self.vm.delete(refreshing: self.mutations) else { return }
+        self.dismiss()
     }
 
     private func saveThenLeave() {
@@ -403,6 +433,19 @@ struct AtlasCollectionEditView: View {
                 }
                 .disabled(self.vm.withdrawing)
             }
+
+            // Last, and alone: the one thing on this screen that cannot be undone.
+            BBtn(
+                title: self.vm.deleting ? "刪除中…" : "刪除這個合集",
+                bg: .tujiAlert,
+                fg: .white,
+                fullWidth: true,
+                icon: "trash"
+            ) {
+                self.showDeleteConfirm = true
+            }
+            .disabled(self.vm.deleting)
+            .padding(.top, Space.s3)
         }
         .padding(.horizontal, Space.s4)
         .padding(.top, Space.s5)

@@ -135,14 +135,31 @@ private struct AtlasCardsManagementPane: View {
     /// withdrawal refreshes — the View's job is to hand over the root-owned
     /// signal, not to decide the consequences (ADR-0001).
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
+    /// For 切換: the hint row's whole point is that the cards are one direction
+    /// away, so it may as well take you there.
+    @Environment(SettingsStore.self) private var settings
+    @Environment(AuthService.self) private var auth
 
     @State private var pendingDelete: AtlasShelfRow?
     @State private var showBatchDeleteConfirm = false
 
     /// 「英文圖鑑」/「日文圖鑑」 for the hidden-cards hint — the *other*
     /// direction, i.e. where the hidden cards live.
+    /// The direction the hidden cards are in — asked once, so the sentence and
+    /// the button can never name different languages.
+    private var otherDirection: LearningDirection {
+        self.targetLanguage == .ja ? .zhEn : .zhJa
+    }
+
     private var otherDirectionTitle: String {
-        self.targetLanguage == .ja ? LearningDirection.zhEn.title : LearningDirection.zhJa.title
+        self.otherDirection.title
+    }
+
+    /// Switching is the store's business (`LearningDirectionRefresh` decides what
+    /// gets dropped and re-fetched); this row only reports the choice — the same
+    /// two lines 設定's picker uses.
+    private func switchDirection() {
+        self.settings.setLearningDirection(self.otherDirection, persist: !self.auth.isGuest)
     }
 
     var body: some View {
@@ -283,23 +300,17 @@ private struct AtlasCardsManagementPane: View {
             .buttonStyle(.plain)
             .accessibilityAddTraits(selected ? [.isSelected] : [])
         } else {
-            TujiSwipeRow(
-                actionLabel: "刪除",
-                systemImage: "trash",
-                action: { self.pendingDelete = row }
-            ) {
-                NavigationLink {
-                    AtlasManageDetailView(
-                        shelf: self.shelf,
-                        row: row,
-                        onDelete: { self.pendingDelete = row }
-                    )
-                } label: {
-                    self.rowBody(row)
-                        .padding(.horizontal, Space.s4)
-                }
-                .tujiRowStyle()
+            NavigationLink {
+                AtlasManageDetailView(
+                    shelf: self.shelf,
+                    row: row,
+                    onDelete: { self.pendingDelete = row }
+                )
+            } label: {
+                self.rowBody(row)
+                    .padding(.horizontal, Space.s4)
             }
+            .tujiRowStyle()
         }
     }
 
@@ -343,22 +354,32 @@ private struct AtlasCardsManagementPane: View {
         // Deliberately not an empty state. "There is nothing here" and "your
         // things are on the other side" are different sentences, and confusing
         // them makes a user who switched EN↔JA think their cards were deleted.
-        HStack(spacing: Space.s3) {
-            Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)")
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk2)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: Space.s2)
-            Text("切換 →")
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiInk)
-                .underline()
+        //
+        // The whole band is the button. 「切換 →」 was underlined ink — which in
+        // this system means *tappable* — over no action at all: it said where the
+        // cards were and then refused to go.
+        Button(action: self.switchDirection) {
+            HStack(spacing: Space.s3) {
+                Text("另有 \(count) 張卡片屬於\(self.otherDirectionTitle)")
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk2)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: Space.s2)
+                Text("切換 →")
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk)
+                    .underline()
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Space.s4)
+            .frame(minHeight: 56)
+            .background(.tujiPaper2)
+            .contentShape(.rect)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, Space.s4)
-        .frame(minHeight: 56)
-        .background(.tujiPaper2)
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 
     private var emptyRow: some View {
