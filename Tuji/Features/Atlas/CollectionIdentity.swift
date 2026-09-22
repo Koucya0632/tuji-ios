@@ -77,26 +77,37 @@ struct CollectionIdentityTile: View {
     /// is the screen's first event rather than a thumbnail beside a title.
     var size: CGFloat?
 
+    /// The ground owns the box and the photograph lives in an overlay, so the
+    /// picture can never decide how big this tile is.
+    ///
+    /// It used to be a `ZStack`, whose size is the union of its children — and a
+    /// `scaledToFill` image reports the size that *covers* the proposal, which is
+    /// larger than it in one dimension. At a fixed `size` that never showed; at
+    /// `size == nil` (the cover) the tile took the picture's width, and anything
+    /// laid out beside it in the caller's stack went with it. The collection
+    /// avatar is square by upload (`ImageIntakeCrop.square`), so nothing has
+    /// shipped wrong — but that is a promise made three screens away, and this is
+    /// the same rule `CategoryCoverTile` and `AtlasPublicTile` already follow.
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(Color(collectionIdentityHex: self.identities.colorHex(
-                    collectionID: self.collectionID,
-                    serverColor: self.avatarColor
-                )))
-            LazyImage(url: self.identities.imageURL(
+        Rectangle()
+            .fill(Color(collectionIdentityHex: self.identities.colorHex(
                 collectionID: self.collectionID,
-                serverURL: self.avatarImageURL
-            )) { state in
-                if let image = state.image {
-                    image.resizable().aspectRatio(contentMode: .fill)
+                serverColor: self.avatarColor
+            )))
+            .frame(width: self.size, height: self.size)
+            .overlay {
+                LazyImage(url: self.identities.imageURL(
+                    collectionID: self.collectionID,
+                    serverURL: self.avatarImageURL
+                )) { state in
+                    if let image = state.image {
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    }
                 }
+                .pipeline(.shared)
             }
-            .pipeline(.shared)
-        }
-        .frame(width: self.size, height: self.size)
-        .clipped()
-        .accessibilityHidden(true)
+            .clipped()
+            .accessibilityHidden(true)
     }
 }
 
