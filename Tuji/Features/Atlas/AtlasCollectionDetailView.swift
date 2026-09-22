@@ -1,6 +1,6 @@
 // 公開合集詳情（MOJi 風格）：封面做主題化 header + 目錄 / 簡介 tab。
 //
-// 資料來源：GET /api/atlas/public/collections/{slug}。目錄裡的項目沿用 AtlasPublicTile，
+// 資料來源：GET /api/atlas/public/collections/{slug}。目錄裡的卡片沿用 AtlasPublicTile，
 // 點進去是既有的 AtlasPublicDetailView（逐張收藏 / 檢舉）；封面標頭也提供整個合集的收藏操作。
 
 import Nuke
@@ -176,63 +176,78 @@ struct AtlasCollectionDetailView: View {
         }
     }
 
+    /// The container owns the box: a 16:9 band measured from the screen, with the
+    /// photograph filling it from inside an overlay.
+    ///
+    /// 16:9 is the crop every other hero in the app uses (主題's, and the theme
+    /// tiles that echo it). At 4:3 this cover was 0.75 × the screen's width, so
+    /// with the ink bar under it more than half the page went by before the first
+    /// 卡片 — the thing the reader came for.
+    ///
+    /// And the ratio has to be owned by a `Color`, not asked of the ZStack:
+    /// `aspectRatio(_:contentMode: .fill)` over a stack that contains a
+    /// `scaledToFill` photograph resolves its height from *the picture's* ideal
+    /// size, so the same 16:9 band measured 253pt instead of 226 — and would have
+    /// been a different height for a different collection's avatar.
     private func cover(_ collection: AtlasCollection) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            CollectionIdentityTile(
-                collectionID: collection.id,
-                avatarColor: collection.avatarColor,
-                avatarImageURL: collection.avatarURL,
-                size: nil
-            )
-
-            // One-way scrim: legibility, not decoration.
-            LinearGradient(
-                colors: [.clear, Color.tujiInk.opacity(0.7)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            VStack(alignment: .leading, spacing: Space.s2) {
-                Text(collection.title)
-                    .font(.tujiH1)
-                    .foregroundStyle(.tujiPaper)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-
-                HStack(spacing: Space.s2) {
-                    if let author = collection.author {
-                        Button {
-                            self.navigator.push(.authorProfile(handle: author.handle, isSelf: false))
-                        } label: {
-                            HStack(spacing: 6) {
-                                ProfileAvatar(avatar: author.avatar, size: 24)
-                                Text(author.displayName)
-                                    .font(.tujiBodySm)
-                                    .foregroundStyle(.tujiPaper.opacity(0.8))
-                                    .lineLimit(1)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Text(collection.langBadge)
-                        .font(.tujiLabel)
-                        .tracking(0.5)
-                        .foregroundStyle(.tujiPaper)
-                        .padding(.horizontal, Space.s2)
-                        .frame(height: 22)
-                        .background(.tujiPaper.opacity(0.2))
-                }
+        Color.tujiPaper2
+            .aspectRatio(16.0 / 9.0, contentMode: .fit)
+            .overlay {
+                CollectionIdentityTile(
+                    collectionID: collection.id,
+                    avatarColor: collection.avatarColor,
+                    avatarImageURL: collection.avatarURL,
+                    size: nil
+                )
             }
-            .padding(Space.s4)
-        }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(4.0 / 3.0, contentMode: .fill)
-        .clipped()
+            // One-way scrim: legibility, not decoration.
+            .overlay {
+                LinearGradient(
+                    colors: [.clear, Color.tujiInk.opacity(0.7)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .overlay(alignment: .bottomLeading) {
+                VStack(alignment: .leading, spacing: Space.s2) {
+                    Text(collection.title)
+                        .font(.tujiH1)
+                        .foregroundStyle(.tujiPaper)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    HStack(spacing: Space.s2) {
+                        if let author = collection.author {
+                            Button {
+                                self.navigator.push(.authorProfile(handle: author.handle, isSelf: false))
+                            } label: {
+                                HStack(spacing: 6) {
+                                    ProfileAvatar(avatar: author.avatar, size: 24)
+                                    Text(author.displayName)
+                                        .font(.tujiBodySm)
+                                        .foregroundStyle(.tujiPaper.opacity(0.8))
+                                        .lineLimit(1)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        Text(collection.langBadge)
+                            .font(.tujiLabel)
+                            .tracking(0.5)
+                            .foregroundStyle(.tujiPaper)
+                            .padding(.horizontal, Space.s2)
+                            .frame(height: 22)
+                            .background(.tujiPaper.opacity(0.2))
+                    }
+                }
+                .padding(Space.s4)
+            }
+            .clipped()
     }
 
     private func actionBar(_ collection: AtlasCollection) -> some View {
         HStack(spacing: Space.s5) {
-            TujiInkStat(label: "內容", value: collection.itemCount)
+            TujiInkStat(label: "卡片", value: collection.itemCount)
             TujiInkStat(label: "被收藏", value: collection.saveCount)
             Spacer(minLength: Space.s3)
             self.trailingAction(collection)
@@ -418,7 +433,7 @@ struct AtlasCollectionDetailView: View {
             if self.vm.items.isEmpty, case .loading = self.vm.phase {
                 TujiPageLoading()
             } else if self.vm.items.isEmpty {
-                Text("這個合集還沒有項目")
+                Text("這個合集還沒有卡片")
                     .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity)
@@ -449,7 +464,7 @@ struct AtlasCollectionDetailView: View {
                     if !self.vm.unlocked {
                         HStack(spacing: Space.s2) {
                             Image(systemName: "lock.fill")
-                            Text("收藏合集後查看全部 \(self.vm.totalCount) 個內容")
+                            Text("收藏合集後查看全部 \(self.vm.totalCount) 張卡片")
                         }
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)

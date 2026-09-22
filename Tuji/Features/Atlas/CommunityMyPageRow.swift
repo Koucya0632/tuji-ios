@@ -76,7 +76,7 @@ struct CommunityMyPageRow: View {
                 // The two numbers the author page itself shows, in the words it
                 // uses there — not the spec's "3 個合集", which counts something
                 // the payload does not carry.
-                Text(verbatim: "\(tujiLocalized("公開項目")) \(author.publishedCount) · "
+                Text(verbatim: "\(tujiLocalized("公開卡片")) \(author.publishedCount) · "
                     + "\(tujiLocalized("被收藏")) \(author.saveCount)")
                     .font(.tujiLabel)
                     .tracking(0.5)

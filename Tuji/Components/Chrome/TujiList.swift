@@ -255,7 +255,10 @@ struct TujiStatusEdgeLabel: View {
             .foregroundStyle(.tujiInk2)
             .lineLimit(1)
             .padding(.horizontal, Space.s2)
-            .frame(height: 24)
+            // minHeight, not height: every tuji font scales with Dynamic Type,
+            // so at accessibility sizes a fixed 24 leaves the word standing
+            // outside its own ground.
+            .frame(minHeight: 24)
             .background(alignment: .leading) {
                 HStack(spacing: 0) {
                     Rectangle().fill(self.edge).frame(width: Border.bw3)

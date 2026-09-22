@@ -46,6 +46,18 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
         default: nil
         }
     }
+
+    /// The same state, said out loud for a settled member too.
+    ///
+    /// `collectionPublicationLabel` stays nil for a public item because 加入卡片's
+    /// tiles only mark the exceptions — badging every normal photo there would be
+    /// noise. 編輯合集's member list is the opposite case: it is a roster of what
+    /// this 合集 is made of, and "this one is live" is the answer the author came
+    /// for on the rows that carry no warning.
+    var collectionMemberStateLabel: String? {
+        if self.publicationState == "public" { return tujiLocalized("已公開") }
+        return self.collectionPublicationLabel
+    }
 }
 
 /// GET /api/atlas/public/by-lemma — everyone else's public items for one word.
@@ -209,7 +221,7 @@ enum AtlasReviewStatus: String, Decodable, Hashable {
     /// onto 物見 unscreened either way.
     ///
     /// Mirrors tuji-web `ATLAS_COLLECTION_OPEN_STATUSES`. It decides what
-    /// 加入項目 promises about a tile, not whether the tile works: requiring
+    /// 加入卡片 promises about a tile, not whether the tile works: requiring
     /// 取消公開 to add one photo took the whole 合集 off 物見 to do it.
     /// The set happens to equal `canSubmit`'s today — that is a coincidence of
     /// the same three states, not one question: 「可以送審嗎」 and 「還帶得動

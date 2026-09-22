@@ -163,7 +163,7 @@ private struct AtlasMyCollectionRow: View {
                     .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
-                Text(tujiLocalized("\(self.collection.itemCount) 字"))
+                Text(tujiLocalized("\(self.collection.itemCount) 張卡片"))
                     .font(.tujiLabel)
                     .tracking(0.5)
                     .foregroundStyle(.tujiInk3)
@@ -203,7 +203,7 @@ struct AtlasCollectionItemPicker: View {
     var body: some View {
         // No 完成 button: every tap adds its item immediately, so there was never
         // anything for 完成 to confirm — it only ever meant 關閉.
-        TujiFormSheet(title: "加入項目") {
+        TujiFormSheet(title: "加入卡片") {
             ScrollView {
                 Group {
                     if self.model.loading {
@@ -212,7 +212,7 @@ struct AtlasCollectionItemPicker: View {
                         TujiBlankState(
                             icon: "photo.on.rectangle.angled",
                             iconSize: 36,
-                            emptyText: "沒有可加入的項目。完成辨識與確認後，就能直接加入合集。",
+                            emptyText: "沒有可加入的卡片。完成辨識與確認後，就能直接加入合集。",
                             error: self.model.loadError
                         )
                     } else {
@@ -227,7 +227,7 @@ struct AtlasCollectionItemPicker: View {
                             // tile: it is one fact about the 合集, not a
                             // property of eight photos.
                             if self.model.submitsMembersOnTheirOwn {
-                                Text("未公開的項目加入後會自動送審，通過才會出現在合集裡。")
+                                Text("未公開的卡片加入後會自動送審，通過才會出現在合集裡。")
                                     .font(.tujiLabel)
                                     .foregroundStyle(.tujiInk3)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -260,37 +260,41 @@ struct AtlasCollectionItemPicker: View {
             Task { await self.model.add(item.id, using: self.onAdd) }
         } label: {
             VStack(spacing: 2) {
-                ZStack {
-                    Rectangle().fill(.tujiPaper)
-                    LazyImage(url: item.imageURL) { state in
-                        if let image = state.image {
-                            image.resizable().aspectRatio(contentMode: .fill)
-                        } else {
-                            Image(systemName: "photo").foregroundStyle(.tujiInk3)
+                // The container owns the box. `.frame(height:)` alone leaves the
+                // width to the photograph, and a wide one (the atlas serves
+                // 320×135 crops) then drags the whole cell out of its grid
+                // column — see AtlasPublicTile.
+                Color.tujiPaper
+                    .frame(height: 84)
+                    .overlay {
+                        LazyImage(url: item.imageURL) { state in
+                            if let image = state.image {
+                                image.resizable().aspectRatio(contentMode: .fill)
+                            } else {
+                                Image(systemName: "photo").foregroundStyle(.tujiInk3)
+                            }
+                        }
+                        .pipeline(.shared)
+                    }
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
+                    .overlay(alignment: .bottomLeading) {
+                        if let label = self.badge(for: item, entersReview: entersReview) {
+                            Text(label)
+                                .font(.tujiLabel)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 3)
+                                .background(.black.opacity(0.65), in: .rect(cornerRadius: Radius.r0))
+                                .padding(4)
                         }
                     }
-                    .pipeline(.shared)
-                }
-                .frame(height: 84)
-                .clipped()
-                .clipShape(RoundedRectangle(cornerRadius: Radius.r0))
-                .overlay(alignment: .bottomLeading) {
-                    if let label = self.badge(for: item, entersReview: entersReview) {
-                        Text(label)
-                            .font(.tujiLabel)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 3)
-                            .background(.black.opacity(0.65), in: .rect(cornerRadius: Radius.r0))
+                    .overlay(alignment: .topTrailing) {
+                        Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
+                            .font(.tujiIcon(18))
+                            .foregroundStyle(.white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
                             .padding(4)
                     }
-                }
-                .overlay(alignment: .topTrailing) {
-                    Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
-                        .font(.tujiIcon(18))
-                        .foregroundStyle(.white, isAdded ? .tujiAccumulation : .black.opacity(0.5))
-                        .padding(4)
-                }
                 Text(item.lemma)
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk2)

@@ -235,7 +235,7 @@ final class CollectionDetailVM {
     /// came from the server's `access`, and while a collection is locked the
     /// response carries a preview of the members rather than all of them — so
     /// flipping a local flag would open a list the screen does not have.
-    /// Without this, saving left the screen showing 「收藏合集後查看全部 N 個內容」
+    /// Without this, saving left the screen showing 「收藏合集後查看全部 N 張卡片」
     /// until the user backed out and came in again.
     ///
     /// Deliberately narrow: an owner is unlocked whatever their bookmark says,

@@ -40,12 +40,23 @@ final class CollectionEditVM {
     private(set) var metaSaved = false
     private(set) var submitState: SubmitState = .idle
     private(set) var withdrawing = false
-    /// Shared error line for meta-save and member edits; a failed publish takes
+    /// Shared error line for meta-save and avatar upload; a failed publish takes
     /// precedence (see `errorMessage`).
     private(set) var actionError: String?
+    /// 加入/移除卡片 failures, kept apart from `actionError` so the refusal can be
+    /// drawn beside the rows it is about. Folded into the page-level
+    /// `errorMessage` it landed at the bottom of the screen — which, now that the
+    /// members are full rows rather than a three-up grid, can be a screenful and
+    /// a half below the ✕ that was tapped.
+    private(set) var memberError: String?
     /// The two fields the view binds and edits directly.
     var title = ""
     var description = ""
+    /// What the server last confirmed for those two fields — exactly the values
+    /// a save would send. 儲存 is lit by the difference between these and what is
+    /// typed, so a screen nobody has touched cannot offer to save itself.
+    private var savedTitle = ""
+    private var savedDescription: String?
 
     private let repo: CollectionEditing
 
@@ -78,9 +89,19 @@ final class CollectionEditVM {
         self.members.count { $0.publicationState != "public" }
     }
 
-    /// 儲存 is enabled when not mid-save and the title isn't blank.
+    /// 標題/簡介 differ from what the server last confirmed. Compared trimmed on
+    /// both sides, so trailing whitespace alone is not an edit — and read by the
+    /// back button, which asks before dropping real ones.
+    var isMetaDirty: Bool {
+        self.trimmedTitle != self.savedTitle || self.trimmedDescription != self.savedDescription
+    }
+
+    /// 儲存 is enabled when not mid-save, the title isn't blank, and something
+    /// actually changed. Without the last clause the action is lit on a screen
+    /// that has nothing to write, which is what made it read as the page's
+    /// primary button rather than as one field's commit.
     var canSaveMeta: Bool {
-        !self.savingMeta && !self.trimmedTitle.isEmpty
+        !self.savingMeta && !self.trimmedTitle.isEmpty && self.isMetaDirty
     }
 
     /// The single error line the edit screen shows — a failed publish wins over a
@@ -95,7 +116,9 @@ final class CollectionEditVM {
     }
 
     private var trimmedDescription: String? {
-        let trimmed = self.description.trimmingCharacters(in: .whitespaces)
+        // whitespacesAndNewlines, not whitespaces: 簡介 is a multiline field, so a
+        // stray trailing newline is reachable and must not count as content.
+        let trimmed = self.description.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
     }
 
@@ -105,10 +128,22 @@ final class CollectionEditVM {
         self.phase = .loading
         do {
             let response = try await self.repo.collectionEdit(id: self.collectionId)
+            // Asked before anything is overwritten: `submit()` and `withdraw()`
+            // both reload, and a reload that reseeds the form would silently drop
+            // text the user has typed but not saved — right after the back button
+            // has promised to ask before doing exactly that.
+            let keepsTypedMeta = self.isMetaDirty
             self.collection = response.collection
             self.members = response.items
-            self.title = response.collection.title
-            self.description = response.collection.description ?? ""
+            if !keepsTypedMeta {
+                self.title = response.collection.title
+                self.description = response.collection.description ?? ""
+                self.savedTitle = self.trimmedTitle
+                self.savedDescription = self.trimmedDescription
+                // Otherwise 已儲存 reappears after a publish reload, beside the
+                // 已送出 line, with nothing having been saved.
+                self.metaSaved = false
+            }
             self.coverId = response.collection.coverPublicItemId ?? response.items.first?.publicItemId
             self.avatarColor = response.collection.avatarColor
             self.avatarPreviewURL = response.collection.avatarPreviewURL
@@ -122,23 +157,35 @@ final class CollectionEditVM {
 
     // MARK: - Meta
 
-    func saveMeta() async {
-        guard !self.savingMeta else { return }
+    /// Returns whether the write landed, so 儲存並離開 only leaves the screen on
+    /// a save that actually happened.
+    @discardableResult
+    func saveMeta() async -> Bool {
+        guard !self.savingMeta else { return false }
+        // Read once, up front: these are what goes to the server, so they are
+        // also what the baseline becomes. Re-reading them after the round trip
+        // would bank text the user typed *while* it was in flight and leave
+        // 儲存 dark over unsaved edits.
+        let title = self.trimmedTitle
+        let description = self.trimmedDescription
         self.savingMeta = true
         self.metaSaved = false
         self.actionError = nil
         do {
             try await self.repo.updateCollection(
                 id: self.collectionId,
-                title: self.trimmedTitle,
-                description: self.trimmedDescription,
+                title: title,
+                description: description,
                 coverPublicItemId: self.coverId
             )
+            self.savedTitle = title
+            self.savedDescription = description
             self.metaSaved = true
         } catch {
             self.actionError = tujiUserMessage(for: error)
         }
         self.savingMeta = false
+        return self.metaSaved
     }
 
     /// Uploads one already-confirmed square crop. The public avatar image and
@@ -179,35 +226,39 @@ final class CollectionEditVM {
     @discardableResult
     func addMember(_ publicItemId: String) async -> String? {
         do {
+            self.memberError = nil
             try await self.repo.addCollectionItem(id: self.collectionId, publicItemId: publicItemId)
             await self.reloadMembers()
             return nil
         } catch {
             let message = tujiUserMessage(for: error)
-            self.actionError = message
+            self.memberError = message
             return message
         }
     }
 
     func removeMember(_ publicItemId: String) async {
         do {
+            self.memberError = nil
             try await self.repo.removeCollectionItem(id: self.collectionId, publicItemId: publicItemId)
             if self.members.first(where: { $0.id == publicItemId })?.publicItemId == self.coverId {
                 self.coverId = nil
             }
             await self.reloadMembers()
         } catch {
-            self.actionError = tujiUserMessage(for: error)
+            self.memberError = tujiUserMessage(for: error)
         }
     }
 
+    /// Members only — deliberately not `load()`, which would reseed 標題/簡介 and
+    /// take the user's unsaved text with it on every add and remove.
     private func reloadMembers() async {
         do {
             let response = try await self.repo.collectionEdit(id: self.collectionId)
             self.members = response.items
             if self.coverId == nil { self.coverId = response.items.first?.publicItemId }
         } catch {
-            self.actionError = tujiUserMessage(for: error)
+            self.memberError = tujiUserMessage(for: error)
         }
     }
 
@@ -223,12 +274,18 @@ final class CollectionEditVM {
         self.submitState = .submitting
         self.actionError = nil
         do {
+            let title = self.trimmedTitle
+            let description = self.trimmedDescription
             try await self.repo.updateCollection(
                 id: self.collectionId,
-                title: self.trimmedTitle,
-                description: self.trimmedDescription,
+                title: title,
+                description: description,
                 coverPublicItemId: self.coverId
             )
+            // Banked here rather than left to the reload below: `load()` can fail,
+            // and then 儲存 would stay lit over text the server already has.
+            self.savedTitle = title
+            self.savedDescription = description
             let response = try await self.repo.publishCollection(id: self.collectionId)
             self.submitState = .done(response.moderation)
             await self.load()
