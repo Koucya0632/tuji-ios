@@ -2,7 +2,7 @@
 //
 // 資料來源：GET /api/atlas/public/collections?lang=（公開、吃 CDN 快取）。列表**自動依
 // 使用者當前學習語言過濾**（學日文只看日文合集），無手動語言切換。點合集卡片進
-// AtlasCollectionDetailView（目錄/簡介），再點項目進 AtlasPublicDetailView（收藏 / 檢舉）。
+// AtlasCollectionDetailView（目錄/簡介），再點卡片進 AtlasPublicDetailView（收藏 / 檢舉）。
 
 import Nuke
 import NukeUI
@@ -317,7 +317,7 @@ struct AtlasCollectionCard: View {
     }
 
     private var counts: String {
-        let items = tujiLocalized("\(self.collection.itemCount) 字")
+        let items = tujiLocalized("\(self.collection.itemCount) 張卡片")
         guard self.collection.saveCount > 0 else { return items }
         return items + " · " + tujiLocalized("被收藏") + " \(self.collection.saveCount)"
     }
@@ -336,40 +336,49 @@ struct AtlasCollectionCard: View {
 
 struct AtlasPublicTile: View {
     let item: AtlasPublicItem
-    /// 點卡片主體（圖/詞）→ 開項目詳情。
+    /// 點卡片主體（圖/詞）→ 開卡片詳情。
     var onOpen: () -> Void = {}
     /// 點「by 作者」→ 開作者主頁。nil = 無作者，不可點。
     var onOpenAuthor: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack {
-                Rectangle().fill(.tujiPaper)
-                LazyImage(url: self.item.imageURL) { state in
-                    if let image = state.image {
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } else if state.error != nil {
-                        self.placeholder
-                    } else {
-                        TujiImagePlaceholder()
+            // The *container* owns the box, the way CategoryCoverTile's 16:9
+            // does: a 120pt-tall band measured from the grid column, with the
+            // photo filling it from inside an overlay. Letting the picture
+            // negotiate its own size instead is what pushed this tile out of
+            // its column — `.frame(height:)` pins only the height, so a wide
+            // thumb (the atlas serves 320×135 crops) reported 120 × ratio as
+            // its width, the card grew with it, and the grid centred the
+            // oversized card half off the screen. `.clipped()` cannot save it:
+            // it clips to the frame the picture already widened.
+            Color.tujiPaper
+                .frame(height: 120)
+                .overlay {
+                    LazyImage(url: self.item.imageURL) { state in
+                        if let image = state.image {
+                            image.resizable().aspectRatio(contentMode: .fill)
+                        } else if state.error != nil {
+                            self.placeholder
+                        } else {
+                            TujiImagePlaceholder()
+                        }
                     }
+                    .pipeline(.shared)
                 }
-                .pipeline(.shared)
-            }
-            .frame(height: 120)
-            .clipped()
-            .overlay(alignment: .topTrailing) {
-                Text(self.item.langBadge)
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiBrandSecondary)
-                    .padding(.horizontal, Space.s2)
-                    .padding(.vertical, 3)
-                    .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
-                    .padding(Space.s2)
-            }
-            // 卡片主體點擊區（圖）→ 詳情
-            .contentShape(Rectangle())
-            .onTapGesture { self.onOpen() }
+                .clipped()
+                .overlay(alignment: .topTrailing) {
+                    Text(self.item.langBadge)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiBrandSecondary)
+                        .padding(.horizontal, Space.s2)
+                        .padding(.vertical, 3)
+                        .background(Color.tujiBrandSecondary.opacity(0.1), in: .rect(cornerRadius: Radius.r0))
+                        .padding(Space.s2)
+                }
+                // 卡片主體點擊區（圖）→ 詳情
+                .contentShape(Rectangle())
+                .onTapGesture { self.onOpen() }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(self.item.lemma)

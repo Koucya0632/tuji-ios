@@ -1,4 +1,4 @@
-// 物見的項目詳情頁 —— 一張別人公開的照片，以及讀者能對它做的三件事：
+// 物見的卡片詳情頁 —— 一張別人公開的照片，以及讀者能對它做的三件事：
 // 收進圖鑑、檢舉、封鎖作者。
 //
 // 它住在 `AtlasPublicFeedView.swift` 裡，因為列表是它唯一的入口。那個檔案因此有
@@ -87,7 +87,7 @@ struct AtlasPublicDetailView: View {
                 Button {
                     self.report.begin(.item(slug: self.vm.item.slug))
                 } label: {
-                    Text(self.report.isSent ? "已收到檢舉" : "檢舉這個項目")
+                    Text(self.report.isSent ? "已收到檢舉" : "檢舉這張卡片")
                         .font(.tujiLabel)
                         .foregroundStyle(self.report.isSent ? .tujiInk3 : .tujiAlert)
                         .frame(maxWidth: .infinity)

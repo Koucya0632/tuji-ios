@@ -29,7 +29,7 @@ final class AuthorProfileVM {
     /// One language's worth of an author's public items. A profile is a body of
     /// work, not a study feed, so nothing is filtered out by the viewer's
     /// learning direction — the languages are merely separated so a mixed
-    /// portfolio stays readable, and the header's 公開項目 count still matches
+    /// portfolio stays readable, and the header's 公開卡片 count still matches
     /// what is on screen.
     struct LanguageGroup: Identifiable, Equatable {
         let language: TargetLanguage

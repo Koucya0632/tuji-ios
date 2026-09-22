@@ -290,6 +290,135 @@ struct CollectionEditVMTests {
         #expect(vm.errorMessage != nil)
         #expect(vm.collection?.review == .approved)
     }
+
+    // MARK: - 儲存 is lit by a real difference
+
+    @Test
+    func theFormIsCleanUntilItIsTypedIntoAndSavingMakesItCleanAgain() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T", description: "D"), items: [])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        // A screen nobody has touched has nothing to write.
+        #expect(!vm.isMetaDirty)
+        #expect(!vm.canSaveMeta)
+
+        vm.title = "T2"
+        #expect(vm.isMetaDirty)
+        #expect(vm.canSaveMeta)
+
+        let saved = await vm.saveMeta()
+
+        #expect(saved)
+        #expect(vm.metaSaved)
+        #expect(!vm.isMetaDirty)
+        #expect(!vm.canSaveMeta)
+    }
+
+    @Test
+    func whitespaceAloneIsNotAnEdit() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T", description: "D"), items: [])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        vm.title = "T  "
+        vm.description = "D\n"
+
+        #expect(!vm.isMetaDirty)
+    }
+
+    @Test
+    func aBlankTitleCannotBeSavedEvenThoughTheFormChanged() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T"), items: [])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        vm.title = "   "
+
+        #expect(vm.isMetaDirty)
+        #expect(!vm.canSaveMeta)
+    }
+
+    @Test
+    func aFailedSaveLeavesTheFormDirty() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T"), items: [])
+        )
+        fake.updateError = FakeError.boom
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        vm.title = "T2"
+
+        let saved = await vm.saveMeta()
+
+        #expect(!saved)
+        #expect(!vm.metaSaved)
+        // 儲存 must stay lit over text the server does not have.
+        #expect(vm.canSaveMeta)
+        #expect(vm.errorMessage != nil)
+    }
+
+    @Test
+    func publishBanksTheSavedMetaEvenWhenTheReloadFails() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T"), items: [self.item(id: "a")]),
+            moderation: self.moderation(published: true)
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        vm.title = "T2"
+        // The write lands; reading the row back does not.
+        fake.editError = FakeError.boom
+
+        _ = await vm.submit()
+
+        // submit() persists the meta itself, so 儲存 must not stay lit over text
+        // the server already has.
+        #expect(!vm.isMetaDirty)
+    }
+
+    @Test
+    func withdrawKeepsTextThatWasTypedButNotSaved() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T", status: "approved"), items: [self.item(id: "a")])
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        vm.title = "T2"
+
+        let withdrawn = await vm.withdraw()
+
+        #expect(withdrawn)
+        #expect(vm.collection?.review == .withdrawn)
+        // The reload must not take the unsaved title with it.
+        #expect(vm.title == "T2")
+        #expect(vm.isMetaDirty)
+    }
+
+    @Test
+    func aRefusedRemoveReportsBesideTheRowsAndKeepsUnsavedText() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(title: "T"), items: [self.item(id: "a")])
+        )
+        fake.removeError = FakeError.boom
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+        vm.title = "T2"
+
+        await vm.removeMember("a")
+
+        // Member failures have their own line next to the rows; the page-level
+        // error is for the publish gate.
+        #expect(vm.memberError != nil)
+        #expect(vm.errorMessage == nil)
+        #expect(vm.title == "T2")
+    }
 }
 
 // MARK: - Fake
@@ -305,6 +434,11 @@ private final class FakeCollectionEditing: CollectionEditing {
     var moderation: AtlasPublishModeration?
     var publishError: Error?
     var withdrawError: Error?
+    var updateError: Error?
+    var removeError: Error?
+    /// Fails the *reload*, not the first load: set it after `load()` to model a
+    /// server that takes the write and then cannot be read back.
+    var editError: Error?
     var avatarResponse: AtlasCollectionAvatarResponse?
     var avatarError: Error?
 
@@ -315,6 +449,7 @@ private final class FakeCollectionEditing: CollectionEditing {
 
     func collectionEdit(id _: String) async throws -> AtlasCollectionEditResponse {
         self.callLog.append("edit")
+        if let editError { throw editError }
         return self.response
     }
 
@@ -325,6 +460,7 @@ private final class FakeCollectionEditing: CollectionEditing {
         coverPublicItemId _: String?
     ) async throws {
         self.callLog.append("update")
+        if let updateError { throw updateError }
     }
 
     func updateCollectionAvatar(id _: String, imageData _: Data) async throws
@@ -346,6 +482,7 @@ private final class FakeCollectionEditing: CollectionEditing {
 
     func removeCollectionItem(id _: String, publicItemId _: String) async throws {
         self.callLog.append("remove")
+        if let removeError { throw removeError }
     }
 
     func publishCollection(id _: String) async throws -> AtlasCollectionPublishResponse {

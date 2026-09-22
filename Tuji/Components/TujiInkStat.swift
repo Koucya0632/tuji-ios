@@ -1,4 +1,4 @@
-// One number on an ink block — 作者主頁's 公開項目/被收藏 and 合集詳情's
+// One number on an ink block — 作者主頁's 公開卡片/被收藏 and 合集詳情's
 // 內容/被收藏.
 //
 // Two screens that share a visual language ("it also mirrors the ink block on
@@ -40,7 +40,7 @@ struct TujiInkStat: View {
 
 #Preview {
     HStack(spacing: Space.s4) {
-        TujiInkStat(label: "公開項目", value: 12)
+        TujiInkStat(label: "公開卡片", value: 12)
         TujiInkStat(label: "被收藏", value: 348)
     }
     .padding(Space.s4)

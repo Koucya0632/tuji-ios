@@ -1,6 +1,6 @@
-// 公開圖鑑「作者主頁」（點公開項目的「by 作者」進來，或從 我的 看自己的那一份）。
+// 公開圖鑑「作者主頁」（點公開卡片的「by 作者」進來，或從 我的 看自己的那一份）。
 //
-// 資料來源：GET /api/atlas/public/authors/{handle} —— 作者身分 + 其已公開項目
+// 資料來源：GET /api/atlas/public/authors/{handle} —— 作者身分 + 其已公開卡片
 // + 累計被收藏數（../docs/COMMUNITY_ATLAS_PLAN.md §3B/§3C — FEATURES.md §12.5）。
 // 公開、吃 CDN 快取。
 //
@@ -302,7 +302,7 @@ struct AtlasAuthorProfileView: View {
             }
 
             HStack(spacing: Space.s5) {
-                TujiInkStat(label: "公開項目", value: author.publishedCount)
+                TujiInkStat(label: "公開卡片", value: author.publishedCount)
                 // The altruistic signal: how much this author's work has helped
                 // others (../docs/COMMUNITY_ATLAS_PLAN.md §3C — FEATURES.md §12.5).
                 TujiInkStat(label: "被收藏", value: author.saveCount)
@@ -366,7 +366,7 @@ struct AtlasAuthorProfileView: View {
             }
 
             if self.vm.groups.isEmpty {
-                Text(self.vm.isSelf ? "你還沒有公開任何圖鑑" : "還沒有公開項目")
+                Text(self.vm.isSelf ? "你還沒有公開任何圖鑑" : "還沒有公開卡片")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .leading)

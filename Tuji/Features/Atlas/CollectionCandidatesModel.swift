@@ -1,4 +1,4 @@
-// 加入項目 — which of the author's own 圖鑑 a 合集 can take, and the optimistic
+// 加入卡片 — which of the author's own 圖鑑 a 合集 can take, and the optimistic
 // add that puts one in.
 //
 // Membership eligibility is the headline 合集 rule in CONTEXT.md (approved,
@@ -8,7 +8,7 @@
 // filter was de-duplication. The tick was also inserted before the await and
 // never rolled back, so an add that failed stayed ticked.
 //
-// **Eligibility is a pair, not a property.** `eligible` answers 「這個項目本身壞了
+// **Eligibility is a pair, not a property.** `eligible` answers 「這張卡片本身壞了
 // 嗎」 — and it is the only question `/collections/candidates` *can* answer,
 // because it is scoped by language and never told which 合集 you are filling.
 // The other half belongs to the collection, and it is no longer about *whether*

@@ -46,9 +46,9 @@ enum APIError: LocalizedError {
         // paywall, so the server marks it non-upgradeable.
         case let .atCapacity(limit, _):
             if let limit {
-                tujiLocalized("已收進的項目達到上限（\(limit)），移除一些後再加入")
+                tujiLocalized("已收進的卡片達到上限（\(limit)），移除一些後再加入")
             } else {
-                tujiLocalized("已收進的項目達到上限，移除一些後再加入")
+                tujiLocalized("已收進的卡片達到上限，移除一些後再加入")
             }
         case let .conflict(reason, message):
             Self.conflictCopy(for: reason) ?? message ?? tujiLocalized("這個動作現在無法完成，請重新整理後再試")
@@ -153,7 +153,7 @@ enum APIError: LocalizedError {
     private static func conflictCopy(for reason: String?) -> String? {
         switch reason {
         case "already_member":
-            tujiLocalized("這個項目已經在合集裡了。")
+            tujiLocalized("這張卡片已經在合集裡了。")
         default:
             nil
         }
