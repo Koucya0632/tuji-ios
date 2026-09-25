@@ -1,82 +1,59 @@
-// MCQ option assembly for the study flows (identify + review).
-//
-// `studyChoices` is the single entry point: it scrubs the server-attached
-// `choices` of unfair near-synonyms of the answer, then tops the set back up
-// from the local dictionary pool. Custom 自制圖鑑 cards (no server choices)
-// build the whole set from the pool.
-//
-// Why the scrub exists: the server distractor draw is category-scoped, so a
-// 平底鍋 question could offer both "pan" (the answer) and "frying pan" (a
-// distractor) — two words the dictionary translates identically. A learner
-// who knows the word can still be marked wrong. Unfair = shares a Chinese
-// gloss with the answer, or one term's tokens contain the other's
-// ("knife" vs "kitchen knife").
-//
-// The order must be STABLE across SwiftUI re-renders: `computedChoices` is a
-// computed property re-evaluated on every redraw, so a plain `.shuffled()`
-// would make the options jump. We seed a deterministic RNG from the item id
-// (via FNV-1a, which — unlike Swift's per-process-seeded Hasher — is stable
-// across launches too), so the same card always yields the same layout.
-
+// Four-option assembly, with the same exclusion rules as the server and Android.
 import Foundation
 
-/// Up to four MCQ option labels for `item`: the correct answer plus fair
-/// distractors. Server-provided `choices` are preferred (scrubbed), then the
-/// set is topped up from `pool`. The correct label is `item.word.word` (what
-/// the review / identify coordinators compare picks against).
-///
-/// `variant` folds into the seed: the coordinator bumps it per wrong attempt
-/// so a requeued question re-shuffles (and may re-draw top-ups) — otherwise
-/// remembering "the answer was C" stands in for knowing the word.
-///
-/// `session` is 當前圖鑑語言, used to place words the server did not tag. The
-/// top-up used to skip its same-language filter entirely for an untagged
-/// question, drawing English distractors under a Japanese answer.
+/// Four labels from the server candidate pool, or local vocabulary for old queues.
+/// StudyChoiceSession owns the fresh round seed, stable presentation and retry history.
+/// Unknown legacy labels are never used to guess a vocabulary's language.
 func studyChoices(
     for item: StudyQueueItem,
     pool: [CardWord],
     session: TargetLanguage,
-    variant: Int = 0
+    variant: Int = 0,
+    seed: UInt32? = nil,
+    previous: [String] = []
 )
     -> [String]
 {
-    let answer = item.word.word
-    var rng = SeededRNG(seed: studyStableHash(item.id) &+ UInt64(variant) &* 0x9E3779B97F4A7C15)
-    let fairness = DistractorPool(answer: answer, gloss: item.word.chinese, pool: pool)
-    var seen: Set<String> = [answer.lowercased()]
-    var distractors: [String] = []
-
-    func admit(_ label: String) {
-        guard distractors.count < 3,
-              !label.isEmpty,
-              fairness.fairness(of: label) == .fair,
-              seen.insert(label.lowercased()).inserted
-        else { return }
-        distractors.append(label)
+    let language = item.word.language(in: session)
+    let target = StudyChoiceCandidate(
+        wordId: item.id,
+        label: item.word.word,
+        language: language,
+        gloss: item.word.chinese,
+        category: item.word.category,
+        pos: nil,
+        exclusions: item.choiceExclusions,
+        tier: 0,
+        weight: 1
+    )
+    let local = pool.filter { $0.language(in: session) == language }.map { word in
+        StudyChoiceCandidate(
+            wordId: word.id,
+            label: word.word,
+            language: language,
+            gloss: word.chinese,
+            category: word.category,
+            pos: nil,
+            exclusions: [],
+            tier: word.category == target.category ? 2 : 3,
+            weight: 1
+        )
     }
-
-    // Server distractors first — they're difficulty-curated (same category).
-    for label in item.choices ?? [] {
-        admit(label)
+    // Old cached labels are used only if a same-language vocabulary entry can
+    // identify them. Unknown labels cannot silently introduce the wrong language.
+    let known = local + StudyChoiceData.reserve.filter { $0.language == language }
+    let legacy = (item.choices ?? []).compactMap { label in
+        known.first { choiceKey($0.label) == choiceKey(label) }
     }
-
-    // Top up from the local dictionary, same-language first, so an untagged
-    // custom word still lands in the right half of the pool.
-    if distractors.count < 3 {
-        let lang = item.word.language(in: session)
-        for word in pool.filter({ $0.language(in: session) == lang }).shuffled(using: &rng) {
-            admit(word.word)
-        }
-        if distractors.count < 3 {
-            // Same-language pool was thin (e.g. brand-new account) — widen to
-            // all words so the quiz still has plausible-ish options.
-            for word in pool.shuffled(using: &rng) {
-                admit(word.word)
-            }
-        }
-    }
-
-    return ([answer] + distractors).shuffled(using: &rng)
+    let server = item.choiceCandidates ?? []
+    let candidates = prepareChoiceCandidates(target: target, input: server)
+        .count >= 3 ? server : server + local + legacy
+    return assembleStudyChoices(
+        target: target,
+        candidates: candidates,
+        seed: seed ?? choiceHash("\(language.rawValue):\(item.id):\(variant)"),
+        previous: previous
+    )
 }
 
 /// Why a label may not stand beside the answer — or that it may.
@@ -96,6 +73,7 @@ enum DistractorFairness: Equatable {
     case cjkSubstring
     /// The dictionary translates both identically: pan / frying pan → 平底鍋.
     case sharedGloss
+    case synonym
 }
 
 /// The fairness question for one question's answer, against one dictionary.
@@ -116,9 +94,10 @@ struct DistractorPool {
     /// A distractor is unfair when a learner who knows the answer could
     /// legitimately pick it.
     func fairness(of label: String) -> DistractorFairness {
-        if label.compare(self.answer, options: [.caseInsensitive]) == .orderedSame {
+        if choiceKey(label) == choiceKey(self.answer) {
             return .sameTerm
         }
+        if choiceAliasesConflict(label, self.answer) { return .synonym }
         let answerTokens = wordTokens(self.answer)
         let labelTokens = wordTokens(label)
         if !answerTokens.isEmpty, !labelTokens.isEmpty,
@@ -132,7 +111,7 @@ struct DistractorPool {
             if a.contains(l) || l.contains(a) { return .cjkSubstring }
         }
         if !self.answerGlosses.isEmpty,
-           let glosses = glossIndex[label.lowercased()],
+           let glosses = glossIndex[choiceKey(label)],
            !glosses.isDisjoint(with: self.answerGlosses)
         {
             return .sharedGloss
@@ -174,7 +153,7 @@ private func containsCJK(_ s: String) -> Bool {
 private func buildGlossIndex(_ pool: [CardWord]) -> [String: Set<String>] {
     var index: [String: Set<String>] = [:]
     for word in pool {
-        index[word.word.lowercased(), default: []].formUnion(chineseGlosses(word.chinese))
+        index[choiceKey(word.word), default: []].formUnion(chineseGlosses(word.chinese))
     }
     return index
 }

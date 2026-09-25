@@ -64,6 +64,7 @@ enum ReviewFlash: Hashable {
 @MainActor
 @Observable
 final class ReviewFlowCoordinator: StudySession {
+    @ObservationIgnored let choiceSession = StudyChoiceSession()
     /// Mutable so a wrong first answer can requeue the word once (appended to
     /// the tail for an in-session re-test, mirroring NewFlow).
     private(set) var queue: [StudyQueueItem]

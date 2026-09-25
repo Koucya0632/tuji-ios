@@ -24,6 +24,7 @@ import SwiftUI
 @MainActor
 @Observable
 final class NewFlowCoordinator: StudySession {
+    @ObservationIgnored let choiceSession = StudyChoiceSession()
     /// The session's words, in server order. NewDoneView renders this grid.
     let queue: [StudyQueueItem]
 

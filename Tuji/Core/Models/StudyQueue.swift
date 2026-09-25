@@ -93,10 +93,25 @@ struct StudyExample: Decodable, Hashable {
     let mentionedWordIds: [String]?
 }
 
+/// Optional reserve pool on /api/study/queue; old cached queues omit it.
+struct StudyChoiceCandidate: Codable, Hashable {
+    let wordId: String
+    let label: String
+    let language: TargetLanguage
+    let gloss: String
+    let category: String?
+    let pos: String?
+    let exclusions: [String]?
+    let tier: Int
+    let weight: Double
+}
+
 struct StudyQueueItem: Decodable, Hashable, Identifiable {
     let card: StudyCard
     let word: StudyQueueWord
     let choices: [String]?
+    var choiceCandidates: [StudyChoiceCandidate]? = nil
+    var choiceExclusions: [String]? = nil
     let spellingChoices: [String]?
     let mastery: Int?
     /// The word's authored example pair. Absent for 自製圖鑑 and 物見 cards,

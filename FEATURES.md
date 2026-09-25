@@ -275,13 +275,13 @@ App 啟動
 - 進度條以「不同字完成數」計,reveal 中加 0.5 半步。
 - 結束前 `drainPendingWrites`(上限 800ms)讓完成頁的變化資料儘量齊全。
 
-### 6.6 MCQ 選項公平性 — `StudyChoiceFallback.swift`
+### 6.6 四選一選項 — `StudyChoices.swift`
 
-`studyChoices(for:pool:variant:)` 是唯一入口:
-
-1. 先用伺服器給的 choices(同分類、難度佳),但**剔除不公平干擾項**:與答案共用中文釋義(pan / frying pan 都是平底鍋)、token 互為子集(knife / kitchen knife)、CJK 互為子字串(時計 / 腕時計)。
-2. 不足 3 個干擾項時從本機字典補:先同語言,再放寬到全部。
-3. 洗牌用 `SeededRNG`(SplitMix64)+ FNV-1a 穩定 hash:同一張卡跨 re-render、跨 App 重啟順序都不變;`variant`(答錯次數)改變 seed 讓重試重洗。
+- 伺服器從完整已發布詞庫提供 `choices` 與可選 `choiceCandidates`（ID、語言、顯示文字、釋義、分類、詞性、排除詞、層級、權重）。舊佇列可省略候選池。
+- 四層補足：同分類相近詞 → 同分類其他詞 → 同語言跨分類詞 → 內建同語言備用詞。每層最多 12 個合格候選，加權無放回抽取。
+- 所有候選與答案、候選彼此都排除拼寫變體、同義詞、token 子集、CJK 子字串及相同釋義。NFKC、大小寫、空白、連字號只用於排除；日文長音保留。
+- `StudyChoiceSession` 每輪產生新種子；顯示中選項保持快照，複測優先替換兩個干擾詞。辨認新字和複習共用此入口。
+- 英日各 48 個跨分類備用詞及共用案例由 `tuji-web/scripts/sync-study-choice-data.mjs` 產生原生程式碼。發版前以完整已發布詞庫檢查備用詞覆蓋，任何一字不足三個合格干擾詞即失敗。
 
 ### 6.7 離線與同步保證
 

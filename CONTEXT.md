@@ -726,16 +726,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   that **the app never calls**, entered from 11 test call sites. *The interface is
   the test surface*: tests that must enter where the app doesn't are telling you
   the module is the wrong shape.
-- **`DistractorPool`** — whether a label may stand beside the answer, as a returned
-  `DistractorFairness` (`sameTerm` / `tokenSubset` / `cjkSubstring` / `sharedGloss`
-  / `fair`) rather than a private `Bool`. The four rules are the reason the module
-  exists and not one was pinned: they lived in file-private functions with no test
-  file, assertable only through a seeded shuffle, *by absence* — an assertion that
-  passes just as well when the shuffle happened to fill the slot otherwise. Its
-  `studyChoices` entry point is unchanged; what moved is that the verdict is now a
-  value. `StudyChoiceList` is the matching view seam — 選字 and 複習 each carried
-  their own copy of the same 18-line option list and the same four-argument
-  assembly.
+- **Four-choice policy** — `StudyChoices.swift` ports the pure Web/server policy:
+  spelling/synonym/gloss exclusions apply pairwise before four-tier weighted
+  sampling. `StudyChoiceSession` belongs to the coordinator, snapshots each
+  displayed question, and replaces two distractors on retries when possible.
+  New server candidate metadata is optional; old queues use local words and
+  generated same-language reserves. `StudyChoiceData.swift` and shared lexical
+  fixtures are generated from `tuji-web/lib/study-choice-data.json` and
+  `tests/fixtures/study-choice-cases.json`. Run the generator with `--check`
+  from a checkout containing all three repositories. No word IDs or SRS data
+  change. `DistractorPool` remains the fairness interface used by listening.
 - **A finished session refreshes, whichever screen celebrates it.**
   `.refreshesFinishedSession(draining:)` hangs off the *finish*, not off
   `CompleteView` / `NewDoneView` — where it used to live, so a session that crossed a

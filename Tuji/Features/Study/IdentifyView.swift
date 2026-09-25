@@ -80,6 +80,7 @@ struct IdentifyView: View {
     private var choicesList: some View {
         StudyChoiceList(
             item: self.item,
+            choiceSession: self.coord.choiceSession,
             variant: self.coord.choicesVariant(for: self.item),
             picked: self.coord.idPicked,
             revealed: self.coord.idLocked

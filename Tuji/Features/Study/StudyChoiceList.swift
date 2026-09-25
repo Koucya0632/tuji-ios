@@ -11,6 +11,7 @@ import SwiftUI
 
 struct StudyChoiceList: View {
     let item: StudyQueueItem
+    let choiceSession: StudyChoiceSession
     /// Bumps when the word leaves the screen (複習) or per wrong attempt
     /// (學新字), so a re-test reshuffles instead of letting 「the answer was C」
     /// stand in for the word.
@@ -53,7 +54,7 @@ struct StudyChoiceList: View {
     /// Server choices scrubbed of near-synonyms of the answer + topped up;
     /// custom (自制圖鑑) cards build the whole set from the local pool.
     private var choices: [String] {
-        studyChoices(
+        self.choiceSession.choices(
             for: self.item,
             pool: self.words.words,
             session: self.session,

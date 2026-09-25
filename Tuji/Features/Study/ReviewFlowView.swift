@@ -301,6 +301,7 @@ private struct ReviewQuestionView: View {
     private var choicesList: some View {
         StudyChoiceList(
             item: self.question.item,
+            choiceSession: self.coord.choiceSession,
             variant: self.question.variant,
             picked: self.question.picked?.label,
             revealed: !self.question.acceptsAnswer,
