@@ -71,14 +71,16 @@ enum AtlasFixtures {
     static func syncResponse(
         images: [AtlasImageSummary] = [],
         items: [AtlasItem] = [],
-        serverTime: String = "T1"
+        serverTime: String = "T1",
+        lockedItemIds: [String]? = nil
     )
         -> AtlasSyncResponse
     {
         AtlasSyncResponse(
             serverTime: serverTime,
             images: images,
-            items: items
+            items: items,
+            lockedItemIds: lockedItemIds
         )
     }
 

@@ -191,3 +191,19 @@ extension EffectiveEntitlementTests {
         #expect(forced.proNeedsLifetimeFirst)
     }
 }
+
+extension EffectiveEntitlementTests {
+    @Test("the grace end date is read off the server, never a constant")
+    func graceEndDateParses() {
+        let m = Membership(
+            tier: "lifetime", lifetime: nil, proExpiresAt: nil, graceEndsAt: "2026-10-04T00:00:00.000Z",
+            canPurchaseLifetime: false, canPurchasePro: true, policy: "v2"
+        )
+        #expect(m.graceEndDate == Wire.parseISO("2026-10-04T00:00:00Z"))
+        let none = Membership(
+            tier: "lifetime", lifetime: nil, proExpiresAt: nil, graceEndsAt: nil,
+            canPurchaseLifetime: false, canPurchasePro: true, policy: "v2"
+        )
+        #expect(none.graceEndDate == nil)
+    }
+}

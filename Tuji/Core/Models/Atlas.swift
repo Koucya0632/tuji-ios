@@ -252,6 +252,10 @@ struct AtlasSyncResponse: Decodable {
     let serverTime: String
     let images: [AtlasImageSummary]
     @LossyArray var items: [AtlasItem]
+    /// Items locked for being over the slot cap after Pro ended (membership v2).
+    /// The FULL current set on every sync, never a delta — an item can become
+    /// locked without changing. Absent from older servers → nothing locked.
+    var lockedItemIds: [String]?
 }
 
 // MARK: - Entitlement / quota (GET /api/atlas/entitlement)
@@ -286,6 +290,14 @@ struct AtlasEntitlement: Decodable, Hashable {
     }
 }
 
+extension Membership {
+    /// When over-cap 自製 items lock, while that is still ahead. nil outside a
+    /// grace, or for a date that can't be read.
+    var graceEndDate: Date? {
+        self.graceEndsAt.flatMap(Wire.parseISO)
+    }
+}
+
 /// 非會員 / 永久會員 / Pro (CONTEXT.md → 方案與權限).
 enum MembershipTier: String, Hashable {
     case free
@@ -317,7 +329,8 @@ struct Membership: Decodable, Hashable {
     let tier: String
     let lifetime: LifetimeHolding?
     let proExpiresAt: String?
-    /// Set only for a lifetime member inside the 30 days after Pro ended.
+    /// Set only for a lifetime member inside the grace after Pro ended (7 days
+    /// server-side, `PRO_GRACE_DAYS`); read the date off this, never a constant.
     let graceEndsAt: String?
     let canPurchaseLifetime: Bool
     let canPurchasePro: Bool

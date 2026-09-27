@@ -119,6 +119,10 @@ struct MeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.s5) {
                 self.identityRow
+                if let graceEnd = self.entitlement.membership?.graceEndDate {
+                    self.graceNotice(until: graceEnd)
+                        .padding(.horizontal, Space.s4)
+                }
                 MeProgressSections()
                 self.weakSection
                     .padding(.horizontal, Space.s4)
@@ -285,6 +289,27 @@ struct MeView: View {
             return String(local)
         }
         return nil
+    }
+
+    /// A lifetime member inside the grace after Pro ended: over-cap 自製 cards
+    /// are still usable but lock on this date. Said once, here, with the way
+    /// out — renewing, or deleting down to the cap in 圖鑑管理.
+    private func graceNotice(until date: Date) -> some View {
+        let slots = AtlasStore.shared.entitlement?.atlasSlotsLimit ?? 20
+        return VStack(alignment: .leading, spacing: Space.s2) {
+            Text("Pro 已結束。超過 \(slots) 格的自製卡片將於 \(date, format: .dateTime.month().day()) 起鎖定，續訂 Pro 即可繼續使用。")
+                .font(.tujiBodySm(.strong))
+                .foregroundStyle(.tujiInk)
+            Button { self.showPaywall = true } label: {
+                Text("續訂 Pro")
+                    .font(.tujiBodySm(.strong))
+                    .foregroundStyle(.tujiBrandSecondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(Space.s3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
     }
 
     private var subscriptionTier: String {
