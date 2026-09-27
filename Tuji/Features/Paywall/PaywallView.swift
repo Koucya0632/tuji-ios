@@ -6,6 +6,24 @@
 import StoreKit
 import SwiftUI
 
+/// Debug-only switches. The type exists in every build — a `#Preview` naming a
+/// DEBUG-only type breaks the Release build — but outside DEBUG every value is
+/// false, so nothing here can reach an App Store build.
+enum DebugOverrides {
+    static let forceMembershipV2Key = "debug.forceMembershipV2"
+
+    /// Show the paywall as if the server were on policy v2, so the 永久會員
+    /// section can be screenshotted for App Review and bought in the sandbox
+    /// before the real cutover. Toggled in 我 → 除錯工具.
+    static var forceMembershipV2: Bool {
+        #if DEBUG
+        UserDefaults.standard.bool(forKey: forceMembershipV2Key)
+        #else
+        false
+        #endif
+    }
+}
+
 /// What the paywall offers, decided from the server's three-tier view. Pure so
 /// the cutover rules are testable without StoreKit.
 struct PaywallOffer: Equatable {
@@ -19,8 +37,8 @@ struct PaywallOffer: Equatable {
     /// Pro benefit copy follows the limits in force (ordinary AI 500 → 200).
     let isV2: Bool
 
-    static func from(tier: MembershipTier, membership: Membership?) -> PaywallOffer {
-        let v2 = membership?.policy == "v2"
+    static func from(tier: MembershipTier, membership: Membership?, forceV2: Bool = false) -> PaywallOffer {
+        let v2 = forceV2 || membership?.policy == "v2"
         let owns = tier == .lifetime || membership?.lifetime != nil
         return PaywallOffer(
             showsLifetime: v2,
@@ -57,7 +75,11 @@ struct PaywallView: View {
     @State private var loadingProducts = true
 
     private var offer: PaywallOffer {
-        PaywallOffer.from(tier: self.entitlement.tier, membership: self.entitlement.membership)
+        PaywallOffer.from(
+            tier: self.entitlement.tier,
+            membership: self.entitlement.membership,
+            forceV2: DebugOverrides.forceMembershipV2
+        )
     }
 
     var body: some View {
