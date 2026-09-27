@@ -1,7 +1,23 @@
 {
   "identifier" : "B7F3A1C0-0000-4000-8000-000000000000",
   "nonRenewingSubscriptions" : [],
-  "products" : [],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "B7F3A1C0-0000-4000-8000-000000000020",
+      "localizations" : [
+        {
+          "description" : "一次購買：全部官方圖鑑、自製圖鑑 20 格、每月 AI 辨識 10 次。",
+          "displayName" : "永久會員",
+          "locale" : "zh_TW"
+        }
+      ],
+      "productID" : "app.tuji.lifetime",
+      "referenceName" : "Lifetime Membership",
+      "type" : "NonConsumable"
+    }
+  ],
   "settings" : {
     "_applicationInternalID" : "",
     "_developerTeamID" : "",
