@@ -27,8 +27,13 @@ struct LiveStudyQueueInputs: StudyQueueInputs {
         self.settings.current.dailyGoal
     }
 
+    /// Narrowed to what the server lets this account study, so the queue asks
+    /// for exactly what 首頁 counted (the server gates it again regardless).
     var studyCategories: [String] {
-        self.settings.current.studyCategories
+        StudyCategoryDefaults.effective(
+            selected: self.settings.current.studyCategories,
+            studyable: StudyCategoryDefaults.liveStudyable
+        )
     }
 
     var due: Int {

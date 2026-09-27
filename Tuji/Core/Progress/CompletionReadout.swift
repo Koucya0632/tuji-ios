@@ -129,6 +129,15 @@ protocol StudySelectionReading {
     var studyCategories: [String] { get }
     /// An empty theme list means nothing until settings have actually arrived.
     var settingsLoaded: Bool { get }
+    /// What the server lets this account study (nil = everything); see
+    /// `StudyCategoryDefaults.effective`.
+    var studyableCategories: [String]? { get }
+}
+
+extension StudySelectionReading {
+    var studyableCategories: [String]? {
+        nil
+    }
 }
 
 extension SettingsStore: StudySelectionReading {
@@ -141,6 +150,10 @@ extension SettingsStore: StudySelectionReading {
     /// account switch 首頁 could decide 「pick themes」 from someone else's list.
     var settingsLoaded: Bool {
         self.loadedForCurrentAccount
+    }
+
+    var studyableCategories: [String]? {
+        StudyCategoryDefaults.liveStudyable
     }
 }
 
@@ -193,7 +206,12 @@ extension CompletionReadout.Inputs {
         // being *the same* selection in all four places is the rule — 我 used to
         // fall back to the whole dictionary and print a denominator describing a
         // selection nobody made.
-        let selected = settings.studyCategories
+        // Narrowed to what this account may study, so 首頁 and 我 never count
+        // themes the queue would not serve.
+        let selected = StudyCategoryDefaults.effective(
+            selected: settings.studyCategories,
+            studyable: settings.studyableCategories
+        )
         self.init(
             isGuest: viewer.isGuest,
             settingsLoaded: settings.settingsLoaded,
