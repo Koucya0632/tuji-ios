@@ -11,6 +11,7 @@
 // paying subscriber would otherwise see 「升級」 flash on every cold launch
 // before the first entitlement sync lands.
 
+import Foundation
 import Testing
 @testable import Tuji
 
@@ -79,5 +80,104 @@ struct EffectiveEntitlementTests {
                 devicePurchase: false
             ) == false
         )
+    }
+}
+
+// MARK: - Three tiers (tuji monorepo docs/MEMBERSHIP_SERVER_DESIGN.md §6)
+
+extension EffectiveEntitlementTests {
+    private func snapshot(json: String) throws -> AtlasEntitlement {
+        try JSONDecoder().decode(AtlasEntitlement.self, from: Data(json.utf8))
+    }
+
+    private static let base = """
+    "atlasSlotsLimit": 20, "primaryAiSoftLimitMonthly": 10, "precisionAiLimitMonthly": 0,
+    "subscriptionExpiresAt": null,
+    "usage": { "atlasSlots": 2, "primaryAiThisMonth": 1, "precisionAiThisMonth": 0 }
+    """
+
+    @Test("a lifetime member decodes as lifetime even though plan stays \"free\"")
+    func lifetimeMemberDecodes() throws {
+        let e = try self.snapshot(json: """
+        { "plan": "free", \(Self.base),
+          "membership": { "tier": "lifetime", "lifetime": { "source": "appstore", "acquiredAt": "2026-10-01T00:00:00Z" },
+                          "proExpiresAt": null, "graceEndsAt": "2026-10-20T00:00:00Z",
+                          "canPurchaseLifetime": false, "canPurchasePro": true, "policy": "v2" } }
+        """)
+        #expect(e.membershipTier == .lifetime)
+        #expect(e.isPro == false)
+        #expect(e.membership?.graceEndsAt == "2026-10-20T00:00:00Z")
+        #expect(e.membership?.canPurchaseLifetime == false)
+    }
+
+    @Test("an older server without `membership` still resolves from plan")
+    func legacyServerFallsBackToPlan() throws {
+        #expect(try self.snapshot(json: "{ \"plan\": \"pro\", \(Self.base) }").membershipTier == .pro)
+        #expect(try self.snapshot(json: "{ \"plan\": \"free\", \(Self.base) }").membershipTier == .free)
+    }
+
+    @Test("an unknown future tier degrades to the plan, not a crash")
+    func unknownTierFallsBackToPlan() throws {
+        let e = try self.snapshot(json: """
+        { "plan": "free", \(Self.base),
+          "membership": { "tier": "platinum", "lifetime": null, "proExpiresAt": null, "graceEndsAt": null,
+                          "canPurchaseLifetime": true, "canPurchasePro": true, "policy": "v2" } }
+        """)
+        #expect(e.membershipTier == .free)
+    }
+
+    @Test("tier follows the same rule as isPro: the server wins, the device stands in only while unknown")
+    func tierResolution() {
+        #expect(LiveEffectiveEntitlement.resolveTier(serverPlan: self.plan("pro"), devicePurchase: false) == .pro)
+        #expect(LiveEffectiveEntitlement.resolveTier(serverPlan: self.plan("free"), devicePurchase: true) == .free)
+        #expect(LiveEffectiveEntitlement.resolveTier(serverPlan: nil, devicePurchase: true) == .pro)
+        #expect(LiveEffectiveEntitlement.resolveTier(serverPlan: nil, devicePurchase: false) == .free)
+    }
+}
+
+// MARK: - What the paywall offers (membership checklist §6)
+
+extension EffectiveEntitlementTests {
+    private func membership(policy: String, lifetime: Bool) -> Membership {
+        Membership(
+            tier: lifetime ? "lifetime" : "free",
+            lifetime: lifetime ? .init(source: "appstore", acquiredAt: "2026-10-01T00:00:00Z") : nil,
+            proExpiresAt: nil,
+            graceEndsAt: nil,
+            canPurchaseLifetime: !lifetime,
+            canPurchasePro: true,
+            policy: policy
+        )
+    }
+
+    @Test("before the cutover lifetime is not sold and Pro is unchanged")
+    func v1OffersProOnly() {
+        let offer = PaywallOffer.from(tier: .free, membership: self.membership(policy: "v1", lifetime: false))
+        #expect(offer.showsLifetime == false)
+        #expect(offer.proNeedsLifetimeFirst == false)
+        #expect(offer.isV2 == false)
+        // An older server sends no membership at all: same answer.
+        #expect(PaywallOffer.from(tier: .free, membership: nil).showsLifetime == false)
+    }
+
+    @Test("v2 non-member: lifetime first, Pro locked behind it")
+    func v2NonMemberBuysLifetimeFirst() {
+        let offer = PaywallOffer.from(tier: .free, membership: self.membership(policy: "v2", lifetime: false))
+        #expect(offer.showsLifetime)
+        #expect(offer.ownsLifetime == false)
+        #expect(offer.proNeedsLifetimeFirst)
+    }
+
+    @Test("v2 lifetime member: owns lifetime, may buy Pro")
+    func v2LifetimeMemberMayBuyPro() {
+        let offer = PaywallOffer.from(tier: .lifetime, membership: self.membership(policy: "v2", lifetime: true))
+        #expect(offer.ownsLifetime)
+        #expect(offer.proNeedsLifetimeFirst == false)
+    }
+
+    @Test("v2 live Pro is never told to buy lifetime first")
+    func v2ProIsNotLocked() {
+        let offer = PaywallOffer.from(tier: .pro, membership: self.membership(policy: "v2", lifetime: false))
+        #expect(offer.proNeedsLifetimeFirst == false)
     }
 }

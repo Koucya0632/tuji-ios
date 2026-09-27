@@ -6,6 +6,31 @@
 import StoreKit
 import SwiftUI
 
+/// What the paywall offers, decided from the server's three-tier view. Pure so
+/// the cutover rules are testable without StoreKit.
+struct PaywallOffer: Equatable {
+    /// The 永久會員 section exists only under policy v2: before the cutover a
+    /// lifetime purchase would buy nothing, so it must not be sold.
+    let showsLifetime: Bool
+    let ownsLifetime: Bool
+    /// 先永久會員、再 Pro (membership checklist §6): under v2 a non-member sees
+    /// the Pro plans but buys lifetime first.
+    let proNeedsLifetimeFirst: Bool
+    /// Pro benefit copy follows the limits in force (ordinary AI 500 → 200).
+    let isV2: Bool
+
+    static func from(tier: MembershipTier, membership: Membership?) -> PaywallOffer {
+        let v2 = membership?.policy == "v2"
+        let owns = tier == .lifetime || membership?.lifetime != nil
+        return PaywallOffer(
+            showsLifetime: v2,
+            ownsLifetime: owns,
+            proNeedsLifetimeFirst: v2 && !owns && tier != .pro,
+            isV2: v2
+        )
+    }
+}
+
 struct PaywallView: View {
     private static let termsURL = URL(string: "https://tuji.nexflow.team/terms") ?? URL(fileURLWithPath: "/")
     private static let privacyURL = URL(string: "https://tuji.nexflow.team/privacy") ?? URL(fileURLWithPath: "/")
@@ -31,11 +56,18 @@ struct PaywallView: View {
     /// no price, no error, and no way to retry.
     @State private var loadingProducts = true
 
+    private var offer: PaywallOffer {
+        PaywallOffer.from(tier: self.entitlement.tier, membership: self.entitlement.membership)
+    }
+
     var body: some View {
         TujiFormSheet(title: "Tuji Pro") {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.header
+                    if self.offer.showsLifetime {
+                        self.lifetimeSection
+                    }
                     self.benefits
                     self.plans
                     self.restoreButton
@@ -70,13 +102,43 @@ struct PaywallView: View {
     private var benefits: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             self.benefitRow(icon: "square.stack.3d.up.fill", text: "自製圖鑑容量提升至 300 格")
-            self.benefitRow(icon: "sparkles", text: "AI 辨識次數提升至每月 500 次")
+            if self.offer.isV2 {
+                self.benefitRow(icon: "sparkles", text: "AI 辨識次數提升至每月 200 次")
+            } else {
+                self.benefitRow(icon: "sparkles", text: "AI 辨識次數提升至每月 500 次")
+            }
             self.benefitRow(icon: "scope", text: "高精度 AI 辨識（每月 30 次）")
             self.benefitRow(icon: "bolt.fill", text: "優先支援與後續 Pro 功能")
         }
         .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+    }
+
+    /// 永久會員 — same card and button language as the Pro plans below it.
+    private var lifetimeSection: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("永久會員")
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+            VStack(alignment: .leading, spacing: Space.s3) {
+                self.benefitRow(icon: "books.vertical.fill", text: "解鎖全部官方圖鑑系列")
+                self.benefitRow(icon: "square.stack.3d.up.fill", text: "個人自製圖鑑 20 格")
+                self.benefitRow(icon: "sparkles", text: "AI 辨識每月 10 次")
+                self.benefitRow(icon: "bookmark.fill", text: "收藏、學習與投稿物見")
+            }
+            .padding(Space.s3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+            if self.offer.ownsLifetime {
+                Text("你已經是永久會員")
+                    .font(.tujiBodySm(.strong))
+                    .foregroundStyle(.tujiAccumulation)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if let product = self.store.lifetimeProduct {
+                self.planButton(product)
+            }
+        }
     }
 
     private func benefitRow(icon: String, text: LocalizedStringKey) -> some View {
@@ -110,7 +172,7 @@ struct PaywallView: View {
                 .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiAccumulation)
                 .frame(maxWidth: .infinity, alignment: .leading)
-        } else if self.store.products.isEmpty {
+        } else if self.store.subscriptionProducts.isEmpty {
             if self.loadingProducts {
                 TujiPageLoading()
             } else {
@@ -136,8 +198,16 @@ struct PaywallView: View {
             }
         } else {
             VStack(spacing: Space.s3) {
-                ForEach(self.store.products, id: \.id) { product in
+                if self.offer.proNeedsLifetimeFirst {
+                    Text("先成為永久會員，才能訂閱 Pro")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                ForEach(self.store.subscriptionProducts, id: \.id) { product in
                     self.planButton(product)
+                        .disabled(self.offer.proNeedsLifetimeFirst)
+                        .opacity(self.offer.proNeedsLifetimeFirst ? 0.45 : 1)
                 }
             }
         }
@@ -193,6 +263,11 @@ struct PaywallView: View {
             Text("訂閱會自動續訂，可隨時在 App Store 帳號設定取消。付款於確認購買時向 Apple ID 收取。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
+            if self.offer.showsLifetime {
+                Text("永久會員為一次性購買，不會自動續訂；Pro 到期後仍保留永久會員權益。")
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
+            }
             // App Review 3.1.2: auto-renewable subscriptions must link to the
             // Terms of Use (EULA) and privacy policy from inside the app.
             HStack(spacing: Space.s3) {
@@ -207,6 +282,9 @@ struct PaywallView: View {
 
     /// zh-Hant period label from the subscription's renewal period.
     private func periodLabel(_ product: Product) -> String? {
+        if product.id == StoreKitService.ProductID.lifetime {
+            return tujiLocalized("一次購買，永久有效")
+        }
         guard let period = product.subscription?.subscriptionPeriod else { return nil }
         switch period.unit {
         case .day: return period.value == 1 ? "每日" : "每 \(period.value) 天"
@@ -231,7 +309,7 @@ struct PaywallView: View {
         self.errorMessage = nil
         do {
             try await self.store.restore()
-            if self.store.isPro { self.dismiss() }
+            if self.store.isPro || self.entitlement.tier == .lifetime { self.dismiss() }
         } catch {
             self.errorMessage = tujiUserMessage(for: error)
         }
@@ -244,4 +322,14 @@ struct PaywallView: View {
 
 #Preview("already Pro") {
     PaywallView(entitlement: PreviewEntitlement(isPro: true))
+}
+
+#Preview("v2 non-member") {
+    PaywallView(entitlement: PreviewEntitlement(
+        tier: .free,
+        membership: Membership(
+            tier: "free", lifetime: nil, proExpiresAt: nil, graceEndsAt: nil,
+            canPurchaseLifetime: true, canPurchasePro: true, policy: "v2"
+        )
+    ))
 }

@@ -1,5 +1,5 @@
 // StoreKit 2 for Tuji Pro (auto-renewable subscription: monthly, quarterly,
-// semiannual, and yearly).
+// semiannual, and yearly) and 永久會員 (a non-consumable, one-time purchase).
 //
 // The server is the entitlement authority — every verified transaction (initial
 // purchase, background renewal, restore) is forwarded to /api/billing/verify,
@@ -34,11 +34,26 @@ final class StoreKitService {
         static let quarterly = "app.tuji.pro.quarterly"
         static let semiannual = "app.tuji.pro.semiannual"
         static let yearly = "app.tuji.pro.yearly"
-        static let all: [String] = [monthly, quarterly, semiannual, yearly]
+        /// 永久會員 — non-consumable.
+        static let lifetime = "app.tuji.lifetime"
+        static let subscriptions: [String] = [monthly, quarterly, semiannual, yearly]
+        static let all: [String] = subscriptions + [lifetime]
     }
 
     private(set) var products: [Product] = []
+    /// Device-local Pro flag. Only SUBSCRIPTION transactions move it — a
+    /// lifetime purchase is not Pro, and letting its verify reply ("tier" is
+    /// absent → "free") clear this flag wrongly demoted Pro buyers.
     private(set) var isPro = false
+
+    var subscriptionProducts: [Product] {
+        self.products.filter { ProductID.subscriptions.contains($0.id) }
+    }
+
+    var lifetimeProduct: Product? {
+        self.products.first { $0.id == ProductID.lifetime }
+    }
+
     /// productID currently being purchased (drives per-plan spinners).
     private(set) var purchasing: String?
     private(set) var loadError: Error?
@@ -83,7 +98,10 @@ final class StoreKitService {
         switch result {
         case let .success(verification):
             let transaction = try self.checkVerified(verification)
-            try await self.syncEntitlement(jws: verification.jwsRepresentation)
+            try await self.syncEntitlement(
+                jws: verification.jwsRepresentation,
+                isSubscription: ProductID.subscriptions.contains(transaction.productID)
+            )
             await transaction.finish()
             return true
         case .userCancelled, .pending:
@@ -108,15 +126,20 @@ final class StoreKitService {
             guard let transaction = try? self.checkVerified(result),
                   ProductID.all.contains(transaction.productID)
             else { continue }
-            active = true
-            try? await self.syncEntitlement(jws: result.jwsRepresentation)
+            // A lifetime purchase is forwarded (restore) but is not Pro.
+            let isSubscription = ProductID.subscriptions.contains(transaction.productID)
+            if isSubscription { active = true }
+            try? await self.syncEntitlement(jws: result.jwsRepresentation, isSubscription: isSubscription)
         }
         self.isPro = active
     }
 
     private func handle(_ result: VerificationResult<Transaction>) async {
         guard let transaction = try? self.checkVerified(result) else { return }
-        try? await self.syncEntitlement(jws: result.jwsRepresentation)
+        try? await self.syncEntitlement(
+            jws: result.jwsRepresentation,
+            isSubscription: ProductID.subscriptions.contains(transaction.productID)
+        )
         await transaction.finish()
     }
 
@@ -129,9 +152,9 @@ final class StoreKitService {
 
     /// Forward the signed transaction (JWS) to the server (the authority) and
     /// refresh the mirrored atlas entitlement so quota UI updates immediately.
-    private func syncEntitlement(jws: String) async throws {
+    private func syncEntitlement(jws: String, isSubscription: Bool) async throws {
         let tier = try await self.repository.verify(signedTransaction: jws)
-        self.isPro = (tier == "pro")
+        if isSubscription { self.isPro = (tier == "pro") }
         await AtlasStore.shared.refreshEntitlement()
     }
 }

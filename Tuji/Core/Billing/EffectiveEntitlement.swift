@@ -19,6 +19,11 @@ import Foundation
 @MainActor
 protocol EffectiveEntitlementReading {
     var isPro: Bool { get }
+    /// free / lifetime / pro, by the same rule as `isPro`.
+    var tier: MembershipTier { get }
+    /// The server's three-tier detail (policy, purchasability, grace), or nil
+    /// before the first sync / from a server that predates it.
+    var membership: Membership? { get }
 }
 
 @MainActor
@@ -42,6 +47,17 @@ struct LiveEffectiveEntitlement: EffectiveEntitlementReading {
         )
     }
 
+    var tier: MembershipTier {
+        Self.resolveTier(
+            serverPlan: self.atlas.entitlement,
+            devicePurchase: self.storeKit.isPro
+        )
+    }
+
+    var membership: Membership? {
+        self.atlas.entitlement?.membership
+    }
+
     /// The rule, as a pure function — mirroring the server's `resolveEntitlement`.
     ///
     /// Split out because it is otherwise untestable: `StoreKitService.init` is
@@ -58,6 +74,13 @@ struct LiveEffectiveEntitlement: EffectiveEntitlementReading {
         guard let serverPlan else { return devicePurchase }
         return serverPlan.isPro
     }
+
+    /// The same rule for three tiers. The device flag only knows Pro, so while
+    /// the snapshot is unknown it can say pro or free — never lifetime.
+    static func resolveTier(serverPlan: AtlasEntitlement?, devicePurchase: Bool) -> MembershipTier {
+        guard let serverPlan else { return devicePurchase ? .pro : .free }
+        return serverPlan.membershipTier
+    }
 }
 
 /// The second implementation, so the seam is a seam.
@@ -72,5 +95,20 @@ struct LiveEffectiveEntitlement: EffectiveEntitlementReading {
 /// Pro-side layout was therefore only ever seen on a device with a live
 /// subscription.
 struct PreviewEntitlement: EffectiveEntitlementReading {
-    let isPro: Bool
+    let tier: MembershipTier
+    let membership: Membership?
+
+    var isPro: Bool {
+        self.tier == .pro
+    }
+
+    init(isPro: Bool) {
+        self.tier = isPro ? .pro : .free
+        self.membership = nil
+    }
+
+    init(tier: MembershipTier, membership: Membership? = nil) {
+        self.tier = tier
+        self.membership = membership
+    }
 }
