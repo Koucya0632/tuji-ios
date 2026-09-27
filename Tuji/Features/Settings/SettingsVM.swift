@@ -55,6 +55,12 @@ final class SettingsVM {
         self.entitlement.isPro
     }
 
+    /// free / lifetime / pro, by the same rule. A lifetime member is not Pro,
+    /// but must not be told "free" either.
+    var tier: MembershipTier {
+        self.entitlement.tier
+    }
+
     /// 設定 → 帳號 → 清除學習進度.
     ///
     /// The server wipes `user_cards` too, so the stats store has to be

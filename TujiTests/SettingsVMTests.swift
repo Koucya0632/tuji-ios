@@ -187,4 +187,15 @@ struct SettingsVMTests {
         #expect(SettingsVM(entitlement: PreviewEntitlement(isPro: true)).isPro)
         #expect(!SettingsVM(entitlement: PreviewEntitlement(isPro: false)).isPro)
     }
+
+    /// A lifetime member is neither Pro nor free — 設定 and 我 must say so.
+    @Test
+    func lifetimeMemberIsNeitherProNorFree() {
+        let vm = SettingsVM(entitlement: PreviewEntitlement(tier: .lifetime))
+        #expect(vm.tier == .lifetime)
+        #expect(!vm.isPro)
+        #expect(MembershipTier.lifetime.badge == "Lifetime")
+        #expect(MembershipTier.pro.badge == "Pro")
+        #expect(MembershipTier.free.badge == "Free")
+    }
 }
