@@ -302,6 +302,7 @@ struct MeView: View {
 private struct DebugSmokeSection: View {
     let isGuest: Bool
     @State private var open = false
+    @AppStorage(DebugOverrides.forceMembershipV2Key) private var forceMembershipV2 = false
     @State private var pinging = false
     @State private var ping: Result<WhoamiResponse, Error>?
 
@@ -323,6 +324,12 @@ private struct DebugSmokeSection: View {
             }
             .buttonStyle(.plain)
             if self.open {
+                // Paywall only: the server's limits are untouched.
+                Toggle(isOn: self.$forceMembershipV2) {
+                    Text(verbatim: "付費頁視為會員 v2（顯示永久會員）")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk2)
+                }
                 BBtn(
                     title: self.buttonTitle,
                     fullWidth: true,

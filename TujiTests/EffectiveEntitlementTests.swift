@@ -181,3 +181,13 @@ extension EffectiveEntitlementTests {
         #expect(offer.proNeedsLifetimeFirst == false)
     }
 }
+
+extension EffectiveEntitlementTests {
+    @Test("the debug override shows the lifetime section before the cutover; off by default")
+    func debugOverrideForcesV2() {
+        #expect(PaywallOffer.from(tier: .free, membership: nil).showsLifetime == false)
+        let forced = PaywallOffer.from(tier: .free, membership: nil, forceV2: true)
+        #expect(forced.showsLifetime)
+        #expect(forced.proNeedsLifetimeFirst)
+    }
+}
