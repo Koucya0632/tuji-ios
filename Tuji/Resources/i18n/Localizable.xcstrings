@@ -2839,6 +2839,29 @@
         }
       }
     },
+    "先成為永久會員，需要更多再升級 Pro。" : {
+      "comment" : "Paywall headline after the membership cutover, above the two plan cards: buy Lifetime first, upgrade to Pro if you need more.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start as a Lifetime Member; upgrade to Pro when you need more."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まずは永久会員に。もっと必要になったらProへ。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先成为永久会员，需要更多再升级 Pro。"
+          }
+        }
+      }
+    },
     "先看一眼這些字，準備好就開始" : {
       "localizations" : {
         "en" : {
@@ -4368,6 +4391,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加入书签"
+          }
+        }
+      }
+    },
+    "包含永久會員全部權益，另外再加上：" : {
+      "comment" : "Subtitle on the Tuji Pro card of the paywall: Pro includes every Lifetime Membership benefit, plus the ones listed below.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything in Lifetime Membership, plus:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久会員の特典すべてに加えて："
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含永久会员全部权益，另外再加上："
           }
         }
       }

@@ -88,10 +88,17 @@ struct PaywallView: View {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.header
                     if self.offer.showsLifetime {
+                        // Two plans, two cards — each with its own benefits
+                        // and its own buy button, so nobody reads Pro's list
+                        // as part of 永久會員's.
                         self.lifetimeSection
+                            .tierCard()
+                        self.proSection
+                            .tierCard()
+                    } else {
+                        self.benefits
+                        self.plans
                     }
-                    self.benefits
-                    self.plans
                     self.restoreButton
                     self.legal
                 }
@@ -115,13 +122,26 @@ struct PaywallView: View {
             Image(systemName: "crown.fill")
                 .font(.tujiIcon(34, weight: .heavy))
                 .foregroundStyle(.tujiCurrent)
-            Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
-                .font(.tujiH3)
-                .foregroundStyle(.tujiInk)
+            if self.offer.showsLifetime {
+                Text("先成為永久會員，需要更多再升級 Pro。")
+                    .font(.tujiH3)
+                    .foregroundStyle(.tujiInk)
+            } else {
+                Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
+                    .font(.tujiH3)
+                    .foregroundStyle(.tujiInk)
+            }
         }
     }
 
     private var benefits: some View {
+        self.proBenefitRows
+            .padding(Space.s3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+    }
+
+    private var proBenefitRows: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             self.benefitRow(icon: "square.stack.3d.up.fill", text: "自製圖鑑容量提升至 300 格")
             if self.offer.isV2 {
@@ -132,9 +152,21 @@ struct PaywallView: View {
             self.benefitRow(icon: "scope", text: "高精度 AI 辨識（每月 30 次）")
             self.benefitRow(icon: "bolt.fill", text: "優先支援與後續 Pro 功能")
         }
-        .padding(Space.s3)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
+    }
+
+    /// Tuji Pro under v2: says up front that it CONTAINS 永久會員, then only
+    /// what it adds, then its own plans.
+    private var proSection: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("Tuji Pro")
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+            Text("包含永久會員全部權益，另外再加上：")
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
+            self.proBenefitRows
+            self.plans
+        }
     }
 
     /// 永久會員 — same card and button language as the Pro plans below it.
@@ -149,9 +181,6 @@ struct PaywallView: View {
                 self.benefitRow(icon: "sparkles", text: "AI 辨識每月 10 次")
                 self.benefitRow(icon: "bookmark.fill", text: "收藏、學習與投稿物見")
             }
-            .padding(Space.s3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
             if self.offer.ownsLifetime {
                 Text("你已經是永久會員")
                     .font(.tujiBodySm(.strong))
@@ -159,6 +188,15 @@ struct PaywallView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if let product = self.store.lifetimeProduct {
                 self.planButton(product)
+            } else if self.loadingProducts {
+                TujiPageLoading()
+            } else {
+                // Never a card with no way to buy: say it failed, like the
+                // Pro plans do.
+                Text("暫時無法載入方案，請檢查網路後再試一次。")
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -354,4 +392,19 @@ struct PaywallView: View {
             canPurchaseLifetime: true, canPurchasePro: true, policy: "v2"
         )
     ))
+}
+
+private extension View {
+    /// One plan's card on the paywall: a filled, outlined block that reads as
+    /// separate from the page and from the other plan.
+    func tierCard() -> some View {
+        self
+            .padding(Space.s3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.tujiPaper2, in: .rect(cornerRadius: Radius.r0))
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(Color.tujiRule, lineWidth: 1)
+            )
+    }
 }
