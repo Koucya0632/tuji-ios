@@ -169,6 +169,16 @@ struct SettingsView: View {
         self.vm.isPro
     }
 
+    /// A lifetime member is not subscribed, but is not a prospect for the
+    /// capacity pitch either — the plan they hold is the honest subtitle.
+    private var planSubtitle: LocalizedStringKey {
+        switch self.vm.tier {
+        case .pro: "訂閱中"
+        case .lifetime: "永久會員"
+        case .free: "擴充自製圖鑑容量，解鎖高精度 AI 辨識"
+        }
+    }
+
     // MARK: - List
 
     /// A row's value, or nothing while the settings on screen are the defaults.
@@ -308,7 +318,7 @@ struct SettingsView: View {
                     Button { self.showPaywall = true } label: {
                         TujiRow(
                             "Tuji Pro",
-                            subtitle: self.isPro ? "訂閱中" : "擴充自製圖鑑容量，解鎖高精度 AI 辨識"
+                            subtitle: self.planSubtitle
                         )
                     }
                     .tujiRowStyle()

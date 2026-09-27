@@ -288,11 +288,15 @@ struct MeView: View {
     }
 
     private var subscriptionTier: String {
-        self.entitlement.isPro ? "Pro" : "Free"
+        self.entitlement.tier.badge
     }
 
     private var subscriptionEdge: Color {
-        self.entitlement.isPro ? .tujiAccumulation : .tujiInk3
+        switch self.entitlement.tier {
+        case .pro: .tujiAccumulation
+        case .lifetime: .tujiBrandSecondary
+        case .free: .tujiInk3
+        }
     }
 }
 

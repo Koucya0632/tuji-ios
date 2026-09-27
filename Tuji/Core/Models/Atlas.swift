@@ -291,6 +291,16 @@ enum MembershipTier: String, Hashable {
     case free
     case lifetime
     case pro
+
+    /// 我's status badge. Latin on purpose and never localized, like the
+    /// "Pro" / "Free" it replaces — a product mark, not a sentence.
+    var badge: String {
+        switch self {
+        case .free: "Free"
+        case .lifetime: "Lifetime"
+        case .pro: "Pro"
+        }
+    }
 }
 
 /// GET /api/atlas/entitlement → `membership`. Dates stay ISO strings, like
