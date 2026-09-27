@@ -1,6 +1,10 @@
 import Foundation
 
-func choiceKey(_ label: String) -> String {
+/// Pure string helpers, `nonisolated` like `tujiLocalized`: the target's default
+/// actor isolation is MainActor, and `choiceAliases` below passes `choiceKey` as
+/// a function value to `map` — which the Release (WMO) build rejects as losing
+/// the global actor, while Debug builds let it through.
+nonisolated func choiceKey(_ label: String) -> String {
     String(label.precomposedStringWithCompatibilityMapping.lowercased().unicodeScalars.filter {
         !CharacterSet.whitespacesAndNewlines.contains($0) && $0.properties.generalCategory != .dashPunctuation
     })
