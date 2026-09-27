@@ -313,6 +313,10 @@ struct Membership: Decodable, Hashable {
     let canPurchasePro: Bool
     /// v1 = pre-membership limits still in force; v2 = three-tier limits.
     let policy: String
+    /// Official categories this account may study; nil = every category.
+    /// Only a v2 non-member gets a list (the server's study gate, fruits +
+    /// bedroom). Absent from older servers, which decodes as nil.
+    var studyableCategories: [String]?
 }
 
 struct AtlasUsage: Decodable, Hashable {

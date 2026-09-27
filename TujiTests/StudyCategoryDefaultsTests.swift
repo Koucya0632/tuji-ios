@@ -72,3 +72,42 @@ struct StudyCategoryDefaultsTests {
         #expect(!migration.hasApplied(for: secondUserID))
     }
 }
+
+// MARK: - The effective selection (membership study gate, checklist §3)
+
+extension StudyCategoryDefaultsTests {
+    @Test("no gate: the pick is used as-is, including an empty pick")
+    func noGatePassesThrough() {
+        #expect(StudyCategoryDefaults.effective(selected: ["kitchen", "custom"], studyable: nil) == [
+            "kitchen",
+            "custom"
+        ])
+        #expect(StudyCategoryDefaults.effective(selected: [], studyable: nil).isEmpty)
+    }
+
+    @Test("gated: the pick narrowed to what may be studied")
+    func gateNarrowsThePick() {
+        let out = StudyCategoryDefaults.effective(
+            selected: ["kitchen", "fruits", "custom"],
+            studyable: ["fruits", "bedroom"]
+        )
+        #expect(out == ["fruits"])
+    }
+
+    /// An empty list means "every category" to the queue and the totals, so it
+    /// must never come out of a gated account — the default pick (kitchen,
+    /// bathroom, living-room, custom, community) has no overlap at all.
+    @Test("gated with nothing studyable picked: the studyable list, never empty")
+    func gateNeverYieldsEmpty() {
+        #expect(
+            StudyCategoryDefaults.effective(
+                selected: UserSettings.default.studyCategories,
+                studyable: ["fruits", "bedroom"]
+            ) == ["bedroom", "fruits"]
+        )
+        #expect(StudyCategoryDefaults.effective(selected: [], studyable: ["fruits", "bedroom"]) == [
+            "bedroom",
+            "fruits"
+        ])
+    }
+}

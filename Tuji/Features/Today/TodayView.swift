@@ -581,7 +581,10 @@ struct TodayView: View {
         if self.auth.isGuest {
             return Array(known.prefix(4))
         }
-        let selected = Set(self.settings.current.studyCategories)
+        let selected = Set(StudyCategoryDefaults.effective(
+            selected: self.settings.current.studyCategories,
+            studyable: StudyCategoryDefaults.liveStudyable
+        ))
         guard !selected.isEmpty else { return [] }
         return known.filter { selected.contains($0.id) }
     }

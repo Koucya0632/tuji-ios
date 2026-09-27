@@ -14,6 +14,20 @@ import SwiftUI
 struct StudyCategoriesPickerView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(CategoriesStore.self) private var categories
+    /// Read for the server's `studyableCategories`; observing it re-renders
+    /// the locks when the entitlement snapshot arrives.
+    @State private var atlas = AtlasStore.shared
+    @State private var showPaywall = false
+
+    /// nil = every theme may be studied (members, and before the cutover).
+    private var studyable: Set<String>? {
+        self.atlas.entitlement?.membership?.studyableCategories.map(Set.init)
+    }
+
+    private func isLocked(_ id: String) -> Bool {
+        guard let studyable else { return false }
+        return !studyable.contains(id)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +41,7 @@ struct StudyCategoriesPickerView: View {
         // Reachable from 今日 as well as 設定, so it cannot count on 設定 having
         // asked. A launch whose read failed asks nowhere else.
         .task { await self.store.loadIfNeeded() }
+        .sheet(isPresented: self.$showPaywall) { PaywallView() }
     }
 
     private var list: some View {
@@ -35,6 +50,11 @@ struct StudyCategoriesPickerView: View {
                 Text("選你想學的主題。學新字與主題進度只會算這些主題；複習不分主題，所有學過的字都會排進來。")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
+                if self.studyable != nil {
+                    Text("上鎖的主題成為會員後即可學習。")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                }
 
                 if !self.store.isEditable {
                     // The grid computes each new selection from the one on
@@ -69,7 +89,11 @@ struct StudyCategoriesPickerView: View {
 
     private var actions: some View {
         HStack(spacing: Space.s3) {
-            Button("全選") { self.setSelection(self.categories.categories.map(\.id)) }
+            // Only what may be studied: selecting a locked theme would count
+            // toward nothing.
+            Button("全選") {
+                self.setSelection(self.categories.categories.map(\.id).filter { !self.isLocked($0) })
+            }
             Button("清除") { self.setSelection([]) }
             Spacer()
             Text("已選 \(self.selectedIds.count) 個")
@@ -86,8 +110,13 @@ struct StudyCategoriesPickerView: View {
             spacing: Space.s2
         ) {
             ForEach(self.categories.categories) { c in
-                self.tile(category: c, selected: self.selectedIds.contains(c.id)) {
-                    self.toggle(c.id)
+                let locked = self.isLocked(c.id)
+                self.tile(category: c, selected: !locked && self.selectedIds.contains(c.id), locked: locked) {
+                    if locked {
+                        self.showPaywall = true
+                    } else {
+                        self.toggle(c.id)
+                    }
                 }
             }
         }
@@ -96,31 +125,40 @@ struct StudyCategoriesPickerView: View {
     private func tile(
         category: TujiCategory,
         selected: Bool,
+        locked: Bool,
         action: @escaping () -> Void
     )
         -> some View
     {
         Button(action: action) {
-            Text(category.nameZh)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk2)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .padding(.vertical, Space.s4)
-                .frame(maxWidth: .infinity)
-                .background(
-                    selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
-                    in: .rect(cornerRadius: Radius.r0)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.r0)
-                        .stroke(
-                            selected ? Color.tujiCurrent : .tujiRule,
-                            lineWidth: selected ? 1.5 : 1
-                        )
-                )
+            HStack(spacing: Space.s1) {
+                if locked {
+                    Image(systemName: "lock.fill")
+                        .font(.tujiIcon(10, weight: .semibold))
+                        .foregroundStyle(.tujiInk3)
+                }
+                Text(category.nameZh)
+                    .font(.tujiLabel)
+                    .foregroundStyle(locked ? .tujiInk3 : .tujiInk2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.vertical, Space.s4)
+            .frame(maxWidth: .infinity)
+            .background(
+                selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
+                in: .rect(cornerRadius: Radius.r0)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Radius.r0)
+                    .stroke(
+                        selected ? Color.tujiCurrent : .tujiRule,
+                        lineWidth: selected ? 1.5 : 1
+                    )
+            )
         }
         .buttonStyle(.plain)
+        .accessibilityHint(locked ? Text("成為會員後可學習") : Text(verbatim: ""))
     }
 
     private func toggle(_ id: String) {

@@ -29,6 +29,28 @@ enum StudyCategoryDefaults {
     static func addingCommunity(to categoryIDs: [String]) -> [String] {
         Array(Set(categoryIDs).union([communityID])).sorted()
     }
+
+    /// The themes that actually get studied: the user's pick, narrowed to what
+    /// the server says this account may study (`Membership.studyableCategories`).
+    ///
+    /// nil = no gate → the pick as-is. With a gate, the pick ∩ studyable; and
+    /// when nothing survives, the studyable list itself — a non-member who only
+    /// ticked locked themes still studies fruits + bedroom rather than nothing.
+    /// That fallback is also what keeps the numbers honest: an empty list means
+    /// "every category" to the queue and to the progress totals, so it must
+    /// never reach them for a gated account.
+    static func effective(selected: [String], studyable: [String]?) -> [String] {
+        guard let studyable else { return selected }
+        let allowed = Set(studyable)
+        let kept = selected.filter { allowed.contains($0) }
+        return kept.isEmpty ? studyable.sorted() : kept
+    }
+
+    /// The server's list for whoever is signed in; nil before the first
+    /// entitlement sync, for members, and under policy v1.
+    static var liveStudyable: [String]? {
+        AtlasStore.shared.entitlement?.membership?.studyableCategories
+    }
 }
 
 /// One-time, per-account migration for people whose settings predate the

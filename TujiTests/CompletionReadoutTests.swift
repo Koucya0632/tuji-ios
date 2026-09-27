@@ -226,6 +226,33 @@ struct CompletionInputsMappingTests {
         #expect(inputs.dictionaryCount == 3)
     }
 
+    /// A v2 non-member's counts cover only what they may study — 首頁 must not
+    /// promise 「300 新字」 from themes the queue will not serve.
+    @Test
+    func gatedSelectionCountsOnlyStudyableThemes() async {
+        let progress = await self.makeProgress([
+            CategoryProgress(category: "kitchen", total: 30, seen: 12),
+            CategoryProgress(category: "fruits", total: 34, seen: 5)
+        ])
+        let words = await self.makeWords([
+            self.word("a", category: "kitchen"),
+            self.word("b", category: "fruits")
+        ])
+        let inputs = CompletionReadout.Inputs(
+            viewer: FakeViewer(isGuest: false),
+            settings: FakeStudySelection(
+                studyCategories: ["kitchen", "fruits"],
+                studyableCategories: ["fruits", "bedroom"]
+            ),
+            progress: progress,
+            words: words,
+            cache: FakeGuestProgress(learnedCount: 0)
+        )
+        #expect(inputs.studyCategories == ["fruits"])
+        #expect(inputs.seenInSelection == 5)
+        #expect(inputs.totalInSelection == 34)
+    }
+
     /// `isGuest` comes from the viewer seam and nowhere else. It decides whether
     /// 完成度 counts the local learned set or the server rows, and it is the one
     /// field the two screens once answered differently.
@@ -327,6 +354,7 @@ private struct FakeViewer: ViewerIdentity {
 private struct FakeStudySelection: StudySelectionReading {
     var studyCategories: [String]
     var settingsLoaded: Bool = true
+    var studyableCategories: [String]?
 }
 
 @MainActor
