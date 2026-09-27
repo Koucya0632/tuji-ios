@@ -68,6 +68,24 @@ struct DurableAnswerWriterTests {
         #expect(repo.callCount == 3) // three attempts, then give up
         #expect(outbox.pending.map(\.cardId) == ["c9"])
     }
+
+    /// A permanent refusal will never succeed: retrying it wastes the backoff,
+    /// and parking it would wedge the outbox. Rejected after one attempt.
+    @Test
+    func permanentRefusalIsRejectedWithoutRetryOrPark() async {
+        let repo = StubStudyRepository(alwaysFail: true, failure: APIError.notFound)
+        let outbox = self.makeOutbox()
+        let writer = DurableAnswerWriter(repository: repo, outbox: outbox)
+
+        let outcome = await writer.submitAnswer(self.payload(card: "gone"))
+
+        guard case .rejected = outcome else {
+            Issue.record("expected .rejected, got \(outcome)")
+            return
+        }
+        #expect(repo.callCount == 1)
+        #expect(outbox.pending.isEmpty)
+    }
 }
 
 /// A raw study repository whose `submitAnswer` fails a set number of times
@@ -77,14 +95,16 @@ struct DurableAnswerWriterTests {
 private final class StubStudyRepository: StudyRepository {
     let failuresBeforeSuccess: Int
     let alwaysFail: Bool
+    let failure: Error
     private(set) var callCount = 0
 
     struct Boom: Error {}
     struct NotImplemented: Error {}
 
-    init(failuresBeforeSuccess: Int = 0, alwaysFail: Bool = false) {
+    init(failuresBeforeSuccess: Int = 0, alwaysFail: Bool = false, failure: Error = Boom()) {
         self.failuresBeforeSuccess = failuresBeforeSuccess
         self.alwaysFail = alwaysFail
+        self.failure = failure
     }
 
     func loadQueue(mode _: StudyMode, limit _: Int, newCount _: Int, categories _: [String]) async throws
@@ -99,7 +119,7 @@ private final class StubStudyRepository: StudyRepository {
 
     func submitAnswer(_: StudyAnswerPayload) async throws -> StudyAnswerResponse {
         self.callCount += 1
-        if self.alwaysFail || self.callCount <= self.failuresBeforeSuccess { throw Boom() }
+        if self.alwaysFail || self.callCount <= self.failuresBeforeSuccess { throw self.failure }
         return StudyAnswerResponse(
             ok: true,
             milestone: nil,

@@ -79,6 +79,10 @@ final class StudySessionWrites {
                 }
             case .parked:
                 self.parkedCount += 1
+            case .rejected:
+                // Refused for good (card gone, not allowed): nothing will ever
+                // sync it, so it is not "unsynced" either. Logged by the writer.
+                break
             }
             self.pendingRemaining -= 1
         })

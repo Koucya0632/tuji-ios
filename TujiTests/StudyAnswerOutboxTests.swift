@@ -121,10 +121,70 @@ struct StudyAnswerOutboxTests {
 }
 
 @MainActor
+extension StudyAnswerOutboxTests {
+    /// A permanently refused answer (404 card gone, 403, 402…) used to stay at
+    /// the head of the outbox and stop every pass, so nothing queued behind it
+    /// was ever sent again. It is dropped now, and the pass carries on.
+    @Test
+    func permanentlyRefusedAnswerIsDroppedAndReplayContinues() async {
+        let url = self.tempURL()
+        let outbox = StudyAnswerOutbox(fileURL: url, activeUserID: { self.ownerA })
+        outbox.add(self.payload(card: "gone"))
+        outbox.add(self.payload(card: "c2"))
+        let repo = OutboxSpyRepository(failing: false)
+        repo.errorsByCard["gone"] = APIError.notFound
+        await outbox.replay(using: repo)
+        #expect(outbox.pending.isEmpty)
+        #expect(repo.answers.map(\.cardId) == ["c2"])
+    }
+
+    /// A transient failure (offline, 5xx, 429, 401) still stops the pass and
+    /// keeps everything — that half of the contract is unchanged.
+    @Test
+    func transientFailureStillStopsAndKeepsEverything() async {
+        let url = self.tempURL()
+        let outbox = StudyAnswerOutbox(fileURL: url, activeUserID: { self.ownerA })
+        outbox.add(self.payload(card: "c1"))
+        outbox.add(self.payload(card: "c2"))
+        let repo = OutboxSpyRepository(failing: false)
+        repo.errorsByCard["c1"] = APIError.server(status: 503, body: nil)
+        await outbox.replay(using: repo)
+        #expect(outbox.pending.map(\.cardId) == ["c1", "c2"])
+    }
+}
+
+struct AnswerWriteFailureTests {
+    @Test(arguments: [
+        APIError.notFound, .forbidden, .paymentRequired(message: nil),
+        .conflict(reason: nil, message: nil), .server(status: 400, body: nil),
+        .server(status: 422, body: nil)
+    ] as [APIError])
+    func permanent(_ error: APIError) {
+        #expect(AnswerWriteFailure.isPermanent(error))
+    }
+
+    @Test(arguments: [
+        APIError.unauthorized, .rateLimited(message: nil), .server(status: 500, body: nil),
+        .server(status: 503, body: nil), .server(status: 408, body: nil),
+        .transport(URLError(.notConnectedToInternet)), .missingBaseURL,
+    ] as [APIError])
+    func transient(_ error: APIError) {
+        #expect(!AnswerWriteFailure.isPermanent(error))
+    }
+
+    @Test
+    func unknownErrorsAreTransient() {
+        struct Mystery: Error {}
+        #expect(!AnswerWriteFailure.isPermanent(Mystery()))
+    }
+}
+
 private final class OutboxSpyRepository: StudyRepository {
     let failing: Bool
     private(set) var answers: [StudyAnswerPayload] = []
     var onSubmit: ((StudyAnswerPayload) -> Void)?
+    /// Per-card error to throw instead of accepting, e.g. a permanent 404.
+    var errorsByCard: [String: Error] = [:]
 
     struct Offline: Error {}
     struct NotImplemented: Error {}
@@ -145,6 +205,7 @@ private final class OutboxSpyRepository: StudyRepository {
 
     func submitAnswer(_ payload: StudyAnswerPayload) async throws -> StudyAnswerResponse {
         if self.failing { throw Offline() }
+        if let error = self.errorsByCard[payload.cardId] { throw error }
         self.answers.append(payload)
         self.onSubmit?(payload)
         return StudyAnswerResponse(ok: true, milestone: nil, mastery: nil)

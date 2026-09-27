@@ -68,9 +68,11 @@ final class StudyAnswerOutbox {
     }
 
     /// Re-send everything in order. Successes leave the outbox; the first
-    /// failure stops the pass (same network, later ones would fail too) and
-    /// keeps the rest for the next trigger. Reentrancy-guarded — launch and
-    /// foreground triggers can overlap.
+    /// TRANSIENT failure stops the pass (same network, later ones would fail
+    /// too) and keeps the rest for the next trigger. A PERMANENT failure (see
+    /// `AnswerWriteFailure`) is dropped and the pass carries on — kept, it would
+    /// sit at the head and stop every future pass. Reentrancy-guarded — launch
+    /// and foreground triggers can overlap.
     func replay(using repository: StudyRepository = LiveStudyRepository.shared) async {
         guard !self.replaying, let ownerUserID = self.activeUserID() else { return }
         self.replaying = true
@@ -85,6 +87,15 @@ final class StudyAnswerOutbox {
             next.ownerUserId = ownerUserID
             do {
                 _ = try await repository.submitAnswer(next)
+                guard self.activeUserID() == ownerUserID,
+                      let index = self.entries.firstIndex(where: { $0.id == entry.id })
+                else { return }
+                self.entries.remove(at: index)
+                self.save()
+            } catch where AnswerWriteFailure.isPermanent(error) {
+                self.log.error(
+                    "dropping parked answer for card \(entry.payload.cardId, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                )
                 guard self.activeUserID() == ownerUserID,
                       let index = self.entries.firstIndex(where: { $0.id == entry.id })
                 else { return }

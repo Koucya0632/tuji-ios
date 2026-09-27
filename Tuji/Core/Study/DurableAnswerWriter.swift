@@ -26,6 +26,35 @@ enum StudyWriteOutcome {
     /// Every retry failed; the payload was parked in the durable outbox and
     /// will replay later. No response is available.
     case parked
+    /// The server refused this answer for good (see `AnswerWriteFailure`).
+    /// Neither retried nor parked: it would never succeed, and a parked
+    /// permanent failure used to wedge the whole outbox behind it.
+    case rejected
+}
+
+/// Which write failures are permanent. A permanent failure will never succeed
+/// on replay — the card is gone (404), the account may not write it (403), the
+/// write needs a plan (402), the request itself is refused (other 4xx). Those
+/// must be dropped, not retried: `StudyAnswerOutbox.replay` stops at the first
+/// failure, so one parked permanent failure blocked every answer queued behind
+/// it, forever.
+///
+/// Everything else is transient and keeps the old retry-then-park behaviour:
+/// offline, 5xx, 408/429, and 401 (the next attempt carries a refreshed
+/// token). Unknown errors count as transient — dropping an answer is the worse
+/// mistake of the two.
+enum AnswerWriteFailure {
+    static func isPermanent(_ error: Error) -> Bool {
+        guard let api = error as? APIError else { return false }
+        switch api {
+        case .forbidden, .notFound, .paymentRequired, .conflict:
+            return true
+        case let .server(status, _):
+            return (400..<500).contains(status) && status != 408 && status != 429
+        case .unauthorized, .rateLimited, .atCapacity, .decoding, .transport, .missingBaseURL:
+            return false
+        }
+    }
 }
 
 @MainActor
@@ -51,6 +80,11 @@ struct DurableAnswerWriter: DurableAnswerWriting {
         for attempt in 0..<Self.maxAttempts {
             do {
                 return try await .synced(self.repository.submitAnswer(payload))
+            } catch where AnswerWriteFailure.isPermanent(error) {
+                log.error(
+                    "answer for card \(payload.cardId, privacy: .public) refused for good: \(error.localizedDescription, privacy: .public)"
+                )
+                return .rejected
             } catch {
                 log.warning(
                     "answer write attempt \(attempt + 1, privacy: .public) failed: \(error.localizedDescription, privacy: .public)"
