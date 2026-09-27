@@ -267,10 +267,52 @@ struct AtlasEntitlement: Decodable, Hashable {
     let precisionAiLimitMonthly: Int
     let subscriptionExpiresAt: String?
     let usage: AtlasUsage
+    /// Three-tier view. Absent from servers older than the membership rollout,
+    /// hence optional — and a `var`: it defaults to nil so existing memberwise
+    /// call sites keep compiling, whereas a `let` given a default would be
+    /// skipped by the synthesized decoder without a word.
+    var membership: Membership?
 
+    /// `plan` keeps its pre-membership meaning: "pro" only while Pro is live.
+    /// A lifetime member is `plan == "free"` — ask `membershipTier` instead.
     var isPro: Bool {
         self.plan == "pro"
     }
+
+    /// free / lifetime / pro. Falls back to `plan` when the server predates
+    /// `membership` or sends a tier this build doesn't know.
+    var membershipTier: MembershipTier {
+        self.membership.flatMap { MembershipTier(rawValue: $0.tier) } ?? (self.isPro ? .pro : .free)
+    }
+}
+
+/// 非會員 / 永久會員 / Pro (CONTEXT.md → 方案與權限).
+enum MembershipTier: String, Hashable {
+    case free
+    case lifetime
+    case pro
+}
+
+/// GET /api/atlas/entitlement → `membership`. Dates stay ISO strings, like
+/// `subscriptionExpiresAt` beside them.
+struct Membership: Decodable, Hashable {
+    struct LifetimeHolding: Decodable, Hashable {
+        /// appstore / legacy_pro / grant
+        let source: String
+        let acquiredAt: String
+    }
+
+    /// Raw so an unknown future tier decodes instead of failing the whole
+    /// snapshot; `AtlasEntitlement.membershipTier` maps it.
+    let tier: String
+    let lifetime: LifetimeHolding?
+    let proExpiresAt: String?
+    /// Set only for a lifetime member inside the 30 days after Pro ended.
+    let graceEndsAt: String?
+    let canPurchaseLifetime: Bool
+    let canPurchasePro: Bool
+    /// v1 = pre-membership limits still in force; v2 = three-tier limits.
+    let policy: String
 }
 
 struct AtlasUsage: Decodable, Hashable {
