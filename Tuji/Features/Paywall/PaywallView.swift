@@ -122,8 +122,11 @@ struct PaywallView: View {
             Image(systemName: "crown.fill")
                 .font(.tujiIcon(34, weight: .heavy))
                 .foregroundStyle(.tujiCurrent)
-            if self.offer.showsLifetime {
-                Text("先成為永久會員，需要更多再升級 Pro。")
+            // Under v2 the headline sells 永久會員 alone — Pro is the second
+            // card, not the pitch. Someone who already owns lifetime is here
+            // for Pro, so they get the Pro sentence.
+            if self.offer.showsLifetime, !self.offer.ownsLifetime {
+                Text("一次購買，永久解鎖全部官方圖鑑。")
                     .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
             } else {
