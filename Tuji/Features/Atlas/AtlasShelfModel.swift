@@ -26,11 +26,14 @@ struct AtlasShelfRow: Identifiable, Hashable {
     /// something the row it has not written yet cannot: this screen used to read
     /// 「已上傳」 off a photo the 卡片 grid was simultaneously calling 「生成中」.
     let inFlight: CaptureProgress?
+    /// Over the slot cap after Pro ended: kept and deletable, but not studied.
+    let locked: Bool
 
-    init(image: AtlasImageSummary, item: AtlasItem?, inFlight: CaptureProgress? = nil) {
+    init(image: AtlasImageSummary, item: AtlasItem?, inFlight: CaptureProgress? = nil, locked: Bool = false) {
         self.image = image
         self.item = item
         self.inFlight = inFlight
+        self.locked = locked
     }
 
     var id: String {
@@ -49,7 +52,8 @@ struct AtlasShelfRow: Identifiable, Hashable {
     }
 
     var statusLabel: String {
-        self.inFlight?.label ?? self.image.statusLabel
+        if self.locked { return tujiLocalized("已鎖定") }
+        return self.inFlight?.label ?? self.image.statusLabel
     }
 }
 
@@ -157,7 +161,12 @@ final class AtlasShelfModel {
         return self.store.images.compactMap { image in
             let item = self.store.itemsByImageId[image.id]
             if let item, item.targetLanguage != scope { return nil }
-            return AtlasShelfRow(image: image, item: item, inFlight: inFlight[image.id])
+            return AtlasShelfRow(
+                image: image,
+                item: item,
+                inFlight: inFlight[image.id],
+                locked: item.map { self.store.lockedItemIds.contains($0.id) } ?? false
+            )
         }
     }
 

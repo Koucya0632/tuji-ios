@@ -881,6 +881,29 @@
         }
       }
     },
+    "Pro 已結束。超過 %lld 格的自製卡片將於 %@ 起鎖定，續訂 Pro 即可繼續使用。" : {
+      "comment" : "Notice on 我 during the grace after Pro ended. %lld = the Lifetime slot cap (20); %@ = the date the over-cap custom cards lock.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro has ended. Custom cards beyond %lld will lock on %@. Renew Pro to keep using them."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proが終了しました。%lld枠を超えるマイ図鑑のカードは%@からロックされます。Proを更新すると引き続き使えます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro 已结束。超过 %lld 格的自制卡片将于 %@ 起锁定，续订 Pro 即可继续使用。"
+          }
+        }
+      }
+    },
     "Pro：本月 AI 辨識剩 %lld／%lld 次" : {
       "comment" : "Capture-screen footnote for Pro users: remaining vs monthly ordinary-AI allowance (500).",
       "localizations" : {
@@ -6972,6 +6995,29 @@
         }
       }
     },
+    "已鎖定" : {
+      "comment" : "Status of a custom atlas card in 圖鑑管理 that is locked for being over the plan's slot cap after Pro ended (kept, deletable, not studied).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locked"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ロック中"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已锁定"
+          }
+        }
+      }
+    },
     "已開啟" : {
       "localizations" : {
         "en" : {
@@ -12577,6 +12623,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续复习"
+          }
+        }
+      }
+    },
+    "續訂 Pro" : {
+      "comment" : "Button on the post-Pro grace notice: opens the paywall to renew Pro.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renew Pro"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proを更新"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "续订 Pro"
           }
         }
       }

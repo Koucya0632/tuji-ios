@@ -26,6 +26,9 @@ final class AtlasStore {
     /// linear scan inside `body`, making the list render O(n²).
     private(set) var itemsByImageId: [String: AtlasItem] = [:]
     private(set) var entitlement: AtlasEntitlement?
+    /// Items locked for being over the slot cap (membership v2). Replaced
+    /// wholesale on every sync — the server sends the full set.
+    private(set) var lockedItemIds: Set<String> = []
     private(set) var loading = false
     private(set) var lastError: Error?
 
@@ -55,6 +58,7 @@ final class AtlasStore {
         self.items = []
         self.itemsByImageId = [:]
         self.entitlement = nil
+        self.lockedItemIds = []
         self.lastSyncAt = nil
         self.lastError = nil
     }
@@ -70,6 +74,7 @@ final class AtlasStore {
             let response = try await self.repository.sync(since: since, limit: limit)
             guard generation == self.generation else { return }
             self.merge(response)
+            self.lockedItemIds = Set(response.lockedItemIds ?? [])
             self.lastSyncAt = response.serverTime
             self.log
                 .info(

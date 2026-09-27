@@ -24,6 +24,28 @@ struct AtlasShelfModelTests {
 
     // MARK: - Rows
 
+    /// Over the slot cap after Pro ended: the row stays (it must be deletable)
+    /// but reads 已鎖定. The set is replaced on every sync, so an item the
+    /// server stops listing is unlocked again (e.g. after renewing Pro).
+    @Test
+    func lockedItemsReadLockedAndUnlockOnTheNextSync() async {
+        let fake = FakeAtlasAuthoring()
+        fake.syncResponse = AtlasFixtures.syncResponse(
+            images: [AtlasFixtures.image("img-1")],
+            items: [AtlasFixtures.item("item-1", imageId: "img-1")],
+            lockedItemIds: ["item-1"]
+        )
+        let store = AtlasStore(repository: fake)
+        await store.sync(.full)
+        let model = AtlasShelfModel(store: store, targetLanguage: .ja)
+        #expect(model.rows.first?.locked == true)
+        #expect(model.rows.first?.statusLabel == tujiLocalized("已鎖定"))
+
+        fake.syncResponse = AtlasFixtures.syncResponse(images: [], items: [])
+        await store.sync(.incremental)
+        #expect(model.rows.first?.locked == false)
+    }
+
     @Test
     func aCaptureStillBeingMadeSaysSoRatherThanQuotingTheServerRow() async {
         // The 卡片 grid and this shelf used to answer separately: the grid read

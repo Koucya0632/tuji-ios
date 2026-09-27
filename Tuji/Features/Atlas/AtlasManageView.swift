@@ -424,9 +424,16 @@ private struct AtlasCardsManagementPane: View {
                 }
             }
             Spacer()
-            Text(row.statusLabel)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
+            HStack(spacing: Space.s1) {
+                if row.locked {
+                    Image(systemName: "lock.fill")
+                        .font(.tujiIcon(10, weight: .semibold))
+                        .foregroundStyle(.tujiInk3)
+                }
+                Text(row.statusLabel)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
+            }
         }
         .padding(.vertical, 2)
     }
