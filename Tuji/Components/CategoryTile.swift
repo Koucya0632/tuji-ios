@@ -112,6 +112,10 @@ struct CategoryCoverTile: View {
     let category: TujiCategory
     let wordCount: Int
     var status: ThemeStatus = .none
+    /// Browsable but not studyable for this account (membership v2 non-member).
+    /// Only marked — the tile still opens: definitions, examples and audio are
+    /// never locked, only study is.
+    var locked: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -150,6 +154,17 @@ struct CategoryCoverTile: View {
         .overlay(alignment: .topTrailing) {
             ThemeStatusBadge(status: self.status)
                 .padding(5)
+        }
+        .overlay(alignment: .topLeading) {
+            if self.locked {
+                Image(systemName: "lock.fill")
+                    .font(.tujiIcon(9, weight: .semibold))
+                    .foregroundStyle(.tujiInk2)
+                    .padding(5)
+                    .background(.tujiPaper.opacity(0.92), in: .circle)
+                    .padding(5)
+                    .accessibilityLabel(Text("成為會員後可學習"))
+            }
         }
     }
 }
