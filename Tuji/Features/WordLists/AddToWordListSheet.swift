@@ -148,7 +148,9 @@ struct WordListButton: View {
     @State private var showPaywall = false
 
     var body: some View {
-        Group {
+        ZStack(alignment: .topLeading) {
+            // Always drawn, so the `.task` below runs — see `TaskAnchor`.
+            TaskAnchor()
             if !self.auth.isGuest, self.store.addEntry != .hidden {
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()

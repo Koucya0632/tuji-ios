@@ -19,7 +19,9 @@ struct WordInsightsSection: View {
     @State private var showPaywall = false
 
     var body: some View {
-        Group {
+        ZStack(alignment: .topLeading) {
+            // Always drawn, so the `.task` below runs — see `TaskAnchor`.
+            TaskAnchor()
             // Double optional: not asked yet, or asked and the word has none.
             if let answer = self.store.cached(for: self.wordId), let insights = answer, !insights.isEmpty {
                 self.content(insights)
