@@ -303,7 +303,8 @@ struct CardsListView: View {
                         CategoryCoverTile(
                             category: c,
                             wordCount: self.store.byCategory(c.id).count,
-                            status: self.themeStatus(for: c.id)
+                            status: self.themeStatus(for: c.id),
+                            locked: self.isStudyLocked(c.id)
                         )
                     }
                     .buttonStyle(.plain)
@@ -327,6 +328,14 @@ struct CardsListView: View {
             from: self.categories.categories,
             presentIds: Set(self.store.categories)
         )
+    }
+
+    /// Marked with a lock when the server says this account may not study it
+    /// (`Membership.studyableCategories`; nil = everything, so v1 and members
+    /// never see a lock). Same list the study-theme picker locks against.
+    private func isStudyLocked(_ id: String) -> Bool {
+        guard let studyable = StudyCategoryDefaults.liveStudyable else { return false }
+        return !studyable.contains(id)
     }
 
     /// The badge rule, asked the same way 今天 asks it.
