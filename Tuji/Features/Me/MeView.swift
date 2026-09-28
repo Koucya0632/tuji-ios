@@ -124,6 +124,8 @@ struct MeView: View {
                         .padding(.horizontal, Space.s4)
                 }
                 MeProgressSections()
+                MeWordListsRow()
+                    .padding(.horizontal, Space.s4)
                 self.weakSection
                     .padding(.horizontal, Space.s4)
                 #if DEBUG

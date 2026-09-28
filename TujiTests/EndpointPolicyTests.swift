@@ -28,7 +28,10 @@ struct EndpointPolicyTests {
         .usersDeleteAccount, .usersPushToken,
         .usersPushTokenDelete(deviceId: "d1"), .usersFeedback,
         .usersBlocks, .usersBlock(handle: "TJ1"),
+        .usersWordLists(learning: "zh-en", word: nil), .usersWordList(id: "l1"),
+        .usersWordListWords(id: "l1"), .usersWordListOrder(learning: "zh-en"),
         .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant", learning: "zh-en"),
+        .studyWordListQueue(listId: "l1", mode: "new", limit: 10, lang: "zh-Hant", learning: "zh-en"),
         .studyAnswer, .studyStats(learning: "zh-en"), .studyReports,
         .atlasImages(limit: 20), .atlasImage(id: "i1"),
         .atlasImageRecognize(id: "i1", lang: "zh-Hant", learning: "en"),
@@ -60,7 +63,7 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 59)
+        #expect(Self.all.count == 64)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be

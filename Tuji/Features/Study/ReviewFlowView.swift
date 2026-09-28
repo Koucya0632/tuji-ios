@@ -20,8 +20,11 @@ struct ReviewFlowView: View {
     /// due count.
     @State private var sessionRefreshed = false
 
-    init(queue: [StudyQueueItem]) {
+    private let allowsAnotherRound: Bool
+
+    init(queue: [StudyQueueItem], allowsAnotherRound: Bool = true) {
         self.queue = queue
+        self.allowsAnotherRound = allowsAnotherRound
         let coord = ReviewFlowCoordinator(queue: queue)
         self._coord = State(initialValue: coord)
         self._shell = State(initialValue: StudySessionShell(kind: .review, session: coord))
@@ -41,7 +44,7 @@ struct ReviewFlowView: View {
                             wrongIds: self.coord.retriedIds,
                             unsyncedCount: self.coord.writes.parkedCount,
                             onFinish: { self.dismiss() },
-                            onAnotherRound: { await self.startAnotherRound() },
+                            onAnotherRound: self.anotherRound,
                             refreshed: self.sessionRefreshed
                         )
                     }
@@ -57,6 +60,12 @@ struct ReviewFlowView: View {
         // discs at the top of a study screen are the platform talking over it.
         .toolbar(.hidden, for: .navigationBar)
         .studySessionShell(self.shell)
+    }
+
+    /// nil hides 再來一輪 (a 個人詞表 session — see `StudyLauncherView`).
+    private var anotherRound: (() async -> Void)? {
+        guard self.allowsAnotherRound else { return nil }
+        return { await self.startAnotherRound() }
     }
 
     /// 再來一輪 from CompleteView: fetch a fresh due queue (via the coordinator's
