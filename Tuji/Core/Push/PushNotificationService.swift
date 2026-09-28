@@ -62,15 +62,17 @@ final class PushNotificationService {
         log.info("authorization status=\(self.authorization.rawValue, privacy: .public)")
     }
 
-    /// Requests notification permission. If granted, also triggers APNs
-    /// registration which calls back through PushAppDelegate.
+    /// Requests notification permission. If granted and `registeringForRemote`,
+    /// also triggers APNs registration which calls back through PushAppDelegate.
+    /// 每日提醒 passes `false`: its notifications are local, and the app has no
+    /// `aps-environment` entitlement, so registering would only fail.
     @discardableResult
-    func requestAuthorization() async -> Authorization {
+    func requestAuthorization(registeringForRemote: Bool = true) async -> Authorization {
         do {
             let granted = try await UNUserNotificationCenter.current()
                 .requestAuthorization(options: [.alert, .sound, .badge])
             authorization = granted ? .granted : .denied
-            if granted {
+            if granted, registeringForRemote {
                 UIApplication.shared.registerForRemoteNotifications()
             }
             log.info("requestAuthorization → \(self.authorization.rawValue, privacy: .public)")

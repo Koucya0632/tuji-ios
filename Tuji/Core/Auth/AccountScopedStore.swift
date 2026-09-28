@@ -35,6 +35,7 @@ extension ProgressStore: AccountScopedStore {}
 extension StudyStatsStore: AccountScopedStore {}
 extension StudyQueueStore: AccountScopedStore {}
 extension LocalCache: AccountScopedStore {}
+extension StudyReminders: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -64,6 +65,8 @@ enum AccountScopedStores {
     /// - `StudyQueueStore` — a prefetched queue whose signature has no account.
     /// - `LocalCache` — the device's bookmarks, uploaded into whichever account
     ///   signs in next.
+    /// - `StudyReminders` — its notifications are laid out ahead for a week;
+    ///   the next account on this phone would be reminded on this one's behalf.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -76,7 +79,8 @@ enum AccountScopedStores {
             ProgressStore.shared,
             StudyStatsStore.shared,
             StudyQueueStore.shared,
-            LocalCache.shared
+            LocalCache.shared,
+            StudyReminders.shared
         ]
     }
 

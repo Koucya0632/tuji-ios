@@ -61,6 +61,7 @@ struct TujiApp: App {
     @State private var deepLinks = DeepLinkCoordinator.shared
     @State private var network = NetworkMonitor.shared
     @State private var appUpdates = AppUpdateStore.shared
+    @State private var reminders = StudyReminders.shared
     /// RootView observes this App-owned reference through the environment.
     private let launch: LaunchCoordinator
     @State private var feedRefresh = CommunityFeedRefresh()
@@ -84,6 +85,7 @@ struct TujiApp: App {
                 .environment(deepLinks)
                 .environment(network)
                 .environment(appUpdates)
+                .environment(reminders)
                 .environment(launch)
                 .environment(feedRefresh)
                 .environment(collectionBookmarks)
@@ -104,6 +106,18 @@ struct TujiApp: App {
                           case .signedIn = auth.state
                     else { return }
                     Task { await StudyAnswerOutbox.shared.replay() }
+                    Task { await reminders.reschedule() }
+                }
+                // 每日提醒 is laid out a week ahead, and today's entry depends
+                // on the due count, on whether today has been studied, and on
+                // the language its text was resolved in.
+                .onChange(of: StudyReminderSignature(
+                    due: studyStats.stats?.due,
+                    studiedToday: (progress.streak?.todayCount ?? 0) > 0,
+                    uiLanguage: settings.current.uiLanguage
+                )) {
+                    guard reminders.isEnabled else { return }
+                    Task { await reminders.reschedule() }
                 }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback
