@@ -9,7 +9,9 @@ struct MeWordListsRow: View {
     @State private var showPaywall = false
 
     var body: some View {
-        Group {
+        ZStack(alignment: .topLeading) {
+            // Always drawn, so the `.task` below runs — see `TaskAnchor`.
+            TaskAnchor()
             if !self.auth.isGuest {
                 switch self.store.browseEntry {
                 case .hidden:

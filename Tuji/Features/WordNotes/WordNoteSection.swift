@@ -13,7 +13,9 @@ struct WordNoteSection: View {
     @State private var confirmDelete = false
 
     var body: some View {
-        Group {
+        ZStack(alignment: .topLeading) {
+            // Always drawn, so the `.task` below runs — see `TaskAnchor`.
+            TaskAnchor()
             if !self.auth.isGuest {
                 switch self.store.entry(for: self.wordId) {
                 case .hidden:
@@ -195,7 +197,9 @@ struct WordNoteLine: View {
     @Environment(WordNotesStore.self) private var store
 
     var body: some View {
-        Group {
+        ZStack(alignment: .topLeading) {
+            // Always drawn, so the `.task` below runs — see `TaskAnchor`.
+            TaskAnchor()
             if let note = self.store.note(for: self.wordId) {
                 HStack(alignment: .top, spacing: Space.s2) {
                     Image(systemName: "note.text")
