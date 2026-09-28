@@ -153,6 +153,10 @@ struct PaywallView: View {
                 self.benefitRow(icon: "sparkles", text: "AI 辨識次數提升至每月 500 次")
             }
             self.benefitRow(icon: "scope", text: "高精度 AI 辨識（每月 30 次）")
+            // 詞表 exists only under v2 (docs/MEMBERSHIP_TIER_STATUS.md §6 1.1).
+            if self.offer.isV2 {
+                self.benefitRow(icon: "list.bullet.rectangle", text: "個人詞表增加到 100 張")
+            }
             self.benefitRow(icon: "bolt.fill", text: "優先支援與後續 Pro 功能")
         }
     }
@@ -183,6 +187,8 @@ struct PaywallView: View {
                 self.benefitRow(icon: "square.stack.3d.up.fill", text: "個人自製圖鑑 20 格")
                 self.benefitRow(icon: "sparkles", text: "AI 辨識每月 10 次")
                 self.benefitRow(icon: "bookmark.fill", text: "收藏、學習與投稿物見")
+                self.benefitRow(icon: "list.bullet.rectangle", text: "個人詞表 20 張，可以從詞表背詞")
+                self.benefitRow(icon: "note.text", text: "為每個字寫下自己的筆記")
             }
             if self.offer.ownsLifetime {
                 Text("你已經是永久會員")
