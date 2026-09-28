@@ -58,13 +58,14 @@ struct EndpointPolicyTests {
         .search(q: "cup", lang: "zh-Hant", learning: "en"), .events,
         .words(lang: "zh-Hant", learning: "en"),
         .word(id: "w1", lang: "zh-Hant", learning: "en"),
+        .wordInsights(id: "w1", lang: "zh-Hant", learning: "zh-en"),
         .categories(lang: "zh-Hant"),
         .smokeWhoami
     ]
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 66)
+        #expect(Self.all.count == 67)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be

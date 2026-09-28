@@ -127,6 +127,8 @@ enum Endpoint {
     case events
     case words(lang: String, learning: String)
     case word(id: String, lang: String, learning: String)
+    /// 詞條延伸內容 for one word — membership-aware, so kept off the cached detail.
+    case wordInsights(id: String, lang: String, learning: String)
     case categories(lang: String)
 
     // MARK: - Smoke (temporary; delete with the backend endpoint)
@@ -229,6 +231,8 @@ enum Endpoint {
         case .usersWordLists, .usersWordList, .usersWordListWords, .usersWordListOrder,
              .studyWordListQueue:
             self.wordListDescriptor
+        case .wordInsights:
+            self.wordInsightsDescriptor
         case .usersWordNotes:
             EndpointDescriptor(path: "/api/users/word-notes", policy: .privateFresh)
         case let .usersWordNote(wordId):

@@ -38,6 +38,7 @@ extension LocalCache: AccountScopedStore {}
 extension StudyReminders: AccountScopedStore {}
 extension WordListsStore: AccountScopedStore {}
 extension WordNotesStore: AccountScopedStore {}
+extension WordInsightsStore: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -72,6 +73,7 @@ enum AccountScopedStores {
     /// - `WordListsStore` — the lists, and whether the feature is open at all,
     ///   are this account's answer.
     /// - `WordNotesStore` — the notes are this account's writing.
+    /// - `WordInsightsStore` — cached per tier, and the tier is this account's.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -87,7 +89,8 @@ enum AccountScopedStores {
             LocalCache.shared,
             StudyReminders.shared,
             WordListsStore.shared,
-            WordNotesStore.shared
+            WordNotesStore.shared,
+            WordInsightsStore.shared
         ]
     }
 
