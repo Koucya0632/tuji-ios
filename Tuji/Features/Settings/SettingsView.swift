@@ -1,8 +1,8 @@
 // Settings (§III.N). Every change applies immediately — controls write
 // straight to SettingsStore.current, which auto-persists via POST
 // /api/users/settings (debounced). No save button, no discard step.
-// v1 ships the 學習 / 顯示 / 帳號 sections; 提醒 / 字體大小 / 深色模式
-// come online when the matching backend infra is ready.
+// 提醒 is device-local (StudyReminders) and so skips SettingsStore entirely;
+// 字體大小 / 深色模式 come online when the matching backend infra is ready.
 
 import SwiftUI
 
@@ -254,6 +254,10 @@ struct SettingsView: View {
                         .tujiRowStyle()
                         .settingsInert(!self.store.isEditable)
                     }
+                }
+
+                if !self.auth.isGuest {
+                    ReminderSettingsSection()
                 }
 
                 if self.auth.isGuest {
