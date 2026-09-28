@@ -36,6 +36,7 @@ extension StudyStatsStore: AccountScopedStore {}
 extension StudyQueueStore: AccountScopedStore {}
 extension LocalCache: AccountScopedStore {}
 extension StudyReminders: AccountScopedStore {}
+extension WordListsStore: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -67,6 +68,8 @@ enum AccountScopedStores {
     ///   signs in next.
     /// - `StudyReminders` — its notifications are laid out ahead for a week;
     ///   the next account on this phone would be reminded on this one's behalf.
+    /// - `WordListsStore` — the lists, and whether the feature is open at all,
+    ///   are this account's answer.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -80,7 +83,8 @@ enum AccountScopedStores {
             StudyStatsStore.shared,
             StudyQueueStore.shared,
             LocalCache.shared,
-            StudyReminders.shared
+            StudyReminders.shared,
+            WordListsStore.shared
         ]
     }
 

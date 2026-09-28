@@ -160,6 +160,7 @@ extension WordDetailPage {
                     self.barControl(systemImage: "arrow.left", label: "返回") { self.dismiss() }
                     Spacer()
                     if w.id.atlasItemId == nil {
+                        WordListButton(wordId: w.id)
                         FavoriteButton(wordId: w.id)
                     }
                 }

@@ -32,10 +32,17 @@ enum Endpoint {
     case usersBlocks
     /// 解除封鎖 (DELETE).
     case usersBlock(handle: String)
+    /// 個人詞表: list + create (`word` marks lists holding it); one list (GET/PATCH/DELETE).
+    case usersWordLists(learning: String, word: String?)
+    case usersWordList(id: String)
+    case usersWordListWords(id: String)
+    case usersWordListOrder(learning: String)
 
     // MARK: - Study (auth-protected)
 
     case studyQueue(mode: String, limit: Int, new: Int, categories: [String], lang: String, learning: String)
+    /// The study queue scoped to one 個人詞表 (`?list=`); replaces the theme filter.
+    case studyWordListQueue(listId: String, mode: String, limit: Int, lang: String, learning: String)
     case studyAnswer
     case studyStats(learning: String)
     case studyReports
@@ -216,6 +223,9 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/users/blocks", policy: .privateFresh)
         case let .usersBlock(handle):
             EndpointDescriptor(path: "/api/users/blocks/\(handle)", policy: .privateFresh)
+        case .usersWordLists, .usersWordList, .usersWordListWords, .usersWordListOrder,
+             .studyWordListQueue:
+            self.wordListDescriptor
 
         // MARK: Study
         case let .studyQueue(mode, limit, new, categories, lang, learning):

@@ -20,6 +20,9 @@ struct StudyLauncherView: View {
     /// The queue source. Injected rather than reached for, so the four branches
     /// below — warm cache, live fetch, empty, throw — can be driven by a test.
     var queues: StudyQueueProviding = StudyQueueStore.shared
+    /// Whether the review summary offers 再來一輪. Off for a 個人詞表 session,
+    /// whose summary would otherwise count every due word, not the list's.
+    var allowsAnotherRound = true
 
     @State private var pushQueue: QueuePush?
     @State private var queueFailure: QueueFailure?
@@ -105,7 +108,7 @@ struct StudyLauncherView: View {
             case .new:
                 NewFlowView(queue: wrap.queue)
             case .review:
-                ReviewFlowView(queue: wrap.queue)
+                ReviewFlowView(queue: wrap.queue, allowsAnotherRound: self.allowsAnotherRound)
             }
         }
         // The launcher exists only to fetch a queue and forward to the
