@@ -103,6 +103,7 @@ struct WordDetailSections: View {
                 self.sectionTitle("例句 · EXAMPLE")
                 self.examplesCard(examples)
             }
+            WordInsightsSection(wordId: self.word.id)
         }
     }
 

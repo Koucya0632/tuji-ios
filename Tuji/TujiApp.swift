@@ -64,6 +64,7 @@ struct TujiApp: App {
     @State private var reminders = StudyReminders.shared
     @State private var wordLists = WordListsStore.shared
     @State private var wordNotes = WordNotesStore.shared
+    @State private var wordInsights = WordInsightsStore.shared
     /// RootView observes this App-owned reference through the environment.
     private let launch: LaunchCoordinator
     @State private var feedRefresh = CommunityFeedRefresh()
@@ -90,6 +91,7 @@ struct TujiApp: App {
                 .environment(reminders)
                 .environment(wordLists)
                 .environment(wordNotes)
+                .environment(wordInsights)
                 .environment(launch)
                 .environment(feedRefresh)
                 .environment(collectionBookmarks)
