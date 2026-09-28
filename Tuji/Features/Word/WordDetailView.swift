@@ -115,6 +115,10 @@ struct WordDetailPage: View {
                 nextReview: self.mastery.nextReviewDate(for: w.id)
             )
             .padding(.horizontal, Space.s4)
+            // Notes are for official words only (the server refuses 自製 ids).
+            if w.id.atlasItemId == nil {
+                WordNoteSection(wordId: w.id).padding(.horizontal, Space.s4)
+            }
             WordDetailSections(word: w).padding(.horizontal, Space.s4)
             WordCommunityAtlasSection(word: w).padding(.horizontal, Space.s4)
         }

@@ -61,7 +61,7 @@ final class WordListDetailModel {
     }
 
     /// Optimistic; restored if the server refuses.
-    func remove(_ wordId: String) async -> WordListWriteOutcome {
+    func remove(_ wordId: String) async -> MemberWriteOutcome {
         guard let before = self.detail else { return .done }
         self.detail = WordListDetailResponse(
             list: before.list,
@@ -78,7 +78,7 @@ final class WordListDetailModel {
             return .done
         } catch {
             self.detail = before
-            return WordListWriteOutcome.from(error)
+            return MemberWriteOutcome.from(error)
         }
     }
 }

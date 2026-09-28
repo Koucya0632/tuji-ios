@@ -139,10 +139,10 @@ struct WordListRulesTests {
 
     @Test
     func refusalsMapToWhatTheScreenDoes() {
-        #expect(WordListWriteOutcome.from(APIError.paymentRequired(message: nil)) == .needsUpgrade)
-        #expect(WordListWriteOutcome.from(APIError.rateLimited(message: nil)) == .atLimit)
-        #expect(WordListWriteOutcome.from(APIError.notFound) == .missing)
-        if case .failed = WordListWriteOutcome.from(APIError.server(status: 500, body: nil)) {} else {
+        #expect(MemberWriteOutcome.from(APIError.paymentRequired(message: nil)) == .needsUpgrade)
+        #expect(MemberWriteOutcome.from(APIError.rateLimited(message: nil)) == .atLimit)
+        #expect(MemberWriteOutcome.from(APIError.notFound) == .missing)
+        if case .failed = MemberWriteOutcome.from(APIError.server(status: 500, body: nil)) {} else {
             Issue.record("a 500 is a failure, not a paywall")
         }
     }

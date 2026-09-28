@@ -172,7 +172,7 @@ struct WordListsView: View {
         }
     }
 
-    private func handle(_ outcome: WordListWriteOutcome) {
+    private func handle(_ outcome: MemberWriteOutcome) {
         switch outcome {
         case .done, .missing: break
         case .needsUpgrade: self.showPaywall = true

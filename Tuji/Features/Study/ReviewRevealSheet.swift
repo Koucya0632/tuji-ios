@@ -141,12 +141,18 @@ struct ReviewRevealSheet: View {
     /// Header laid out like the new-word peek sheet: no image (it's already on
     /// screen in the question above), word + pronunciation + 中文 on the left,
     /// favourite + audio buttons stacked on the right.
+    ///
+    /// The person's own note rides under it: this is the moment they needed it.
+    /// Inside the measured summary, so the resting detent grows to fit it.
     private func summary(_ item: StudyQueueItem) -> some View {
-        WordSummaryRow(
-            word: item.word,
-            wordId: item.word.id,
-            gloss: self.settings.current.showZh ? item.word.chinese : nil
-        )
+        VStack(alignment: .leading, spacing: Space.s3) {
+            WordSummaryRow(
+                word: item.word,
+                wordId: item.word.id,
+                gloss: self.settings.current.showZh ? item.word.chinese : nil
+            )
+            WordNoteLine(wordId: item.word.id)
+        }
     }
 
     /// Stacked full width, not four boxes side by side.
