@@ -4230,6 +4230,28 @@
         }
       }
     },
+    "刪除筆記" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモを削除"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除笔记"
+          }
+        }
+      }
+    },
     "刪除詞表" : {
       "localizations" : {
         "en" : {
@@ -4315,6 +4337,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除这个词表？"
+          }
+        }
+      }
+    },
+    "刪除這則筆記？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this note?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このメモを削除しますか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除这则笔记？"
           }
         }
       }
@@ -6363,6 +6407,28 @@
         }
       }
     },
+    "寫下你自己的記法、例句或提醒…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write your own way to remember it, an example, a reminder…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自分なりの覚え方や例文、メモを書きましょう…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写下你自己的记法、例句或提醒…"
+          }
+        }
+      }
+    },
     "封鎖" : {
       "localizations" : {
         "en" : {
@@ -8138,6 +8204,28 @@
         }
       }
     },
+    "成為會員才能編輯" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Become a member to edit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集はメンバー限定です"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "成为会员才能编辑"
+          }
+        }
+      }
+    },
     "我" : {
       "localizations" : {
         "en" : {
@@ -8300,6 +8388,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "我的收藏"
+          }
+        }
+      }
+    },
+    "我的筆記" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "マイメモ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的笔记"
           }
         }
       }
@@ -9951,6 +10061,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会员功能：把字整理成自己的词表来背"
+          }
+        }
+      }
+    },
+    "會員可以為每個字寫下自己的筆記" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Members can keep their own note on every word"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メンバーは単語ごとに自分のメモを残せます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会员可以为每个字写下自己的笔记"
           }
         }
       }
@@ -12636,6 +12768,28 @@
         }
       }
     },
+    "筆記" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "笔记"
+          }
+        }
+      }
+    },
     "答對了" : {
       "localizations" : {
         "en" : {
@@ -13131,6 +13285,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑合集"
+          }
+        }
+      }
+    },
+    "編輯筆記" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit note"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メモを編集"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑笔记"
           }
         }
       }

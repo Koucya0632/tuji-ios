@@ -37,6 +37,9 @@ enum Endpoint {
     case usersWordList(id: String)
     case usersWordListWords(id: String)
     case usersWordListOrder(learning: String)
+    /// 個人筆記: all of them; one (POST writes, DELETE removes).
+    case usersWordNotes
+    case usersWordNote(wordId: String)
 
     // MARK: - Study (auth-protected)
 
@@ -226,6 +229,10 @@ enum Endpoint {
         case .usersWordLists, .usersWordList, .usersWordListWords, .usersWordListOrder,
              .studyWordListQueue:
             self.wordListDescriptor
+        case .usersWordNotes:
+            EndpointDescriptor(path: "/api/users/word-notes", policy: .privateFresh)
+        case let .usersWordNote(wordId):
+            EndpointDescriptor(path: "/api/users/word-notes/\(wordId)", policy: .privateFresh)
 
         // MARK: Study
         case let .studyQueue(mode, limit, new, categories, lang, learning):

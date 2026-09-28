@@ -82,28 +82,28 @@ final class WordListsStore {
 
     // MARK: - Writes
 
-    func create(name: String) async -> (WordListWriteOutcome, WordList?) {
+    func create(name: String) async -> (MemberWriteOutcome, WordList?) {
         do {
             let list = try await self.repository.create(name: name)
             self.lists.append(list)
             await self.reload()
             return (.done, list)
         } catch {
-            return (WordListWriteOutcome.from(error), nil)
+            return (MemberWriteOutcome.from(error), nil)
         }
     }
 
-    func rename(_ list: WordList, to name: String) async -> WordListWriteOutcome {
+    func rename(_ list: WordList, to name: String) async -> MemberWriteOutcome {
         do {
             try await self.repository.rename(id: list.id, name: name)
             await self.reload()
             return .done
         } catch {
-            return WordListWriteOutcome.from(error)
+            return MemberWriteOutcome.from(error)
         }
     }
 
-    func delete(_ list: WordList) async -> WordListWriteOutcome {
+    func delete(_ list: WordList) async -> MemberWriteOutcome {
         let before = self.lists
         self.lists.removeAll { $0.id == list.id }
         do {
@@ -111,7 +111,7 @@ final class WordListsStore {
             await self.reload()
             return .done
         } catch {
-            let outcome = WordListWriteOutcome.from(error)
+            let outcome = MemberWriteOutcome.from(error)
             // Already gone elsewhere is what the person asked for.
             if outcome != .missing { self.lists = before }
             return outcome == .missing ? .done : outcome
@@ -121,7 +121,7 @@ final class WordListsStore {
     /// Optimistic: the rows move first, the server is told after. Order also
     /// decides which lists stay usable after a downgrade, so it is reloaded to
     /// pick up the new `locked` flags.
-    func move(_ listId: String, by offset: Int) async -> WordListWriteOutcome {
+    func move(_ listId: String, by offset: Int) async -> MemberWriteOutcome {
         guard let from = self.lists.firstIndex(where: { $0.id == listId }),
               self.lists.indices.contains(from + offset)
         else { return .done }
@@ -133,11 +133,11 @@ final class WordListsStore {
             return .done
         } catch {
             self.lists = before
-            return WordListWriteOutcome.from(error)
+            return MemberWriteOutcome.from(error)
         }
     }
 
-    func setWord(_ wordId: String, in list: WordList, present: Bool) async -> WordListWriteOutcome {
+    func setWord(_ wordId: String, in list: WordList, present: Bool) async -> MemberWriteOutcome {
         do {
             try await self.repository.setWord(wordId, inList: list.id, present: present)
             if let i = self.lists.firstIndex(where: { $0.id == list.id }) {
@@ -154,7 +154,7 @@ final class WordListsStore {
             }
             return .done
         } catch {
-            return WordListWriteOutcome.from(error)
+            return MemberWriteOutcome.from(error)
         }
     }
 
