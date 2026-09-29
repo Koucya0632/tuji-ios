@@ -72,6 +72,8 @@ struct TujiSheetShell<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiPaper)
+        // A lock inside this sheet opens 付費頁 on top of it — see `PaywallHost`.
+        .paywallHost()
         .presentationDetents([.height(self.height), .large])
         .tujiSheetPresentation()
     }
@@ -117,6 +119,7 @@ struct TujiFormSheet<Content: View>: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(.tujiPaper)
+        .paywallHost()
         .presentationDetents([.large])
         .tujiSheetPresentation()
         // A sheet that overrides close has something to ask before it goes, so

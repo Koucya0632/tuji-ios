@@ -84,6 +84,8 @@ struct ReviewRevealSheet: View {
         // place a user has just got the word wrong. An overlay, so hosting it
         // inside a sheet is fine; on the root, so it does not scroll away.
         .glossCard()
+        // The 延伸內容 lock inside opens 付費頁 over this sheet — see `PaywallHost`.
+        .paywallHost()
         .presentationDetents([self.restDetent, .large], selection: self.$detent)
         // The measured detent replaces the fallback one pass after the sheet
         // appears, and a selection that is no longer in the set is undefined —

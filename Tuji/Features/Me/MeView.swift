@@ -47,7 +47,7 @@ struct MeView: View {
     @Environment(SettingsStore.self) private var settings
 
     @State private var vm = MeVM()
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
 
     /// The rule this screen used to document — server entitlement first, device
     /// StoreKit flag only while it is unknown — now lives in
@@ -94,7 +94,6 @@ struct MeView: View {
         // so the system nav bar itself stays hidden.
         .navigationTitle("我")
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .refreshable {
             // Mastery too: 我 · 進度 draws the 熟練度 bar, and this pull used to
             // re-read progress alone.
@@ -145,7 +144,7 @@ struct MeView: View {
     /// a 92pt centred avatar over your own name was the app telling you about
     /// yourself, which you already know. What you came for is below it.
     private var identityRow: some View {
-        Button { self.showPaywall = true } label: {
+        Button { self.presentPaywall() } label: {
             HStack(spacing: Space.s3) {
                 ProfileAvatar(
                     avatar: self.auth.isGuest ? nil : self.user?.avatar,
@@ -302,7 +301,7 @@ struct MeView: View {
             Text("Pro 已結束。超過 \(slots) 格的自製卡片將於 \(date, format: .dateTime.month().day()) 起鎖定，續訂 Pro 即可繼續使用。")
                 .font(.tujiBodySm(.strong))
                 .foregroundStyle(.tujiInk)
-            Button { self.showPaywall = true } label: {
+            Button { self.presentPaywall() } label: {
                 Text("續訂 Pro")
                     .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiBrandSecondary)

@@ -4,9 +4,8 @@
 // direction and the account's tier, so all four are in the cache key — buying
 // a membership shows the unlocked text on the next open without a relaunch.
 //
-// Under membership policy v1 the server says `available: false`; the store
-// remembers that and stops asking, so v1 costs one request per session, not
-// one per word opened.
+// Under membership policy v1 it never asks: `MemberAccess` says the feature is
+// hidden, so v1 costs no request at all.
 
 import Foundation
 import Observation
@@ -42,26 +41,24 @@ struct LiveWordInsightsRepository: WordInsightsRepository {
 final class WordInsightsStore {
     static let shared = WordInsightsStore()
 
-    /// nil until the server has answered once.
-    private(set) var available: Bool?
     private var cache: [String: WordInsights?] = [:]
 
     private let repository: WordInsightsRepository
     private let language: LanguageContext
-    private let tier: () -> MembershipTier
+    private let access: any MemberAccessReading
 
     init(
         repository: WordInsightsRepository = LiveWordInsightsRepository.shared,
         language: LanguageContext = SettingsStore.shared,
-        tier: @escaping () -> MembershipTier = { LiveEffectiveEntitlement.shared.tier }
+        access: any MemberAccessReading = LiveMemberAccess()
     ) {
         self.repository = repository
         self.language = language
-        self.tier = tier
+        self.access = access
     }
 
     func key(for wordId: String) -> String {
-        "\(self.language.learningDirection.rawValue)|\(self.language.uiLang)|\(self.tier().rawValue)|\(wordId)"
+        "\(self.language.learningDirection.rawValue)|\(self.language.uiLang)|\(self.access.tier.rawValue)|\(wordId)"
     }
 
     /// The cached answer, if this word has been asked about under the current key.
@@ -75,12 +72,11 @@ final class WordInsightsStore {
     }
 
     func load(_ wordId: String) async {
-        guard Self.isEligible(wordId), self.available != false else { return }
+        guard Self.isEligible(wordId), self.access.level(.wordInsights) != .hidden else { return }
         let key = self.key(for: wordId)
         guard self.cache[key] == nil else { return }
         do {
             let response = try await self.repository.insights(wordId: wordId)
-            self.available = response.available
             self.cache[key] = .some(response.insights)
         } catch {
             // A failed read shows nothing and is asked again next time.
@@ -89,7 +85,6 @@ final class WordInsightsStore {
 
     /// The account changed: its tier, and so every cached answer, may differ.
     func reset() {
-        self.available = nil
         self.cache = [:]
     }
 }

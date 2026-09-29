@@ -38,7 +38,7 @@ struct PaywallOffer: Equatable {
     let isV2: Bool
 
     static func from(tier: MembershipTier, membership: Membership?, forceV2: Bool = false) -> PaywallOffer {
-        let v2 = forceV2 || membership?.policy == "v2"
+        let v2 = MemberAccess.policy(of: membership, forceV2: forceV2) == .v2
         let owns = tier == .lifetime || membership?.lifetime != nil
         return PaywallOffer(
             showsLifetime: v2,

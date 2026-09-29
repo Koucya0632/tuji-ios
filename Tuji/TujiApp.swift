@@ -125,6 +125,16 @@ struct TujiApp: App {
                     guard reminders.isEnabled else { return }
                     Task { await reminders.reschedule() }
                 }
+                // A purchase, a refund or the v2 cutover changes what the member
+                // features may do; their stores reload so the lock a person just
+                // paid to lift is gone without a relaunch (`MemberAccess`).
+                .onChange(of: LiveMemberAccess().signature) {
+                    guard case .signedIn = auth.state, LiveMemberAccess().policy == .v2 else { return }
+                    Task {
+                        await wordLists.reload()
+                        await wordNotes.reload()
+                    }
+                }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback
                     // internally, but forward here as a safety net for any
@@ -139,6 +149,7 @@ struct TujiApp: App {
     }
 
     private var rootContent: some View {
-        RootView()
+        // Every lock outside a sheet opens 付費頁 from here — see `PaywallHost`.
+        RootView().paywallHost()
     }
 }
