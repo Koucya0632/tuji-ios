@@ -15,8 +15,13 @@ enum DebugOverrides {
     /// Show the paywall as if the server were on policy v2, so the 永久會員
     /// section can be screenshotted for App Review and bought in the sandbox
     /// before the real cutover. Toggled in 我 → 除錯工具.
+    ///
+    /// Also in TestFlight builds (`TUJI_BETA`): the sandbox purchase can only be
+    /// tested from a build with the store bundle id and no local StoreKit file,
+    /// which a Debug build is not. App Store builds are a separate Release
+    /// archive without the flag (release.yml), so this cannot ship.
     static var forceMembershipV2: Bool {
-        #if DEBUG
+        #if DEBUG || TUJI_BETA
         UserDefaults.standard.bool(forKey: forceMembershipV2Key)
         #else
         false
