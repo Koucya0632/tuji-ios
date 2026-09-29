@@ -358,6 +358,18 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   and true for a subscription since re-bound elsewhere; treating it as 生效權限 is what made
   設定 offer 「升級」 to accounts that already had Pro. `StoreKitService` keeps it for the
   paywall's own purchase/restore flow and nothing else.
+- **會員功能權限 (`MemberAccess`)** — whether a member feature (詞表, 筆記, 詞條延伸內容)
+  shows at all and in which form: hidden / locked / readOnly / open, from policy × tier ×
+  feature × whether the account already has something there. Read off
+  `EffectiveEntitlementReading` and nothing else. The three feature stores once each kept
+  their own copy of policy and tier from their own endpoint, never refreshed — so a person
+  who bought 永久會員 from a lock came back to the same lock until relaunch. The stores now
+  hold data only, and the app root reloads them when `MemberAccess.signature` changes.
+- **付費頁 host (`paywallHost()`)** — where a lock's `@Environment(\.presentPaywall)` opens
+  付費頁. The nearest host wins: the app root, both sheet shells, 複習's reveal sheet, and
+  the presentation point of any sheet whose *own* code can hit a lock (a view reads the
+  environment of whoever presented it, not a host inside its body). A lock inside a sheet
+  therefore opens 付費頁 on top of it; the old way dismissed the sheet and slept 400 ms.
 
 ## Navigation
 
