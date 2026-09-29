@@ -108,35 +108,7 @@ private func detail(
 
 // MARK: - Rules
 
-struct WordListRulesTests {
-    @Test
-    func unknownOrV1HidesEveryEntryPoint() {
-        for available in [nil, false] as [Bool?] {
-            #expect(WordListRules.browseEntry(available: available, tier: "pro", listCount: 3) == .hidden)
-            #expect(WordListRules.addEntry(available: available, tier: "pro") == .hidden)
-        }
-    }
-
-    @Test
-    func aNonMemberMeetsALock() {
-        #expect(WordListRules.browseEntry(available: true, tier: "free", listCount: 0) == .locked)
-        #expect(WordListRules.addEntry(available: true, tier: "free") == .locked)
-    }
-
-    @Test
-    func aRefundedNonMemberCanStillOpenTheirListsButNotAdd() {
-        #expect(WordListRules.browseEntry(available: true, tier: "free", listCount: 2) == .open)
-        #expect(WordListRules.addEntry(available: true, tier: "free") == .locked)
-    }
-
-    @Test
-    func membersAreOpen() {
-        for tier in ["lifetime", "pro"] {
-            #expect(WordListRules.browseEntry(available: true, tier: tier, listCount: 0) == .open)
-            #expect(WordListRules.addEntry(available: true, tier: tier) == .open)
-        }
-    }
-
+struct MemberWriteOutcomeTests {
     @Test
     func refusalsMapToWhatTheScreenDoes() {
         #expect(MemberWriteOutcome.from(APIError.paymentRequired(message: nil)) == .needsUpgrade)
@@ -163,16 +135,6 @@ struct WordListsStoreTests {
         language.learningDirection = .zhJa
         await store.loadIfNeeded()
         #expect(repo.listCalls == 2)
-    }
-
-    @Test
-    func v1AnswerHidesTheFeature() async {
-        let repo = FakeWordListRepository()
-        repo.response = WordListsResponse(available: false, tier: nil, canCreate: nil, limits: nil, lists: [])
-        let store = WordListsStore(repository: repo, language: FakeLanguage())
-        await store.loadIfNeeded()
-        #expect(store.browseEntry == .hidden)
-        #expect(store.addEntry == .hidden)
     }
 
     @Test
@@ -258,9 +220,8 @@ struct WordListsStoreTests {
         let store = WordListsStore(repository: repo, language: FakeLanguage())
         await store.loadIfNeeded()
         store.reset()
-        #expect(store.available == nil)
         #expect(store.lists.isEmpty)
-        #expect(store.browseEntry == .hidden)
+        #expect(store.phase == .idle)
         await store.loadIfNeeded()
         #expect(repo.listCalls == 2)
     }

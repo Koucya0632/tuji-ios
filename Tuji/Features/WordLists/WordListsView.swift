@@ -8,7 +8,8 @@ import SwiftUI
 struct WordListsView: View {
     @Environment(WordListsStore.self) private var store
     @State private var showCreate = false
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
+    private let access: any MemberAccessReading = LiveMemberAccess()
     @State private var reordering = false
     @State private var limitMessage: String?
     @State private var failure: String?
@@ -43,8 +44,8 @@ struct WordListsView: View {
             WordListNameSheet(title: "建立詞表", actionTitle: "建立") { name in
                 await self.create(name)
             }
+            .paywallHost()
         }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .tujiPrompt(
             isPresented: Binding(get: { self.failure != nil }, set: { if !$0 { self.failure = nil } }),
             style: .error,
@@ -56,15 +57,15 @@ struct WordListsView: View {
 
     @ViewBuilder
     private var summary: some View {
-        if let limits = self.store.limits, self.store.tier != "free" {
+        if let limits = self.store.limits, self.access.tier != .free {
             Text("已建立 \(self.store.lists.count) / \(limits.lists) 張，每張最多 \(limits.words) 個字")
                 .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
                 .padding(.horizontal, Space.s4)
                 .padding(.bottom, Space.s3)
-        } else if self.store.tier == "free" {
+        } else if self.access.tier == .free {
             // A refund leaves the lists in place, read-only.
-            Button { self.showPaywall = true } label: {
+            Button { self.presentPaywall() } label: {
                 Text("會員才能新增或學習詞表。你的詞表仍會保留。")
                     .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk2)
@@ -154,28 +155,24 @@ struct WordListsView: View {
         await self.handle(self.store.move(self.store.lists[index].id, by: offset))
     }
 
-    private func create(_ name: String) async -> String? {
+    private func create(_ name: String) async -> WordListNameResult {
         let (outcome, _) = await self.store.create(name: name)
         switch outcome {
-        case .done:
-            return nil
+        case .done, .missing:
+            return .done
         case .needsUpgrade:
-            self.showCreate = false
-            self.showPaywall = true
-            return nil
+            return .needsUpgrade
         case .atLimit:
-            return tujiLocalized("詞表數量已達上限，刪除一些後再建立")
-        case .missing:
-            return nil
+            return .message(tujiLocalized("詞表數量已達上限，刪除一些後再建立"))
         case let .failed(message):
-            return message
+            return .message(message)
         }
     }
 
     private func handle(_ outcome: MemberWriteOutcome) {
         switch outcome {
         case .done, .missing: break
-        case .needsUpgrade: self.showPaywall = true
+        case .needsUpgrade: self.presentPaywall()
         case .atLimit: self.failure = tujiLocalized("已達上限")
         case let .failed(message): self.failure = message
         }

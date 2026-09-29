@@ -6,30 +6,37 @@ import SwiftUI
 struct MeWordListsRow: View {
     @Environment(WordListsStore.self) private var store
     @Environment(AuthService.self) private var auth
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
+    private let access: any MemberAccessReading = LiveMemberAccess()
+
+    private var level: MemberAccessLevel {
+        self.access.level(.wordListBrowse, hasOwnData: !self.store.lists.isEmpty)
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
             if !self.auth.isGuest {
-                switch self.store.browseEntry {
+                switch self.level {
                 case .hidden:
                     EmptyView()
                 case .locked:
-                    Button { self.showPaywall = true } label: { self.row(locked: true) }
+                    Button { self.presentPaywall() } label: { self.row(locked: true) }
                         .buttonStyle(.plain)
-                case .open:
+                // A refund keeps the lists: open them read-only.
+                case .readOnly, .open:
                     NavigationLink(value: WordListRoute.lists) { self.row(locked: false) }
                         .buttonStyle(.plain)
                 }
             }
         }
         .task {
-            guard !self.auth.isGuest else { return }
+            // Loaded whenever the feature exists at all, locked or not: whether a
+            // non-member still has lists decides between the lock and the way in.
+            guard !self.auth.isGuest, self.access.level(.wordListBrowse, hasOwnData: true) != .hidden else { return }
             await self.store.loadIfNeeded()
         }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
     }
 
     private func row(locked: Bool) -> some View {

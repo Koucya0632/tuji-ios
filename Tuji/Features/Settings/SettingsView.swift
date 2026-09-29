@@ -30,7 +30,7 @@ struct SettingsView: View {
     @State private var showClearConfirm = false
     @State private var showClearSuccess = false
     @State private var showFeedback = false
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
 
     var body: some View {
         VStack(spacing: 0) {
@@ -155,7 +155,6 @@ struct SettingsView: View {
             primary: TujiPromptAction("知道了") {}
         )
         .sheet(isPresented: self.$showFeedback) { FeedbackSheet() }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
     }
 
     /// Points at the public landing page until the App Store listing exists.
@@ -319,7 +318,7 @@ struct SettingsView: View {
                 // pitch belongs at the moment the limit bites (the capture
                 // flow's quota sheets), and a single row here for everyone else.
                 TujiSection(title: "Tuji Pro") {
-                    Button { self.showPaywall = true } label: {
+                    Button { self.presentPaywall() } label: {
                         TujiRow(
                             "Tuji Pro",
                             subtitle: self.planSubtitle

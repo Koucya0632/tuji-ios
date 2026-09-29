@@ -8,20 +8,25 @@ struct WordNoteSection: View {
 
     @Environment(WordNotesStore.self) private var store
     @Environment(AuthService.self) private var auth
+    @Environment(\.presentPaywall) private var presentPaywall
     @State private var showEditor = false
-    @State private var showPaywall = false
     @State private var confirmDelete = false
+    private let access: any MemberAccessReading = LiveMemberAccess()
+
+    private var level: MemberAccessLevel {
+        self.access.level(.wordNote, hasOwnData: self.store.note(for: self.wordId) != nil)
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
             if !self.auth.isGuest {
-                switch self.store.entry(for: self.wordId) {
+                switch self.level {
                 case .hidden:
                     EmptyView()
                 case .locked:
-                    Button { self.showPaywall = true } label: {
+                    Button { self.presentPaywall() } label: {
                         self.card {
                             Label("會員可以為每個字寫下自己的筆記", systemImage: "lock.fill")
                                 .font(.tujiBodySm)
@@ -33,7 +38,7 @@ struct WordNoteSection: View {
                     self.card {
                         self.noteText
                         HStack {
-                            Button { self.showPaywall = true } label: {
+                            Button { self.presentPaywall() } label: {
                                 Text("成為會員才能編輯")
                                     .font(.tujiLabel)
                                     .underline()
@@ -46,7 +51,7 @@ struct WordNoteSection: View {
                         }
                         .buttonStyle(.plain)
                     }
-                case .editable:
+                case .open:
                     Button { self.showEditor = true } label: {
                         self.card {
                             if self.store.note(for: self.wordId) != nil {
@@ -64,13 +69,13 @@ struct WordNoteSection: View {
             }
         }
         .task {
-            guard !self.auth.isGuest else { return }
+            guard !self.auth.isGuest, self.access.level(.wordNote, hasOwnData: true) != .hidden else { return }
             await self.store.loadIfNeeded()
         }
         .sheet(isPresented: self.$showEditor) {
-            WordNoteEditorSheet(wordId: self.wordId) { self.showPaywall = true }
+            // Hosted here, so a refused save opens 付費頁 on top of the editor.
+            WordNoteEditorSheet(wordId: self.wordId).paywallHost()
         }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .tujiPrompt(
             isPresented: self.$confirmDelete,
             style: .destructive,
@@ -109,10 +114,10 @@ struct WordNoteSection: View {
 /// Writing or rewriting one note. Saving an empty note is not offered — deleting is.
 struct WordNoteEditorSheet: View {
     let wordId: String
-    let onNeedsUpgrade: () -> Void
 
     @Environment(WordNotesStore.self) private var store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentPaywall) private var presentPaywall
     @State private var text = ""
     @State private var working = false
     @State private var error: String?
@@ -176,12 +181,7 @@ struct WordNoteEditorSheet: View {
         case .done, .missing:
             self.dismiss()
         case .needsUpgrade:
-            self.dismiss()
-            let upgrade = self.onNeedsUpgrade
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(400))
-                upgrade()
-            }
+            self.presentPaywall()
         case .atLimit:
             self.error = tujiLocalized("已達上限")
         case let .failed(message):
@@ -195,12 +195,19 @@ struct WordNoteEditorSheet: View {
 struct WordNoteLine: View {
     let wordId: String
     @Environment(WordNotesStore.self) private var store
+    private let access: any MemberAccessReading = LiveMemberAccess()
+
+    /// A note is shown wherever the feature exists — a refunded non-member
+    /// still reads their own notes.
+    private var visible: Bool {
+        self.access.level(.wordNote, hasOwnData: true) != .hidden
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
-            if let note = self.store.note(for: self.wordId) {
+            if self.visible, let note = self.store.note(for: self.wordId) {
                 HStack(alignment: .top, spacing: Space.s2) {
                     Image(systemName: "note.text")
                         .font(.tujiIcon(13, weight: .semibold))
@@ -214,6 +221,9 @@ struct WordNoteLine: View {
                 }
             }
         }
-        .task { await self.store.loadIfNeeded() }
+        .task {
+            guard self.visible else { return }
+            await self.store.loadIfNeeded()
+        }
     }
 }

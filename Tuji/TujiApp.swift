@@ -50,12 +50,10 @@ struct TujiApp: App {
     @State private var auth = AuthService.shared
     @State private var push = PushNotificationService.shared
     @State private var onboarding = OnboardingState.shared
-    @State private var cache = LocalCache.shared
     @State private var words = WordsStore.shared
     @State private var categories = CategoriesStore.shared
     @State private var settings = SettingsStore.shared
     @State private var progress = ProgressStore.shared
-    @State private var mastery = MasteryStore.shared
     @State private var studyStats = StudyStatsStore.shared
     @State private var studyFocus = StudyFocus.shared
     @State private var deepLinks = DeepLinkCoordinator.shared
@@ -64,7 +62,6 @@ struct TujiApp: App {
     @State private var reminders = StudyReminders.shared
     @State private var wordLists = WordListsStore.shared
     @State private var wordNotes = WordNotesStore.shared
-    @State private var wordInsights = WordInsightsStore.shared
     /// RootView observes this App-owned reference through the environment.
     private let launch: LaunchCoordinator
     @State private var feedRefresh = CommunityFeedRefresh()
@@ -77,26 +74,19 @@ struct TujiApp: App {
                 .environment(auth)
                 .environment(push)
                 .environment(onboarding)
-                .environment(cache)
                 .environment(words)
                 .environment(categories)
-                .environment(settings)
-                .environment(progress)
-                .environment(mastery)
-                .environment(studyStats)
                 .environment(studyFocus)
                 .environment(deepLinks)
                 .environment(network)
                 .environment(appUpdates)
-                .environment(reminders)
-                .environment(wordLists)
-                .environment(wordNotes)
-                .environment(wordInsights)
                 .environment(launch)
                 .environment(feedRefresh)
                 .environment(collectionBookmarks)
                 .environment(collectionIdentities)
-                .environment(BlockStore.shared)
+                // Everything on the sign-out roster that screens read — listed
+                // beside the roster, so enrolling a store is one file.
+                .accountScopedEnvironment()
                 .environment(\.locale, settings.current.uiLanguage.locale)
                 // 當前圖鑑語言, supplied once. Every screen that scopes itself to
                 // the learning direction reads it from here rather than deriving
@@ -125,6 +115,16 @@ struct TujiApp: App {
                     guard reminders.isEnabled else { return }
                     Task { await reminders.reschedule() }
                 }
+                // A purchase, a refund or the v2 cutover changes what the member
+                // features may do; their stores reload so the lock a person just
+                // paid to lift is gone without a relaunch (`MemberAccess`).
+                .onChange(of: LiveMemberAccess().signature) {
+                    guard case .signedIn = auth.state, LiveMemberAccess().policy == .v2 else { return }
+                    Task {
+                        await wordLists.reload()
+                        await wordNotes.reload()
+                    }
+                }
                 .onOpenURL { url in
                     // ASWebAuthenticationSession captures the OAuth callback
                     // internally, but forward here as a safety net for any
@@ -139,6 +139,7 @@ struct TujiApp: App {
     }
 
     private var rootContent: some View {
-        RootView()
+        // Every lock outside a sheet opens 付費頁 from here — see `PaywallHost`.
+        RootView().paywallHost()
     }
 }

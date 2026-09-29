@@ -3,15 +3,22 @@
 
 import SwiftUI
 
+/// What naming a list came to: close the sheet, say why not, or offer 付費頁.
+enum WordListNameResult: Equatable {
+    case done
+    case message(String)
+    case needsUpgrade
+}
+
 struct WordListNameSheet: View {
     let title: LocalizedStringKey
     let actionTitle: LocalizedStringKey
     var initialName: String = ""
-    /// Returns nil when done (the sheet closes), or a sentence to show under
-    /// the field.
-    let submit: (String) async -> String?
+    let submit: (String) async -> WordListNameResult
 
     @Environment(\.dismiss) private var dismiss
+    /// The host is wherever this sheet is presented, so 付費頁 opens on top of it.
+    @Environment(\.presentPaywall) private var presentPaywall
     @State private var name = ""
     @State private var working = false
     @State private var error: String?
@@ -46,8 +53,12 @@ struct WordListNameSheet: View {
     private func run() async {
         let name = self.trimmed
         self.working = true
-        self.error = await self.submit(name)
+        let result = await self.submit(name)
         self.working = false
-        if self.error == nil { self.dismiss() }
+        switch result {
+        case .done: self.dismiss()
+        case let .message(text): self.error = text
+        case .needsUpgrade: self.presentPaywall()
+        }
     }
 }

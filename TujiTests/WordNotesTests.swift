@@ -38,27 +38,6 @@ private func note(_ id: String, _ body: String = "記法") -> WordNote {
     WordNote(wordId: id, body: body, updatedAt: "2026-09-28T00:00:00Z")
 }
 
-struct WordNoteEntryTests {
-    @Test
-    func v1OrUnknownShowsNothing() {
-        for available in [nil, false] as [Bool?] {
-            #expect(WordNotesStore.entry(available: available, canWrite: true, hasNote: true) == .hidden)
-        }
-    }
-
-    @Test
-    func aNonMemberSeesALockOrTheirOldNoteReadOnly() {
-        #expect(WordNotesStore.entry(available: true, canWrite: false, hasNote: false) == .locked)
-        #expect(WordNotesStore.entry(available: true, canWrite: false, hasNote: true) == .readOnly)
-    }
-
-    @Test
-    func aMemberCanAlwaysEdit() {
-        #expect(WordNotesStore.entry(available: true, canWrite: true, hasNote: false) == .editable)
-        #expect(WordNotesStore.entry(available: true, canWrite: true, hasNote: true) == .editable)
-    }
-}
-
 @MainActor
 struct WordNotesStoreTests {
     @Test
@@ -71,16 +50,6 @@ struct WordNotesStoreTests {
         #expect(repo.loads == 1)
         #expect(store.note(for: "apple")?.body == "記法")
         #expect(store.note(for: "banana") == nil)
-    }
-
-    @Test
-    func underV1NoNoteIsServedEvenIfPresent() async {
-        let repo = FakeWordNoteRepository()
-        repo.response = WordNotesResponse(available: false, canWrite: false, maxLength: nil, notes: [note("apple")])
-        let store = WordNotesStore(repository: repo)
-        await store.loadIfNeeded()
-        #expect(store.note(for: "apple") == nil)
-        #expect(store.entry(for: "apple") == .hidden)
     }
 
     @Test
@@ -144,7 +113,6 @@ struct WordNotesStoreTests {
         await store.loadIfNeeded()
         store.reset()
         #expect(store.note(for: "apple") == nil)
-        #expect(store.entry(for: "apple") == .hidden)
         await store.loadIfNeeded()
         #expect(repo.loads == 2)
     }

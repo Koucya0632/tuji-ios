@@ -12,7 +12,7 @@ struct WordListDetailView: View {
     @State private var editing = false
     @State private var showRename = false
     @State private var confirmDelete = false
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
     @State private var failure: String?
 
     init(listId: String, repository: WordListRepository = LiveWordListRepository.shared) {
@@ -61,8 +61,8 @@ struct WordListDetailView: View {
             WordListNameSheet(title: "重新命名", actionTitle: "儲存", initialName: self.model.name) { name in
                 await self.rename(name)
             }
+            .paywallHost()
         }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .tujiPrompt(
             isPresented: self.$confirmDelete,
             style: .destructive,
@@ -106,7 +106,7 @@ struct WordListDetailView: View {
                 .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk3)
             if !detail.canStudy {
-                Button { self.showPaywall = true } label: {
+                Button { self.presentPaywall() } label: {
                     Label(
                         detail.list.locked
                             ? "這個詞表超出目前方案的數量，已鎖定。升級或調整排序即可繼續使用。"
@@ -202,20 +202,18 @@ struct WordListDetailView: View {
         await self.store.reload()
     }
 
-    private func rename(_ name: String) async -> String? {
-        guard let list = self.model.detail?.list else { return nil }
+    private func rename(_ name: String) async -> WordListNameResult {
+        guard let list = self.model.detail?.list else { return .done }
         switch await self.store.rename(list, to: name) {
         case .done, .missing:
             await self.model.load()
-            return nil
+            return .done
         case .needsUpgrade:
-            self.showRename = false
-            self.showPaywall = true
-            return nil
+            return .needsUpgrade
         case .atLimit:
-            return tujiLocalized("已達上限")
+            return .message(tujiLocalized("已達上限"))
         case let .failed(message):
-            return message
+            return .message(message)
         }
     }
 

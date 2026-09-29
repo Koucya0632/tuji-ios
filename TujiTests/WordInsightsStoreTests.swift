@@ -18,6 +18,16 @@ private final class FakeInsightsRepository: WordInsightsRepository {
 }
 
 @MainActor
+private final class FakeAccess: MemberAccessReading {
+    var policy: MemberPolicy = .v2
+    var tier: MembershipTier = .free
+
+    func level(_ feature: MemberFeature, hasOwnData: Bool) -> MemberAccessLevel {
+        MemberAccess.level(feature, policy: self.policy, tier: self.tier, hasOwnData: hasOwnData)
+    }
+}
+
+@MainActor
 private final class FakeLanguage: LanguageContext {
     var uiLang = "zh-Hant"
     var learningDirection: LearningDirection = .zhEn
@@ -34,22 +44,21 @@ private let sample = WordInsights(
 @MainActor
 struct WordInsightsStoreTests {
     @Test
-    func v1IsAskedOncePerSessionNotOncePerWord() async {
+    func v1NeverAsks() async {
         let repo = FakeInsightsRepository()
-        repo.response = WordInsightsResponse(available: false, insights: nil)
-        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), tier: { .free })
+        let access = FakeAccess()
+        access.policy = .v1
+        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), access: access)
         await store.load("faucet")
         await store.load("sofa")
-        await store.load("rug")
-        #expect(repo.calls == ["faucet"])
-        #expect(store.available == false)
+        #expect(repo.calls.isEmpty)
     }
 
     @Test
     func aWordIsAskedOnceAndServedFromMemory() async {
         let repo = FakeInsightsRepository()
         repo.response = WordInsightsResponse(available: true, insights: sample)
-        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), tier: { .free })
+        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), access: FakeAccess())
         await store.load("faucet")
         await store.load("faucet")
         #expect(repo.calls.count == 1)
@@ -60,10 +69,10 @@ struct WordInsightsStoreTests {
     func becomingAMemberAsksAgain() async {
         let repo = FakeInsightsRepository()
         repo.response = WordInsightsResponse(available: true, insights: sample)
-        var tier = MembershipTier.free
-        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), tier: { tier })
+        let access = FakeAccess()
+        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), access: access)
         await store.load("faucet")
-        tier = .lifetime
+        access.tier = .lifetime
         #expect(store.cached(for: "faucet") == nil)
         await store.load("faucet")
         #expect(repo.calls.count == 2)
@@ -73,7 +82,7 @@ struct WordInsightsStoreTests {
     func aDirectionOrLanguageSwitchAsksAgain() async {
         let repo = FakeInsightsRepository()
         let language = FakeLanguage()
-        let store = WordInsightsStore(repository: repo, language: language, tier: { .free })
+        let store = WordInsightsStore(repository: repo, language: language, access: FakeAccess())
         await store.load("faucet")
         language.learningDirection = .zhJa
         await store.load("faucet")
@@ -85,7 +94,7 @@ struct WordInsightsStoreTests {
     @Test
     func customAndSavedWordsAreNeverAsked() async {
         let repo = FakeInsightsRepository()
-        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), tier: { .free })
+        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), access: FakeAccess())
         await store.load("atlas:123e4567-e89b-12d3-a456-426614174000")
         await store.load("saved:some-slug")
         #expect(repo.calls.isEmpty)
@@ -95,7 +104,7 @@ struct WordInsightsStoreTests {
     func aFailureIsNotRememberedAsNothing() async {
         let repo = FakeInsightsRepository()
         repo.fail = true
-        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), tier: { .free })
+        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), access: FakeAccess())
         await store.load("faucet")
         #expect(store.cached(for: "faucet") == nil)
         repo.fail = false
@@ -105,13 +114,13 @@ struct WordInsightsStoreTests {
     }
 
     @Test
-    func signOutForgetsV1AndEveryAnswer() async {
+    func signOutForgetsEveryAnswer() async {
         let repo = FakeInsightsRepository()
-        repo.response = WordInsightsResponse(available: false, insights: nil)
-        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), tier: { .free })
+        repo.response = WordInsightsResponse(available: true, insights: sample)
+        let store = WordInsightsStore(repository: repo, language: FakeLanguage(), access: FakeAccess())
         await store.load("faucet")
         store.reset()
-        #expect(store.available == nil)
+        #expect(store.cached(for: "faucet") == nil)
         await store.load("faucet")
         #expect(repo.calls.count == 2)
     }

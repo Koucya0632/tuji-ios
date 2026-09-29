@@ -16,7 +16,7 @@ struct WordInsightsSection: View {
     @Environment(TabNavigator.self) private var navigator
     @Environment(\.wordDetailPresentation) private var presentation
     @State private var sheetWordId: String?
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -28,7 +28,6 @@ struct WordInsightsSection: View {
             }
         }
         .task(id: self.store.key(for: self.wordId)) { await self.store.load(self.wordId) }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
         .tujiSheet(
             isPresented: Binding(get: { self.sheetWordId != nil }, set: { if !$0 { self.sheetWordId = nil } }),
             title: "單字詳情",
@@ -116,7 +115,7 @@ struct WordInsightsSection: View {
     }
 
     private func locked(count: Int) -> some View {
-        Button { self.showPaywall = true } label: {
+        Button { self.presentPaywall() } label: {
             HStack(spacing: Space.s2) {
                 Image(systemName: "lock.fill")
                 Text("會員可看更多（\(count) 則）")

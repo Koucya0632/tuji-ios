@@ -5,10 +5,9 @@ import SwiftUI
 
 struct AddToWordListSheet: View {
     let wordId: String
-    let onNeedsUpgrade: () -> Void
 
     @Environment(WordListsStore.self) private var store
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentPaywall) private var presentPaywall
     @State private var lists: [WordList] = []
     @State private var phase: LoadPhase = .idle
     @State private var message: String?
@@ -36,6 +35,7 @@ struct AddToWordListSheet: View {
             WordListNameSheet(title: "建立詞表", actionTitle: "建立並加入") { name in
                 await self.createAndAdd(name)
             }
+            .paywallHost()
         }
     }
 
@@ -104,8 +104,7 @@ struct AddToWordListSheet: View {
                 self.lists[i] = updated
             }
         case .needsUpgrade:
-            self.dismiss()
-            self.onNeedsUpgrade()
+            self.presentPaywall()
         case .atLimit:
             self.message = tujiLocalized("這個詞表的字數已達上限")
         case .missing:
@@ -115,23 +114,21 @@ struct AddToWordListSheet: View {
         }
     }
 
-    private func createAndAdd(_ name: String) async -> String? {
+    private func createAndAdd(_ name: String) async -> WordListNameResult {
         let (outcome, created) = await self.store.create(name: name)
         switch outcome {
         case .done:
             if let created { await self.set(created, present: true) }
             await self.load()
-            return nil
+            return .done
         case .needsUpgrade:
-            self.dismiss()
-            self.onNeedsUpgrade()
-            return nil
+            return .needsUpgrade
         case .atLimit:
-            return tujiLocalized("詞表數量已達上限，刪除一些後再建立")
+            return .message(tujiLocalized("詞表數量已達上限，刪除一些後再建立"))
         case .missing:
-            return nil
+            return .done
         case let .failed(text):
-            return text
+            return .message(text)
         }
     }
 }
@@ -144,18 +141,23 @@ struct WordListButton: View {
 
     @Environment(WordListsStore.self) private var store
     @Environment(AuthService.self) private var auth
+    @Environment(\.presentPaywall) private var presentPaywall
     @State private var showSheet = false
-    @State private var showPaywall = false
+    private let access: any MemberAccessReading = LiveMemberAccess()
+
+    private var level: MemberAccessLevel {
+        self.access.level(.wordListAdd)
+    }
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
-            if !self.auth.isGuest, self.store.addEntry != .hidden {
+            if !self.auth.isGuest, self.level != .hidden {
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    if self.store.addEntry == .locked {
-                        self.showPaywall = true
+                    if self.level == .locked {
+                        self.presentPaywall()
                     } else {
                         self.showSheet = true
                     }
@@ -166,7 +168,7 @@ struct WordListButton: View {
                             .font(.tujiIcon(self.size * 0.38, weight: .semibold))
                             .foregroundStyle(.tujiInk2)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        if self.store.addEntry == .locked {
+                        if self.level == .locked {
                             Image(systemName: "lock.fill")
                                 .font(.tujiIcon(9, weight: .bold))
                                 .foregroundStyle(.tujiInk3)
@@ -180,19 +182,12 @@ struct WordListButton: View {
             }
         }
         .task {
-            guard !self.auth.isGuest else { return }
+            guard !self.auth.isGuest, self.level != .hidden else { return }
             await self.store.loadIfNeeded()
         }
         .sheet(isPresented: self.$showSheet) {
-            AddToWordListSheet(wordId: self.wordId) {
-                // The sheet is gone before the paywall comes up; presenting
-                // both at once is refused by SwiftUI.
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(400))
-                    self.showPaywall = true
-                }
-            }
+            // Hosted here, so the sheet's own lock opens 付費頁 on top of it.
+            AddToWordListSheet(wordId: self.wordId).paywallHost()
         }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
     }
 }

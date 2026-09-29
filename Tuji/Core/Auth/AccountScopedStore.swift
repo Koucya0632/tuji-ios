@@ -10,7 +10,7 @@
 // ADR-0001 §4 blesses this glue staying `.shared`. That is about *how* the
 // reset reaches them, not about whether the list can name itself.
 
-import Foundation
+import SwiftUI
 
 /// A store whose contents belong to one account and must not survive into the
 /// next one.
@@ -98,5 +98,29 @@ enum AccountScopedStores {
         for store in self.all {
             store.reset()
         }
+    }
+}
+
+extension View {
+    /// The roster's members that screens read from the environment. Kept next
+    /// to `AccountScopedStores.all` so a new account-scoped store is enrolled in
+    /// both in one place: the app root used to carry these as a separate list,
+    /// which every new member store had to find and extend.
+    ///
+    /// Not every roster member is here — `AtlasStore`, `AtlasCaptureQueue`,
+    /// `MyCollectionsCache`, `StudyAnswerOutbox` and `StudyQueueStore` are reached
+    /// through their seams, not the environment.
+    func accountScopedEnvironment() -> some View {
+        self
+            .environment(LocalCache.shared)
+            .environment(SettingsStore.shared)
+            .environment(ProgressStore.shared)
+            .environment(MasteryStore.shared)
+            .environment(StudyStatsStore.shared)
+            .environment(BlockStore.shared)
+            .environment(StudyReminders.shared)
+            .environment(WordListsStore.shared)
+            .environment(WordNotesStore.shared)
+            .environment(WordInsightsStore.shared)
     }
 }

@@ -17,7 +17,7 @@ struct StudyCategoriesPickerView: View {
     /// Read for the server's `studyableCategories`; observing it re-renders
     /// the locks when the entitlement snapshot arrives.
     @State private var atlas = AtlasStore.shared
-    @State private var showPaywall = false
+    @Environment(\.presentPaywall) private var presentPaywall
 
     /// nil = every theme may be studied (members, and before the cutover).
     private var studyable: Set<String>? {
@@ -41,7 +41,6 @@ struct StudyCategoriesPickerView: View {
         // Reachable from 今日 as well as 設定, so it cannot count on 設定 having
         // asked. A launch whose read failed asks nowhere else.
         .task { await self.store.loadIfNeeded() }
-        .sheet(isPresented: self.$showPaywall) { PaywallView() }
     }
 
     private var list: some View {
@@ -113,7 +112,7 @@ struct StudyCategoriesPickerView: View {
                 let locked = self.isLocked(c.id)
                 self.tile(category: c, selected: !locked && self.selectedIds.contains(c.id), locked: locked) {
                     if locked {
-                        self.showPaywall = true
+                        self.presentPaywall()
                     } else {
                         self.toggle(c.id)
                     }

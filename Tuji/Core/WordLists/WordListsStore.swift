@@ -1,8 +1,9 @@
 // The account's 個人詞表 in the current learning language — the one shared read
 // that 我, the 詞表 screen and the word page's 加入詞表 all ask.
 //
-// Also where the answer to "does this feature exist for this account" lives:
-// `available` is false under membership policy v1 and every entry point hides.
+// Data only. Whether the feature shows, and in which form, is `MemberAccess`;
+// this used to keep its own copy of policy and tier, which went stale after a
+// purchase.
 
 import Foundation
 import Observation
@@ -14,9 +15,6 @@ final class WordListsStore {
     static let shared = WordListsStore()
 
     private(set) var phase: LoadPhase = .idle
-    /// nil until the server has answered.
-    private(set) var available: Bool?
-    private(set) var tier: String?
     private(set) var canCreate = false
     private(set) var limits: WordListLimits?
     private(set) var lists: [WordList] = []
@@ -34,14 +32,6 @@ final class WordListsStore {
     ) {
         self.repository = repository
         self.language = language
-    }
-
-    var browseEntry: WordListEntry {
-        WordListRules.browseEntry(available: self.available, tier: self.tier, listCount: self.lists.count)
-    }
-
-    var addEntry: WordListEntry {
-        WordListRules.addEntry(available: self.available, tier: self.tier)
     }
 
     func loadIfNeeded() async {
@@ -71,8 +61,6 @@ final class WordListsStore {
     }
 
     private func apply(_ response: WordListsResponse, direction: LearningDirection) {
-        self.available = response.available
-        self.tier = response.tier
         self.canCreate = response.canCreate ?? false
         self.limits = response.limits
         self.lists = response.lists
@@ -161,8 +149,6 @@ final class WordListsStore {
     /// The account changed: none of this is the next account's.
     func reset() {
         self.phase = .idle
-        self.available = nil
-        self.tier = nil
         self.canCreate = false
         self.limits = nil
         self.lists = []
