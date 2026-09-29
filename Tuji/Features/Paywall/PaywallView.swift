@@ -105,6 +105,7 @@ struct PaywallView: View {
                         self.plans
                     }
                     self.restoreButton
+                    self.purchaseNotes
                     self.legal
                 }
                 .padding(.horizontal, Space.s4)
@@ -318,6 +319,34 @@ struct PaywallView: View {
         }
         .buttonStyle(.plain)
         .disabled(self.store.purchasing != nil)
+    }
+
+    /// 購買說明 — what to do when a purchase does not show up, and who handles
+    /// refunds. Refunds are Apple's to grant (the server revokes the membership
+    /// when Apple reports one), so this says where to ask rather than that there
+    /// are none.
+    private var purchaseNotes: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("購買說明")
+                .font(.tujiLabel.weight(.semibold))
+                .foregroundStyle(.tujiInk2)
+            Group {
+                Text("1. 購買後如未生效，請稍等幾分鐘後重新開啟 App。")
+                Text("2. 已購買但會員不見了，請依序嘗試：")
+                Text("a. 確認登入的是購買時使用的 Tuji 帳號")
+                    .padding(.leading, Space.s3)
+                Text("b. 點上方的「恢復購買」")
+                    .padding(.leading, Space.s3)
+                Text("c. 仍然無效，請到 設定 → 意見收集 聯絡我們")
+                    .padding(.leading, Space.s3)
+                Text("3. 購買與退款由 Apple 處理，退款請向 Apple 申請；退款後會員資格會收回，學習紀錄、詞表與筆記仍會保留。")
+                Text("4. 價格以購買時 App Store 顯示的金額為準。")
+            }
+            .font(.tujiLabel)
+            .foregroundStyle(.tujiInk3)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var legal: some View {

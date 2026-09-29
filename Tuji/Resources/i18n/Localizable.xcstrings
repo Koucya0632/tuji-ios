@@ -441,6 +441,94 @@
         }
       }
     },
+    "1. 購買後如未生效，請稍等幾分鐘後重新開啟 App。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. If a purchase doesn't take effect, wait a few minutes and reopen the app."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 購入が反映されない場合は、数分待ってからアプリを開き直してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 购买后如未生效，请稍等几分钟后重新打开 App。"
+          }
+        }
+      }
+    },
+    "2. 已購買但會員不見了，請依序嘗試：" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. Bought it but your membership is missing? Try, in order:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 購入済みなのにメンバーが表示されない場合は、順番にお試しください："
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 已购买但会员不见了，请依序尝试："
+          }
+        }
+      }
+    },
+    "3. 購買與退款由 Apple 處理，退款請向 Apple 申請；退款後會員資格會收回，學習紀錄、詞表與筆記仍會保留。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. Purchases and refunds are handled by Apple; request refunds from Apple. After a refund the membership is removed, but your study history, word lists and notes are kept."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. 購入と返金は Apple が取り扱います。返金は Apple にお申し込みください。返金後はメンバー資格がなくなりますが、学習記録・単語リスト・メモは残ります。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. 购买与退款由 Apple 处理，退款请向 Apple 申请；退款后会员资格会收回，学习记录、词表与笔记仍会保留。"
+          }
+        }
+      }
+    },
+    "4. 價格以購買時 App Store 顯示的金額為準。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4. The price is the one the App Store shows when you buy."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4. 価格は購入時に App Store に表示される金額が適用されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4. 价格以购买时 App Store 显示的金额为准。"
+          }
+        }
+      }
+    },
     "8 個字" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -466,6 +554,28 @@
     },
     "23" : {
 
+    },
+    "a. 確認登入的是購買時使用的 Tuji 帳號" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a. Make sure you're signed in to the Tuji account you bought with"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a. 購入時と同じ Tuji アカウントでログインしているか確認する"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a. 确认登录的是购买时使用的 Tuji 账号"
+          }
+        }
+      }
     },
     "AI 建議" : {
       "localizations" : {
@@ -648,6 +758,28 @@
         }
       }
     },
+    "b. 點上方的「恢復購買」" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "b. Tap “Restore purchases” above"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "b. 上の「購入を復元」をタップする"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "b. 点上方的「恢复购买」"
+          }
+        }
+      }
+    },
     "Bearer smoke test" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -691,6 +823,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "by %@"
+          }
+        }
+      }
+    },
+    "c. 仍然無效，請到 設定 → 意見收集 聯絡我們" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "c. Still missing? Contact us in Settings → Feedback"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "c. それでも解決しない場合は、設定 → フィードバック からご連絡ください"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "c. 仍然无效，请到 设置 → 意见收集 联系我们"
           }
         }
       }
@@ -15496,6 +15650,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "资料解析失败：%@"
+          }
+        }
+      }
+    },
+    "購買說明" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Purchase notes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入について"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "购买说明"
           }
         }
       }
