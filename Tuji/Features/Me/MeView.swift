@@ -133,6 +133,10 @@ struct MeView: View {
                 DebugSmokeSection(isGuest: self.auth.isGuest)
                     .padding(.horizontal, Space.s4)
                 #endif
+                #if TUJI_BETA
+                BetaMembershipSection()
+                    .padding(.horizontal, Space.s4)
+                #endif
             }
             .padding(.bottom, Space.s6)
         }
@@ -431,6 +435,22 @@ private struct DebugSmokeSection: View {
             } catch {
                 self.ping = .failure(error)
             }
+        }
+    }
+}
+#endif
+
+#if TUJI_BETA
+/// TestFlight only: the one switch the sandbox purchase test needs — the rest of
+/// 除錯工具 stays in Debug builds.
+private struct BetaMembershipSection: View {
+    @AppStorage(DebugOverrides.forceMembershipV2Key) private var forceMembershipV2 = false
+
+    var body: some View {
+        Toggle(isOn: self.$forceMembershipV2) {
+            Text(verbatim: "測試：付費頁視為會員 v2（顯示永久會員）")
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk2)
         }
     }
 }
