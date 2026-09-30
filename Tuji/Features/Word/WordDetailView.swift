@@ -120,7 +120,6 @@ struct WordDetailPage: View {
                 WordNoteSection(wordId: w.id).padding(.horizontal, Space.s4)
             }
             WordDetailSections(word: w).padding(.horizontal, Space.s4)
-            WordCommunityAtlasSection(word: w).padding(.horizontal, Space.s4)
         }
         .padding(.bottom, Space.s6)
         .frame(width: width, alignment: .leading)
