@@ -24,6 +24,10 @@ enum MemberFeature: Hashable, CaseIterable {
     /// 詞條延伸內容. The server trims what a non-member sees; the app only needs
     /// to know whether to ask.
     case wordInsights
+    /// 物見 writes: 收藏 a card or 合集, 全部加入學習, 公開, 建立合集. The server
+    /// refuses each with 402 for a non-member; the app sends them to the
+    /// paywall instead of letting the write fail.
+    case communityWrite
 }
 
 enum MemberAccessLevel: Equatable {
@@ -60,6 +64,7 @@ enum MemberAccess {
         case .wordListAdd: return .locked
         case .wordNote: return hasOwnData ? .readOnly : .locked
         case .wordInsights: return .open
+        case .communityWrite: return .locked
         }
     }
 

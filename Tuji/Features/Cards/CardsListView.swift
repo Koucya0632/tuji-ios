@@ -22,6 +22,7 @@ struct CardsListView: View {
     @Environment(LocalCache.self) private var cache
     @Environment(AuthService.self) private var auth
     @Environment(TabNavigator.self) private var navigator
+    @Environment(\.presentPaywall) private var presentPaywall
 
     /// A source the navigation layer wants shown (a `tuji://favorites` link).
     /// Consumed once and cleared, so it never fights a later manual pick.
@@ -299,15 +300,22 @@ struct CardsListView: View {
         ScrollView {
             LazyVGrid(columns: Self.gridColumns, spacing: Space.s2) {
                 ForEach(self.themes) { c in
-                    NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
-                        CategoryCoverTile(
-                            category: c,
-                            wordCount: self.store.byCategory(c.id).count,
-                            status: self.themeStatus(for: c.id),
-                            locked: self.isStudyLocked(c.id)
-                        )
+                    let locked = self.isStudyLocked(c.id)
+                    let tile = CategoryCoverTile(
+                        category: c,
+                        wordCount: self.store.byCategory(c.id).count,
+                        status: self.themeStatus(for: c.id),
+                        locked: locked
+                    )
+                    // A locked theme doesn't open: the padlock is the paywall's
+                    // door, the same way the study-theme picker treats it.
+                    if locked {
+                        Button { self.presentPaywall() } label: { tile }
+                            .buttonStyle(.plain)
+                    } else {
+                        NavigationLink(value: NavRoute.categoryDetail(id: c.id)) { tile }
+                            .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, Space.s4)

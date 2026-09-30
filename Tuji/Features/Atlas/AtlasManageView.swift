@@ -18,6 +18,8 @@ enum AtlasManagementSection: Hashable {
 
 struct AtlasManageView: View {
     @Environment(\.targetLanguage) private var targetLanguage
+    @Environment(\.presentPaywall) private var presentPaywall
+    private let access: any MemberAccessReading = LiveMemberAccess()
 
     @State private var shelf = AtlasShelfModel()
     @State private var section: AtlasManagementSection
@@ -44,7 +46,12 @@ struct AtlasManageView: View {
             }
         case .collections:
             TujiNavIcon(systemName: "plus", label: "建立合集") {
-                self.showCreateCollection = true
+                // Refused with 402 for a non-member; go to the paywall instead.
+                if self.access.level(.communityWrite) == .locked {
+                    self.presentPaywall()
+                } else {
+                    self.showCreateCollection = true
+                }
             }
         }
     }

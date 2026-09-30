@@ -39,6 +39,8 @@ struct AtlasCollectionDetailView: View {
     @Environment(TabNavigator.self) private var navigator
     @Environment(CollectionBookmarkStore.self) private var bookmarks
     @Environment(DeepLinkCoordinator.self) private var deepLinks
+    @Environment(\.presentPaywall) private var presentPaywall
+    private let access: any MemberAccessReading = LiveMemberAccess()
 
     @State private var vm: CollectionDetailVM
     @State private var tab: Tab = .catalog
@@ -141,6 +143,7 @@ struct AtlasCollectionDetailView: View {
             primary: TujiPromptAction("全部加入") {
                 Task {
                     if await !(self.vm.learnRemaining()) {
+                        self.presentPaywallIfNeeded()
                         self.showLearningErrorPrompt = self.vm.learningActionError != nil
                     }
                 }
@@ -324,14 +327,28 @@ struct AtlasCollectionDetailView: View {
         }
         if self.vm.isSaved {
             self.showUnsavePrompt = true
+        } else if self.access.level(.communityWrite) == .locked {
+            // 收藏合集 is a member feature; the server would answer 402.
+            self.presentPaywall()
         } else {
             Task { await self.saveCollection() }
         }
     }
 
+    /// A 402 from any write here means "buy, then try again" — the paywall, not
+    /// 操作失敗. Covers what the pre-check above can't see: an entitlement the
+    /// app hasn't synced yet, and the deep-link auto-save.
+    private func presentPaywallIfNeeded() {
+        guard self.vm.needsUpgrade else { return }
+        self.vm.dismissUpgrade()
+        self.presentPaywall()
+    }
+
     private func saveCollection() async {
         if let change = await self.vm.save() {
             self.publish(change)
+        } else if self.vm.needsUpgrade {
+            self.presentPaywallIfNeeded()
         } else if self.vm.bookmarkActionError != nil {
             self.showBookmarkErrorPrompt = true
         }
@@ -345,6 +362,8 @@ struct AtlasCollectionDetailView: View {
         ))
         if let change {
             self.publish(change)
+        } else if self.vm.needsUpgrade {
+            self.presentPaywallIfNeeded()
         } else if self.vm.bookmarkActionError != nil {
             self.showBookmarkErrorPrompt = true
         }

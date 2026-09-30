@@ -20,6 +20,8 @@ struct AtlasPublicDetailView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(BlockStore.self) private var blocks
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentPaywall) private var presentPaywall
+    private let access: any MemberAccessReading = LiveMemberAccess()
     @State private var vm: AtlasPublicDetailVM
     @State private var report = ReportFlow()
     @State private var showBlockPrompt = false
@@ -273,10 +275,16 @@ struct AtlasPublicDetailView: View {
                 Button {
                     if self.vm.saved {
                         self.showStopLearningPrompt = true
+                    } else if self.access.level(.communityWrite) == .locked {
+                        self.presentPaywall()
                     } else {
                         Task {
                             if await self.vm.toggleSave() == true {
                                 AnalyticsService.shared.track(.atlasPublicSaved)
+                            } else if self.vm.needsUpgrade {
+                                // An entitlement the app hadn't synced yet.
+                                self.vm.needsUpgrade = false
+                                self.presentPaywall()
                             }
                         }
                     }

@@ -167,6 +167,29 @@ struct CollectionDetailVMTests {
         #expect(vm.bookmarkLoaded)
     }
 
+    /// A non-member's 收藏 comes back 402. That is "buy, then try again" — the
+    /// paywall — not the 操作失敗 prompt it used to raise.
+    @Test
+    func a402SaveAsksForTheUpgradeInsteadOfAnError() async {
+        let bookmarks = FakeDetailBookmarking()
+        bookmarks.saveResult = .failure(APIError.paymentRequired(message: "會員功能"))
+        let vm = CollectionDetailVM(
+            slug: "s",
+            preview: self.collection(id: "a"),
+            repo: FakeCollectionDetailReading(),
+            bookmarkRepo: bookmarks
+        )
+
+        let change = await vm.save()
+
+        #expect(change == nil)
+        #expect(vm.needsUpgrade)
+        #expect(vm.bookmarkActionError == nil)
+        #expect(!vm.isSaved)
+        vm.dismissUpgrade()
+        #expect(!vm.needsUpgrade)
+    }
+
     @Test
     func lockedResponseKeepsOnlyTheServerPreviewAndAccessCounts() async {
         let fake = FakeCollectionDetailReading()
