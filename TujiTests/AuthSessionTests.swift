@@ -37,7 +37,6 @@ struct AuthSessionTests {
     @Test
     func aFreshSessionStartsChecking() {
         #expect(AuthSession().state == .checking)
-        #expect(!AuthSession().cameFromGuest)
     }
 
     /// The app's whole offline-launch behaviour: a refresh that fails while a
@@ -70,48 +69,11 @@ struct AuthSessionTests {
     // MARK: - Guest
 
     @Test
-    func guestModeIsEnteredOnlyFromSignedOut() {
-        var s = AuthSession()
-        s.enterGuest() // from .checking — silently does nothing
-        #expect(s.state == .checking)
-
-        s.signedOut()
-        s.enterGuest()
-        #expect(s.state == .guest)
-    }
-
-    @Test
     func guestModeIsLeftOnlyFromGuest() {
         var s = AuthSession()
         s.signedIn(self.user())
         s.exitGuest() // signed in — nothing happens
         #expect(s.state == .signedIn(self.user()))
-    }
-
-    /// `cameFromGuest` is what stops Welcome being an exit-less dead end for
-    /// someone who tapped 登入 by accident. Only *leaving* guest mode sets it.
-    @Test
-    func onlyLeavingGuestModeMarksCameFromGuest() {
-        var s = AuthSession()
-        s.signedOut()
-        s.enterGuest()
-        #expect(!s.cameFromGuest)
-
-        s.exitGuest()
-        #expect(s.cameFromGuest)
-    }
-
-    @Test
-    func signingOutClearsCameFromGuest() {
-        var s = AuthSession()
-        s.signedOut()
-        s.enterGuest()
-        s.exitGuest()
-        #expect(s.cameFromGuest)
-
-        s.signedOut()
-        #expect(!s.cameFromGuest)
-        #expect(s.state == .signedOut)
     }
 
     // MARK: - Profile mirror

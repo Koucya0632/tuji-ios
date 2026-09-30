@@ -40,6 +40,9 @@ final class CollectionDetailVM {
     private(set) var learningCount = 0
     private(set) var learningBusy = false
     private(set) var learningActionError: String?
+    /// The server answered a write with 402: a non-member tried to 收藏 or
+    /// 全部加入學習. Not an error to apologise for — the view opens the paywall.
+    private(set) var needsUpgrade = false
 
     private let repo: CollectionDetailReading
     private let bookmarkRepo: CollectionBookmarking
@@ -164,6 +167,9 @@ final class CollectionDetailVM {
             return self.collection.map {
                 BookmarkChange(collection: $0, isSaved: response.saved)
             }
+        } catch where MemberWriteOutcome.from(error) == .needsUpgrade {
+            self.needsUpgrade = true
+            return nil
         } catch {
             self.bookmarkError = tujiUserMessage(for: error)
             self.bookmarkActionError = tujiUserMessage(for: error)
@@ -215,10 +221,17 @@ final class CollectionDetailVM {
             self.totalCount = response.totalCount
             await self.learningRefresher.refreshAfterLearningMutation()
             return true
+        } catch where MemberWriteOutcome.from(error) == .needsUpgrade {
+            self.needsUpgrade = true
+            return false
         } catch {
             self.learningActionError = tujiUserMessage(for: error)
             return false
         }
+    }
+
+    func dismissUpgrade() {
+        self.needsUpgrade = false
     }
 
     func dismissLearningActionError() {

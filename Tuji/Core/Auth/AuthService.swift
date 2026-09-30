@@ -115,19 +115,6 @@ final class AuthService {
 
     // MARK: - Guest mode
 
-    /// True when the Welcome screen was reached by leaving guest mode (Me tab
-    /// / Today hero 登入/註冊) rather than at first launch. Welcome uses it to
-    /// offer a close button back to guest browsing — otherwise the screen is
-    /// an exit-less dead end for someone who tapped in by accident.
-    var cameFromGuest: Bool {
-        self.session.cameFromGuest
-    }
-
-    func enterGuestMode() {
-        self.session.enterGuest()
-        log.info("entered guest mode")
-    }
-
     /// Called from MainTabsView's "登入 / 註冊" button so guest can land
     /// on Welcome and pick a flow.
     func exitGuestMode() {

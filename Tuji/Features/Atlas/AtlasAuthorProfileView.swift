@@ -29,6 +29,8 @@ struct AtlasAuthorProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(\.targetLanguage) private var targetLanguage
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentPaywall) private var presentPaywall
+    private let access: any MemberAccessReading = LiveMemberAccess()
 
     /// `vm.isSelf` answers "did the caller open this as *my* page" — it is passed
     /// in deliberately (see `AuthorProfileVM.isSelf`) and is false on every route
@@ -164,10 +166,15 @@ struct AtlasAuthorProfileView: View {
                         if self.vm.showsSegmentedControl {
                             self.segmentPicker
                         }
-                        switch self.vm.visibleSegment {
-                        case .collections: self.collectionsSection
-                        case .items: self.itemsSection
+                        // The header bleeds; the work below it sits on the
+                        // page's gutter like every other screen's content.
+                        Group {
+                            switch self.vm.visibleSegment {
+                            case .collections: self.collectionsSection
+                            case .items: self.itemsSection
+                            }
                         }
+                        .padding(.horizontal, Space.s4)
                     }
                 } else if case .loading = self.vm.phase {
                     TujiPageLoading()
@@ -215,7 +222,13 @@ struct AtlasAuthorProfileView: View {
                 fullWidth: true,
                 icon: "plus"
             ) {
-                self.creating = true
+                // A non-member's 合集 would be refused on the server (402), so
+                // the button goes where that answer would have sent them.
+                if self.access.level(.communityWrite) == .locked {
+                    self.presentPaywall()
+                } else {
+                    self.creating = true
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

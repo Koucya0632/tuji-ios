@@ -6,12 +6,9 @@
 // rules below — every one of them a fact a caller must know and none of them
 // stated by a type — were verified by nobody:
 //
-//   • `enterGuestMode` only works from `.signedOut` and `exitGuestMode` only
-//     from `.guest`. From anywhere else they are **silent no-ops**: no throw,
-//     no signal, nothing happens.
-//   • `cameFromGuest` is what stops Welcome being an exit-less dead end for
-//     someone who tapped 登入 by accident. It is set by *leaving* guest mode
-//     and cleared by signing out — a distinction with no test.
+//   • `exitGuestMode` only works from `.guest`. From anywhere else it is a
+//     **silent no-op**: no throw, no signal, nothing happens. (Welcome no
+//     longer offers a way *into* guest mode.)
 //   • A failed session refresh does **not** mean signed out. If a session is
 //     still cached and the error is anything other than "no session at all",
 //     the likely cause is a flat network, and bouncing an authenticated user
@@ -47,10 +44,6 @@ enum SessionRefreshFailure: Equatable {
 struct AuthSession: Equatable {
     private(set) var state: AuthState = .checking
 
-    /// True when Welcome was reached by *leaving* guest mode rather than at
-    /// first launch, so Welcome can offer a way back to browsing.
-    private(set) var cameFromGuest = false
-
     var signedInUser: SessionUser? {
         guard case let .signedIn(user) = state else { return nil }
         return user
@@ -75,18 +68,10 @@ struct AuthSession: Equatable {
 
     // MARK: - Guest
 
-    /// No-op unless signed out. Stated here because the type cannot say it.
-    mutating func enterGuest() {
-        guard case .signedOut = state else { return }
-        self.state = .guest
-        self.cameFromGuest = false
-    }
-
     /// No-op unless in guest mode.
     mutating func exitGuest() {
         guard case .guest = state else { return }
         self.state = .signedOut
-        self.cameFromGuest = true
     }
 
     // MARK: - Sign in / out
@@ -97,7 +82,6 @@ struct AuthSession: Equatable {
 
     mutating func signedOut() {
         self.state = .signedOut
-        self.cameFromGuest = false
     }
 
     // MARK: - Profile mirror

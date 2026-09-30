@@ -22,6 +22,9 @@ final class AtlasPublicDetailVM {
     private(set) var saveCount: Int?
     private(set) var busy = false
     private(set) var actionError: String?
+    /// The server answered 加入學習 with 402 (a non-member). The view opens the
+    /// paywall rather than printing the refusal under the card.
+    var needsUpgrade = false
     // 檢舉 moved to `ReportFlow`, which all three reporting screens share. This
     // VM kept the only correct copy of the write (await, then mark sent) while
     // the other two marked sent first and swallowed the error — so the module
@@ -95,6 +98,9 @@ final class AtlasPublicDetailVM {
             self.saveCount = response.saveCount
             await self.learningRefresher.refreshAfterLearningMutation()
             return response.saved
+        } catch where MemberWriteOutcome.from(error) == .needsUpgrade {
+            self.needsUpgrade = true
+            return nil
         } catch {
             self.actionError = tujiUserMessage(for: error)
             return nil

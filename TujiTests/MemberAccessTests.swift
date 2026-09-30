@@ -36,6 +36,8 @@ struct MemberAccessTests {
         #expect(MemberAccess.level(.wordListAdd, policy: .v2, tier: .free, hasOwnData: true) == .locked)
         // The server trims 延伸內容 for a non-member; the app still asks.
         #expect(MemberAccess.level(.wordInsights, policy: .v2, tier: .free) == .open)
+        // 物見 writes are refused by the server (402) for a non-member.
+        #expect(MemberAccess.level(.communityWrite, policy: .v2, tier: .free, hasOwnData: true) == .locked)
     }
 
     @Test
