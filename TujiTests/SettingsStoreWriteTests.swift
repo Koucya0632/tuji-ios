@@ -114,9 +114,9 @@ struct SettingsStoreWriteTests {
     }
 
     @Test
-    func aGuestChangesThisDeviceAndSendsNothing() async throws {
-        // A guest's read never succeeds — there is no account to read — so
-        // gating on it would lock a guest out of 設定 for good.
+    func aSignedOutChangeStaysOnThisDeviceAndSendsNothing() async throws {
+        // A signed-out read never succeeds — there is no account to read — so
+        // gating on it would refuse every change for good.
         let repository = SettingsWriteRepositoryFake()
         let harness = try self.harness(repository) { nil }
         defer { harness.tearDown() }
@@ -287,7 +287,6 @@ private final class SettingsWriteRepositoryFake: UserRepository {
     }
 
     func deleteAccount() async throws {}
-    func syncLocalCache(_: SyncPayload) async throws {}
 
     func loadMe() async throws -> UserMeResponse {
         throw SettingsWriteTestFailure.unimplemented

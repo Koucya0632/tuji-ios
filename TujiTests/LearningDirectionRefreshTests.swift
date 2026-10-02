@@ -246,7 +246,6 @@ private final class DirectionUserRepositoryFake: UserRepository {
 
     func saveSettings(_: UserSettings) async throws {}
     func deleteAccount() async throws {}
-    func syncLocalCache(_: SyncPayload) async throws {}
 
     func loadMe() async throws -> UserMeResponse {
         throw DirectionRefreshTestFailure.unimplemented

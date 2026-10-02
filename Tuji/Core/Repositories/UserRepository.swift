@@ -5,7 +5,6 @@ protocol UserRepository {
     func loadSettings() async throws -> UserSettings
     func saveSettings(_ settings: UserSettings) async throws
     func deleteAccount() async throws
-    func syncLocalCache(_ snapshot: SyncPayload) async throws
     func loadMe() async throws -> UserMeResponse
     func registerPushToken(_ payload: PushTokenPayload) async throws
     func unregisterPushToken(deviceId: String) async throws
@@ -36,10 +35,6 @@ struct LiveUserRepository: UserRepository {
         let _: SaveSettingsResponse = try await self.api.post(.usersDeleteAccount, body: EmptyBody())
     }
 
-    func syncLocalCache(_ snapshot: SyncPayload) async throws {
-        let _: SyncAckResponse = try await self.api.post(.usersSync, body: snapshot)
-    }
-
     func loadMe() async throws -> UserMeResponse {
         try await self.api.get(.usersMe)
     }
@@ -55,10 +50,6 @@ struct LiveUserRepository: UserRepository {
     func submitFeedback(_ payload: FeedbackPayload) async throws {
         let _: AckResponse = try await self.api.post(.usersFeedback, body: payload)
     }
-}
-
-struct SyncAckResponse: Decodable {
-    let ok: Bool?
 }
 
 struct PushTokenPayload: Encodable {

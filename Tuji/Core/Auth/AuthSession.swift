@@ -6,9 +6,6 @@
 // rules below — every one of them a fact a caller must know and none of them
 // stated by a type — were verified by nobody:
 //
-//   • `exitGuestMode` only works from `.guest`. From anywhere else it is a
-//     **silent no-op**: no throw, no signal, nothing happens. (Welcome no
-//     longer offers a way *into* guest mode.)
 //   • A failed session refresh does **not** mean signed out. If a session is
 //     still cached and the error is anything other than "no session at all",
 //     the likely cause is a flat network, and bouncing an authenticated user
@@ -28,8 +25,6 @@ import Foundation
 enum AuthState: Equatable {
     case checking
     case signedOut
-    /// Browsing without an account.
-    case guest
     case signedIn(SessionUser)
 }
 
@@ -64,14 +59,6 @@ struct AuthSession: Equatable {
         case .unreachable, .noSession:
             self.state = .signedOut
         }
-    }
-
-    // MARK: - Guest
-
-    /// No-op unless in guest mode.
-    mutating func exitGuest() {
-        guard case .guest = state else { return }
-        self.state = .signedOut
     }
 
     // MARK: - Sign in / out

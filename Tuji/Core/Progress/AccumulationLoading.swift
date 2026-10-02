@@ -13,7 +13,7 @@
 // 全精通 kept working, because mastery *was* loaded — which is why the badge
 // looked intermittent rather than broken.
 //
-// The policy (`needs`) is a pure function over the surface and the guest flag.
+// The policy (`needs`) is a pure function over the surface.
 // The warming itself is glue.
 
 import Foundation
@@ -48,13 +48,8 @@ enum AccumulationSurface {
     case themeIndex
 
     /// Which stores must be warm for this surface's numbers to be true.
-    ///
-    /// Guests have no account-scoped data, so the three server-backed stores
-    /// are dropped for them rather than fetched and 401'd. Their numbers come
-    /// from `LocalCache` instead, which no screen has to load.
-    func needs(isGuest: Bool) -> Set<AccumulationStore> {
+    var needs: Set<AccumulationStore> {
         var stores: Set<AccumulationStore> = [.dictionary, .themes, .settings]
-        if isGuest { return stores }
         switch self {
         case .todayHero:
             // The hero reads every one of them: 今日目標 needs stats.todayNew,
@@ -147,8 +142,8 @@ struct AccumulationWarmer {
     /// the Debug build — the same trap documented on `MeVM.load`. Every store
     /// here is guarded (a TTL or a once-flag), so on all but the first
     /// appearance the whole sequence is a no-op.
-    func warm(_ surface: AccumulationSurface, isGuest: Bool) async {
-        let needed = surface.needs(isGuest: isGuest)
+    func warm(_ surface: AccumulationSurface) async {
+        let needed = surface.needs
         if needed.contains(.settings), let settings = self.stores[.settings] {
             await settings.warm()
         }
@@ -168,20 +163,18 @@ extension View {
     /// settings and stats are warm — it reads both to build its params.
     func warmsAccumulation(
         _ surface: AccumulationSurface,
-        isGuest: Bool,
         then follow: @escaping @MainActor () -> Void = {}
     )
         -> some View
     {
         self.modifier(
-            AccumulationWarmModifier(surface: surface, isGuest: isGuest, follow: follow)
+            AccumulationWarmModifier(surface: surface, follow: follow)
         )
     }
 }
 
 private struct AccumulationWarmModifier: ViewModifier {
     let surface: AccumulationSurface
-    let isGuest: Bool
     let follow: @MainActor () -> Void
 
     @Environment(WordsStore.self) private var words
@@ -192,22 +185,19 @@ private struct AccumulationWarmModifier: ViewModifier {
     @Environment(MasteryStore.self) private var mastery
 
     func body(content: Content) -> some View {
-        // Warms on *appearance*, and re-keys on `isGuest`.
+        // Warms on *appearance*.
         //
-        // Two things were wrong with a bare `.task`. The tab shell's pager is a
+        // A bare `.task` was wrong: the tab shell's pager is a
         // plain `HStack` — not lazy — so **all four tabs are constructed at
         // launch** and every warm fired once, then, whichever tab was showing;
         // returning to 今天 never re-ran it. So the 30 s TTL on Progress/Stats,
         // justified by 「`due` crosses midnight, the streak turns over」, was
-        // unreachable through the very surface built to consume it. And
-        // `isGuest` was captured at construction, so a guest→signed-in
-        // transition that preserved view identity left the three
-        // account-scoped stores unwarmed forever.
+        // unreachable through the very surface built to consume it.
         //
         // Every store is TTL- or once-guarded, so a repeat is a no-op in the
         // common case — that guard is what makes appearance the right trigger.
         content
-            .task(id: self.isGuest) { await self.warm() }
+            .task { await self.warm() }
             .onAppear { Task { await self.warm() } }
     }
 
@@ -222,7 +212,7 @@ private struct AccumulationWarmModifier: ViewModifier {
                 .mastery: self.mastery
             ]
         )
-        .warm(self.surface, isGuest: self.isGuest)
+        .warm(self.surface)
         self.follow()
     }
 }

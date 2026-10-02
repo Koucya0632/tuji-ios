@@ -12,7 +12,6 @@ enum Endpoint {
     case usersProfile
     case usersSettings
     case usersFavorites
-    case usersSync
     /// 連勝 + 熱力圖 + 各主題完成度, all of it scoped to one learning direction.
     case usersProgress(learning: String)
     /// 清除學習進度 — every direction at once, so it names none.
@@ -159,8 +158,6 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/users/settings", policy: .privateServerCached)
         case .usersFavorites:
             EndpointDescriptor(path: "/api/users/favorites", policy: .privateServerCached)
-        case .usersSync:
-            EndpointDescriptor(path: "/api/users/sync", policy: .privateFresh)
         case let .usersProgress(learning):
             // Same rule as the custom-words pair below: the direction the user
             // just picked wins over the one the server still has stored. These

@@ -38,13 +38,11 @@ struct AtlasCollectionDetailView: View {
     @Environment(AuthService.self) private var auth
     @Environment(TabNavigator.self) private var navigator
     @Environment(CollectionBookmarkStore.self) private var bookmarks
-    @Environment(DeepLinkCoordinator.self) private var deepLinks
     @Environment(\.presentPaywall) private var presentPaywall
     private let access: any MemberAccessReading = LiveMemberAccess()
 
     @State private var vm: CollectionDetailVM
     @State private var tab: Tab = .catalog
-    @State private var showSignInPrompt = false
     @State private var showUnsavePrompt = false
     @State private var showBookmarkErrorPrompt = false
     @State private var showLearnAllPrompt = false
@@ -67,15 +65,12 @@ struct AtlasCollectionDetailView: View {
         .padding(.bottom, Space.s6)
     }
 
-    private let autoSave: Bool
-
     enum Tab: Hashable { case catalog, about }
 
     /// `preview` is the card data from the feed, so the header renders instantly
     /// while the member items load.
-    init(slug: String, preview: AtlasCollection? = nil, autoSave: Bool = false) {
+    init(slug: String, preview: AtlasCollection? = nil) {
         _vm = State(initialValue: CollectionDetailVM(slug: slug, preview: preview))
-        self.autoSave = autoSave
     }
 
     var body: some View {
@@ -108,16 +103,6 @@ struct AtlasCollectionDetailView: View {
             await self.openCollection()
         }
         .reportSheet(self.report)
-        .tujiPrompt(
-            isPresented: self.$showSignInPrompt,
-            style: .confirmation,
-            title: "登入後才能收藏合集",
-            primary: TujiPromptAction("登入") {
-                self.deepLinks.receive(.collection(slug: self.vm.slug, autoSave: true))
-                self.auth.exitGuestMode()
-            },
-            secondary: TujiPromptAction("取消", role: .cancel) {}
-        )
         .tujiPrompt(
             isPresented: self.$showUnsavePrompt,
             style: .confirmation,
@@ -270,7 +255,7 @@ struct AtlasCollectionDetailView: View {
         } else {
             Button(action: self.bookmarkTapped) {
                 Group {
-                    if self.vm.bookmarkBusy || (!self.auth.isGuest && !self.vm.bookmarkLoaded) {
+                    if self.vm.bookmarkBusy || !self.vm.bookmarkLoaded {
                         TujiProgressBar(
                             progress: nil,
                             track: .tujiPaper.opacity(0.2),
@@ -321,10 +306,6 @@ struct AtlasCollectionDetailView: View {
     }
 
     private func bookmarkTapped() {
-        guard !self.auth.isGuest else {
-            self.showSignInPrompt = true
-            return
-        }
         if self.vm.isSaved {
             self.showUnsavePrompt = true
         } else if self.access.level(.communityWrite) == .locked {
@@ -337,7 +318,7 @@ struct AtlasCollectionDetailView: View {
 
     /// A 402 from any write here means "buy, then try again" — the paywall, not
     /// 操作失敗. Covers what the pre-check above can't see: an entitlement the
-    /// app hasn't synced yet, and the deep-link auto-save.
+    /// app hasn't synced yet.
     private func presentPaywallIfNeeded() {
         guard self.vm.needsUpgrade else { return }
         self.vm.dismissUpgrade()
@@ -355,18 +336,7 @@ struct AtlasCollectionDetailView: View {
     }
 
     private func openCollection() async {
-        let change = await self.vm.open(context: .init(
-            isSignedIn: !self.auth.isGuest,
-            username: self.auth.uid,
-            autoSave: self.autoSave
-        ))
-        if let change {
-            self.publish(change)
-        } else if self.vm.needsUpgrade {
-            self.presentPaywallIfNeeded()
-        } else if self.vm.bookmarkActionError != nil {
-            self.showBookmarkErrorPrompt = true
-        }
+        await self.vm.open(context: .init(username: self.auth.uid))
     }
 
     private func unsaveCollection() async {
@@ -392,7 +362,7 @@ struct AtlasCollectionDetailView: View {
     /// account does, and this way the screen asks "who is looking" the one way
     /// the app answers it (`ViewerIdentity`) instead of a fifth way.
     private var loadKey: String {
-        "\(self.vm.slug)-\(self.auth.uid ?? "guest")"
+        "\(self.vm.slug)-\(self.auth.uid ?? "")"
     }
 
     // MARK: Tabs

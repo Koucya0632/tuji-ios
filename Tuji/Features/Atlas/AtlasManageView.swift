@@ -166,7 +166,7 @@ private struct AtlasCardsManagementPane: View {
     /// gets dropped and re-fetched); this row only reports the choice — the same
     /// two lines 設定's picker uses.
     private func switchDirection() {
-        self.settings.setLearningDirection(self.otherDirection, persist: !self.auth.isGuest)
+        self.settings.setLearningDirection(self.otherDirection, persist: true)
     }
 
     var body: some View {

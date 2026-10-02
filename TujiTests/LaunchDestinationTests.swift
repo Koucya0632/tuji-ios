@@ -11,7 +11,6 @@ struct LaunchDestinationTests {
         #expect(self.resolve(.signedOut, learning: false) == .learningDirection)
         #expect(self.resolve(.signedOut, learning: true, introDone: false) == .onboarding)
         #expect(self.resolve(.signedOut, learning: true, introDone: true) == .welcome)
-        #expect(self.resolve(.guest, learning: true) == .main)
         #expect(self.resolve(
             .signedIn(userID: userID, setupDone: false),
             learning: true
@@ -40,14 +39,9 @@ struct LaunchDestinationTests {
     }
 
     @Test
-    func guestAndCompletedSetupWaitForCatalog() {
+    func completedSetupWaitsForCatalog() {
         let userID = UUID()
 
-        #expect(self.resolve(
-            .guest,
-            learning: true,
-            catalogReady: false
-        ) == .splash)
         #expect(self.resolve(
             .signedIn(userID: userID, setupDone: true),
             learning: true,

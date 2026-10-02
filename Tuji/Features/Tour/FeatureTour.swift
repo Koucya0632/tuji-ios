@@ -10,11 +10,11 @@ import SwiftUI
 /// during layout, so the Hashable conformance can't be MainActor-isolated
 /// (the project's default). The TestFlight (release/WMO) build enforces it.
 nonisolated enum TourTarget: Hashable {
-    /// Whole hero card on Today (guest fallback — guests have no CTA pair).
+    /// Whole hero card on Today — the fallback when the CTA pair is missing.
     case hero
-    /// The 複習/學新字 button pair inside the hero (signed-in).
+    /// The 複習/學新字 button pair inside the hero.
     case heroCTAs
-    /// Daily-goal progress block inside the hero (signed-in only).
+    /// Daily-goal progress block inside the hero.
     case dailyGoal
     /// Streak chip in the Today top bar.
     case streak
@@ -65,33 +65,27 @@ struct TourStep: Identifiable {
     let title: LocalizedStringKey
     let text: LocalizedStringKey
 
-    /// Guests get fallback targets (no CTA pair / goal bar) and copy that
-    /// doesn't promise actions they can't take without an account.
-    static func steps(isGuest: Bool) -> [TourStep] {
+    static var steps: [TourStep] {
         [
             TourStep(
                 id: 0,
                 tab: .today,
-                target: isGuest ? .hero : .heroCTAs,
+                target: .heroCTAs,
                 fallback: .hero,
-                shape: isGuest ? .rounded(Radius.r0 + 8) : .pill,
+                shape: .pill,
                 pose: .wave,
                 title: "每天從這裡開始",
-                text: isGuest
-                    ? "這裡是你的學習基地，建立帳號後就能學新字、排複習。"
-                    : "點「學新字」認識新單字，用「複習」複習快忘記的字。"
+                text: "點「學新字」認識新單字，用「複習」複習快忘記的字。"
             ),
             TourStep(
                 id: 1,
                 tab: .today,
-                target: isGuest ? .streak : .dailyGoal,
+                target: .dailyGoal,
                 fallback: .streak,
-                shape: isGuest ? .pill : .rounded(Radius.r0),
+                shape: .rounded(Radius.r0),
                 pose: .think,
                 title: "每日目標與連續天數",
-                text: isGuest
-                    ? "每天回來學習，火焰會記錄你的連續天數。"
-                    : "完成今日目標，連續學習的火焰就會一天天累積。"
+                text: "完成今日目標，連續學習的火焰就會一天天累積。"
             ),
             TourStep(
                 id: 2,
@@ -133,12 +127,7 @@ struct TourStep: Identifiable {
                 shape: .pill,
                 pose: .peek,
                 title: "拍照收字",
-                // 拍照 needs an account (the upload is authenticated), so the
-                // guest line says when it becomes theirs rather than telling
-                // them to go do it now.
-                text: isGuest
-                    ? "Tuji 的招牌功能！建立帳號後，對準身邊的物品拍一張，AI 幫你把它變成單字卡。"
-                    : "Tuji 的招牌功能！對準身邊的物品拍一張，AI 幫你把它變成單字卡。"
+                text: "Tuji 的招牌功能！對準身邊的物品拍一張，AI 幫你把它變成單字卡。"
             ),
             TourStep(
                 id: 4,
@@ -147,13 +136,8 @@ struct TourStep: Identifiable {
                 fallback: nil,
                 shape: .rounded(Radius.r0),
                 pose: .cheer,
-                // The closing step used to send guests off to "start today's
-                // lesson" — the one thing a guest cannot do. Their hero CTA is
-                // 建立帳號，開始學習, so the tour ends on the same ask.
-                title: isGuest ? "建立帳號，開始學習" : "開始你的第一課吧",
-                text: isGuest
-                    ? "免費註冊就能學新字、排複習，進度存在雲端"
-                    : "都準備好了，現在就開始今天的學習！"
+                title: "開始你的第一課吧",
+                text: "都準備好了，現在就開始今天的學習！"
             )
         ]
     }
@@ -186,8 +170,8 @@ enum TourAdvance: Equatable {
 struct FeatureTourFlow {
     let steps: [TourStep]
 
-    init(isGuest: Bool) {
-        self.steps = TourStep.steps(isGuest: isGuest)
+    init() {
+        self.steps = TourStep.steps
     }
 
     /// May the tour open at all?

@@ -14,9 +14,7 @@ final class CollectionDetailVM {
     }
 
     struct OpenContext: Equatable {
-        let isSignedIn: Bool
         let username: String?
-        let autoSave: Bool
     }
 
     struct BookmarkChange: Equatable {
@@ -72,18 +70,11 @@ final class CollectionDetailVM {
     }
 
     /// Open the collection through one workflow so the view cannot reorder the
-    /// detail, ownership, bookmark-state, and deep-link auto-save steps.
-    @discardableResult
-    func open(context: OpenContext) async -> BookmarkChange? {
-        guard await self.load(context: context) else { return nil }
-        guard context.isSignedIn, !self.isOwner else { return nil }
-
-        if !self.bookmarkLoaded {
-            await self.loadBookmarkState()
-        }
-
-        guard context.autoSave, !self.isSaved else { return nil }
-        return await self.save()
+    /// detail, ownership and bookmark-state steps.
+    func open(context: OpenContext) async {
+        guard await self.load(context: context) else { return }
+        guard !self.isOwner, !self.bookmarkLoaded else { return }
+        await self.loadBookmarkState()
     }
 
     private func load(context: OpenContext) async -> Bool {

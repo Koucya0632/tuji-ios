@@ -14,12 +14,10 @@ import Testing
 
 struct TodayDecisionsTests {
     private func inputs(
-        isGuest: Bool = false,
         settingsLoaded: Bool = true,
         studyCategories: [String] = ["kitchen"],
         dailyGoal: Int = 10,
         stats: StudyStats? = StudyStats(total: 120, seen: 40, due: 0, new: 80, todayNew: 0),
-        guestLearnedCount: Int = 0,
         progressLoaded: Bool = true,
         seenInSelection: Int = 40,
         totalInSelection: Int = 120,
@@ -30,10 +28,8 @@ struct TodayDecisionsTests {
     {
         TodayDecisions.Inputs(
             completion: CompletionReadout.Inputs(
-                isGuest: isGuest,
                 settingsLoaded: settingsLoaded,
                 studyCategories: studyCategories,
-                guestLearnedCount: guestLearnedCount,
                 seenInSelection: seenInSelection,
                 totalInSelection: totalInSelection,
                 dictionaryCount: dictionaryCount,
@@ -121,35 +117,20 @@ struct TodayDecisionsTests {
         #expect(TodayDecisions(self.inputs(stats: nil)).subtitle == .unknown)
     }
 
-    @Test("a guest is told what they have, or where to start")
-    func subtitleForGuests() {
-        #expect(
-            TodayDecisions(self.inputs(isGuest: true, guestLearnedCount: 4)).subtitle
-                == .guestLearned(count: 4)
-        )
-        #expect(
-            TodayDecisions(self.inputs(isGuest: true, guestLearnedCount: 0)).subtitle
-                == .guestBrowsing
-        )
-    }
-
     @Test("an empty theme list only means 'pick themes' once settings have loaded")
     func themePromptWaitsForSettings() {
         #expect(!TodayDecisions(self.inputs(settingsLoaded: false, studyCategories: [])).showThemePrompt)
         #expect(TodayDecisions(self.inputs(studyCategories: [])).showThemePrompt)
-        // A guest never picks themes.
-        #expect(!TodayDecisions(self.inputs(isGuest: true, studyCategories: [])).showThemePrompt)
     }
 
     // MARK: - 主題進度 denominator
 
     @Test("the denominator describes the selection, not the whole dictionary")
     func dexTotalFallsBackWithinTheSelection() {
-        // The regression this guards: a guest whose themes hold nothing on the
-        // server used to read 「0 / 480」 — a denominator describing a selection
+        // The regression this guards: themes that hold nothing on the server
+        // used to read 「0 / 480」 — a denominator describing a selection
         // nobody made.
         let d = TodayDecisions(self.inputs(
-            isGuest: true,
             totalInSelection: 0,
             dictionaryCount: 480,
             dictionaryCountInSelection: 60
@@ -166,10 +147,11 @@ struct TodayDecisionsTests {
 
     @Test("with themes picked but nothing selected locally the whole dictionary is the fallback")
     func dexTotalUsesDictionaryOnlyWhenNothingIsSelected() {
-        // Guests skip showThemePrompt, so an empty selection reaches the
-        // dictionary-wide fallback — the one case where 480 is the right answer.
+        // Before settings arrive there is no theme prompt, so an empty selection
+        // reaches the dictionary-wide fallback — the one case where 480 is the
+        // right answer.
         let d = TodayDecisions(self.inputs(
-            isGuest: true,
+            settingsLoaded: false,
             studyCategories: [],
             totalInSelection: 0,
             dictionaryCount: 480
@@ -204,15 +186,6 @@ struct TodayDecisionsTests {
         #expect(d.newDisabled)
     }
 
-    @Test("a guest is never told why 學新字 is blocked")
-    func guestsGetNoBlockReason() {
-        // Guests can't study new words at all; the prompt to sign in lives
-        // elsewhere, so surfacing a reason here would be noise.
-        let d = TodayDecisions(self.inputs(isGuest: true, studyCategories: []))
-        #expect(d.newBlock == .none)
-        #expect(d.newDisabled)
-    }
-
     @Test("before progress loads the global new count stands in")
     func newAvailableFallsBackBeforeProgressLoads() {
         let d = TodayDecisions(self.inputs(progressLoaded: false))
@@ -224,12 +197,6 @@ struct TodayDecisionsTests {
         #expect(TodayDecisions(self.inputs()).reviewDisabled)
         #expect(
             !TodayDecisions(self.inputs(
-                stats: StudyStats(total: 120, seen: 40, due: 3, new: 80, todayNew: 0)
-            )).reviewDisabled
-        )
-        #expect(
-            TodayDecisions(self.inputs(
-                isGuest: true,
                 stats: StudyStats(total: 120, seen: 40, due: 3, new: 80, todayNew: 0)
             )).reviewDisabled
         )
@@ -271,18 +238,6 @@ struct TodayDecisionsTests {
         let d = TodayDecisions(self.inputs(stats: nil))
         #expect(d.reviewDisabled)
         #expect(d.heroHint == nil)
-    }
-
-    /// A guest's verdict is `.nothingToReview` — `reviewDisabled` is true for
-    /// them by definition — and that is *unreachable*, not wrong: the hero
-    /// swaps its whole CTA block for 建立帳號，開始學習 before any hint renders.
-    ///
-    /// Stated rather than asserted-away, because the next reader of
-    /// `heroHint` will wonder, and because it is the kind of thing that stops
-    /// being unreachable the moment someone gives guests a CTA row.
-    @Test
-    func aGuestsVerdictIsNeverRendered() {
-        #expect(TodayDecisions(self.inputs(isGuest: true)).heroHint == .nothingToReview)
     }
 
     /// Picking no themes is answered by the theme prompt, not by a caption.

@@ -63,8 +63,7 @@ struct MasteryDistribution: Equatable {
     /// **未學 is deliberately absent.** A word the user has never studied has no
     /// row and so no entry here, so counting it would need a denominator, and
     /// the only honest denominator is the one `CompletionReadout` already owns
-    /// (scoped to the selected 學習主題, with its guest branch and its
-    /// published-card total). Minting a second one here is how that module's
+    /// (scoped to the selected 學習主題, with its published-card total). Minting a second one here is how that module's
     /// documented bug — a percentage describing a selection nobody made —
     /// would come back under a new name. Width is 完成度's question; this
     /// answers depth, over the words that have an answer.

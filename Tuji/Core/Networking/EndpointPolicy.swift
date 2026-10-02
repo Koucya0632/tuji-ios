@@ -26,7 +26,7 @@ struct EndpointPolicy {
 /// endpoint: 「attach no bearer」 (`buildRequest`) and 「never retry a 401」
 /// (`execute`). `.atlasPublicCollection` is `optionalToken`, so a signed-in
 /// caller *does* send a token — and its 401 was the one 401 never retried,
-/// leaving the user looking at the guest view of a collection they had saved.
+/// leaving the user looking at the signed-out view of a collection they had saved.
 enum EndpointAccess: Equatable {
     /// A bearer token is required; the request cannot be made without one.
     case authenticated

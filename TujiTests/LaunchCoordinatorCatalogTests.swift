@@ -15,7 +15,7 @@ struct LaunchCoordinatorCatalogTests {
             resolveAuthentication: { .signedIn(userID: userID) },
             hydrateProfile: {},
             catalog: FakeCatalogWarmer.splitting(
-                guest: { preloadCompletions += 1 },
+                anonymous: { preloadCompletions += 1 },
                 signedIn: { finalizedUserID in
                     #expect(finalizedUserID == userID)
                     finalizationStarts += 1
@@ -38,7 +38,7 @@ struct LaunchCoordinatorCatalogTests {
         await start.value
 
         #expect(coordinator.state == .ready)
-        #expect(!coordinator.guestCatalogReady)
+        #expect(!coordinator.anonymousCatalogReady)
         #expect(!coordinator.catalogReady(for: context.account))
         #expect(LaunchDestination.resolve(
             launchReady: coordinator.launchReady,
@@ -268,38 +268,6 @@ struct LaunchCoordinatorCatalogTests {
         )))
         #expect(coordinator.catalogReady(for: .signedIn(
             userID: secondUserID,
-            setupDone: true
-        )))
-    }
-
-    @Test
-    func switchingToGuestReactivatesTheAnonymousCatalog() async {
-        let userID = UUID()
-        var anonymousLoads = 0
-        let coordinator = LaunchCoordinator(
-            minimumSplashDuration: .milliseconds(0),
-            resolveAuthentication: { .signedIn(userID: userID) },
-            hydrateProfile: {},
-            catalog: FakeCatalogWarmer.splitting(
-                guest: { anonymousLoads += 1 }
-            ),
-            replayOutbox: {},
-            trackAppOpen: {}
-        )
-
-        await coordinator.start()
-        await coordinator.waitForBackgroundWork()
-        #expect(coordinator.catalogReady(for: .signedIn(
-            userID: userID,
-            setupDone: true
-        )))
-
-        await coordinator.prepareGuestSession()
-
-        #expect(anonymousLoads == 2)
-        #expect(coordinator.guestCatalogReady)
-        #expect(!coordinator.catalogReady(for: .signedIn(
-            userID: userID,
             setupDone: true
         )))
     }

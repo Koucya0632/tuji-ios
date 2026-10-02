@@ -16,19 +16,13 @@ struct LearningRefreshTests {
     /// 我 · 進度 draws the 熟練度 bar; its pull used to re-read progress alone.
     @Test
     func pullingMeRereadsMasteryToo() {
-        #expect(LearningRefreshCause.pulledMe(isGuest: false).targets == [.progress, .mastery])
+        #expect(LearningRefreshCause.pulledMe.targets == [.progress, .mastery])
     }
 
     @Test
     func pullingTodayDropsTheQueueAlongWithTheNumbers() {
-        #expect(LearningRefreshCause.pulledToday(isGuest: false).targets
+        #expect(LearningRefreshCause.pulledToday.targets
             == [.progress, .stats, .mastery, .queue, .dictionary, .themes])
-    }
-
-    @Test
-    func aGuestHasNoAccountStoresToRefresh() {
-        #expect(LearningRefreshCause.pulledToday(isGuest: true).targets == [.dictionary, .themes])
-        #expect(LearningRefreshCause.pulledMe(isGuest: true).targets.isEmpty)
     }
 
     @Test

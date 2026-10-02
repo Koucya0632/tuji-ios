@@ -65,20 +65,17 @@ final class SettingsVM {
     ///
     /// The server wipes `user_cards` too, so the stats store has to be
     /// invalidated alongside progress — otherwise 學習 shows the pre-wipe
-    /// due/seen counts for up to 30s. The local learned set goes as well: 完成度
-    /// and the category breakdown read it, and sync is union-only, so a stale
-    /// local set would resurrect the cleared ids at the next sign-in.
+    /// due/seen counts for up to 30s.
     ///
     /// The stores are parameters because a screen holds them in its environment
     /// and this object does not; they are `RefreshableStore` so a test can pass
     /// spies.
-    func clearProgress(learned: LearnedSetClearing) async {
+    func clearProgress() async {
         self.clearing = true
         self.clearError = nil
         defer { self.clearing = false }
         do {
             try await self.progressRepository.clearProgress()
-            learned.clearLearned()
             // The View used to pass the stores, and left mastery out.
             await self.refresh.refresh(after: .progressCleared)
         } catch {
@@ -112,11 +109,3 @@ final class SettingsVM {
         self.deleteError = nil
     }
 }
-
-/// The local learned set, as the one thing clearing needs from `LocalCache`.
-@MainActor
-protocol LearnedSetClearing {
-    func clearLearned()
-}
-
-extension LocalCache: LearnedSetClearing {}

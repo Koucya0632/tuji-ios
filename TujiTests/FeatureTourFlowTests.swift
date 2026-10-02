@@ -61,7 +61,7 @@ struct FeatureTourFlowTests {
     /// premise can quietly stop holding is a test that passes by absence.
     @Test
     func aStepOnTheSameTabJustShowsTheNextOne() throws {
-        let flow = FeatureTourFlow(isGuest: false)
+        let flow = FeatureTourFlow()
         let pair = try #require(
             (0..<(flow.steps.count - 1)).first { flow.steps[$0].tab == flow.steps[$0 + 1].tab },
             "the tour no longer has two consecutive steps on one tab"
@@ -73,7 +73,7 @@ struct FeatureTourFlowTests {
     /// card lives on another tab, so the pager has to move first.
     @Test
     func aStepOnAnotherTabCrossesToIt() throws {
-        let flow = FeatureTourFlow(isGuest: false)
+        let flow = FeatureTourFlow()
         let boundary = try #require(
             (0..<(flow.steps.count - 1)).first { flow.steps[$0].tab != flow.steps[$0 + 1].tab },
             "the tour no longer changes tab; this branch has nothing to pin"
@@ -87,7 +87,7 @@ struct FeatureTourFlowTests {
     /// card — the guard that used to be `index + 1 < steps.count` inline.
     @Test
     func advancingPastTheLastStepFinishes() {
-        let flow = FeatureTourFlow(isGuest: false)
+        let flow = FeatureTourFlow()
         #expect(flow.advance(from: flow.steps.count - 1, showing: .today) == .finish)
     }
 
@@ -95,27 +95,13 @@ struct FeatureTourFlowTests {
     /// reader who swiped the pager mid-tour is already where the next card is.
     @Test
     func theTabBeingShownDecidesNotTheStepsOwn() throws {
-        let flow = FeatureTourFlow(isGuest: false)
+        let flow = FeatureTourFlow()
         let boundary = try #require(
             (0..<(flow.steps.count - 1)).first { flow.steps[$0].tab != flow.steps[$0 + 1].tab }
         )
         let next = flow.steps[boundary + 1]
         // Already on the destination → no crossing needed.
         #expect(flow.advance(from: boundary, showing: next.tab) == .show(index: boundary + 1))
-    }
-
-    // MARK: - The two tours
-
-    /// A guest gets a tour of what a guest can do. The two differ, which is why
-    /// `steps(isGuest:)` takes the flag at all.
-    @Test
-    func theGuestTourIsItsOwnSequence() {
-        let guest = FeatureTourFlow(isGuest: true)
-        let signedIn = FeatureTourFlow(isGuest: false)
-        #expect(!guest.steps.isEmpty)
-        // A guest has no 學新字/複習 buttons, so the opening card points at the
-        // hero itself rather than at CTAs that are not there.
-        #expect(guest.steps[0].target != signedIn.steps[0].target)
     }
 
     /// Finishing lands on 主頁 because the closing card invites the reader to

@@ -60,9 +60,7 @@ struct DeepLinkParsingTests {
         #expect(self.link("tuji://study?mode=review") == .study(mode: .review))
         #expect(self.link("tuji://word/cup") == .word(id: "cup"))
         #expect(self.link("tuji://category/kitchen") == .category(id: "kitchen"))
-        #expect(
-            self.link("tuji://collection/my-slug") == .collection(slug: "my-slug", autoSave: false)
-        )
+        #expect(self.link("tuji://collection/my-slug") == .collection(slug: "my-slug"))
     }
 
     @Test("an id-carrying head without its id is not a link")
@@ -79,17 +77,6 @@ struct DeepLinkParsingTests {
         #expect(self.link("tuji://") == nil)
     }
 
-    @Test("a shared collection link never auto-saves on its own")
-    func sharedCollectionLinksDoNotAutoSave() {
-        // autoSave is an in-app intent (re-entering after sign-in), never
-        // something an incoming URL can ask for — otherwise any link could add
-        // a collection to your shelf.
-        #expect(self.link("tuji://collection/x") == .collection(slug: "x", autoSave: false))
-        #expect(
-            self.universal("collection/x?autoSave=true") == .collection(slug: "x", autoSave: false)
-        )
-    }
-
     @Test("each link names the tab it belongs to")
     func tabMapping() {
         #expect(TujiDeepLink.today.tab == .today)
@@ -101,7 +88,7 @@ struct DeepLinkParsingTests {
         // 我的收藏 stopped being a screen: bookmarks are a source filter on 圖鑑.
         #expect(TujiDeepLink.favorites.tab == .cards)
         #expect(TujiDeepLink.community.tab == .community)
-        #expect(TujiDeepLink.collection(slug: "s", autoSave: false).tab == .community)
+        #expect(TujiDeepLink.collection(slug: "s").tab == .community)
         #expect(TujiDeepLink.me.tab == .me)
         #expect(TujiDeepLink.settings.tab == .me)
     }
@@ -117,54 +104,27 @@ struct DeepLinkParsingTests {
 }
 
 struct TabShellDecisionsTests {
-    @Test("a guest's auto-save collection intent is held, not consumed")
-    func guestAutoSaveIsHeld() {
-        // It has to survive the root swap to Welcome and the whole sign-in
-        // flow; consuming it here would drop the thing the user tapped.
+    @Test("a collection link opens the collection on 物見")
+    func collectionLinkApplies() {
         let effect = TabShellDecisions.pendingLinkEffect(
-            pending: .collection(slug: "s", autoSave: true),
-            isSignedIn: false,
-            tourActive: false
-        )
-        #expect(effect == .hold)
-    }
-
-    @Test("the same intent is applied once signed in")
-    func signedInAutoSaveIsApplied() {
-        let effect = TabShellDecisions.pendingLinkEffect(
-            pending: .collection(slug: "s", autoSave: true),
-            isSignedIn: true,
+            pending: .collection(slug: "s"),
             tourActive: false
         )
         #expect(
             effect == .apply(.init(
                 tab: .community,
-                route: .atlasCollectionDetail(slug: "s", autoSave: true, preview: nil),
+                route: .atlasCollectionDetail(slug: "s", preview: nil),
                 cardsSource: nil,
                 skipTour: false
             ))
         )
     }
 
-    @Test("a guest opening a non-saving link is not held up")
-    func guestPlainCollectionLinkApplies() {
-        let effect = TabShellDecisions.pendingLinkEffect(
-            pending: .collection(slug: "s", autoSave: false),
-            isSignedIn: false,
-            tourActive: false
-        )
-        if case let .apply(applied) = effect {
-            #expect(applied.tab == .community)
-        } else {
-            Issue.record("a plain collection link must open for guests too")
-        }
-    }
-
-    @Test("nothing pending is not the same as being held")
+    @Test("nothing pending applies nothing")
     func noPendingLink() {
         #expect(
             TabShellDecisions.pendingLinkEffect(
-                pending: nil, isSignedIn: true, tourActive: false
+                pending: nil, tourActive: false
             ) == PendingLinkEffect.none
         )
     }
@@ -172,7 +132,7 @@ struct TabShellDecisionsTests {
     @Test("favorites selects the 書籤 source rather than opening a screen")
     func favoritesSelectsASource() {
         let effect = TabShellDecisions.pendingLinkEffect(
-            pending: .favorites, isSignedIn: true, tourActive: false
+            pending: .favorites, tourActive: false
         )
         #expect(
             effect == .apply(.init(
@@ -187,7 +147,7 @@ struct TabShellDecisionsTests {
     @Test("a deep link outranks the first-run tour")
     func linkSkipsTheTour() {
         let effect = TabShellDecisions.pendingLinkEffect(
-            pending: .today, isSignedIn: true, tourActive: true
+            pending: .today, tourActive: true
         )
         if case let .apply(applied) = effect {
             #expect(applied.skipTour)

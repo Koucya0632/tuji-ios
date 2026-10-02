@@ -36,14 +36,13 @@ protocol AccessTokenProviding {
     func refreshedAccessToken(rejected: String?) async throws -> String
     /// Whether to *attempt* a token on an optional-auth endpoint. Distinct from
     /// "a token is available": an optional-auth request must stay usable for
-    /// signed-out guests, so this only decides whether to try.
+    /// a signed-out caller, so this only decides whether to try.
     var isSignedIn: Bool { get }
 }
 
 extension AuthService: AccessTokenProviding {
     var isSignedIn: Bool {
-        if case .signedIn = self.state { return true }
-        return false
+        self.state.isSignedIn
     }
 
     func refreshedAccessToken(rejected: String?) async throws -> String {

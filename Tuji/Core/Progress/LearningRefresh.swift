@@ -20,9 +20,9 @@ import Foundation
 /// Something that makes learning numbers on screen stale.
 enum LearningRefreshCause: Equatable {
     /// 首頁 pulled to refresh.
-    case pulledToday(isGuest: Bool)
+    case pulledToday
     /// 我 pulled to refresh.
-    case pulledMe(isGuest: Bool)
+    case pulledMe
     /// 設定 → 清除學習進度 succeeded on the server.
     case progressCleared
     /// 設定 → 語言 changed the interface language.
@@ -41,14 +41,14 @@ enum RefreshTarget: CaseIterable, Hashable {
 }
 
 extension LearningRefreshCause {
-    /// The whole policy. Guests have no account-scoped stores to refresh.
+    /// The whole policy.
     var targets: Set<RefreshTarget> {
         switch self {
-        case let .pulledToday(isGuest):
-            isGuest ? [.dictionary, .themes] : [.progress, .stats, .mastery, .queue, .dictionary, .themes]
-        case let .pulledMe(isGuest):
+        case .pulledToday:
+            [.progress, .stats, .mastery, .queue, .dictionary, .themes]
+        case .pulledMe:
             // No stats: nothing on 我 reads due / new. Mastery: the 熟練度 bar.
-            isGuest ? [] : [.progress, .mastery]
+            [.progress, .mastery]
         case .progressCleared:
             // Everything the wipe emptied. The queue too: it was built from the
             // SRS schedule that no longer exists.

@@ -73,14 +73,14 @@ struct LocalCacheAccountBoundaryTests {
         let suite = "LocalCacheAccountBoundaryTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         return Harness(
-            cache: LocalCache(defaults: defaults, learningDirection: { .zhJa }),
+            cache: LocalCache(defaults: defaults),
             defaults: defaults,
             suite: suite
         )
     }
 
-    /// The next sign-in uploads whatever is here into *that* account, so the
-    /// previous account's bookmarks must be gone before it can.
+    /// The previous account's bookmarks must be gone before the next one signs
+    /// in.
     @Test
     func signOutDropsTheBookmarksButKeepsTheSearchHistory() throws {
         let harness = try self.harness()
@@ -92,10 +92,9 @@ struct LocalCacheAccountBoundaryTests {
         cache.reset()
 
         #expect(cache.favoriteIds.isEmpty)
-        #expect(cache.syncSnapshot.favorites.isEmpty)
         #expect(cache.recentSearches == ["やかん"])
         // Persisted, not just in memory: a relaunch must not bring them back.
-        #expect(LocalCache(defaults: harness.defaults, learningDirection: { .zhJa }).favoriteIds.isEmpty)
+        #expect(LocalCache(defaults: harness.defaults).favoriteIds.isEmpty)
     }
 
     @Test
@@ -108,14 +107,6 @@ struct LocalCacheAccountBoundaryTests {
         cache.mergeServerFavorites(["ladle", "kettle"])
 
         #expect(cache.favoriteIds == ["kettle", "ladle"])
-    }
-
-    @Test
-    func theSyncSnapshotCarriesTheInjectedDirection() throws {
-        let harness = try self.harness()
-        defer { harness.tearDown() }
-        let cache = harness.cache
-        #expect(cache.syncSnapshot.learningDirection == .zhJa)
     }
 }
 

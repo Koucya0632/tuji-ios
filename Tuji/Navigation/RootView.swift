@@ -30,15 +30,9 @@ struct RootView: View {
             }
         }
         .task { await self.launch.start() }
-        .task(id: self.catalogSession) {
-            switch self.catalogSession {
-            case .some(.guest):
-                await self.launch.prepareGuestSession()
-            case let .some(.signedIn(userID)):
-                await self.launch.prepareSignedInSession(userID: userID)
-            case .none:
-                break
-            }
+        .task(id: self.signedInUserID) {
+            guard let userID = self.signedInUserID else { return }
+            await self.launch.prepareSignedInSession(userID: userID)
         }
         .onChange(of: self.onboarding.learningDirection) { oldValue, newValue in
             guard oldValue != newValue, newValue != nil else { return }
@@ -48,11 +42,11 @@ struct RootView: View {
             // existing no-empty-flash reload behavior instead.
             switch self.auth.state {
             case .signedOut:
-                self.launch.refreshGuestCatalog()
+                self.launch.refreshAnonymousCatalog()
             case let .signedIn(user)
                 where !self.onboarding.setupDone(for: user.id):
                 self.launch.refreshSignedInCatalog(userID: user.id)
-            case .checking, .guest, .signedIn:
+            case .checking, .signedIn:
                 break
             }
         }
@@ -103,8 +97,6 @@ struct RootView: View {
 
         case .main:
             switch self.auth.state {
-            case .guest:
-                MainTabsView(user: nil)
             case let .signedIn(user):
                 MainTabsView(user: user)
             case .checking, .signedOut:
@@ -137,8 +129,6 @@ struct RootView: View {
             .checking
         case .signedOut:
             .signedOut
-        case .guest:
-            .guest
         case let .signedIn(user):
             .signedIn(
                 userID: user.id,
@@ -147,20 +137,9 @@ struct RootView: View {
         }
     }
 
-    private var catalogSession: CatalogSession? {
-        switch self.auth.state {
-        case .guest:
-            .guest
-        case let .signedIn(user):
-            .signedIn(userID: user.id)
-        case .checking, .signedOut:
-            nil
-        }
-    }
-
-    private enum CatalogSession: Hashable {
-        case guest
-        case signedIn(userID: UUID)
+    private var signedInUserID: UUID? {
+        guard case let .signedIn(user) = self.auth.state else { return nil }
+        return user.id
     }
 }
 

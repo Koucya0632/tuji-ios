@@ -1,7 +1,5 @@
 // 設定 → 提醒. Device-local, so it reads StudyReminders rather than
 // SettingsStore, and it is never inert while the account's settings load.
-// Not shown to guests: they have nothing to be reminded of, since they cannot
-// study yet.
 
 import SwiftUI
 

@@ -66,16 +66,6 @@ struct AuthSessionTests {
         #expect(s.state == .signedOut)
     }
 
-    // MARK: - Guest
-
-    @Test
-    func guestModeIsLeftOnlyFromGuest() {
-        var s = AuthSession()
-        s.signedIn(self.user())
-        s.exitGuest() // signed in — nothing happens
-        #expect(s.state == .signedIn(self.user()))
-    }
-
     // MARK: - Profile mirror
 
     @Test

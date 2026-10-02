@@ -155,12 +155,12 @@ struct APIClientTests {
     @Test("an optional-auth endpoint attaches a token only when signed in")
     func optionalAuthFollowsTheSession() async throws {
         let signedOut = RequestRecorder()
-        let guestApi = self.client(auth: FakeAuth(isSignedIn: false)) { request in
+        let signedOutApi = self.client(auth: FakeAuth(isSignedIn: false)) { request in
             _ = signedOut.record(request)
             return StubResponse(status: 200, body: #"{"ok":true}"#)
         }
-        _ = try await guestApi.get(.atlasPublicCollection(slug: "s"), as: Ack.self)
-        #expect(signedOut.last?.authorization == nil, "a guest must still be able to read it")
+        _ = try await signedOutApi.get(.atlasPublicCollection(slug: "s"), as: Ack.self)
+        #expect(signedOut.last?.authorization == nil, "a signed-out caller must still be able to read it")
 
         let signedIn = RequestRecorder()
         let userApi = self.client(auth: FakeAuth(isSignedIn: true)) { request in

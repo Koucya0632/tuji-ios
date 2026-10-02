@@ -59,9 +59,7 @@ struct AtlasAuthorProfileView: View {
         return self.auth.relationship(toAuthor: self.vm.handle) ?? .theirs
     }
 
-    /// Guests have no account to report or block *with*, and both endpoints
-    /// require auth — offering an action that can only 401 is worse than not
-    /// offering it.
+    /// Only someone else's work can be reported or blocked.
     private var canModerate: Bool {
         self.relationship == .theirs
     }
@@ -111,7 +109,6 @@ struct AtlasAuthorProfileView: View {
                 switch self.relationship {
                 case .mine: self.editButton
                 case .theirs: self.moderationMenu
-                case .guest: EmptyView()
                 }
             }
             self.scroll
@@ -355,7 +352,7 @@ struct AtlasAuthorProfileView: View {
                     onOpen: {
                         self.navigator.push(
                             .atlasCollectionDetail(
-                                slug: collection.slug, autoSave: false, preview: collection
+                                slug: collection.slug, preview: collection
                             )
                         )
                     },

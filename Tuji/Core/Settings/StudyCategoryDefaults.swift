@@ -3,12 +3,10 @@ import Foundation
 /// What a brand-new selection of study themes contains, in one place.
 ///
 /// It used to be split: `newUserCategoryIDs` here held only the two personal
-/// atlas themes, and the beginner trio lived privately in `SetupView`. A signed
-/// -in user came out fine because Setup unions the two — but **a guest never
-/// runs Setup**, so their entire selection was 自定義 + 物見: two themes a guest
-/// can never fill, because a guest can neither photograph nor 收進圖鑑. That
-/// left 設定 claiming 「已選 2 個」 next to a 主題進度 counted over the whole
-/// dictionary.
+/// atlas themes, and the beginner trio lived privately in `SetupView`, so
+/// anything that read the default before Setup ran saw 自定義 + 物見 alone: two
+/// themes that start empty, with 設定 claiming 「已選 2 個」 next to a 主題進度
+/// counted over the whole dictionary.
 enum StudyCategoryDefaults {
     static let customID = "custom"
     static let communityID = "community"
@@ -22,8 +20,8 @@ enum StudyCategoryDefaults {
     /// new account has real cards on day one.
     static let beginnerCategoryIDs = ["kitchen", "bathroom", "living-room"]
 
-    /// The pre-server default (`UserSettings.default`), and therefore the whole
-    /// of a guest's selection. Must contain themes that actually hold words.
+    /// The pre-server default (`UserSettings.default`). Must contain themes
+    /// that actually hold words.
     static let newUserCategoryIDs = beginnerCategoryIDs + atlasCategoryIDs
 
     static func addingCommunity(to categoryIDs: [String]) -> [String] {

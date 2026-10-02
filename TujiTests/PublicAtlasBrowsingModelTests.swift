@@ -15,7 +15,7 @@ struct PublicAtlasBrowsingModelTests {
         explore.result = .success([self.collection("a")])
         let model = self.model(explore: explore)
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
 
         #expect(model.explore.collections.map(\.id) == ["a"])
         #expect(model.explore.phase == .ready)
@@ -28,8 +28,8 @@ struct PublicAtlasBrowsingModelTests {
         explore.result = .success([self.collection("a")])
         let model = self.model(explore: explore)
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
+        await model.update(shelf: .explore, language: .ja)
 
         #expect(explore.calls.count == 1)
     }
@@ -40,8 +40,8 @@ struct PublicAtlasBrowsingModelTests {
         explore.result = .success([self.collection("a")])
         let model = self.model(explore: explore)
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
-        await model.update(shelf: .explore, language: .en, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
+        await model.update(shelf: .explore, language: .en)
 
         #expect(explore.calls.map(\.language) == [.ja, .en])
     }
@@ -52,14 +52,13 @@ struct PublicAtlasBrowsingModelTests {
         explore.result = .success([self.collection("a")])
         let model = self.model(explore: explore)
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
         await model.update(
             shelf: .explore,
             language: .ja,
-            isSignedIn: false,
             pendingExploreRefresh: true
         )
-        await model.refresh(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.refresh(shelf: .explore, language: .ja)
 
         #expect(explore.calls.count == 3)
         #expect(explore.calls.dropFirst().map(\.forceReload) == [true, true])
@@ -79,14 +78,13 @@ struct PublicAtlasBrowsingModelTests {
 
         #expect(model.explore.showsPlaceholder, "a cold shelf has nothing to keep")
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
         #expect(!model.explore.showsPlaceholder)
 
         // The publish-then-return path.
         await model.update(
             shelf: .explore,
             language: .ja,
-            isSignedIn: false,
             pendingExploreRefresh: true
         )
         #expect(!model.explore.showsPlaceholder)
@@ -101,7 +99,7 @@ struct PublicAtlasBrowsingModelTests {
         saved.saved = [self.collection("a")]
         let model = self.model(saved: saved)
 
-        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
+        await model.update(shelf: .saved, language: .ja)
         #expect(!model.saved.showsPlaceholder)
         #expect(model.saved.collections.map(\.id) == ["a"])
     }
@@ -112,7 +110,7 @@ struct PublicAtlasBrowsingModelTests {
         explore.result = .failure(FakeBrowsingError.boom)
         let model = self.model(explore: explore)
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
 
         #expect(model.explore.collections.isEmpty)
         #expect(model.explore.errorMessage != nil)
@@ -127,25 +125,24 @@ struct PublicAtlasBrowsingModelTests {
         explore.result = .success([self.collection("a"), self.collection("b")])
         let model = self.model(explore: explore)
 
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
         explore.result = .failure(FakeBrowsingError.boom)
-        await model.refresh(shelf: .explore, language: .ja, isSignedIn: false)
+        await model.refresh(shelf: .explore, language: .ja)
 
         #expect(model.explore.collections.map(\.id) == ["a", "b"])
         #expect(model.explore.errorMessage != nil)
     }
 
     @Test
-    func selectedSavedShelfLoadsOnlyForSignedInUser() async {
+    func selectedSavedShelfLoads() async {
         let saved = FakeCollectionBookmarking()
         saved.saved = [self.collection("new"), self.collection("old")]
         let model = self.model(saved: saved)
 
-        await model.update(shelf: .saved, language: .ja, isSignedIn: false)
+        await model.update(shelf: .explore, language: .ja)
         #expect(saved.requestedLanguages.isEmpty)
-        #expect(model.saved.phase == .idle)
 
-        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
+        await model.update(shelf: .saved, language: .ja)
         #expect(saved.requestedLanguages == [.ja])
         #expect(model.saved.collections.map(\.id) == ["new", "old"])
         #expect(model.saved.phase == .ready)
@@ -156,28 +153,12 @@ struct PublicAtlasBrowsingModelTests {
         let saved = FakeCollectionBookmarking()
         let model = self.model(saved: saved)
 
-        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
-        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
+        await model.update(shelf: .saved, language: .ja)
+        await model.update(shelf: .saved, language: .ja)
         #expect(saved.requestedLanguages.count == 1)
 
-        await model.refresh(shelf: .saved, language: .ja, isSignedIn: true)
+        await model.refresh(shelf: .saved, language: .ja)
         #expect(saved.requestedLanguages.count == 2)
-    }
-
-    @Test
-    func signingOutClearsPrivateShelfAndNextSignInReloadsIt() async {
-        let saved = FakeCollectionBookmarking()
-        saved.saved = [self.collection("a")]
-        let model = self.model(saved: saved)
-
-        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
-        await model.update(shelf: .explore, language: .ja, isSignedIn: false)
-
-        #expect(model.saved.collections.isEmpty)
-        #expect(model.saved.phase == .idle)
-
-        await model.update(shelf: .saved, language: .ja, isSignedIn: true)
-        #expect(saved.requestedLanguages == [.ja, .ja])
     }
 
     @Test
@@ -187,7 +168,7 @@ struct PublicAtlasBrowsingModelTests {
         let explore = FakeCollectionsBrowsing()
         explore.result = .success([original])
         let model = self.model(explore: explore)
-        await model.update(shelf: .explore, language: .ja, isSignedIn: true)
+        await model.update(shelf: .explore, language: .ja)
 
         model.applyConfirmedBookmark(
             collection: confirmed,
@@ -224,7 +205,7 @@ struct PublicAtlasBrowsingModelTests {
         let explore = FakeCollectionsBrowsing()
         explore.result = .success([self.collection("a")])
         let model = self.model(explore: explore)
-        await model.update(shelf: .explore, language: .ja, isSignedIn: true)
+        await model.update(shelf: .explore, language: .ja)
 
         model.applyAuthorIdentity(
             AtlasAuthorRef(

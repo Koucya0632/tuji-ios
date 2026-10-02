@@ -3,10 +3,8 @@
 // The rule had two implementations. `TodayDecisions.dexSeen/dexTotal` carried
 // the corrected one; `MeProgressSections.seenTotal/dictTotal` carried the
 // version from before the fix, private on a `View` struct where no test could
-// reach it. They disagreed in three cases a user can reach:
+// reach it. They disagreed in cases a user can reach:
 //
-//   - a guest who has learned words: 首頁 counted them, 我 read the server's
-//     (empty) rows and said 0%;
 //   - themes that hold no published cards (自定義 + 物見): 我 fell back to the
 //     *whole* dictionary and printed 「已學 0 / 共 480 字」 — a denominator
 //     describing a selection nobody made, which is exactly the bug
@@ -26,7 +24,7 @@ enum CompletionScope: Equatable {
     case selectedThemes
     /// No selection, so the whole dictionary stands in.
     case wholeDictionary
-    /// Nothing to describe yet: signed in, settings loaded, no themes picked.
+    /// Nothing to describe yet: settings loaded, no themes picked.
     /// Reads 0 / 0 rather than inventing a denominator.
     case pending
 }
@@ -35,13 +33,10 @@ struct CompletionReadout: Equatable {
     /// Every fact the rule depends on. Assembled by the screen from its
     /// environment; nothing in here is fetched.
     struct Inputs: Equatable {
-        var isGuest: Bool
         /// `SettingsStore.hasLoaded` — an empty theme list means nothing until
         /// settings have actually arrived.
         var settingsLoaded: Bool
         var studyCategories: [String]
-        /// Guests have no SRS state; their progress is the local learned set.
-        var guestLearnedCount: Int
         /// `ProgressStore.seenCount(filter:)` over the selection.
         var seenInSelection: Int
         /// `ProgressStore.totalCount(filter:)` over the selection.
@@ -58,13 +53,11 @@ struct CompletionReadout: Equatable {
         self.inputs = inputs
     }
 
-    /// Signed in, settings have arrived, and no themes are picked. The screens
+    /// Settings have arrived and no themes are picked. The screens
     /// both branch on this — 首頁 to show its 選擇主題 prompt, 我 to avoid
     /// labelling an all-category number as a scoped one.
     var showsThemePrompt: Bool {
-        !self.inputs.isGuest
-            && self.inputs.settingsLoaded
-            && self.inputs.studyCategories.isEmpty
+        self.inputs.settingsLoaded && self.inputs.studyCategories.isEmpty
     }
 
     var scope: CompletionScope {
@@ -75,7 +68,6 @@ struct CompletionReadout: Equatable {
     /// Words studied at least once (server "seen"). With no themes selected the
     /// progress reads 0 to match the "pick themes first" empty state.
     var seen: Int {
-        if self.inputs.isGuest { return self.inputs.guestLearnedCount }
         if self.showsThemePrompt { return 0 }
         return self.inputs.seenInSelection
     }
@@ -84,8 +76,8 @@ struct CompletionReadout: Equatable {
     /// available, else the locally known dictionary — scoped the same way.
     ///
     /// The fallback is scoped deliberately. Falling back to the *whole*
-    /// dictionary fires not only when there is no server progress (guests,
-    /// always) but also whenever the selected themes happen to hold nothing.
+    /// dictionary fires not only when there is no server progress but also
+    /// whenever the selected themes happen to hold nothing.
     var total: Int {
         if self.showsThemePrompt { return 0 }
         if self.inputs.totalInSelection > 0 { return self.inputs.totalInSelection }
@@ -157,36 +149,15 @@ extension SettingsStore: StudySelectionReading {
     }
 }
 
-/// A guest's progress, which is the local learned set rather than server rows.
-///
-/// A seam for one integer, because `LocalCache.init` is **private**: `.shared`
-/// is the only instance that can exist, so a mapping that took the concrete type
-/// could not be stood up in a test — the trap 圖鑑管理 already recorded ("a
-/// `.shared`-defaulted seam whose init is private is not a seam"). The other
-/// three stores this mapping reads all have an injectable `init(repository:)`
-/// and stay concrete.
-@MainActor
-protocol GuestProgressReading {
-    var learnedCount: Int { get }
-}
-
-extension LocalCache: GuestProgressReading {
-    var learnedCount: Int {
-        self.learnedIds.count
-    }
-}
-
 extension CompletionReadout.Inputs {
-    /// Read the eight facts out of the six stores that hold them.
+    /// Read the facts out of the stores that hold them.
     ///
     /// The *rule* had one home from the start; the *reading* had three — 首頁
     /// assembling `TodayDecisions.Inputs`, `TodayDecisions` copying eight of its
     /// eleven fields across field by field, and 我 assembling its own set from
     /// the same six stores. Two of the three lived in `View` bodies, so nothing
-    /// could verify that the two screens were asking the same question, and
-    /// once they were not: `isGuest` was answered two different ways and only
-    /// agreed because `RootView` maps `.guest` to `user: nil` by hand.
-    /// `ViewerIdentity` collapsed that one field. This collapses the other seven.
+    /// could verify that the two screens were asking the same question. This
+    /// collapses them.
     ///
     /// **The stores are parameters, not properties.** Reading them inside the
     /// `View`'s body evaluation is what registers the `@Observable` dependency
@@ -196,11 +167,9 @@ extension CompletionReadout.Inputs {
     /// test. So the call stays in the body and only the mapping moves here.
     @MainActor
     init(
-        viewer: some ViewerIdentity,
         settings: some StudySelectionReading,
         progress: ProgressStore,
-        words: WordsStore,
-        cache: some GuestProgressReading
+        words: WordsStore
     ) {
         // Read once, then used as the filter for all four scoped numbers. It
         // being *the same* selection in all four places is the rule — 我 used to
@@ -213,10 +182,8 @@ extension CompletionReadout.Inputs {
             studyable: settings.studyableCategories
         )
         self.init(
-            isGuest: viewer.isGuest,
             settingsLoaded: settings.settingsLoaded,
             studyCategories: selected,
-            guestLearnedCount: cache.learnedCount,
             seenInSelection: progress.seenCount(filter: selected),
             totalInSelection: progress.totalCount(filter: selected),
             dictionaryCount: words.words.count,

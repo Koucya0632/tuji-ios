@@ -40,9 +40,8 @@ final class MeVM {
 }
 
 struct MeView: View {
-    let user: SessionUser?
+    let user: SessionUser
     @Environment(AuthService.self) private var auth
-    @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
     @Environment(SettingsStore.self) private var settings
 
@@ -59,7 +58,7 @@ struct MeView: View {
     private let entitlement: any EffectiveEntitlementReading
 
     init(
-        user: SessionUser?,
+        user: SessionUser,
         entitlement: any EffectiveEntitlementReading = LiveEffectiveEntitlement.shared
     ) {
         self.user = user
@@ -97,20 +96,16 @@ struct MeView: View {
         .refreshable {
             // Mastery too: 我 · 進度 draws the 熟練度 bar, and this pull used to
             // re-read progress alone.
-            await LiveLearningRefresher().refresh(after: .pulledMe(isGuest: self.auth.isGuest))
-            if !self.auth.isGuest {
-                await self.vm.load(progress: self.progress)
-            }
+            await LiveLearningRefresher().refresh(after: .pulledMe)
+            await self.vm.load(progress: self.progress)
         }
         .task {
-            if !self.auth.isGuest {
-                // Warm the 圖鑑管理 store from here (its parent screen) so tapping
-                // into AtlasManageView renders from the cached singleton instead
-                // of waiting on /api/atlas/sync. Fire-and-forget so it doesn't
-                // block Me's own load; sync() is incremental after the first run.
-                Task { await AtlasStore.shared.sync() }
-                await self.vm.load(progress: self.progress)
-            }
+            // Warm the 圖鑑管理 store from here (its parent screen) so tapping
+            // into AtlasManageView renders from the cached singleton instead
+            // of waiting on /api/atlas/sync. Fire-and-forget so it doesn't
+            // block Me's own load; sync() is incremental after the first run.
+            Task { await AtlasStore.shared.sync() }
+            await self.vm.load(progress: self.progress)
         }
     }
 
@@ -130,7 +125,7 @@ struct MeView: View {
                 #if DEBUG
                 // Dev-only Bearer smoke test. Compiled out of release /
                 // App Store builds so end users never see it.
-                DebugSmokeSection(isGuest: self.auth.isGuest)
+                DebugSmokeSection()
                     .padding(.horizontal, Space.s4)
                 #endif
                 #if TUJI_BETA
@@ -151,7 +146,7 @@ struct MeView: View {
         Button { self.presentPaywall() } label: {
             HStack(spacing: Space.s3) {
                 ProfileAvatar(
-                    avatar: self.auth.isGuest ? nil : self.user?.avatar,
+                    avatar: self.user.avatar,
                     fallbackPose: .face,
                     size: 48
                 )
@@ -191,7 +186,7 @@ struct MeView: View {
 
     @ViewBuilder
     private var weakSection: some View {
-        if !self.auth.isGuest, !self.vm.weakWords.isEmpty {
+        if !self.vm.weakWords.isEmpty {
             self.wordSection(
                 title: "需要加強",
                 words: self.vm.weakWords,
@@ -288,9 +283,8 @@ struct MeView: View {
     /// chose. The email local part stays as a last resort for an account whose
     /// UID has not mirrored yet.
     private var handle: String? {
-        if self.auth.isGuest { return "guest" }
         if let uid = self.auth.uid { return uid }
-        if let e = user?.email, let local = e.split(separator: "@").first {
+        if let e = user.email, let local = e.split(separator: "@").first {
             return String(local)
         }
         return nil
@@ -334,7 +328,6 @@ struct MeView: View {
 
 #if DEBUG
 private struct DebugSmokeSection: View {
-    let isGuest: Bool
     @State private var open = false
     @AppStorage(DebugOverrides.forceMembershipV2Key) private var forceMembershipV2 = false
     @State private var pinging = false
@@ -370,13 +363,9 @@ private struct DebugSmokeSection: View {
                     icon: "antenna.radiowaves.left.and.right",
                     action: self.runPing
                 )
-                .disabled(self.pinging || self.isGuest)
+                .disabled(self.pinging)
                 if let ping {
                     self.resultCard(ping)
-                } else if self.isGuest {
-                    Text("登入後可驗證 Bearer 鏈")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
                 }
             }
         }
@@ -420,12 +409,10 @@ private struct DebugSmokeSection: View {
 
     private var buttonTitle: LocalizedStringKey {
         if self.pinging { return "驗證中…" }
-        if self.isGuest { return "需要登入" }
         return "Bearer smoke test"
     }
 
     private func runPing() {
-        guard !self.isGuest else { return }
         Task {
             self.pinging = true
             defer { self.pinging = false }

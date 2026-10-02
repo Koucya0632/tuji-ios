@@ -19,14 +19,14 @@ enum NavRoute: Hashable {
     case atlasManage
     /// 編輯合集 — create/edit a single collection (add members, cover, submit).
     case atlasCollectionEdit(id: String)
-    /// 公開合集詳情；autoSave is used only to resume a guest's interrupted save.
+    /// 公開合集詳情.
     ///
     /// `preview` carries the row the user tapped so the header renders
     /// instantly. It is the capability the three sites that bypassed this table
     /// were reaching `navigationDestination(item:)` for — two passed a preview
     /// and one did not, which is exactly the kind of divergence a single case
     /// makes impossible.
-    case atlasCollectionDetail(slug: String, autoSave: Bool, preview: AtlasCollection?)
+    case atlasCollectionDetail(slug: String, preview: AtlasCollection?)
     /// 作者主頁. `isSelf` adds the edit entry point — 我的 pushes its own page
     /// with it set; 物見 opens other people's from the feed.
     case authorProfile(handle: String, isSelf: Bool)

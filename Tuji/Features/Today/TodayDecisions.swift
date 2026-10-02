@@ -20,8 +20,6 @@ import Foundation
 /// Which line sits under the greeting. One case per thing 首頁 can truthfully
 /// say, in the order the rules resolve.
 enum TodaySubtitle: Equatable {
-    case guestBrowsing
-    case guestLearned(count: Int)
     case pickThemes
     /// Stats have not arrived. A neutral line beats a wrong verdict —
     /// 「都學過了」 flashing on a brand-new account while the first fetch is in
@@ -88,23 +86,15 @@ struct TodayDecisions {
 
     /// 完成度, scoped to the selection. The rule lives on `CompletionReadout`
     /// so 我's card asks the same question the same way — it used to carry its
-    /// own copy, with a whole-dictionary fallback and no guest branch.
+    /// own copy, with a whole-dictionary fallback.
     var completion: CompletionReadout {
         CompletionReadout(self.inputs.completion)
     }
 
     // The 完成度 facts 首頁 also reasons about directly. Shortcuts, not a second
     // copy: they read straight through to the one input set.
-    private var isGuest: Bool {
-        self.inputs.completion.isGuest
-    }
-
     private var studyCategories: [String] {
         self.inputs.completion.studyCategories
-    }
-
-    private var guestLearnedCount: Int {
-        self.inputs.completion.guestLearnedCount
     }
 
     private var seenInSelection: Int {
@@ -120,13 +110,12 @@ struct TodayDecisions {
     }
 
     var dailyGoalReached: Bool {
-        guard !self.isGuest else { return false }
         let goal = max(1, self.inputs.dailyGoal)
         return (self.inputs.stats?.todayNew ?? 0) >= goal
     }
 
     var reviewDisabled: Bool {
-        self.isGuest || (self.inputs.stats?.due ?? 0) == 0
+        (self.inputs.stats?.due ?? 0) == 0
     }
 
     /// New words still to learn within the selected themes: (total − seen)
@@ -139,8 +128,6 @@ struct TodayDecisions {
     }
 
     var newBlock: TodayNewBlock {
-        // Guests can't study new words; the prompt to sign in lives elsewhere.
-        if self.isGuest { return .none }
         // No themes selected → nothing to draw new words from (review stays
         // available — it spans all studied words).
         if self.studyCategories.isEmpty { return .noThemes }
@@ -162,14 +149,10 @@ struct TodayDecisions {
     }
 
     var newDisabled: Bool {
-        self.isGuest || self.newBlock != .none
+        self.newBlock != .none
     }
 
     var subtitle: TodaySubtitle {
-        if self.isGuest {
-            let learned = self.guestLearnedCount
-            return learned > 0 ? .guestLearned(count: learned) : .guestBrowsing
-        }
         if self.showThemePrompt { return .pickThemes }
         guard let stats = self.inputs.stats else { return .unknown }
         if stats.due > 0 { return .reviewDue(count: stats.due) }
@@ -197,7 +180,7 @@ struct TodayDecisions {
     }
 
     var quotaAdjustment: (due: Int, limit: Int)? {
-        guard !self.isGuest, let stats = self.inputs.stats else { return nil }
+        guard let stats = self.inputs.stats else { return nil }
         let goal = max(1, self.inputs.dailyGoal)
         guard (stats.todayNew ?? 0) < goal else { return nil }
         guard self.newAvailable > 0 else { return nil }

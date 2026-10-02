@@ -1,11 +1,10 @@
-// 我 → 詞表. Absent under membership v1 and for guests; a lock for a
+// 我 → 詞表. Absent under membership v1; a lock for a
 // non-member with nothing yet; otherwise the way in.
 
 import SwiftUI
 
 struct MeWordListsRow: View {
     @Environment(WordListsStore.self) private var store
-    @Environment(AuthService.self) private var auth
     @Environment(\.presentPaywall) private var presentPaywall
     private let access: any MemberAccessReading = LiveMemberAccess()
 
@@ -17,24 +16,22 @@ struct MeWordListsRow: View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
-            if !self.auth.isGuest {
-                switch self.level {
-                case .hidden:
-                    EmptyView()
-                case .locked:
-                    Button { self.presentPaywall() } label: { self.row(locked: true) }
-                        .buttonStyle(.plain)
-                // A refund keeps the lists: open them read-only.
-                case .readOnly, .open:
-                    NavigationLink(value: WordListRoute.lists) { self.row(locked: false) }
-                        .buttonStyle(.plain)
-                }
+            switch self.level {
+            case .hidden:
+                EmptyView()
+            case .locked:
+                Button { self.presentPaywall() } label: { self.row(locked: true) }
+                    .buttonStyle(.plain)
+            // A refund keeps the lists: open them read-only.
+            case .readOnly, .open:
+                NavigationLink(value: WordListRoute.lists) { self.row(locked: false) }
+                    .buttonStyle(.plain)
             }
         }
         .task {
             // Loaded whenever the feature exists at all, locked or not: whether a
             // non-member still has lists decides between the lock and the way in.
-            guard !self.auth.isGuest, self.access.level(.wordListBrowse, hasOwnData: true) != .hidden else { return }
+            guard self.access.level(.wordListBrowse, hasOwnData: true) != .hidden else { return }
             await self.store.loadIfNeeded()
         }
     }

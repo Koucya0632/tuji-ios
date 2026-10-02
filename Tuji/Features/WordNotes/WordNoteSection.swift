@@ -1,4 +1,4 @@
-// 我的筆記 on the word page. Hidden under membership v1 and for guests; a lock
+// 我的筆記 on the word page. Hidden under membership v1; a lock
 // for a non-member; read-only for a non-member who already wrote one.
 
 import SwiftUI
@@ -7,7 +7,6 @@ struct WordNoteSection: View {
     let wordId: String
 
     @Environment(WordNotesStore.self) private var store
-    @Environment(AuthService.self) private var auth
     @Environment(\.presentPaywall) private var presentPaywall
     @State private var showEditor = false
     @State private var confirmDelete = false
@@ -21,55 +20,53 @@ struct WordNoteSection: View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
-            if !self.auth.isGuest {
-                switch self.level {
-                case .hidden:
-                    EmptyView()
-                case .locked:
-                    Button { self.presentPaywall() } label: {
-                        self.card {
-                            Label("會員可以為每個字寫下自己的筆記", systemImage: "lock.fill")
+            switch self.level {
+            case .hidden:
+                EmptyView()
+            case .locked:
+                Button { self.presentPaywall() } label: {
+                    self.card {
+                        Label("會員可以為每個字寫下自己的筆記", systemImage: "lock.fill")
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk3)
+                    }
+                }
+                .buttonStyle(.plain)
+            case .readOnly:
+                self.card {
+                    self.noteText
+                    HStack {
+                        Button { self.presentPaywall() } label: {
+                            Text("成為會員才能編輯")
+                                .font(.tujiLabel)
+                                .underline()
+                                .foregroundStyle(.tujiInk2)
+                        }
+                        Spacer()
+                        Button("刪除筆記", role: .destructive) { self.confirmDelete = true }
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiAlert)
+                    }
+                    .buttonStyle(.plain)
+                }
+            case .open:
+                Button { self.showEditor = true } label: {
+                    self.card {
+                        if self.store.note(for: self.wordId) != nil {
+                            self.noteText
+                        } else {
+                            Text("寫下你自己的記法、例句或提醒…")
                                 .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk3)
                         }
                     }
-                    .buttonStyle(.plain)
-                case .readOnly:
-                    self.card {
-                        self.noteText
-                        HStack {
-                            Button { self.presentPaywall() } label: {
-                                Text("成為會員才能編輯")
-                                    .font(.tujiLabel)
-                                    .underline()
-                                    .foregroundStyle(.tujiInk2)
-                            }
-                            Spacer()
-                            Button("刪除筆記", role: .destructive) { self.confirmDelete = true }
-                                .font(.tujiLabel)
-                                .foregroundStyle(.tujiAlert)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                case .open:
-                    Button { self.showEditor = true } label: {
-                        self.card {
-                            if self.store.note(for: self.wordId) != nil {
-                                self.noteText
-                            } else {
-                                Text("寫下你自己的記法、例句或提醒…")
-                                    .font(.tujiBodySm)
-                                    .foregroundStyle(.tujiInk3)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityHint(Text("編輯筆記"))
                 }
+                .buttonStyle(.plain)
+                .accessibilityHint(Text("編輯筆記"))
             }
         }
         .task {
-            guard !self.auth.isGuest, self.access.level(.wordNote, hasOwnData: true) != .hidden else { return }
+            guard self.access.level(.wordNote, hasOwnData: true) != .hidden else { return }
             await self.store.loadIfNeeded()
         }
         .sheet(isPresented: self.$showEditor) {

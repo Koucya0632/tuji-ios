@@ -32,8 +32,8 @@ final class LaunchCoordinator {
 
     private(set) var state: State = .idle
 
-    var guestCatalogReady: Bool {
-        self.activeCatalogAudience == .guest
+    var anonymousCatalogReady: Bool {
+        self.activeCatalogAudience == .anonymous
     }
 
     var launchReady: Bool {
@@ -133,17 +133,6 @@ final class LaunchCoordinator {
         }.value
     }
 
-    /// Restores the anonymous aggregate after sign-out. This matters when the
-    /// same process previously published personalized words for an account.
-    func prepareGuestSession() async {
-        await self.requestCatalog(
-            owner: .guest,
-            intervalName: "catalog-preload"
-        ) { [catalog = self.catalog] in
-            await catalog.warm(for: .guest)
-        }.value
-    }
-
     /// A choice made before Main is first presented (for example learning
     /// direction or first-run Setup) creates a new catalog generation for the
     /// same account. Clear readiness synchronously so RootView cannot render
@@ -151,12 +140,12 @@ final class LaunchCoordinator {
     /// request. Store-level context/flight IDs keep the superseded work from
     /// publishing if it finishes late.
     @discardableResult
-    func refreshGuestCatalog() -> Task<Void, Never> {
+    func refreshAnonymousCatalog() -> Task<Void, Never> {
         self.replaceCatalogRequest(
-            owner: .guest,
+            owner: .anonymous,
             intervalName: "catalog-preload"
         ) { [catalog = self.catalog] in
-            await catalog.warm(for: .guest)
+            await catalog.warm(for: .anonymous)
         }
     }
 
@@ -173,8 +162,6 @@ final class LaunchCoordinator {
 
     func catalogReady(for account: LaunchAccountState) -> Bool {
         switch account {
-        case .guest:
-            self.activeCatalogAudience == .guest
         case let .signedIn(userID, _):
             self.activeCatalogAudience == .signedIn(userID: userID)
         case .checking, .signedOut:
@@ -249,10 +236,10 @@ final class LaunchCoordinator {
     private func startPreloadOnce() {
         guard self.latestCatalogRequest == nil else { return }
         _ = self.requestCatalog(
-            owner: .guest,
+            owner: .anonymous,
             intervalName: "catalog-preload"
         ) { [catalog = self.catalog] in
-            await catalog.warm(for: .guest)
+            await catalog.warm(for: .anonymous)
         }
     }
 

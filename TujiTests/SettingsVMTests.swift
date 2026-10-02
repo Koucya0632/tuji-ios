@@ -33,7 +33,6 @@ struct SettingsVMTests {
         }
 
         func saveSettings(_: UserSettings) async throws {}
-        func syncLocalCache(_: SyncPayload) async throws {}
         func loadMe() async throws -> UserMeResponse {
             throw Boom()
         }
@@ -75,13 +74,6 @@ struct SettingsVMTests {
         }
     }
 
-    private final class SpyLearned: LearnedSetClearing {
-        var cleared = 0
-        func clearLearned() {
-            self.cleared += 1
-        }
-    }
-
     // MARK: - 清除學習進度
 
     /// The stores are `LearningRefresh`'s to name — the View used to pass
@@ -91,20 +83,9 @@ struct SettingsVMTests {
         let refresh = SpyRefresh()
         let vm = SettingsVM(progressRepository: SpyProgress(), refresh: refresh)
 
-        await vm.clearProgress(learned: SpyLearned())
+        await vm.clearProgress()
 
         #expect(refresh.causes == [.progressCleared])
-    }
-
-    /// The local learned set goes too: 完成度 and the category breakdown read it,
-    /// and sync is union-only — a stale local set would resurrect the cleared
-    /// ids at the next sign-in.
-    @Test
-    func clearingAlsoDropsTheLocalLearnedSet() async {
-        let learned = SpyLearned()
-        await SettingsVM(progressRepository: SpyProgress(), refresh: SpyRefresh())
-            .clearProgress(learned: learned)
-        #expect(learned.cleared == 1)
     }
 
     /// A failed clear must not wipe anything locally — the account still has
@@ -113,13 +94,11 @@ struct SettingsVMTests {
     func aFailedClearTouchesNothingLocally() async {
         let repo = SpyProgress()
         repo.clearResult = .failure(Boom())
-        let learned = SpyLearned()
         let refresh = SpyRefresh()
         let vm = SettingsVM(progressRepository: repo, refresh: refresh)
 
-        await vm.clearProgress(learned: learned)
+        await vm.clearProgress()
 
-        #expect(learned.cleared == 0)
         #expect(refresh.causes.isEmpty)
         #expect(vm.clearError != nil)
         #expect(!vm.clearing)
@@ -130,7 +109,7 @@ struct SettingsVMTests {
         let repo = SpyProgress()
         repo.clearResult = .failure(Boom())
         let vm = SettingsVM(progressRepository: repo, refresh: SpyRefresh())
-        await vm.clearProgress(learned: SpyLearned())
+        await vm.clearProgress()
         #expect(vm.clearError != nil)
         vm.dismissClearError()
         #expect(vm.clearError == nil)

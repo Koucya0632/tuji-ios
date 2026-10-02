@@ -5,8 +5,8 @@
 //
 // Decay is applied server-side at read, so the scores here are "as of the
 // last load". After a study session CompleteView calls invalidate() + reload()
-// so the grid/detail reflect the just-earned changes. Guests leave the map
-// empty → every word renders as 未學. A failed load is `.failed`, not an empty
+// so the grid/detail reflect the just-earned changes. A word with no score
+// renders as 未學. A failed load is `.failed`, not an empty
 // answer, and the next warm asks again.
 
 import Foundation
