@@ -30,8 +30,8 @@ struct AtlasPublicFeedView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Guests have no public page, and an account with no UID yet has
-            // nothing to link to — in both cases the row simply isn't there.
+            // An account with no UID yet has nothing to link to, so the row
+            // simply isn't there.
             if let uid = self.auth.uid {
                 CommunityMyPageRow(uid: uid)
                 Rectangle()
@@ -63,7 +63,6 @@ struct AtlasPublicFeedView: View {
             await self.browsing.update(
                 shelf: self.section,
                 language: self.targetLanguage,
-                isSignedIn: !self.auth.isGuest,
                 blockedAuthors: self.blocks.handles,
                 pendingExploreRefresh: self.feedRefresh.consume()
             )
@@ -142,19 +141,7 @@ struct AtlasPublicFeedView: View {
 
     @ViewBuilder
     private var savedContent: some View {
-        if self.auth.isGuest {
-            VStack(spacing: Space.s3) {
-                Spacer()
-                Text("登入後才能查看已收藏的合集")
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk3)
-                BBtn(title: "登入", fullWidth: false) {
-                    self.auth.exitGuestMode()
-                }
-                Spacer()
-            }
-            .frame(maxWidth: .infinity)
-        } else if self.browsing.saved.showsPlaceholder {
+        if self.browsing.saved.showsPlaceholder {
             TujiProgressBar(progress: nil).frame(width: 56)
                 .tint(.tujiCurrent)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -199,7 +186,7 @@ struct AtlasPublicFeedView: View {
                         AtlasCollectionCard(collection: collection) {
                             self.navigator.push(
                                 .atlasCollectionDetail(
-                                    slug: collection.slug, autoSave: false, preview: collection
+                                    slug: collection.slug, preview: collection
                                 )
                             )
                         }
@@ -214,8 +201,7 @@ struct AtlasPublicFeedView: View {
         .refreshable {
             await self.browsing.refresh(
                 shelf: shelf,
-                language: self.targetLanguage,
-                isSignedIn: !self.auth.isGuest
+                language: self.targetLanguage
             )
         }
     }
@@ -225,7 +211,7 @@ struct AtlasPublicFeedView: View {
     }
 
     private var browsingLoadKey: String {
-        "\(self.section.rawValue)-\(self.targetLanguage.rawValue)-\(!self.auth.isGuest)"
+        "\(self.section.rawValue)-\(self.targetLanguage.rawValue)"
     }
 
     private func title(for shelf: PublicAtlasBrowsingModel.Shelf) -> LocalizedStringKey {
@@ -254,8 +240,7 @@ struct AtlasPublicFeedView: View {
                 retry: {
                     await self.browsing.refresh(
                         shelf: .explore,
-                        language: self.targetLanguage,
-                        isSignedIn: !self.auth.isGuest
+                        language: self.targetLanguage
                     )
                 },
                 topPadding: 0

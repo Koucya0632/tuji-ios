@@ -2,8 +2,7 @@
 //
 // Greeting → streak chip → hero card with stats + 2 CTAs → themes grid.
 // What the screen needs loaded is named by `AccumulationLoading`, shared with
-// 我 · 進度 and 主題. Guest mode skips the network and reads only LocalCache +
-// WordsStore for a degraded hero.
+// 我 · 進度 and 主題.
 //
 // There used to be a `TodayVM` here. It held `me` / `loading` / `error` and no
 // view read any of the three: it fetched GET /api/users/me on every appearance
@@ -23,7 +22,6 @@ import SwiftUI
 struct TodayView: View {
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
-    @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
@@ -42,11 +40,9 @@ struct TodayView: View {
                 // 我 calls the same initializer. They used to be assembled here
                 // and again in `MeProgressSections`, both inside `View` bodies.
                 completion: .init(
-                    viewer: self.auth,
                     settings: self.settings,
                     progress: self.progress,
-                    words: self.words,
-                    cache: self.cache
+                    words: self.words
                 ),
                 dailyGoal: self.settings.current.dailyGoal,
                 stats: self.studyStats.stats,
@@ -101,10 +97,9 @@ struct TodayView: View {
             .refreshable {
                 // What a pull re-reads is `LearningRefresh`'s to say. This list was
                 // written here, and 我 and 清除學習進度 each wrote their own.
-                await LiveLearningRefresher().refresh(after: .pulledToday(isGuest: self.auth.isGuest))
+                await LiveLearningRefresher().refresh(after: .pulledToday)
             }
-            .warmsAccumulation(.todayHero, isGuest: self.auth.isGuest) {
-                guard !self.auth.isGuest else { return }
+            .warmsAccumulation(.todayHero) {
                 self.prefetchStudyQueues()
             }
         }
@@ -224,8 +219,6 @@ struct TodayView: View {
     /// `TodayDecisions`; this maps it to copy.
     private var subtitle: LocalizedStringKey {
         switch self.decisions.subtitle {
-        case .guestBrowsing: "訪客模式 · 先逛逛圖鑑，想再看的字加書籤"
-        case let .guestLearned(count): "訪客模式 · 已認得 \(count) 個字"
         case .pickThemes: "先選學習主題，開始學新字"
         case .unknown: "今天想學點什麼呢？"
         case let .reviewDue(count): "今天有 \(count) 個字要複習"
@@ -242,63 +235,43 @@ struct TodayView: View {
         ZStack(alignment: .topTrailing) {
             VStack(alignment: .leading, spacing: Space.s3) {
                 VStack(alignment: .leading, spacing: Space.s3) {
-                    if !self.auth.isGuest {
-                        self.dailyGoalProgress
-                    }
+                    self.dailyGoalProgress
                     self.heroProgress
                 }
                 .padding(.trailing, 96)
 
-                if self.auth.isGuest {
-                    // Guests can't study (SRS is account-scoped), so instead of
-                    // two permanently-dead buttons the hero offers the one
-                    // action that actually works: creating an account.
-                    Button {
-                        self.auth.exitGuestMode()
-                    } label: {
-                        Text("建立帳號，開始學習")
-                            .frame(maxWidth: .infinity)
+                // The pair is one control, so the two pills are one height:
+                // 複習 is two characters in every language and its neighbour
+                // is not, so the moment the longer label wraps — a large
+                // Dynamic Type size, a language that needs the room — an
+                // unconstrained HStack draws a short button beside a tall
+                // one and the row reads as two unrelated things. Each label
+                // fills the row's height, `fixedSize` keeps that height at
+                // the taller label's ideal rather than the parent's.
+                HStack(spacing: Space.s3) {
+                    NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
+                        Text("複習")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-                    .buttonStyle(HeroPillStyle(role: .primary))
+                    .buttonStyle(HeroPillStyle(role: self.reviewDisabled ? .secondary : .primary))
+                    .disabled(self.reviewDisabled)
 
-                    Text("免費註冊就能學新字、排複習，進度存在雲端")
+                    NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
+                        Text("學新字")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .buttonStyle(HeroPillStyle(role: self.reviewDisabled && !self
+                            .newDisabled ? .primary : .secondary))
+                    .disabled(self.newDisabled)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                .tourAnchor(.heroCTAs)
+
+                if let hint = self.heroHint {
+                    Text(hint)
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiPaper.opacity(0.6))
                         .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    // The pair is one control, so the two pills are one height:
-                    // 複習 is two characters in every language and its neighbour
-                    // is not, so the moment the longer label wraps — a large
-                    // Dynamic Type size, a language that needs the room — an
-                    // unconstrained HStack draws a short button beside a tall
-                    // one and the row reads as two unrelated things. Each label
-                    // fills the row's height, `fixedSize` keeps that height at
-                    // the taller label's ideal rather than the parent's.
-                    HStack(spacing: Space.s3) {
-                        NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
-                            Text("複習")
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
-                        .buttonStyle(HeroPillStyle(role: self.reviewDisabled ? .secondary : .primary))
-                        .disabled(self.reviewDisabled)
-
-                        NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
-                            Text("學新字")
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
-                        .buttonStyle(HeroPillStyle(role: self.reviewDisabled && !self
-                                .newDisabled ? .primary : .secondary))
-                        .disabled(self.newDisabled)
-                    }
-                    .fixedSize(horizontal: false, vertical: true)
-                    .tourAnchor(.heroCTAs)
-
-                    if let hint = self.heroHint {
-                        Text(hint)
-                            .font(.tujiLabel)
-                            .foregroundStyle(.tujiPaper.opacity(0.6))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
                 }
             }
         }
@@ -341,8 +314,7 @@ struct TodayView: View {
         let done = self.studyStats.stats?.todayNew ?? 0
         let goal = max(1, self.settings.current.dailyGoal)
         // The verdict comes from the module, not from a second copy of the rule.
-        // This line used to re-derive `done >= goal` here, without the guest
-        // guard the module carries — and `TodayDecisions.subtitle` documents
+        // This line used to re-derive `done >= goal` here — and `TodayDecisions.subtitle` documents
         // that 達成 "wins over everything below so this line can never
         // contradict the 達成 badge on the hero card", while the badge was
         // being drawn from the copy.
@@ -573,14 +545,10 @@ struct TodayView: View {
         }
     }
 
-    /// Guests get a discovery preview (first 4 categories that have words).
-    /// Signed-in users see exactly their selected themes (that have words).
+    /// Exactly the selected themes (that have words).
     private var themeTiles: [TujiCategory] {
         let presentIds = Set(self.words.categories)
         let known = self.categories.categories.filter { presentIds.contains($0.id) }
-        if self.auth.isGuest {
-            return Array(known.prefix(4))
-        }
         let selected = Set(StudyCategoryDefaults.effective(
             selected: self.settings.current.studyCategories,
             studyable: StudyCategoryDefaults.liveStudyable
@@ -659,20 +627,6 @@ private struct HeroPillStyle: ButtonStyle {
 }
 
 #Preview("Signed in") {
-    NavigationStack {
-        TodayView()
-            .environment(WordsStore.shared)
-            .environment(CategoriesStore.shared)
-            .environment(LocalCache.shared)
-            .environment(ProgressStore.shared)
-            .environment(StudyStatsStore.shared)
-            .environment(SettingsStore.shared)
-            .environment(MasteryStore.shared)
-            .environment(AuthService.shared)
-    }
-}
-
-#Preview("Guest") {
     NavigationStack {
         TodayView()
             .environment(WordsStore.shared)

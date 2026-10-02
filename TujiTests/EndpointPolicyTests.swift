@@ -20,7 +20,7 @@ struct EndpointPolicyTests {
     /// One value per case, in declaration order.
     private static let all: [Endpoint] = [
         .usersMe, .usersProfile, .usersSettings, .usersFavorites,
-        .usersSync, .usersProgress(learning: "zh-en"), .usersProgressClear,
+        .usersProgress(learning: "zh-en"), .usersProgressClear,
         .usersMastery(learning: "zh-en"),
         .usersCustomWords(lang: "zh-Hant", learning: "en"),
         .usersSavedWords(lang: "zh-Hant", learning: "en"),
@@ -65,7 +65,7 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 67)
+        #expect(Self.all.count == 66)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be
@@ -158,7 +158,7 @@ struct EndpointPolicyTests {
     /// 401」. They part company on exactly the optional-auth endpoint: a
     /// signed-in caller *does* send a token there, so a 401 means the token was
     /// stale and is worth one retry — which the old guard refused, leaving the
-    /// user on the guest view of a collection they had saved.
+    /// user on the signed-out view of a collection they had saved.
     @Test("a 401 is retried wherever a token may have been attached")
     func optionalAuthEndpointsRetryUnauthorized() {
         let optional = EndpointAccess.optionalToken

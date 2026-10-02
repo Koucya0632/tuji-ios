@@ -100,25 +100,21 @@ final class PublicAtlasBrowsingModel {
     }
 
     /// Reconcile the screen's explicit context. The explore shelf is always kept
-    /// warm; the private shelf loads only while selected and authenticated.
+    /// warm; the private shelf loads only while selected.
     func update(
         shelf: Shelf,
         language: TargetLanguage,
-        isSignedIn: Bool,
         blockedAuthors: Set<String> = [],
         pendingExploreRefresh: Bool = false
     ) async {
         self.blockedAuthors = blockedAuthors
-        if !isSignedIn {
-            self.savedRaw = ShelfState(phase: .idle)
-        }
 
         await self.loadExplore(
             language: language,
             pendingForce: pendingExploreRefresh
         )
 
-        if shelf == .saved, isSignedIn {
+        if shelf == .saved {
             await self.loadSaved(language: language)
         }
     }
@@ -127,17 +123,12 @@ final class PublicAtlasBrowsingModel {
     /// rules to the view.
     func refresh(
         shelf: Shelf,
-        language: TargetLanguage,
-        isSignedIn: Bool
+        language: TargetLanguage
     ) async {
         switch shelf {
         case .explore:
             await self.loadExplore(language: language, forceReload: true)
         case .saved:
-            guard isSignedIn else {
-                self.savedRaw = ShelfState(phase: .idle)
-                return
-            }
             await self.loadSaved(language: language, force: true)
         }
     }

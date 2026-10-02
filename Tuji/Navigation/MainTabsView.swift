@@ -13,7 +13,7 @@
 import SwiftUI
 
 struct MainTabsView: View {
-    let user: SessionUser?
+    let user: SessionUser
 
     @Environment(DeepLinkCoordinator.self) private var deepLinks
     @Environment(StudyFocus.self) private var studyFocus
@@ -193,7 +193,7 @@ struct MainTabsView: View {
     /// here is the animation, the two beats, and the anchor resolution that
     /// cannot live anywhere else.
     private var tour: FeatureTourFlow {
-        FeatureTourFlow(isGuest: self.user == nil)
+        FeatureTourFlow()
     }
 
     private var tourSteps: [TourStep] {
@@ -263,12 +263,10 @@ struct MainTabsView: View {
     private func consumePendingLink() {
         let effect = TabShellDecisions.pendingLinkEffect(
             pending: self.deepLinks.pending,
-            isSignedIn: self.user != nil,
             tourActive: self.tourIndex != nil
         )
         switch effect {
-        // Held, not consumed: the signed-in shell picks it up after sign-in.
-        case .hold, .none: return
+        case .none: return
         case let .apply(applied):
             _ = self.deepLinks.consume()
             if applied.skipTour { self.skipTour() }
@@ -441,18 +439,6 @@ private struct CaptureBarButton: View {
 
 #Preview("Signed in") {
     MainTabsView(user: SessionUser.tabPreview)
-        .environment(AuthService.shared)
-        .environment(LocalCache.shared)
-        .environment(WordsStore.shared)
-        .environment(CategoriesStore.shared)
-        .environment(MasteryStore.shared)
-        .environment(DeepLinkCoordinator.shared)
-        .environment(StudyFocus.shared)
-        .environment(OnboardingState.shared)
-}
-
-#Preview("Guest") {
-    MainTabsView(user: nil)
         .environment(AuthService.shared)
         .environment(LocalCache.shared)
         .environment(WordsStore.shared)

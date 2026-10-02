@@ -14,14 +14,14 @@
 // empty grid *is* "replace twelve themes with 廚房", however late it is sent.
 // The change itself is wrong, not just its timing.
 //
-// A guest has no server row to overwrite and nothing to save with; their
-// settings live on this device, as they always have. Android holds the same
+// Signed out there is no server row to overwrite and nothing to save with;
+// the change lives on this device. Android holds the same
 // rule in `core:study`'s `SettingsWrite`.
 
 enum SettingsWrite: Equatable {
     /// The account's settings are on screen: apply, then save.
     case applyAndSave
-    /// A guest: apply on this device. There is nothing to save to.
+    /// Signed out: apply on this device. There is nothing to save to.
     case applyLocally
     /// Signed in, and the account's settings have not arrived. Drop it.
     case refuse

@@ -1,6 +1,5 @@
 // Bookmark toggle for a word. Optimistic — updates LocalCache immediately,
-// then fires the POST off in the background. Guests get LocalCache only;
-// signed-in users also sync to /api/users/favorites.
+// then fires the POST to /api/users/favorites off in the background.
 //
 // A bookmark, not a heart: "書籤" is the passive half of the vocabulary split
 // (CONTEXT.md) — it means "I want to look at this word again" and never touches
@@ -17,7 +16,6 @@ struct FavoriteButton: View {
     var size: CGFloat = 40
 
     @Environment(LocalCache.self) private var cache
-    @Environment(AuthService.self) private var auth
     /// Injected rather than a hardcoded `.shared` stored property. `ReportFlow`
     /// names that shape as the defect it was carved out to fix — *no init seam,
     /// so no test could substitute it* — and it survived in eight more places.
@@ -58,10 +56,7 @@ struct FavoriteButton: View {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         self.cache.toggleFavorite(self.wordId)
 
-        // Fire-and-forget for signed-in users; guests stay LocalCache-only
-        // until they sign in (AuthService.syncLocalCacheToServer handles
-        // that catch-up).
-        guard !self.auth.isGuest else { return }
+        // Fire-and-forget.
         let nowFav = self.cache.isFavorite(self.wordId)
         Task {
             await self.progress.toggleFavorite(wordId: self.wordId, isFavorite: nowFav)

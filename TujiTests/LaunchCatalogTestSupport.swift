@@ -2,7 +2,7 @@
 //
 // `LaunchCoordinator` used to take `preloadCatalog` and `finalizeSignedIn` as
 // two separate closures, so every test here supplied two bodies. They are one
-// seam now (`CatalogWarming`), and `splitting(guest:signedIn:)` keeps the tests
+// seam now (`CatalogWarming`), and `splitting(anonymous:signedIn:)` keeps the tests
 // reading the way they did — one body per audience — while the production side
 // gets a single named module instead of eight lines written twice inside
 // `TujiApp.init`.
@@ -25,14 +25,14 @@ final class FakeCatalogWarmer: CatalogWarming {
 
     /// One body per audience, mirroring the pair of closures this replaced.
     static func splitting(
-        guest: @escaping @MainActor () async -> Void = {},
+        anonymous: @escaping @MainActor () async -> Void = {},
         signedIn: @escaping @MainActor (UUID) async -> Void = { _ in }
     )
         -> FakeCatalogWarmer
     {
         FakeCatalogWarmer { audience in
             switch audience {
-            case .guest: await guest()
+            case .anonymous: await anonymous()
             case let .signedIn(userID): await signedIn(userID)
             }
         }
@@ -43,8 +43,8 @@ final class FakeCatalogWarmer: CatalogWarming {
         await self.onWarm(audience)
     }
 
-    var guestWarmings: Int {
-        self.audiences.count { $0 == .guest }
+    var anonymousWarmings: Int {
+        self.audiences.count { $0 == .anonymous }
     }
 
     func warmings(for userID: UUID) -> Int {

@@ -140,7 +140,6 @@ struct WordListButton: View {
     var size: CGFloat = 40
 
     @Environment(WordListsStore.self) private var store
-    @Environment(AuthService.self) private var auth
     @Environment(\.presentPaywall) private var presentPaywall
     @State private var showSheet = false
     private let access: any MemberAccessReading = LiveMemberAccess()
@@ -153,7 +152,7 @@ struct WordListButton: View {
         ZStack(alignment: .topLeading) {
             // Always drawn, so the `.task` below runs — see `TaskAnchor`.
             TaskAnchor()
-            if !self.auth.isGuest, self.level != .hidden {
+            if self.level != .hidden {
                 Button {
                     UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     if self.level == .locked {
@@ -182,7 +181,7 @@ struct WordListButton: View {
             }
         }
         .task {
-            guard !self.auth.isGuest, self.level != .hidden else { return }
+            guard self.level != .hidden else { return }
             await self.store.loadIfNeeded()
         }
         .sheet(isPresented: self.$showSheet) {

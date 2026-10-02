@@ -1,7 +1,7 @@
 // Pins what a launch actually loads.
 //
 // This was two closures in `TujiApp.init` carrying the same eight lines, so the
-// difference between "preload for a guest" and "finalize for a signed-in user"
+// difference between "anonymous preload" and "finalize for a signed-in user"
 // — the two fields `CatalogContext`'s precondition exists to relate — was
 // asserted by nothing. `LaunchCoordinator`'s own tests pass fakes for the whole
 // thing and only ever check the *sequencing*.
@@ -17,8 +17,8 @@ struct CatalogAudienceTests {
     func onlyASignedInAudienceIsPersonalized() {
         let userID = UUID()
 
-        #expect(CatalogAudience.guest.userID == nil)
-        #expect(!CatalogAudience.guest.includesPersonalization)
+        #expect(CatalogAudience.anonymous.userID == nil)
+        #expect(!CatalogAudience.anonymous.includesPersonalization)
 
         #expect(CatalogAudience.signedIn(userID: userID).userID == userID)
         #expect(CatalogAudience.signedIn(userID: userID).includesPersonalization)
@@ -31,15 +31,15 @@ struct CatalogAudienceTests {
         let a = UUID()
         let b = UUID()
         #expect(CatalogAudience.signedIn(userID: a) != CatalogAudience.signedIn(userID: b))
-        #expect(CatalogAudience.signedIn(userID: a) != .guest)
+        #expect(CatalogAudience.signedIn(userID: a) != .anonymous)
     }
 
-    /// A guest's catalog carries no identity and no personalization. Asking for
+    /// The anonymous catalog carries no identity and no personalization. Asking for
     /// custom/saved words without an account is the combination
     /// `CatalogContext` traps on, which is why these two travel together.
     @Test
-    func aGuestContextIsAnonymousAndUnpersonalized() {
-        let context = CatalogAudience.guest.context(settings: .default)
+    func anAnonymousContextIsUnpersonalized() {
+        let context = CatalogAudience.anonymous.context(settings: .default)
 
         #expect(context.userID == nil)
         #expect(context.includePersonalization == false)
@@ -59,12 +59,12 @@ struct CatalogAudienceTests {
     /// authentication resolves and then asks again for the account.
     @Test
     func theTwoAudiencesAreTwoRequestsUnderIdenticalSettings() {
-        let guest = CatalogAudience.guest.context(settings: .default)
+        let anonymous = CatalogAudience.anonymous.context(settings: .default)
         let signedIn = CatalogAudience.signedIn(userID: UUID()).context(settings: .default)
 
-        #expect(guest != signedIn)
-        #expect(guest.contentLanguageCode == signedIn.contentLanguageCode)
-        #expect(guest.learningDirectionCode == signedIn.learningDirectionCode)
+        #expect(anonymous != signedIn)
+        #expect(anonymous.contentLanguageCode == signedIn.contentLanguageCode)
+        #expect(anonymous.learningDirectionCode == signedIn.learningDirectionCode)
     }
 
     /// The language half comes from settings, so a warm after a 學習語言 switch
@@ -77,8 +77,8 @@ struct CatalogAudienceTests {
         en.learningDirection = .zhEn
 
         #expect(
-            CatalogAudience.guest.context(settings: ja)
-                != CatalogAudience.guest.context(settings: en)
+            CatalogAudience.anonymous.context(settings: ja)
+                != CatalogAudience.anonymous.context(settings: en)
         )
     }
 }
@@ -127,20 +127,20 @@ struct LiveCatalogWarmerTests {
         let f = try self.fixture()
         let warmer = f.warmer
 
-        await warmer.warm(for: .guest)
+        await warmer.warm(for: .anonymous)
 
         #expect(f.repo.wordsLoads == 1)
         #expect(f.repo.categoryLoads == 1)
     }
 
-    /// A guest asks for the public list only. `loadCustomWords` on an account
+    /// The anonymous preload asks for the public list only. `loadCustomWords` on an account
     /// that does not exist is the request the anonymous preload must not make.
     @Test
-    func aGuestWarmDoesNotAskForPersonalizedWords() async throws {
+    func anAnonymousWarmDoesNotAskForPersonalizedWords() async throws {
         let f = try self.fixture()
         let warmer = f.warmer
 
-        await warmer.warm(for: .guest)
+        await warmer.warm(for: .anonymous)
 
         #expect(f.repo.customLoads == 0)
     }
@@ -162,8 +162,8 @@ struct LiveCatalogWarmerTests {
         let f = try self.fixture()
         let warmer = f.warmer
 
-        await warmer.warm(for: .guest)
-        await warmer.warm(for: .guest)
+        await warmer.warm(for: .anonymous)
+        await warmer.warm(for: .anonymous)
 
         #expect(f.repo.wordsLoads == 1)
     }
@@ -181,7 +181,7 @@ struct LiveCatalogWarmerTests {
         let f = try self.fixture()
         let warmer = f.warmer
 
-        await warmer.warm(for: .guest)
+        await warmer.warm(for: .anonymous)
         await warmer.warm(for: .signedIn(userID: UUID()))
 
         #expect(f.repo.wordsLoads == 1)
@@ -241,7 +241,6 @@ private final class WarmerUserRepository: UserRepository {
 
     func saveSettings(_: UserSettings) async throws {}
     func deleteAccount() async throws {}
-    func syncLocalCache(_: SyncPayload) async throws {}
     func loadMe() async throws -> UserMeResponse {
         throw WarmerCatalogRepository.NotImplemented()
     }

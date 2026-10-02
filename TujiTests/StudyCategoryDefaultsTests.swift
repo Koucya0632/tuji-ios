@@ -11,11 +11,10 @@ struct StudyCategoryDefaultsTests {
         )
     }
 
-    /// A guest never runs `SetupView`, so `UserSettings.default` *is* their
-    /// whole selection. It used to be 自定義 + 物見 alone — two themes a guest
-    /// can never fill, since a guest can neither photograph nor 收進圖鑑 — which
-    /// left 設定 saying 「已選 2 個」 beside a 主題進度 counted over the entire
-    /// dictionary. The default has to carry themes that actually hold words.
+    /// `UserSettings.default` is the selection until Setup or the server says
+    /// otherwise. It used to be 自定義 + 物見 alone — two themes that start
+    /// empty — which left 設定 saying 「已選 2 個」 beside a 主題進度 counted over
+    /// the entire dictionary. The default has to carry themes that actually hold words.
     @Test
     func firstLaunchDefaultsAreNotAllEmptyAtlasThemes() {
         let defaults = UserSettings.default.studyCategories

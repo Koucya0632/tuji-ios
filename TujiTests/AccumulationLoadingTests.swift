@@ -11,7 +11,7 @@ import Testing
 struct AccumulationSurfaceNeedsTests {
     @Test("主題 needs progress — 完成 is drawn from it")
     func themeIndexNeedsProgress() {
-        let needs = AccumulationSurface.themeIndex.needs(isGuest: false)
+        let needs = AccumulationSurface.themeIndex.needs
         #expect(needs.contains(.progress))
         // 全精通 comes from mastery; that half always worked.
         #expect(needs.contains(.mastery))
@@ -19,13 +19,13 @@ struct AccumulationSurfaceNeedsTests {
 
     @Test("首頁's hero reads every store")
     func todayHeroNeedsAll() {
-        let needs = AccumulationSurface.todayHero.needs(isGuest: false)
+        let needs = AccumulationSurface.todayHero.needs
         #expect(needs == Set(AccumulationStore.allCases))
     }
 
     @Test("我 · 進度 needs mastery — the 熟練度 spread is drawn from it")
     func progressSectionsNeedsMastery() {
-        let needs = AccumulationSurface.progressSections.needs(isGuest: false)
+        let needs = AccumulationSurface.progressSections.needs
         #expect(needs.contains(.progress))
         // The 熟練度 section counts per-word scores into tiers. Before it
         // existed this surface deliberately skipped mastery; leaving it skipped
@@ -37,18 +37,9 @@ struct AccumulationSurfaceNeedsTests {
 
     @Test("我 · 進度 still asks for nothing it does not render")
     func progressSectionsSkipsStats() {
-        let needs = AccumulationSurface.progressSections.needs(isGuest: false)
+        let needs = AccumulationSurface.progressSections.needs
         // Nothing on the 進度 sections reads due/new.
         #expect(!needs.contains(.stats))
-    }
-
-    @Test("a guest never reaches for account-scoped data")
-    func guestsSkipTheServerStores() {
-        let surfaces: [AccumulationSurface] = [.todayHero, .progressSections, .themeIndex]
-        for surface in surfaces {
-            let needs = surface.needs(isGuest: true)
-            #expect(needs == [.dictionary, .themes, .settings])
-        }
     }
 }
 
@@ -59,7 +50,7 @@ struct AccumulationWarmerTests {
         var warmed: [AccumulationStore] = []
         let warmer = AccumulationWarmer(stores: Self.spies { warmed.append($0) })
 
-        await warmer.warm(.progressSections, isGuest: false)
+        await warmer.warm(.progressSections)
 
         #expect(Set(warmed) == [.dictionary, .themes, .settings, .progress, .mastery])
     }
@@ -72,20 +63,10 @@ struct AccumulationWarmerTests {
         var warmed: [AccumulationStore] = []
         let warmer = AccumulationWarmer(stores: Self.spies { warmed.append($0) })
 
-        await warmer.warm(.todayHero, isGuest: false)
+        await warmer.warm(.todayHero)
 
         #expect(warmed.first == .settings)
         #expect(Set(warmed) == Set(AccumulationStore.allCases))
-    }
-
-    @Test("a guest's warm touches no account-scoped store")
-    func guestWarmStaysLocal() async {
-        var warmed: [AccumulationStore] = []
-        let warmer = AccumulationWarmer(stores: Self.spies { warmed.append($0) })
-
-        await warmer.warm(.todayHero, isGuest: true)
-
-        #expect(Set(warmed) == [.dictionary, .themes, .settings])
     }
 
     private static func spies(
@@ -116,7 +97,7 @@ struct AccumulationWarmerTests {
             stores[key] = spy
         }
 
-        await AccumulationWarmer(stores: stores).warm(.todayHero, isGuest: false)
+        await AccumulationWarmer(stores: stores).warm(.todayHero)
 
         let settingsDone = order.firstIndex(of: "done:settings")
         #expect(settingsDone == 0)

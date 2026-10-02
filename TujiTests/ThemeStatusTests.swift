@@ -68,9 +68,9 @@ struct ThemeStatusTests {
         #expect(status == .none)
     }
 
-    /// Guests have no mastery rows at all — nil scores read as 未學, which is
-    /// not 精通, so the tile stays unmarked rather than claiming 全精通 over an
-    /// empty map.
+    /// A theme nobody has studied has no mastery rows — nil scores read as
+    /// 未學, which is not 精通, so the tile stays unmarked rather than claiming
+    /// 全精通 over an empty map.
     @Test
     func unstudiedWordsAreNotMastered() {
         let status = ThemeStatus.of(

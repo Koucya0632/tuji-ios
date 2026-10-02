@@ -50,10 +50,9 @@ struct LearningDirectionOnboardingView: View {
         Button {
             // The store writes the direction down and mirrors it into
             // onboarding — this view used to set both itself.
-            // A guest has nowhere to persist to; 設定's picker asks the same
-            // question the same way (`ViewerIdentity`), because two hand-written
-            // copies of it is how the question got four answers in the first place.
-            let shouldPersist = !self.auth.isGuest
+            // Signed out there is nowhere to persist to — this picker runs
+            // before Welcome as well as for an account with no direction yet.
+            let shouldPersist = self.auth.isSignedIn
             // The store owns the consequences (LearningDirectionRefresh). This
             // used to drop only the catalog, so a first-run 日文 learner kept the
             // English mastery, progress and streak the default direction fetched.

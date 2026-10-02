@@ -39,18 +39,8 @@ struct CollectionDetailVMTests {
         )
     }
 
-    private func context(
-        isSignedIn: Bool = false,
-        username: String? = nil,
-        autoSave: Bool = false
-    )
-        -> CollectionDetailVM.OpenContext
-    {
-        .init(
-            isSignedIn: isSignedIn,
-            username: username,
-            autoSave: autoSave
-        )
+    private func context(username: String? = nil) -> CollectionDetailVM.OpenContext {
+        .init(username: username)
     }
 
     @Test
@@ -58,7 +48,8 @@ struct CollectionDetailVMTests {
         let vm = CollectionDetailVM(
             slug: "s",
             preview: self.collection(id: "a"),
-            repo: FakeCollectionDetailReading()
+            repo: FakeCollectionDetailReading(),
+            bookmarkRepo: FakeDetailBookmarking()
         )
         #expect(vm.collection != nil)
         if case .loading = vm.phase {} else {
@@ -73,7 +64,7 @@ struct CollectionDetailVMTests {
             collection: self.collection(id: "a"),
             items: [self.item(id: "x"), self.item(id: "y")]
         ))
-        let vm = CollectionDetailVM(slug: "s", repo: fake)
+        let vm = CollectionDetailVM(slug: "s", repo: fake, bookmarkRepo: FakeDetailBookmarking())
 
         await vm.open(context: self.context())
 
@@ -89,7 +80,8 @@ struct CollectionDetailVMTests {
         let vm = CollectionDetailVM(
             slug: "s",
             preview: self.collection(id: "a"),
-            repo: fake
+            repo: fake,
+            bookmarkRepo: FakeDetailBookmarking()
         )
 
         await vm.open(context: self.context())
@@ -106,7 +98,8 @@ struct CollectionDetailVMTests {
         let vm = CollectionDetailVM(
             slug: "s",
             preview: self.collection(id: "a"),
-            repo: fake
+            repo: fake,
+            bookmarkRepo: FakeDetailBookmarking()
         )
 
         await vm.open(context: self.context())
@@ -127,10 +120,7 @@ struct CollectionDetailVMTests {
             bookmarkRepo: bookmarks
         )
 
-        await vm.open(context: self.context(
-            isSignedIn: true,
-            username: "other"
-        ))
+        await vm.open(context: self.context(username: "other"))
 
         #expect(vm.collection != nil)
         #expect(!vm.isUnavailable)
@@ -205,7 +195,7 @@ struct CollectionDetailVMTests {
             learningCount: 0
         )
         fake.result = .success(response)
-        let vm = CollectionDetailVM(slug: "s", repo: fake)
+        let vm = CollectionDetailVM(slug: "s", repo: fake, bookmarkRepo: FakeDetailBookmarking())
 
         await vm.open(context: self.context())
 
@@ -243,7 +233,7 @@ struct CollectionDetailVMTests {
             repo: details,
             bookmarkRepo: bookmarks
         )
-        await vm.open(context: self.context(isSignedIn: true, username: "other"))
+        await vm.open(context: self.context(username: "other"))
         #expect(!vm.unlocked)
         #expect(vm.items.count == 1)
 
@@ -297,7 +287,7 @@ struct CollectionDetailVMTests {
             repo: details,
             bookmarkRepo: bookmarks
         )
-        await vm.open(context: self.context(isSignedIn: true, username: "u"))
+        await vm.open(context: self.context(username: "u"))
         await vm.save()
 
         #expect(recorder.calls.count(where: { $0 == .detail }) == 1)
@@ -323,6 +313,7 @@ struct CollectionDetailVMTests {
         let vm = CollectionDetailVM(
             slug: "s",
             repo: details,
+            bookmarkRepo: FakeDetailBookmarking(),
             learningRepo: learning,
             learningRefresher: refresher
         )
@@ -358,6 +349,7 @@ struct CollectionDetailVMTests {
         let vm = CollectionDetailVM(
             slug: "s",
             repo: details,
+            bookmarkRepo: FakeDetailBookmarking(),
             learningRepo: learning,
             learningRefresher: refresher
         )
@@ -371,7 +363,7 @@ struct CollectionDetailVMTests {
     }
 
     @Test
-    func autoSaveContinuesAfterBookmarkStateFailureInWorkflowOrder() async {
+    func bookmarkStateIsReadAfterTheDetail() async {
         let recorder = DetailCallRecorder()
         let details = FakeCollectionDetailReading(recorder: recorder)
         let bookmarks = FakeDetailBookmarking(recorder: recorder)
@@ -382,15 +374,11 @@ struct CollectionDetailVMTests {
             bookmarkRepo: bookmarks
         )
 
-        let change = await vm.open(context: self.context(
-            isSignedIn: true,
-            username: "other",
-            autoSave: true
-        ))
+        await vm.open(context: self.context(username: "other"))
 
-        #expect(recorder.calls == [.detail, .bookmarkState, .save])
-        #expect(change?.isSaved == true)
-        #expect(vm.isSaved)
+        #expect(recorder.calls == [.detail, .bookmarkState])
+        #expect(vm.bookmarkLoaded)
+        #expect(!vm.isSaved)
     }
 
     @Test
@@ -416,14 +404,9 @@ struct CollectionDetailVMTests {
             bookmarkRepo: bookmarks
         )
 
-        let change = await vm.open(context: self.context(
-            isSignedIn: true,
-            username: "different-user",
-            autoSave: true
-        ))
+        await vm.open(context: self.context(username: "different-user"))
 
         #expect(recorder.calls == [.detail])
-        #expect(change == nil)
         #expect(vm.isOwner)
     }
 
@@ -438,11 +421,7 @@ struct CollectionDetailVMTests {
             bookmarkRepo: bookmarks
         )
 
-        await vm.open(context: self.context(
-            isSignedIn: true,
-            username: "U",
-            autoSave: true
-        ))
+        await vm.open(context: self.context(username: "U"))
 
         #expect(recorder.calls == [.detail])
         #expect(vm.isOwner)
@@ -460,14 +439,9 @@ struct CollectionDetailVMTests {
             bookmarkRepo: bookmarks
         )
 
-        let change = await vm.open(context: self.context(
-            isSignedIn: true,
-            username: "other",
-            autoSave: true
-        ))
+        await vm.open(context: self.context(username: "other"))
 
         #expect(recorder.calls == [.detail])
-        #expect(change == nil)
     }
 }
 

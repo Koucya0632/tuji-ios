@@ -57,13 +57,6 @@ enum CardsSource: String, CaseIterable, Identifiable {
         self == .official
     }
 
-    /// A guest has no account-scoped content, so two of the values would always
-    /// come back empty. Offering a filter that can only ever say "nothing here"
-    /// is worse than not offering it.
-    static func available(isGuest: Bool) -> [CardsSource] {
-        isGuest ? [.official, .bookmarked] : allCases
-    }
-
     func matches(_ word: CardWord, isBookmarked: (String) -> Bool) -> Bool {
         switch self {
         case .official: word.category != "custom" && word.category != "community"

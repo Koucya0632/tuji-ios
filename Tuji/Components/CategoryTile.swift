@@ -16,8 +16,7 @@ enum ThemeStatus {
     case mastered
 
     /// `.mastered` (全精通) wins over `.completed` (完成) since all-精通 already
-    /// implies every word was seen. Guests have no mastery / progress data, so
-    /// this stays `.none` for them by way of empty inputs.
+    /// implies every word was seen. Empty inputs give `.none`.
     ///
     /// - Parameters:
     ///   - words: every word in the theme.

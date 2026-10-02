@@ -40,21 +40,6 @@ struct CardsListThemeVisibilityTests {
         #expect(visible.map(\.id) == ["kitchen"])
     }
 
-    /// The source row still offers every value with content behind it, so a user
-    /// with no saved community words can still ask to see them and get a
-    /// truthful empty result rather than a missing filter.
-    @Test
-    func sourceRowAlwaysOffersTakenAndMineWhenSignedIn() {
-        #expect(CardsSource.available(isGuest: false) == CardsSource.allCases)
-    }
-
-    /// A guest has no account-scoped content, so two values could only ever say
-    /// "nothing here" — worse than not offering them.
-    @Test
-    func guestsDoNotSeeAccountScopedSources() {
-        #expect(CardsSource.available(isGuest: true) == [.official, .bookmarked])
-    }
-
     /// There is no 全部 case: "everything" is the absence of a filter, which the
     /// grid spells `nil`. A case for it would have put a second 全部 chip on
     /// screen beside the theme row's, each meaning something different.

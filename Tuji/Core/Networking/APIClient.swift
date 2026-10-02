@@ -3,7 +3,7 @@
 // retries once with a replacement for the token the server refused.
 //
 // Public endpoints usually skip auth. Optional-auth reads attach a token when
-// one is already available, while remaining usable by signed-out guests.
+// one is already available, while remaining usable signed out.
 
 import Foundation
 import OSLog

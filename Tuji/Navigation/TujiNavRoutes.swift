@@ -12,8 +12,8 @@ extension View {
                 case .settings: SettingsView()
                 case .atlasManage: AtlasManageView(initialSection: .cards)
                 case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
-                case let .atlasCollectionDetail(slug, autoSave, preview):
-                    AtlasCollectionDetailView(slug: slug, preview: preview, autoSave: autoSave)
+                case let .atlasCollectionDetail(slug, preview):
+                    AtlasCollectionDetailView(slug: slug, preview: preview)
                 case let .authorProfile(handle, isSelf):
                     AtlasAuthorProfileView(handle: handle, isSelf: isSelf)
                 case .studyCategories: StudyCategoriesPickerView()

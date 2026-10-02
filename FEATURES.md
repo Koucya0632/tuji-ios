@@ -57,8 +57,7 @@ App 啟動
   ├─ .signedOut
   │    ├─ 未選學習方向              → LearningDirectionOnboardingView
   │    ├─ !introDone               → OnboardingFlow(3 頁行銷介紹)
-  │    └─ introDone                → WelcomeView(登入/註冊/訪客)
-  ├─ .guest                        → catalog 嘗試完成前 SplashView,之後 MainTabsView(user: nil)
+  │    └─ introDone                → WelcomeView(登入/註冊)
   └─ .signedIn(user)
        ├─ 未選學習方向              → LearningDirectionOnboardingView
        ├─ !setupDone(user.id)      → SetupView(選主題 + 每日目標)
@@ -67,7 +66,7 @@ App 啟動
 ```
 
 - 原生 `UILaunchScreen` 使用 `LaunchLockupPeekStart`(232×230pt)與 `tujiPaper #FBF7EF`;它是 SwiftUI `TujiBrandLockup` 探頭動畫的精確起始幀,因此系統最後一幀到 App 第一幀不跳動。SwiftUI 接手後開啟洞口並讓黑貓探頭,且最少顯示 600ms;Reduce Motion 直接顯示最終品牌鎖定並移除離場 opacity,但不跳過時間門檻。
-- 登出、onboarding 與首次 setup 只等待身份和 600ms;guest / setup 已完成的 signed-in 主介面才等待對應 catalog 的最終載入嘗試。成功或失敗都解除 gate,錯誤與離線提示進入目的頁後再呈現。
+- 登出、onboarding 與首次 setup 只等待身份和 600ms;setup 已完成的 signed-in 主介面才等待對應 catalog 的最終載入嘗試。成功或失敗都解除 gate,錯誤與離線提示進入目的頁後再呈現。
 - `LaunchCoordinator.start()` 可重入但整個 process 只執行一次;RootView 只渲染一個頂層 destination,不再有底層 Splash 加 overlay Splash 的雙重轉場。
 - 啟動 catalog 以 immutable `CatalogContext`(介面語言、學習方向、帳號、是否 personalized)識別 single-flight。相同 context 共用請求;context 改變時舊結果可完成但不得覆寫目前畫面。
 
@@ -92,10 +91,9 @@ App 啟動
 | 基本 | `cards` / `today` / `search(query:)` / `favorites` / `settings` |
 | 學習 | `studyCategories` / `studyLanding(mode:)` / `wordDetail(id:)` / `categoryDetail(id:)` |
 | 自製圖鑑 | `atlasManage`(開在 圖鑑卡片)/ `atlasMyCollections`(開在 合集,deep link 相容用)/ `atlasCollectionEdit(id:)` |
-| 物見 | `atlasPublic` / `atlasCollectionDetail(slug:autoSave:)` / `authorProfile(handle:isSelf:)` |
+| 物見 | `atlasPublic` / `atlasCollectionDetail(slug:preview:)` / `authorProfile(handle:isSelf:)` |
 
 - `authorProfile` 的 `isSelf` 只多加一個編輯入口,其餘完全相同 —— 這頁的價值就在於它就是別人看到的那一頁(§12)。
-- `atlasCollectionDetail` 的 `autoSave` 只用來續接訪客被登入打斷的收藏動作。
 
 ### Deep Link — `Tuji/Navigation/DeepLink.swift`, `DeepLinkCoordinator.swift`
 
@@ -106,7 +104,7 @@ App 啟動
 ### 首次功能導覽 — `Tuji/Features/Tour/FeatureTour.swift`, `FeatureTourOverlay.swift`
 
 - 各 View 以 `.tourAnchor(_:)` 標註高亮目標(hero、CTA、每日目標、連勝、tab bar、拍照鈕),經 PreferenceKey 匯集到 `MainTabsView` 渲染遮罩。
-- 步驟依訪客/登入身分不同(訪客沒有 CTA 對,fallback 到整張 hero 卡,文案也不承諾無法做的動作)。
+- CTA 對與每日目標找不到 anchor 時,fallback 到整張 hero 卡與連勝。
 - 進入條件:`!tourDone` 且無學習中、無 pending deep link;結束(完成或跳過)寫入 `tourDone`(裝置層級)。完成後切回主頁分頁。
 
 ---
@@ -115,21 +113,12 @@ App 啟動
 
 ### 狀態機 — `Tuji/Core/Auth/AuthService.swift`
 
-- 狀態:`.checking → .signedOut / .signedIn`;`.signedOut ⇄ .guest`(訪客模式)。
+- 狀態:`.checking → .signedOut / .signedIn`。沒有訪客模式:App 必須登入才能使用。
 - **Email**:`signUp`(可能回 `pendingEmailConfirmation`,確認信 redirect 到 `TUJI_BASE_URL/auth/confirmed`)、`signIn`。
 - **Apple**:`AppleSignInBridge` 取得 idToken + nonce → Supabase `signInWithIdToken`。Apple 提供的姓名不會自動成為公開暱稱；暱稱只能在登入後由使用者於「編輯個人資料」主動送出並通過審核。
 - **Google**:`GoogleSignInBridge` 原生流程取 idToken → Supabase(Supabase 專案需開 Skip nonce checks,SDK 不支援 nonce)。使用者取消不顯示錯誤。
 - **登出**:先(並行)刪除裝置推播 token,再 Supabase signOut + 清 Google 快取。
 - 錯誤訊息經 `friendly()` 轉成中文(密碼錯誤、Email 已註冊、rate limit…)。
-
-### 訪客模式
-
-- `.guest` 可瀏覽圖鑑/收藏(僅本機 LocalCache),不能學習(SRS 綁帳號)。
-- 從訪客按「登入/註冊」→ `exitGuestMode()` 回 Welcome,並記 `cameFromGuest` 讓 Welcome 顯示關閉鈕(可退回訪客),避免誤觸變死路。
-
-### 登入時本機資料上行
-
-`syncLocalCacheToServer()`:登入/註冊成功後,把訪客期間累積的收藏 + 已學 id 上傳 `/api/users/sync`(union 語義,永不丟資料)。失敗僅記 log。
 
 ### Session / Token
 
@@ -187,27 +176,25 @@ App 啟動
 ### 資料載入
 
 - `TodayVM.load()` 並行抓 `/api/users/me` + `ProgressStore.loadIfStale()` + `StudyStatsStore.loadIfStale()`(共享 store,30 秒 TTL,分頁互切不重打)。
-- 訪客不打網路,只讀 LocalCache + WordsStore 呈現降級版 hero。
 - 載入完成後**預抓學習佇列**(`prefetchStudyQueues`):只 prefetch 未被停用的 CTA 對應 mode,讓按下 復習/學新字 時跳過 spinner。
 
 ### 問候與副標
 
 - 依時段顯示 早安/午安/晚安 + 暱稱(nickname → username → email local part → 探險者)。
-- 副標優先序:訪客文案 → 未選主題提示 → stats 未載入時中性句(避免亂下結論)→ 有到期字(`今天有 N 個字要復習`)→ 每日目標達成 → 今天已學 N 個 → 還沒學新字 → 主題字都學完。
+- 副標優先序:未選主題提示 → stats 未載入時中性句(避免亂下結論)→ 有到期字(`今天有 N 個字要復習`)→ 每日目標達成 → 今天已學 N 個 → 還沒學新字 → 主題字都學完。
 
 ### Hero 卡
 
 - **今日目標進度條**:`todayNew / dailyGoal`(只計新字,復習不算);達成顯示「達成」徽章 + 吉祥物切換 cheer 姿勢。
-- **主題進度條**:所選主題的 `seen / total`(伺服器數字;訪客 fallback 本機 learned 數;未選主題顯示 0/0)。
+- **主題進度條**:所選主題的 `seen / total`(伺服器數字;未選主題顯示 0/0)。
 - **CTA 按鈕**:
-  - `復習` disabled 條件:訪客或 `due == 0`。
+  - `復習` disabled 條件:`due == 0`。
   - `學新字` disabled 原因(`NewBlockReason`):未選主題(noThemes)/ 所選主題無卡片(noCards)/ 主題新字學完(allLearned)/ 復習積壓把新字額度壓到 0(reviewBacklog)。
   - 每個灰掉的按鈕都有一行說明(不留無聲死按鈕);另有「因為還有 N 個字要複習,今天新字先調整為 M 個」的額度調降提示。
-- **訪客版 hero**:兩顆學習鈕換成「建立帳號,開始學習」。
 
 ### 主題格
 
-- 登入:只顯示使用者選的主題(且有字);訪客:前 4 個有字的分類。
+- 只顯示使用者選的主題(且有字)。
 - 完成標章:`全精通`(主題內每個字都達精通 ≥80,紫色皇冠)優先於 `完成`(seen == total,青色勾)。
 - 未選主題時顯示「選擇主題」引導卡。
 
@@ -335,8 +322,7 @@ App 啟動
 ### 7.3 我的進度區塊 — `Tuji/Features/Me/MeProgressSections.swift`
 
 - 進度不再是主分頁,完整搬到「我」:圖鑑完成度(所選主題 seen/total 百分比)、目前/最長連勝、最近 6 週熱力圖(0 / 1–4 / 5–12 / >12 四檔深淺)、每分類明細(依所選主題過濾,空選=全部)。
-- 訪客顯示登入提示空狀態。
-- **清除學習進度**放在 設定 → 帳號(不在進度頁,破壞性操作不該離統計一步之遙):DELETE `/api/users/progress` 後同時 `cache.clearLearned()`(sync 是 union-only,不清本機會在下次登入把已清除的 id 復活)+ invalidate/reload progress 與 stats。收藏、設定、自製圖鑑不受影響。
+- **清除學習進度**放在 設定 → 帳號(不在進度頁,破壞性操作不該離統計一步之遙):DELETE `/api/users/progress` 後 invalidate/reload progress、mastery、stats 與 queue。收藏、設定、自製圖鑑不受影響。
 
 ---
 
@@ -397,13 +383,13 @@ App 啟動
 
 > 「收藏」在 App 裡有兩個意思,不要混淆:**本章**是把字典裡的字加進「我的收藏」(純本機事實來源);**§12** 的收藏是把別人公開的圖鑑項目或合集收進自己的學習內容(伺服器事實來源,會影響 `WordsStore` 與學習佇列)。
 
-- **來源**:`LocalCache.favoriteIds`(UserDefaults)是唯一事實來源;訪客純本機,登入者由 `FavoriteButton` 樂觀更新本機後 fire-and-forget POST `/api/users/favorites`,登入時再由 sync 統一 union。
+- **來源**:`LocalCache.favoriteIds`(UserDefaults)是本機副本;`FavoriteButton` 樂觀更新本機後 fire-and-forget POST `/api/users/favorites`,登入後再把伺服器清單 union 進來。
 - **圖鑑的收藏來源**:`CardsSource.bookmarks` 以 `favoriteIds × WordsStore` 直接渲染,不打 GET;`CardsListView` 與所有字共用分頁、排序、WordPeek 與列操作。`tuji://favorites` 保留舊連結語意,但現在是切到圖鑑的收藏 filter,不再 push 獨立 Favorites 畫面。
 
 ### LocalCache — `Core/Cache/LocalCache.swift`
 
-- 持有:favorites、learned(**按語言分開** `tuji.cache.learned.en/.ja`,舊單一 key 自動遷移進 en)、recentSearches、匿名 sessionId。
-- `mergeFromServer` / `syncSnapshot` 皆 union 語義;`clearLearned` 只在清除學習進度時呼叫。
+- 持有:favorites、recentSearches、匿名 sessionId。
+- `mergeServerFavorites` 是 union 語義;登出時 `reset()` 清掉 favorites,recentSearches 保留。
 
 ---
 
@@ -635,7 +621,7 @@ GET `/api/atlas/public/authors/{handle}`(公開、吃 CDN 快取)。同一個畫
 
 | 區塊 | 項目 | 邏輯 |
 |---|---|---|
-| 學習 | 學習語言 | 切換 zh-en / zh-ja:invalidate + reload words/categories/progress/mastery/stats;兩種語言進度分開保留;訪客只寫本機 |
+| 學習 | 學習語言 | 切換 zh-en / zh-ja:invalidate + reload words/categories/progress/mastery/stats;兩種語言進度分開保留 |
 | 學習 | 每日目標題數 | 影響新字額度(§6.1) |
 | 學習 | 學習主題 | 影響學新字出題範圍與主題進度統計 |
 | 學習 | 中文釋義 | showZh 開關,各列表/學習畫面條件渲染中文 |

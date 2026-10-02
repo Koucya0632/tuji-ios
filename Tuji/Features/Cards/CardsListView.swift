@@ -62,7 +62,7 @@ struct CardsListView: View {
         // asked for by name instead of hand-written here. (A hand-written
         // `.task` is what left the old 主題 screen rendering 完成 from a store
         // it never loaded; see AccumulationLoading.)
-        .warmsAccumulation(.themeIndex, isGuest: self.auth.isGuest)
+        .warmsAccumulation(.themeIndex)
         .onChange(of: self.sourceRequest, initial: true) { _, requested in
             guard let requested else { return }
             self.source = requested
@@ -114,7 +114,7 @@ struct CardsListView: View {
         VStack(alignment: .leading, spacing: Space.s2) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Space.s2) {
-                    ForEach(CardsSource.available(isGuest: self.auth.isGuest)) { value in
+                    ForEach(CardsSource.allCases) { value in
                         self.sourceChip(value)
                     }
                 }

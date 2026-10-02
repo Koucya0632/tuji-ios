@@ -9,7 +9,6 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(AuthService.self) private var auth
-    @Environment(LocalCache.self) private var cache
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     /// The screen's two writes — 清除學習進度 and 刪除帳號 — plus the entitlement
@@ -126,7 +125,7 @@ struct SettingsView: View {
             detail: "將刪除掌握度、連續天數、SRS 排程與答題紀錄；收藏與設定不受影響。",
             primary: TujiPromptAction("確認清除", role: .destructive) {
                 Task {
-                    await self.vm.clearProgress(learned: self.cache)
+                    await self.vm.clearProgress()
                     if self.vm.clearError == nil {
                         self.showClearSuccess = true
                     }
@@ -255,62 +254,45 @@ struct SettingsView: View {
                     }
                 }
 
-                if !self.auth.isGuest {
-                    ReminderSettingsSection()
+                ReminderSettingsSection()
+
+                TujiSection(title: "帳號") {
+                    NavigationLink { EditProfileView() } label: {
+                        TujiRow("編輯個人資料")
+                    }
+                    .tujiRowStyle()
+                    // A block has to be undoable somewhere that doesn't
+                    // require finding the person again — which is exactly
+                    // what blocking them made hard.
+                    NavigationLink { BlockedAuthorsView() } label: {
+                        TujiRow("已封鎖的人")
+                    }
+                    .tujiRowStyle()
+                    Button { self.showSignOutConfirm = true } label: {
+                        TujiRow("登出", showsArrow: false, destructive: true)
+                    }
+                    .tujiRowStyle(destructive: true)
                 }
 
-                if self.auth.isGuest {
-                    // Not an empty space where the account section would be: a
-                    // guest is not a blocked user, they are an undecided one, so
-                    // the gap becomes one statement and one way out.
-                    TujiSection(
-                        title: "帳號",
-                        footer: "訪客的書籤只存在這台裝置上。建立帳號後會同步，並且可以開始學習。"
-                    ) {
-                        Button { self.auth.exitGuestMode() } label: {
-                            TujiRow("建立帳號", showsArrow: false)
-                        }
-                        .tujiRowStyle()
+                TujiSection(
+                    footer: "清除學習進度會刪除掌握度與答題紀錄，但保留書籤、設定與自製圖鑑。"
+                ) {
+                    Button { self.showClearConfirm = true } label: {
+                        self.dangerRow(
+                            title: self.vm.clearing ? "清除中…" : "清除學習進度",
+                            busy: self.vm.clearing
+                        )
                     }
-                } else {
-                    TujiSection(title: "帳號") {
-                        NavigationLink { EditProfileView() } label: {
-                            TujiRow("編輯個人資料")
-                        }
-                        .tujiRowStyle()
-                        // A block has to be undoable somewhere that doesn't
-                        // require finding the person again — which is exactly
-                        // what blocking them made hard.
-                        NavigationLink { BlockedAuthorsView() } label: {
-                            TujiRow("已封鎖的人")
-                        }
-                        .tujiRowStyle()
-                        Button { self.showSignOutConfirm = true } label: {
-                            TujiRow("登出", showsArrow: false, destructive: true)
-                        }
-                        .tujiRowStyle(destructive: true)
+                    .tujiRowStyle(destructive: true)
+                    .disabled(self.vm.clearing)
+                    Button { self.showDeleteFirst = true } label: {
+                        self.dangerRow(
+                            title: self.vm.deleting ? "刪除中…" : "刪除帳號",
+                            busy: self.vm.deleting
+                        )
                     }
-
-                    TujiSection(
-                        footer: "清除學習進度會刪除掌握度與答題紀錄，但保留書籤、設定與自製圖鑑。"
-                    ) {
-                        Button { self.showClearConfirm = true } label: {
-                            self.dangerRow(
-                                title: self.vm.clearing ? "清除中…" : "清除學習進度",
-                                busy: self.vm.clearing
-                            )
-                        }
-                        .tujiRowStyle(destructive: true)
-                        .disabled(self.vm.clearing)
-                        Button { self.showDeleteFirst = true } label: {
-                            self.dangerRow(
-                                title: self.vm.deleting ? "刪除中…" : "刪除帳號",
-                                busy: self.vm.deleting
-                            )
-                        }
-                        .tujiRowStyle(destructive: true)
-                        .disabled(self.vm.deleting)
-                    }
+                    .tujiRowStyle(destructive: true)
+                    .disabled(self.vm.deleting)
                 }
 
                 // Pro is no longer a permanent card on 我. A subscription card
@@ -464,12 +446,9 @@ private struct LearningDirectionPickerView: View {
             self.dismiss()
             return
         }
-        // Same question, same answer as the first-run picker — see
-        // `OnboardingFlow`. It used to be these same five lines, twice.
-        let shouldPersist = !self.auth.isGuest
         // What a direction change drops and re-fetches is the store's to know
         // (LearningDirectionRefresh); this screen only reports the choice.
-        self.settings.setLearningDirection(direction, persist: shouldPersist)
+        self.settings.setLearningDirection(direction, persist: true)
         self.dismiss()
     }
 }

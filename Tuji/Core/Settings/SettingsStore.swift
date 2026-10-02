@@ -361,8 +361,8 @@ final class SettingsStore {
         }
     }
 
-    /// Applies the learning target immediately. First-launch and guest flows
-    /// use `persist: false`; signed-in settings changes sync to the server.
+    /// Applies the learning target immediately. The first-run picker uses
+    /// `persist: false` while signed out; signed-in changes sync to the server.
     ///
     /// Also drops and re-fetches everything scoped to the old direction. The two
     /// callers used to do that themselves and disagreed about what it meant —

@@ -6,7 +6,6 @@ import Foundation
 enum LaunchAccountState: Equatable {
     case checking
     case signedOut
-    case guest
     case signedIn(userID: UUID, setupDone: Bool)
 }
 
@@ -57,12 +56,6 @@ enum LaunchDestination: Hashable {
                 return .learningDirection
             }
             return context.introDone ? .welcome : .onboarding
-
-        case .guest:
-            guard context.learningDirectionSelected else {
-                return .learningDirection
-            }
-            return catalogReady ? .main : .splash
 
         case let .signedIn(userID, setupDone):
             guard context.learningDirectionSelected else {

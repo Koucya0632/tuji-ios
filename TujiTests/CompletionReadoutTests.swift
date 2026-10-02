@@ -1,19 +1,16 @@
 // Pins 完成度 — the seen/total/ratio rule that 首頁's hero and 我's completion
 // card now share.
 //
-// Each of the first three tests is a case where the two screens used to
-// disagree, because 我 carried its own copy of the rule from before the
-// denominator fix and without a guest branch at all.
+// The first tests are cases where the two screens used to disagree, because 我
+// carried its own copy of the rule from before the denominator fix.
 
 import Testing
 @testable import Tuji
 
 struct CompletionReadoutTests {
     private func inputs(
-        isGuest: Bool = false,
         settingsLoaded: Bool = true,
         studyCategories: [String] = ["kitchen"],
-        guestLearnedCount: Int = 0,
         seenInSelection: Int = 40,
         totalInSelection: Int = 120,
         dictionaryCount: Int = 480,
@@ -22,10 +19,8 @@ struct CompletionReadoutTests {
         -> CompletionReadout.Inputs
     {
         CompletionReadout.Inputs(
-            isGuest: isGuest,
             settingsLoaded: settingsLoaded,
             studyCategories: studyCategories,
-            guestLearnedCount: guestLearnedCount,
             seenInSelection: seenInSelection,
             totalInSelection: totalInSelection,
             dictionaryCount: dictionaryCount,
@@ -33,24 +28,7 @@ struct CompletionReadoutTests {
         )
     }
 
-    // MARK: - The three divergences
-
-    @Test("a guest's progress is the local learned set, not the empty server rows")
-    func guestCountsWhatIsOnTheDevice() {
-        // 我 used to read the server's seen count for guests — always 0 — and
-        // print 「0% · 已學 0 / 共 480 字」 to someone 首頁 credited with 37.
-        let readout = CompletionReadout(
-            self.inputs(
-                isGuest: true,
-                studyCategories: [],
-                guestLearnedCount: 37,
-                seenInSelection: 0,
-                totalInSelection: 0
-            )
-        )
-        #expect(readout.seen == 37)
-        #expect(readout.total == 480)
-    }
+    // MARK: - The divergences
 
     @Test("the denominator describes the selection, not the whole dictionary")
     func fallbackStaysWithinTheSelection() {
@@ -146,12 +124,6 @@ struct CompletionReadoutTests {
                 .showsThemePrompt
         )
     }
-
-    @Test("a guest is never prompted to pick themes")
-    func guestsAreNotPrompted() {
-        let readout = CompletionReadout(self.inputs(isGuest: true, studyCategories: []))
-        #expect(!readout.showsThemePrompt)
-    }
 }
 
 // MARK: - The mapping
@@ -161,7 +133,6 @@ struct CompletionReadoutTests {
 /// `TodayDecisions` copying eight of its eleven fields across again, and 我
 /// assembling its own set from the same stores. Two of the three lived in `View`
 /// bodies, so nothing could check that the two screens asked the same question.
-/// They once did not: `isGuest` had two answers and agreed only by accident.
 @MainActor
 struct CompletionInputsMappingTests {
     private func word(_ id: String, category: String) -> CardWord {
@@ -210,11 +181,9 @@ struct CompletionInputsMappingTests {
         ])
 
         let inputs = CompletionReadout.Inputs(
-            viewer: FakeViewer(isGuest: false),
             settings: FakeStudySelection(studyCategories: ["kitchen"]),
             progress: progress,
-            words: words,
-            cache: FakeGuestProgress(learnedCount: 0)
+            words: words
         )
 
         #expect(inputs.studyCategories == ["kitchen"])
@@ -239,41 +208,16 @@ struct CompletionInputsMappingTests {
             self.word("b", category: "fruits")
         ])
         let inputs = CompletionReadout.Inputs(
-            viewer: FakeViewer(isGuest: false),
             settings: FakeStudySelection(
                 studyCategories: ["kitchen", "fruits"],
                 studyableCategories: ["fruits", "bedroom"]
             ),
             progress: progress,
-            words: words,
-            cache: FakeGuestProgress(learnedCount: 0)
+            words: words
         )
         #expect(inputs.studyCategories == ["fruits"])
         #expect(inputs.seenInSelection == 5)
         #expect(inputs.totalInSelection == 34)
-    }
-
-    /// `isGuest` comes from the viewer seam and nowhere else. It decides whether
-    /// 完成度 counts the local learned set or the server rows, and it is the one
-    /// field the two screens once answered differently.
-    @Test
-    func isGuestComesFromTheViewer() async {
-        let progress = await self.makeProgress([])
-        let words = await self.makeWords([])
-
-        for guest in [true, false] {
-            let inputs = CompletionReadout.Inputs(
-                viewer: FakeViewer(isGuest: guest),
-                settings: FakeStudySelection(studyCategories: []),
-                progress: progress,
-                words: words,
-                cache: FakeGuestProgress(learnedCount: 7)
-            )
-            #expect(inputs.isGuest == guest)
-            // Read regardless of who is looking: the *rule* decides when it is
-            // used, so the reading must not pre-empt it.
-            #expect(inputs.guestLearnedCount == 7)
-        }
     }
 
     /// An empty theme list before settings arrive is not a selection — it is an
@@ -284,21 +228,17 @@ struct CompletionInputsMappingTests {
         let words = await self.makeWords([])
 
         let cold = CompletionReadout.Inputs(
-            viewer: FakeViewer(isGuest: false),
             settings: FakeStudySelection(studyCategories: [], settingsLoaded: false),
             progress: progress,
-            words: words,
-            cache: FakeGuestProgress(learnedCount: 0)
+            words: words
         )
         #expect(!cold.settingsLoaded)
         #expect(!CompletionReadout(cold).showsThemePrompt)
 
         let warm = CompletionReadout.Inputs(
-            viewer: FakeViewer(isGuest: false),
             settings: FakeStudySelection(studyCategories: [], settingsLoaded: true),
             progress: progress,
-            words: words,
-            cache: FakeGuestProgress(learnedCount: 0)
+            words: words
         )
         #expect(warm.settingsLoaded)
         #expect(CompletionReadout(warm).showsThemePrompt)
@@ -313,11 +253,9 @@ struct CompletionInputsMappingTests {
         ])
         let words = await self.makeWords([self.word("a", category: "kitchen")])
         let shared = CompletionReadout.Inputs(
-            viewer: FakeViewer(isGuest: false),
             settings: FakeStudySelection(studyCategories: ["kitchen"]),
             progress: progress,
-            words: words,
-            cache: FakeGuestProgress(learnedCount: 0)
+            words: words
         )
 
         let today = TodayDecisions(
@@ -331,35 +269,10 @@ struct CompletionInputsMappingTests {
 // MARK: - Mapping fakes
 
 @MainActor
-private struct FakeViewer: ViewerIdentity {
-    var isGuest: Bool
-    var uid: String? {
-        nil
-    }
-
-    var authorRef: AtlasAuthorRef? {
-        nil
-    }
-
-    func owns(handle _: String) -> Bool {
-        false
-    }
-
-    func displayName(fallback: String) -> String {
-        fallback
-    }
-}
-
-@MainActor
 private struct FakeStudySelection: StudySelectionReading {
     var studyCategories: [String]
     var settingsLoaded: Bool = true
     var studyableCategories: [String]?
-}
-
-@MainActor
-private struct FakeGuestProgress: GuestProgressReading {
-    var learnedCount: Int
 }
 
 @MainActor

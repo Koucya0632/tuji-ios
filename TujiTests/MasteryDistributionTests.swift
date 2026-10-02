@@ -63,8 +63,7 @@ struct MasteryDistributionTests {
 
     @Test("total is studied words, never the dictionary size")
     func totalIsStudiedOnly() {
-        // 完成度 owns the denominator question, with its scoping and its guest
-        // branch. This readout deliberately has no denominator at all.
+        // 完成度 owns the denominator question, with its scoping. This readout deliberately has no denominator at all.
         let spread = MasteryDistribution.of(scores: ["a": 5, "b": 95])
         #expect(spread.total == 2)
     }

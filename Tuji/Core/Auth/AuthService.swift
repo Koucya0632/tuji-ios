@@ -113,15 +113,6 @@ final class AuthService {
         await self.refreshResolvedProfile()
     }
 
-    // MARK: - Guest mode
-
-    /// Called from MainTabsView's "登入 / 註冊" button so guest can land
-    /// on Welcome and pick a flow.
-    func exitGuestMode() {
-        self.session.exitGuest()
-        log.info("exited guest mode")
-    }
-
     // MARK: - Email
 
     /// Registration creates only the server-minted UID and default avatar.
@@ -140,7 +131,6 @@ final class AuthService {
             )
             if let session = resp.session {
                 self.session.signedIn(SessionUser(from: session.user))
-                await syncLocalCacheToServer()
                 await hydrateProfile()
                 log.info("signup ok uid=\(session.user.id.uuidString, privacy: .public)")
                 return .signedIn
@@ -162,7 +152,6 @@ final class AuthService {
         do {
             let session = try await supabase.auth.signIn(email: email, password: password)
             self.session.signedIn(SessionUser(from: session.user))
-            await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("signin ok uid=\(session.user.id.uuidString, privacy: .public)")
             return .succeeded
@@ -196,7 +185,6 @@ final class AuthService {
                 )
             )
             self.session.signedIn(SessionUser(from: session.user))
-            await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("apple signin ok uid=\(session.user.id.uuidString, privacy: .public)")
             return .succeeded
@@ -241,7 +229,6 @@ final class AuthService {
                 )
             )
             self.session.signedIn(SessionUser(from: session.user))
-            await syncLocalCacheToServer()
             await hydrateProfile()
             log.info("google signin ok uid=\(session.user.id.uuidString, privacy: .public)")
             return .succeeded
@@ -339,24 +326,6 @@ final class AuthService {
         guard merged != currentUser else { return }
         self.session.reconcile(merged, ifStillSignedInAs: user.id)
         log.info("profile mirror reconciled from server")
-    }
-
-    // MARK: - Local cache sync
-
-    /// Uploads the device's anonymous favorites/learned to the server so a
-    /// new account inherits whatever the user touched in guest mode.
-    /// Best-effort — failures are logged and silently swallowed.
-    private func syncLocalCacheToServer() async {
-        let snapshot = LocalCache.shared.syncSnapshot
-        guard !snapshot.favorites.isEmpty || !snapshot.learned.isEmpty else {
-            return
-        }
-        do {
-            try await self.users.syncLocalCache(snapshot)
-            log.info("synced \(snapshot.favorites.count) favs + \(snapshot.learned.count) learned to server")
-        } catch {
-            log.error("sync failed: \(error.localizedDescription, privacy: .public)")
-        }
     }
 
     private var emailConfirmationRedirectURL: URL? {

@@ -53,7 +53,7 @@ struct LaunchCoordinatorTests {
             },
             hydrateProfile: { profileHydrations += 1 },
             catalog: FakeCatalogWarmer.splitting(
-                guest: { catalogPreloads += 1 },
+                anonymous: { catalogPreloads += 1 },
                 signedIn: { finalizedUserID in
                     #expect(finalizedUserID == userID)
                     signedInFinalizations += 1

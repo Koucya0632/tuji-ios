@@ -6,11 +6,6 @@
 // nickname → username → email-local. None of them were reachable: every one was
 // a `private var` on a `View`.
 //
-// The split was not academic. `MeView` used the first mechanism and hosted
-// `MeProgressSections`, which used the second — and both feed
-// `CompletionReadout.Inputs.isGuest`, the flag that decides whether 完成度 counts
-// the local learned set or the server rows.
-//
 // The rules live on `AuthState` rather than on `AuthService` because the service
 // has a private init and a stored Supabase client that traps without Info.plist
 // keys. The state is a plain enum, so these assertions need nothing.
@@ -37,17 +32,15 @@ struct ViewerIdentityTests {
         )
     }
 
-    // MARK: - isGuest
+    // MARK: - isSignedIn
 
-    /// Everything that is not a signed-in session is a guest, including the two
-    /// states the shell never renders these screens in. The two mechanisms
-    /// agreed only because `RootView` maps `.guest` to `user: nil` by hand.
+    /// Only a signed-in session counts — the first-run direction picker asks
+    /// this before Welcome, while the launch is still resolving.
     @Test
-    func onlyASignedInSessionIsNotAGuest() {
-        #expect(AuthState.signedIn(self.user()).isGuest == false)
-        #expect(AuthState.guest.isGuest)
-        #expect(AuthState.signedOut.isGuest)
-        #expect(AuthState.checking.isGuest)
+    func onlyASignedInSessionIsSignedIn() {
+        #expect(AuthState.signedIn(self.user()).isSignedIn)
+        #expect(!AuthState.signedOut.isSignedIn)
+        #expect(!AuthState.checking.isSignedIn)
     }
 
     // MARK: - uid
@@ -58,13 +51,13 @@ struct ViewerIdentityTests {
     }
 
     /// An account the server has not minted a UID for is not identifiable, and
-    /// neither is a guest. An empty string is the same as absent — it was the
+    /// neither is a signed-out viewer. An empty string is the same as absent — it was the
     /// `!uid.isEmpty` half that four of the call sites remembered and one didn't.
     @Test
     func uidIsAbsentWithoutAMintedUsername() {
         #expect(AuthState.signedIn(self.user(username: nil)).uid == nil)
         #expect(AuthState.signedIn(self.user(username: "")).uid == nil)
-        #expect(AuthState.guest.uid == nil)
+        #expect(AuthState.signedOut.uid == nil)
     }
 
     // MARK: - owns(handle:)
@@ -81,11 +74,10 @@ struct ViewerIdentityTests {
     }
 
     /// A viewer with no account owns nothing — this is what stops 檢舉/封鎖 being
-    /// offered on your own profile, and what stops it being offered to a guest
-    /// who has no account to act with.
+    /// offered on your own profile.
     @Test
     func aViewerWithoutAUidOwnsNothing() {
-        #expect(!AuthState.guest.owns(handle: "TJ12345678"))
+        #expect(!AuthState.signedOut.owns(handle: "TJ12345678"))
         #expect(!AuthState.signedIn(self.user(username: nil)).owns(handle: "TJ12345678"))
     }
 
@@ -123,8 +115,8 @@ struct ViewerIdentityTests {
     /// divergence — so the seam takes it rather than picking one.
     @Test
     func theFallbackBelongsToTheCaller() {
-        #expect(AuthState.guest.displayName(fallback: "探險者") == "探險者")
-        #expect(AuthState.guest.displayName(fallback: "Tuji 探險者") == "Tuji 探險者")
+        #expect(AuthState.signedOut.displayName(fallback: "探險者") == "探險者")
+        #expect(AuthState.signedOut.displayName(fallback: "Tuji 探險者") == "Tuji 探險者")
 
         let bare = self.user(username: nil, nickname: nil, email: nil)
         #expect(AuthState.signedIn(bare).displayName(fallback: "探險者") == "探險者")
@@ -146,11 +138,10 @@ struct ViewerIdentityTests {
         #expect(ref?.avatar == "cat.jpg")
     }
 
-    /// A guest has no byline at all — not a byline with an empty handle, which
-    /// would render a link to nowhere.
+    /// Signed out there is no byline at all — not a byline with an empty
+    /// handle, which would render a link to nowhere.
     @Test
-    func aGuestHasNoAuthorRef() {
-        #expect(AuthState.guest.authorRef == nil)
+    func aSignedOutViewerHasNoAuthorRef() {
         #expect(AuthState.signedOut.authorRef == nil)
         #expect(AuthState.checking.authorRef == nil)
     }
@@ -184,10 +175,9 @@ struct ViewerIdentityTests {
     // MARK: - ViewerRelationship
 
     /// A stub rather than `AuthState`: the relationship is a protocol extension
-    /// derived from `isGuest` and `owns(handle:)`, so what is worth pinning is
-    /// that derivation — any conformer gets the same three answers.
+    /// derived from `owns(handle:)`, so what is worth pinning is that
+    /// derivation — any conformer gets the same answers.
     private struct Viewer: ViewerIdentity {
-        var isGuest = false
         var ownedHandle: String?
 
         var uid: String? {
@@ -210,14 +200,11 @@ struct ViewerIdentityTests {
 
     @Test
     @MainActor
-    func theRelationshipIsMineTheirsOrGuest() {
+    func theRelationshipIsMineOrTheirs() {
         let me = Viewer(ownedHandle: "TJ12345678")
         #expect(me.relationship(toAuthor: "TJ12345678") == .mine)
         #expect(me.relationship(toAuthor: "tj12345678") == .mine, "the UID compare is case-insensitive")
         #expect(me.relationship(toAuthor: "TJ87654321") == .theirs)
-
-        let guest = Viewer(isGuest: true, ownedHandle: nil)
-        #expect(guest.relationship(toAuthor: "TJ12345678") == .guest)
     }
 
     /// A public item whose byline never resolved is nothing to anybody — which
@@ -242,7 +229,6 @@ struct ViewerIdentityTests {
         for handle in ["TJ12345678", "TJ87654321"] {
             let relationship = me.relationship(toAuthor: handle)
             #expect(relationship == .mine || relationship == .theirs)
-            #expect(relationship != .guest)
         }
     }
 }

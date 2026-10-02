@@ -200,7 +200,6 @@ private final class SettingsUserRepositoryFake: UserRepository {
 
     func saveSettings(_: UserSettings) async throws {}
     func deleteAccount() async throws {}
-    func syncLocalCache(_: SyncPayload) async throws {}
 
     func loadMe() async throws -> UserMeResponse {
         throw SettingsLoadingTestFailure.unimplemented

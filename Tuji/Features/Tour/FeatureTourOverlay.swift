@@ -197,7 +197,7 @@ struct FeatureTourOverlay: View {
         .padding()
 
         FeatureTourOverlay(
-            steps: TourStep.steps(isGuest: false),
+            steps: TourStep.steps,
             index: 4,
             transitioning: false,
             anchors: [:],

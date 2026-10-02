@@ -1,5 +1,5 @@
-// First screen when not signed in. Offers Apple / Google / Email sign-in.
-// There is no guest entry: the app is used with an account.
+// First screen when not signed in. Offers Apple / Google / Email sign-in;
+// the app is used with an account.
 
 import SwiftUI
 

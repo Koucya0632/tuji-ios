@@ -8,23 +8,15 @@
 //   • `uid.caseInsensitiveCompare(handle)`   — 物見 ×2, 作者主頁, CollectionDetailVM
 //   • nickname ?? username ?? email-local    — 今天, 我, 物見（後者還多一個 ?? "face"）
 //
-// The split was not academic. `MeView` answered with the first mechanism and
-// hosted `MeProgressSections`, which answered with the second — and both feed
-// `CompletionReadout.Inputs.isGuest`, the flag that decides whether 完成度 counts
-// the local learned set or the server rows. They agreed only because `RootView`
-// happens to map `.guest` to `user: nil` by hand.
-//
-// The consuming half of this seam already existed: `CompletionReadout.Inputs`
-// and `TodayDecisions.Inputs` both take `isGuest` as an input, are tested, and
-// are load-bearing. What was missing was a producer. There were fourteen.
+// One producer now, where there were fourteen.
 
 import Foundation
 
 /// What the viewer is to a piece of someone's work.
 ///
-/// Every moderation affordance in 物見 is a function of these three, and each
-/// screen was recombining `isGuest` and `owns(handle:)` into its own predicate:
-/// 物見詳情 spelled it `!isGuest && !owns` for 檢舉/封鎖 and `owns` alone for the
+/// Every moderation affordance in 物見 is a function of these two, and each
+/// screen was recombining `owns(handle:)` into its own predicate: 物見詳情
+/// spelled it one way for 檢舉/封鎖 and `owns` alone for the
 /// 「你的分享」 pill three hundred lines later, and 作者主頁 kept a pair
 /// (`isOwnProfile` / `canModerate`) whose *third* consumer — the nav bar —
 /// then went around both and asked a fourth question.
@@ -35,13 +27,10 @@ import Foundation
 /// edit, no 更多. This is the shape `NavRoute` dropped `isSelf`'s default to
 /// prevent, returning as a hard-coded argument.
 enum ViewerRelationship: Hashable {
-    /// No account. Both moderation endpoints require auth, so offering an
-    /// action that can only 401 is worse than not offering it.
-    case guest
     /// The viewer's own work. Nothing to report yourself for, and 封鎖 would
     /// hide your own 圖鑑 from you.
     case mine
-    /// Someone else's, and the viewer is signed in.
+    /// Someone else's.
     case theirs
 }
 
@@ -52,12 +41,6 @@ enum ViewerRelationship: Hashable {
 /// signing in mid-session must take effect on the next render.
 @MainActor
 protocol ViewerIdentity {
-    /// Browsing without an account.
-    ///
-    /// Guests keep progress locally, so this is not cosmetic: it changes what
-    /// 完成度 counts and what 今天 offers.
-    var isGuest: Bool { get }
-
     /// The public UID (`TJ` + 8 digits), or nil when there is no account.
     ///
     /// System-assigned and immutable, which is why comparing it is safe.
@@ -79,7 +62,7 @@ protocol ViewerIdentity {
     func displayName(fallback: String) -> String
 
     /// The viewer as an **Author identity** — the byline shape 物見 renders,
-    /// for the viewer's own work. Nil for a guest, and for an account whose
+    /// for the viewer's own work. Nil when signed out, and for an account whose
     /// UID mirror has not arrived yet (there is nothing to link to).
     ///
     /// Here rather than at the call site because the seam answered three of
@@ -100,7 +83,6 @@ extension ViewerIdentity {
     /// already meant.
     func relationship(toAuthor handle: String?) -> ViewerRelationship? {
         guard let handle, !handle.isEmpty else { return nil }
-        if self.isGuest { return .guest }
         return self.owns(handle: handle) ? .mine : .theirs
     }
 }
@@ -112,9 +94,9 @@ extension ViewerIdentity {
 /// is a plain enum — the same reason `AuthSession` was split out of the service
 /// in the first place. The service below is a one-line adapter over these.
 extension AuthState {
-    var isGuest: Bool {
-        if case .signedIn = self { return false }
-        return true
+    var isSignedIn: Bool {
+        if case .signedIn = self { return true }
+        return false
     }
 
     var uid: String? {
@@ -154,10 +136,6 @@ extension AuthState {
 }
 
 extension AuthService: ViewerIdentity {
-    var isGuest: Bool {
-        self.state.isGuest
-    }
-
     var uid: String? {
         self.state.uid
     }

@@ -25,12 +25,12 @@ import Foundation
 /// for the signed-in user's custom/saved words under otherwise identical
 /// language settings, and those two must never share an in-flight result.
 enum CatalogAudience: Equatable {
-    case guest
+    case anonymous
     case signedIn(userID: UUID)
 
     var userID: UUID? {
         switch self {
-        case .guest: nil
+        case .anonymous: nil
         case let .signedIn(userID): userID
         }
     }
@@ -87,8 +87,8 @@ struct LiveCatalogWarmer: CatalogWarming {
     func warm(for audience: CatalogAudience) async {
         // Settings first and alone for a signed-in audience: the catalog context
         // is *derived* from them, so loading them alongside the catalog would
-        // race the request against its own parameters. A guest has no stored
-        // settings to wait for, which is the whole reason the two paths differ.
+        // race the request against its own parameters. The anonymous preload has
+        // no stored settings to wait for, which is the whole reason the two paths differ.
         if let userID = audience.userID {
             await self.settings.loadIfNeeded(for: userID)
         }

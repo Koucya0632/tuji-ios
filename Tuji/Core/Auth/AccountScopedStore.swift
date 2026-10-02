@@ -60,14 +60,13 @@ enum AccountScopedStores {
     /// leaking") went unkept: they never conformed, so nothing failed.
     ///
     /// - `SettingsStore` — the themes, goal and accent in hand were the previous
-    ///   account's; a guest after sign-out studied from them.
+    ///   account's.
     /// - `MasteryStore` — once loaded it never re-fetched, so the next account
     ///   saw the previous one's scores until a study session ended.
     /// - `ProgressStore`, `StudyStatsStore` — streak, heatmap and due counts,
     ///   served from a 30-second cache that has no account in it.
     /// - `StudyQueueStore` — a prefetched queue whose signature has no account.
-    /// - `LocalCache` — the device's bookmarks, uploaded into whichever account
-    ///   signs in next.
+    /// - `LocalCache` — the device's copy of this account's bookmarks.
     /// - `StudyReminders` — its notifications are laid out ahead for a week;
     ///   the next account on this phone would be reminded on this one's behalf.
     /// - `WordListsStore` — the lists, and whether the feature is open at all,

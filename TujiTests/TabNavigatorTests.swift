@@ -61,7 +61,7 @@ struct TabNavigatorTests {
 
         nav.applyPush(.init(
             tab: .community,
-            route: .atlasCollectionDetail(slug: "s", autoSave: true, preview: nil),
+            route: .atlasCollectionDetail(slug: "s", preview: nil),
             cardsSource: nil,
             skipTour: false
         ))
@@ -83,11 +83,9 @@ struct TabNavigatorTests {
         // destination arrived three different ways. It is one case now, and the
         // preview is payload — but a route carrying one must still be a
         // distinct value, or NavigationPath would collapse two pushes into one.
-        let withPreview = NavRoute.atlasCollectionDetail(
-            slug: "s", autoSave: false, preview: nil
-        )
-        let same = NavRoute.atlasCollectionDetail(slug: "s", autoSave: false, preview: nil)
-        let other = NavRoute.atlasCollectionDetail(slug: "s", autoSave: true, preview: nil)
+        let withPreview = NavRoute.atlasCollectionDetail(slug: "s", preview: nil)
+        let same = NavRoute.atlasCollectionDetail(slug: "s", preview: nil)
+        let other = NavRoute.atlasCollectionDetail(slug: "t", preview: nil)
 
         #expect(withPreview == same)
         #expect(withPreview != other)

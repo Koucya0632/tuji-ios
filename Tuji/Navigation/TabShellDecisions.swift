@@ -4,15 +4,12 @@
 // tab selection, its four `NavigationPath`s, `atRoot`, and `consumePendingLink`
 // are `private` state on a `View`, so nothing could assert that tapping a link
 // lands anywhere in particular. That matters more here than on a normal screen,
-// because two of these policies exist *because they were already wrong once*:
+// because one of these policies exists *because it was already wrong once*:
 //
 //   - the swipe guard read `NavigationPath.count`, which sees only value-based
 //     pushes. A 物見 collection card pushes via `navigationDestination(item:)`,
 //     so the count stayed 0 and the horizontal pager stayed live on top of the
 //     pushed detail, racing NavigationStack's own edge-swipe-to-pop.
-//   - a guest tapping a shared 合集 link has to survive the root swap to
-//     Welcome and the whole sign-in flow, so the intent must be *held*, not
-//     consumed, while signed out.
 //
 // This module changes none of that. It only moves the decisions somewhere a
 // test can reach them, so the seam work that follows has a net under it.
@@ -21,9 +18,6 @@ import Foundation
 
 /// What the shell should do about a pending deep link.
 enum PendingLinkEffect: Equatable {
-    /// Leave it pending. The only case: a guest's auto-save collection intent,
-    /// which the signed-in shell consumes after sign-in completes.
-    case hold
     /// Nothing pending.
     case none
     case apply(Applied)
@@ -42,15 +36,11 @@ enum PendingLinkEffect: Equatable {
 enum TabShellDecisions {
     static func pendingLinkEffect(
         pending: TujiDeepLink?,
-        isSignedIn: Bool,
         tourActive: Bool
     )
         -> PendingLinkEffect
     {
         guard let pending else { return .none }
-        if case let .collection(_, autoSave) = pending, autoSave, !isSignedIn {
-            return .hold
-        }
         var cardsSource: CardsSource?
         if case .favorites = pending { cardsSource = .bookmarked }
         return .apply(

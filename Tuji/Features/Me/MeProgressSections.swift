@@ -16,12 +16,10 @@ import SwiftUI
 /// the screen chrome (its own ScrollView, its own 進度 title, its own nav bar)
 /// belongs to the host now.
 struct MeProgressSections: View {
-    @Environment(AuthService.self) private var auth
     @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
     @Environment(ProgressStore.self) private var progress
     @Environment(SettingsStore.self) private var settings
-    @Environment(LocalCache.self) private var cache
     @Environment(MasteryStore.self) private var mastery
 
     var body: some View {
@@ -40,7 +38,7 @@ struct MeProgressSections: View {
             self.categoryBreakdownCard
                 .padding(.horizontal, Space.s4)
         }
-        .warmsAccumulation(.progressSections, isGuest: self.auth.isGuest)
+        .warmsAccumulation(.progressSections)
     }
 
     // MARK: - Completion card
@@ -48,8 +46,7 @@ struct MeProgressSections: View {
     /// 完成度, from the same module 首頁's hero reads. This card used to carry
     /// its own copy of the rule, and the copy was the pre-fix one: it fell back
     /// to the whole dictionary when the selected themes held no published
-    /// cards, and it had no guest branch at all, so a guest who had learned 37
-    /// words read 「0% · 已學 0 / 共 480 字」 while 首頁 said 37 / 480.
+    /// cards.
     /// Reading the stores here is also what registers the observation that
     /// re-renders this card when any of them changes — which is why the six
     /// stores are handed to the mapping rather than fetched by it. 首頁 builds
@@ -57,11 +54,9 @@ struct MeProgressSections: View {
     private var completion: CompletionReadout {
         CompletionReadout(
             .init(
-                viewer: self.auth,
                 settings: self.settings,
                 progress: self.progress,
-                words: self.words,
-                cache: self.cache
+                words: self.words
             )
         )
     }
@@ -137,14 +132,9 @@ struct MeProgressSections: View {
     /// false — on a slow network, for exactly the long-standing user this
     /// section exists to reassure. So an unanswered store draws the bar's track
     /// and says nothing — and a *failed* store is unanswered too, not empty.
-    /// A guest is different again: their store is never warmed
-    /// (`AccumulationSurface.needs` drops it), so waiting on `.loaded` would
-    /// leave them on that track forever.
     @ViewBuilder
     private var masteryBody: some View {
-        if self.auth.isGuest {
-            self.masteryNotice("登入後顯示熟練度")
-        } else if self.mastery.phase != .loaded {
+        if self.mastery.phase != .loaded {
             MasteryStackedBar(distribution: .empty)
         } else {
             let spread = self.distribution
@@ -292,7 +282,7 @@ struct MeProgressSections: View {
     private var heatmapEmpty: some View {
         MascotEmptyState(
             pose: .sleep,
-            title: self.auth.isGuest ? "登入後才能看活躍熱力圖" : "還沒有學習紀錄",
+            title: "還沒有學習紀錄",
             compact: true
         )
     }
@@ -313,8 +303,7 @@ struct MeProgressSections: View {
     }
 
     private var emptyBreakdownMessage: LocalizedStringKey {
-        if self.auth.isGuest { return "登入後顯示分類進度" }
-        return "還沒有學習紀錄"
+        "還沒有學習紀錄"
     }
 
     private var categoryBreakdownCard: some View {

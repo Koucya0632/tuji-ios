@@ -120,7 +120,7 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   and *what intent* (keep it, or learn it). The distinction is load-bearing, because only
   the learning half changes what the user is asked to review tomorrow.
   - **書籤 (bookmark a word)** — "I want to look at this word again." A dictionary word,
-    device-local truth, never reaches the study queue. Guests have it too.
+    device-local copy of the account's list, never reaches the study queue.
   - **收藏 (save a collection)** — "I want this collection." It is *not* merely a marker:
     it unlocks browsing every member and counts toward the author's cumulative save count
     (the altruistic signal on their Author profile). It creates no cards.
@@ -171,11 +171,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   seen / total, plus the clamped ratio and the percentage rendered from it. The
   denominator is **always scoped to the selection** — server count when there is one,
   else the locally known dictionary *within the same selection*. Falling back to the
-  whole dictionary is the bug this module was built around: it fires not only for guests
-  (who never have server rows) but whenever the picked themes hold no published cards, so
-  自定義 + 物見 read 「已學 0 / 共 480 字」, a denominator describing a selection nobody
-  made. Three states the two screens used to answer differently: a **guest**'s progress is
-  the local learned set, not the empty server rows; **no themes picked** reads 0 / 0 to
+  whole dictionary is the bug this module was built around: it fires whenever the picked
+  themes hold no published cards, so 自定義 + 物見 read 「已學 0 / 共 480 字」, a
+  denominator describing a selection nobody made. States the two screens used to answer
+  differently: **no themes picked** reads 0 / 0 to
   match the 選擇主題 empty state rather than widening to every category; and `seen > total`
   is reachable (seen counts studied words, total counts *published* cards, so a 取消公開
   leaves the difference), which is why the ratio clamps and the percentage is derived from
@@ -193,9 +192,7 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   `@Observable` dependency, so a module that fetched them itself would read the same
   numbers and silently stop the screen from updating. Two of the five are seams —
   `StudySelectionReading` (the 學習主題 selection + `settingsLoaded`, which travel together
-  because the selection is the scope every number is measured against) and
-  `GuestProgressReading` (one integer, because `LocalCache.init` is private and `.shared`
-  is the only instance that can exist).
+  because the selection is the scope every number is measured against).
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 - **當前圖鑑語言 (`\.targetLanguage`)** — the session's target language as a *screen* sees
@@ -387,11 +384,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   screens bypassed the table: a screen with no path to append to had no way to push a
   route. `push(_:)` targets the selected tab; `push(_:on:)` names one.
 - **TabShellDecisions** — the three shell policies as pure functions: what a pending deep
-  link does, whether the tab bar shows, whether the pager may swipe. Two of them exist
-  because they were wrong once — the swipe guard read `NavigationPath.count`, which sees
+  link does, whether the tab bar shows, whether the pager may swipe. One of them exists
+  because it was wrong once — the swipe guard read `NavigationPath.count`, which sees
   only value pushes, so a `navigationDestination(item:)` push left the pager live on top
-  of a pushed screen; and a guest's auto-save collection intent must be *held* through the
-  sign-in root swap rather than consumed.
+  of a pushed screen.
 - **`atRoot`, not `NavigationPath.count`** — the one signal for "is something on top of
   this tab". The count only counts value-based pushes, and the two answers disagreed.
 
@@ -568,7 +564,7 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   the server takes the request at its word (the rule `?lang=` already had). A request that
   states nothing still falls back to stored settings, for installs that predate this.
 - **CatalogWarming / 觀眾 (`CatalogAudience`)** — what a launch loads, and for whom.
-  `warm(for:)` over `.guest` / `.signedIn(userID:)`, with `LiveCatalogWarmer` the only
+  `warm(for:)` over `.anonymous` (the pre-sign-in preload) / `.signedIn(userID:)`, with `LiveCatalogWarmer` the only
   place that knows the catalog is `SettingsStore` + `WordsStore` + `CategoriesStore`.
   `LaunchCoordinator` is deep in *sequencing* (the splash beat, the catalog generation
   handover, cancelling superseded work, `appOpen` once) and all of that is tested — but its
@@ -578,16 +574,16 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   loads" was an anonymous closure in an `@main` struct: not searchable by name, not
   callable from a test. **Settings are loaded first and alone for a signed-in audience**,
   because the context is *derived* from them — loading them alongside would race the
-  request against its own parameters; a guest has none to wait for, which is the whole
-  reason the two paths differ. Switching audience is a new generation but not a new
+  request against its own parameters; the anonymous preload has none to wait for, which
+  is the whole reason the two paths differ. Switching audience is a new generation but not a new
   download: `reusePublic` keeps the public 480 and fetches only the personalized overlay.
   `CatalogContext.current()` stays as-is — six modules read the catalog through the no-arg
   `loadIfNeeded()`/`reload()` it backs, and retiring it is a separate change.
 - **AccumulationLoading** — the **reader's** counterpart to those four: what a screen needs
   *warm* before its numbers are true, where they name what a write *invalidates*. An
-  `AccumulationSurface` (`todayHero` / `progressSections` / `themeIndex`) answers `needs(isGuest:)`
+  `AccumulationSurface` (`todayHero` / `progressSections` / `themeIndex`) answers `needs`
   with a set of `AccumulationStore` roles; `AccumulationWarmer` warms them and the
-  `.warmsAccumulation(_:isGuest:then:)` modifier is the screen-side seam (`then` exists for
+  `.warmsAccumulation(_:then:)` modifier is the screen-side seam (`then` exists for
   首頁, whose study-queue prefetch must follow settings + stats). It exists because three
   screens hand-wrote the same fan-out and one got it wrong: `CategoryIndexView` rendered the
   完成 badge from `ProgressStore` and never loaded it, so on a cold open of 主題 the badge was
@@ -1055,17 +1051,11 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **Read seams (settings/stats slices).** Modules that used to reach `SettingsStore.shared`
   / `StudyStatsStore.shared` inside their methods now inject a narrow read seam instead, so
   they're hermetically testable:
-  - **ViewerIdentity** — `{ isGuest, uid, owns(handle:), displayName(fallback:) }`, conformed
+  - **ViewerIdentity** — `{ uid, owns(handle:), displayName(fallback:), authorRef }`, conformed
     by `AuthService`. Who is looking, and is this theirs. Answered fourteen times before
     this, in **four** mechanisms that did not agree: `user == nil` (今天, 我), `if case
     .signedIn` (設定, 圖鑑, 主題, 我的進度), `uid.caseInsensitiveCompare(handle)` (物見 ×2,
-    作者主頁), and three copies of nickname → UID → email-local. Not academic: `MeView` used
-    the first and hosted `MeProgressSections`, which used the second, and **both feed
-    `CompletionReadout.Inputs.isGuest`** — the flag that decides whether 完成度 counts the
-    local learned set or the server rows. They agreed only because `RootView` maps `.guest`
-    to `user: nil` by hand. The consuming half of the seam already existed and was tested
-    (`CompletionReadout.Inputs`, `TodayDecisions.Inputs` both take `isGuest`); what was
-    missing was a producer. `fallback` is the caller's because it is that screen's copy —
+    作者主頁), and three copies of nickname → UID → email-local. `fallback` is the caller's because it is that screen's copy —
     今天 greets 「探險者」 and 我 titles the row 「Tuji 探險者」. **The rules live on
     `AuthState`, not on `AuthService`**: the service has a private init and a stored
     Supabase client that traps without Info.plist keys, so nothing could stand one up —
@@ -1077,9 +1067,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     `uid` + `displayName` from the seam, and pattern-matched `auth.state` again for the one
     field it did not answer (`avatar`) — which is how 「沒有頭像就用黑貓」 came to be spelled
     in a `View` body. A seam is worth what it answers for the *next* consumer. Two other
-    misses went with it: `shouldPersist` (`!isGuest`) was five hand-written lines in both
+    misses went with it: `shouldPersist` was five hand-written lines in both
     the first-run picker and 設定's, and `FavoriteButton` guarded on `.signedIn` directly.
-    `MainTabsView.user == nil` is deliberately **left**: that view is built on an explicit
+    `MainTabsView.user` is deliberately **left**: that view is built on an explicit
     `user` parameter threaded to 我/`tujiNavDestinations`, and reading the environment
     beside it would create a second source rather than remove one. It was threaded to 今天
     too, and 今天 never read it — the parameter was referenced nowhere in `TodayView`'s
@@ -1087,10 +1077,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
     `EditProfileView.sessionUser` also stays — it is the *edit form's* current values, so
     the nickname must arrive raw, where `displayName` would hand back the UID and the form
     would offer to save that as a nickname.
-  - **ViewerRelationship** — `.guest` / `.mine` / `.theirs`, derived from `isGuest` +
-    `owns(handle:)`. The seam answered "is this handle mine"; every consumer needed
+  - **ViewerRelationship** — `.mine` / `.theirs`, derived from `owns(handle:)`. The seam answered "is this handle mine"; every consumer needed
     "what may I do about this person's work" and recombined the two primitives itself —
-    物見詳情 spelled it `!isGuest && !owns` for 檢舉/封鎖 and `owns` alone for the
+    物見詳情 spelled it one way for 檢舉/封鎖 and `owns` alone for the
     「你的分享」 pill three hundred lines later, and 作者主頁 kept a pair
     (`isOwnProfile` / `canModerate`) whose third consumer went around both. **That cost a
     live bug**: the nav bar branched on the route's `isSelf` alone, and every byline in
