@@ -15,7 +15,10 @@ struct AtlasCaptureQueueCreditTests {
         credits: FakeCreditConfirming = FakeCreditConfirming(),
         journal: InMemoryCaptureJobJournal = InMemoryCaptureJobJournal(),
         mutations: SpyAtlasMutationRefreshing = SpyAtlasMutationRefreshing(),
-        deadline: Duration = .seconds(5)
+        // Generous on purpose: parallel @MainActor suites starve each other on
+        // CI for well over 5s, and a deadline that passes mid-test turns a
+        // "waits for the fill-in" assertion into a timing coin flip.
+        deadline: Duration = .seconds(60)
     )
         -> AtlasCaptureQueue
     {
