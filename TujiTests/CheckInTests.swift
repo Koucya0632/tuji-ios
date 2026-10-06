@@ -145,15 +145,6 @@ struct CheckInRewardTests {
             #expect(!CheckInDecision.chipBadge(other))
         }
     }
-
-    @Test("the next milestone is the first one above the streak")
-    func milestones() {
-        let next = { (n: Int) in CheckInDecision.nextMilestone(after: n).map { [$0.target, $0.daysLeft] } }
-        #expect(next(0) == [30, 30])
-        #expect(next(30) == [100, 70])
-        #expect(next(364) == [365, 1])
-        #expect(next(365) == nil)
-    }
 }
 
 // MARK: - Month grid

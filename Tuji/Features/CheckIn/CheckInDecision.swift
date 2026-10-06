@@ -1,6 +1,6 @@
 // 打卡's decisions, kept out of the views so they can be pinned without a
 // bundle or a locale: which reward card shows, whether the 首頁 chip gets its
-// dot, how a month lays out, and which streak milestone is next.
+// dot, and how a month lays out.
 //
 // The rule they encode: studying *is* the check-in (one word-card answer, the
 // same thing the streak counts), and the points are a separate tap to collect.
@@ -54,19 +54,6 @@ enum CheckInDecision {
     static func chipBadge(_ reward: Reward) -> Bool {
         if case .claimable = reward { return true }
         return false
-    }
-
-    // MARK: - Milestones
-
-    /// Mirrors the server's `STREAK_MILESTONES` (tuji-web lib/streak-milestone.ts),
-    /// the days `MilestoneView` celebrates.
-    static let milestones = [30, 100, 365]
-
-    /// The next milestone above `current` and how many days are left, or nil
-    /// past the last one.
-    static func nextMilestone(after current: Int) -> (target: Int, daysLeft: Int)? {
-        guard let target = self.milestones.first(where: { $0 > current }) else { return nil }
-        return (target, target - current)
     }
 }
 

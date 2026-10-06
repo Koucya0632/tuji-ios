@@ -74,16 +74,6 @@ struct CheckInSheet: View {
                         .font(.tujiH2)
                         .foregroundStyle(.tujiInk)
                 }
-                if let streak = self.streak {
-                    Text("最長 \(streak.longest) 天 · 累計 \(streak.totalDays) 天")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                }
-                if let next = CheckInDecision.nextMilestone(after: current), current > 0 {
-                    Text("再 \(next.daysLeft) 天達成 \(next.target) 天")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk3)
-                }
             }
             Spacer(minLength: 0)
             MascotFigure(
@@ -231,11 +221,6 @@ struct CheckInSheet: View {
                     firstWeekday: self.firstWeekday,
                     locale: self.settings.current.uiLanguage.locale
                 )
-                if let calendar = self.model.calendar {
-                    Text("本月學習 \(calendar.studiedDays.count) 天")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                }
             }
         }
     }
