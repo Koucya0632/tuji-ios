@@ -34,6 +34,15 @@ struct AtlasCaptureView: View {
     @State private var slowRecognition = false
 
     var body: some View {
+        if AtlasStore.shared.entitlement?.billingMode == "credits" {
+            CreditCaptureView()
+        } else {
+            self.legacyBody
+        }
+    }
+
+    @ViewBuilder
+    private var legacyBody: some View {
         @Bindable var vm = self.vm
         TujiFormSheet(
             title: "拍照新增",

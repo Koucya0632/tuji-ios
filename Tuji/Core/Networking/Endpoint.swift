@@ -119,6 +119,20 @@ enum Endpoint {
     // MARK: - Billing (auth-protected)
 
     case billingVerify
+    case creditPurchaseVerify
+    case creditCatalog
+    case creditWallet
+#if TUJI_CREDITS_SANDBOX
+    case sandboxCreditLedger
+#endif
+    case creditMonthlyClaim
+    case creditCheckIn
+    case creditImages
+    case aiQuotes
+    case aiOperations
+    case aiOperation(id: String)
+    case aiOperationCancel(id: String)
+    case aiOperationConfirm(id: String)
 
     // MARK: - Public
 
@@ -426,6 +440,32 @@ enum Endpoint {
         // MARK: Billing
         case .billingVerify:
             EndpointDescriptor(path: "/api/billing/verify", policy: .privateFresh)
+        case .creditPurchaseVerify:
+            EndpointDescriptor(path: "/api/credits/purchases/verify", policy: .privateFresh)
+        case .creditCatalog:
+            EndpointDescriptor(path: "/api/credits/catalog", policy: .privateFresh)
+        case .creditWallet:
+            EndpointDescriptor(path: "/api/credits/wallet", policy: .privateFresh)
+#if TUJI_CREDITS_SANDBOX
+        case .sandboxCreditLedger:
+            EndpointDescriptor(path: "/api/credits/ledger", policy: .privateFresh)
+#endif
+        case .creditMonthlyClaim:
+            EndpointDescriptor(path: "/api/credits/benefits/monthly/claim", policy: .privateFresh)
+        case .creditCheckIn:
+            EndpointDescriptor(path: "/api/credits/check-in", policy: .privateFresh)
+        case .creditImages:
+            EndpointDescriptor(path: "/api/ai/images", policy: .privateFresh)
+        case .aiQuotes:
+            EndpointDescriptor(path: "/api/ai/quotes", policy: .privateFresh)
+        case .aiOperations:
+            EndpointDescriptor(path: "/api/ai/operations", policy: .privateFresh)
+        case let .aiOperation(id):
+            EndpointDescriptor(path: "/api/ai/operations/\(id)", policy: .privateFresh)
+        case let .aiOperationCancel(id):
+            EndpointDescriptor(path: "/api/ai/operations/\(id)/cancel", policy: .privateFresh)
+        case let .aiOperationConfirm(id):
+            EndpointDescriptor(path: "/api/ai/operations/\(id)/confirm", policy: .privateFresh)
 
         // MARK: Public
         case let .search(q, lang, learning):

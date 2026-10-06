@@ -35,6 +35,7 @@ struct TujiApp: App {
             catalog: LiveCatalogWarmer(),
             replayOutbox: {
                 await StudyAnswerOutbox.shared.replay()
+                await StoreKitService.shared.reconcileUnfinished()
             },
             trackAppOpen: {
                 AnalyticsService.shared.track(.appOpen)
@@ -102,6 +103,7 @@ struct TujiApp: App {
                           case .signedIn = auth.state
                     else { return }
                     Task { await StudyAnswerOutbox.shared.replay() }
+                    Task { await StoreKitService.shared.reconcileUnfinished() }
                     Task { await reminders.reschedule() }
                 }
                 // 每日提醒 is laid out a week ahead, and today's entry depends

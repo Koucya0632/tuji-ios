@@ -15,11 +15,17 @@ import StoreKit
 
 private enum StoreKitServiceError: LocalizedError {
     case signedOut
+    case deliveryPending
+    case purchaseUnavailable
 
     var errorDescription: String? {
         switch self {
         case .signedOut:
-            tujiLocalized("請先登入，再購買 Tuji Pro。")
+            tujiLocalized("請先登入，再購買會員或罐頭點數。")
+        case .deliveryPending:
+            tujiLocalized("付款正在同步，請稍後重試同步，不需再次購買。")
+        case .purchaseUnavailable:
+            tujiLocalized("這項方案目前未開放購買。")
         }
     }
 }
@@ -37,7 +43,8 @@ final class StoreKitService {
         /// 永久會員 — non-consumable.
         static let lifetime = "app.tuji.lifetime"
         static let subscriptions: [String] = [monthly, quarterly, semiannual, yearly]
-        static let all: [String] = subscriptions + [lifetime]
+        static let credits = ["app.tuji.credits.1000", "app.tuji.credits.4000", "app.tuji.credits.7000"]
+        static let all: [String] = subscriptions + [lifetime] + credits
     }
 
     private(set) var products: [Product] = []
@@ -57,8 +64,18 @@ final class StoreKitService {
     /// productID currently being purchased (drives per-plan spinners).
     private(set) var purchasing: String?
     private(set) var loadError: Error?
+    private(set) var syncError: Error?
+    private(set) var catalog: CreditCatalog?
+    var proNewPurchaseEnabled: Bool { self.catalog?.proNewPurchaseEnabled == true }
+    var creditProducts: [Product] {
+        guard self.catalog?.purchaseEnabled == true else { return [] }
+        let ids = Set(self.catalog?.packs.map(\.productId) ?? [])
+        return self.products.filter { ids.contains($0.id) }
+    }
 
     private var updatesTask: Task<Void, Never>?
+    private var unfinishedTask: Task<Void, Never>?
+    private var deliveries: [UInt64: Task<Void, Error>] = [:]
     private let repository: BillingRepository
     private let log = Logger(subsystem: "app.tuji.ios", category: "storekit")
 
@@ -72,14 +89,20 @@ final class StoreKitService {
                 await self.handle(update)
             }
         }
+        self.unfinishedTask = Task { [weak self] in await self?.reconcileUnfinished() }
     }
 
     func loadProducts() async {
         self.loadError = nil
         do {
-            let products = try await Product.products(for: ProductID.all)
+            self.catalog = try await self.fetchCatalog()
+            let ids = [ProductID.lifetime] + (self.proNewPurchaseEnabled ? ProductID.subscriptions : []) +
+                (self.catalog?.purchaseEnabled == true ? self.catalog?.packs.map(\.productId) ?? [] : [])
+            let products = try await Product.products(for: ids)
             self.products = products.sorted { $0.price < $1.price }
         } catch {
+            self.catalog = nil
+            self.products = []
             self.loadError = error
             self.log.error("product load failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -92,17 +115,17 @@ final class StoreKitService {
         guard case let .signedIn(user) = AuthService.shared.state else {
             throw StoreKitServiceError.signedOut
         }
+        self.catalog = try await self.fetchCatalog()
+        guard case let .signedIn(current) = AuthService.shared.state, current.id == user.id else { throw StoreKitServiceError.signedOut }
+        if ProductID.subscriptions.contains(product.id), !self.proNewPurchaseEnabled { throw StoreKitServiceError.purchaseUnavailable }
+        if ProductID.credits.contains(product.id), self.catalog?.purchaseEnabled != true { throw StoreKitServiceError.purchaseUnavailable }
         self.purchasing = product.id
         defer { self.purchasing = nil }
         let result = try await product.purchase(options: [.appAccountToken(user.id)])
         switch result {
         case let .success(verification):
             let transaction = try self.checkVerified(verification)
-            try await self.syncEntitlement(
-                jws: verification.jwsRepresentation,
-                isSubscription: ProductID.subscriptions.contains(transaction.productID)
-            )
-            await transaction.finish()
+            try await self.deliverAndFinish(transaction, jws: verification.jwsRepresentation)
             return true
         case .userCancelled, .pending:
             return false
@@ -116,6 +139,7 @@ final class StoreKitService {
     func restore() async throws {
         try await AppStore.sync()
         await self.refreshFromCurrentEntitlements()
+        await self.reconcileUnfinished()
     }
 
     /// Re-read the device's active entitlements (e.g. on paywall open) and mark
@@ -136,23 +160,64 @@ final class StoreKitService {
 
     private func handle(_ result: VerificationResult<Transaction>) async {
         guard let transaction = try? self.checkVerified(result) else { return }
-        try? await self.syncEntitlement(
-            jws: result.jwsRepresentation,
-            isSubscription: ProductID.subscriptions.contains(transaction.productID)
-        )
-        await transaction.finish()
+        do { try await self.deliverAndFinish(transaction, jws: result.jwsRepresentation) }
+        catch {
+            self.syncError = error
+            self.log.error("purchase sync pending; transaction retained")
+        }
     }
 
-    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+    func reconcileUnfinished() async {
+        guard case .signedIn = AuthService.shared.state else { return }
+        for await result in Transaction.unfinished { await self.handle(result) }
+    }
+
+    /// Updates, launch recovery and explicit purchases share one delivery and finish.
+    private func deliverAndFinish(_ transaction: Transaction, jws: String) async throws {
+        guard ProductID.all.contains(transaction.productID) else { throw StoreKitServiceError.purchaseUnavailable }
+        if let existing = self.deliveries[transaction.id] { return try await existing.value }
+        let task = Task { @MainActor in
+            if ProductID.credits.contains(transaction.productID) {
+                _ = try await self.fetchCatalog()
+                let ack = try await self.repository.verifyCredits(signedTransaction: jws)
+                let environment = transaction.environment == .sandbox ? "sandbox" : "production"
+                guard ack.permitsFinish(transactionId: String(transaction.id), environment: environment) else { throw StoreKitServiceError.deliveryPending }
+            } else {
+                try await self.syncEntitlement(jws: jws, isSubscription: ProductID.subscriptions.contains(transaction.productID))
+            }
+            await transaction.finish()
+            self.syncError = nil
+        }
+        self.deliveries[transaction.id] = task
+        defer { self.deliveries[transaction.id] = nil }
+        try await task.value
+    }
+
+    private func checkVerified(_ result: VerificationResult<Transaction>) throws -> Transaction {
         switch result {
         case let .unverified(_, error): throw error
-        case let .verified(safe): return safe
+        case let .verified(safe):
+            #if TUJI_CREDITS_SANDBOX
+            guard safe.environment == .sandbox else { throw StoreKitServiceError.purchaseUnavailable }
+            #endif
+            return safe
         }
+    }
+
+    private func fetchCatalog() async throws -> CreditCatalog {
+        let catalog: CreditCatalog = try await APIClient.shared.get(.creditCatalog)
+        #if TUJI_CREDITS_SANDBOX
+        guard catalog.matches(environment: "sandbox") else { throw StoreKitServiceError.purchaseUnavailable }
+        #endif
+        return catalog
     }
 
     /// Forward the signed transaction (JWS) to the server (the authority) and
     /// refresh the mirrored atlas entitlement so quota UI updates immediately.
     private func syncEntitlement(jws: String, isSubscription: Bool) async throws {
+        #if TUJI_CREDITS_SANDBOX
+        _ = try await self.fetchCatalog()
+        #endif
         let tier = try await self.repository.verify(signedTransaction: jws)
         if isSubscription { self.isPro = (tier == "pro") }
         await AtlasStore.shared.refreshEntitlement()

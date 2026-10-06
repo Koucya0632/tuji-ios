@@ -1,131 +1,176 @@
 {
-  "identifier" : "B7F3A1C0-0000-4000-8000-000000000000",
-  "nonRenewingSubscriptions" : [],
-  "products" : [
+  "identifier": "B7F3A1C0-0000-4000-8000-000000000000",
+  "nonRenewingSubscriptions": [],
+  "products": [
     {
-      "displayPrice" : "0.99",
-      "familyShareable" : false,
-      "internalID" : "B7F3A1C0-0000-4000-8000-000000000020",
-      "localizations" : [
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "B7F3A1C0-0000-4000-8000-000000000020",
+      "localizations": [
         {
-          "description" : "一次購買：全部官方圖鑑、自製圖鑑 20 格、每月 AI 辨識 10 次。",
-          "displayName" : "永久會員",
-          "locale" : "zh_TW"
+          "description": "一次購買：全部官方圖鑑、自製圖鑑 200 格、每月免費贈送 1,000 點。每月自動補滿，不累積。",
+          "displayName": "永久會員",
+          "locale": "zh_TW"
         }
       ],
-      "productID" : "app.tuji.lifetime",
-      "referenceName" : "Lifetime Membership",
-      "type" : "NonConsumable"
+      "productID": "app.tuji.lifetime",
+      "referenceName": "Lifetime Membership",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "B7F3A1C0-0000-4000-8000-000000001000",
+      "localizations": [
+        {
+          "description": "1,000 罐頭點數，用於 AI 功能。購買點數不過期。",
+          "displayName": "1,000 罐頭點數",
+          "locale": "zh_TW"
+        }
+      ],
+      "productID": "app.tuji.credits.1000",
+      "referenceName": "Can Credits 1000",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "B7F3A1C0-0000-4000-8000-000000004000",
+      "localizations": [
+        {
+          "description": "4,000 罐頭點數，用於 AI 功能。購買點數不過期。",
+          "displayName": "4,000 罐頭點數",
+          "locale": "zh_TW"
+        }
+      ],
+      "productID": "app.tuji.credits.4000",
+      "referenceName": "Can Credits 4000",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "4.99",
+      "familyShareable": false,
+      "internalID": "B7F3A1C0-0000-4000-8000-000000007000",
+      "localizations": [
+        {
+          "description": "7,000 罐頭點數，用於 AI 功能。購買點數不過期。",
+          "displayName": "7,000 罐頭點數",
+          "locale": "zh_TW"
+        }
+      ],
+      "productID": "app.tuji.credits.7000",
+      "referenceName": "Can Credits 7000",
+      "type": "Consumable"
     }
   ],
-  "settings" : {
-    "_applicationInternalID" : "",
-    "_developerTeamID" : "",
-    "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 0,
-    "_locale" : "zh_TW",
-    "_storefront" : "TWN",
-    "_storeKitErrors" : []
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 0,
+    "_locale": "zh_TW",
+    "_storefront": "USA",
+    "_storeKitErrors": []
   },
-  "subscriptionGroups" : [
+  "subscriptionGroups": [
     {
-      "id" : "B7F3A1C0-0000-4000-8000-000000000001",
-      "localizations" : [],
-      "name" : "Tuji Pro",
-      "subscriptions" : [
+      "id": "B7F3A1C0-0000-4000-8000-000000000001",
+      "localizations": [],
+      "name": "Tuji Pro",
+      "subscriptions": [
         {
-          "adHocOffers" : [],
-          "codeOffers" : [],
-          "displayPrice" : "4.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "B7F3A1C0-0000-4000-8000-000000000010",
-          "introductoryOffer" : null,
-          "localizations" : [
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "4.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "B7F3A1C0-0000-4000-8000-000000000010",
+          "introductoryOffer": null,
+          "localizations": [
             {
-              "description" : "每月自動續訂，無限自製圖鑑容量與更高 AI 額度。",
-              "displayName" : "Tuji Pro（月）",
-              "locale" : "zh_TW"
+              "description": "每月自動續訂，無限自製圖鑑容量與更高 AI 額度。",
+              "displayName": "Tuji Pro（月）",
+              "locale": "zh_TW"
             }
           ],
-          "productID" : "app.tuji.pro.monthly",
-          "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Tuji Pro Monthly",
-          "subscriptionGroupID" : "B7F3A1C0-0000-4000-8000-000000000001",
-          "type" : "RecurringSubscription"
+          "productID": "app.tuji.pro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Tuji Pro Monthly",
+          "subscriptionGroupID": "B7F3A1C0-0000-4000-8000-000000000001",
+          "type": "RecurringSubscription"
         },
         {
-          "adHocOffers" : [],
-          "codeOffers" : [],
-          "displayPrice" : "13.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "B7F3A1C0-0000-4000-8000-000000000013",
-          "introductoryOffer" : null,
-          "localizations" : [
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "13.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "B7F3A1C0-0000-4000-8000-000000000013",
+          "introductoryOffer": null,
+          "localizations": [
             {
-              "description" : "每 3 個月自動續訂，自製圖鑑容量與 AI 額度全面升級。",
-              "displayName" : "Tuji Pro（3 個月）",
-              "locale" : "zh_TW"
+              "description": "每 3 個月自動續訂，自製圖鑑容量與 AI 額度全面升級。",
+              "displayName": "Tuji Pro（3 個月）",
+              "locale": "zh_TW"
             }
           ],
-          "productID" : "app.tuji.pro.quarterly",
-          "recurringSubscriptionPeriod" : "P3M",
-          "referenceName" : "Tuji Pro Quarterly",
-          "subscriptionGroupID" : "B7F3A1C0-0000-4000-8000-000000000001",
-          "type" : "RecurringSubscription"
+          "productID": "app.tuji.pro.quarterly",
+          "recurringSubscriptionPeriod": "P3M",
+          "referenceName": "Tuji Pro Quarterly",
+          "subscriptionGroupID": "B7F3A1C0-0000-4000-8000-000000000001",
+          "type": "RecurringSubscription"
         },
         {
-          "adHocOffers" : [],
-          "codeOffers" : [],
-          "displayPrice" : "24.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "B7F3A1C0-0000-4000-8000-000000000014",
-          "introductoryOffer" : null,
-          "localizations" : [
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "24.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "B7F3A1C0-0000-4000-8000-000000000014",
+          "introductoryOffer": null,
+          "localizations": [
             {
-              "description" : "每半年自動續訂，自製圖鑑容量與 AI 額度全面升級。",
-              "displayName" : "Tuji Pro（半年）",
-              "locale" : "zh_TW"
+              "description": "每半年自動續訂，自製圖鑑容量與 AI 額度全面升級。",
+              "displayName": "Tuji Pro（半年）",
+              "locale": "zh_TW"
             }
           ],
-          "productID" : "app.tuji.pro.semiannual",
-          "recurringSubscriptionPeriod" : "P6M",
-          "referenceName" : "Tuji Pro Semiannual",
-          "subscriptionGroupID" : "B7F3A1C0-0000-4000-8000-000000000001",
-          "type" : "RecurringSubscription"
+          "productID": "app.tuji.pro.semiannual",
+          "recurringSubscriptionPeriod": "P6M",
+          "referenceName": "Tuji Pro Semiannual",
+          "subscriptionGroupID": "B7F3A1C0-0000-4000-8000-000000000001",
+          "type": "RecurringSubscription"
         },
         {
-          "adHocOffers" : [],
-          "codeOffers" : [],
-          "displayPrice" : "44.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "B7F3A1C0-0000-4000-8000-000000000011",
-          "introductoryOffer" : {
-            "internalID" : "B7F3A1C0-0000-4000-8000-000000000012",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "44.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "B7F3A1C0-0000-4000-8000-000000000011",
+          "introductoryOffer": {
+            "internalID": "B7F3A1C0-0000-4000-8000-000000000012",
+            "paymentMode": "free",
+            "subscriptionPeriod": "P1W"
           },
-          "localizations" : [
+          "localizations": [
             {
-              "description" : "每年自動續訂，含一週免費試用。最超值。",
-              "displayName" : "Tuji Pro（年）",
-              "locale" : "zh_TW"
+              "description": "每年自動續訂，含一週免費試用。最超值。",
+              "displayName": "Tuji Pro（年）",
+              "locale": "zh_TW"
             }
           ],
-          "productID" : "app.tuji.pro.yearly",
-          "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Tuji Pro Yearly",
-          "subscriptionGroupID" : "B7F3A1C0-0000-4000-8000-000000000001",
-          "type" : "RecurringSubscription"
+          "productID": "app.tuji.pro.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Tuji Pro Yearly",
+          "subscriptionGroupID": "B7F3A1C0-0000-4000-8000-000000000001",
+          "type": "RecurringSubscription"
         }
       ]
     }
   ],
-  "version" : {
-    "major" : 3,
-    "minor" : 0
+  "version": {
+    "major": 3,
+    "minor": 0
   }
 }
