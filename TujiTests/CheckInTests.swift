@@ -8,6 +8,14 @@ import Testing
 
 // MARK: - Fixtures
 
+private func decodeFixture<T: Decodable>(_ json: String) -> T {
+    do {
+        return try JSONDecoder().decode(T.self, from: Data(json.utf8))
+    } catch {
+        fatalError("CheckInTests fixture does not decode: \(error)")
+    }
+}
+
 private func makeCatalog(
     billingMode: String = "credits",
     checkInEnabled: Bool = true,
@@ -25,7 +33,7 @@ private func makeCatalog(
      "proNewPurchaseEnabled":false,"operationsEnabled":true,"monthlyEnabled":true,
      "checkInEnabled":\#(checkInEnabled),"packs":[]\#(policy)}
     """#
-    return try! JSONDecoder().decode(CreditCatalog.self, from: Data(json.utf8))
+    return decodeFixture(json)
 }
 
 private func makeWallet(
@@ -44,7 +52,7 @@ private func makeWallet(
      "benefits":{"monthlyClaimed":true,"checkedInToday":\#(checkedInToday),
        "checkInGrantedThisMonth":\#(granted),"hasLifetime":\#(hasLifetime)\#(studied)}}
     """#
-    return try! JSONDecoder().decode(CreditWallet.self, from: Data(json.utf8))
+    return decodeFixture(json)
 }
 
 private func makeMonth(

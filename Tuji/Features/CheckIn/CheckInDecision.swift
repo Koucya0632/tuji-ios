@@ -83,7 +83,7 @@ struct MonthGrid: Equatable {
     init?(month: String, firstWeekday: Int) {
         guard let (year, m) = Self.parse(month) else { return nil }
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.timeZone = .gmt
         guard let first = calendar.date(from: DateComponents(year: year, month: m, day: 1)),
               let days = calendar.range(of: .day, in: .month, for: first)?.count
         else { return nil }

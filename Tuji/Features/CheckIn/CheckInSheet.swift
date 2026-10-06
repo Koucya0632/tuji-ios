@@ -287,7 +287,7 @@ struct StudyMonthGrid: View {
     /// YYYY-MM in Asia/Taipei — the calendar's zone, not the device's.
     static func currentMonth(now: Date = Date()) -> String {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Asia/Taipei")!
+        calendar.timeZone = TimeZone(identifier: "Asia/Taipei") ?? .current
         let c = calendar.dateComponents([.year, .month], from: now)
         return String(format: "%04d-%02d", c.year ?? 2026, c.month ?? 1)
     }
