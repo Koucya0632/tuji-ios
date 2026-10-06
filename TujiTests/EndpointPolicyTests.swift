@@ -21,6 +21,7 @@ struct EndpointPolicyTests {
     private static let all: [Endpoint] = [
         .usersMe, .usersProfile, .usersSettings, .usersFavorites,
         .usersProgress(learning: "zh-en"), .usersProgressClear,
+        .usersStudyCalendar(month: "2026-10", learning: "zh-en"),
         .usersMastery(learning: "zh-en"),
         .usersCustomWords(lang: "zh-Hant", learning: "en"),
         .usersSavedWords(lang: "zh-Hant", learning: "en"),
@@ -65,7 +66,7 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 66)
+        #expect(Self.all.count == 67)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be
@@ -252,6 +253,15 @@ struct EndpointPolicyTests {
     func clearingProgressIsDirectionless() {
         #expect(Endpoint.usersProgressClear.descriptor.queryItems.isEmpty)
         #expect(Endpoint.usersProgressClear.descriptor.path == "/api/users/progress")
+    }
+
+    @Test("the study calendar states its direction and only names a month when asked")
+    func studyCalendarQuery() {
+        let current = Endpoint.usersStudyCalendar(month: nil, learning: "zh-ja").descriptor
+        #expect(current.path == "/api/users/study-calendar")
+        #expect(current.queryItems == [URLQueryItem(name: "learning", value: "zh-ja")])
+        let past = Endpoint.usersStudyCalendar(month: "2026-09", learning: "zh-en").descriptor
+        #expect(past.queryItems.contains(URLQueryItem(name: "month", value: "2026-09")))
     }
 
     @Test("an absent cache-bust nonce adds no query item")

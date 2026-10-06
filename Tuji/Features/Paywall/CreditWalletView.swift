@@ -44,7 +44,8 @@ struct CreditWalletView: View {
                 }
                 .disabled(self.busy || self.catalog?.checkInEnabled != true || self.wallet?.benefits
                     .hasLifetime != true || self.wallet?.benefits
-                    .checkedInToday == true || (self.wallet?.benefits.checkInGrantedThisMonth ?? 0) >= 300)
+                    .checkedInToday == true || self.wallet?.benefits.studiedToday == false ||
+                    (self.wallet?.benefits.checkInGrantedThisMonth ?? 0) >= 300)
             }.font(.tujiLabel)
             Text("每月免費贈送 1,000 點").font(.tujiBody)
             Text(String(
@@ -55,7 +56,7 @@ struct CreditWalletView: View {
             .font(.tujiLabel).foregroundStyle(.tujiInk3)
             Text("每月自動補滿，不累積。簽到點與購買點數不過期。")
                 .font(.tujiLabel).foregroundStyle(.tujiInk3)
-            Text("每天簽到 10 點，每月最多 300 點。日期依 UTC 計算。")
+            Text("每天學習一題後可簽到 10 點，每月最多 300 點。日期依台北時間計算。")
                 .font(.tujiLabel).foregroundStyle(.tujiInk3)
             ForEach(self.store.creditProducts, id: \.id) { product in
                 Button {
@@ -124,7 +125,12 @@ struct CreditWalletView: View {
             guard self.current(user.id) else { return }
             self.apply(result.wallet)
             self.message = nil
-        } catch { self.message = tujiLocalized("暫時無法完成，請重試同步。") }
+        } catch {
+            // A refusal the server names (studied nowhere today yet) says why.
+            if case APIError.conflict = error { self.message = error.localizedDescription } else {
+                self.message = tujiLocalized("暫時無法完成，請重試同步。")
+            }
+        }
     }
 }
 

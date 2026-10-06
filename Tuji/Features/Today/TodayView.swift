@@ -27,7 +27,13 @@ struct TodayView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(MasteryStore.self) private var mastery
     @Environment(AuthService.self) private var auth
+    @Environment(TabNavigator.self) private var navigator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// 打卡. Owned here, not by the sheet, so the chip's dot and the sheet read
+    /// one wallet and a claim in the sheet clears the dot.
+    @State private var checkIn = CheckInModel()
+    @State private var showingCheckIn = false
 
     /// One snapshot of everything 首頁's decisions depend on, read from the
     /// environment here and answered in `TodayDecisions`. Reading the stores in
@@ -102,6 +108,20 @@ struct TodayView: View {
             .warmsAccumulation(.todayHero) {
                 self.prefetchStudyQueues()
             }
+            .task { await self.checkIn.loadRewardIfStale() }
+            // A new answer today re-reads the wallet regardless of age: the
+            // first one is what makes the points claimable.
+            .onChange(of: self.progress.streak?.todayCount) { old, new in
+                guard let old, let new, new > old else { return }
+                Task { await self.checkIn.loadReward() }
+            }
+            .tujiSheet(isPresented: self.$showingCheckIn, title: "打卡", height: 640) {
+                CheckInSheet(
+                    model: self.checkIn,
+                    fallbackStreak: self.progress.streak,
+                    onStudy: self.studyFromCheckIn
+                )
+            }
         }
     }
 
@@ -141,8 +161,43 @@ struct TodayView: View {
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
+    /// The chip opens 打卡. Its dot means exactly one thing — points a tap would
+    /// collect — so it is never decoration and never a nag to study.
     private var streakChip: some View {
+        Button { self.showingCheckIn = true } label: {
+            self.streakChipLabel
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .topTrailing) {
+            if self.checkInBadge {
+                Circle()
+                    .fill(.tujiAlert)
+                    .frame(width: 8, height: 8)
+                    .offset(x: 3, y: -3)
+                    .accessibilityHidden(true)
+            }
+        }
+        .accessibilityLabel(Text("打卡"))
+        .accessibilityValue(Text("連續 \(self.progress.streak?.current ?? 0) 天"))
+        .accessibilityHint(self.checkInBadge ? Text("有點數可以領取") : Text(verbatim: ""))
+        .tourAnchor(.streak)
+    }
+
+    private var checkInBadge: Bool {
+        CheckInDecision.chipBadge(
+            self.checkIn.reward(fallbackStudiedToday: (self.progress.streak?.todayCount ?? 0) > 0)
+        )
+    }
+
+    /// 去學習 from inside the sheet: close it and take the hero's own advice —
+    /// 複習 when it is lit, otherwise 學新字.
+    private func studyFromCheckIn() {
+        self.showingCheckIn = false
+        self.navigator.push(.studyLanding(mode: self.reviewDisabled ? .new : .review))
+    }
+
+    @ViewBuilder
+    private var streakChipLabel: some View {
         let n = self.progress.streak?.current ?? 0
         HStack(spacing: 4) {
             Image(systemName: "flame.fill")
@@ -157,7 +212,6 @@ struct TodayView: View {
         .padding(.vertical, 6)
         .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
         .overlay(Rectangle().stroke(.tujiRule.opacity(0.3), lineWidth: 1))
-        .tourAnchor(.streak)
     }
 
     // MARK: - Greeting

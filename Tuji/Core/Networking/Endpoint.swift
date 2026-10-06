@@ -16,6 +16,9 @@ enum Endpoint {
     case usersProgress(learning: String)
     /// 清除學習進度 — every direction at once, so it names none.
     case usersProgressClear
+    /// 打卡月曆: which days of one month had a word-card answer, plus the
+    /// streak. `month` is YYYY-MM; nil asks for the server's current month.
+    case usersStudyCalendar(month: String?, learning: String)
     case usersMastery(learning: String)
     case usersCustomWords(lang: String, learning: String)
     /// Saved 公開圖鑑 items, shaped as words for the 圖鑑 page's 物見 theme.
@@ -186,6 +189,12 @@ enum Endpoint {
             )
         case .usersProgressClear:
             EndpointDescriptor(path: "/api/users/progress", policy: .privateFresh)
+        case let .usersStudyCalendar(month, learning):
+            // Fresh: a claim decision is made from it, and the server already
+            // caches the query behind the tag study/answer busts.
+            EndpointDescriptor(path: "/api/users/study-calendar", queryItems: [
+                URLQueryItem(name: "learning", value: learning)
+            ] + (month.map { [URLQueryItem(name: "month", value: $0)] } ?? []), policy: .privateFresh)
         case let .usersMastery(learning):
             EndpointDescriptor(
                 path: "/api/users/mastery",
