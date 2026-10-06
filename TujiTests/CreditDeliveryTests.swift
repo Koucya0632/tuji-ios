@@ -107,4 +107,38 @@ struct CreditDeliveryTests {
         model.lemma = "  "
         #expect(!model.canConfirm)
     }
+
+    @Test
+    func aCardFromEitherRunFinishesThePhotoSoItIsNotReopened() {
+        func run(
+            _ id: String,
+            image: String,
+            feature: String,
+            state: String = "committed",
+            card: String? = nil
+        )
+            -> CreditOperation
+        {
+            CreditOperation(
+                id: id,
+                state: state,
+                feature: feature,
+                targetLanguage: "ja",
+                imageId: image,
+                points: 100,
+                confirmedItemId: card,
+                fulfillmentState: "unclaimed",
+                result: nil
+            )
+        }
+        let precision = run("p", image: "a", feature: "atlas.recognize.precision", card: "item")
+        let primary = run("q", image: "a", feature: "atlas.recognize.primary")
+        #expect(CreditCaptureModel.resumable(in: [precision, primary]) == nil)
+
+        let other = run("r", image: "b", feature: "atlas.recognize.primary")
+        #expect(CreditCaptureModel.resumable(in: [precision, primary, other])?.id == "r")
+
+        let inFlight = run("s", image: "a", feature: "atlas.recognize.precision", state: "running")
+        #expect(CreditCaptureModel.resumable(in: [primary, inFlight])?.id == "s")
+    }
 }

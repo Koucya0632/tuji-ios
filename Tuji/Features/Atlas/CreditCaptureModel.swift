@@ -137,10 +137,15 @@ final class CreditCaptureModel {
             let list: List = try await self.api.get(.aiOperations)
             guard self.valid(stamp) else { return }
             self.history = list.operations
-            // Resume work already paid for: a run in flight, else a result nobody has picked from yet.
             if self.operation == nil, self.photo == nil {
-                self.operation = list.operations.first(where: \.isRunning) ??
-                    list.operations.first { $0.state == "committed" && $0.confirmedItemId == nil }
+                self.operation = Self.resumable(in: list.operations)
+                if let imageId = self.operation?.imageId {
+                    struct Detail: Decodable { let image: AtlasImageSummary }
+                    // The crop never left this phone's last session; show the upload instead.
+                    let detail: Detail? = try? await self.api.get(.atlasImage(id: imageId))
+                    guard self.valid(stamp), self.operation?.imageId == imageId else { return }
+                    self.image = detail?.image
+                }
             }
         }
     }
@@ -473,5 +478,17 @@ final class CreditCaptureModel {
 extension CreditOperation {
     var isRunning: Bool {
         ["reserved", "running", "reconciling"].contains(self.state)
+    }
+}
+
+extension CreditCaptureModel {
+    /// Work already paid for that the screen should reopen on: a run in flight, else a result
+    /// nobody has picked from yet. A photo's 普通 and 高精度 runs share one card, so a card made
+    /// from either finishes both.
+    static func resumable(in operations: [CreditOperation]) -> CreditOperation? {
+        let finished = Set(operations.filter { $0.confirmedItemId != nil }.map(\.imageId))
+        return operations.first(where: \.isRunning) ?? operations.first {
+            $0.state == "committed" && $0.confirmedItemId == nil && !finished.contains($0.imageId)
+        }
     }
 }
