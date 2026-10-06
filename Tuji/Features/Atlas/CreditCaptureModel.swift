@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 
 /// 點數版拍照新增：選模式 → 拍照/裁切（只留在本機）→ 開始識別（上傳、報價、扣點一次做完）→ 選候選建卡。
 /// 普通識別完成後，同一張照片可補差價升級成高精度；價格由伺服器決定，報價和畫面上的價格不符就停下來讓使用者確認。
@@ -42,6 +43,14 @@ final class CreditCaptureModel {
     private let api: APIClient
     private var owner: UUID?
     private var generation = 0
+    /// Consecutive failed polls; one dropped request mid-run is not worth a banner.
+    private var pollFailures = 0
+    @ObservationIgnored private let log = Logger(subsystem: "app.tuji.ios", category: "credit-capture")
+    private static let pollFailureLimit = 3
+    private var pollMessage: String {
+        tujiLocalized("暫時無法連線，請重試同步。")
+    }
+
     private var journalKey: String? {
         guard let owner, let catalog else { return nil }
         return "tuji.credit-operation.\(owner.uuidString.lowercased()).\(catalog.environment)"
@@ -144,6 +153,7 @@ final class CreditCaptureModel {
         self.quote = nil
         self.clearSelection()
         self.message = nil
+        self.pollFailures = 0
     }
 
     func setPhoto(_ data: Data) {
@@ -321,7 +331,15 @@ final class CreditCaptureModel {
             let wallet: CreditWallet = try await self.api.get(.creditWallet)
             guard self.valid(stamp) else { return }
             self.apply(wallet)
-        } catch { if self.valid(stamp) { self.message = tujiLocalized("暫時無法連線，請重試同步。") } }
+            self.pollFailures = 0
+            // Only lift the banner poll() raised; other messages belong to their own actions.
+            if self.message == self.pollMessage { self.message = nil }
+        } catch {
+            guard self.valid(stamp) else { return }
+            self.pollFailures += 1
+            self.log.error("poll failed (\(self.pollFailures)): \(error.localizedDescription, privacy: .public)")
+            if self.pollFailures >= Self.pollFailureLimit { self.message = self.pollMessage }
+        }
     }
 
     func cancelOperation() async {
