@@ -34,7 +34,12 @@ struct CreditCaptureView: View {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.walletRow
                     self.statusMessage
-                    if self.model.pending != nil {
+                    if self.model.busy, self.model.photo != nil, self.model.operation == nil {
+                        // Upload → quote → accept in flight. The accept journals
+                        // `pending` before it sends, and the recovery panels below
+                        // are for after a failure; mid-request they read as one.
+                        self.readyPanel
+                    } else if self.model.pending != nil {
                         self.pendingPanel
                     } else if let quote = self.model.quote {
                         self.quotePanel(quote)
