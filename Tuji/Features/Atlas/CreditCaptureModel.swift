@@ -137,6 +137,7 @@ final class CreditCaptureModel {
             let list: List = try await self.api.get(.aiOperations)
             guard self.valid(stamp) else { return }
             self.history = list.operations
+            CreditEnrichmentWatch.shared.track(list.operations)
             if self.operation == nil, self.photo == nil {
                 self.operation = Self.resumable(in: list.operations)
                 if let imageId = self.operation?.imageId {
@@ -453,7 +454,9 @@ final class CreditCaptureModel {
                 cardTypes: ["image_recall", "flashcard"]
             )
             await AtlasStore.shared.sync(.full)
-            await AtlasStore.shared.refreshEntitlement()
+            // The 我做的 grid reads WordsStore, which AtlasStore.sync does not touch.
+            await LiveAtlasMutationRefresher().refresh(after: .captureCompleted)
+            CreditEnrichmentWatch.shared.track([result.operation])
             saved = true
         }
         return saved
@@ -469,6 +472,8 @@ final class CreditCaptureModel {
                 cardTypes: ["image_recall", "flashcard"]
             )
             await AtlasStore.shared.sync(.full)
+            await LiveAtlasMutationRefresher().refresh(after: .captureCompleted)
+            if let operation = self.operation { CreditEnrichmentWatch.shared.track([operation]) }
             synced = true
         }
         return synced

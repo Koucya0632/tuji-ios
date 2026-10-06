@@ -21,6 +21,8 @@ enum AtlasMutation: Hashable {
     case itemsDeleted
     /// A capture finished generating its cards. Consumes an atlas slot.
     case captureCompleted
+    /// A 自製圖鑑 card's reading, definitions and examples arrived after it was made.
+    case cardEnriched
     /// 取消公開 on a single item. The item, its cards and every saver's progress
     /// stay — only the public row is retired.
     case itemWithdrawn
@@ -39,7 +41,7 @@ enum AtlasMutation: Hashable {
     /// snapshot that gates capture.
     var changesOwnAtlas: Bool {
         switch self {
-        case .itemsDeleted, .captureCompleted: true
+        case .itemsDeleted, .captureCompleted, .cardEnriched: true
         case .itemWithdrawn, .collectionPublished, .collectionWithdrawn,
              .collectionDeleted, .collectionAvatarChanged: false
         }
@@ -51,7 +53,7 @@ enum AtlasMutation: Hashable {
         case .itemWithdrawn, .collectionPublished, .collectionWithdrawn: true
         case let .collectionDeleted(wasPublic): wasPublic
         case let .collectionAvatarChanged(isPublic): isPublic
-        case .itemsDeleted, .captureCompleted: false
+        case .itemsDeleted, .captureCompleted, .cardEnriched: false
         }
     }
 }

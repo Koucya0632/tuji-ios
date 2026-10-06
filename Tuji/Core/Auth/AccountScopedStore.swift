@@ -39,6 +39,7 @@ extension StudyReminders: AccountScopedStore {}
 extension WordListsStore: AccountScopedStore {}
 extension WordNotesStore: AccountScopedStore {}
 extension WordInsightsStore: AccountScopedStore {}
+extension CreditEnrichmentWatch: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -73,6 +74,8 @@ enum AccountScopedStores {
     ///   are this account's answer.
     /// - `WordNotesStore` — the notes are this account's writing.
     /// - `WordInsightsStore` — cached per tier, and the tier is this account's.
+    /// - `CreditEnrichmentWatch` — it polls this account's operations and would
+    ///   keep marking their item ids 補充中 under the next one.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -89,7 +92,8 @@ enum AccountScopedStores {
             StudyReminders.shared,
             WordListsStore.shared,
             WordNotesStore.shared,
-            WordInsightsStore.shared
+            WordInsightsStore.shared,
+            CreditEnrichmentWatch.shared
         ]
     }
 

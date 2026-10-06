@@ -15139,6 +15139,28 @@
         }
       }
     },
+    "補充中" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filling in"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "補足中"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "补充中"
+          }
+        }
+      }
+    },
     "補充詳情中" : {
       "localizations" : {
         "en" : {
