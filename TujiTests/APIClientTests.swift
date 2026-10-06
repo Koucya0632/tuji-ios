@@ -139,6 +139,20 @@ struct APIClientTests {
         #expect(recorder.last?.authorization == "Bearer stale")
     }
 
+    @Test("every request states the phone's time zone, signed in or not")
+    func requestsCarryTheTimezone() async throws {
+        let recorder = RequestRecorder()
+        let api = self.client { request in
+            _ = recorder.record(request)
+            return StubResponse(status: 200, body: #"{"ok":true}"#)
+        }
+
+        _ = try await api.get(.usersMe, as: Ack.self)
+        _ = try await api.get(.categories(lang: "zh-Hant"), as: Ack.self)
+
+        #expect(recorder.requests.map(\.timezone) == [TimeZone.current.identifier, TimeZone.current.identifier])
+    }
+
     @Test("a public endpoint carries no token at all")
     func publicEndpointsCarryNothing() async throws {
         let recorder = RequestRecorder()
@@ -340,6 +354,7 @@ private struct RecordedRequest {
     let url: URL?
     let authorization: String?
     let contentType: String?
+    let timezone: String?
     let cachePolicy: URLRequest.CachePolicy
     let timeout: TimeInterval
     let bodyByteCount: Int
@@ -374,6 +389,7 @@ private final class RequestRecorder: @unchecked Sendable {
             url: request.url,
             authorization: request.value(forHTTPHeaderField: "Authorization"),
             contentType: request.value(forHTTPHeaderField: "Content-Type"),
+            timezone: request.value(forHTTPHeaderField: "X-Tuji-Timezone"),
             cachePolicy: request.cachePolicy,
             timeout: request.timeoutInterval,
             bodyByteCount: RequestRecorder.byteCount(of: request)

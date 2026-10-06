@@ -56,7 +56,7 @@ struct CreditWalletView: View {
             .font(.tujiLabel).foregroundStyle(.tujiInk3)
             Text("每月自動補滿，不累積。簽到點與購買點數不過期。")
                 .font(.tujiLabel).foregroundStyle(.tujiInk3)
-            Text("每天學習一題後可簽到 10 點，每月最多 300 點。日期依台北時間計算。")
+            Text("每天學習一題後可簽到 10 點，每月最多 300 點。")
                 .font(.tujiLabel).foregroundStyle(.tujiInk3)
             ForEach(self.store.creditProducts, id: \.id) { product in
                 Button {

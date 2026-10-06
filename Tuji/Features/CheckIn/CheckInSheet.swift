@@ -39,9 +39,6 @@ struct CheckInSheet: View {
                     self.rewardCard
                 }
                 self.calendarSection
-                Text("日期以台北時間計算")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
             }
             .padding(.horizontal, Space.s4)
             .padding(.top, Space.s3)
@@ -269,10 +266,10 @@ struct StudyMonthGrid: View {
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: Space.s1), count: 7)
 
-    /// YYYY-MM in Asia/Taipei — the calendar's zone, not the device's.
+    /// YYYY-MM on the phone's calendar — the zone every request states.
     static func currentMonth(now: Date = Date()) -> String {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Asia/Taipei") ?? .current
+        calendar.timeZone = .current
         let c = calendar.dateComponents([.year, .month], from: now)
         return String(format: "%04d-%02d", c.year ?? 2026, c.month ?? 1)
     }

@@ -181,6 +181,10 @@ final class APIClient {
         var req = URLRequest(url: url)
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Accept")
+        // Whose "today" the server counts in — streak, calendar, today's new
+        // words, the check-in reward (tuji-web lib/timezone.ts). Read per
+        // request so a trip across zones moves the day with the phone.
+        req.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Tuji-Timezone")
         req.timeoutInterval = policy.timeout
         req.cachePolicy = cachePolicy ?? policy.cachePolicy
 
