@@ -10474,28 +10474,6 @@
         }
       }
     },
-    "日期以台北時間計算" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Days follow Taipei time"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日付は台北時間基準です"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日期以台北时间计算"
-          }
-        }
-      }
-    },
     "早安，" : {
       "localizations" : {
         "en" : {
@@ -11676,24 +11654,24 @@
         }
       }
     },
-    "每天學習一題後可簽到 10 點，每月最多 300 點。日期依台北時間計算。" : {
+    "每天學習一題後可簽到 10 點，每月最多 300 點。" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Study one question to check in for 10 credits a day, up to 300 a month. Dates follow Taipei time."
+            "value" : "Study one question to check in for 10 credits a day, up to 300 a month."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1問学習するとチェックインで毎日10ポイント、月最大300ポイント。日付は台北時間基準です。"
+            "value" : "1問学習するとチェックインで毎日10ポイント、月最大300ポイント。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每天学习一题后可签到 10 点，每月最多 300 点。日期按台北时间计算。"
+            "value" : "每天学习一题后可签到 10 点，每月最多 300 点。"
           }
         }
       }

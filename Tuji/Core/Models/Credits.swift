@@ -6,7 +6,7 @@ struct CreditWallet: Decodable, Equatable {
         let checkedInToday: Bool
         let checkInGrantedThisMonth: Int
         let hasLifetime: Bool
-        /// A word-card answer was logged today (Asia/Taipei), which check-in
+        /// A word-card answer was logged today (the phone's zone), which check-in
         /// requires. nil from a server older than that rule.
         var studiedToday: Bool? = nil
     }
