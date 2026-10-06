@@ -86,7 +86,7 @@ struct CreditCaptureView: View {
     private var walletRow: some View {
         Button { self.showWallet = true } label: {
             HStack(spacing: Space.s2) {
-                Image("CreditCan").resizable().scaledToFit().frame(width: 28, height: 28)
+                Image("CreditCan").resizable().scaledToFit().frame(width: 28, height: 28).foregroundStyle(.tujiInk)
                 Text("罐頭點數").font(.tujiLabel).tracking(0.5).foregroundStyle(.tujiInk3)
                 Spacer()
                 Text(self.model.wallet.map { String($0.available) } ?? "—")
