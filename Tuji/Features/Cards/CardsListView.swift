@@ -256,9 +256,7 @@ struct CardsListView: View {
                             WordTile(
                                 word: word,
                                 showMastery: true,
-                                masteryScore: self.mastery.score(for: word.id),
-                                enriching: word.id.atlasItemId
-                                    .map(CreditEnrichmentWatch.shared.enrichingItemIds.contains) ?? false
+                                masteryScore: self.mastery.score(for: word.id)
                             )
                         }
                         .buttonStyle(.plain)
