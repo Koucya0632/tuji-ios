@@ -276,6 +276,7 @@ struct AtlasEntitlement: Decodable, Hashable {
     /// call sites keep compiling, whereas a `let` given a default would be
     /// skipped by the synthesized decoder without a word.
     var membership: Membership?
+    var billingMode: String?
 
     /// `plan` keeps its pre-membership meaning: "pro" only while Pro is live.
     /// A lifetime member is `plan == "free"` — ask `membershipTier` instead.

@@ -1,0 +1,11 @@
+// Real Apple Sandbox payments with an isolated backend. Never archive for release.
+#include "Debug.xcconfig"
+PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios
+APP_DISPLAY_NAME = Tuji 沙盒
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG TUJI_DEV TUJI_CREDITS_SANDBOX
+OTHER_SWIFT_FLAGS = $(inherited) -DTUJI_CREDITS_SANDBOX
+// Explicit local settings only; never fall back to the production backend.
+TUJI_BASE_URL = https:/$()/sandbox-unconfigured.invalid
+TUJI_SUPABASE_URL = https:/$()/sandbox-unconfigured.invalid
+TUJI_SUPABASE_ANON_KEY =
+#include? "CreditsSandbox.local.xcconfig"

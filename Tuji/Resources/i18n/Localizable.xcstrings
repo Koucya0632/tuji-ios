@@ -577,6 +577,28 @@
         }
       }
     },
+    "AI 依需要使用罐頭點數" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Can Credits for AI as needed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "必要に応じて缶詰ポイントでAIを使う"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 按需使用罐头点数"
+          }
+        }
+      }
+    },
     "AI 建議" : {
       "localizations" : {
         "en" : {
@@ -623,8 +645,31 @@
         }
       }
     },
+    "AI 辨識暫時無法使用，請稍後再試。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI recognition is unavailable right now. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 認識は現在利用できません。しばらくしてからお試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 识别暂时无法使用，请稍后再试。"
+          }
+        }
+      }
+    },
     "AI 辨識次數提升至每月 200 次" : {
       "comment" : "A benefit of the Tuji Pro paywall after the membership cutover: ordinary AI recognitions raised to 200 per month.",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -648,6 +693,7 @@
     },
     "AI 辨識次數提升至每月 500 次" : {
       "comment" : "A benefit of the Tuji Pro paywall: ordinary AI recognitions raised to 500 per month.",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -671,6 +717,7 @@
     },
     "AI 辨識每月 10 次" : {
       "comment" : "Lifetime Membership benefit on the paywall: 10 ordinary AI recognitions per month.",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1425,6 +1472,28 @@
         }
       }
     },
+    "上次的扣點確認尚未同步，請重試同一筆操作。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your last credit confirmation has not synced. Retry the same task."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前回のポイント使用が未同期です。同じ処理を再試行してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次的扣点确认尚未同步，请重试同一笔操作。"
+          }
+        }
+      }
+    },
     "上移" : {
       "localizations" : {
         "en" : {
@@ -1953,6 +2022,29 @@
         }
       }
     },
+    "今天已簽到" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checked in today"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日は受取済み"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天已签到"
+          }
+        }
+      }
+    },
     "今天已經學過就不會再提醒。" : {
       "localizations" : {
         "en" : {
@@ -2200,6 +2292,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "介绍一下你自己"
+          }
+        }
+      }
+    },
+    "付款正在同步，請稍後重試同步，不需再次購買。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your payment is syncing. Retry sync later; there is no need to buy again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お支払いを同期中です。後で同期を再試行してください。再購入は不要です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "付款正在同步，请稍后重试同步，无需再次购买。"
           }
         }
       }
@@ -2824,6 +2938,7 @@
     },
     "個人自製圖鑑 20 格" : {
       "comment" : "Lifetime Membership benefit on the paywall: 20 slots in the user's custom atlas.",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2846,6 +2961,7 @@
       }
     },
     "個人詞表 20 張，可以從詞表背詞" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2868,6 +2984,7 @@
       }
     },
     "個人詞表增加到 100 張" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2959,8 +3076,31 @@
         }
       }
     },
+    "價格已更新，請確認後再開始。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The price has changed. Please confirm before starting."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "料金が変更されました。確認してから開始してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "价格已更新，请确认后再开始。"
+          }
+        }
+      }
+    },
     "優先支援與後續 Pro 功能" : {
       "comment" : "A benefit of the Pro plan, describing priority support and future features.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "en" : {
@@ -3299,6 +3439,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "免费版：本月 AI 辨识剩 %lld／%lld 次"
+          }
+        }
+      }
+    },
+    "免費額度剩餘 %d 點 · 簽到點 %d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free allowance: %d credits · Check-in: %d credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無料分残高 %d ポイント · チェックイン分 %d ポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免费额度剩余 %d 点 · 签到点 %d 点"
           }
         }
       }
@@ -4853,6 +5015,28 @@
         }
       }
     },
+    "加購 %d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buy %d credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d ポイントを追加購入"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加购 %d 点"
+          }
+        }
+      }
+    },
     "包含永久會員全部權益，另外再加上：" : {
       "comment" : "Subtitle on the Tuji Pro card of the paywall: Pro includes every Lifetime Membership benefit, plus the ones listed below.",
       "localizations" : {
@@ -4925,6 +5109,28 @@
         }
       }
     },
+    "升級高精度" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upgrade"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高精度にする"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升级高精度"
+          }
+        }
+      }
+    },
     "午安，" : {
       "localizations" : {
         "en" : {
@@ -4987,6 +5193,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "卡片 %lld"
+          }
+        }
+      }
+    },
+    "卡片已保存，但同步失敗。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Card saved, but syncing failed."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カードは保存されましたが、同期に失敗しました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡片已保存，但同步失败。"
           }
         }
       }
@@ -5315,6 +5543,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "合集头像"
+          }
+        }
+      }
+    },
+    "同步複習卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync study cards"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復習カードを同期"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步复习卡片"
           }
         }
       }
@@ -5883,6 +6133,28 @@
         }
       }
     },
+    "報價已到期，請重新取得報價。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This quote has expired. Get a new quote."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "見積もりの有効期限が切れました。新しい見積もりを取得してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "报价已到期，请重新获取报价。"
+          }
+        }
+      }
+    },
     "報錯" : {
       "localizations" : {
         "en" : {
@@ -5999,6 +6271,7 @@
     },
     "大家的圖鑑" : {
       "comment" : "A title for a section that shows public photos of a word by other users.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "en" : {
@@ -9551,6 +9824,7 @@
     },
     "收藏、學習與投稿物見" : {
       "comment" : "Lifetime Membership benefit on the paywall: save, study and publish on Sightings (物見, the community tab).",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9751,6 +10025,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "整整一年，没缺席一天"
+          }
+        }
+      }
+    },
+    "新 Pro 方案已停止販售，既有會員權益持續有效。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Pro plans are no longer sold. Existing benefits remain valid."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新規Proプランの販売は終了しました。既存の特典は引き続き有効です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新 Pro 方案已停止销售，现有会员权益继续有效。"
           }
         }
       }
@@ -10006,6 +10302,50 @@
         }
       }
     },
+    "普通識別後覺得不準，可以補差價升級成高精度，不用重拍。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If a standard result looks wrong, pay the difference to upgrade to high precision—no need to retake the photo."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通常認識の結果が違うときは、差額を払って高精度に切り替えられます。撮り直しは不要です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "普通识别后觉得不准，可以补差价升级成高精度，不用重拍。"
+          }
+        }
+      }
+    },
+    "暫時無法完成，請重試同步。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to finish right now. Retry sync."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在完了できません。同期を再試行してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法完成，请重试同步。"
+          }
+        }
+      }
+    },
     "暫時無法載入方案，請檢查網路後再試一次。" : {
       "comment" : "A message displayed when the app cannot load payment",
       "isCommentAutoGenerated" : true,
@@ -10026,6 +10366,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂时无法载入方案，请检查网络后再试一次。"
+          }
+        }
+      }
+    },
+    "暫時無法連線，請重試同步。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to connect right now. Retry sync."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在接続できません。同期を再試行してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时无法连接，请重试同步。"
           }
         }
       }
@@ -10301,6 +10663,28 @@
         }
       }
     },
+    "會員與罐頭點數" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Membership & Can Credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会員と缶詰ポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会员与罐头点数"
+          }
+        }
+      }
+    },
     "有 %lld 筆評分還沒送出，已排入待同步，連上網路後會自動補送。" : {
       "comment" : "A notice explaining that there are unsynced reviews that will be automatically resynced once the user connects to the internet.",
       "isCommentAutoGenerated" : true,
@@ -10486,6 +10870,28 @@
         }
       }
     },
+    "未完成照片已達上限，請先完成或整理照片。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have reached the pending photo limit. Finish or remove photos first."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未完成の写真が上限に達しました。写真を完成させるか整理してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未完成照片已达上限，请先完成或整理照片。"
+          }
+        }
+      }
+    },
     "未授權，請重新登入" : {
       "localizations" : {
         "en" : {
@@ -10551,6 +10957,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未通过。修改后可以再送一次。"
+          }
+        }
+      }
+    },
+    "本月已領取" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claimed this month"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今月は受取済み"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月已领取"
           }
         }
       }
@@ -10940,6 +11369,28 @@
         }
       }
     },
+    "每天簽到 10 點，每月最多 300 點。日期依 UTC 計算。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in for 10 credits a day, up to 300 a month. Dates follow UTC."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎日のチェックインで10ポイント、月最大300ポイント。日付はUTC基準です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天签到 10 点，每月最多 300 点。日期按 UTC 计算。"
+          }
+        }
+      }
+    },
     "每天進步一點" : {
       "localizations" : {
         "en" : {
@@ -11052,6 +11503,73 @@
         }
       }
     },
+    "每日簽到" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily check-in"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎日チェックイン"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日签到"
+          }
+        }
+      }
+    },
+    "每月免費贈送 1,000 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1,000 free credits every month"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎月1,000ポイントを無料プレゼント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月免费赠送 1,000 点"
+          }
+        }
+      }
+    },
+    "每月自動補滿，不累積。簽到點與購買點數不過期。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The free allowance resets automatically each month and does not carry over. Check-in and purchased credits never expire."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無料分は毎月自動で補充され、繰り越しません。チェックイン分と購入分に有効期限はありません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月自动补满，不累积。签到点与购买点数不过期。"
+          }
+        }
+      }
+    },
     "比較級" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -11139,6 +11657,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "永久会员为一次性购买，不会自动续订；Pro 到期后仍保留永久会员权益。"
+          }
+        }
+      }
+    },
+    "永久解鎖全部官方圖鑑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock all official atlases permanently"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての公式図鑑を永久に解放"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久解锁全部官方图鉴"
           }
         }
       }
@@ -11446,6 +11986,7 @@
       }
     },
     "為每個字寫下自己的筆記" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -11597,6 +12138,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法连接伺服器，请稍后再试"
+          }
+        }
+      }
+    },
+    "照片會在按下「開始識別」後才上傳。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your photo is uploaded only when you tap “Start”."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真は「認識を開始」を押したときにアップロードされます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "照片会在按下“开始识别”后才上传。"
           }
         }
       }
@@ -12666,6 +13229,28 @@
         }
       }
     },
+    "確認使用點數" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm credit use"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポイント使用を確認"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认使用点数"
+          }
+        }
+      }
+    },
     "確認信已寄出" : {
       "localizations" : {
         "en" : {
@@ -13588,6 +14173,73 @@
         }
       }
     },
+    "罐頭點數" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Can Credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缶詰ポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "罐头点数"
+          }
+        }
+      }
+    },
+    "罐頭點數不足，請先領取贈點或加購。" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough Can Credits. Claim your bonus or buy more first."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缶詰ポイントが不足しています。特典を受け取るか追加購入してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "罐头点数不足，请先领取赠点或加购。"
+          }
+        }
+      }
+    },
+    "罐頭點數不足，請簽到取得贈點或加購。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough Can Credits. Check in for bonus credits or buy more."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缶詰ポイントが不足しています。チェックインで特典を受け取るか追加購入してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "罐头点数不足，请签到获取赠点或加购。"
+          }
+        }
+      }
+    },
     "美式" : {
       "comment" : "Label for an option in the AccentPickerView that represents American English.",
       "isCommentAutoGenerated" : true,
@@ -13683,8 +14335,53 @@
         }
       }
     },
+    "自製圖鑑容量 200 格" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "200 custom atlas slots"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自作図鑑200枠"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自制图鉴容量 200 格"
+          }
+        }
+      }
+    },
+    "自製圖鑑容量已滿，請先整理卡片。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your custom atlas is full. Make room for more cards first."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自作図鑑がいっぱいです。カードを整理してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自制图鉴容量已满，请先整理卡片。"
+          }
+        }
+      }
+    },
     "自製圖鑑容量提升至 300 格" : {
       "comment" : "A benefit description for increasing the user's custom photo album capacity to 300 photos.",
+      "extractionState" : "stale",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "en" : {
@@ -14092,6 +14789,28 @@
         }
       }
     },
+    "補充點數" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポイントを追加"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "补充点数"
+          }
+        }
+      }
+    },
     "製作中…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -14412,6 +15131,7 @@
     },
     "解鎖全部官方圖鑑系列" : {
       "comment" : "Lifetime Membership benefit on the paywall: every official atlas series can be studied.",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14937,6 +15657,7 @@
       }
     },
     "請先登入，再購買 Tuji Pro。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -14954,6 +15675,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请先登录，再购买 Tuji Pro。"
+          }
+        }
+      }
+    },
+    "請先登入，再購買會員或罐頭點數。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in before buying membership or Can Credits."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会員や缶詰ポイントを購入する前にログインしてください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录，再购买会员或罐头点数。"
           }
         }
       }
@@ -15638,6 +16381,50 @@
         }
       }
     },
+    "辨識沒有完成，點數未扣除。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognition didn’t finish. No credits were used."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認識が完了しませんでした。ポイントは使われていません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "识别没有完成，点数未扣除。"
+          }
+        }
+      }
+    },
+    "辨識費用：%d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognition cost: %d credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認識費用：%d ポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "识别费用：%d 点"
+          }
+        }
+      }
+    },
     "返回" : {
       "comment" : "Button title that dismisses the current view, returning the user to the previous screen.",
       "isCommentAutoGenerated" : true,
@@ -15658,6 +16445,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
+          }
+        }
+      }
+    },
+    "退款點數正在核對，新增 AI 工作暫停。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refunded credits are being reconciled. New AI tasks are paused."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返金分のポイントを確認中です。新しいAI処理は一時停止しています。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退款点数正在核对，新增 AI 工作暂停。"
           }
         }
       }
@@ -16346,6 +17155,28 @@
         }
       }
     },
+    "這張照片已有工作進行中，請先查看處理結果。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This photo already has a task in progress. Check its result first."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この写真は処理中です。先に処理結果を確認してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这张照片已有任务进行中，请先查看处理结果。"
+          }
+        }
+      }
+    },
     "這張照片會作為合集頭像顯示在公開列表與合集詳情。" : {
       "comment" : "A description below the collection avatar upload button, explaining its purpose.",
       "isCommentAutoGenerated" : true,
@@ -16478,6 +17309,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这轮不做听句题"
+          }
+        }
+      }
+    },
+    "這項方案目前未開放購買。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This plan is not available for purchase yet."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このプランは現在購入できません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此方案目前未开放购买。"
           }
         }
       }
@@ -16891,6 +17744,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择照片"
+          }
+        }
+      }
+    },
+    "選擇辨識方式" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose recognition"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認識方法を選ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择识别方式"
           }
         }
       }
@@ -17434,6 +18309,28 @@
         }
       }
     },
+    "重試同步" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retry sync"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同期を再試行"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试同步"
+          }
+        }
+      }
+    },
     "開始你的第一課吧" : {
       "localizations" : {
         "en" : {
@@ -17496,6 +18393,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始学习"
+          }
+        }
+      }
+    },
+    "開始識別" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認識を開始"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始识别"
           }
         }
       }
@@ -17631,6 +18550,51 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "页面显示或操作异常"
+          }
+        }
+      }
+    },
+    "預留 %d 點 · 贈點 %d · 購買點 %d" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reserved %d · Bonus %d · Purchased %d"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約 %d · 特典 %d · 購入 %d"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预留 %d 点 · 赠点 %d · 购买点 %d"
+          }
+        }
+      }
+    },
+    "領取本月 1,000 點" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claim this month’s 1,000 credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今月の1,000ポイントを受け取る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "领取本月 1,000 点"
           }
         }
       }
@@ -17774,6 +18738,7 @@
       }
     },
     "高精度 AI 辨識（每月 30 次）" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -17952,6 +18917,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点底下中间的相机，拍一张就能做卡片。"
+          }
+        }
+      }
+    },
+    "點數不足" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not enough credits"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ポイントが足りません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点数不足"
           }
         }
       }

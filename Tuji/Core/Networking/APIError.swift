@@ -154,6 +154,18 @@ enum APIError: LocalizedError {
         switch reason {
         case "already_member":
             tujiLocalized("這張卡片已經在合集裡了。")
+        case "insufficient_credits":
+            tujiLocalized("罐頭點數不足，請簽到取得贈點或加購。")
+        case "capacity_full":
+            tujiLocalized("自製圖鑑容量已滿，請先整理卡片。")
+        case "quote_expired":
+            tujiLocalized("報價已到期，請重新取得報價。")
+        case "credits_reconciliation_required":
+            tujiLocalized("退款點數正在核對，新增 AI 工作暫停。")
+        case "operation_busy":
+            tujiLocalized("這張照片已有工作進行中，請先查看處理結果。")
+        case "upload_limit":
+            tujiLocalized("未完成照片已達上限，請先完成或整理照片。")
         default:
             nil
         }

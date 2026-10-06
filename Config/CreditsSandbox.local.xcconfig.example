@@ -1,0 +1,5 @@
+// Copy to CreditsSandbox.local.xcconfig (ignored by Git).
+// Use only the independently created sandbox project and its public anon key.
+TUJI_BASE_URL = https:/$()/tuji-credits-sandbox.vercel.app
+TUJI_SUPABASE_URL = https:/$()/YOUR_SANDBOX_PROJECT.supabase.co
+TUJI_SUPABASE_ANON_KEY = YOUR_SANDBOX_PUBLIC_ANON_KEY

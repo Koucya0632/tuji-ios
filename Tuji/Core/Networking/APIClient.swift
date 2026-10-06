@@ -38,9 +38,14 @@ final class APIClient {
         {
             self.baseURL = url
         } else {
+            #if TUJI_CREDITS_SANDBOX
+            self.baseURL = URL(string: "https://sandbox-unconfigured.invalid")!
+            log.error("TUJI_BASE_URL missing; sandbox backend unavailable")
+            #else
             // Last-resort fallback. SmokeTest used the same one.
             self.baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
             log.error("TUJI_BASE_URL missing from Info.plist; falling back to prod")
+            #endif
         }
     }
 
@@ -76,6 +81,13 @@ final class APIClient {
         -> T
     {
         try await request(ep, method: "PATCH", body: body, decodeAs: T.self)
+    }
+
+    /// A paid operation keeps its identity across a timeout and the 401 retry.
+    func postIdempotent<T: Decodable>(_ ep: Endpoint, body: some Encodable, key: String) async throws -> T {
+        var request = try await buildRequest(ep, method: "POST", body: body)
+        request.setValue(key, forHTTPHeaderField: "Idempotency-Key")
+        return try await execute(request, ep: ep, method: "POST", decodeAs: T.self)
     }
 
     func delete(_ ep: Endpoint) async throws {

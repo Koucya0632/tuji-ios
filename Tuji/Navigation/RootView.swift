@@ -33,6 +33,7 @@ struct RootView: View {
         .task(id: self.signedInUserID) {
             guard let userID = self.signedInUserID else { return }
             await self.launch.prepareSignedInSession(userID: userID)
+            await StoreKitService.shared.reconcileUnfinished()
         }
         .onChange(of: self.onboarding.learningDirection) { oldValue, newValue in
             guard oldValue != newValue, newValue != nil else { return }

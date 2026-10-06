@@ -88,21 +88,26 @@ struct PaywallView: View {
     }
 
     var body: some View {
-        TujiFormSheet(title: "Tuji Pro") {
+        TujiFormSheet(title: "會員與罐頭點數") {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.header
-                    if self.offer.showsLifetime {
+                    if self.store.catalog?.billingMode == "credits" {
+                        CreditWalletView().tierCard()
+                        if self.offer.showsLifetime { self.lifetimeSection.tierCard() }
+                    } else if self.offer.showsLifetime {
                         // Two plans, two cards — each with its own benefits
                         // and its own buy button, so nobody reads Pro's list
                         // as part of 永久會員's.
                         self.lifetimeSection
                             .tierCard()
-                        self.proSection
-                            .tierCard()
-                    } else {
+                        if self.store.proNewPurchaseEnabled { self.proSection.tierCard() }
+                    } else if self.store.proNewPurchaseEnabled {
                         self.benefits
                         self.plans
+                    } else {
+                        Text("新 Pro 方案已停止販售，既有會員權益持續有效。")
+                            .font(.tujiLabel)
                     }
                     self.restoreButton
                     self.purchaseNotes
@@ -135,7 +140,7 @@ struct PaywallView: View {
                 Text("一次購買，永久解鎖全部官方圖鑑。")
                     .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
-            } else {
+            } else if self.store.proNewPurchaseEnabled {
                 Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
                     .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
@@ -156,8 +161,14 @@ struct PaywallView: View {
 
     private func benefitRows(_ card: MembershipPlanCard) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            ForEach(MembershipBenefits.rows(for: card, policy: self.offer.isV2 ? .v2 : .v1), id: \.key) { row in
-                self.benefitRow(icon: row.icon, text: LocalizedStringKey(row.key))
+            if self.store.catalog?.billingMode == "credits", card == .lifetime {
+                self.benefitRow(icon: "books.vertical", text: "永久解鎖全部官方圖鑑")
+                self.benefitRow(icon: "square.grid.2x2", text: "自製圖鑑容量 200 格")
+                self.benefitRow(icon: "sparkles", text: "AI 依需要使用罐頭點數")
+            } else {
+                ForEach(MembershipBenefits.rows(for: card, policy: self.offer.isV2 ? .v2 : .v1), id: \.key) { row in
+                    self.benefitRow(icon: row.icon, text: LocalizedStringKey(row.key))
+                }
             }
         }
     }

@@ -1,0 +1,23 @@
+// Internal TestFlight acceptance against the isolated credits backend.
+#include "TestFlight.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = app.tuji.ios
+APP_DISPLAY_NAME = Tuji 罐頭測試
+MARKETING_VERSION = 1.3.0
+CURRENT_PROJECT_VERSION = 32
+
+// Archive with development signing; export selects App Store Connect signing.
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+PROVISIONING_PROFILE_SPECIFIER =
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = TUJI_BETA TUJI_CREDITS_SANDBOX
+OTHER_SWIFT_FLAGS = $(inherited) -DTUJI_CREDITS_SANDBOX
+TUJI_ENABLE_LOG_VERBOSE = NO
+TUJI_ENABLE_RESET_BUTTON = NO
+
+// Explicit isolated settings. Missing local configuration must fail closed.
+TUJI_BASE_URL = https:/$()/sandbox-unconfigured.invalid
+TUJI_SUPABASE_URL = https:/$()/sandbox-unconfigured.invalid
+TUJI_SUPABASE_ANON_KEY =
+#include? "CreditsSandbox.local.xcconfig"

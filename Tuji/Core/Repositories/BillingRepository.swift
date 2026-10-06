@@ -8,6 +8,13 @@ protocol BillingRepository {
     /// Send a StoreKit 2 signed transaction (JWS) for server verification.
     /// Returns the tier the server recorded ("pro" / "free").
     func verify(signedTransaction: String) async throws -> String
+    func verifyCredits(signedTransaction: String) async throws -> CreditPurchaseDelivery
+}
+
+extension BillingRepository {
+    func verifyCredits(signedTransaction: String) async throws -> CreditPurchaseDelivery {
+        throw URLError(.unsupportedURL)
+    }
 }
 
 @MainActor
@@ -28,5 +35,10 @@ struct LiveBillingRepository: BillingRepository {
             body: Payload(signedTransaction: signedTransaction)
         )
         return response.tier ?? "free"
+    }
+
+    func verifyCredits(signedTransaction: String) async throws -> CreditPurchaseDelivery {
+        struct Payload: Encodable { let signedTransaction: String }
+        return try await self.api.post(.creditPurchaseVerify, body: Payload(signedTransaction: signedTransaction))
     }
 }
