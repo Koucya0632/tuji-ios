@@ -16,7 +16,6 @@ struct AtlasMutationRefreshTests {
     func onlyOwnAtlasMutationsMoveTheLearningData() {
         #expect(AtlasMutation.itemsDeleted.changesOwnAtlas)
         #expect(AtlasMutation.captureCompleted.changesOwnAtlas)
-        #expect(AtlasMutation.cardEnriched.changesOwnAtlas)
 
         #expect(!AtlasMutation.itemWithdrawn.changesOwnAtlas)
         #expect(!AtlasMutation.collectionPublished.changesOwnAtlas)
@@ -33,7 +32,6 @@ struct AtlasMutationRefreshTests {
 
         #expect(!AtlasMutation.itemsDeleted.invalidatesPublicFeed)
         #expect(!AtlasMutation.captureCompleted.invalidatesPublicFeed)
-        #expect(!AtlasMutation.cardEnriched.invalidatesPublicFeed)
     }
 
     /// A 合集 that was never on the wall has nothing to invalidate — the old

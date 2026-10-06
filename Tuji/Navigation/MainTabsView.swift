@@ -47,7 +47,11 @@ struct MainTabsView: View {
             }
         }
         .fullScreenCover(isPresented: self.$showCapture) {
-            AtlasCaptureView()
+            AtlasCaptureView {
+                // The card being made heads 我做的's grid; open it there.
+                self.navigator.select(.cards)
+                self.navigator.cardsSourceRequest = .mine
+            }
         }
         // Every pushed screen needs it: a feature screen that wants to open a
         // destination pushes a route through this rather than constructing the

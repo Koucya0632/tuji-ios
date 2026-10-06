@@ -35,6 +35,9 @@ enum CaptureFailure: Hashable {
     init(_ error: Error) {
         if let api = error as? APIError, case let .paymentRequired(message) = api {
             self = .atCapacity(message)
+        } else if let api = error as? APIError, case let .conflict("capacity_full", message) = api {
+            // The 罐頭點數 confirm's spelling of the same dead end.
+            self = .atCapacity(message)
         } else {
             self = .transient
         }

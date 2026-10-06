@@ -19,6 +19,9 @@ import SwiftUI
 import UIKit
 
 struct AtlasCaptureView: View {
+    /// A capture was handed to 生成佇列; the host shows 我做的, where its tile is.
+    var onCardQueued: () -> Void = {}
+
     @Environment(\.dismiss) private var dismiss
 
     /// Pipeline + form state. Replaced wholesale on 換一張 — a fresh VM *is* the
@@ -35,7 +38,7 @@ struct AtlasCaptureView: View {
 
     var body: some View {
         if AtlasStore.shared.entitlement?.billingMode == "credits" {
-            CreditCaptureView()
+            CreditCaptureView(onCardQueued: self.onCardQueued)
         } else {
             self.legacyBody
         }
@@ -479,6 +482,7 @@ struct AtlasCaptureView: View {
                 // Enqueue and close the cover immediately — the user never
                 // waits here, and the queue owns the work from this point.
                 self.vm.submit()
+                self.onCardQueued()
                 self.dismiss()
             }
             .disabled(!self.vm.canSubmit)

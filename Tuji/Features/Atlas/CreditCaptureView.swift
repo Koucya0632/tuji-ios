@@ -12,6 +12,9 @@ import SwiftUI
 import UIKit
 
 struct CreditCaptureView: View {
+    /// The card is in 生成佇列 and the sheet is about to close.
+    var onCardQueued: () -> Void = {}
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.targetLanguage) private var language
     @State private var model = CreditCaptureModel()
@@ -31,7 +34,12 @@ struct CreditCaptureView: View {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.walletRow
                     self.statusMessage
-                    if self.model.pending != nil {
+                    if self.model.busy, self.model.photo != nil, self.model.operation == nil {
+                        // Upload → quote → accept in flight. The accept journals
+                        // `pending` before it sends, and the recovery panels below
+                        // are for after a failure; mid-request they read as one.
+                        self.readyPanel
+                    } else if self.model.pending != nil {
                         self.pendingPanel
                     } else if let quote = self.model.quote {
                         self.quotePanel(quote)
@@ -314,7 +322,10 @@ struct CreditCaptureView: View {
                 self.correctionForm
             }
             BBtn(title: "確認並生成卡片", bg: .tujiBrandPrimary, fg: .tujiInk, fullWidth: true, icon: "checkmark") {
-                Task { if await self.model.confirm() { self.dismiss() } }
+                if self.model.confirm() {
+                    self.onCardQueued()
+                    self.dismiss()
+                }
             }
             .disabled(!self.model.canConfirm)
         }

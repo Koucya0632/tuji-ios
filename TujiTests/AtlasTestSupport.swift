@@ -356,3 +356,31 @@ final class SpyAtlasMutationRefreshing: AtlasMutationRefreshing {
         self.reported.append(mutation)
     }
 }
+
+/// The 罐頭點數 confirm and fill-in, in memory. `fillIn` is what each poll of
+/// the operation answers, in order; the last answer repeats.
+@MainActor
+final class FakeCreditConfirming: CreditCardConfirming {
+    var itemId = "item-1"
+    var confirmState = "pending"
+    var fillIn: [String] = ["completed"]
+    var confirmFailures = 0
+    var failureError: Error = AtlasFakeError.boom
+
+    private(set) var confirmed: [CreditConfirmRequest] = []
+    private(set) var polls = 0
+
+    func confirm(_ request: CreditConfirmRequest) async throws -> CreditConfirmed {
+        if self.confirmFailures > 0 {
+            self.confirmFailures -= 1
+            throw self.failureError
+        }
+        self.confirmed.append(request)
+        return CreditConfirmed(itemId: self.itemId, fulfillmentState: self.confirmState)
+    }
+
+    func fulfillmentState(operationId _: String) async throws -> String {
+        self.polls += 1
+        return self.fillIn.count > 1 ? self.fillIn.removeFirst() : self.fillIn.first ?? "completed"
+    }
+}

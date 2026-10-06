@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import os
+import UIKit
 
 /// 點數版拍照新增：選模式 → 拍照/裁切（只留在本機）→ 開始識別（上傳、報價、扣點一次做完）→ 選候選建卡。
 /// 普通識別完成後，同一張照片可補差價升級成高精度；價格由伺服器決定，報價和畫面上的價格不符就停下來讓使用者確認。
@@ -41,6 +42,7 @@ final class CreditCaptureModel {
     /// What the chosen candidate put in each field, so the form can mark the AI's guess.
     private(set) var suggestion: AtlasCaptureVM.Suggestion?
     private let api: APIClient
+    private let queue: AtlasCaptureQueue
     private var owner: UUID?
     private var generation = 0
     /// Consecutive failed polls; one dropped request mid-run is not worth a banner.
@@ -56,8 +58,9 @@ final class CreditCaptureModel {
         return "tuji.credit-operation.\(owner.uuidString.lowercased()).\(catalog.environment)"
     }
 
-    init(api: APIClient = .shared) {
+    init(api: APIClient = .shared, queue: AtlasCaptureQueue = .shared) {
         self.api = api
+        self.queue = queue
     }
 
     // MARK: Prices
@@ -137,9 +140,8 @@ final class CreditCaptureModel {
             let list: List = try await self.api.get(.aiOperations)
             guard self.valid(stamp) else { return }
             self.history = list.operations
-            CreditEnrichmentWatch.shared.track(list.operations)
             if self.operation == nil, self.photo == nil {
-                self.operation = Self.resumable(in: list.operations)
+                self.operation = Self.resumable(in: list.operations, queued: self.queue.creditOperationIds)
                 if let imageId = self.operation?.imageId {
                     struct Detail: Decodable { let image: AtlasImageSummary }
                     // The crop never left this phone's last session; show the upload instead.
@@ -417,49 +419,30 @@ final class CreditCaptureModel {
     }
 
     /// 確認並生成卡片. Returns true once the card exists, so the sheet can close.
-    func confirm() async -> Bool {
-        guard self.canConfirm, let id = self.operation?.id,
-              let candidate = self.operation?.result?.candidates.first(where: { $0.id == self.selectedCandidateId })
+    /// 確認並生成卡片: hand the confirm → cards → fill-in tail to 生成佇列 and
+    /// return, so the sheet closes at once and 我做的 shows the card being made.
+    /// Not `async`, like the free flow's `submit()`: the work it commits
+    /// outlives the sheet by design.
+    func confirm() -> Bool {
+        guard self.canConfirm, let operation = self.operation,
+              let candidate = operation.result?.candidates.first(where: { $0.id == self.selectedCandidateId })
         else { return false }
         // The gloss field only exists for a cross-language capture; elsewhere the server keeps the candidate's.
         let gloss = self.secondField == .gloss && !Self.trim(self.displayGloss).isEmpty ? Self
             .trim(self.displayGloss) : nil
-        let stamp = self.generation
-        var saved = false
-        await self.act {
-            struct Payload: Encodable {
-                let candidateId: String
-                let lemma: String
-                let displayZhHant: String
-                let displayGloss: String?
-            }
-            struct Confirm: Decodable { struct Item: Decodable { let id: String }
-                let item: Item
-                let operation: CreditOperation
-            }
-            let result: Confirm = try await self.api.post(
-                .aiOperationConfirm(id: id),
-                body: Payload(
-                    candidateId: candidate.id,
-                    lemma: Self.trim(self.lemma),
-                    displayZhHant: Self.trim(self.displayZhHant),
-                    displayGloss: gloss
-                )
-            )
-            guard self.valid(stamp) else { return }
-            self.operation = result.operation
-            self.history = [result.operation] + self.history.filter { $0.id != id }
-            _ = try await LiveAtlasRepository.shared.createCards(
-                itemId: result.item.id,
-                cardTypes: ["image_recall", "flashcard"]
-            )
-            await AtlasStore.shared.sync(.full)
-            // The 我做的 grid reads WordsStore, which AtlasStore.sync does not touch.
-            await LiveAtlasMutationRefresher().refresh(after: .captureCompleted)
-            CreditEnrichmentWatch.shared.track([result.operation])
-            saved = true
-        }
-        return saved
+        self.queue.enqueue(
+            credit: CreditConfirmRequest(
+                operationId: operation.id,
+                candidateId: candidate.id,
+                lemma: Self.trim(self.lemma),
+                displayZhHant: Self.trim(self.displayZhHant),
+                displayGloss: gloss
+            ),
+            imageId: operation.imageId,
+            thumbnail: self.photo.flatMap(UIImage.init(data:))
+        )
+        self.reset()
+        return true
     }
 
     /// The card was saved but syncing it failed: retry without confirming again.
@@ -473,7 +456,6 @@ final class CreditCaptureModel {
             )
             await AtlasStore.shared.sync(.full)
             await LiveAtlasMutationRefresher().refresh(after: .captureCompleted)
-            if let operation = self.operation { CreditEnrichmentWatch.shared.track([operation]) }
             synced = true
         }
         return synced
@@ -489,11 +471,12 @@ extension CreditOperation {
 extension CreditCaptureModel {
     /// Work already paid for that the screen should reopen on: a run in flight, else a result
     /// nobody has picked from yet. A photo's 普通 and 高精度 runs share one card, so a card made
-    /// from either finishes both.
-    static func resumable(in operations: [CreditOperation]) -> CreditOperation? {
+    /// from either finishes both. One 生成佇列 is already confirming is not waiting either.
+    static func resumable(in operations: [CreditOperation], queued: Set<String> = []) -> CreditOperation? {
         let finished = Set(operations.filter { $0.confirmedItemId != nil }.map(\.imageId))
         return operations.first(where: \.isRunning) ?? operations.first {
-            $0.state == "committed" && $0.confirmedItemId == nil && !finished.contains($0.imageId)
+            $0.state == "committed" && $0.confirmedItemId == nil && !finished.contains($0.imageId) &&
+                !queued.contains($0.id)
         }
     }
 }

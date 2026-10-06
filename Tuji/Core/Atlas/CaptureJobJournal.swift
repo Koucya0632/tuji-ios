@@ -17,11 +17,29 @@ import OSLog
 struct CaptureJobRecord: Codable, Identifiable, Equatable {
     let id: UUID
     let imageId: String
-    let payload: AtlasConfirmPayload
+    /// The free flow's confirm. nil for a 罐頭點數 job, which confirms through
+    /// `credit` instead. Optional only since that kind arrived; every record a
+    /// shipped build journalled carries one.
+    let payload: AtlasConfirmPayload?
     let lemma: String
     /// Set once confirm succeeds. Its presence *is* the resume rule: a run that
     /// finds one skips confirm and continues from the idempotent tail.
     var itemId: String?
+    /// A 罐頭點數 job. Absent from records written before the kind existed,
+    /// which therefore decode as free-flow jobs, as they were.
+    var credit: CreditConfirmRequest? = nil
+}
+
+/// What 確認並生成卡片 sends for a 罐頭點數 result. The server binds one card
+/// per operation and answers a repeat with the same candidate by returning that
+/// card, so — unlike the free flow's confirm — resending this is safe.
+struct CreditConfirmRequest: Codable, Equatable {
+    let operationId: String
+    let candidateId: String
+    let lemma: String
+    let displayZhHant: String
+    /// Only for a cross-language capture; nil keeps the candidate's own.
+    let displayGloss: String?
 }
 
 /// A restored job: its record, plus the JPEG bytes of the frame the user took if
