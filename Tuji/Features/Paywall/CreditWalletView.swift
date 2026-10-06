@@ -27,8 +27,13 @@ struct CreditWalletView: View {
                 }
             }
             if let wallet {
-                Text(String(format: tujiLocalized("預留 %d 點 · 贈點 %d · 購買點 %d"), wallet.reserved, wallet.giftAvailable, wallet.paidAvailable))
-                    .font(.tujiLabel).foregroundStyle(.tujiInk3)
+                Text(String(
+                    format: tujiLocalized("預留 %d 點 · 贈點 %d · 購買點 %d"),
+                    wallet.reserved,
+                    wallet.giftAvailable,
+                    wallet.paidAvailable
+                ))
+                .font(.tujiLabel).foregroundStyle(.tujiInk3)
                 if wallet.reconciliationRequired {
                     Text("退款點數正在核對，新增 AI 工作暫停。").font(.tujiLabel)
                 }
@@ -36,11 +41,18 @@ struct CreditWalletView: View {
             HStack {
                 Button(LocalizedStringKey(self.wallet?.benefits.checkedInToday == true ? "今天已簽到" : "每日簽到")) {
                     Task { await self.claim(.creditCheckIn) }
-                }.disabled(self.busy || self.catalog?.checkInEnabled != true || self.wallet?.benefits.hasLifetime != true || self.wallet?.benefits.checkedInToday == true || (self.wallet?.benefits.checkInGrantedThisMonth ?? 0) >= 300)
+                }
+                .disabled(self.busy || self.catalog?.checkInEnabled != true || self.wallet?.benefits
+                    .hasLifetime != true || self.wallet?.benefits
+                    .checkedInToday == true || (self.wallet?.benefits.checkInGrantedThisMonth ?? 0) >= 300)
             }.font(.tujiLabel)
             Text("每月免費贈送 1,000 點").font(.tujiBody)
-            Text(String(format: tujiLocalized("免費額度剩餘 %d 點 · 簽到點 %d 點"), self.wallet?.monthlyAvailable ?? 0, self.wallet?.checkInAvailable ?? 0))
-                .font(.tujiLabel).foregroundStyle(.tujiInk3)
+            Text(String(
+                format: tujiLocalized("免費額度剩餘 %d 點 · 簽到點 %d 點"),
+                self.wallet?.monthlyAvailable ?? 0,
+                self.wallet?.checkInAvailable ?? 0
+            ))
+            .font(.tujiLabel).foregroundStyle(.tujiInk3)
             Text("每月自動補滿，不累積。簽到點與購買點數不過期。")
                 .font(.tujiLabel).foregroundStyle(.tujiInk3)
             Text("每天簽到 10 點，每月最多 300 點。日期依 UTC 計算。")
@@ -50,12 +62,16 @@ struct CreditWalletView: View {
                     Task {
                         self.busy = true
                         defer { self.busy = false }
-                        do { _ = try await self.store.purchase(product); await self.reload() }
-                        catch { self.message = tujiLocalized("付款正在同步，請稍後重試同步，不需再次購買。") }
+                        do { _ = try await self.store.purchase(product)
+                            await self.reload()
+                        } catch { self.message = tujiLocalized("付款正在同步，請稍後重試同步，不需再次購買。") }
                     }
                 } label: {
                     HStack {
-                        Text(String(format: tujiLocalized("加購 %d 點"), self.catalog?.packs.first(where: { $0.productId == product.id })?.points ?? 0))
+                        Text(String(
+                            format: tujiLocalized("加購 %d 點"),
+                            self.catalog?.packs.first(where: { $0.productId == product.id })?.points ?? 0
+                        ))
                         Spacer()
                         Text(product.displayPrice)
                     }
@@ -63,23 +79,30 @@ struct CreditWalletView: View {
             }
             if let message { Text(message).font(.tujiLabel).foregroundStyle(.tujiAlert) }
             Button("重試同步") {
-                Task { await self.store.reconcileUnfinished(); await self.reload() }
+                Task { await self.store.reconcileUnfinished()
+                    await self.reload()
+                }
             }.disabled(self.busy)
-#if TUJI_CREDITS_SANDBOX
+            #if TUJI_CREDITS_SANDBOX
             if let owner, self.current(owner), self.catalog?.matches(environment: "sandbox") == true {
                 SandboxCreditRefundView(owner: owner)
                     .id(owner)
             }
-#endif
+            #endif
         }
         .task { await self.reload() }
     }
+
     private func apply(_ value: CreditWallet) {
         if self.wallet.map({ value.isNewer(than: $0) }) ?? true { self.wallet = value }
     }
+
     private func reload() async {
         guard case let .signedIn(user) = AuthService.shared.state else { return }
-        if self.owner != user.id { self.owner = user.id; self.wallet = nil; self.catalog = nil }
+        if self.owner != user.id { self.owner = user.id
+            self.wallet = nil
+            self.catalog = nil
+        }
         do {
             let catalog: CreditCatalog = try await APIClient.shared.get(.creditCatalog)
             guard self.current(user.id) else { return }
@@ -90,6 +113,7 @@ struct CreditWalletView: View {
             self.message = nil
         } catch { self.message = tujiLocalized("暫時無法連線，請重試同步。") }
     }
+
     private func claim(_ endpoint: Endpoint) async {
         guard case let .signedIn(user) = AuthService.shared.state, self.current(user.id), !self.busy else { return }
         struct Claim: Decodable { let wallet: CreditWallet }
@@ -98,7 +122,8 @@ struct CreditWalletView: View {
         do {
             let result: Claim = try await APIClient.shared.post(endpoint, body: Empty())
             guard self.current(user.id) else { return }
-            self.apply(result.wallet); self.message = nil
+            self.apply(result.wallet)
+            self.message = nil
         } catch { self.message = tujiLocalized("暫時無法完成，請重試同步。") }
     }
 }
@@ -184,13 +209,17 @@ private struct SandboxCreditRefundView: View {
         }
         guard let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
-            .first(where: { $0.activationState == .foregroundActive && $0.windows.contains(where: \.isKeyWindow) }) else {
+            .first(where: { $0.activationState == .foregroundActive && $0.windows.contains(where: \.isKeyWindow) })
+        else {
             self.message = "請返回 App 畫面後再次開啟退款。"
             return
         }
         do {
             let status = try await Transaction.beginRefundRequest(for: id, in: scene)
-            guard self.current else { self.purchases = []; self.message = nil; return }
+            guard self.current else { self.purchases = []
+                self.message = nil
+                return
+            }
             switch status {
             case .success: self.message = "已提交，等待 Apple 退款通知。"
             case .userCancelled: self.message = nil
@@ -201,6 +230,5 @@ private struct SandboxCreditRefundView: View {
             self.message = "無法開啟 Apple 退款頁，請稍後重試。"
         }
     }
-
 }
 #endif

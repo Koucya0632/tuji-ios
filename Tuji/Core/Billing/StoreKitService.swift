@@ -66,7 +66,10 @@ final class StoreKitService {
     private(set) var loadError: Error?
     private(set) var syncError: Error?
     private(set) var catalog: CreditCatalog?
-    var proNewPurchaseEnabled: Bool { self.catalog?.proNewPurchaseEnabled == true }
+    var proNewPurchaseEnabled: Bool {
+        self.catalog?.proNewPurchaseEnabled == true
+    }
+
     var creditProducts: [Product] {
         guard self.catalog?.purchaseEnabled == true else { return [] }
         let ids = Set(self.catalog?.packs.map(\.productId) ?? [])
@@ -116,9 +119,13 @@ final class StoreKitService {
             throw StoreKitServiceError.signedOut
         }
         self.catalog = try await self.fetchCatalog()
-        guard case let .signedIn(current) = AuthService.shared.state, current.id == user.id else { throw StoreKitServiceError.signedOut }
-        if ProductID.subscriptions.contains(product.id), !self.proNewPurchaseEnabled { throw StoreKitServiceError.purchaseUnavailable }
-        if ProductID.credits.contains(product.id), self.catalog?.purchaseEnabled != true { throw StoreKitServiceError.purchaseUnavailable }
+        guard case let .signedIn(current) = AuthService.shared.state,
+              current.id == user.id
+        else { throw StoreKitServiceError.signedOut }
+        if ProductID.subscriptions.contains(product.id),
+           !self.proNewPurchaseEnabled { throw StoreKitServiceError.purchaseUnavailable }
+        if ProductID.credits.contains(product.id),
+           self.catalog?.purchaseEnabled != true { throw StoreKitServiceError.purchaseUnavailable }
         self.purchasing = product.id
         defer { self.purchasing = nil }
         let result = try await product.purchase(options: [.appAccountToken(user.id)])
@@ -169,7 +176,9 @@ final class StoreKitService {
 
     func reconcileUnfinished() async {
         guard case .signedIn = AuthService.shared.state else { return }
-        for await result in Transaction.unfinished { await self.handle(result) }
+        for await result in Transaction.unfinished {
+            await self.handle(result)
+        }
     }
 
     /// Updates, launch recovery and explicit purchases share one delivery and finish.
@@ -181,9 +190,13 @@ final class StoreKitService {
                 _ = try await self.fetchCatalog()
                 let ack = try await self.repository.verifyCredits(signedTransaction: jws)
                 let environment = transaction.environment == .sandbox ? "sandbox" : "production"
-                guard ack.permitsFinish(transactionId: String(transaction.id), environment: environment) else { throw StoreKitServiceError.deliveryPending }
+                guard ack.permitsFinish(transactionId: String(transaction.id), environment: environment)
+                else { throw StoreKitServiceError.deliveryPending }
             } else {
-                try await self.syncEntitlement(jws: jws, isSubscription: ProductID.subscriptions.contains(transaction.productID))
+                try await self.syncEntitlement(
+                    jws: jws,
+                    isSubscription: ProductID.subscriptions.contains(transaction.productID)
+                )
             }
             await transaction.finish()
             self.syncError = nil

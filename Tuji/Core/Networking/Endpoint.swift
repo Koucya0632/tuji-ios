@@ -122,9 +122,9 @@ enum Endpoint {
     case creditPurchaseVerify
     case creditCatalog
     case creditWallet
-#if TUJI_CREDITS_SANDBOX
+    #if TUJI_CREDITS_SANDBOX
     case sandboxCreditLedger
-#endif
+    #endif
     case creditMonthlyClaim
     case creditCheckIn
     case creditImages
@@ -446,10 +446,10 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/credits/catalog", policy: .privateFresh)
         case .creditWallet:
             EndpointDescriptor(path: "/api/credits/wallet", policy: .privateFresh)
-#if TUJI_CREDITS_SANDBOX
+        #if TUJI_CREDITS_SANDBOX
         case .sandboxCreditLedger:
             EndpointDescriptor(path: "/api/credits/ledger", policy: .privateFresh)
-#endif
+        #endif
         case .creditMonthlyClaim:
             EndpointDescriptor(path: "/api/credits/benefits/monthly/claim", policy: .privateFresh)
         case .creditCheckIn:
