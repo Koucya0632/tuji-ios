@@ -20,7 +20,8 @@ struct CreditWalletView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             HStack {
-                Image("CreditCan").resizable().scaledToFit().frame(width: 48, height: 48).accessibilityHidden(true)
+                Image("CreditCan").resizable().scaledToFit().frame(width: 48, height: 48)
+                    .foregroundStyle(.tujiInk).accessibilityHidden(true)
                 VStack(alignment: .leading) {
                     Text("罐頭點數").font(.tujiH3)
                     Text(self.wallet.map { String($0.available) } ?? "—").font(.tujiH3)

@@ -118,6 +118,7 @@ struct CheckInSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 44, height: 44)
+                .foregroundStyle(.tujiInk)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(self.rewardTitle)

@@ -181,6 +181,14 @@ final class ImageIntake {
         self.pendingCrop = PendingCrop(data: data)
     }
 
+    func switchToLibrary() async {
+        // Same beat as `handleCaptured`: the photo picker will not present
+        // while the camera cover is still dismissing.
+        try? await Task.sleep(for: .milliseconds(350))
+        self.phase = .idle
+        self.showPhotoLibrary = true
+    }
+
     func handleCropped(_ cropped: Data) async {
         self.pendingCrop = nil
         guard let encoded = ImageDownscale.jpeg(
@@ -280,9 +288,12 @@ private struct ImageIntakeModifier: ViewModifier {
                         self.intake.showCamera = false
                         Task { await self.intake.handleCaptured(data) }
                     },
-                    onCancel: { self.intake.showCamera = false }
+                    onCancel: { self.intake.showCamera = false },
+                    onPickLibrary: {
+                        self.intake.showCamera = false
+                        Task { await self.intake.switchToLibrary() }
+                    }
                 )
-                .ignoresSafeArea()
             }
             .fullScreenCover(item: Binding(
                 get: { self.intake.pendingCrop },

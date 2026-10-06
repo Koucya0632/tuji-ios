@@ -23,8 +23,10 @@ import UIKit
 struct CameraPicker: View {
     /// Delivered the re-encoded JPEG once the user takes a shot.
     let onCapture: (Data) -> Void
-    /// Cancel tap, a failed encode, or "use the library instead".
+    /// Cancel tap or a failed encode.
     let onCancel: () -> Void
+    /// The 相簿 button: leave the camera and open the photo library directly.
+    let onPickLibrary: () -> Void
 
     /// False on the Simulator and any device without a usable camera — callers
     /// fall back to the photo-library path.
@@ -38,6 +40,9 @@ struct CameraPicker: View {
 
     @State private var session = CameraSession()
     @State private var capturing = false
+    /// Zoom when the current pinch began; the gesture's magnification is
+    /// relative to it.
+    @State private var pinchBase: CGFloat?
 
     var body: some View {
         ZStack {
@@ -46,6 +51,7 @@ struct CameraPicker: View {
             if self.session.failure == nil {
                 CameraPreview(session: self.session.session)
                     .ignoresSafeArea()
+                    .gesture(self.pinch)
             }
 
             VStack(spacing: 0) {
@@ -66,6 +72,16 @@ struct CameraPicker: View {
         .onDisappear { self.session.stop() }
     }
 
+    private var pinch: some Gesture {
+        MagnifyGesture()
+            .onChanged { value in
+                let base = self.pinchBase ?? self.session.zoom
+                self.pinchBase = base
+                self.session.setZoom(base * value.magnification)
+            }
+            .onEnded { _ in self.pinchBase = nil }
+    }
+
     /// 72×72 square shutter with a 3pt ink inner frame — the same square the
     /// rest of the app is built from, at the one moment the user is aiming.
     /// A round shutter is every camera app's signature, including the one this
@@ -73,9 +89,9 @@ struct CameraPicker: View {
     private var controls: some View {
         HStack {
             // 相簿 sits bottom-left, where the system camera puts its roll: the
-            // position is muscle memory, the chrome is not. Cancelling returns
-            // to the source chooser, which is where 從相簿選 lives.
-            Button(action: self.onCancel) {
+            // position is muscle memory, the chrome is not. It opens the library
+            // itself — the user reads it as "pick a photo", not "go back".
+            Button(action: self.onPickLibrary) {
                 Image(systemName: "photo.on.rectangle")
                     .font(.tujiIcon(22, weight: .semibold))
                     .foregroundStyle(.tujiPaper)
@@ -120,7 +136,7 @@ struct CameraPicker: View {
     /// working second source, so say what happened and offer it.
     private func failed(_ message: String) -> some View {
         TujiErrorState(title: "無法使用相機", message: message) {
-            BBtn(title: "從相簿選", action: self.onCancel)
+            BBtn(title: "從相簿選", action: self.onPickLibrary)
         }
         .padding(.horizontal, Space.s4)
     }
@@ -150,6 +166,8 @@ private final class CameraSession {
     /// Already resolved: `TujiErrorState.message` takes a `String` because its
     /// usual source is a server error description.
     private(set) var failure: String?
+    /// Current zoom factor of the active camera (1 = no zoom).
+    private(set) var zoom: CGFloat = 1
 
     private let output = AVCapturePhotoOutput()
     private var position: AVCaptureDevice.Position = .back
@@ -191,6 +209,20 @@ private final class CameraSession {
         }
         if let input = self.input(for: self.position) { self.session.addInput(input) }
         self.session.commitConfiguration()
+        self.zoom = 1
+    }
+
+    /// Clamped to 5× — beyond that a phone's digital zoom is mush, and a card
+    /// photo is better taken by stepping closer.
+    func setZoom(_ factor: CGFloat) {
+        guard let device = (self.session.inputs.first as? AVCaptureDeviceInput)?.device else { return }
+        let clamped = min(max(factor, device.minAvailableVideoZoomFactor), min(device.maxAvailableVideoZoomFactor, 5))
+        do {
+            try device.lockForConfiguration()
+            device.videoZoomFactor = clamped
+            device.unlockForConfiguration()
+            self.zoom = clamped
+        } catch {}
     }
 
     func capture() async -> Data? {
