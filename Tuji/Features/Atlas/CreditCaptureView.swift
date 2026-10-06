@@ -67,9 +67,12 @@ struct CreditCaptureView: View {
             await self.model.load()
         }
         .task(id: "\(self.model.operation?.id ?? ""):\(self.model.operation?.state ?? "")") {
+            // The server starts the run on accept and a 普通 run finishes in ~2s, so look early.
+            var delay: Duration = .seconds(1)
             while self.model.operation?.isRunning == true, !Task.isCancelled {
-                do { try await Task.sleep(for: .seconds(3)) } catch { return }
+                do { try await Task.sleep(for: delay) } catch { return }
                 await self.model.poll()
+                delay = .seconds(2)
             }
         }
     }
