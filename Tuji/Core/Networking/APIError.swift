@@ -162,6 +162,8 @@ enum APIError: LocalizedError {
             tujiLocalized("報價已到期，請重新取得報價。")
         case "credits_reconciliation_required":
             tujiLocalized("退款點數正在核對，新增 AI 工作暫停。")
+        case "check_in_requires_study":
+            tujiLocalized("今天學習一題後就能領取打卡點數。")
         case "operation_busy":
             tujiLocalized("這張照片已有工作進行中，請先查看處理結果。")
         case "upload_limit":

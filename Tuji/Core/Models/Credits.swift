@@ -6,6 +6,9 @@ struct CreditWallet: Decodable, Equatable {
         let checkedInToday: Bool
         let checkInGrantedThisMonth: Int
         let hasLifetime: Bool
+        /// A word-card answer was logged today (Asia/Taipei), which check-in
+        /// requires. nil from a server older than that rule.
+        var studiedToday: Bool? = nil
     }
 
     let available: Int
@@ -38,6 +41,8 @@ struct CreditCatalog: Decodable {
     struct Policy: Decodable { let recognition: Int?
         let precision: Int?
         let precisionUpgrade: Int?
+        var checkInDaily: Int? = nil
+        var checkInMonthlyCap: Int? = nil
     }
 
     let billingMode: String
