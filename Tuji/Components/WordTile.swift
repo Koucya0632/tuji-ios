@@ -23,6 +23,8 @@ struct WordTile: View {
     /// The word's 0–100 mastery score, or nil if never studied (→ 未學). Only
     /// consulted when `showMastery` is true.
     var masteryScore: Int?
+    /// A 罐頭點數 card whose reading and definitions are still on their way.
+    var enriching: Bool = false
 
     @Environment(SettingsStore.self) private var settings
 
@@ -72,6 +74,11 @@ struct WordTile: View {
                             .font(.tujiBodySm)
                             .foregroundStyle(.tujiInk3)
                             .lineLimit(1)
+                    }
+
+                    if self.enriching {
+                        TujiStatusEdgeLabel(text: Text("補充中"), edge: .tujiCurrent)
+                            .padding(.top, Space.s1)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
