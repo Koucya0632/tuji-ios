@@ -36,10 +36,21 @@ struct MembershipBenefitsTests {
     }
 
     @Test
+    func creditsLifetimeSellsSightingsNotesListsAndTheAtlas() {
+        let rows = MembershipBenefits.creditsLifetime.map(\.key)
+        #expect(rows.contains { $0.contains("物見") })
+        #expect(rows.contains { $0.contains("筆記") })
+        #expect(rows.contains { $0.contains("詞表") })
+        #expect(rows.contains { $0.contains("自製圖鑑") && $0.contains("罐頭點數") })
+        // No monthly AI quota under points: it is paid per use.
+        #expect(!rows.contains { $0.contains("每月") })
+    }
+
+    @Test
     func everyRowIsTranslated() {
         let all = [MembershipPlanCard.lifetime, .pro].flatMap { card in
             [MemberPolicy.v1, .v2].flatMap { self.keys(card, $0) }
-        }
+        } + MembershipBenefits.creditsLifetime.map(\.key)
         for key in Set(all) {
             for lang in ["en", "ja", "zh-Hans"] {
                 #expect(tujiLocalized(String.LocalizationValue(key), lang: lang) != key, "\(key) missing in \(lang)")

@@ -599,28 +599,6 @@
         }
       }
     },
-    "AI 依需要使用罐頭點數" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Use Can Credits for AI as needed"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "必要に応じて缶詰ポイントでAIを使う"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 按需使用罐头点数"
-          }
-        }
-      }
-    },
     "AI 建議" : {
       "localizations" : {
         "en" : {
@@ -14730,24 +14708,24 @@
         }
       }
     },
-    "自製圖鑑容量 200 格" : {
+    "自製圖鑑 200 格，AI 辨識使用罐頭點數" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "200 custom atlas slots"
+            "value" : "200 custom atlas slots, with AI recognition paid in Can Credits"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "自作図鑑200枠"
+            "value" : "自作図鑑200枠、AI認識は缶詰ポイントで"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "自制图鉴容量 200 格"
+            "value" : "自制图鉴 200 格，AI 识别使用罐头点数"
           }
         }
       }
