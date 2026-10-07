@@ -19,6 +19,9 @@ struct NewFlowView: View {
     /// Preview gate: the session opens on a scannable list of today's words
     /// (a pre-teach pass) and the queue only starts on 開始學習.
     @State private var started = false
+    /// Whether the finish's refresh has landed — 今天已打卡 waits for it, since
+    /// before that the server may not have this session's answers yet.
+    @State private var sessionRefreshed = false
 
     init(queue: [StudyQueueItem]) {
         self.queue = queue
@@ -194,8 +197,14 @@ struct NewFlowView: View {
             StudySessionFinish(
                 shell: self.shell,
                 onFinish: { self.dismiss() },
+                onRefreshed: { self.sessionRefreshed = true },
                 summary: {
-                    NewDoneView(coord: self.coord, queue: self.coord.queue, onFinish: { self.dismiss() })
+                    NewDoneView(
+                        coord: self.coord,
+                        queue: self.coord.queue,
+                        refreshed: self.sessionRefreshed,
+                        onFinish: { self.dismiss() }
+                    )
                 }
             )
         }

@@ -30,9 +30,9 @@ struct TodayView: View {
     @Environment(TabNavigator.self) private var navigator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// 打卡. Owned here, not by the sheet, so the chip's dot and the sheet read
-    /// one wallet and a claim in the sheet clears the dot.
-    @State private var checkIn = CheckInModel()
+    /// 打卡. Owned by `MainTabsView`, not by the sheet, so the chip's dot, the
+    /// sheet and the 學新字 finish screen read one wallet.
+    @Environment(CheckInModel.self) private var checkIn
     @State private var showingCheckIn = false
 
     /// One snapshot of everything 首頁's decisions depend on, read from the
@@ -691,6 +691,7 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(SettingsStore.shared)
             .environment(MasteryStore.shared)
             .environment(AuthService.shared)
+            .environment(CheckInModel())
     }
 }
 

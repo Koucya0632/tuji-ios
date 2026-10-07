@@ -32,6 +32,10 @@ struct MainTabsView: View {
     /// way to reach 拍照 was to be standing in 圖鑑 first.
     @State private var showCapture = false
 
+    /// 打卡. Owned by the shell so 首頁's chip and the 學新字 finish screen read
+    /// one wallet: a claim on either clears the other's 領取.
+    @State private var checkIn = CheckInModel()
+
     var body: some View {
         VStack(spacing: 0) {
             self.pager
@@ -57,6 +61,7 @@ struct MainTabsView: View {
         // destination pushes a route through this rather than constructing the
         // screen itself.
         .environment(self.navigator)
+        .environment(self.checkIn)
         .animation(Motion.ease(Motion.d2), value: self.tabBarVisible)
         .background(.tujiPaper)
         .allowsHitTesting(self.tourIndex == nil)

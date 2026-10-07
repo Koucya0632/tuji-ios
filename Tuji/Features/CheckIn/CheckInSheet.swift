@@ -143,14 +143,7 @@ struct CheckInSheet: View {
     }
 
     private var rewardDetail: LocalizedStringKey? {
-        switch self.reward {
-        case .hidden: nil
-        case let .locked(daily): "永久會員每天學習可領 \(daily) 點罐頭點數"
-        case let .needsStudy(daily): "學一題就算打卡，可領 \(daily) 點"
-        case let .claimable(points): "\(points) 點罐頭點數等你領取"
-        case .claimed: "今天的點數已入帳，明天再來"
-        case let .capped(cap): "每月最多 \(cap) 點，下個月再來"
-        }
+        self.reward.detail
     }
 
     @ViewBuilder
@@ -163,33 +156,14 @@ struct CheckInSheet: View {
         case .needsStudy:
             self.pill("去學習", primary: true) { self.onStudy() }
         case let .claimable(points):
-            self.pill("領取 +\(points)", primary: true) {
-                Task {
-                    await self.model.claim()
-                    if self.model.reward(fallbackStudiedToday: true) == .claimed { self.claimedTick += 1 }
-                }
-            }
-            .disabled(self.model.claiming)
+            CheckInClaimButton(model: self.model, points: points) { self.claimedTick += 1 }
         case .claimed:
-            Image(systemName: "checkmark")
-                .font(.tujiIcon(18, weight: .semibold))
-                .foregroundStyle(.tujiAccumulation)
-                .accessibilityLabel(Text("已領取"))
+            CheckInClaimedMark()
         }
     }
 
     private func pill(_ title: LocalizedStringKey, primary: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.tujiBody(.strong))
-                .foregroundStyle(.tujiInk)
-                .lineLimit(1)
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, Space.s2)
-                .background(primary ? .tujiBrandPrimary : .tujiPaper)
-        }
-        .buttonStyle(.plain)
-        .fixedSize()
+        CheckInPill(title: title, primary: primary, action: action)
     }
 
     // MARK: - Month
@@ -253,6 +227,71 @@ struct CheckInSheet: View {
         f.locale = self.settings.current.uiLanguage.locale
         f.setLocalizedDateFormatFromTemplate("yMMMM")
         return f.string(from: date)
+    }
+}
+
+// MARK: - Shared with the 學新字 finish screen
+
+extension CheckInDecision.Reward {
+    /// The sentence under the reward card's title.
+    var detail: LocalizedStringKey? {
+        switch self {
+        case .hidden: nil
+        case let .locked(daily): "永久會員每天學習可領 \(daily) 點罐頭點數"
+        case let .needsStudy(daily): "學一題就算打卡，可領 \(daily) 點"
+        case let .claimable(points): "\(points) 點罐頭點數等你領取"
+        case .claimed: "今天的點數已入帳，明天再來"
+        case let .capped(cap): "每月最多 \(cap) 點，下個月再來"
+        }
+    }
+}
+
+struct CheckInPill: View {
+    let title: LocalizedStringKey
+    let primary: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: self.action) {
+            Text(self.title)
+                .font(.tujiBody(.strong))
+                .foregroundStyle(.tujiInk)
+                .lineLimit(1)
+                .padding(.horizontal, Space.s3)
+                .padding(.vertical, Space.s2)
+                .background(self.primary ? .tujiBrandPrimary : .tujiPaper)
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+    }
+}
+
+/// 領取 +N. `onClaimed` runs when the claim lands — the caller owns the
+/// success tap, because this button is gone by then.
+struct CheckInClaimButton: View {
+    let model: CheckInModel
+    let points: Int
+    let onClaimed: () -> Void
+
+    var body: some View {
+        CheckInPill(title: "領取 +\(self.points)", primary: true) {
+            Task {
+                await self.model.claim()
+                if self.model.reward(fallbackStudiedToday: true) == .claimed { self.onClaimed() }
+            }
+        }
+        .disabled(self.model.claiming)
+    }
+}
+
+struct CheckInClaimedMark: View {
+    var label: LocalizedStringKey = "已領取"
+
+    var body: some View {
+        Image(systemName: "checkmark")
+            .font(.tujiIcon(18, weight: .semibold))
+            .foregroundStyle(.tujiAccumulation)
+            .accessibilityLabel(Text(self.label))
     }
 }
 

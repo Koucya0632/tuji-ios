@@ -145,6 +145,16 @@ struct CheckInRewardTests {
             #expect(!CheckInDecision.chipBadge(other))
         }
     }
+
+    @Test("the 學新字 finish shows what today earned, never an upgrade or a 去學習")
+    func finishReward() {
+        for kept: CheckInDecision.Reward in [.claimable(points: 10), .claimed, .capped(cap: 300)] {
+            #expect(CheckInDecision.finishReward(kept) == kept)
+        }
+        for dropped: CheckInDecision.Reward in [.hidden, .locked(daily: 10), .needsStudy(daily: 10)] {
+            #expect(CheckInDecision.finishReward(dropped) == .hidden)
+        }
+    }
 }
 
 // MARK: - Month grid

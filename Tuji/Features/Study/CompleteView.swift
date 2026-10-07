@@ -1,16 +1,15 @@
 // Review-complete celebration (§III.R Complete). Shown after ReviewFlow
-// finishes — Mascot cheer, reviewed-count display, streak +1 capsule, and a
+// finishes — Mascot cheer, reviewed-count display, 今天已打卡 with the streak
+// (SessionCheckInCard), and a
 // per-word 熟練度變化 list (before → after, with ↑ when the word crossed into a
 // higher MasteryLevel). Reviews are deliberately NOT counted against the daily
 // goal (that target tracks new words only — see TodayView.dailyGoalProgress /
 // studyStats.todayNew), so this screen frames itself as "複習完成" rather than
 // the daily-goal milestone.
 //
-// Streak comes from ProgressStore.shared; mastery scores from MasteryStore.
-// We invalidate both first so the just-answered session (which the server
-// already busted on /api/study/answer) is round-tripped fresh — the streak
-// shows the new value here, and the 圖鑑/詳情 reflect the new scores when the
-// user navigates back.
+// The flow root reloads the stores once the session's writes drain, so the
+// streak on the check-in card is the new value and the 圖鑑/詳情 reflect the
+// new mastery scores when the user navigates back.
 
 import SwiftUI
 
@@ -35,9 +34,6 @@ struct CompleteView: View {
 
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
-    /// Read for the 連勝 line only — the post-session reload it depends on is
-    /// run by the flow root, not here.
-    @Environment(ProgressStore.self) private var progress
     @State private var startingNextRound = false
 
     private var done: Int {
@@ -61,7 +57,7 @@ struct CompleteView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.hero
-                    self.streakLine
+                    SessionCheckInCard(refreshed: self.refreshed)
                         .padding(.horizontal, Space.s4)
                     self.unsyncedNotice
                         .padding(.horizontal, Space.s4)
@@ -90,34 +86,6 @@ struct CompleteView: View {
                 Text("個字")
                     .font(.tujiH2)
                     .foregroundStyle(.tujiPaper.opacity(0.7))
-            }
-        }
-    }
-
-    /// A line, not a badge. The streak used to sit in a teal-tinted box with a
-    /// teal border and a flame — three ways of shouting a number that is simply
-    /// a fact about the account. It is accumulation, so it is teal, and that is
-    /// the whole treatment.
-    private var streakLine: some View {
-        Group {
-            if let streak = self.progress.streak?.current {
-                HStack(spacing: Space.s2) {
-                    Text("連勝")
-                        .font(.tujiLabel)
-                        .tracking(0.5)
-                        .foregroundStyle(.tujiInk3)
-                    Text("\(streak)")
-                        .font(.tujiMono)
-                        .foregroundStyle(.tujiAccumulation)
-                        .contentTransition(.numericText())
-                    Text("天")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                }
-            } else {
-                Text("讀取連勝中…")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
             }
         }
     }
