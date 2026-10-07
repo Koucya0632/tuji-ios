@@ -181,34 +181,37 @@ private struct AtlasCardsManagementPane: View {
         let targetWarning = target.map { self.shelf.deleteWarning(for: $0) } ?? .privateOnly
         let batchWarning = self.shelf.deleteWarning(forSelected: self.shelf.selectedIds)
         return ScrollView {
-            TujiSection(title: "我的圖鑑卡片") {
-                if let errorMessage = self.shelf.errorMessage {
-                    Text(errorMessage)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiAlert)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, Space.s4)
-                        .padding(.vertical, Space.s3)
-                }
-                switch self.shelf.state {
-                case .loading:
-                    TujiSkeletonRows(count: 4, height: 88)
-                case .failed:
-                    self.failedRow
-                case let .hiddenElsewhere(count):
-                    self.hiddenHintRow(count)
-                case .empty:
-                    self.emptyRow
-                case .loaded:
-                    ForEach(self.shelf.rows) { row in
-                        self.imageRow(row)
+            VStack(alignment: .leading, spacing: 0) {
+                self.sectionHeader
+                TujiSection {
+                    if let errorMessage = self.shelf.errorMessage {
+                        Text(errorMessage)
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiAlert)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, Space.s4)
+                            .padding(.vertical, Space.s3)
                     }
-                    if self.shelf.hiddenCount > 0 {
-                        self.hiddenHintRow(self.shelf.hiddenCount)
+                    switch self.shelf.state {
+                    case .loading:
+                        TujiSkeletonRows(count: 4, height: 88)
+                    case .failed:
+                        self.failedRow
+                    case let .hiddenElsewhere(count):
+                        self.hiddenHintRow(count)
+                    case .empty:
+                        self.emptyRow
+                    case .loaded:
+                        ForEach(self.shelf.rows) { row in
+                            self.imageRow(row)
+                        }
+                        if self.shelf.hiddenCount > 0 {
+                            self.hiddenHintRow(self.shelf.hiddenCount)
+                        }
                     }
                 }
+                .padding(.bottom, Space.s6)
             }
-            .padding(.bottom, Space.s6)
         }
         .background(.tujiPaper)
         .safeAreaInset(edge: .bottom) {
@@ -216,7 +219,13 @@ private struct AtlasCardsManagementPane: View {
                 self.deleteBar
             }
         }
-        .task { await self.shelf.load() }
+        .task {
+            async let rows: Void = self.shelf.load()
+            // The count in the header. Deleting refreshes it already
+            // (`AtlasMutationRefresh.deletedCards`); this covers arriving.
+            async let slots: Void = AtlasStore.shared.refreshEntitlement()
+            _ = await (rows, slots)
+        }
         .tujiPrompt(
             isPresented: Binding(
                 get: { self.pendingDelete != nil },
@@ -357,6 +366,36 @@ private struct AtlasCardsManagementPane: View {
     /// Shown whenever the direction filter is hiding cards, so a user who
     /// switched EN↔JA knows where their captures went (and that nothing was
     /// deleted).
+    /// 已用 / 上限, from the server's own usage snapshot — the numbers the
+    /// capture gate reads, so the header and 「已達上限」 can never disagree.
+    /// Account-wide: cards in the other learning direction count too, which is
+    /// why it can be larger than the rows listed here.
+    private var slots: (used: Int, limit: Int)? {
+        guard let entitlement = AtlasStore.shared.entitlement else { return nil }
+        return (entitlement.usage.atlasSlots, entitlement.atlasSlotsLimit)
+    }
+
+    /// `TujiSection`'s title, drawn here so the count can sit on the same line.
+    private var sectionHeader: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
+            Text("我的圖鑑卡片")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            Spacer(minLength: Space.s2)
+            if let slots = self.slots {
+                // Over the cap only happens after Pro ends (the extra cards
+                // lock), and that is worth the alert colour.
+                Text("\(slots.used) / \(slots.limit) 格")
+                    .font(.tujiLabel.monospacedDigit())
+                    .foregroundStyle(slots.used > slots.limit ? .tujiAlert : .tujiInk3)
+            }
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.bottom, Space.s2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private func hiddenHintRow(_ count: Int) -> some View {
         // Deliberately not an empty state. "There is nothing here" and "your
         // things are on the other side" are different sentences, and confusing
