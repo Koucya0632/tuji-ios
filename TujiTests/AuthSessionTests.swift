@@ -114,4 +114,39 @@ struct AuthSessionTests {
         s.reconcile(self.user("阿貓"), ifStillSignedInAs: self.user().id)
         #expect(s.state == .signedOut)
     }
+
+    // MARK: - Ended by the server
+
+    /// A global sign-out elsewhere, or a spent refresh token, deletes the
+    /// stored session out from under a signed-in app. It must land on
+    /// Welcome, not stay signed in with every request failing.
+    @Test
+    func aSessionEndedWhileSignedInSignsOut() {
+        var s = AuthSession()
+        s.signedIn(self.user())
+        let changed = s.sessionEnded()
+        #expect(changed)
+        #expect(s.state == .signedOut)
+    }
+
+    /// The event and the token path can both report the same loss; the
+    /// account's stores are cleared only the first time.
+    @Test
+    func aSecondSessionEndIsANoOp() {
+        var s = AuthSession()
+        s.signedIn(self.user())
+        _ = s.sessionEnded()
+        let changed = s.sessionEnded()
+        #expect(!changed)
+    }
+
+    /// Launch's `.checking` is settled by `resolveSession`, not by an event
+    /// that fires while it is still refreshing.
+    @Test
+    func aSessionEndDuringLaunchLeavesCheckingAlone() {
+        var s = AuthSession()
+        let changed = s.sessionEnded()
+        #expect(!changed)
+        #expect(s.state == .checking)
+    }
 }

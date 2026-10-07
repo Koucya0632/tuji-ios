@@ -31,7 +31,7 @@ enum APIError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .unauthorized: tujiLocalized("未授權，請重新登入")
+        case .unauthorized: tujiLocalized("登入已過期，請重新登入")
         case let .paymentRequired(message):
             if let message, !message.isEmpty { message } else { tujiLocalized("已達使用上限，升級後可繼續") }
         case .forbidden: tujiLocalized("沒有權限")
