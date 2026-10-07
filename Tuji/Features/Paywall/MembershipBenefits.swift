@@ -34,7 +34,7 @@ enum MembershipBenefits {
         switch card {
         case .lifetime:
             return [
-                .init(icon: "books.vertical.fill", key: "解鎖全部官方圖鑑系列"),
+                .init(icon: "books.vertical.fill", key: "永久解鎖全部官方圖鑑"),
                 .init(icon: "square.stack.3d.up.fill", key: "個人自製圖鑑 20 格"),
                 .init(icon: "sparkles", key: "AI 辨識每月 10 次"),
                 .init(icon: "bookmark.fill", key: "收藏、學習與投稿物見"),

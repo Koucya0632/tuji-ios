@@ -15502,30 +15502,6 @@
         }
       }
     },
-    "解鎖全部官方圖鑑系列" : {
-      "comment" : "Lifetime Membership benefit on the paywall: every official atlas series can be studied.",
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unlock every official atlas series"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "公式図鑑シリーズをすべて解放"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "解锁全部官方图鉴系列"
-          }
-        }
-      }
-    },
     "解除中…" : {
       "localizations" : {
         "en" : {
