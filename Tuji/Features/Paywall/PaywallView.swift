@@ -161,14 +161,11 @@ struct PaywallView: View {
 
     private func benefitRows(_ card: MembershipPlanCard) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            if self.store.catalog?.billingMode == "credits", card == .lifetime {
-                self.benefitRow(icon: "books.vertical", text: "永久解鎖全部官方圖鑑")
-                self.benefitRow(icon: "square.grid.2x2", text: "自製圖鑑容量 200 格")
-                self.benefitRow(icon: "sparkles", text: "AI 依需要使用罐頭點數")
-            } else {
-                ForEach(MembershipBenefits.rows(for: card, policy: self.offer.isV2 ? .v2 : .v1), id: \.key) { row in
-                    self.benefitRow(icon: row.icon, text: LocalizedStringKey(row.key))
-                }
+            let rows = self.store.catalog?.billingMode == "credits" && card == .lifetime
+                ? MembershipBenefits.creditsLifetime
+                : MembershipBenefits.rows(for: card, policy: self.offer.isV2 ? .v2 : .v1)
+            ForEach(rows, id: \.key) { row in
+                self.benefitRow(icon: row.icon, text: LocalizedStringKey(row.key))
             }
         }
     }

@@ -18,12 +18,23 @@ struct MembershipBenefit: Equatable {
 }
 
 enum MembershipBenefits {
+    /// 永久會員 once billing is on 罐頭點數: AI has no monthly quota any more —
+    /// it is paid per use from the points — so the card sells what the
+    /// membership itself opens: 物見, 筆記, 詞表 and the 自製圖鑑 slots.
+    static let creditsLifetime: [MembershipBenefit] = [
+        .init(icon: "books.vertical", key: "永久解鎖全部官方圖鑑"),
+        .init(icon: "bookmark", key: "收藏、學習與投稿物見"),
+        .init(icon: "note.text", key: "為每個字寫下自己的筆記"),
+        .init(icon: "list.bullet.rectangle", key: "個人詞表 20 張，可以從詞表背詞"),
+        .init(icon: "square.grid.2x2", key: "自製圖鑑 200 格，AI 辨識使用罐頭點數")
+    ]
+
     static func rows(for card: MembershipPlanCard, policy: MemberPolicy) -> [MembershipBenefit] {
         let v2 = policy == .v2
         switch card {
         case .lifetime:
             return [
-                .init(icon: "books.vertical.fill", key: "解鎖全部官方圖鑑系列"),
+                .init(icon: "books.vertical.fill", key: "永久解鎖全部官方圖鑑"),
                 .init(icon: "square.stack.3d.up.fill", key: "個人自製圖鑑 20 格"),
                 .init(icon: "sparkles", key: "AI 辨識每月 10 次"),
                 .init(icon: "bookmark.fill", key: "收藏、學習與投稿物見"),
