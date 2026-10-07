@@ -11,6 +11,11 @@
 //     the likely cause is a flat network, and bouncing an authenticated user
 //     to Welcome over a transient hiccup is worse than carrying a stale token
 //     to the next refresh. That is the app's whole offline-launch behaviour.
+//   • The server can end a session this device still believes in — a global
+//     sign-out elsewhere, a refresh token already spent. supabase-swift then
+//     deletes the stored session and says so only by event; a state machine
+//     that never hears it stays `.signedIn` while every protected request
+//     throws "Auth session missing.". `sessionEnded()` is that event's door.
 //   • `applyNickname` / `applyProfile` are optimistic mirrors that only apply
 //     while signed in — a profile edit that lands after a sign-out must not
 //     resurrect the session.
@@ -69,6 +74,16 @@ struct AuthSession: Equatable {
 
     mutating func signedOut() {
         self.state = .signedOut
+    }
+
+    /// The session was ended out from under us rather than by the user's own
+    /// sign-out. Returns whether it actually changed anything, so the caller
+    /// clears the account's stores once — not again for a session already gone,
+    /// and not during launch's `.checking`, which `resolveSession` settles.
+    mutating func sessionEnded() -> Bool {
+        guard case .signedIn = self.state else { return false }
+        self.state = .signedOut
+        return true
     }
 
     // MARK: - Profile mirror

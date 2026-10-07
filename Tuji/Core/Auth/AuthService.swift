@@ -65,7 +65,33 @@ final class AuthService {
         LiveUserRepository.shared
     }
 
-    private init() {}
+    /// Set across the user's own sign-out, whose `.signedOut` event the
+    /// listener below must not treat as the server ending the session.
+    private var signingOut = false
+
+    private init() {
+        Task { await self.listenForEndedSessions() }
+    }
+
+    /// supabase-swift deletes the stored session when the server says it no
+    /// longer exists (session_not_found, refresh_token_already_used, …) and
+    /// reports it only as a `.signedOut` event. Unheard, the app stayed
+    /// `.signedIn` while every protected request threw "Auth session missing."
+    private func listenForEndedSessions() async {
+        for await (event, _) in self.supabase.auth.authStateChanges where event == .signedOut {
+            guard !self.signingOut else { continue }
+            self.endSession(reason: "server ended session")
+        }
+    }
+
+    /// Sends a session the server has already ended back to Welcome, clearing
+    /// the same account-scoped stores a sign-out does.
+    private func endSession(reason: String) {
+        guard self.session.sessionEnded() else { return }
+        GoogleSignInBridge.signOut()
+        AccountScopedStores.resetAll()
+        log.info("signed out: \(reason, privacy: .public)")
+    }
 
     // MARK: - Lifecycle
 
@@ -247,12 +273,17 @@ final class AuthService {
     // MARK: - Sign out
 
     func signOut() async {
+        self.signingOut = true
+        defer { self.signingOut = false }
         // Drop the device's push token first so the previous account
         // stops receiving notifications. Best-effort; runs in parallel
         // with the Supabase sign-out call below.
         async let unregisterPush: Void = PushNotificationService.shared.unregister()
 
-        try? await supabase.auth.signOut()
+        // `.local`: the default `.global` revokes every session this account
+        // has, so signing out of the simulator or Android signed this phone
+        // out too — silently, until its next request needed a token.
+        try? await supabase.auth.signOut(scope: .local)
         GoogleSignInBridge.signOut() // clears cached Google credentials too
 
         _ = await unregisterPush
@@ -271,15 +302,31 @@ final class AuthService {
     // MARK: - For APIClient
 
     func validAccessToken() async throws -> String {
-        let session = try await supabase.auth.session
-        return session.accessToken
+        do {
+            return try await supabase.auth.session.accessToken
+        } catch {
+            throw self.sessionLoss(error)
+        }
     }
 
     /// Refresh regardless of what the device's clock says about expiry — the
     /// server has refused the token. supabase-swift joins concurrent refreshes
     /// into one request, so a burst of 401s spends the refresh token once.
     func refreshSession() async throws -> String {
-        try await supabase.auth.refreshSession().accessToken
+        do {
+            return try await supabase.auth.refreshSession().accessToken
+        } catch {
+            throw self.sessionLoss(error)
+        }
+    }
+
+    /// `sessionMissing` means there is no session left to send: end ours too
+    /// (the event may not have arrived yet, or arrived before the listener)
+    /// and surface it as the localized 401 rather than Supabase's English.
+    private func sessionLoss(_ error: Error) -> Error {
+        guard (error as? AuthError) == .sessionMissing else { return error }
+        self.endSession(reason: "token requested with no session")
+        return APIError.unauthorized
     }
 
     // MARK: - Profile
