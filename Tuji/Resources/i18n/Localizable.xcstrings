@@ -52,6 +52,28 @@
         }
       }
     },
+    "%lld / %lld 格" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld slots"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld 枠"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld 格"
+          }
+        }
+      }
+    },
     "%lld 人學習中" : {
       "localizations" : {
         "en" : {
