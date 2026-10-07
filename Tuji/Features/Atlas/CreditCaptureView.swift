@@ -34,11 +34,16 @@ struct CreditCaptureView: View {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.walletRow
                     self.statusMessage
-                    if self.model.busy, self.model.photo != nil, self.model.operation == nil {
-                        // Upload → quote → accept in flight. The accept journals
-                        // `pending` before it sends, and the recovery panels below
-                        // are for after a failure; mid-request they read as one.
-                        self.readyPanel
+                    if self.recognitionInFlight {
+                        // A recognition or 高精度 upgrade is being quoted and
+                        // accepted. The accept journals `pending` before it
+                        // sends, and the recovery panels below are for after a
+                        // failure; mid-request they read as one.
+                        if let operation = self.model.operation {
+                            self.recognizingPanel(operation)
+                        } else {
+                            self.readyPanel
+                        }
                     } else if self.model.pending != nil {
                         self.pendingPanel
                     } else if let quote = self.model.quote {
@@ -83,6 +88,15 @@ struct CreditCaptureView: View {
                 delay = .seconds(2)
             }
         }
+    }
+
+    /// Upload → quote → accept under way, for a new photo or a 高精度 upgrade of
+    /// the result on screen. Not a relaunch's leftover `pending` with nothing
+    /// to show, which still needs its 重試同步.
+    private var recognitionInFlight: Bool {
+        guard self.model.busy else { return false }
+        if self.model.operation == nil { return self.model.photo != nil }
+        return self.model.pending != nil || self.model.quote != nil
     }
 
     private var step: Int {
