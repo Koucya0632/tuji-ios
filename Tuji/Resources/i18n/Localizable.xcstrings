@@ -16386,28 +16386,6 @@
         }
       }
     },
-    "讀取連勝中…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading streak…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "連続記録を読み込み中…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "读取连胜中…"
-          }
-        }
-      }
-    },
     "變更立即生效。單字與例句維持中文內容，繁簡會跟隨此設定。" : {
       "localizations" : {
         "en" : {

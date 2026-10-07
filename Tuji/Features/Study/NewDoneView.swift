@@ -1,17 +1,24 @@
 // Completion celebration shown after Step 3 wraps. Lists the words
 // learned this session and a 完成 CTA back to the previous screen.
+//
+// Studying is the check-in, so this is one of the two places (with
+// CompleteView) where 今天已打卡 gets said — see SessionCheckInCard.
 
 import SwiftUI
 
 struct NewDoneView: View {
     let coord: NewFlowCoordinator
     let queue: [StudyQueueItem]
+    /// Whether the finish's refresh has landed; the check-in line waits for it.
+    var refreshed = false
     let onFinish: () -> Void
 
     var body: some View {
         ScrollView {
             VStack(spacing: Space.s4) {
                 self.hero
+                SessionCheckInCard(refreshed: self.refreshed)
+                    .padding(.horizontal, Space.s4)
                 UnsyncedAnswersNotice(unsyncedCount: self.coord.writes.parkedCount)
                     .padding(.horizontal, Space.s4)
                 StudyWordGrid(items: self.queue, mistakeCounts: self.coord.mistakeCounts)

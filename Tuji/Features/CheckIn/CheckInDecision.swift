@@ -55,6 +55,16 @@ enum CheckInDecision {
         if case .claimable = reward { return true }
         return false
     }
+
+    /// The reward line on the 學新字 finish screen. Only what today's studying
+    /// earned: no upgrade pitch on a celebration, and 還沒學習 there only means
+    /// the answers are still parked offline — the unsynced notice says that.
+    static func finishReward(_ reward: Reward) -> Reward {
+        switch reward {
+        case .claimable, .claimed, .capped: reward
+        case .hidden, .locked, .needsStudy: .hidden
+        }
+    }
 }
 
 // MARK: - Month grid
