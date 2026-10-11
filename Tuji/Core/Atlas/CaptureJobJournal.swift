@@ -17,17 +17,11 @@ import OSLog
 struct CaptureJobRecord: Codable, Identifiable, Equatable {
     let id: UUID
     let imageId: String
-    /// The free flow's confirm. nil for a 罐頭點數 job, which confirms through
-    /// `credit` instead. Optional only since that kind arrived; every record a
-    /// shipped build journalled carries one.
-    let payload: AtlasConfirmPayload?
     let lemma: String
-    /// Set once confirm succeeds. Its presence *is* the resume rule: a run that
-    /// finds one skips confirm and continues from the idempotent tail.
-    var itemId: String?
-    /// A 罐頭點數 job. Absent from records written before the kind existed,
-    /// which therefore decode as free-flow jobs, as they were.
-    var credit: CreditConfirmRequest? = nil
+    /// What to confirm. A record without one was journalled by the pre-credit
+    /// flow, which the server no longer serves; it does not decode, and
+    /// `restore` clears it away.
+    let credit: CreditConfirmRequest
 }
 
 /// What 確認並生成卡片 sends for a 罐頭點數 result. The server binds one card
@@ -103,7 +97,13 @@ struct FileCaptureJobJournal: CaptureJobJournal {
             .compactMap { file in
                 guard let data = try? Data(contentsOf: file),
                       let record = try? JSONDecoder().decode(CaptureJobRecord.self, from: data)
-                else { return nil }
+                else {
+                    // Unreadable, or a pre-credit job nothing can finish. Left
+                    // on disk it would be skipped on every launch, forever.
+                    self.log.info("dropping an unreadable capture record")
+                    try? FileManager.default.removeItem(at: file)
+                    return nil
+                }
                 return CaptureJobEntry(
                     record: record,
                     thumbnail: try? Data(contentsOf: self.thumbURL(record.id))

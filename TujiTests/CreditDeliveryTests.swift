@@ -90,24 +90,6 @@ struct CreditDeliveryTests {
         #expect(!catalog("LocalTesting").matches(environment: "LocalTesting"))
     }
 
-    @MainActor @Test
-    func choosingACandidateFillsTheFormAndEditsLeaveTheSuggestion() {
-        let model = CreditCaptureModel()
-        model.select(CreditCandidate(id: "c1", level: "primary", label: "cat", zhHant: "貓", gloss: nil))
-        #expect(model.lemma == "cat")
-        #expect(model.displayZhHant == "貓")
-        #expect(model.isStillSuggested(.lemma))
-        model.lemma = "kitten"
-        #expect(!model.isStillSuggested(.lemma))
-        #expect(model.isStillSuggested(.zhHant))
-        model.select(CreditCandidate(id: "c2", level: "fine", label: "tabby", zhHant: "虎斑貓", gloss: "tabby cat"))
-        #expect(model.lemma == "tabby")
-        #expect(model.displayGloss == "tabby cat")
-        #expect(model.selectedCandidateId == "c2")
-        model.lemma = "  "
-        #expect(!model.canConfirm)
-    }
-
     @Test
     func aCardFromEitherRunFinishesThePhotoSoItIsNotReopened() {
         func run(
@@ -133,12 +115,12 @@ struct CreditDeliveryTests {
         }
         let precision = run("p", image: "a", feature: "atlas.recognize.precision", card: "item")
         let primary = run("q", image: "a", feature: "atlas.recognize.primary")
-        #expect(CreditCaptureModel.resumable(in: [precision, primary]) == nil)
+        #expect(CreditOperation.resumable(in: [precision, primary]) == nil)
 
         let other = run("r", image: "b", feature: "atlas.recognize.primary")
-        #expect(CreditCaptureModel.resumable(in: [precision, primary, other])?.id == "r")
+        #expect(CreditOperation.resumable(in: [precision, primary, other])?.id == "r")
 
         let inFlight = run("s", image: "a", feature: "atlas.recognize.precision", state: "running")
-        #expect(CreditCaptureModel.resumable(in: [primary, inFlight])?.id == "s")
+        #expect(CreditOperation.resumable(in: [primary, inFlight])?.id == "s")
     }
 }

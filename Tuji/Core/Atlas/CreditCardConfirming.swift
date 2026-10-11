@@ -6,16 +6,15 @@ import Foundation
 /// What the server answered to a 罐頭點數 confirm.
 struct CreditConfirmed: Equatable {
     let itemId: String
-    /// The server-side fill-in (reading, definitions, examples) the confirm
-    /// started. `CreditOperation.isEnrichingState` says whether it is still open.
-    let fulfillmentState: String
+    /// The server-side fill-in (reading, definitions, examples) the confirm started.
+    let fulfillment: CreditOperation.Fulfillment
 }
 
 @MainActor
 protocol CreditCardConfirming {
     /// Idempotent per operation and candidate — see `CreditConfirmRequest`.
     func confirm(_ request: CreditConfirmRequest) async throws -> CreditConfirmed
-    func fulfillmentState(operationId: String) async throws -> String
+    func fulfillment(operationId: String) async throws -> CreditOperation.Fulfillment
 }
 
 @MainActor
@@ -43,18 +42,11 @@ struct LiveCreditCardConfirming: CreditCardConfirming {
                 displayGloss: request.displayGloss
             )
         )
-        return CreditConfirmed(itemId: result.item.id, fulfillmentState: result.operation.fulfillmentState)
+        return CreditConfirmed(itemId: result.item.id, fulfillment: result.operation.fulfillment)
     }
 
-    func fulfillmentState(operationId: String) async throws -> String {
+    func fulfillment(operationId: String) async throws -> CreditOperation.Fulfillment {
         let operation: CreditOperation = try await self.api.get(.aiOperation(id: operationId))
-        return operation.fulfillmentState
-    }
-}
-
-extension CreditOperation {
-    /// Whether a fill-in in this state can still land.
-    static func isEnrichingState(_ fulfillmentState: String) -> Bool {
-        ["pending", "running", "reconciling"].contains(fulfillmentState)
+        return operation.fulfillment
     }
 }

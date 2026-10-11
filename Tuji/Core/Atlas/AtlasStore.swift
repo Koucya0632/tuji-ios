@@ -102,40 +102,6 @@ final class AtlasStore {
         }
     }
 
-    func uploadImage(
-        data: Data,
-        filename: String = "atlas.webp",
-        mimeType: String = "image/webp",
-        targetLanguage: TargetLanguage? = nil
-    ) async throws
-        -> AtlasUploadResponse
-    {
-        let generation = self.generation
-        let response = try await self.repository.uploadImage(
-            data: data,
-            filename: filename,
-            mimeType: mimeType,
-            targetLanguage: targetLanguage
-        )
-        guard generation == self.generation else { return response }
-        // Foreground updates local state only; the full reconciling sync is
-        // deferred to AtlasCaptureQueue's background job.
-        self.images = Self.sortedByRecency(Self.merged(self.images, [response.image]))
-        return response
-    }
-
-    func recognize(imageId: String, mode: AtlasRecognitionMode = .primary) async throws -> AtlasRecognitionResponse {
-        try await self.repository.recognize(imageId: imageId, mode: mode)
-    }
-
-    func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
-        let generation = self.generation
-        let item = try await self.repository.confirm(imageId: imageId, payload: payload)
-        guard generation == self.generation else { return item }
-        self.setItems(Self.merged(self.items, [item]))
-        return item
-    }
-
     /// The created cards are the server's receipt, not state this store keeps —
     /// nothing in the app reads a card list, and the queue discards the return.
     func createCards(itemId: String, cardTypes: [String] = ["image_recall", "flashcard"]) async throws -> [AtlasCard] {
@@ -150,13 +116,6 @@ final class AtlasStore {
         guard generation == self.generation else { return }
         self.images.removeAll { $0.id == id }
         self.setItems(self.items.filter { $0.imageId != id })
-    }
-
-    /// Kick off (or re-run) AI enrichment for a custom item — fills
-    /// definition / synonyms / forms / etymology so its detail page matches a
-    /// dictionary word. itemId is the bare UUID (no "atlas:" prefix).
-    func enrich(itemId: String) async throws {
-        try await self.repository.enrich(itemId: itemId)
     }
 
     /// Full per-word detail for a custom item (same `Word` shape as the

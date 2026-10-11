@@ -6,7 +6,25 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 ## Domain — the atlas (圖鑑)
 
 - **自製圖鑑 (custom atlas)** — a user's own captured items. Created via the capture
-  pipeline (photo → AI 識別 → 校正 → confirm). Capacity is quota-gated per tier.
+  pipeline (photo → AI 識別 → 校正 → confirm), which runs **only on 罐頭點數** — a
+  membership feature with one flow, not a quota-gated one with two (docs/adr/0016).
+- **拍照新增的入口 (`CaptureEntry`)** — what the camera button opens: `.capture` for a
+  罐頭點數 account, `.membership` (the paywall) for anyone else, `.resolving` while the
+  entitlement has not arrived. The pre-credit flow used to be the fallback for all three,
+  which is how a non-member came to read 「升級 Tuji Pro」 after Pro was delisted.
+- **識別操作 (credit operation, `CreditOperation`)** — one paid recognition of one photo:
+  報價 → 接受 → 識別 → 候選 → 確認. `Status` (reserved / running / reconciling / committed /
+  released) is where the wire strings are spelled, once; `isInFlight` is the single answer
+  to "keep asking". The server's 補充 that a confirm starts is `Fulfillment`, a separate
+  state with its own `isOpen`. `CreditCaptureModel` owns the whole of it — the screen
+  renders its `panel` and awaits its `watch()` — behind `CreditCaptureAPI` and
+  `PendingAcceptJournal` (`CreditCaptureSeams.swift`).
+- **未回覆的接受 (`PendingAccept`)** — an accept that was sent and not answered: the quote
+  id and the idempotency key, journalled *before* the request leaves. Only an explicit
+  rejection (`CreditCaptureModel.acceptRejections`) clears it; anything else is an unknown
+  outcome and is resent under the **same key**, because a fresh key would be a second
+  charge for the same photo.
+  _Avoid_：把逾時當成失敗而重新報價。
 - **一次拍照有四個身分**，而使用者只看得到一個。`image`（`user_atlas_images` 的那一列
   ——書架列的是它，刪除刪的也是它）→ `item`（東西本身：配額數的是它、mastery 的 key 是
   `atlas:<itemId>`、公開的也是它）→ `AtlasCard` ×2（`image_recall` 與 `flashcard`，
@@ -17,15 +35,15 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   生成的卡片」說的是那兩張題目，而後者是前者的組成部分。
   _Avoid_：在任何給人看的句子裡用「卡片」指那兩張題目。
 - **生成佇列 (`AtlasCaptureQueue`)** — the durable tail of a capture: confirm →
-  createCards → enrich → one reconciling read, run after the sheet closes so the user
-  never waits. Jobs are journalled, so an app kill mid-flight resumes on launch. The
-  load-bearing rule is the **confirm checkpoint**: confirm is a plain INSERT server-side
-  and *not* idempotent, so the itemId it returns is written to the journal before the
-  (idempotent) tail runs, and a resumed job that finds one skips confirm. Everything it
-  reaches is an init parameter — `AtlasCardGenerating` (the four-method 生成卡片 seam
-  carved off `AtlasStore`), `CaptureJobJournal` (the on-disk half), `AtlasMutationRefreshing`.
-  It had a `private init` and four `AtlasStore.shared` reach-ins, so the checkpoint rule —
-  the only thing between a resumed run and a duplicate card — was verified by nothing.
+  createCards → wait for the server's 補充 → one reconciling read, run after the sheet
+  closes so the user never waits. Jobs are journalled, so an app kill mid-flight resumes on
+  launch. **Every step is safe to repeat**: the confirm is bound to its 識別操作 server-side
+  and answers a resend with the card it already made, and createCards is idempotent — so a
+  resumed job runs again from the top. (The pre-credit confirm was a plain INSERT and
+  needed an itemId *checkpoint*; that rule left with the flow.) Everything it reaches is an
+  init parameter — `CreditCardConfirming`, `AtlasCardGenerating`, `CaptureJobJournal`,
+  `AtlasMutationRefreshing`. A journalled record from the pre-credit flow no longer
+  decodes, and `restore` deletes it rather than skipping it on every launch.
 - **拍照進度 (`CaptureProgress`)** — where one capture sits, in the single vocabulary
   every screen reads: generating / enriching / ready / failed, plus the label and the
   determinate fraction. A third status vocabulary used to exist beside `AtlasImageStatus`
@@ -36,20 +54,22 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **`CaptureFailure`** — why a capture stopped, in the only two kinds a screen must tell
   apart: `.atCapacity` (another attempt fails the same way — no 重試 offered) and
   `.transient`. The queue's `catch` used to flatten every error into one untyped failure,
-  so a spent quota wore a retry's costume; the paywall route the VM builds for a 402
-  during 識別 had no counterpart after enqueue.
-- **`AtlasCapacityReadout`** — 自製圖鑑 room as the capture flow must ask it: the server's
-  usage snapshot **plus the captures 生成佇列 has not finished**. Two things consume a
-  slot and the gate counted one, so at capacity − 1 two quick captures both passed and
-  the second died in the queue. `AtlasQuotas` stays the pure mirror of the server's
-  arithmetic (lib/atlas/entitlement.ts); this is the reading built on it. Slots held by
-  the queue say 「正在生成」 rather than 「刪除一些」 — waiting is what actually works.
+  so a full atlas wore a retry's costume.
 - **校正欄位 (`CaptureCorrectionFields`)** — which second field the correction form asks
-  for (`chineseName` / `gloss` / `hidden`), over the {UILanguage × TargetLanguage} grid.
-  `needsGloss` — whether a cached candidate is missing the meaning that field would show,
-  and so worth one repair call — is *derived from* the field rather than stated beside it.
-  The two were written separately, as exact complements (`monolingual` in a View computed
-  property, `needsSeparateGloss` in the VM), and one of them was unreachable from a test.
+  for (`chineseName` / `gloss` / `hidden`), over the {UILanguage × TargetLanguage} grid —
+  and everything that is the same question read another way: the gloss language a paid
+  quote asks for (`glossLanguage`), the meaning under a candidate chip (`candidateMeaning`),
+  the Chinese name a confirm sends (`chineseNameToSend` — withheld once the card is renamed
+  on a form that never showed it), and the line under a card on the shelf
+  (`AtlasItem.localName`). Each of those was answered on its own at some point, three of
+  them inside a `View`. The server holds the same grid as `captureForm`
+  (tuji-web `lib/atlas/gloss.ts`) and tells a run which field it is (`correctionField`).
+- **校正表單 (`CaptureCorrectionForm`)** — what the user settles on before 確認並生成卡片:
+  the chosen candidate and the names they may have corrected. A value, so "which fields
+  still hold the AI's guess", "is it complete" and "what does the confirm send" are asked
+  without a screen. It does not decide which second field exists — that is 校正欄位, whose
+  answer the caller passes in. The pre-credit flow and the credit flow each kept their own
+  copy of this, and the copies had drifted (trim sets, whether a candidate must be chosen).
 - **Pipeline status (`AtlasImageStatus`)** — where an uploaded capture sits in card
   generation: uploaded / processing / needs_review / confirmed / cards_ready / failed /
   deleted. Distinct from the **review status** (`AtlasReviewStatus`), which is about the
@@ -227,19 +247,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   バスマット is a `.term` too. The ladder gates the stage on the same value, so a scheduled
   拼字 task always has a board.
 - **補充 (enrichment)** — the AI pass that fills a captured item's 釋義, 助記, 詞源 and the
-  per-language gloss. One pass is three to four paid model calls, not one. Its states live in
-  `backfill_status`: `pending` → `filled`, or `failed` (this attempt broke — try again) → after
-  `ATLAS_ENRICH_MAX_ATTEMPTS`, `skipped` (**we have given up on this one**). That second line —
-  transient versus terminal — is the same one iOS already draws in `CaptureFailure`; the server
-  had `skipped` declared in its schema CHECK and never wrote it, so `failed` carried both
-  meanings and the retry decision had no memory. **Whether this item should cost money is one
-  question with one answer: `shouldEnrichAtlasItem` (`lib/atlas/enrich-policy.ts`, kept clear of
-  the AI SDK so a route handler or a test can ask it).** It was written out three times, twice on
-  a paying path, and one of those spellings (`backfill_status !== 'filled'`) was true forever
-  once an item failed, so a reliably-failing item re-ran the whole paid pass on every 詳情 open.
-  A `skipped` item degrades to name-and-image, which is a shape the product already accepts.
-  Raising `ATLAS_ENRICH_VERSION` revives `skipped` and zeroes the count — `skipped` means
-  「用這一版配方試不出來」, so a new recipe earns a fresh round. See docs/adr/0011.
+  per-language gloss. One pass is three to four paid model calls, not one. It runs **once
+  per confirmed card, as the included fulfillment of the 識別操作 that made it**, on the
+  server's worker — no client triggers it and no read does (docs/adr/0016). Its states live
+  in `backfill_status`: `pending` → `filled`, or `skipped` (**we have given up on this
+  one**) when the fulfillment is compensated — out of attempts (`ATLAS_ENRICH_MAX_ATTEMPTS`,
+  the one budget), past its deadline, or uncertain. `ATLAS_ENRICH_VERSION` is a stamp of
+  which recipe made the stored fields; it triggers nothing. A `skipped` item degrades to
+  name-and-image, which is a shape the product already accepts.
   **iOS 端刻意沒有第四套狀態。** `backfill_status` 從不上 wire：`skipped` 在畫面上就是
   「只有名字和照片」，而那是一種**完整**的卡片，不是壞掉的卡片。已經有三套狀態詞彙
   （`AtlasImageStatus` / `AtlasReviewStatus` / `CaptureProgress`）互相對得起來，第四套
@@ -403,13 +418,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   has no caller (ADR-0001 lazy-narrowing).
 - **Role seams** — narrow protocols, one per consumer, so each consumer (and its test
   fake) depends only on the slice it uses.
-  - **AtlasAuthoring** — 10-method authoring/sync pipeline used by `AtlasStore`
-    (sync/upload/recognize/confirm/createCards/deleteImage/enrich/detail/entitlement/withdraw).
-  - **AtlasCardGenerating** — the 4-method 生成卡片 tail used by 生成佇列
-    (confirm / generateCards / enrich / reconcile), conformed by `AtlasStore`. Narrower
-    than `AtlasAuthoring` on purpose: the queue discards the card list `createCards`
-    returns and always reconciles `.full`, so neither the return value nor the scope
-    belongs on the seam.
+  - **AtlasAuthoring** — 6-method sync/housekeeping seam used by `AtlasStore`
+    (sync/createCards/deleteImage/detail/entitlement/withdraw). Capture is not on it:
+    upload, 識別 and confirm go through `CreditCaptureAPI` and `CreditCardConfirming`.
+  - **AtlasCardGenerating** — the 2-method 生成卡片 tail used by 生成佇列 and by the
+    capture sheet's 同步複習卡片 retry (generateCards / reconcile), conformed by
+    `AtlasStore`. Narrower than `AtlasAuthoring` on purpose: the queue discards the card
+    list `createCards` returns and always reconciles `.full`, so neither the return value
+    nor the scope belongs on the seam.
+  - **CreditCaptureAPI** — the 9-method server edge of one 識別操作 (catalog / wallet /
+    operations / image / upload / quote / accept / operation / cancel), with
+    `LiveCreditCaptureAPI` over `APIClient`. Two adapters: HTTP, and the in-memory fake
+    `CreditCaptureModelTests` stands on.
+  - **PendingAcceptJournal** — where an 未回覆的接受 waits between launches, one per
+    account and billing environment (`DefaultsPendingAcceptJournal`).
   - **CaptureJobJournal** — 生成佇列's on-disk half (save / remove / restore / removeAll),
     with `FileCaptureJobJournal` over Application Support. Split out because the confirm
     checkpoint is the pipeline's load-bearing rule and it lived behind a hard-coded path.
@@ -475,7 +497,7 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   publish / form + async state) lives in an `@Observable @MainActor` view model,
   `@State`-owned by the View and injected with a narrow repository role via a default arg.
   The View is presentation-only; analytics stays in the View (VMs don't reach
-  `AnalyticsService`). Exemplar: `AtlasCaptureVM` (+ `AtlasCaptureVMTests`).
+  `AnalyticsService`). Exemplar: `CreditCaptureModel` (+ `CreditCaptureModelTests`).
   **A destructive write belongs to the model, not to the `View` that hosts the button.**
   Its in-flight flag, its error, its re-entrancy guard, the *decision* behind its warning
   copy, and the mutation-refresh fan-out all live on the VM; the View hands over the
@@ -496,11 +518,12 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   test can await* — ADR-0001 amendment). It also moved out of `SearchView.swift`: **a
   module named after one of its callers does not get found by the next one.**
   **A view model's async work is `async`, and the View owns the `Task`.** Every atlas
-  model follows this and `AtlasCaptureVM` was the one that did not: `requestRecognize`
-  was synchronous and spawned a `Task {}` it dropped, so the rule protecting the user's
-  paid AI allowance (each mode recognises at most once; an incomplete cache gets exactly
-  one repair) could not be awaited and so was never tested — while `submit()` was `async`
-  and awaited nothing. Work that must outlive the screen goes to a module that owns it
+  model follows this. The rule has a second half the capture sheet taught: **a loop is
+  work too.** `CreditCaptureView` held the polling of a paid run in a `.task` closure —
+  the cadence, the stop condition and the raw state strings — so none of it could be
+  constructed in a test. It is `CreditCaptureModel.watch()` now, over an injected `sleep`;
+  the View's `.task(id: model.watchKey)` only starts and cancels it. Work that must
+  outlive the screen goes to a module that owns it
   (生成佇列), not to an unstructured task inside a `@State` object SwiftUI is about to
   throw away. The community
   screens (合集 / 公開圖鑑) are on this pattern: `CollectionEditVM`,

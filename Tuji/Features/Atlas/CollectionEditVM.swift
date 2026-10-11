@@ -2,7 +2,7 @@
 // load → 校正 meta → 挑選成員 → 送審 state machine so the view stays
 // presentation-only and the order-sensitive submit() (persist the meta BEFORE
 // the publish gate reads the stored row) is a plain, unit-testable method behind
-// the CollectionEditing seam. Mirrors the AtlasCaptureVM pattern.
+// the CollectionEditing seam. Mirrors the CreditCaptureModel pattern.
 
 import Foundation
 import Observation

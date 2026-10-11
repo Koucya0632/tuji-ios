@@ -22,38 +22,22 @@ struct CreditCaptureView: View {
     @State private var showWallet = false
     @State private var showPrecisionInfo = false
     @State private var slowRecognition = false
-    private var glossLanguage: String? {
-        let ui = SettingsStore.shared.uiLang
-        return ["en", "ja"].contains(ui) && ui != self.language.rawValue ? ui : nil
-    }
-
     var body: some View {
         TujiFormSheet(title: "拍照新增", closeDisabled: self.model.busy, onClose: { self.dismiss() }) {
-            TujiStepIndicator(total: 5, current: self.step)
+            TujiStepIndicator(total: 5, current: self.model.step)
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
                     self.walletRow
                     self.statusMessage
-                    if self.recognitionInFlight {
-                        // A recognition or 高精度 upgrade is being quoted and
-                        // accepted. The accept journals `pending` before it
-                        // sends, and the recovery panels below are for after a
-                        // failure; mid-request they read as one.
-                        if let operation = self.model.operation {
-                            self.recognizingPanel(operation)
-                        } else {
-                            self.readyPanel
-                        }
-                    } else if self.model.pending != nil {
-                        self.pendingPanel
-                    } else if let quote = self.model.quote {
-                        self.quotePanel(quote)
-                    } else if let operation = self.model.operation {
-                        self.operationPanel(operation)
-                    } else if self.model.photo != nil {
-                        self.readyPanel
-                    } else {
-                        self.sourcePanel
+                    switch self.model.panel {
+                    case .source: self.sourcePanel
+                    case .ready: self.readyPanel
+                    case let .recognizing(operation): self.recognizingPanel(operation)
+                    case .unansweredAccept: self.pendingPanel
+                    case let .priceChanged(quote): self.quotePanel(quote)
+                    case .released: self.releasedPanel
+                    case .cardUnsynced: self.unsyncedPanel
+                    case let .result(operation): self.resultPanel(operation)
                     }
                 }
                 .padding(.horizontal, Space.s4)
@@ -79,31 +63,7 @@ struct CreditCaptureView: View {
             }
             await self.model.load()
         }
-        .task(id: "\(self.model.operation?.id ?? ""):\(self.model.operation?.state ?? "")") {
-            // The server starts the run on accept and a 普通 run finishes in ~2s, so look early.
-            var delay: Duration = .seconds(1)
-            while self.model.operation?.isRunning == true, !Task.isCancelled {
-                do { try await Task.sleep(for: delay) } catch { return }
-                await self.model.poll()
-                delay = .seconds(2)
-            }
-        }
-    }
-
-    /// Upload → quote → accept under way, for a new photo or a 高精度 upgrade of
-    /// the result on screen. Not a relaunch's leftover `pending` with nothing
-    /// to show, which still needs its 重試同步.
-    private var recognitionInFlight: Bool {
-        guard self.model.busy else { return false }
-        if self.model.operation == nil { return self.model.photo != nil }
-        return self.model.pending != nil || self.model.quote != nil
-    }
-
-    private var step: Int {
-        if self.model.operation?.state == "committed" { return 3 }
-        if self.model.operation?.isRunning == true { return 2 }
-        if self.model.photo != nil { return 1 }
-        return 0
+        .task(id: self.model.watchKey) { await self.model.watch() }
     }
 
     // MARK: - Wallet
@@ -226,7 +186,7 @@ struct CreditCaptureView: View {
                 Text("辨識中…").font(.tujiLabel).tracking(0.5).foregroundStyle(.tujiInk3)
             } else if self.model.affordable(self.model.price) {
                 Button {
-                    Task { await self.model.start(language: self.language, glossLanguage: self.glossLanguage) }
+                    Task { await self.model.start(language: self.language) }
                 } label: {
                     HStack(spacing: Space.s2) {
                         Image(systemName: "sparkles")
@@ -275,30 +235,25 @@ struct CreditCaptureView: View {
 
     // MARK: - 4. Recognition + results
 
-    @ViewBuilder
-    private func operationPanel(_ operation: CreditOperation) -> some View {
-        if operation.isRunning {
-            self.recognizingPanel(operation)
-        } else if operation.state == "released" {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                self.photoFrame
-                Text("辨識沒有完成，點數未扣除。").font(.tujiBody).foregroundStyle(.tujiInk)
-                BBtn(title: "換一張", fullWidth: true) { self.model.reset() }
-            }
-        } else if operation.confirmedItemId != nil {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                Text("卡片已保存，但同步失敗。").font(.tujiBody).foregroundStyle(.tujiInk)
-                BBtn(title: "同步複習卡片", fullWidth: true) {
-                    Task { if await self.model.syncCards() { self.dismiss() } }
-                }
-                .disabled(self.model.busy)
-            }
-        } else {
-            self.resultPanel(operation)
+    private var releasedPanel: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            self.photoFrame
+            Text("辨識沒有完成，點數未扣除。").font(.tujiBody).foregroundStyle(.tujiInk)
+            BBtn(title: "換一張", fullWidth: true) { self.model.reset() }
         }
     }
 
-    /// AI 辨識中 — same panel as the free flow: no spinner, the cat after 3s.
+    private var unsyncedPanel: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("卡片已保存，但同步失敗。").font(.tujiBody).foregroundStyle(.tujiInk)
+            BBtn(title: "同步複習卡片", fullWidth: true) {
+                Task { if await self.model.syncCards() { self.dismiss() } }
+            }
+            .disabled(self.model.busy)
+        }
+    }
+
+    /// AI 辨識中: no spinner, the cat after 3s.
     private func recognizingPanel(_ operation: CreditOperation) -> some View {
         VStack(alignment: .leading, spacing: Space.s4) {
             self.photoFrame
@@ -308,7 +263,7 @@ struct CreditCaptureView: View {
                 MascotSpeechBubble(pose: .think, text: "這張比較費工，再等一下")
                     .transition(.opacity)
             }
-            if operation.state == "reserved" {
+            if self.model.canCancelOperation {
                 TujiNavTextAction(title: "取消", isEnabled: !self.model.busy) {
                     Task { await self.model.cancelOperation() }
                 }
@@ -332,7 +287,7 @@ struct CreditCaptureView: View {
             self.photoFrame
             self.modeRow
             self.candidates(operation)
-            if self.model.selectedCandidateId != nil {
+            if self.model.form.selectedCandidateId != nil {
                 self.correctionForm
             }
             BBtn(title: "確認並生成卡片", bg: .tujiBrandPrimary, fg: .tujiInk, fullWidth: true, icon: "checkmark") {
@@ -345,7 +300,7 @@ struct CreditCaptureView: View {
         }
     }
 
-    /// 人工校正 — the free flow's two names, prefilled from the chosen candidate.
+    /// 人工校正 — the two names, prefilled from the chosen candidate.
     private var correctionForm: some View {
         @Bindable var model = self.model
         return VStack(alignment: .leading, spacing: Space.s4) {
@@ -353,7 +308,7 @@ struct CreditCaptureView: View {
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
-            self.field("圖片名稱", text: $model.lemma, suggested: .lemma)
+            self.field("圖片名稱", text: $model.form.lemma, suggested: .lemma)
             if let warning = self.model.duplicateLemmaWarning {
                 Text(warning)
                     .font(.tujiBodySm)
@@ -361,9 +316,9 @@ struct CreditCaptureView: View {
             }
             switch self.model.secondField {
             case .chineseName:
-                self.field("中文名稱", text: $model.displayZhHant, suggested: .zhHant)
+                self.field("中文名稱", text: $model.form.displayZhHant, suggested: .zhHant)
             case .gloss:
-                self.field("中文名稱", text: $model.displayGloss, suggested: .gloss)
+                self.field("中文名稱", text: $model.form.displayGloss, suggested: .gloss)
             case .hidden:
                 EmptyView()
             }
@@ -373,11 +328,11 @@ struct CreditCaptureView: View {
     private func field(
         _ title: LocalizedStringKey,
         text: Binding<String>,
-        suggested: AtlasCaptureVM.SuggestedField
+        suggested: CaptureCorrectionForm.Field
     )
         -> some View
     {
-        TujiField(label: title, badge: self.model.isStillSuggested(suggested) ? "AI 建議" : nil) {
+        TujiField(label: title, badge: self.model.form.isStillSuggested(suggested) ? "AI 建議" : nil) {
             TujiTextField(placeholder: "", text: text)
         }
         // TujiField carries the page margin itself; this panel has its own.
@@ -402,7 +357,7 @@ struct CreditCaptureView: View {
             } else {
                 Button {
                     if self.model.affordable(self.model.upgradePrice) {
-                        Task { await self.model.upgrade(language: self.language, glossLanguage: self.glossLanguage) }
+                        Task { await self.model.upgrade(language: self.language) }
                     } else {
                         self.showWallet = true
                     }
@@ -455,8 +410,8 @@ struct CreditCaptureView: View {
                 spacing: Space.s2
             ) {
                 ForEach(rows) { candidate in
-                    let selected = self.model.selectedCandidateId == candidate.id
-                    Button { self.model.select(candidate) } label: {
+                    let selected = self.model.form.selectedCandidateId == candidate.id
+                    Button { self.model.form.select(candidate) } label: {
                         VStack(spacing: 2) {
                             Text(candidate.label).font(.tujiBodySm)
                             if let meaning = self.model.candidateMeaning(candidate) {

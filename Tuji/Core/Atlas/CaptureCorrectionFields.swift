@@ -19,7 +19,7 @@ import Foundation
 
 /// The second field on the correction form — the one that carries the meaning.
 /// The first is always 圖片名稱 (`lemma`).
-enum CaptureSecondField: Equatable {
+enum CaptureSecondField: String, Equatable {
     /// Chinese interfaces edit `displayZhHant` directly.
     case chineseName
     /// A ja/en interface learning the *other* language edits their-language
@@ -40,11 +40,11 @@ enum CaptureCorrectionFields {
         }
     }
 
-    /// Whether the model is expected to return a UI-language gloss for this
-    /// capture — which is the same question as "does the form have a gloss field
-    /// to fill", and so is answered by asking it.
-    static func needsGloss(ui: UILanguage, target: TargetLanguage) -> Bool {
-        self.second(ui: ui, target: target) == .gloss
+    /// The language a recognition should also name its candidates in — the one
+    /// the gloss field is edited in — or nil when the form has no gloss field.
+    /// Asked on the way into a paid quote; it used to be restated in a `View`.
+    static func glossLanguage(ui: UILanguage, target: TargetLanguage) -> String? {
+        self.second(ui: ui, target: target) == .gloss ? ui.rawValue : nil
     }
 
     /// The meaning a candidate chip shows under its label: whatever the form's

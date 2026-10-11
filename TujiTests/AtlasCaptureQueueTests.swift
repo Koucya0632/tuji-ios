@@ -1,8 +1,7 @@
-// 生成佇列's durable tail — the confirm checkpoint, the resume rule, retry, and
-// what a sign-out drops. None of this could be reached before: the queue had a
-// `private init`, reached `AtlasStore.shared` at four call sites and hard-coded
-// its Application Support path, so the one rule standing between a resumed run
-// and a duplicate 自製圖鑑 card was verified by nothing.
+// 生成佇列: 確認並生成卡片 closes the sheet at once and the card is made here,
+// behind a 生成中 tile in 我做的. Pinned below — the confirm is the operation's
+// (so a resumed or retried job simply runs again), the server fills the card in
+// on its own and the job waits for that, and a sign-out leaves nothing behind.
 
 import Foundation
 import Testing
@@ -11,202 +10,163 @@ import UIKit
 
 @MainActor
 struct AtlasCaptureQueueTests {
-    /// `doneLinger: .zero` everywhere: the four-second pause is how long a
-    /// finished tile stays on screen, not part of the pipeline, and waiting it
-    /// out in a test is how a suite starts timing out on CI.
     private func queue(
         cards: FakeCardGenerating = FakeCardGenerating(),
+        credits: FakeCreditConfirming = FakeCreditConfirming(),
         journal: InMemoryCaptureJobJournal = InMemoryCaptureJobJournal(),
         mutations: SpyAtlasMutationRefreshing = SpyAtlasMutationRefreshing(),
-        celebrate: @escaping @MainActor () -> Void = {}
+        // Generous on purpose: parallel @MainActor suites starve each other on
+        // CI for well over 5s, and a deadline that passes mid-test turns a
+        // "waits for the fill-in" assertion into a timing coin flip.
+        deadline: Duration = .seconds(60)
     )
         -> AtlasCaptureQueue
     {
         AtlasCaptureQueue(
             cards: cards,
+            credits: credits,
             journal: journal,
             mutations: mutations,
             doneLinger: .zero,
-            celebrate: celebrate
+            enrichmentPoll: .milliseconds(1),
+            enrichmentDeadline: deadline,
+            celebrate: {}
         )
     }
 
-    private func record(itemId: String? = nil) -> CaptureJobRecord {
-        CaptureJobRecord(
-            id: UUID(),
-            imageId: "img-1",
-            payload: AtlasFixtures.payload(),
-            lemma: "cat",
-            itemId: itemId
-        )
-    }
-
-    /// A real 1×1 frame, so `enqueue` has something to JPEG-encode.
-    private var frame: UIImage {
-        UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1)).image { context in
-            UIColor.red.setFill()
-            context.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
-        }
-    }
+    private let request = CreditConfirmRequest(
+        operationId: "op-1",
+        candidateId: "cand-1",
+        lemma: "鏡",
+        displayZhHant: "鏡子",
+        displayGloss: nil
+    )
 
     @Test
-    func aFinishedCaptureRunsTheWholeTailAndClearsItsRecord() async {
+    func aCreditCaptureConfirmsMakesCardsWaitsForTheFillInThenFinishes() async {
         let cards = FakeCardGenerating()
+        let credits = FakeCreditConfirming()
+        credits.fillIn = ["running", "completed"]
         let journal = InMemoryCaptureJobJournal()
         let mutations = SpyAtlasMutationRefreshing()
-        var celebrated = false
-        let queue = self.queue(
-            cards: cards,
-            journal: journal,
-            mutations: mutations,
-            celebrate: { celebrated = true }
-        )
+        let queue = self.queue(cards: cards, credits: credits, journal: journal, mutations: mutations)
 
-        await queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil).value
+        let task = queue.enqueue(credit: self.request, imageId: "img-1", thumbnail: nil)
+        // The tile is up before any network work: this is what the sheet closes onto.
+        #expect(queue.jobs.first?.lemma == "鏡")
+        #expect(queue.jobs.first?.progress == .generating(0.15))
+        #expect(queue.creditOperationIds == ["op-1"])
+        await task.value
 
-        #expect(cards.confirmedImageIds == ["img-1"])
+        #expect(credits.confirmed == [self.request])
         #expect(cards.generatedItemIds == ["item-1"])
-        #expect(cards.enrichedItemIds == ["item-1"])
-        // The reconcile is what makes the new card true for every other screen.
+        #expect(credits.polls == 2)
         #expect(cards.reconciles == 1)
         #expect(mutations.reported == [.captureCompleted])
-        #expect(celebrated)
-        // A finished job leaves nothing behind to resume.
         #expect(journal.entries.isEmpty)
         #expect(queue.jobs.isEmpty)
     }
 
     @Test
-    func confirmIsCheckpointedBeforeTheIdempotentTail() async throws {
-        // createCards fails, so the run dies *after* confirm has committed.
-        let cards = FakeCardGenerating()
-        cards.generateFailures = 1
-        let journal = InMemoryCaptureJobJournal()
-        let queue = self.queue(cards: cards, journal: journal)
+    func aFillInAlreadyFinishedAtConfirmIsNotPolled() async {
+        let credits = FakeCreditConfirming()
+        credits.confirmState = "completed"
+        let queue = self.queue(credits: credits)
 
-        await queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil).value
+        await queue.enqueue(credit: self.request, imageId: "img-1", thumbnail: nil).value
 
-        // The record survives, carrying the item confirm created.
-        let entry = try #require(journal.restore().first)
-        #expect(entry.record.itemId == "item-1")
-        #expect(queue.jobs.first?.progress == .failed(.transient))
+        #expect(credits.polls == 0)
+        #expect(queue.jobs.isEmpty)
     }
 
     @Test
-    func theCheckpointKeepsTheFrameTheUserTook() async throws {
-        // The checkpoint re-saves the record with no thumbnail. The frame was
-        // written at enqueue and must survive, or a resumed tile shows an empty
-        // box under the user's word.
-        let cards = FakeCardGenerating()
-        cards.generateFailures = 1
-        let journal = InMemoryCaptureJobJournal()
-        let queue = self.queue(cards: cards, journal: journal)
+    func aFillInThatNeverEndsStillFinishesTheJobAtTheDeadline() async {
+        let credits = FakeCreditConfirming()
+        credits.fillIn = ["running"]
+        let mutations = SpyAtlasMutationRefreshing()
+        let queue = self.queue(credits: credits, mutations: mutations, deadline: .milliseconds(30))
 
-        await queue.enqueue(
-            imageId: "img-1",
-            payload: AtlasFixtures.payload(),
-            thumbnail: self.frame
-        ).value
+        await queue.enqueue(credit: self.request, imageId: "img-1", thumbnail: nil).value
 
-        let entry = try #require(journal.restore().first)
-        #expect(entry.record.itemId == "item-1")
-        #expect(entry.thumbnail != nil)
+        // The card exists; a stuck fill-in must not hold the tile on 補充詳情中.
+        #expect(credits.polls > 0)
+        #expect(mutations.reported == [.captureCompleted])
+        #expect(queue.jobs.isEmpty)
     }
 
     @Test
-    func aResumedRunNeverConfirmsTwice() async {
-        // What a previous session left behind: confirm succeeded, the tail did not.
+    func aResumedCreditJobResendsTheIdempotentConfirm() async {
+        // The previous session died mid-job; the journal still holds it.
+        let record = CaptureJobRecord(id: UUID(), imageId: "img-1", lemma: "鏡", credit: self.request)
         let cards = FakeCardGenerating()
-        let journal = InMemoryCaptureJobJournal([
-            CaptureJobEntry(record: self.record(itemId: "item-1"), thumbnail: nil)
-        ])
-        let queue = self.queue(cards: cards, journal: journal)
+        let credits = FakeCreditConfirming()
+        let queue = self.queue(
+            cards: cards,
+            credits: credits,
+            journal: InMemoryCaptureJobJournal([CaptureJobEntry(record: record, thumbnail: nil)])
+        )
 
         await queue.settle()
 
-        // confirm is a plain INSERT server-side; running it again is a duplicate card.
-        #expect(cards.confirmedImageIds.isEmpty)
-        #expect(cards.generatedItemIds == ["item-1"])
-        #expect(journal.entries.isEmpty)
-    }
-
-    @Test
-    func aResumedJobDoesNotWalkItsProgressBackToTheStart() async {
-        // Restore builds the job; the task that runs it has not been given a turn
-        // yet, so this observes exactly what a relaunch puts on screen first.
-        let journal = InMemoryCaptureJobJournal([
-            CaptureJobEntry(record: self.record(itemId: "item-1"), thumbnail: nil)
-        ])
-        let resumed = self.queue(journal: journal)
-        #expect(resumed.jobs.first?.progress == .generating(0.5))
-        await resumed.settle()
-
-        // A job with no checkpoint has genuinely not started.
-        let fresh = self.queue(journal: InMemoryCaptureJobJournal([
-            CaptureJobEntry(record: self.record(), thumbnail: nil)
-        ]))
-        #expect(fresh.jobs.first?.progress == .generating(0.15))
-        await fresh.settle()
-    }
-
-    @Test
-    func retryResumesFromTheCheckpointRatherThanFromTheTop() async throws {
-        let cards = FakeCardGenerating()
-        cards.generateFailures = 1
-        let queue = self.queue(cards: cards)
-
-        await queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil).value
-        let jobId = try #require(queue.jobs.first?.id)
-        await queue.retry(jobId)?.value
-
-        // One confirm across both runs; only the idempotent half repeated.
-        #expect(cards.confirmedImageIds == ["img-1"])
+        // No checkpoint to consult: the server returns the card it already bound.
+        #expect(credits.confirmed == [self.request])
         #expect(cards.generatedItemIds == ["item-1"])
         #expect(queue.jobs.isEmpty)
     }
 
     @Test
-    func aSpentQuotaIsADeadEndRatherThanSomethingToRetry() async throws {
-        let cards = FakeCardGenerating()
-        cards.confirmFailures = 1
-        cards.failureError = APIError.paymentRequired(message: "自製圖鑑已達上限")
-        let queue = self.queue(cards: cards)
+    func aFullAtlasIsADeadEndAndANetworkErrorIsRetryable() async throws {
+        let full = FakeCreditConfirming()
+        full.confirmFailures = 1
+        full.failureError = APIError.conflict(reason: "capacity_full", message: nil)
+        let blocked = self.queue(credits: full)
+        await blocked.enqueue(credit: self.request, imageId: "img-1", thumbnail: nil).value
+        let dead = try #require(blocked.jobs.first)
+        #expect(dead.progress == .failed(.atCapacity(nil)))
+        #expect(!dead.progress.canRetry)
 
-        await queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil).value
-
-        let job = try #require(queue.jobs.first)
-        #expect(job.progress == .failed(.atCapacity("自製圖鑑已達上限")))
-        // The tile must not offer 重試: another attempt fails the same way. This
-        // used to be one untyped `.failed`, so a dead end wore a retry's costume.
-        #expect(job.progress.canRetry == false)
-        #expect(queue.retry(job.id) == nil)
-        // The server's own copy wins over the generic line.
-        #expect(job.progress.label == "自製圖鑑已達上限")
+        let flaky = FakeCreditConfirming()
+        flaky.confirmFailures = 1
+        let journal = InMemoryCaptureJobJournal()
+        let retrying = self.queue(credits: flaky, journal: journal)
+        await retrying.enqueue(credit: self.request, imageId: "img-1", thumbnail: nil).value
+        let job = try #require(retrying.jobs.first)
+        #expect(job.progress.canRetry)
+        // The record survives so an app kill can still resume it.
+        #expect(journal.restore().first?.record.credit == self.request)
+        await retrying.retry(job.id)?.value
+        #expect(flaky.confirmed == [self.request])
+        #expect(retrying.jobs.isEmpty)
     }
 
     @Test
-    func anOrdinaryFailureKeepsItsRecordSoAnAppKillCanStillResumeIt() async throws {
+    func aFailedJobKeepsTheFrameTheUserTook() async throws {
         let cards = FakeCardGenerating()
-        cards.confirmFailures = 1
+        cards.generateFailures = 1
         let journal = InMemoryCaptureJobJournal()
         let queue = self.queue(cards: cards, journal: journal)
+        // A real 1×1 frame, so `enqueue` has something to JPEG-encode.
+        let frame = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1)).image { context in
+            UIColor.red.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
 
-        await queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil).value
+        await queue.enqueue(credit: self.request, imageId: "img-1", thumbnail: frame).value
 
-        #expect(queue.jobs.first?.progress.canRetry == true)
+        // Without it a resumed tile shows an empty box under the user's word.
         let entry = try #require(journal.restore().first)
-        // Nothing confirmed, so there is no checkpoint to resume from.
-        #expect(entry.record.itemId == nil)
+        #expect(entry.thumbnail != nil)
+        #expect(queue.jobs.first?.progress.canRetry == true)
     }
 
     @Test
     func signOutDropsEveryJobAndItsRecord() async {
-        let cards = FakeCardGenerating()
-        cards.confirmFailures = 1
+        let credits = FakeCreditConfirming()
+        credits.confirmFailures = 1
         let journal = InMemoryCaptureJobJournal()
-        let queue = self.queue(cards: cards, journal: journal)
+        let queue = self.queue(credits: credits, journal: journal)
 
-        await queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil).value
+        await queue.enqueue(credit: self.request, imageId: "img-1", thumbnail: nil).value
         queue.reset()
 
         // A journalled job survives app kills, so leaving one behind would resume
@@ -216,16 +176,33 @@ struct AtlasCaptureQueueTests {
     }
 
     @Test
-    func inFlightCountIsTheSlotCapacityCannotSeeOnTheServer() async {
-        let cards = FakeCardGenerating()
-        cards.confirmFailures = 1
-        let queue = self.queue(cards: cards)
+    func aRecordFromThePreCreditFlowIsClearedAwayRatherThanResumed() throws {
+        // Exactly what a shipped build wrote for the retired flow: no `credit`.
+        // The server refuses its confirm now, so resuming it could only fail.
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("capture-journal-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let journal = FileCaptureJobJournal(directory: directory)
+        let stale = directory.appendingPathComponent("6F9619FF-8B86-D011-B42D-00C04FC964FF.json")
+        try Data("""
+        {"id":"6F9619FF-8B86-D011-B42D-00C04FC964FF","imageId":"img-1","lemma":"cat","itemId":"item-1",
+         "payload":{"primaryLabel":"cat","lemma":"cat","displayZhHant":"貓"}}
+        """.utf8).write(to: stale)
+        let kept = CaptureJobRecord(id: UUID(), imageId: "img-2", lemma: "鏡", credit: self.request)
+        journal.save(kept, thumbnail: nil)
 
-        let running = queue.enqueue(imageId: "img-1", payload: AtlasFixtures.payload(), thumbnail: nil)
-        // Committed, not yet counted by the server's usage snapshot.
-        #expect(queue.inFlightCount == 1)
-        await running.value
-        // A failed job holds no slot: nothing was confirmed.
-        #expect(queue.inFlightCount == 0)
+        #expect(journal.restore().map(\.record) == [kept])
+        // Left on disk it would be read and skipped on every launch, forever.
+        #expect(!FileManager.default.fileExists(atPath: stale.path))
+    }
+
+    @Test
+    func aResultTheQueueIsConfirmingIsNotReopenedIn拍照新增() {
+        let waiting = CreditOperation(
+            id: "op-1", state: "committed", feature: "atlas.recognize.primary", targetLanguage: "ja",
+            imageId: "img-1", points: 100, confirmedItemId: nil, fulfillmentState: "unclaimed", result: nil
+        )
+        #expect(CreditOperation.resumable(in: [waiting])?.id == "op-1")
+        #expect(CreditOperation.resumable(in: [waiting], queued: ["op-1"]) == nil)
     }
 }

@@ -104,65 +104,6 @@ enum AtlasFixtures {
             usage: AtlasUsage(atlasSlots: slots, primaryAiThisMonth: 0, precisionAiThisMonth: 0)
         )
     }
-
-    /// `AtlasCandidate` declares its own `init(from:)` for the NUMERIC-as-string
-    /// confidence, which suppresses the memberwise init — so a fixture has to go
-    /// through the decoder the app uses.
-    static func candidate(
-        id: String = "c1",
-        level: String = "primary",
-        label: String = "cat",
-        zhHant: String? = "貓",
-        gloss: String? = nil,
-        confidence: String = "0.9",
-        rank: Int = 1
-    ) throws
-        -> AtlasCandidate
-    {
-        var fields = [
-            "\"id\": \"\(id)\"",
-            "\"level\": \"\(level)\"",
-            "\"label\": \"\(label)\"",
-            "\"normalizedLabel\": \"\(label)\"",
-            "\"confidence\": \(confidence)",
-            "\"rank\": \(rank)"
-        ]
-        if let zhHant { fields.append("\"zhHant\": \"\(zhHant)\"") }
-        if let gloss { fields.append("\"gloss\": \"\(gloss)\"") }
-        return try JSONDecoder.tuji.decode(
-            AtlasCandidate.self,
-            from: Data("{ \(fields.joined(separator: ", ")) }".utf8)
-        )
-    }
-
-    static func uploadResponse(
-        image: AtlasImageSummary? = nil,
-        candidates: [AtlasCandidate]? = nil
-    )
-        -> AtlasUploadResponse
-    {
-        AtlasUploadResponse(
-            duplicate: nil,
-            targetLanguage: nil,
-            image: image ?? Self.image("img-1", status: "uploaded"),
-            job: nil,
-            candidates: candidates
-        )
-    }
-
-    static func payload(lemma: String = "cat") -> AtlasConfirmPayload {
-        AtlasConfirmPayload(
-            selectedCandidateId: nil,
-            targetLanguage: nil,
-            primaryLabel: lemma,
-            fineLabel: nil,
-            lemma: lemma,
-            displayZhHant: "貓",
-            displayGloss: nil,
-            partOfSpeech: "noun",
-            category: nil
-        )
-    }
 }
 
 /// `{ uiLang, learningDirection }` — the two-line stub the read seam exists for.
@@ -177,30 +118,16 @@ final class FakeLanguageContext: LanguageContext {
     }
 }
 
-/// The 生成卡片 tail, in memory. Every method logs what it was asked for, so a
-/// test can assert the checkpoint rule — that a resumed run never confirms twice.
+/// The 生成卡片 tail, in memory. Every method logs what it was asked for.
 @MainActor
 final class FakeCardGenerating: AtlasCardGenerating {
-    var item = AtlasFixtures.item("item-1", imageId: "img-1")
-    /// How many more times each step should fail before succeeding. Counted
+    /// How many more times the step should fail before succeeding. Counted
     /// rather than latched so a test can fail a run and then retry it.
-    var confirmFailures = 0
     var generateFailures = 0
     var failureError: Error = AtlasFakeError.boom
 
-    private(set) var confirmedImageIds: [String] = []
     private(set) var generatedItemIds: [String] = []
-    private(set) var enrichedItemIds: [String] = []
     private(set) var reconciles = 0
-
-    func confirm(imageId: String, payload _: AtlasConfirmPayload) async throws -> AtlasItem {
-        if self.confirmFailures > 0 {
-            self.confirmFailures -= 1
-            throw self.failureError
-        }
-        self.confirmedImageIds.append(imageId)
-        return self.item
-    }
 
     func generateCards(forItem itemId: String) async throws {
         if self.generateFailures > 0 {
@@ -208,10 +135,6 @@ final class FakeCardGenerating: AtlasCardGenerating {
             throw self.failureError
         }
         self.generatedItemIds.append(itemId)
-    }
-
-    func enrich(itemId: String) async throws {
-        self.enrichedItemIds.append(itemId)
     }
 
     func reconcile() async {
@@ -276,49 +199,10 @@ final class FakeAtlasAuthoring: AtlasAuthoring {
     /// sign-out (or another account's sync) in the middle of the call.
     var onDeleteImage: (() async -> Void)?
 
-    // The capture half. These used to throw `NotImplemented`, which is exactly
-    // how far the seam reached: `AtlasCaptureVM` was injectable and nothing
-    // injected anything, so upload / 識別 / confirm went untested.
-    var uploadResponse = AtlasFixtures.uploadResponse()
-    var uploadError: Error?
-    /// One canned answer per recognition depth, so a test can prove that
-    /// re-tapping a mode does not spend a second call.
-    var recognitionsByMode: [AtlasRecognitionMode: AtlasRecognitionResponse] = [:]
-    var recognizeError: Error?
-
-    private(set) var uploads = 0
-    private(set) var recognizeCalls: [AtlasRecognitionMode] = []
-
     func sync(since: String?, limit _: Int) async throws -> AtlasSyncResponse {
         self.syncSinceLog.append(since)
         if let syncError { throw syncError }
         return self.syncResponse
-    }
-
-    func uploadImage(
-        data _: Data,
-        filename _: String,
-        mimeType _: String,
-        targetLanguage _: TargetLanguage?
-    ) async throws
-        -> AtlasUploadResponse
-    {
-        self.uploads += 1
-        if let uploadError { throw uploadError }
-        return self.uploadResponse
-    }
-
-    func recognize(imageId _: String, mode: AtlasRecognitionMode) async throws
-        -> AtlasRecognitionResponse
-    {
-        self.recognizeCalls.append(mode)
-        if let recognizeError { throw recognizeError }
-        return self.recognitionsByMode[mode]
-            ?? AtlasRecognitionResponse(job: nil, candidates: [])
-    }
-
-    func confirm(imageId _: String, payload _: AtlasConfirmPayload) async throws -> AtlasItem {
-        throw NotImplemented()
     }
 
     func createCards(itemId _: String, cardTypes _: [String]) async throws -> [AtlasCard] {
@@ -329,10 +213,6 @@ final class FakeAtlasAuthoring: AtlasAuthoring {
         await self.onDeleteImage?()
         if self.deleteFailures.contains(id) { throw AtlasFakeError.boom }
         self.deletedIds.append(id)
-    }
-
-    func enrich(itemId _: String) async throws {
-        throw NotImplemented()
     }
 
     func detail(itemId _: String) async throws -> Word {
@@ -380,11 +260,11 @@ final class FakeCreditConfirming: CreditCardConfirming {
             throw self.failureError
         }
         self.confirmed.append(request)
-        return CreditConfirmed(itemId: self.itemId, fulfillmentState: self.confirmState)
+        return CreditConfirmed(itemId: self.itemId, fulfillment: .init(self.confirmState))
     }
 
-    func fulfillmentState(operationId _: String) async throws -> String {
+    func fulfillment(operationId _: String) async throws -> CreditOperation.Fulfillment {
         self.polls += 1
-        return self.fillIn.count > 1 ? self.fillIn.removeFirst() : self.fillIn.first ?? "completed"
+        return .init(self.fillIn.count > 1 ? self.fillIn.removeFirst() : self.fillIn.first ?? "completed")
     }
 }

@@ -55,10 +55,11 @@ struct AtlasShelfModelTests {
             images: [AtlasFixtures.image("img-1", status: "uploaded")],
             items: []
         )
-        let cards = FakeCardGenerating()
-        cards.confirmFailures = 1 // hold the job in flight
+        let credits = FakeCreditConfirming()
+        credits.confirmFailures = 1 // hold the job in flight
         let queue = AtlasCaptureQueue(
-            cards: cards,
+            cards: FakeCardGenerating(),
+            credits: credits,
             journal: InMemoryCaptureJobJournal(),
             mutations: SpyAtlasMutationRefreshing(),
             doneLinger: .zero,
@@ -68,8 +69,10 @@ struct AtlasShelfModelTests {
         #expect(model.rows.first?.statusLabel == AtlasImageStatus.uploaded.label)
 
         let running = queue.enqueue(
+            credit: CreditConfirmRequest(
+                operationId: "op-1", candidateId: "cand-1", lemma: "鏡", displayZhHant: "鏡子", displayGloss: nil
+            ),
             imageId: "img-1",
-            payload: AtlasFixtures.payload(),
             thumbnail: nil
         )
         #expect(model.rows.first?.statusLabel == CaptureProgress.generating(0.15).label)

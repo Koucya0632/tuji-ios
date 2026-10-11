@@ -35,10 +35,8 @@ struct EndpointPolicyTests {
         .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant", learning: "zh-en"),
         .studyWordListQueue(listId: "l1", mode: "new", limit: 10, lang: "zh-Hant", learning: "zh-en"),
         .studyAnswer, .studyStats(learning: "zh-en"), .studyReports,
-        .atlasImages(limit: 20), .atlasImage(id: "i1"),
-        .atlasImageRecognize(id: "i1", lang: "zh-Hant", learning: "en"),
-        .atlasImageConfirm(id: "i1", lang: "zh-Hant"),
-        .atlasItemCards(id: "t1"), .atlasItemEnrich(id: "t1"),
+        .atlasImage(id: "i1"),
+        .atlasItemCards(id: "t1"),
         .atlasItemDetail(id: "t1"), .atlasItemWithdraw(id: "t1"),
         .atlasSync(since: nil, limit: 50), .atlasEntitlement,
         .atlasCollections, .atlasCollection(id: "c1"), .atlasCollectionAvatar(id: "c1"),
@@ -66,7 +64,7 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 67)
+        #expect(Self.all.count == 63)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be
@@ -170,16 +168,12 @@ struct EndpointPolicyTests {
         #expect(!EndpointAccess.anonymous.mayRetryUnauthorized)
     }
 
-    @Test("only the AI endpoints get the long timeout")
+    @Test("only the image-processing upload gets the long timeout")
     func slowEndpointsAreExactlyTheAiOnes() {
         let slow = Set(
             Self.all.filter { $0.descriptor.policy.timeout > 15 }.map(\.descriptor.path)
         )
         #expect(slow == [
-            "/api/atlas/images",
-            "/api/atlas/images/i1/recognize",
-            "/api/atlas/items/t1/enrich",
-            "/api/atlas/items/t1/detail",
             "/api/atlas/collections/c1/avatar"
         ])
         for ep in Self.all where !slow.contains(ep.descriptor.path) {
