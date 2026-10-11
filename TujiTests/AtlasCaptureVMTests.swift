@@ -207,14 +207,27 @@ struct AtlasCaptureVMTests {
     }
 
     @Test
-    func candidateLabelPrefersUiGlossAndFallsBackToChinese() throws {
-        let vm = AtlasCaptureVM()
+    func candidateLabelNeverShowsChineseToAJaOrEnInterface() throws {
         let withGloss = try self.candidate(label: "猫", zhHant: "貓", gloss: "cat", confidence: "0.87")
-        #expect(vm.candidateLabel(withGloss) == "猫 · cat · 87%")
-        let chineseFallback = try self.candidate(label: "猫", zhHant: "貓", confidence: "0.87")
-        #expect(vm.candidateLabel(chineseFallback) == "猫 · 貓 · 87%")
-        let noMeaning = try self.candidate(label: "猫", zhHant: nil, confidence: "0.87")
-        #expect(vm.candidateLabel(noMeaning) == "猫 · 87%")
+        let chineseOnly = try self.candidate(label: "猫", zhHant: "貓", confidence: "0.87")
+        func vm(_ ui: String) -> AtlasCaptureVM {
+            self.standUp(language: FakeLanguageContext(uiLang: ui, learningDirection: .zhJa)).vm
+        }
+        #expect(vm("zh-Hant").candidateLabel(chineseOnly) == "猫 · 貓 · 87%")
+        try #expect(vm("zh-Hant").candidateLabel(self.candidate(zhHant: nil, confidence: "0.87")) == "cat · 87%")
+        #expect(vm("en").candidateLabel(withGloss) == "猫 · cat · 87%")
+        #expect(vm("en").candidateLabel(chineseOnly) == "猫 · 87%")
+        #expect(vm("ja").candidateLabel(withGloss) == "猫 · 87%")
+    }
+
+    @Test
+    func aRenamedCardOnAMonolingualFormSendsNoChineseName() throws {
+        let vm = self.standUp(language: FakeLanguageContext(uiLang: "en", learningDirection: .zhEn)).vm
+        try vm.apply(self.candidate(label: "keyboard", zhHant: "鍵盤"), overwrite: true)
+        #expect(vm.confirmPayload.displayZhHant == "鍵盤")
+        vm.lemma = "laptop"
+        #expect(vm.confirmPayload.displayZhHant.isEmpty)
+        #expect(vm.canSubmit)
     }
 
     // MARK: - Over the seam

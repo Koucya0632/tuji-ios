@@ -37,7 +37,9 @@ struct CreditConfirmRequest: Codable, Equatable {
     let operationId: String
     let candidateId: String
     let lemma: String
-    let displayZhHant: String
+    /// nil when the form had no Chinese field and the card was renamed
+    /// (`CaptureCorrectionFields.chineseNameToSend`).
+    let displayZhHant: String?
     /// Only for a cross-language capture; nil keeps the candidate's own.
     let displayGloss: String?
 }

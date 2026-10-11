@@ -459,7 +459,9 @@ struct CreditCaptureView: View {
                     Button { self.model.select(candidate) } label: {
                         VStack(spacing: 2) {
                             Text(candidate.label).font(.tujiBodySm)
-                            Text(candidate.gloss ?? candidate.zhHant).font(.tujiLabel).opacity(0.7)
+                            if let meaning = self.model.candidateMeaning(candidate) {
+                                Text(meaning).font(.tujiLabel).opacity(0.7)
+                            }
                         }
                         .foregroundStyle(selected ? Color.tujiPaper : .tujiInk)
                         .padding(.horizontal, Space.s3)

@@ -324,7 +324,13 @@ final class AtlasCaptureVM {
             primaryLabel: self.primaryLabel.isEmpty ? self.lemma : self.primaryLabel,
             fineLabel: self.fineLabel.isEmpty ? nil : self.fineLabel,
             lemma: self.lemma,
-            displayZhHant: self.displayZhHant,
+            // Empty when withheld: the server reads a blank as "no Chinese name".
+            displayZhHant: CaptureCorrectionFields.chineseNameToSend(
+                second: self.secondField,
+                lemma: self.lemma,
+                suggestedLemma: self.suggestion?.lemma,
+                zhHant: self.displayZhHant
+            ) ?? "",
             displayGloss: self.displayGloss.isEmpty ? nil : self.displayGloss,
             partOfSpeech: self.partOfSpeech.isEmpty ? nil : self.partOfSpeech,
             category: self.category.isEmpty ? nil : self.category
@@ -368,11 +374,11 @@ final class AtlasCaptureVM {
 
     func candidateLabel(_ candidate: AtlasCandidate) -> String {
         let pct = Int((candidate.confidence * 100).rounded())
-        // Cross-language ja/en captures carry the interface-language meaning
-        // in `gloss`; Chinese captures have no gloss and fall back to zhHant.
-        let meaning = [candidate.gloss, candidate.zhHant]
-            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .first { !$0.isEmpty }
+        let meaning = CaptureCorrectionFields.candidateMeaning(
+            second: self.secondField,
+            zhHant: candidate.zhHant,
+            gloss: candidate.gloss
+        )
         if let meaning {
             return "\(candidate.label) · \(meaning) · \(pct)%"
         }

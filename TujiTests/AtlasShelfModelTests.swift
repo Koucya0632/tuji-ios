@@ -141,11 +141,12 @@ struct AtlasShelfModelTests {
         let pending = try #require(model.rows.first { $0.id == "pending" })
 
         #expect(done.title == "ねこ")
-        #expect(done.subtitle == "中文-t1")
+        #expect(done.subtitle(ui: .zhHant) == "中文-t1")
+        #expect(done.subtitle(ui: .ja) == nil)
         // 未完成 next to 已完成 was the contradiction; the fallback now comes
         // from the same status the chip shows.
         #expect(pending.title == pending.image.placeholderTitle)
-        #expect(pending.subtitle == nil)
+        #expect(pending.subtitle(ui: .zhHant) == nil)
     }
 
     // MARK: - State

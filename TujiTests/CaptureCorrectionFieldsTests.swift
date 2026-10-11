@@ -54,4 +54,63 @@ struct CaptureCorrectionFieldsTests {
         }
         #expect(Set(needing) == ["ja-en", "en-ja"])
     }
+
+    @Test
+    func aChipNeverShowsChineseToAJaOrEnInterface() {
+        // 英文介面學英文曾在每個候選字下面看到中文——表單上根本沒有的欄位。
+        #expect(CaptureCorrectionFields.candidateMeaning(second: .chineseName, zhHant: "貓", gloss: "cat") == "貓")
+        #expect(CaptureCorrectionFields.candidateMeaning(second: .gloss, zhHant: "貓", gloss: "cat") == "cat")
+        #expect(CaptureCorrectionFields.candidateMeaning(second: .gloss, zhHant: "貓", gloss: nil) == nil)
+        #expect(CaptureCorrectionFields.candidateMeaning(second: .hidden, zhHant: "貓", gloss: "cat") == nil)
+        #expect(CaptureCorrectionFields.candidateMeaning(second: .chineseName, zhHant: "  ", gloss: nil) == nil)
+    }
+
+    @Test
+    func aRenameWithoutTheChineseFieldWithholdsTheChineseName() {
+        for second in [CaptureSecondField.gloss, .hidden] {
+            // Untouched: the candidate's Chinese name still describes the card.
+            #expect(
+                CaptureCorrectionFields.chineseNameToSend(
+                    second: second, lemma: "keyboard ", suggestedLemma: "keyboard", zhHant: "鍵盤"
+                ) == "鍵盤"
+            )
+            // Renamed: 鍵盤 now names the thing the user corrected away from.
+            #expect(
+                CaptureCorrectionFields.chineseNameToSend(
+                    second: second, lemma: "laptop", suggestedLemma: "keyboard", zhHant: "鍵盤"
+                ) == nil
+            )
+        }
+        // A Chinese interface edits the name itself, so whatever is there is sent.
+        #expect(
+            CaptureCorrectionFields.chineseNameToSend(
+                second: .chineseName, lemma: "laptop", suggestedLemma: "keyboard", zhHant: "鍵盤"
+            ) == "鍵盤"
+        )
+        // No candidate was ever applied: nothing to be stale against.
+        #expect(
+            CaptureCorrectionFields.chineseNameToSend(
+                second: .hidden, lemma: "laptop", suggestedLemma: nil, zhHant: "筆電"
+            ) == "筆電"
+        )
+    }
+
+    @Test
+    func anItemsLocalNameFollowsTheInterfaceLanguage() {
+        let item = AtlasFixtures.item(
+            "t1",
+            imageId: "i1",
+            language: .en,
+            lemma: "cat",
+            displayJa: "猫",
+            displayEn: "cat"
+        )
+        #expect(item.localName(ui: .zhHant) == "中文-t1")
+        #expect(item.localName(ui: .ja) == "猫")
+        // Monolingual: the lemma is already the name.
+        #expect(item.localName(ui: .en) == nil)
+        // Not filled yet (or an older server): nothing, rather than Chinese.
+        let bare = AtlasFixtures.item("t2", imageId: "i2", language: .en, lemma: "cat")
+        #expect(bare.localName(ui: .ja) == nil)
+    }
 }
