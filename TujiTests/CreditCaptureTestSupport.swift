@@ -21,7 +21,7 @@ final class FakeCreditCaptureAPI: CreditCaptureAPI {
     struct Quoted: Equatable {
         let mode: CreditCaptureMode
         let target: TargetLanguage
-        let gloss: String?
+        let uiLanguage: UILanguage
     }
 
     private(set) var quotes: [Quoted] = []
@@ -55,11 +55,11 @@ final class FakeCreditCaptureAPI: CreditCaptureAPI {
         imageId _: String,
         mode: CreditCaptureMode,
         target: TargetLanguage,
-        glossLanguage: String?
+        uiLanguage: UILanguage
     ) async throws
         -> CreditQuote
     {
-        self.quotes.append(Quoted(mode: mode, target: target, gloss: glossLanguage))
+        self.quotes.append(Quoted(mode: mode, target: target, uiLanguage: uiLanguage))
         return CreditQuote(
             id: "quote-\(self.quotes.count)",
             points: self.quotePoints,

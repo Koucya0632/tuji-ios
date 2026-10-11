@@ -40,13 +40,6 @@ enum CaptureCorrectionFields {
         }
     }
 
-    /// The language a recognition should also name its candidates in — the one
-    /// the gloss field is edited in — or nil when the form has no gloss field.
-    /// Asked on the way into a paid quote; it used to be restated in a `View`.
-    static func glossLanguage(ui: UILanguage, target: TargetLanguage) -> String? {
-        self.second(ui: ui, target: target) == .gloss ? ui.rawValue : nil
-    }
-
     /// The meaning a candidate chip shows under its label: whatever the form's
     /// second field would hold. A ja/en interface never falls back to the
     /// Chinese name — it is not this user's language, and it is not on the form.

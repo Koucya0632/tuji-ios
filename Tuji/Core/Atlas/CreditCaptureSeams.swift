@@ -37,11 +37,15 @@ protocol CreditCaptureAPI {
     func image(id: String) async throws -> AtlasImageSummary
     /// Nothing leaves the phone before this: the photo is uploaded on 開始識別.
     func upload(photo: Data) async throws -> AtlasImageSummary
+    /// `uiLanguage` is the interface the capture is made on. The server derives
+    /// the rest from it — which gloss the run asks for, which field the form
+    /// shows (`CreditOperation.correctionField`). The client used to decide the
+    /// gloss language itself.
     func quote(
         imageId: String,
         mode: CreditCaptureMode,
         target: TargetLanguage,
-        glossLanguage: String?
+        uiLanguage: UILanguage
     ) async throws
         -> CreditQuote
     /// Idempotent under `key`: a resend answers with the operation it made.
@@ -90,7 +94,7 @@ struct LiveCreditCaptureAPI: CreditCaptureAPI {
         imageId: String,
         mode: CreditCaptureMode,
         target: TargetLanguage,
-        glossLanguage: String?
+        uiLanguage: UILanguage
     ) async throws
         -> CreditQuote
     {
@@ -98,7 +102,7 @@ struct LiveCreditCaptureAPI: CreditCaptureAPI {
             let imageId: String
             let feature: String
             let targetLanguage: String
-            let glossLanguage: String?
+            let uiLanguage: String
         }
         return try await self.api.post(
             .aiQuotes,
@@ -106,7 +110,7 @@ struct LiveCreditCaptureAPI: CreditCaptureAPI {
                 imageId: imageId,
                 feature: mode.feature,
                 targetLanguage: target.rawValue,
-                glossLanguage: glossLanguage
+                uiLanguage: uiLanguage.rawValue
             )
         )
     }

@@ -141,19 +141,15 @@ struct CreditCaptureModelTests {
     }
 
     @Test
-    func theGlossLanguageSentWithAPaidQuoteComesFromTheFormGrid() async {
-        // It used to be worked out in a View computed property.
-        for (ui, target, expected) in [
-            ("zh-Hant", TargetLanguage.en, String?.none),
-            ("en", .ja, "en"),
-            ("ja", .en, "ja"),
-            ("en", .en, nil),
-            ("ja", .ja, nil)
-        ] {
-            let s = self.stand(language: FakeLanguageContext(uiLang: ui, learningDirection: .zhEn))
+    func aPaidQuoteSaysWhichInterfaceItWasMadeOnAndLeavesTheRestToTheServer() async {
+        // The gloss language used to be worked out here — at one point inside a
+        // View — and the server took the client's word for it.
+        for ui in UILanguage.allCases {
+            let s = self.stand(language: FakeLanguageContext(uiLang: ui.rawValue, learningDirection: .zhEn))
             await self.ready(s)
-            await s.model.start(language: target)
-            #expect(s.api.quotes.first?.gloss == expected, "ui \(ui), learning \(target)")
+            await s.model.start(language: .ja)
+            #expect(s.api.quotes.first?.uiLanguage == ui)
+            #expect(s.api.quotes.first?.target == .ja)
         }
     }
 
