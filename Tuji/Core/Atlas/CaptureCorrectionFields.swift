@@ -46,4 +46,37 @@ enum CaptureCorrectionFields {
     static func needsGloss(ui: UILanguage, target: TargetLanguage) -> Bool {
         self.second(ui: ui, target: target) == .gloss
     }
+
+    /// The meaning a candidate chip shows under its label: whatever the form's
+    /// second field would hold. A ja/en interface never falls back to the
+    /// Chinese name — it is not this user's language, and it is not on the form.
+    static func candidateMeaning(second: CaptureSecondField, zhHant: String?, gloss: String?) -> String? {
+        let value: String? = switch second {
+        case .chineseName: zhHant
+        case .gloss: gloss
+        case .hidden: nil
+        }
+        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+            return nil
+        }
+        return trimmed
+    }
+
+    /// The Chinese name a confirm sends, or nil to send none.
+    ///
+    /// Without the Chinese field on screen the user cannot correct it, so once
+    /// they rename the card the candidate's Chinese name describes the object
+    /// they corrected away from. The server regenerates it from the new name.
+    static func chineseNameToSend(
+        second: CaptureSecondField,
+        lemma: String,
+        suggestedLemma: String?,
+        zhHant: String
+    )
+        -> String?
+    {
+        guard second != .chineseName, let suggestedLemma else { return zhHant }
+        let trim = { (s: String) in s.trimmingCharacters(in: .whitespacesAndNewlines) }
+        return trim(lemma) == trim(suggestedLemma) ? zhHant : nil
+    }
 }

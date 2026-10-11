@@ -35,7 +35,9 @@ enum AtlasFixtures {
         lemma: String? = nil,
         updatedAt: String? = "2026-01-01T00:00:00Z",
         deletedAt: String? = nil,
-        reviewStatus: String? = nil
+        reviewStatus: String? = nil,
+        displayJa: String? = nil,
+        displayEn: String? = nil
     )
         -> AtlasItem
     {
@@ -48,6 +50,8 @@ enum AtlasFixtures {
             fineLabel: nil,
             lemma: lemma ?? "lemma-\(id)",
             displayZhHant: "中文-\(id)",
+            displayJa: displayJa,
+            displayEn: displayEn,
             partOfSpeech: nil,
             cefrLevel: nil,
             pronunciation: nil,

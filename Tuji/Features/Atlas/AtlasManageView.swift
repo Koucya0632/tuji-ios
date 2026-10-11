@@ -462,7 +462,7 @@ private struct AtlasCardsManagementPane: View {
                     .font(.tujiBodySm(.strong))
                     .foregroundStyle(.tujiInk)
                     .lineLimit(1)
-                if let subtitle = row.subtitle {
+                if let subtitle = row.subtitle(ui: UILanguage(code: SettingsStore.shared.uiLang)) {
                     Text(subtitle)
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
@@ -529,7 +529,9 @@ private struct AtlasManageDetailView: View {
 
                 if let item {
                     self.detailRow("圖片名稱", item.lemma)
-                    self.detailRow("中文名稱", item.displayZhHant)
+                    if let name = item.localName(ui: UILanguage(code: SettingsStore.shared.uiLang)) {
+                        self.detailRow("中文名稱", name)
+                    }
                     if let fine = item.fineLabel, !fine.isEmpty { self.detailRow("細分類", fine) }
                     if let pos = item.partOfSpeech, !pos.isEmpty { self.detailRow("詞性", pos) }
                     if let cat = item.category, !cat.isEmpty { self.detailRow("分類", cat) }

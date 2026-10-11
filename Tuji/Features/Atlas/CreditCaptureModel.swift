@@ -383,6 +383,14 @@ final class CreditCaptureModel {
         self.suggestion = .init(lemma: self.lemma, zhHant: self.displayZhHant, gloss: self.displayGloss)
     }
 
+    func candidateMeaning(_ candidate: CreditCandidate) -> String? {
+        CaptureCorrectionFields.candidateMeaning(
+            second: self.secondField,
+            zhHant: candidate.zhHant,
+            gloss: candidate.gloss
+        )
+    }
+
     private func clearSelection() {
         self.selectedCandidateId = nil
         self.lemma = ""
@@ -435,7 +443,12 @@ final class CreditCaptureModel {
                 operationId: operation.id,
                 candidateId: candidate.id,
                 lemma: Self.trim(self.lemma),
-                displayZhHant: Self.trim(self.displayZhHant),
+                displayZhHant: CaptureCorrectionFields.chineseNameToSend(
+                    second: self.secondField,
+                    lemma: self.lemma,
+                    suggestedLemma: self.suggestion?.lemma,
+                    zhHant: Self.trim(self.displayZhHant)
+                ),
                 displayGloss: gloss
             ),
             imageId: operation.imageId,

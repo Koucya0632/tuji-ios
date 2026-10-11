@@ -188,6 +188,10 @@ struct AtlasItem: Decodable, Hashable, Identifiable {
     let fineLabel: String?
     let lemma: String
     let displayZhHant: String
+    /// The item's short name in Japanese / English. nil until 補充 fills them,
+    /// and from a server that predates the fields.
+    let displayJa: String?
+    let displayEn: String?
     let partOfSpeech: String?
     let cefrLevel: String?
     let pronunciation: String?
@@ -205,6 +209,23 @@ struct AtlasItem: Decodable, Hashable, Identifiable {
     let createdAt: String?
     let updatedAt: String?
     let deletedAt: String?
+}
+
+extension AtlasItem {
+    /// The item's name in the interface language, for the line under its lemma.
+    /// Same grid as the capture form's second field: a ja/en interface never
+    /// shows the Chinese name, and when the lemma is already in the interface
+    /// language there is nothing to add.
+    func localName(ui: UILanguage) -> String? {
+        let value: String? = switch CaptureCorrectionFields.second(ui: ui, target: self.targetLanguage) {
+        case .chineseName: self.displayZhHant
+        case .gloss: ui == .ja ? self.displayJa : self.displayEn
+        case .hidden: nil
+        }
+        // A name equal to the lemma is the server's "no Chinese name yet" stand-in.
+        guard let value, !value.isEmpty, value != self.lemma else { return nil }
+        return value
+    }
 }
 
 struct AtlasItemResponse: Decodable {

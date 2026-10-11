@@ -26,7 +26,7 @@ struct LiveCreditCardConfirming: CreditCardConfirming {
         struct Payload: Encodable {
             let candidateId: String
             let lemma: String
-            let displayZhHant: String
+            let displayZhHant: String?
             let displayGloss: String?
         }
         struct Confirm: Decodable {

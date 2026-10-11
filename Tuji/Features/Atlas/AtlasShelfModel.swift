@@ -46,9 +46,8 @@ struct AtlasShelfRow: Identifiable, Hashable {
         self.item?.lemma ?? self.image.placeholderTitle
     }
 
-    var subtitle: String? {
-        guard let zh = self.item?.displayZhHant, !zh.isEmpty else { return nil }
-        return zh
+    func subtitle(ui: UILanguage) -> String? {
+        self.item?.localName(ui: ui)
     }
 
     var statusLabel: String {
