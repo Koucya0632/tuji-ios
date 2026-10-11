@@ -315,10 +315,7 @@ final class CreditCaptureModel {
             imageId: imageId,
             mode: mode,
             target: target,
-            glossLanguage: CaptureCorrectionFields.glossLanguage(
-                ui: UILanguage(code: self.language.uiLang),
-                target: target
-            )
+            uiLanguage: UILanguage(code: self.language.uiLang)
         )
     }
 

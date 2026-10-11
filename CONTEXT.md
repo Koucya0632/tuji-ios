@@ -57,13 +57,15 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   so a full atlas wore a retry's costume.
 - **校正欄位 (`CaptureCorrectionFields`)** — which second field the correction form asks
   for (`chineseName` / `gloss` / `hidden`), over the {UILanguage × TargetLanguage} grid —
-  and everything that is the same question read another way: the gloss language a paid
-  quote asks for (`glossLanguage`), the meaning under a candidate chip (`candidateMeaning`),
+  and everything that is the same question read another way: the meaning under a
+  candidate chip (`candidateMeaning`),
   the Chinese name a confirm sends (`chineseNameToSend` — withheld once the card is renamed
   on a form that never showed it), and the line under a card on the shelf
   (`AtlasItem.localName`). Each of those was answered on its own at some point, three of
   them inside a `View`. The server holds the same grid as `captureForm`
-  (tuji-web `lib/atlas/gloss.ts`) and tells a run which field it is (`correctionField`).
+  (tuji-web `lib/atlas/gloss.ts`): a quote carries only the interface language, the server
+  decides which gloss the run asks for and tells the run which field it is
+  (`correctionField`). The client no longer states a gloss language at all.
 - **校正表單 (`CaptureCorrectionForm`)** — what the user settles on before 確認並生成卡片:
   the chosen candidate and the names they may have corrected. A value, so "which fields
   still hold the AI's guess", "is it complete" and "what does the confirm send" are asked
