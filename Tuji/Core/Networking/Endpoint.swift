@@ -54,12 +54,8 @@ enum Endpoint {
 
     // MARK: - Custom Atlas (auth-protected)
 
-    case atlasImages(limit: Int)
     case atlasImage(id: String)
-    case atlasImageRecognize(id: String, lang: String, learning: String)
-    case atlasImageConfirm(id: String, lang: String)
     case atlasItemCards(id: String)
-    case atlasItemEnrich(id: String)
     case atlasItemDetail(id: String)
     case atlasItemWithdraw(id: String)
     case atlasSync(since: String?, limit: Int)
@@ -291,38 +287,13 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/study/reports", policy: .privateFresh)
 
         // MARK: Custom Atlas
-        case let .atlasImages(limit):
-            EndpointDescriptor(
-                path: "/api/atlas/images",
-                queryItems: [URLQueryItem(name: "limit", value: String(limit))],
-                policy: .privateFreshSlow
-            )
         case let .atlasImage(id):
             EndpointDescriptor(path: "/api/atlas/images/\(id)", policy: .privateFresh)
-        case let .atlasImageRecognize(id, lang, learning):
-            // Recognition's candidate gloss + target labels follow the user's
-            // live UI language and learning direction, not the debounced
-            // server settings — otherwise the meaning field comes back empty.
-            EndpointDescriptor(
-                path: "/api/atlas/images/\(id)/recognize",
-                queryItems: [
-                    URLQueryItem(name: "lang", value: lang),
-                    URLQueryItem(name: "learning", value: learning)
-                ],
-                policy: .privateFreshSlow
-            )
-        case let .atlasImageConfirm(id, lang):
-            EndpointDescriptor(
-                path: "/api/atlas/images/\(id)/confirm",
-                queryItems: [URLQueryItem(name: "lang", value: lang)],
-                policy: .privateFresh
-            )
         case let .atlasItemCards(id):
             EndpointDescriptor(path: "/api/atlas/items/\(id)/cards", policy: .privateFresh)
-        case let .atlasItemEnrich(id):
-            EndpointDescriptor(path: "/api/atlas/items/\(id)/enrich", policy: .privateFreshSlow)
         case let .atlasItemDetail(id):
-            EndpointDescriptor(path: "/api/atlas/items/\(id)/detail", policy: .privateFreshSlow)
+            // A plain read now: the server no longer enriches on open.
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/detail", policy: .privateFresh)
         case let .atlasItemWithdraw(id):
             EndpointDescriptor(path: "/api/atlas/items/\(id)/withdraw", policy: .privateFresh)
         case let .atlasSync(since, limit):

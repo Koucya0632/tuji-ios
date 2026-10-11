@@ -1,5 +1,9 @@
 # 自製圖鑑的補充花費，每個項目都有一個有限的上限
 
+> **2026-10-11 部分被 [ADR-0016](0016-ai-runs-only-on-credits.md) 取代**：補充現在只在確認時由
+> 罐頭點數的 fulfillment 跑一次。「詳情 GET 保留付費副作用」與「升版會重新補充」兩點不再
+> 成立；`shouldEnrichAtlasItem` 已不存在。有限上限這個核心決定仍然有效。
+
 補充（enrichment，`enrichAtlasItem`）替一個自製圖鑑項目生出釋義、助記、詞源與各語言
 gloss。它一次是三到四次付費模型呼叫，不是一次：`enrichWord`、日文讀音（僅 JA 且缺讀音
 時）、`generateJapaneseAtlasDefinition`、`generateAtlasGlossPack`。

@@ -1,7 +1,7 @@
-// 生成佇列 — the durable tail of the 自製圖鑑 capture flow. Once the user confirms
-// a name in AtlasCaptureView, confirm → createCards → enrich → one reconciling
-// read runs here instead of blocking the sheet. The 卡片 grid renders these jobs
-// as 生成中 tiles at the head of its own grid.
+// 生成佇列 — the durable tail of a 拍照新增 capture. Once the user confirms a
+// candidate in `CreditCaptureView`, confirm → createCards → wait for the server's
+// 補充 → one reconciling read runs here instead of blocking the sheet. The 卡片
+// grid renders these jobs as 生成中 tiles at the head of its own grid.
 //
 // Jobs are owned by this @MainActor singleton, so they keep running after the
 // capture cover is dismissed. Completion refreshes counters in place via
@@ -10,16 +10,16 @@
 //
 // Weak-network resilience: jobs are journalled, so an app kill mid-flight does
 // not lose committed work — on launch the queue restores and resumes them.
-// confirm is a plain INSERT server-side (not idempotent), so once it succeeds
-// the itemId is checkpointed; a resumed run then skips confirm and continues
-// from createCards (which IS idempotent).
+// **Every step is safe to repeat.** The confirm is bound to its operation
+// server-side and answers a resend with the card it already made, and
+// createCards is idempotent, so a resumed job simply runs again from the top.
+// The pre-credit flow's confirm was a plain INSERT and needed an itemId
+// checkpoint to survive a resume; that flow and its checkpoint are gone
+// (docs/adr/0016).
 //
-// Everything the queue reaches now arrives through an init parameter. It used to
-// reach `AtlasStore.shared` at four call sites and `FileManager` at five, behind
-// a `private init` — so the checkpoint rule above, the only thing standing
-// between a resumed run and a duplicate 自製圖鑑 card, was verified by nothing.
-// ADR-0001's amendment already said it: a seam defaulted to `.shared` that no
-// test can construct is not a seam. Production still goes through `.shared`.
+// Everything the queue reaches arrives through an init parameter. ADR-0001's
+// amendment: a seam defaulted to `.shared` that no test can construct is not a
+// seam. Production still goes through `.shared`.
 
 import OSLog
 import Observation
@@ -41,54 +41,27 @@ final class AtlasCaptureQueue {
         /// grid tile understood.
         fileprivate(set) var progress: CaptureProgress
 
-        fileprivate let payload: AtlasConfirmPayload?
-        /// A 罐頭點數 job: confirms through the operation, and the server fills
-        /// the card in on its own.
-        fileprivate let credit: CreditConfirmRequest?
-        /// Set once confirm succeeds, so a resumed run never re-confirms.
-        fileprivate var itemId: String?
+        /// What the user confirmed. The operation it names is what makes a
+        /// resend safe.
+        fileprivate let credit: CreditConfirmRequest
 
         fileprivate init(record: CaptureJobRecord, thumbnail: UIImage?) {
             self.id = record.id
             self.imageId = record.imageId
             self.lemma = record.lemma
             self.thumbnail = thumbnail
-            self.payload = record.payload
             self.credit = record.credit
-            self.itemId = record.itemId
-            self.progress = .generating(Self.startingFraction(resuming: record.itemId != nil))
+            self.progress = .generating(Self.startingFraction)
         }
 
         fileprivate var record: CaptureJobRecord {
-            CaptureJobRecord(
-                id: self.id,
-                imageId: self.imageId,
-                payload: self.payload,
-                lemma: self.lemma,
-                itemId: self.itemId,
-                credit: self.credit
-            )
+            CaptureJobRecord(id: self.id, imageId: self.imageId, lemma: self.lemma, credit: self.credit)
         }
 
-        /// A job with a checkpoint has already confirmed. Restarting it from the
-        /// top would re-announce work the server has finished — the bar would
-        /// walk back to 15% for a card that already exists.
-        fileprivate static func startingFraction(resuming: Bool) -> Double {
-            resuming ? 0.5 : 0.15
-        }
+        fileprivate static let startingFraction = 0.15
     }
 
     private(set) var jobs: [Job] = []
-
-    /// Captures committed but not yet counted by the server's usage snapshot.
-    /// `AtlasCapacityReadout` folds this in — a queued job has already claimed a
-    /// 自製圖鑑 slot, and the gate that ignored them let a second capture through
-    /// at capacity − 1 only to die as a retry-forever tile.
-    /// A 罐頭點數 job is left out: the server reserved its slot when the
-    /// recognition was accepted, so its snapshot already counts it.
-    var inFlightCount: Int {
-        self.jobs.count(where: { $0.credit == nil && !$0.progress.isFailed && $0.progress != .ready })
-    }
 
     private let log = Logger(subsystem: "app.tuji.ios", category: "atlas-capture-queue")
     /// Signpost the confirm→cards→enrich tail so the pipeline is measurable in
@@ -137,41 +110,22 @@ final class AtlasCaptureQueue {
         self.restore()
     }
 
+    /// A result the user confirmed.
+    ///
     /// The returned task is the job. Production ignores it — the queue owns the
     /// lifetime, which is the whole point of handing work here — but a caller
     /// that wants to observe completion can, and a test that cannot wait for a
     /// pipeline can only assert on it by polling, which is how CI flakes start.
     @discardableResult
-    func enqueue(imageId: String, payload: AtlasConfirmPayload, thumbnail: UIImage?) -> Task<Void, Never> {
-        let record = CaptureJobRecord(
-            id: UUID(),
-            imageId: imageId,
-            payload: payload,
-            lemma: payload.lemma,
-            itemId: nil
-        )
-        return self.add(record, thumbnail: thumbnail)
-    }
-
-    /// A 罐頭點數 result the user confirmed. Same tiles, same journal; only the
-    /// confirm and the fill-in differ.
-    @discardableResult
     func enqueue(credit: CreditConfirmRequest, imageId: String, thumbnail: UIImage?) -> Task<Void, Never> {
-        let record = CaptureJobRecord(
-            id: UUID(),
-            imageId: imageId,
-            payload: nil,
-            lemma: credit.lemma,
-            itemId: nil,
-            credit: credit
-        )
+        let record = CaptureJobRecord(id: UUID(), imageId: imageId, lemma: credit.lemma, credit: credit)
         return self.add(record, thumbnail: thumbnail)
     }
 
     /// Operations whose confirm this queue owns. 拍照新增 must not reopen one as
     /// a result still waiting to be picked.
     var creditOperationIds: Set<String> {
-        Set(self.jobs.compactMap(\.credit?.operationId))
+        Set(self.jobs.map(\.credit.operationId))
     }
 
     private func add(_ record: CaptureJobRecord, thumbnail: UIImage?) -> Task<Void, Never> {
@@ -185,9 +139,7 @@ final class AtlasCaptureQueue {
     @discardableResult
     func retry(_ id: UUID) -> Task<Void, Never>? {
         guard let job = self.jobs.first(where: { $0.id == id }), job.progress.canRetry else { return nil }
-        self.update(id) {
-            $0.progress = .generating(Job.startingFraction(resuming: $0.itemId != nil))
-        }
+        self.update(id) { $0.progress = .generating(Job.startingFraction) }
         return self.start(id)
     }
 
@@ -237,39 +189,14 @@ final class AtlasCaptureQueue {
         let interval = self.signposter.beginInterval("capture-job", id: signpostID)
         defer { self.signposter.endInterval("capture-job", interval) }
         do {
-            let itemId: String
-            var fulfillment: String?
-            if let credit = job.credit {
-                // Safe to resend on resume: the server returns the card it bound.
-                let confirmed = try await self.credits.confirm(credit)
-                itemId = confirmed.itemId
-                fulfillment = confirmed.fulfillmentState
-                self.update(id) { $0.itemId = confirmed.itemId }
-                self.checkpoint(id)
-                self.signposter.emitEvent("confirmed", id: signpostID)
-            } else if let existing = job.itemId {
-                // confirm already succeeded in a prior run — reuse the item so a
-                // resume never creates a duplicate.
-                self.signposter.emitEvent("resume", id: signpostID)
-                itemId = existing
-            } else if let payload = job.payload {
-                let item = try await self.cards.confirm(imageId: job.imageId, payload: payload)
-                itemId = item.id
-                self.update(id) { $0.itemId = item.id }
-                self.checkpoint(id) // before the (idempotent) tail
-                self.signposter.emitEvent("confirmed", id: signpostID)
-            } else {
-                throw CaptureJobError.unreadableRecord
-            }
+            // Safe to resend on resume: the server returns the card it bound.
+            let confirmed = try await self.credits.confirm(job.credit)
+            self.signposter.emitEvent("confirmed", id: signpostID)
             self.update(id) { $0.progress = .generating(0.5) }
-            try await self.cards.generateCards(forItem: itemId)
+            try await self.cards.generateCards(forItem: confirmed.itemId)
             self.signposter.emitEvent("carded", id: signpostID)
             self.update(id) { $0.progress = .enriching(0.7) }
-            if let credit = job.credit {
-                await self.awaitFulfillment(credit.operationId, from: fulfillment)
-            } else {
-                try? await self.cards.enrich(itemId: itemId)
-            }
+            await self.awaitFulfillment(job.credit.operationId, from: confirmed.fulfillment)
             guard !Task.isCancelled else { return }
             self.update(id) { $0.progress = .enriching(0.9) }
             // One reconciling read for the atlas list, then the shared policy for
@@ -285,22 +212,20 @@ final class AtlasCaptureQueue {
             self.signposter.emitEvent("failed", id: signpostID)
             self.log.error("capture job failed: \(error.localizedDescription, privacy: .public)")
             self.update(id) { $0.progress = .failed(CaptureFailure(error)) }
-            // Keep the journalled record so the job survives an app kill and can
-            // be retried (from the itemId checkpoint if confirm already ran).
+            // Keep the journalled record so the job survives an app kill and
+            // can be retried.
         }
     }
 
     /// Waits out the server's fill-in so the finished tile hands over a card
     /// that already has its reading and definitions. A poll that fails is just
     /// asked again; the deadline is the only way out besides the fill-in ending.
-    private func awaitFulfillment(_ operationId: String, from state: String?) async {
-        if let state, !CreditOperation.isEnrichingState(state) { return }
+    private func awaitFulfillment(_ operationId: String, from state: CreditOperation.Fulfillment) async {
+        guard state.isOpen else { return }
         let deadline = ContinuousClock.now + self.enrichmentDeadline
         while ContinuousClock.now < deadline {
             do { try await Task.sleep(for: self.enrichmentPoll) } catch { return }
-            if let state = try? await self.credits.fulfillmentState(operationId: operationId),
-               !CreditOperation.isEnrichingState(state)
-            {
+            if let state = try? await self.credits.fulfillment(operationId: operationId), !state.isOpen {
                 return
             }
         }
@@ -312,16 +237,7 @@ final class AtlasCaptureQueue {
         mutate(&self.jobs[idx])
     }
 
-    /// Re-journal a job whose record changed — in practice, only ever to write
-    /// the itemId checkpoint. The thumbnail is already on disk from `enqueue`.
-    private func checkpoint(_ id: UUID) {
-        guard let job = self.jobs.first(where: { $0.id == id }) else { return }
-        self.journal.save(job.record, thumbnail: nil)
-    }
-
-    /// Reload jobs left over from a previous session and resume them. confirm is
-    /// skipped when an itemId checkpoint exists, so createCards (idempotent) is
-    /// the worst that can repeat.
+    /// Reload jobs left over from a previous session and run them again.
     private func restore() {
         for entry in self.journal.restore() {
             let job = Job(
@@ -332,10 +248,4 @@ final class AtlasCaptureQueue {
             _ = self.start(job.id)
         }
     }
-}
-
-/// A journalled job carrying neither kind's confirm. Only a hand-edited or
-/// half-written file can produce one; it fails as retryable like any other.
-enum CaptureJobError: Error {
-    case unreadableRecord
 }

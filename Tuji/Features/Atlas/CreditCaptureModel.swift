@@ -3,19 +3,36 @@ import Observation
 import os
 import UIKit
 
-/// 點數版拍照新增：選模式 → 拍照/裁切（只留在本機）→ 開始識別（上傳、報價、扣點一次做完）→ 選候選建卡。
+/// 拍照新增：選模式 → 拍照/裁切（只留在本機）→ 開始識別（上傳、報價、扣點一次做完）→ 選候選建卡。
 /// 普通識別完成後，同一張照片可補差價升級成高精度；價格由伺服器決定，報價和畫面上的價格不符就停下來讓使用者確認。
+///
+/// One paid recognition, start to card. The screen renders `panel` and calls
+/// the methods below; everything that decides whether points move — and the
+/// polling that watches a run — lives here, behind seams a test can stand on
+/// (`CreditCaptureSeams.swift`).
 @MainActor
 @Observable
 final class CreditCaptureModel {
-    enum Mode: String { case primary, precision
-        var feature: String {
-            self == .primary ? "atlas.recognize.primary" : "atlas.recognize.precision"
-        }
-    }
+    typealias Mode = CreditCaptureMode
 
-    struct Pending: Codable, Equatable { let quoteId: String
-        let key: String
+    /// What the sheet shows. One answer, derived in one place — the screen used
+    /// to work it out with a ladder of `if`s over six properties.
+    enum Panel {
+        /// Choose 普通／高精度 and a photo.
+        case source
+        /// A photo is chosen; 開始識別 has not been pressed, or its upload and
+        /// quote are under way (`busy`).
+        case ready
+        case recognizing(CreditOperation)
+        /// A relaunch found an accept nobody answered. Resending it is safe.
+        case unansweredAccept
+        /// The server priced differently from the screen: ask, don't charge.
+        case priceChanged(CreditQuote)
+        /// The run ended without a result; the points were never taken.
+        case released(CreditOperation)
+        /// The card exists but its review cards did not sync.
+        case cardUnsynced(CreditOperation)
+        case result(CreditOperation)
     }
 
     var mode: Mode = .primary
@@ -28,21 +45,25 @@ final class CreditCaptureModel {
     private(set) var quote: CreditQuote?
     private(set) var operation: CreditOperation?
     private(set) var history: [CreditOperation] = []
-    private(set) var pending: Pending?
+    private(set) var pending: PendingAccept?
     private(set) var busy = false
     private(set) var message: String?
-    private(set) var selectedCandidateId: String?
+    /// 校正表單 for the result on screen.
+    var form = CaptureCorrectionForm()
 
-    // MARK: Correction form (same fields as the free flow)
-
-    var lemma = ""
-    var displayZhHant = ""
-    /// The ja/en meaning a cross-language capture edits; empty otherwise.
-    var displayGloss = ""
-    /// What the chosen candidate put in each field, so the form can mark the AI's guess.
-    private(set) var suggestion: AtlasCaptureVM.Suggestion?
-    private let api: APIClient
+    private let api: any CreditCaptureAPI
     private let queue: AtlasCaptureQueue
+    /// Who is signed in, asked live: an answer that arrives after a sign-out or
+    /// an account switch must not land on the next account's screen.
+    private let account: @MainActor () -> UUID?
+    private let pendingJournal: any PendingAcceptJournal
+    private let language: any LanguageContext
+    /// The lemmas this account already has cards for.
+    private let ownedLemmas: @MainActor () -> [String]
+    private let cards: any AtlasCardGenerating
+    private let mutations: any AtlasMutationRefreshing
+    private let sleep: (Duration) async throws -> Void
+
     private var owner: UUID?
     private var generation = 0
     /// Consecutive failed polls; one dropped request mid-run is not worth a banner.
@@ -53,14 +74,77 @@ final class CreditCaptureModel {
         tujiLocalized("暫時無法連線，請重試同步。")
     }
 
-    private var journalKey: String? {
-        guard let owner, let catalog else { return nil }
-        return "tuji.credit-operation.\(owner.uuidString.lowercased()).\(catalog.environment)"
-    }
+    /// The only answers to an accept that mean "this accept is dead": anything
+    /// else leaves the outcome unknown, and an unknown accept is kept so the
+    /// same key can be resent.
+    static let acceptRejections: Set<String> = [
+        "quote_expired", "insufficient_credits", "capacity_full", "image_changed",
+        "operation_busy", "idempotency_conflict", "credits_reconciliation_required"
+    ]
 
-    init(api: APIClient = .shared, queue: AtlasCaptureQueue = .shared) {
+    init(
+        api: any CreditCaptureAPI = LiveCreditCaptureAPI(),
+        queue: AtlasCaptureQueue = .shared,
+        account: @escaping @MainActor () -> UUID? = {
+            if case let .signedIn(user) = AuthService.shared.state { return user.id }
+            return nil
+        },
+        pendingJournal: any PendingAcceptJournal = DefaultsPendingAcceptJournal(),
+        language: any LanguageContext = SettingsStore.shared,
+        ownedLemmas: @escaping @MainActor () -> [String] = { AtlasStore.shared.items.map(\.lemma) },
+        cards: any AtlasCardGenerating = AtlasStore.shared,
+        mutations: any AtlasMutationRefreshing = LiveAtlasMutationRefresher(),
+        sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
+    ) {
         self.api = api
         self.queue = queue
+        self.account = account
+        self.pendingJournal = pendingJournal
+        self.language = language
+        self.ownedLemmas = ownedLemmas
+        self.cards = cards
+        self.mutations = mutations
+        self.sleep = sleep
+    }
+
+    // MARK: What the sheet shows
+
+    var panel: Panel {
+        if self.recognitionInFlight {
+            // The accept journals `pending` before it sends, and the recovery
+            // panels below are for after a failure; mid-request they read as one.
+            return self.operation.map(Panel.recognizing) ?? .ready
+        }
+        if self.pending != nil { return .unansweredAccept }
+        if let quote = self.quote { return .priceChanged(quote) }
+        guard let operation = self.operation else { return self.photo == nil ? .source : .ready }
+        if operation.isRunning { return .recognizing(operation) }
+        if operation.status == .released { return .released(operation) }
+        if operation.confirmedItemId != nil { return .cardUnsynced(operation) }
+        return .result(operation)
+    }
+
+    /// Upload → quote → accept under way, for a new photo or a 高精度 upgrade of
+    /// the result on screen. Not a relaunch's leftover `pending` with nothing to
+    /// show, which still needs its 重試同步.
+    private var recognitionInFlight: Bool {
+        guard self.busy else { return false }
+        if self.operation == nil { return self.photo != nil }
+        return self.pending != nil || self.quote != nil
+    }
+
+    /// Which of the five steps the indicator marks.
+    var step: Int {
+        if self.operation?.status == .committed { return 3 }
+        if self.operation?.isRunning == true { return 2 }
+        if self.photo != nil { return 1 }
+        return 0
+    }
+
+    /// Changes whenever there is a different run to watch, or the same run
+    /// moved — what the screen keys `watch()` on.
+    var watchKey: String {
+        "\(self.operation?.id ?? ""):\(self.operation?.state ?? "")"
     }
 
     // MARK: Prices
@@ -96,30 +180,31 @@ final class CreditCaptureModel {
         guard let imageId = self.operation?.imageId else { return nil }
         var runs: [CreditOperation] = self.history
         if let current = self.operation { runs.insert(current, at: 0) }
-        return runs.first { $0.imageId == imageId && $0.feature == mode.feature && $0.state != "released" }
+        return runs.first { $0.imageId == imageId && $0.feature == mode.feature && $0.status != .released }
     }
 
     var shownMode: Mode? {
-        self.operation.map { $0.feature == Mode.precision.feature ? .precision : .primary }
+        self.operation.map { Mode(feature: $0.feature) }
     }
 
     var canUpgrade: Bool {
-        self.shownMode == .primary && self.operation?.state == "committed" && self.run(.precision) == nil &&
+        self.shownMode == .primary && self.operation?.status == .committed && self.run(.precision) == nil &&
             self.operation?.confirmedItemId == nil
     }
 
     func show(_ mode: Mode) {
         guard let run = self.run(mode), run.id != self.operation?.id else { return }
         self.operation = run
-        self.clearSelection()
+        self.form = CaptureCorrectionForm()
     }
 
     // MARK: Lifecycle
 
     func load() async {
-        guard case let .signedIn(user) = AuthService.shared.state else { return }
-        if self.owner != user.id { self.generation += 1
-            self.owner = user.id
+        guard let user = self.account() else { return }
+        if self.owner != user {
+            self.generation += 1
+            self.owner = user
             self.reset()
             self.wallet = nil
             self.pending = nil
@@ -127,27 +212,21 @@ final class CreditCaptureModel {
         }
         let stamp = self.generation
         await self.act {
-            let catalog: CreditCatalog = try await self.api.get(.creditCatalog)
+            let catalog = try await self.api.catalog()
             guard self.valid(stamp) else { return }
             self.catalog = catalog
-            if let key = self.journalKey, let data = UserDefaults.standard.data(forKey: key) {
-                self.pending = try? JSONDecoder().decode(Pending.self, from: data)
-            }
-            let wallet: CreditWallet = try await self.api.get(.creditWallet)
+            self.pending = self.pendingJournal.load(account: user, environment: catalog.environment)
+            try await self.refreshWallet(stamp)
+            let operations = try await self.api.operations()
             guard self.valid(stamp) else { return }
-            self.apply(wallet)
-            struct List: Decodable { let operations: [CreditOperation] }
-            let list: List = try await self.api.get(.aiOperations)
-            guard self.valid(stamp) else { return }
-            self.history = list.operations
+            self.history = operations
             if self.operation == nil, self.photo == nil {
-                self.operation = Self.resumable(in: list.operations, queued: self.queue.creditOperationIds)
+                self.operation = CreditOperation.resumable(in: operations, queued: self.queue.creditOperationIds)
                 if let imageId = self.operation?.imageId {
-                    struct Detail: Decodable { let image: AtlasImageSummary }
                     // The crop never left this phone's last session; show the upload instead.
-                    let detail: Detail? = try? await self.api.get(.atlasImage(id: imageId))
+                    let image = try? await self.api.image(id: imageId)
                     guard self.valid(stamp), self.operation?.imageId == imageId else { return }
-                    self.image = detail?.image
+                    self.image = image
                 }
             }
         }
@@ -159,7 +238,7 @@ final class CreditCaptureModel {
         self.image = nil
         self.operation = nil
         self.quote = nil
-        self.clearSelection()
+        self.form = CaptureCorrectionForm()
         self.message = nil
         self.pollFailures = 0
     }
@@ -169,13 +248,15 @@ final class CreditCaptureModel {
         self.photo = data
     }
 
+    /// Still the account and the session this request was made for.
     private func valid(_ stamp: Int) -> Bool {
-        guard case let .signedIn(user) = AuthService.shared.state else { return false }
-        return stamp == self.generation && self.owner == user.id
+        stamp == self.generation && self.owner != nil && self.owner == self.account()
     }
 
-    private func apply(_ wallet: CreditWallet) {
-        guard case let .signedIn(user) = AuthService.shared.state, self.owner == user.id else { return }
+    private func refreshWallet(_ stamp: Int) async throws {
+        let wallet = try await self.api.wallet()
+        guard self.valid(stamp) else { return }
+        // A slow answer must not walk the balance backwards.
         if self.wallet.map({ wallet.isNewer(than: $0) }) ?? true { self.wallet = wallet }
     }
 
@@ -188,10 +269,15 @@ final class CreditCaptureModel {
         catch { self.message = error.localizedDescription }
     }
 
+    private func adopt(_ operation: CreditOperation) {
+        self.operation = operation
+        self.history = [operation] + self.history.filter { $0.id != operation.id }
+    }
+
     // MARK: Recognition
 
     /// 開始識別: upload (once per photo), quote, and accept when the quote matches the price shown.
-    func start(language: TargetLanguage, glossLanguage: String?) async {
+    func start(language: TargetLanguage) async {
         guard self.pending == nil, self.operationsEnabled, let photo = self.photo,
               let expected = self.price
         else { return }
@@ -199,77 +285,49 @@ final class CreditCaptureModel {
         var quote: CreditQuote?
         await self.act {
             if self.image == nil {
-                struct Upload: Decodable { let image: AtlasImageSummary }
-                let response: Upload = try await self.api.upload(
-                    .creditImages,
-                    fileField: "file",
-                    filename: "atlas-photo.jpg",
-                    mimeType: "image/jpeg",
-                    data: photo
-                )
+                let image = try await self.api.upload(photo: photo)
                 guard self.valid(stamp) else { return }
-                self.image = response.image
+                self.image = image
             }
             guard let imageId = self.image?.id else { return }
-            quote = try await self.requestQuote(
-                imageId: imageId,
-                mode: mode,
-                language: language,
-                glossLanguage: glossLanguage
-            )
+            quote = try await self.requestQuote(imageId: imageId, mode: mode, target: language)
         }
         await self.proceed(quote, expected: expected, stamp: stamp)
     }
 
     /// 普通識別 → 高精度: same photo, pay the difference.
-    func upgrade(language: TargetLanguage, glossLanguage: String?) async {
-        guard self.pending == nil, self.operationsEnabled, self.canUpgrade, let imageId = self.operation?.imageId,
+    func upgrade(language: TargetLanguage) async {
+        guard self.pending == nil, self.operationsEnabled, self.canUpgrade, let operation = self.operation,
               let expected = self.upgradePrice
         else { return }
         let stamp = self.generation
         var quote: CreditQuote?
         await self.act {
             // The run keeps the language it was paid for; a later settings change does not apply here.
-            let target = TargetLanguage(rawValue: self.operation?.targetLanguage ?? "") ?? language
-            quote = try await self.requestQuote(
-                imageId: imageId,
-                mode: .precision,
-                language: target,
-                glossLanguage: glossLanguage
-            )
+            let target = TargetLanguage(rawValue: operation.targetLanguage) ?? language
+            quote = try await self.requestQuote(imageId: operation.imageId, mode: .precision, target: target)
         }
         await self.proceed(quote, expected: expected, stamp: stamp)
     }
 
-    private func requestQuote(
-        imageId: String,
-        mode: Mode,
-        language: TargetLanguage,
-        glossLanguage: String?
-    ) async throws
-        -> CreditQuote
-    {
-        struct Payload: Encodable { let imageId: String
-            let feature: String
-            let targetLanguage: String
-            let glossLanguage: String?
-        }
-        return try await self.api.post(
-            .aiQuotes,
-            body: Payload(
-                imageId: imageId,
-                feature: mode.feature,
-                targetLanguage: language.rawValue,
-                glossLanguage: glossLanguage
+    private func requestQuote(imageId: String, mode: Mode, target: TargetLanguage) async throws -> CreditQuote {
+        try await self.api.quote(
+            imageId: imageId,
+            mode: mode,
+            target: target,
+            glossLanguage: CaptureCorrectionFields.glossLanguage(
+                ui: UILanguage(code: self.language.uiLang),
+                target: target
             )
         )
     }
 
     private func proceed(_ quote: CreditQuote?, expected: Int, stamp: Int) async {
         guard let quote, self.valid(stamp) else { return }
-        if quote.points == expected { self.quote = quote
+        self.quote = quote
+        if quote.points == expected {
             await self.accept()
-        } else { self.quote = quote
+        } else {
             self.message = tujiLocalized("價格已更新，請確認後再開始。")
         }
     }
@@ -278,67 +336,64 @@ final class CreditCaptureModel {
         self.quote = nil
     }
 
+    /// Accept the quote on screen — or resend the accept a previous attempt left
+    /// unanswered, under the key it was first sent with.
     func accept() async {
-        guard let journal = self.journalKey else { return }
+        guard let user = self.owner, let environment = self.catalog?.environment else { return }
         let stamp = self.generation
         await self.act {
-            guard let request = self.pending ?? self.quote.map({ Pending(
-                quoteId: $0.id,
-                key: UUID().uuidString.lowercased()
-            ) })
+            guard let request = self.pending ?? self.quote.map({
+                PendingAccept(quoteId: $0.id, key: UUID().uuidString.lowercased())
+            })
             else { return }
-            try UserDefaults.standard.set(JSONEncoder().encode(request), forKey: journal)
+            // Journalled before it is sent: an app kill here must find the key.
+            self.pendingJournal.save(request, account: user, environment: environment)
             self.pending = request
-            struct Payload: Encodable { let quoteId: String }
             do {
-                let operation: CreditOperation = try await self.api.postIdempotent(
-                    .aiOperations,
-                    body: Payload(quoteId: request.quoteId),
-                    key: request.key
-                )
+                let operation = try await self.api.accept(request)
                 guard self.valid(stamp) else { return }
-                self.operation = operation
-                self.clearSelection()
+                self.adopt(operation)
+                self.form = CaptureCorrectionForm()
                 self.quote = nil
                 self.pending = nil
-                self.history = [operation] + self.history.filter { $0.id != operation.id }
-                UserDefaults.standard.removeObject(forKey: journal)
-                let wallet: CreditWallet = try await self.api.get(.creditWallet)
-                guard self.valid(stamp) else { return }
-                self.apply(wallet)
+                self.pendingJournal.clear(account: user, environment: environment)
+                try await self.refreshWallet(stamp)
             } catch {
                 // Keep unknown outcomes; only an explicit rejection permits a new quote.
-                if case let APIError.conflict(reason, _) = error,
-                   self.valid(stamp), [
-                       "quote_expired",
-                       "insufficient_credits",
-                       "capacity_full",
-                       "image_changed",
-                       "operation_busy",
-                       "idempotency_conflict",
-                       "credits_reconciliation_required"
-                   ].contains(reason ?? "")
+                if case let APIError.conflict(reason, _) = error, self.valid(stamp),
+                   Self.acceptRejections.contains(reason ?? "")
                 {
                     self.pending = nil
                     self.quote = nil
-                    UserDefaults.standard.removeObject(forKey: journal)
+                    self.pendingJournal.clear(account: user, environment: environment)
                 }
                 throw error
             }
         }
     }
 
+    /// Follow the run on screen until it ends. The screen starts this whenever
+    /// `watchKey` changes and cancels it when it leaves.
+    ///
+    /// The server starts the run on accept and a 普通 run finishes in about two
+    /// seconds, so the first look is early.
+    func watch() async {
+        var delay: Duration = .seconds(1)
+        while self.operation?.isRunning == true, !Task.isCancelled {
+            do { try await self.sleep(delay) } catch { return }
+            await self.poll()
+            delay = .seconds(2)
+        }
+    }
+
     func poll() async {
-        guard let id = self.operation?.id, self.operation?.needsPolling == true else { return }
+        guard let id = self.operation?.id, self.operation?.isRunning == true else { return }
         let stamp = self.generation
         do {
-            let value: CreditOperation = try await self.api.get(.aiOperation(id: id))
+            let value = try await self.api.operation(id: id)
             guard self.valid(stamp), self.operation?.id == id else { return }
-            self.operation = value
-            self.history = [value] + self.history.filter { $0.id != id }
-            let wallet: CreditWallet = try await self.api.get(.creditWallet)
-            guard self.valid(stamp) else { return }
-            self.apply(wallet)
+            self.adopt(value)
+            try await self.refreshWallet(stamp)
             self.pollFailures = 0
             // Only lift the banner poll() raised; other messages belong to their own actions.
             if self.message == self.pollMessage { self.message = nil }
@@ -350,37 +405,36 @@ final class CreditCaptureModel {
         }
     }
 
+    /// Only a run that has not started can be withdrawn.
+    var canCancelOperation: Bool {
+        self.operation?.status == .reserved
+    }
+
     func cancelOperation() async {
         guard let id = self.operation?.id else { return }
         let stamp = self.generation
         await self.act {
-            let value: CreditOperation = try await self.api.post(.aiOperationCancel(id: id), body: Empty())
+            let value = try await self.api.cancel(id: id)
             guard self.valid(stamp) else { return }
-            self.operation = value
-            self.history = [value] + self.history.filter { $0.id != id }
-            let wallet: CreditWallet = try await self.api.get(.creditWallet)
-            guard self.valid(stamp) else { return }
-            self.apply(wallet)
+            self.adopt(value)
+            try await self.refreshWallet(stamp)
         }
     }
 
     // MARK: Card
 
+    /// The form this run asked its user for. The server says so when it knows
+    /// the interface language the run was quoted under; otherwise the grid
+    /// answers, over the language the run was paid for.
     var secondField: CaptureSecondField {
-        CaptureCorrectionFields.second(
-            ui: UILanguage(code: SettingsStore.shared.uiLang),
-            target: TargetLanguage(rawValue: self.operation?.targetLanguage ?? "") ?? SettingsStore.shared
-                .learningDirection.targetLanguage
+        if let declared = self.operation?.correctionField.flatMap(CaptureSecondField.init(rawValue:)) {
+            return declared
+        }
+        return CaptureCorrectionFields.second(
+            ui: UILanguage(code: self.language.uiLang),
+            target: TargetLanguage(rawValue: self.operation?.targetLanguage ?? "")
+                ?? self.language.learningDirection.targetLanguage
         )
-    }
-
-    /// Tapping a chip is an explicit choice, so it replaces whatever the fields hold.
-    func select(_ candidate: CreditCandidate) {
-        self.selectedCandidateId = candidate.id
-        self.lemma = candidate.label
-        self.displayZhHant = candidate.zhHant
-        self.displayGloss = candidate.gloss ?? ""
-        self.suggestion = .init(lemma: self.lemma, zhHant: self.displayZhHant, gloss: self.displayGloss)
     }
 
     func candidateMeaning(_ candidate: CreditCandidate) -> String? {
@@ -391,66 +445,26 @@ final class CreditCaptureModel {
         )
     }
 
-    private func clearSelection() {
-        self.selectedCandidateId = nil
-        self.lemma = ""
-        self.displayZhHant = ""
-        self.displayGloss = ""
-        self.suggestion = nil
-    }
-
-    func isStillSuggested(_ field: AtlasCaptureVM.SuggestedField) -> Bool {
-        guard let s = self.suggestion else { return false }
-        return switch field {
-        case .lemma: !s.lemma.isEmpty && s.lemma == self.lemma
-        case .zhHant: !s.zhHant.isEmpty && s.zhHant == self.displayZhHant
-        case .gloss: !s.gloss.isEmpty && s.gloss == self.displayGloss
-        }
-    }
-
     var canConfirm: Bool {
-        !self.busy && self.selectedCandidateId != nil && !Self.trim(self.lemma).isEmpty && !Self
-            .trim(self.displayZhHant).isEmpty
+        !self.busy && self.form.isComplete
     }
 
     var duplicateLemmaWarning: String? {
-        let trimmed = Self.trim(self.lemma)
-        guard !trimmed.isEmpty else { return nil }
-        let exists = AtlasStore.shared.items.contains {
-            Self.trim($0.lemma).caseInsensitiveCompare(trimmed) == .orderedSame
+        self.form.duplicate(among: self.ownedLemmas()).map {
+            tujiLocalized("你已經有一張「\($0)」的卡片，這會再新增一張。")
         }
-        return exists ? tujiLocalized("你已經有一張「\(trimmed)」的卡片，這會再新增一張。") : nil
     }
 
-    private static func trim(_ value: String) -> String {
-        value.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// 確認並生成卡片. Returns true once the card exists, so the sheet can close.
     /// 確認並生成卡片: hand the confirm → cards → fill-in tail to 生成佇列 and
     /// return, so the sheet closes at once and 我做的 shows the card being made.
-    /// Not `async`, like the free flow's `submit()`: the work it commits
-    /// outlives the sheet by design.
+    /// Not `async`: the work it commits outlives the sheet by design.
     func confirm() -> Bool {
         guard self.canConfirm, let operation = self.operation,
-              let candidate = operation.result?.candidates.first(where: { $0.id == self.selectedCandidateId })
+              let request = self.form.request(operationId: operation.id, second: self.secondField),
+              operation.result?.candidates.contains(where: { $0.id == request.candidateId }) == true
         else { return false }
-        // The gloss field only exists for a cross-language capture; elsewhere the server keeps the candidate's.
-        let gloss = self.secondField == .gloss && !Self.trim(self.displayGloss).isEmpty ? Self
-            .trim(self.displayGloss) : nil
         self.queue.enqueue(
-            credit: CreditConfirmRequest(
-                operationId: operation.id,
-                candidateId: candidate.id,
-                lemma: Self.trim(self.lemma),
-                displayZhHant: CaptureCorrectionFields.chineseNameToSend(
-                    second: self.secondField,
-                    lemma: self.lemma,
-                    suggestedLemma: self.suggestion?.lemma,
-                    zhHant: Self.trim(self.displayZhHant)
-                ),
-                displayGloss: gloss
-            ),
+            credit: request,
             imageId: operation.imageId,
             thumbnail: self.photo.flatMap(UIImage.init(data:))
         )
@@ -459,37 +473,16 @@ final class CreditCaptureModel {
     }
 
     /// The card was saved but syncing it failed: retry without confirming again.
+    /// The same tail 生成佇列 runs, through the same seam.
     func syncCards() async -> Bool {
         guard let itemId = self.operation?.confirmedItemId else { return false }
         var synced = false
         await self.act {
-            _ = try await LiveAtlasRepository.shared.createCards(
-                itemId: itemId,
-                cardTypes: ["image_recall", "flashcard"]
-            )
-            await AtlasStore.shared.sync(.full)
-            await LiveAtlasMutationRefresher().refresh(after: .captureCompleted)
+            try await self.cards.generateCards(forItem: itemId)
+            await self.cards.reconcile()
+            await self.mutations.refresh(after: .captureCompleted)
             synced = true
         }
         return synced
-    }
-}
-
-extension CreditOperation {
-    var isRunning: Bool {
-        ["reserved", "running", "reconciling"].contains(self.state)
-    }
-}
-
-extension CreditCaptureModel {
-    /// Work already paid for that the screen should reopen on: a run in flight, else a result
-    /// nobody has picked from yet. A photo's 普通 and 高精度 runs share one card, so a card made
-    /// from either finishes both. One 生成佇列 is already confirming is not waiting either.
-    static func resumable(in operations: [CreditOperation], queued: Set<String> = []) -> CreditOperation? {
-        let finished = Set(operations.filter { $0.confirmedItemId != nil }.map(\.imageId))
-        return operations.first(where: \.isRunning) ?? operations.first {
-            $0.state == "committed" && $0.confirmedItemId == nil && !finished.contains($0.imageId) &&
-                !queued.contains($0.id)
-        }
     }
 }

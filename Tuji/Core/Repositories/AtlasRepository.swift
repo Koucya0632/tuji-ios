@@ -25,54 +25,6 @@ struct LiveAtlasRepository {
         try await self.api.get(.atlasSync(since: since, limit: limit))
     }
 
-    func uploadImage(
-        data: Data,
-        filename: String,
-        mimeType: String,
-        targetLanguage: TargetLanguage?
-    ) async throws
-        -> AtlasUploadResponse
-    {
-        // Upload performs the first recognition inline, so it needs the same
-        // live language context as an explicit recognize request. Do not rely
-        // only on the debounced server settings after an in-app switch.
-        var fields: [String: String] = [
-            "lang": self.settings.uiLang,
-            "learning": self.settings.learningDirection.rawValue
-        ]
-        if let targetLanguage {
-            fields["targetLanguage"] = targetLanguage.rawValue
-        }
-        return try await self.api.upload(
-            .atlasImages(limit: 30),
-            fileField: "file",
-            filename: filename,
-            mimeType: mimeType,
-            data: data,
-            fields: fields
-        )
-    }
-
-    func recognize(imageId: String, mode: AtlasRecognitionMode) async throws -> AtlasRecognitionResponse {
-        struct Payload: Encodable { let mode: String }
-        return try await self.api.post(
-            .atlasImageRecognize(
-                id: imageId,
-                lang: self.settings.uiLang,
-                learning: self.settings.learningDirection.rawValue
-            ),
-            body: Payload(mode: mode.rawValue)
-        )
-    }
-
-    func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem {
-        let response: AtlasItemResponse = try await self.api.post(
-            .atlasImageConfirm(id: imageId, lang: self.settings.uiLang),
-            body: payload
-        )
-        return response.item
-    }
-
     func createCards(itemId: String, cardTypes: [String]) async throws -> [AtlasCard] {
         let response: AtlasCardsResponse = try await self.api.post(
             .atlasItemCards(id: itemId),
@@ -83,11 +35,6 @@ struct LiveAtlasRepository {
 
     func deleteImage(id: String) async throws {
         try await self.api.delete(.atlasImage(id: id))
-    }
-
-    func enrich(itemId: String) async throws {
-        struct Ack: Decodable { let ok: Bool? }
-        let _: Ack = try await self.api.post(.atlasItemEnrich(id: itemId), body: Empty())
     }
 
     func detail(itemId: String) async throws -> Word {

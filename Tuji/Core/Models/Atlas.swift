@@ -86,99 +86,6 @@ struct AtlasImageSummary: Decodable, Hashable, Identifiable {
     }
 }
 
-struct AtlasUploadResponse: Decodable {
-    let duplicate: Bool?
-    let targetLanguage: TargetLanguage?
-    let image: AtlasImageSummary
-    let job: AtlasRecognitionJobSummary?
-    /// Primary candidates now come back inline with the upload (recognition runs
-    /// server-side in the same request) — nil/empty if recognition was skipped
-    /// or failed, in which case the user retries via the 普通識別 button.
-    let candidates: [AtlasCandidate]?
-}
-
-struct AtlasRecognitionJobSummary: Decodable, Hashable, Identifiable {
-    let id: String
-    let status: String
-    let stage: String
-    let provider: String?
-    let model: String?
-    let uncertaintyReason: String?
-    let escalated: Bool?
-    let createdAt: String?
-    let updatedAt: String?
-}
-
-/// Recognition depth requested via POST /images/{id}/recognize. Raw values are
-/// the wire strings the server expects (AI 識別 = primary, 高精度 = escalate).
-enum AtlasRecognitionMode: String {
-    case primary
-    case escalate
-}
-
-/// Candidate granularity tier the server returns. `AtlasCandidate.level` stays
-/// a raw String so an unknown future tier never fails decoding; compare
-/// through `levelKind` instead of string literals.
-enum AtlasCandidateLevel: String {
-    case primary
-    case fine
-}
-
-struct AtlasCandidate: Decodable, Hashable, Identifiable {
-    let id: String
-    let level: String
-    let label: String
-    let normalizedLabel: String
-    let zhHant: String?
-    /// Gloss in the user's UI language (ja/en interfaces only; nil otherwise).
-    let gloss: String?
-    let confidence: Double
-    let rank: Int
-
-    var levelKind: AtlasCandidateLevel? {
-        AtlasCandidateLevel(rawValue: self.level)
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id, level, label, normalizedLabel, zhHant, gloss, confidence, rank
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try c.decode(String.self, forKey: .id)
-        self.level = try c.decode(String.self, forKey: .level)
-        self.label = try c.decode(String.self, forKey: .label)
-        self.normalizedLabel = try c.decode(String.self, forKey: .normalizedLabel)
-        self.zhHant = try c.decodeIfPresent(String.self, forKey: .zhHant)
-        self.gloss = try c.decodeIfPresent(String.self, forKey: .gloss)
-        // The recognize route returns the raw DB row, where `confidence`
-        // (Postgres NUMERIC) serializes as a string — tolerate string-or-number.
-        self.confidence = try c.decodeFlexibleDouble(forKey: .confidence)
-        self.rank = try c.decode(Int.self, forKey: .rank)
-    }
-}
-
-struct AtlasRecognitionResponse: Decodable {
-    let job: AtlasRecognitionJobSummary?
-    let candidates: [AtlasCandidate]
-}
-
-/// `Equatable` so `CaptureJobRecord` — which carries one across an app kill —
-/// can be compared in a test without unpacking nine fields.
-struct AtlasConfirmPayload: Codable, Equatable {
-    let selectedCandidateId: String?
-    let targetLanguage: TargetLanguage?
-    let primaryLabel: String
-    let fineLabel: String?
-    let lemma: String
-    let displayZhHant: String
-    /// The gloss field's value in the user's UI language (ja/en); the server
-    /// routes it to display_ja/display_en. nil for Chinese UIs.
-    let displayGloss: String?
-    let partOfSpeech: String?
-    let category: String?
-}
-
 struct AtlasItem: Decodable, Hashable, Identifiable {
     let id: String
     let imageId: String
@@ -226,10 +133,6 @@ extension AtlasItem {
         guard let value, !value.isEmpty, value != self.lemma else { return nil }
         return value
     }
-}
-
-struct AtlasItemResponse: Decodable {
-    let item: AtlasItem
 }
 
 struct AtlasCardsPayload: Encodable {

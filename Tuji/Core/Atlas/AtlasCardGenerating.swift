@@ -15,14 +15,8 @@ import Foundation
 
 @MainActor
 protocol AtlasCardGenerating {
-    /// A plain INSERT server-side, and therefore **not idempotent**. The queue
-    /// checkpoints the item this returns so a resumed run never calls it twice.
-    func confirm(imageId: String, payload: AtlasConfirmPayload) async throws -> AtlasItem
-    /// Idempotent — which is exactly what makes resuming from the checkpoint safe.
+    /// Idempotent — which is what lets a resumed job simply run again.
     func generateCards(forItem itemId: String) async throws
-    /// Definition / synonyms / forms / etymology. Best-effort: the detail
-    /// endpoint enriches lazily on open, so a failure here never fails the card.
-    func enrich(itemId: String) async throws
     /// The reconciling read a finished capture needs before its cards are true.
     func reconcile() async
 }

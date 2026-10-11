@@ -52,7 +52,7 @@ struct APIClientTests {
         }
 
         _ = try await api.upload(
-            .atlasImages(limit: 1),
+            .creditImages,
             fileField: "file",
             filename: "photo.jpg",
             mimeType: "image/jpeg",
@@ -335,9 +335,9 @@ struct APIClientTests {
             return StubResponse(status: 200, body: #"{"ok":true}"#)
         }
 
-        _ = try await api.get(.atlasItemDetail(id: "x"), as: Ack.self)
+        _ = try await api.get(.atlasCollectionAvatar(id: "x"), as: Ack.self)
 
-        #expect(recorder.last?.timeout == 60, "the AI endpoints need the long timeout")
+        #expect(recorder.last?.timeout == 60, "a slow endpoint needs the long timeout")
     }
 }
 

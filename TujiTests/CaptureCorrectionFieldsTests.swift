@@ -30,29 +30,17 @@ struct CaptureCorrectionFieldsTests {
     }
 
     @Test
-    func theGlossQuestionIsTheFieldQuestion() {
-        // Derived rather than restated: the two answers cannot drift apart,
-        // which is the entire reason this module exists.
+    func onlyJaEnLearningTheOtherOneEditsAGloss() {
+        // Pinned as a truth table so a new UI language cannot quietly inherit
+        // a cell — 4 × 2, two of them a gloss and two of them nothing at all.
+        var cells: [CaptureSecondField: Set<String>] = [:]
         for ui in UILanguage.allCases {
             for target in TargetLanguage.allCases {
-                #expect(
-                    CaptureCorrectionFields.needsGloss(ui: ui, target: target)
-                        == (CaptureCorrectionFields.second(ui: ui, target: target) == .gloss)
-                )
+                cells[CaptureCorrectionFields.second(ui: ui, target: target), default: []].insert("\(ui)-\(target)")
             }
         }
-    }
-
-    @Test
-    func onlyJaEnLearningTheOtherOneNeedsAGloss() {
-        // Pinned as a truth table so a new UI language cannot quietly inherit
-        // "no gloss" — 4 × 2 cells, two of them true.
-        let needing = UILanguage.allCases.flatMap { ui in
-            TargetLanguage.allCases.compactMap { target in
-                CaptureCorrectionFields.needsGloss(ui: ui, target: target) ? "\(ui)-\(target)" : nil
-            }
-        }
-        #expect(Set(needing) == ["ja-en", "en-ja"])
+        #expect(cells[.gloss] == ["ja-en", "en-ja"])
+        #expect(cells[.hidden] == ["ja-ja", "en-en"])
     }
 
     @Test
