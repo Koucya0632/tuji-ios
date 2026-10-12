@@ -321,6 +321,10 @@ struct SettingsView: View {
                     .simultaneousGesture(TapGesture().onEnded {
                         AnalyticsService.shared.track(.shareApp)
                     })
+                    Link(destination: AppStoreRatingRecord.writeReviewURL) {
+                        TujiRow("為 Tuji 評分")
+                    }
+                    .tujiRowStyle()
                     NavigationLink { AboutView() } label: {
                         TujiRow("關於")
                     }

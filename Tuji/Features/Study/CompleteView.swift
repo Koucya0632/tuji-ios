@@ -11,6 +11,7 @@
 // streak on the check-in card is the new value and the 圖鑑/詳情 reflect the
 // new mastery scores when the user navigates back.
 
+import StoreKit
 import SwiftUI
 
 struct CompleteView: View {
@@ -34,6 +35,7 @@ struct CompleteView: View {
 
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
+    @Environment(\.requestReview) private var requestReview
     @State private var startingNextRound = false
 
     private var done: Int {
@@ -70,6 +72,27 @@ struct CompleteView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.tujiPaper)
+        // Keyed on the refresh: whether the queue is cleared is only known
+        // once the post-session round-trip has landed.
+        .task(id: self.refreshed) { await self.settleAppStoreRating() }
+    }
+
+    /// Counts this round and, when it was a good one, asks for an App Store
+    /// rating — after a beat, so the celebration is what the user sees first.
+    private func settleAppStoreRating() async {
+        guard self.refreshed else { return }
+        let round = StudyRoundOutcome(
+            answered: self.done,
+            missed: self.wrongIds.count,
+            unsynced: self.unsyncedCount,
+            queueCleared: self.remainingDue == 0
+        )
+        guard AppStoreRatingRecord.shared.finishReviewRound(round) else { return }
+        try? await Task.sleep(for: .seconds(1.5))
+        // Leaving before the beat is up cancels the task; the ask stays unspent.
+        guard !Task.isCancelled else { return }
+        self.requestReview()
+        AppStoreRatingRecord.shared.markAsked()
     }
 
     // MARK: - Bits

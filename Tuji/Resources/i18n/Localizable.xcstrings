@@ -12358,6 +12358,28 @@
         }
       }
     },
+    "為 Tuji 評分" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rate Tuji"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuji を評価する"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为 Tuji 评分"
+          }
+        }
+      }
+    },
     "為每個字寫下自己的筆記" : {
       "extractionState" : "stale",
       "localizations" : {
