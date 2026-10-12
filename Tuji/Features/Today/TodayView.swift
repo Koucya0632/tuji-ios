@@ -339,16 +339,20 @@ struct TodayView: View {
         // yellow eyes come forward — the gesture the logo already uses.
         //
         // The cat is also the way into 助手. A picture gives no sign that it
-        // can be pressed, so it carries a tag that says what pressing it does.
+        // can be pressed, so the cat says so — in a speech bubble, the one
+        // rounded container the system allows, because only this is speaking
+        // (`MascotSpeechBubble`). No drawn tail: it tucks under the cat.
         .overlay(alignment: .topTrailing) {
             NavigationLink(value: NavRoute.assistant) {
-                HStack(alignment: .bottom, spacing: Space.s1) {
-                    Text("問我")
+                HStack(alignment: .bottom, spacing: -Space.s1) {
+                    Text("有問題可以點擊我")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk)
-                        .padding(.horizontal, Space.s2)
-                        .padding(.vertical, Space.s1)
-                        .background(.tujiCurrent)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .padding(.horizontal, Space.s3)
+                        .padding(.vertical, Space.s1 + 2)
+                        .background(.tujiPaper2, in: .rect(cornerRadius: Radius.rPill))
                     MascotFigure(
                         pose: self.dailyGoalReached ? .cheer : .wave,
                         size: 96,

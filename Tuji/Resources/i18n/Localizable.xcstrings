@@ -5986,28 +5986,6 @@
         }
       }
     },
-    "問我" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask me"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "聞いてね"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "问我"
-          }
-        }
-      }
-    },
     "問我分類、收藏，或打一個字" : {
       "localizations" : {
         "en" : {
@@ -11454,6 +11432,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有印象，但要再看几次"
+          }
+        }
+      }
+    },
+    "有問題可以點擊我" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got a question? Tap me"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "質問があればタップしてね"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有问题可以点击我"
           }
         }
       }
