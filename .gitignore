@@ -72,6 +72,8 @@ fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output/
 fastlane/README.md
+# 審查用的示範帳號密碼、電話、信箱。metadata_download 會一起抓下來，不進 repo。
+fastlane/metadata/review_information/
 
 
 # ---------- 機密 / 設定 ----------

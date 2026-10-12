@@ -101,4 +101,63 @@ platform :ios do
       distribute_external: false
     )
   end
+
+  # ---------------------------------------------------------------------------
+  # Store listing (text only)
+  # ---------------------------------------------------------------------------
+  # fastlane/metadata is the source of truth for the store listing text
+  # (docs/adr/0017). Edit it there, never in the App Store Connect web UI:
+  # the next upload overwrites whatever the web UI holds. Screenshots are
+  # uploaded by hand and are not tracked.
+
+  desc "Pull the store listing text from App Store Connect into fastlane/metadata. Read-only."
+  desc "Params: live:true reads the version on sale instead of the one being edited."
+  lane :metadata_download do |options|
+    require "json"
+    require "tempfile"
+
+    # `deliver download_metadata` is a CLI command, not an action, and only
+    # takes the API key as a JSON file.
+    Tempfile.create(["asc_api_key", ".json"]) do |key_file|
+      key_file.write(
+        JSON.generate(
+          key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+          issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+          key: ENV.fetch("APP_STORE_CONNECT_API_KEY_P8"),
+          is_key_content_base64: true
+        )
+      )
+      key_file.flush
+
+      command = [
+        "bundle", "exec", "fastlane", "deliver", "download_metadata",
+        "--api_key_path", key_file.path,
+        "--app_identifier", APP_IDENTIFIERS.first,
+        "--metadata_path", "fastlane/metadata",
+        "--force"
+      ]
+      command += ["--use_live_version", "true"] if options[:live]
+
+      # Lanes run inside fastlane/; deliver expects the project root.
+      Dir.chdir("..") { sh(*command) }
+    end
+  end
+
+  desc "Push fastlane/metadata to App Store Connect. Never submits for review."
+  desc "Shows an HTML preview of every field and waits for confirmation before uploading."
+  desc "Params: version (the App Store version to write to; defaults to the one being edited)."
+  lane :metadata_upload do |options|
+    upload_to_app_store(
+      api_key: asc_api_key,
+      app_identifier: APP_IDENTIFIERS.first,
+      app_version: options[:version],
+      metadata_path: "./fastlane/metadata",
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false,
+      run_precheck_before_submit: false,
+      force: false
+    )
+  end
 end
