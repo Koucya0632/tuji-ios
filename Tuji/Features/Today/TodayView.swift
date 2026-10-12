@@ -337,14 +337,36 @@ struct TodayView: View {
         // straddle the top edge instead of sitting within the block. Its body is
         // ink, so the half that overlaps reads as a silhouette and only the
         // yellow eyes come forward — the gesture the logo already uses.
+        //
+        // The cat is also the way into 助手. A picture gives no sign that it
+        // can be pressed, so the cat says so — in a speech bubble, the one
+        // rounded container the system allows, because only this is speaking
+        // (`MascotSpeechBubble`). That one tucks under the cat and needs no
+        // tail; this one sits beside it, so the tail is what says who is talking.
         .overlay(alignment: .topTrailing) {
-            MascotFigure(
-                pose: self.dailyGoalReached ? .cheer : .wave,
-                size: 96,
-                grounding: .none
-            )
-            .id(self.dailyGoalReached)
-            .transition(.opacity)
+            NavigationLink(value: NavRoute.assistant) {
+                HStack(alignment: .bottom, spacing: 0) {
+                    Text("有問題可以點擊我")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .padding(.leading, Space.s3)
+                        .padding(.trailing, Space.s3 + SpeechCloud.tail)
+                        .padding(.vertical, Space.s1 + 2)
+                        .background(.tujiPaper2, in: SpeechCloud())
+                    MascotFigure(
+                        pose: self.dailyGoalReached ? .cheer : .wave,
+                        size: 96,
+                        grounding: .none
+                    )
+                    .id(self.dailyGoalReached)
+                    .transition(.opacity)
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("問問助手"))
             .offset(x: -Space.s4, y: -44)
         }
         .tourAnchor(.hero)
@@ -635,6 +657,27 @@ struct TodayView: View {
 private enum HeroPillRole {
     case primary
     case secondary
+}
+
+/// A pill with a tail on its trailing edge, pointing up at whoever is beside
+/// it. One path rather than a pill with a triangle laid over it, so the two
+/// cannot show a seam.
+private struct SpeechCloud: Shape {
+    /// How far the tail reaches past the pill.
+    static let tail: CGFloat = 10
+
+    func path(in rect: CGRect) -> Path {
+        let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width - Self.tail, height: rect.height)
+        var path = Path(roundedRect: body, cornerRadius: body.height / 2)
+        // Rooted well inside the pill's rounded end, so the base is hidden by
+        // the body at any height.
+        let root = body.maxX - body.height / 2
+        path.move(to: CGPoint(x: root, y: body.minY + body.height * 0.2))
+        path.addLine(to: CGPoint(x: rect.maxX, y: body.minY + body.height * 0.1))
+        path.addLine(to: CGPoint(x: root, y: body.minY + body.height * 0.7))
+        path.closeSubpath()
+        return path
+    }
 }
 
 private struct HeroPillStyle: ButtonStyle {

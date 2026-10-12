@@ -14,6 +14,10 @@ import Foundation
 
 enum NavRoute: Hashable {
     case search(query: String?)
+    /// 助手 — the chat behind the cat on 今天. A push rather than a sheet: its
+    /// rows push 單字 and 分類 onto the same stack, and coming back finds the
+    /// conversation where it was left.
+    case assistant
     case settings
     /// 圖鑑管理 — opens on the current user's 圖鑑卡片.
     case atlasManage
