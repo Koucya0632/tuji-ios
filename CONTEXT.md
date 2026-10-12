@@ -666,6 +666,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 ## Study — the SRS write path
 
+- **商店評分請求 (App Store rating request)** — asking the user for App Store stars. Not the
+  SRS **rating** (困難／穩定／熟練) that the rest of this section means by the word, and not a
+  複習 (review) either — which is why every name in the module carries `AppStore`. It is asked
+  at most once per app version, only after a **good round**: a 複習 round that cleared the
+  queue, left nothing unsynced and had at most a fifth of its words missed, by someone who
+  has finished three rounds over three days. A round of new words counts toward that
+  history but never triggers the ask. The 設定 row is a different thing: it always opens
+  the store, because the user asked.
 - **DurableAnswerWriter** (`DurableAnswerWriting` seam) — the one home for the durable
   "retry a few times, then park in `StudyAnswerOutbox`" policy. `submitAnswer` is
   non-throwing and returns a `StudyWriteOutcome` — `.synced(StudyAnswerResponse)` (server

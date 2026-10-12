@@ -37,6 +37,9 @@ struct NewDoneView: View {
             .padding(.horizontal, Space.s4)
             .padding(.bottom, Space.s3)
         }
+        // A round of new words counts toward "has used the app for a while",
+        // but the ask itself waits for a review round (CompleteView).
+        .task { AppStoreRatingRecord.shared.countRound() }
     }
 
     private var hero: some View {
