@@ -9,6 +9,7 @@ extension View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
+                case .assistant: AssistantChatView()
                 case .settings: SettingsView()
                 case .atlasManage: AtlasManageView(initialSection: .cards)
                 case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
@@ -18,20 +19,27 @@ extension View {
                     AtlasAuthorProfileView(handle: handle, isSelf: isSelf)
                 case .studyCategories: StudyCategoriesPickerView()
                 case let .studyLanding(mode): StudyLauncherView(mode: mode)
-                // The id says where it goes. `saved:` items are other people's
-                // work, so they open on the public detail — author, 取消收藏,
-                // 檢舉 — rather than the word screen, which has none of those.
-                // Deciding here keeps every entry point (圖鑑, search, anything
-                // later) on the same destination without each one re-checking.
-                case let .wordDetail(id):
-                    if let slug = id.savedCommunitySlug {
-                        AtlasSavedItemDetailView(slug: slug)
-                    } else {
-                        WordDetailView(id: id)
-                    }
+                case let .wordDetail(id): WordDestination(id: id)
                 case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
                 case let .categoryDetail(id): CategoryView(id: id)
                 }
             }
+    }
+}
+
+/// The id says where it goes. `saved:` items are other people's work, so they
+/// open on the public detail — author, 取消收藏, 檢舉 — rather than the word
+/// screen, which has none of those. Deciding here keeps every entry point
+/// (圖鑑, search, 助手, anything later) on the same destination without each one
+/// re-checking.
+private struct WordDestination: View {
+    let id: String
+
+    var body: some View {
+        if let slug = self.id.savedCommunitySlug {
+            AtlasSavedItemDetailView(slug: slug)
+        } else {
+            WordDetailView(id: self.id)
+        }
     }
 }

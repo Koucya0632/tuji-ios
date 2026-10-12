@@ -408,6 +408,24 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **`atRoot`, not `NavigationPath.count`** — the one signal for "is something on top of
   this tab". The count only counts value-based pushes, and the two answers disagreed.
 
+## Domain — 助手
+
+- **助手 (`AssistantResponding`)** — the chat behind the cat on 今天. The seam is the
+  question → answer step, and tier one's conformer (`LocalAssistantResponder`) answers
+  from what the device already holds: 分類, 詞條, 書籤, 物見卡片, and — the one network
+  read — 收藏的合集. **No model is called**, so it costs no tokens and no 罐頭點數. A tier
+  that does call a model is another conformer; `AssistantChatModel` and the screen do not
+  change.
+  _Avoid_：在第一級裡叫它「AI 回覆」——它是查表，畫面的頁尾也這樣告訴使用者。
+- **意圖 (`AssistantIntent`)** — what was asked, before anything is looked up. Free text is
+  read by a keyword table that recognises every interface language at once (what someone
+  types has nothing to do with uiLang); anything unrecognised is a 詞條 lookup, ranked by
+  `SearchVM.localMatches`. A quick-reply chip *is* its intent and never goes back through
+  the table.
+- **回覆 (`AssistantReply`)** — a sentence, an attachment (categories / a preview of words
+  with the route to the rest / collections) and the next chips. `outcome` is the decision
+  and `text` is that decision in the interface language; tests pin the first.
+
 ## Architecture — seams & conventions
 
 - **LiveAtlasRepository** — the concrete atlas HTTP client (in `AtlasRepository.swift`).

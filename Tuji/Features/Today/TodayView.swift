@@ -337,14 +337,30 @@ struct TodayView: View {
         // straddle the top edge instead of sitting within the block. Its body is
         // ink, so the half that overlaps reads as a silhouette and only the
         // yellow eyes come forward — the gesture the logo already uses.
+        //
+        // The cat is also the way into 助手. A picture gives no sign that it
+        // can be pressed, so it carries a tag that says what pressing it does.
         .overlay(alignment: .topTrailing) {
-            MascotFigure(
-                pose: self.dailyGoalReached ? .cheer : .wave,
-                size: 96,
-                grounding: .none
-            )
-            .id(self.dailyGoalReached)
-            .transition(.opacity)
+            NavigationLink(value: NavRoute.assistant) {
+                HStack(alignment: .bottom, spacing: Space.s1) {
+                    Text("問我")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk)
+                        .padding(.horizontal, Space.s2)
+                        .padding(.vertical, Space.s1)
+                        .background(.tujiCurrent)
+                    MascotFigure(
+                        pose: self.dailyGoalReached ? .cheer : .wave,
+                        size: 96,
+                        grounding: .none
+                    )
+                    .id(self.dailyGoalReached)
+                    .transition(.opacity)
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("問問助手"))
             .offset(x: -Space.s4, y: -44)
         }
         .tourAnchor(.hero)

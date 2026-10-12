@@ -1,0 +1,43 @@
+// 助手 — one answer: a sentence, what it found, and what to ask next.
+//
+// A value, so "what did it decide" is asked without a screen. `outcome` is the
+// decision and `text` is that decision in the interface language — tests pin
+// the first, because CI reads English and a laptop reads 繁體中文.
+
+import Foundation
+
+struct AssistantReply: Equatable {
+    enum Outcome: Equatable {
+        case greeting
+        case categories
+        /// The catalogue has not arrived, so there is nothing to list yet.
+        case categoriesUnavailable
+        case category
+        case words
+        case noMatch
+        case lookupPrompt
+        case favorites
+        case bookmarks
+        case savedCards
+        case collections
+        /// Nothing kept yet — of whichever kind was asked about.
+        case nothingKept
+        case collectionsNeedSignIn
+        case collectionsUnreachable
+    }
+
+    enum Attachment: Equatable {
+        case categories([TujiCategory])
+        /// `total` is how many there are; `words` is the few shown. `more` is
+        /// where the rest live, when there is such a place.
+        case words([CardWord], total: Int, more: NavRoute?)
+        case collections([AtlasCollection])
+    }
+
+    let outcome: Outcome
+    /// Already resolved against the interface language — a `String` does not
+    /// follow uiLang by itself the way a `LocalizedStringKey` does.
+    let text: String
+    var attachment: Attachment?
+    var suggestions: [AssistantIntent] = []
+}
