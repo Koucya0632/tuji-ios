@@ -153,9 +153,9 @@ struct AssistantChatView: View {
                 .accessibilityLabel(Text("送出"))
             }
 
-            // It is called an assistant and it sits behind a chat field, so it
-            // owes the user the sentence that says what it is not.
-            Text("目前只會查分類、收藏和圖鑑裡的詞。")
+            // It sits behind a chat field and part of it costs points, so it
+            // owes the user the sentence that says which part.
+            Text("查分類、收藏和圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -200,10 +200,24 @@ private struct AssistantReplyRow: View {
                 if let attachment = self.reply.attachment {
                     self.attached(attachment)
                 }
+                if let charge = self.reply.charge {
+                    // Said under every answer the model gave, including the
+                    // free ones — a price that only shows up when it is not
+                    // zero reads as a price that was hidden the other times.
+                    Text(verbatim: Self.receipt(charge))
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .contain)
+    }
+
+    private static func receipt(_ charge: AssistantReply.Charge) -> String {
+        let (points, left) = (charge.points, charge.available)
+        if points > 0 { return tujiLocalized("扣了 \(points) 點 · 剩 \(left) 點") }
+        return tujiLocalized("這次沒有扣點 · 剩 \(left) 點")
     }
 
     @ViewBuilder

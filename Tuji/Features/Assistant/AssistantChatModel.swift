@@ -31,7 +31,7 @@ final class AssistantChatModel {
     /// Which question the pending reply answers — see `ask`.
     private var asked = 0
 
-    init(responder: AssistantResponding = LocalAssistantResponder()) {
+    init(responder: AssistantResponding = TieredAssistantResponder()) {
         self.responder = responder
         self.append(.mascot(responder.greeting()))
     }

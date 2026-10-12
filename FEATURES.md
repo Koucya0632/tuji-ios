@@ -377,13 +377,15 @@ App 啟動
 - 空輸入顯示最近搜尋(LocalCache,上限 10 筆,LRU);有結果的查詢才寫入歷史。
 - 結果高亮命中子字串;進入搜尋頁自動 focus 並隱藏 tab bar。
 
-### 助手(第一級) — `Core/Assistant/`、`Features/Assistant/`
+### 助手 — `Core/Assistant/`、`Features/Assistant/`
 
 - **入口**:今天頁 hero 右上角的吉祥物(旁邊的對話雲寫「有問題可以點擊我」)→ `NavRoute.assistant` → `AssistantChatView`。
-- **只查資料,不呼叫模型**:沒有 token 費、不扣罐頭點數、不新增 API。分類、詞條、書籤、物見收藏的卡片都來自啟動時已在記憶體裡的 `CategoriesStore` / `WordsStore` / `LocalCache`,離線可用;只有「收藏的合集」會打一次既有的 `savedCollections`。
+- **第一級,免費**:分類、詞條、書籤、物見收藏的卡片都來自啟動時已在記憶體裡的 `CategoriesStore` / `WordsStore` / `LocalCache`,離線可用;只有「收藏的合集」會打一次既有的 `savedCollections`。不呼叫模型、不扣點。
+- **第二級,扣罐頭點數**:本機查不到(`noMatch`)時,`TieredAssistantResponder` 先讀 `GET /api/assistant/ask` 拿價格範圍與餘額,回一句「要問 AI 嗎？每次回答扣 1–5 點」並附「問 AI」選項。**打字永遠不會扣點,只有點那個選項才送出**。非罐頭點數帳號、功能未開、沒網路時讀不到報價,就維持第一級的「找不到」。
+- **送出的內容**:問題、介面語言、學習方向、問題裡提到的公開詞條 id(最多 8 個,伺服器自己讀詞條內容)、最近的模型問答(最多 6 則)。模型是 Claude Haiku 5.5,只回答語言學習的問題;範圍外的問題回一句說明、不扣點。
+- **計價**:伺服器照實際 token 換算(成本 × 3 ÷ 每點 US$0.0007),最少 1 點、最多 5 點,每則模型回覆下方顯示「扣了 N 點 · 剩 M 點」。失敗、逾時、被限流都不扣點;重試沿用同一個 `requestId`,伺服器同一個 id 只扣一次。
 - **輸入**:快捷選項(直接帶 `AssistantIntent`,不經文字解析)或打字。打字靠 `AssistantIntent.parse` 的關鍵字表(四種介面語言都認),認不出來一律當成查詞條,排序重用 `SearchVM.localMatches`。
 - **回覆**:每則最多 6 列,超過時給「看全部」連到搜尋或分類頁。對話只在記憶體裡,離開畫面即清。
-- **之後接模型**:換一個 `AssistantResponding` 的實作即可,`AssistantChatModel` 與畫面不動。
 
 ---
 

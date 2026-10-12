@@ -24,6 +24,22 @@ struct AssistantReply: Equatable {
         case nothingKept
         case collectionsNeedSignIn
         case collectionsUnreachable
+        /// Lookup found nothing; the model can be asked, for a price.
+        case modelOffer
+        case modelAnswer
+        /// The model declined: not a language-learning question. Not charged.
+        case modelOutOfScope
+        case modelInsufficientPoints
+        case modelBusy
+        case modelOffline
+        case modelUnavailable
+    }
+
+    /// What a model answer cost, and what is left. Present on every reply the
+    /// model produced, including the ones that cost nothing.
+    struct Charge: Equatable {
+        let points: Int
+        let available: Int
     }
 
     enum Attachment: Equatable {
@@ -40,4 +56,5 @@ struct AssistantReply: Equatable {
     let text: String
     var attachment: Attachment?
     var suggestions: [AssistantIntent] = []
+    var charge: Charge?
 }
