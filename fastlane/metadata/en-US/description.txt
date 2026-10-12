@@ -1,4 +1,4 @@
-Tuji is a picture dictionary of words that grows with you. Learn with illustrations, turn photos into cards, and lock words in with spaced repetition.
+Tuji is a picture dictionary for learning Japanese and English words. The convenience store, the drugstore, the supermarket, the station: the things you run into living in Japan, grouped by theme, each with a picture, audio and example sentences, and kept in memory with spaced repetition. Switch between Japanese and English at any time.
 
 ■ A word book you read like a picture dictionary
 Every word comes with a picture, pronunciation and example sentences, grouped by theme into picture dictionaries you can simply page through. Word pages also show easily confused words.
@@ -20,7 +20,6 @@ Anyone can browse published picture dictionaries and collections. Members can sa
 
 ■ Also
 • Daily study reminders (available to everyone)
-• Switch between learning English and learning Japanese at any time
 • Interface in Traditional Chinese, Simplified Chinese, Japanese and English
 • Answer offline; progress syncs when you're back online
 • Word pronunciation audio
