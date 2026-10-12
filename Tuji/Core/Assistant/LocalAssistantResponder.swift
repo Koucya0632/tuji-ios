@@ -73,6 +73,14 @@ final class LocalAssistantResponder: AssistantResponding {
         case .savedCollections: await self.savedCollectionsReply()
         case .lookupPrompt: self.lookupPromptReply()
         case let .lookup(query): self.lookupReply(query: query)
+        // This responder holds no model. `TieredAssistantResponder` answers
+        // this intent before it gets here.
+        case .askModel:
+            AssistantReply(
+                outcome: .modelUnavailable,
+                text: tujiLocalized("現在不能問 AI。沒有扣點。"),
+                suggestions: [.categories, .favorites]
+            )
         }
     }
 

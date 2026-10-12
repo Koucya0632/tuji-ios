@@ -26,7 +26,27 @@ struct AssistantChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TujiNavBar(leading: .back, compactTitle: Text("助手"), showsRule: true)
+            TujiNavBar(leading: .back, compactTitle: Text("助手"), showsRule: true) {
+                // Asking AI spends points a few at a time; the place they add
+                // up is one tap from where they are spent.
+                NavigationLink(value: NavRoute.creditStatement) {
+                    HStack(spacing: Space.s1) {
+                        Image("CreditCan")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .accessibilityHidden(true)
+                        Text("點數明細")
+                            .font(.tujiBodySm(.strong))
+                    }
+                    .foregroundStyle(.tujiInk)
+                    .padding(.horizontal, Space.s3)
+                    .frame(minHeight: 44)
+                    .background(.tujiPaper2)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
             self.conversation
             self.composer
         }
@@ -153,9 +173,9 @@ struct AssistantChatView: View {
                 .accessibilityLabel(Text("送出"))
             }
 
-            // It is called an assistant and it sits behind a chat field, so it
-            // owes the user the sentence that says what it is not.
-            Text("目前只會查分類、收藏和圖鑑裡的詞。")
+            // It sits behind a chat field and part of it costs points, so it
+            // owes the user the sentence that says which part.
+            Text("查分類、收藏和圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
                 .frame(maxWidth: .infinity, alignment: .leading)

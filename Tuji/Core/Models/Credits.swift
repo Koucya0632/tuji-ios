@@ -21,6 +21,8 @@ struct CreditWallet: Decodable, Equatable {
     let environment: String
     let reconciliationRequired: Bool
     let benefits: Benefits
+    /// When the monthly gift lapses (ISO8601). Optional: older fixtures omit it.
+    var nextMonthlyResetAt: String? = nil
 
     /// Compare decimal BIGINT strings without truncating walletVersion to Int.
     func isNewer(than previous: CreditWallet) -> Bool {

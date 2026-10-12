@@ -26,6 +26,10 @@ enum AssistantIntent: Hashable {
     /// 「查單字」 with no word yet.
     case lookupPrompt
     case lookup(query: String)
+    /// Send this question to the model. Never produced by `parse` — it only
+    /// exists as a chip the person taps, because it is the one intent that
+    /// costs 罐頭點數 and a keyword rule must not be able to spend them.
+    case askModel(question: String)
 }
 
 extension AssistantIntent {
@@ -144,6 +148,7 @@ extension AssistantIntent {
         case .savedCollections: tujiLocalized("收藏的合集")
         case .lookupPrompt: tujiLocalized("查單字")
         case let .lookup(query): tujiLocalized("查「\(query)」這個詞")
+        case .askModel: tujiLocalized("問 AI")
         }
     }
 }

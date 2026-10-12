@@ -24,6 +24,15 @@ struct AssistantReply: Equatable {
         case nothingKept
         case collectionsNeedSignIn
         case collectionsUnreachable
+        /// Lookup found nothing; the model can be asked, for a price.
+        case modelOffer
+        case modelAnswer
+        /// The model declined: not a language-learning question. Not charged.
+        case modelOutOfScope
+        case modelInsufficientPoints
+        case modelBusy
+        case modelOffline
+        case modelUnavailable
     }
 
     enum Attachment: Equatable {

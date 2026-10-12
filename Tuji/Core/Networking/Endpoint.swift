@@ -128,6 +128,11 @@ enum Endpoint {
     case creditCheckIn
     case creditImages
     case aiQuotes
+    /// 點數明細: the newest page of point movements, with the wallet beside it.
+    case creditLedger
+    /// 助手's one paid call. GET reads the price range and the balance; POST asks.
+    case assistantOffer
+    case assistantAsk
     case aiOperations
     case aiOperation(id: String)
     case aiOperationCancel(id: String)
@@ -438,6 +443,13 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/ai/images", policy: .privateFresh)
         case .aiQuotes:
             EndpointDescriptor(path: "/api/ai/quotes", policy: .privateFresh)
+        case .creditLedger:
+            EndpointDescriptor(path: "/api/credits/ledger", policy: .privateFresh)
+        case .assistantOffer:
+            EndpointDescriptor(path: "/api/assistant/ask", policy: .privateFresh)
+        case .assistantAsk:
+            // A model call: seconds, not milliseconds.
+            EndpointDescriptor(path: "/api/assistant/ask", policy: .privateFreshSlow)
         case .aiOperations:
             EndpointDescriptor(path: "/api/ai/operations", policy: .privateFresh)
         case let .aiOperation(id):

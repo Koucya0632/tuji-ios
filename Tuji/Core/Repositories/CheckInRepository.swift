@@ -42,3 +42,16 @@ struct LiveCheckInRepository: CheckInRepository {
         try await self.api.get(.usersStudyCalendar(month: month, learning: self.settings.learningDirection.rawValue))
     }
 }
+
+/// 點數明細's one read. Its own protocol for the reason `CheckInRepository` is:
+/// a screen that only reads the ledger should not need a fake that can check in.
+@MainActor
+protocol CreditStatementReading {
+    func loadStatement() async throws -> CreditLedgerPage
+}
+
+extension LiveCheckInRepository: CreditStatementReading {
+    func loadStatement() async throws -> CreditLedgerPage {
+        try await self.api.get(.creditLedger)
+    }
+}
