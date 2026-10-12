@@ -18,6 +18,9 @@ enum NavRoute: Hashable {
     /// rows push 單字 and 分類 onto the same stack, and coming back finds the
     /// conversation where it was left.
     case assistant
+    /// 點數明細 — the balance, where it came from and where it went. Reached
+    /// from 助手, the one screen that spends points a few at a time.
+    case creditStatement
     case settings
     /// 圖鑑管理 — opens on the current user's 圖鑑卡片.
     case atlasManage

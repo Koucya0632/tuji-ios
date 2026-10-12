@@ -26,7 +26,27 @@ struct AssistantChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TujiNavBar(leading: .back, compactTitle: Text("助手"), showsRule: true)
+            TujiNavBar(leading: .back, compactTitle: Text("助手"), showsRule: true) {
+                // Asking AI spends points a few at a time; the place they add
+                // up is one tap from where they are spent.
+                NavigationLink(value: NavRoute.creditStatement) {
+                    HStack(spacing: Space.s1) {
+                        Image("CreditCan")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .accessibilityHidden(true)
+                        Text("點數明細")
+                            .font(.tujiBodySm(.strong))
+                    }
+                    .foregroundStyle(.tujiInk)
+                    .padding(.horizontal, Space.s3)
+                    .frame(minHeight: 44)
+                    .background(.tujiPaper2)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
             self.conversation
             self.composer
         }
@@ -200,24 +220,10 @@ private struct AssistantReplyRow: View {
                 if let attachment = self.reply.attachment {
                     self.attached(attachment)
                 }
-                if let charge = self.reply.charge {
-                    // Said under every answer the model gave, including the
-                    // free ones — a price that only shows up when it is not
-                    // zero reads as a price that was hidden the other times.
-                    Text(verbatim: Self.receipt(charge))
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .contain)
-    }
-
-    private static func receipt(_ charge: AssistantReply.Charge) -> String {
-        let (points, left) = (charge.points, charge.available)
-        if points > 0 { return tujiLocalized("扣了 \(points) 點 · 剩 \(left) 點") }
-        return tujiLocalized("這次沒有扣點 · 剩 \(left) 點")
     }
 
     @ViewBuilder

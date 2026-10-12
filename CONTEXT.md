@@ -422,8 +422,14 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   (`AssistantIntent.askModel` is never produced by `parse`); and **a failure charges
   nothing and keeps its request id**, so a retry after a lost response is the same request
   to the server rather than a second charge. The price follows the answer's tokens between
-  a floor and a ceiling; the server decides it, the app only reports it (`Charge`).
+  a floor and a ceiling; the server decides it. The app does not print it under the
+  answer — what was spent is read on 點數明細.
   _Avoid_：把第一級的查表叫「AI 回覆」；會扣點的只有「問 AI」這一步。
+- **點數明細 (`CreditStatement`)** — the balance, its sources, and the recent movements,
+  built from one ledger page and the wallet returned beside it. The ledger records
+  *changes*, never balances, so each row's 「餘 N 點」 is derived by walking back from what
+  is held now. Held points count toward it (a reservation has spent nothing), and a
+  reserve or a release — which changes no total — is not a row.
 - **意圖 (`AssistantIntent`)** — what was asked, before anything is looked up. Free text is
   read by a keyword table that recognises every interface language at once (what someone
   types has nothing to do with uiLang); anything unrecognised is a 詞條 lookup, ranked by

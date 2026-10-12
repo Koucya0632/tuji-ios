@@ -128,8 +128,9 @@ final class TieredAssistantResponder: AssistantResponding {
         }
     }
 
+    /// The answer is the sentence and nothing under it. What it cost is on
+    /// 點數明細, one tap away, rather than repeated beneath every reply.
     private func reply(for answer: AssistantAnswer, question: String) -> AssistantReply {
-        let charge = AssistantReply.Charge(points: answer.charged, available: answer.available)
         guard answer.inScope else {
             // A declined question is not part of the conversation worth
             // carrying forward, and its (possibly empty) text is replaced.
@@ -138,22 +139,13 @@ final class TieredAssistantResponder: AssistantResponding {
                 text: answer.answer.isEmpty
                     ? tujiLocalized("我只能幫忙語言學習的問題。這次沒有扣點。")
                     : answer.answer,
-                suggestions: [.categories, .lookupPrompt],
-                charge: charge
+                suggestions: [.categories, .lookupPrompt]
             )
         }
         self.turns.append(AssistantTurn(role: .user, text: Self.clipped(question)))
         self.turns.append(AssistantTurn(role: .assistant, text: Self.clipped(answer.answer)))
         self.turns = Array(self.turns.suffix(Self.historyLimit))
-
-        let linked = Set(answer.wordIds)
-        let words = self.dictionary.words.filter { linked.contains($0.id) }
-        return AssistantReply(
-            outcome: .modelAnswer,
-            text: answer.answer,
-            attachment: words.isEmpty ? nil : .words(words, total: words.count, more: nil),
-            charge: charge
-        )
+        return AssistantReply(outcome: .modelAnswer, text: answer.answer)
     }
 
     /// Every failure says the same true thing — nothing was charged — and keeps

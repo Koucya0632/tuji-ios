@@ -1,7 +1,7 @@
 // 助手, tier two — the device first, a model only for what the device cannot
 // answer, and never without the person choosing to pay for it.
 //
-// Assertions are on decisions (`Outcome`, the payload, the charge), never on a
+// Assertions are on decisions (`Outcome`, the payload), never on a
 // sentence: CI reads English and a laptop reads 繁體中文.
 
 import Foundation
@@ -141,12 +141,9 @@ struct TieredAssistantResponderTests {
         #expect(sent?.history.isEmpty == true)
 
         #expect(reply.outcome == .modelAnswer)
-        #expect(reply.charge == AssistantReply.Charge(points: 2, available: 98))
-        #expect(reply.attachment == .words(
-            [AssistantFixture.word("pear", word: "pear", chinese: "梨子")],
-            total: 1,
-            more: nil
-        ))
+        // The answer is the sentence. What it cost lives on 點數明細, and the
+        // entries were grounding for the model, not a list to show again.
+        #expect(reply.attachment == nil)
     }
 
     @Test
@@ -176,7 +173,6 @@ struct TieredAssistantResponderTests {
         let responder = self.responder()
         let reply = await responder.reply(to: .askModel(question: "寫一段程式"))
         #expect(reply.outcome == .modelOutOfScope)
-        #expect(reply.charge?.points == 0)
         // The server sent no sentence, so the app supplies one.
         #expect(!reply.text.isEmpty)
 
@@ -193,7 +189,6 @@ struct TieredAssistantResponderTests {
         self.model.answer = .failure(APIError.transport(URLError(.timedOut)))
         let failed = await responder.reply(to: .askModel(question: self.question))
         #expect(failed.outcome == .modelOffline)
-        #expect(failed.charge == nil)
         #expect(failed.suggestions == [.askModel(question: self.question)])
 
         self.model.answer = .success(AssistantModelFake.answer())
@@ -203,7 +198,7 @@ struct TieredAssistantResponderTests {
     }
 
     @Test
-    func everyFailureIsAReplyThatChargedNothing() async {
+    func everyFailureIsAReply() async {
         let cases: [(Error, AssistantReply.Outcome)] = [
             (APIError.conflict(reason: "insufficient_credits", message: nil), .modelInsufficientPoints),
             (APIError.rateLimited(message: nil), .modelBusy),
@@ -217,7 +212,6 @@ struct TieredAssistantResponderTests {
             self.model.answer = .failure(error)
             let reply = await self.responder().reply(to: .askModel(question: self.question))
             #expect(reply.outcome == outcome)
-            #expect(reply.charge == nil)
         }
     }
 

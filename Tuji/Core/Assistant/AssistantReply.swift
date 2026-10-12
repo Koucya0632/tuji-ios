@@ -35,13 +35,6 @@ struct AssistantReply: Equatable {
         case modelUnavailable
     }
 
-    /// What a model answer cost, and what is left. Present on every reply the
-    /// model produced, including the ones that cost nothing.
-    struct Charge: Equatable {
-        let points: Int
-        let available: Int
-    }
-
     enum Attachment: Equatable {
         case categories([TujiCategory])
         /// `total` is how many there are; `words` is the few shown. `more` is
@@ -56,5 +49,4 @@ struct AssistantReply: Equatable {
     let text: String
     var attachment: Attachment?
     var suggestions: [AssistantIntent] = []
-    var charge: Charge?
 }
