@@ -8,6 +8,8 @@ final class FakeCreditCaptureAPI: CreditCaptureAPI {
     var catalogValue = CreditFixtures.catalog()
     var walletValue = CreditFixtures.wallet(available: 1000, version: "1")
     var operationsValue: [CreditOperation] = []
+    /// Photos `image(id:)` cannot answer for, by id.
+    var imageErrors: [String: Error] = [:]
     var quotePoints = 100
     /// Answers to `accept`, then to each `operation(id:)` poll, in order.
     var acceptResult: Result<CreditOperation, Error> = .success(CreditFixtures.operation(state: "reserved"))
@@ -43,7 +45,8 @@ final class FakeCreditCaptureAPI: CreditCaptureAPI {
     }
 
     func image(id: String) async throws -> AtlasImageSummary {
-        AtlasFixtures.image(id, status: "uploaded")
+        if let error = self.imageErrors[id] { throw error }
+        return AtlasFixtures.image(id, status: "uploaded")
     }
 
     func upload(photo _: Data) async throws -> AtlasImageSummary {
