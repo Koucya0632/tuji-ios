@@ -573,10 +573,10 @@ private struct AtlasManageDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await self.findResumable() }
         .fullScreenCover(isPresented: self.$showResume) {
-            AtlasCaptureView(resume: self.image.id) {
+            AtlasCaptureView(resume: self.image.id, onCardQueued: {
                 // The photo is a card in 生成佇列 now; this screen describes a row that is gone.
                 self.dismiss()
-            }
+            })
         }
         .tujiPrompt(
             isPresented: self.$showWithdrawConfirm,
