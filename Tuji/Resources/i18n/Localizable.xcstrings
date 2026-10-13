@@ -15645,6 +15645,29 @@
         }
       }
     },
+    "繼續確認" : {
+      "comment" : "Button on a photo's detail screen that reopens a paid recognition whose candidate was never picked.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finish confirming"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "確認を続ける"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续确认"
+          }
+        }
+      }
+    },
     "繼續複習" : {
       "localizations" : {
         "en" : {

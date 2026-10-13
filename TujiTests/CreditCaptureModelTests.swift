@@ -43,7 +43,8 @@ struct CreditCaptureModelTests {
         api: FakeCreditCaptureAPI = FakeCreditCaptureAPI(),
         journal: InMemoryPendingAcceptJournal? = nil,
         language: FakeLanguageContext = FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhEn),
-        owned: [String] = []
+        owned: [String] = [],
+        resume: String? = nil
     )
         -> Stand
     {
@@ -58,7 +59,8 @@ struct CreditCaptureModelTests {
             enrichmentPoll: .milliseconds(1), enrichmentDeadline: .seconds(60), celebrate: {}
         )
         let model = CreditCaptureModel(
-            api: api, queue: queue, account: { session.user }, pendingJournal: journal, language: language,
+            resume: resume, api: api, queue: queue, account: { session.user }, pendingJournal: journal,
+            language: language,
             ownedLemmas: { owned }, cards: cards, mutations: SpyAtlasMutationRefreshing(),
             sleep: { naps.asked.append($0) }
         )
@@ -78,6 +80,41 @@ struct CreditCaptureModelTests {
     private func ready(_ s: Stand) async {
         await s.model.load()
         s.model.setPhoto(Data([0xFF, 0xD8, 0xFF]))
+    }
+
+    // MARK: - Reopening a result
+
+    @Test
+    func 繼續確認OpensOnThePhotoThatWasAskedForNotTheNewestOneWaiting() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [
+            CreditFixtures.operation(id: "newer", state: "committed", image: "img-2"),
+            CreditFixtures.operation(id: "older", state: "committed", image: "img-1")
+        ]
+
+        let asked = self.stand(api: api, resume: "img-1")
+        await asked.model.load()
+        #expect(asked.model.operation?.id == "older")
+        guard case .result = asked.model.panel else {
+            Issue.record("expected the result panel, got \(asked.model.panel)")
+            return
+        }
+
+        // The camera button asks for nothing in particular and still gets the newest.
+        let camera = self.stand(api: api)
+        await camera.model.load()
+        #expect(camera.model.operation?.id == "newer")
+    }
+
+    @Test
+    func aPhotoWithNothingToReopenDoesNotOpenOnSomeoneElsesResult() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [CreditFixtures.operation(id: "other", state: "committed", image: "img-2")]
+        let s = self.stand(api: api, resume: "img-1")
+
+        await s.model.load()
+
+        #expect(s.model.operation == nil)
     }
 
     // MARK: - Starting a recognition

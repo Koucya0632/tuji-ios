@@ -32,21 +32,24 @@ enum CaptureEntry: Equatable {
 struct AtlasCaptureView: View {
     /// A capture was handed to 生成佇列; the host shows 我做的, where its tile is.
     var onCardQueued: () -> Void
+    /// Open on this photo's unpicked result instead of the newest one.
+    private let resume: String?
 
     @Environment(\.dismiss) private var dismiss
     private let store: AtlasStore
     /// The entitlement was asked for and still did not arrive.
     @State private var unreachable = false
 
-    init(store: AtlasStore = .shared, onCardQueued: @escaping () -> Void = {}) {
+    init(store: AtlasStore = .shared, resume: String? = nil, onCardQueued: @escaping () -> Void = {}) {
         self.store = store
+        self.resume = resume
         self.onCardQueued = onCardQueued
     }
 
     var body: some View {
         switch CaptureEntry(self.store.entitlement) {
         case .capture:
-            CreditCaptureView(onCardQueued: self.onCardQueued)
+            CreditCaptureView(resume: self.resume, onCardQueued: self.onCardQueued)
         case .membership:
             PaywallView()
         case .resolving:

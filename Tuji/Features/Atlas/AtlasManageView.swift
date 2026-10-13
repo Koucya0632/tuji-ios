@@ -496,6 +496,9 @@ private struct AtlasManageDetailView: View {
     let onDelete: () -> Void
 
     @State private var showWithdrawConfirm = false
+    /// A paid recognition of this photo is still waiting for its candidate to be picked.
+    @State private var resumable = false
+    @State private var showResume = false
     @Environment(\.dismiss) private var dismiss
     @Environment(CommunityFeedRefresh.self) private var feedRefresh
 
@@ -546,6 +549,11 @@ private struct AtlasManageDetailView: View {
                     self.publicationSection(item)
                 }
 
+                if self.resumable {
+                    BBtn(title: "繼續確認", fullWidth: true) { self.showResume = true }
+                        .padding(.top, Space.s2)
+                }
+
                 BBtn(title: "刪除這張卡片", bg: .tujiAlert, fg: .white, fullWidth: true, icon: "trash") {
                     self.onDelete()
                     self.dismiss()
@@ -558,6 +566,13 @@ private struct AtlasManageDetailView: View {
         .background(.tujiPaper)
         .navigationTitle(self.item?.lemma ?? tujiLocalized("圖片詳情"))
         .navigationBarTitleDisplayMode(.inline)
+        .task { await self.findResumable() }
+        .fullScreenCover(isPresented: self.$showResume) {
+            AtlasCaptureView(resume: self.image.id) {
+                // The photo is a card in 生成佇列 now; this screen describes a row that is gone.
+                self.dismiss()
+            }
+        }
         .tujiPrompt(
             isPresented: self.$showWithdrawConfirm,
             style: .confirmation,
@@ -569,6 +584,21 @@ private struct AtlasManageDetailView: View {
             },
             secondary: TujiPromptAction("先不要", role: .cancel) {}
         )
+    }
+
+    // MARK: - 繼續確認
+
+    /// 待確認 alone does not say the result can still be picked from: a photo left by the
+    /// retired pre-credit flow (docs/adr/0016) reads the same and has no run to reopen.
+    private func findResumable() async {
+        guard self.item == nil, self.row.inFlight == nil, self.image.statusKind == .needsReview,
+              let operations = try? await LiveCreditCaptureAPI().operations()
+        else { return }
+        self.resumable = CreditOperation.resumable(
+            for: self.image.id,
+            in: operations,
+            queued: AtlasCaptureQueue.shared.creditOperationIds
+        ) != nil
     }
 
     // MARK: - 公開狀態

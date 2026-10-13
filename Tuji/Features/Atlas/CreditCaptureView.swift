@@ -13,15 +13,22 @@ import UIKit
 
 struct CreditCaptureView: View {
     /// The card is in 生成佇列 and the sheet is about to close.
-    var onCardQueued: () -> Void = {}
+    var onCardQueued: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.targetLanguage) private var language
-    @State private var model = CreditCaptureModel()
+    @State private var model: CreditCaptureModel
     @State private var intake = ImageIntake(encoding: .capture, crop: .freeform)
     @State private var showWallet = false
     @State private var showPrecisionInfo = false
     @State private var slowRecognition = false
+
+    /// `resume`: open on this photo's unpicked result (圖片詳情's 繼續確認).
+    init(resume: String? = nil, onCardQueued: @escaping () -> Void = {}) {
+        self.onCardQueued = onCardQueued
+        self._model = State(initialValue: CreditCaptureModel(resume: resume))
+    }
+
     var body: some View {
         TujiFormSheet(title: "拍照新增", closeDisabled: self.model.busy, onClose: { self.dismiss() }) {
             TujiStepIndicator(total: 5, current: self.model.step)
