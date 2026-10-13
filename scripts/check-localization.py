@@ -179,6 +179,26 @@ def interpolations_to_specifiers(literal: str) -> str:
     return re.sub(r"\\\((?:[^()]|\([^()]*\))*\)", "\x00", literal)
 
 
+def unescape(literal: str) -> str:
+    """Swift writes `排一份\\n學習節奏`; the key the app looks up has a real newline.
+
+    This scan reads source text, so an escape arrives as two characters. Looked
+    up that way, the only catalogue key it can match is one that also spells a
+    backslash and an `n` — a key the running app never asks for. One of those
+    sat in the catalogue beside the real entry for exactly this reason: it was
+    what kept this check green.
+    """
+    simple = {"n": "\n", "t": "\t", "r": "\r", "0": "\0"}
+
+    def replace(match: re.Match[str]) -> str:
+        body = match.group(1)
+        if body.startswith("u{"):
+            return chr(int(body[2:-1], 16))
+        return simple.get(body, body)
+
+    return re.sub(r"\\(u\{[0-9a-fA-F]{1,8}\}|.)", replace, literal)
+
+
 def main() -> int:
     if not CATALOG.exists():
         print(f"catalogue not found: {CATALOG}", file=sys.stderr)
@@ -257,7 +277,10 @@ def main() -> int:
                         continue
                     if SKIP.match(collapsed.replace("\x00", "")):
                         continue
-                    key = literal if literal in catalog else blind.get(collapsed)
+                    # After the interpolations are collapsed, so `\\(` is never
+                    # mistaken for an escaped parenthesis.
+                    exact = unescape(literal)
+                    key = exact if exact in catalog else blind.get(unescape(collapsed))
                     if literal in seen:
                         continue
                     seen.add(literal)

@@ -3332,29 +3332,6 @@
         }
       }
     },
-    "先幫你排一份\\n學習節奏" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Let's set up your\\nlearning rhythm"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "まずは学習ペースを\\n整えましょう"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先帮你排一份\\n学习节奏"
-          }
-        }
-      }
-    },
     "先成為永久會員，才能訂閱 Pro" : {
       "comment" : "Paywall note above the disabled Pro plans: Lifetime Membership must be bought before Pro.",
       "localizations" : {
