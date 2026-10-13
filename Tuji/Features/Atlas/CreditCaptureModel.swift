@@ -60,6 +60,7 @@ final class CreditCaptureModel {
     /// an account switch must not land on the next account's screen.
     private let account: @MainActor () -> UUID?
     private let pendingJournal: any PendingAcceptJournal
+    private let setAside: any SetAsideJournal
     private let language: any LanguageContext
     /// The lemmas this account already has cards for.
     private let ownedLemmas: @MainActor () -> [String]
@@ -94,6 +95,7 @@ final class CreditCaptureModel {
             return nil
         },
         pendingJournal: any PendingAcceptJournal = DefaultsPendingAcceptJournal(),
+        setAside: any SetAsideJournal = DefaultsSetAsideJournal(),
         language: any LanguageContext = SettingsStore.shared,
         ownedLemmas: @escaping @MainActor () -> [String] = { AtlasStore.shared.items.map(\.lemma) },
         cards: any AtlasCardGenerating = AtlasStore.shared,
@@ -105,6 +107,7 @@ final class CreditCaptureModel {
         self.queue = queue
         self.account = account
         self.pendingJournal = pendingJournal
+        self.setAside = setAside
         self.language = language
         self.ownedLemmas = ownedLemmas
         self.cards = cards
@@ -240,6 +243,11 @@ final class CreditCaptureModel {
     private func reopen(from operations: [CreditOperation], stamp: Int) async throws {
         let queued = self.queue.creditOperationIds
         var waiting = operations
+        if self.resume == nil, let owner = self.owner {
+            // 換一張 said "not this one": only 繼續確認, which names the photo, brings it back.
+            let aside = self.setAside.load(account: owner)
+            waiting.removeAll { aside.contains($0.imageId) }
+        }
         while true {
             let found = if let resume = self.resume {
                 CreditOperation.resumable(for: resume, in: waiting, queued: queued)
@@ -264,8 +272,18 @@ final class CreditCaptureModel {
         }
     }
 
-    /// 換一張: back to the source chooser. Results already paid for stay in history.
-    func reset() {
+    /// 換一張: back to the source chooser, and the result left behind stops reopening here.
+    /// It used to come back on every visit, since nothing but a card or deleting the photo
+    /// closes a paid result — so 換一張 could never get past it.
+    func retake() {
+        if let operation = self.operation, operation.status != .released, let owner = self.owner {
+            self.setAside.add(operation.imageId, account: owner)
+        }
+        self.reset()
+    }
+
+    /// Back to the source chooser. Results already paid for stay in history.
+    private func reset() {
         self.photo = nil
         self.image = nil
         self.operation = nil

@@ -109,6 +109,19 @@ final class InMemoryPendingAcceptJournal: PendingAcceptJournal {
     }
 }
 
+@MainActor
+final class InMemorySetAsideJournal: SetAsideJournal {
+    private(set) var stored: [UUID: Set<String>] = [:]
+
+    func load(account: UUID) -> Set<String> {
+        self.stored[account] ?? []
+    }
+
+    func add(_ imageId: String, account: UUID) {
+        self.stored[account, default: []].insert(imageId)
+    }
+}
+
 enum CreditFixtures {
     static func catalog(recognition: Int = 100, precision: Int = 200, upgrade: Int = 100) -> CreditCatalog {
         CreditCatalog(

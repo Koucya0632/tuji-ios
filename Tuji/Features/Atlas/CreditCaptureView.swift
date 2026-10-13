@@ -207,7 +207,7 @@ struct CreditCaptureView: View {
                 Text(self.model.mode == .primary ? "普通識別" : "高精度識別")
                     .font(.tujiLabel).tracking(0.5).foregroundStyle(.tujiInk3)
                 Spacer()
-                TujiNavTextAction(title: "換一張", isEnabled: !self.model.busy) { self.model.reset() }
+                TujiNavTextAction(title: "換一張", isEnabled: !self.model.busy) { self.model.retake() }
             }
             self.photoFrame
             if self.model.busy {
@@ -268,7 +268,7 @@ struct CreditCaptureView: View {
         VStack(alignment: .leading, spacing: Space.s3) {
             self.photoFrame
             Text("辨識沒有完成，點數未扣除。").font(.tujiBody).foregroundStyle(.tujiInk)
-            BBtn(title: "換一張", fullWidth: true) { self.model.reset() }
+            BBtn(title: "換一張", fullWidth: true) { self.model.retake() }
         }
     }
 
@@ -311,7 +311,7 @@ struct CreditCaptureView: View {
             HStack {
                 Text("候選結果").font(.tujiLabel).tracking(0.5).foregroundStyle(.tujiInk3)
                 Spacer()
-                TujiNavTextAction(title: "換一張", isEnabled: !self.model.busy) { self.model.reset() }
+                TujiNavTextAction(title: "換一張", isEnabled: !self.model.busy) { self.model.retake() }
             }
             self.photoFrame
             self.modeRow
