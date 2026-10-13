@@ -117,6 +117,54 @@ struct CreditCaptureModelTests {
         #expect(s.model.operation == nil)
     }
 
+    @Test
+    func aResultWhosePhotoWasDeletedIsPassedOverForTheNextOneWaiting() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [
+            CreditFixtures.operation(id: "orphan", state: "committed", image: "gone"),
+            CreditFixtures.operation(id: "older", state: "committed", image: "img-1")
+        ]
+        api.imageErrors["gone"] = APIError.notFound
+        let s = self.stand(api: api)
+
+        await s.model.load()
+
+        #expect(s.model.operation?.id == "older")
+        #expect(s.model.image?.id == "img-1")
+    }
+
+    @Test
+    func whenTheOnlyResultWaitingHasNoPhotoTheSheetOpensOnChoosingOne() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [CreditFixtures.operation(id: "orphan", state: "committed", image: "gone")]
+        api.imageErrors["gone"] = APIError.notFound
+        let s = self.stand(api: api)
+
+        await s.model.load()
+
+        #expect(s.model.operation == nil)
+        #expect(s.model.message == nil)
+        guard case .source = s.model.panel else {
+            Issue.record("expected the source panel, got \(s.model.panel)")
+            return
+        }
+    }
+
+    @Test
+    func aPhotoThatCouldNotBeFetchedIsNotMistakenForADeletedOne() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [CreditFixtures.operation(id: "waiting", state: "committed", image: "img-1")]
+        api.imageErrors["img-1"] = APIError.transport(URLError(.notConnectedToInternet))
+        let s = self.stand(api: api)
+
+        await s.model.load()
+
+        // Offline is not gone: the paid result stays reachable, just without its photo.
+        #expect(s.model.operation?.id == "waiting")
+        #expect(s.model.image == nil)
+        #expect(s.model.message == nil)
+    }
+
     // MARK: - Starting a recognition
 
     @Test

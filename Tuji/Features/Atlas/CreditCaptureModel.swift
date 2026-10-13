@@ -226,19 +226,41 @@ final class CreditCaptureModel {
             guard self.valid(stamp) else { return }
             self.history = operations
             if self.operation == nil, self.photo == nil {
-                let queued = self.queue.creditOperationIds
-                self.operation = if let resume = self.resume {
-                    CreditOperation.resumable(for: resume, in: operations, queued: queued)
-                } else {
-                    CreditOperation.resumable(in: operations, queued: queued)
-                }
-                if let imageId = self.operation?.imageId {
-                    // The crop never left this phone's last session; show the upload instead.
-                    let image = try? await self.api.image(id: imageId)
-                    guard self.valid(stamp), self.operation?.imageId == imageId else { return }
-                    self.image = image
-                }
+                try await self.reopen(from: operations, stamp: stamp)
             }
+        }
+    }
+
+    /// Opens on work already paid for, with its photo — the crop never left this phone's last
+    /// session, so the upload is shown instead.
+    ///
+    /// A result whose photo has been deleted is passed over. Deleting a photo does not close
+    /// its run, so the newest unpicked result could be one that can never become a card; the
+    /// sheet opened on its candidates with an empty frame, and did so again on every launch.
+    private func reopen(from operations: [CreditOperation], stamp: Int) async throws {
+        let queued = self.queue.creditOperationIds
+        var waiting = operations
+        while true {
+            let found = if let resume = self.resume {
+                CreditOperation.resumable(for: resume, in: waiting, queued: queued)
+            } else {
+                CreditOperation.resumable(in: waiting, queued: queued)
+            }
+            guard let found else { return }
+            var image: AtlasImageSummary?
+            do {
+                image = try await self.api.image(id: found.imageId)
+            } catch APIError.notFound {
+                waiting.removeAll { $0.imageId == found.imageId }
+                continue
+            } catch {
+                // Unreachable is not gone: the result is still worth showing without its photo.
+            }
+            // A photo chosen while this was in the air wins.
+            guard self.valid(stamp), self.operation == nil, self.photo == nil else { return }
+            self.operation = found
+            self.image = image
+            return
         }
     }
 
