@@ -180,6 +180,8 @@ private struct AtlasCardsManagementPane: View {
         // people's accounts.
         let targetWarning = target.map { self.shelf.deleteWarning(for: $0) } ?? .privateOnly
         let batchWarning = self.shelf.deleteWarning(forSelected: self.shelf.selectedIds)
+        // A photo that never became a card has no card and no study history to lose.
+        let photoOnly = target.map { $0.item == nil } ?? false
         return ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 self.sectionHeader
@@ -232,8 +234,8 @@ private struct AtlasCardsManagementPane: View {
                 set: { if !$0 { self.pendingDelete = nil } }
             ),
             style: .destructive,
-            title: "刪除這張卡片？",
-            message: "這張卡片和它的學習紀錄都會一起刪除，無法復原。",
+            title: photoOnly ? "刪除這張圖片？" : "刪除這張卡片？",
+            message: photoOnly ? "這張圖片會被刪除，無法復原。" : "這張卡片和它的學習紀錄都會一起刪除，無法復原。",
             detail: Self.warningDetail(targetWarning, batch: false),
             primary: TujiPromptAction("刪除", role: .destructive) {
                 if let target { Task { await self.shelf.delete([target.id]) } }
@@ -554,7 +556,10 @@ private struct AtlasManageDetailView: View {
                         .padding(.top, Space.s2)
                 }
 
-                BBtn(title: "刪除這張卡片", bg: .tujiAlert, fg: .white, fullWidth: true, icon: "trash") {
+                BBtn(
+                    title: self.item == nil ? "刪除這張圖片" : "刪除這張卡片",
+                    bg: .tujiAlert, fg: .white, fullWidth: true, icon: "trash"
+                ) {
                     self.onDelete()
                     self.dismiss()
                 }
