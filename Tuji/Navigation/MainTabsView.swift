@@ -51,11 +51,19 @@ struct MainTabsView: View {
             }
         }
         .fullScreenCover(isPresented: self.$showCapture) {
-            AtlasCaptureView {
-                // The card being made heads 我做的's grid; open it there.
-                self.navigator.select(.cards)
-                self.navigator.cardsSourceRequest = .mine
-            }
+            AtlasCaptureView(
+                onCardQueued: {
+                    // The card being made heads 我做的's grid; open it there.
+                    self.navigator.select(.cards)
+                    self.navigator.cardsSourceRequest = .mine
+                },
+                onManage: {
+                    self.navigator.select(.cards)
+                    // From the root, so a second visit does not stack 圖鑑管理 on itself.
+                    self.navigator.cardsPath = NavigationPath()
+                    self.navigator.push(.atlasManage, on: .cards)
+                }
+            )
         }
         // Every pushed screen needs it: a feature screen that wants to open a
         // destination pushes a route through this rather than constructing the

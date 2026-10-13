@@ -14,6 +14,9 @@ import UIKit
 struct CreditCaptureView: View {
     /// The card is in 生成佇列 and the sheet is about to close.
     var onCardQueued: () -> Void
+    /// 圖鑑管理 was asked for and the sheet is about to close. Nil where the sheet was opened
+    /// from 圖鑑管理 itself: closing it is already the way there.
+    var onManage: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.targetLanguage) private var language
@@ -24,8 +27,9 @@ struct CreditCaptureView: View {
     @State private var slowRecognition = false
 
     /// `resume`: open on this photo's unpicked result (圖片詳情's 繼續確認).
-    init(resume: String? = nil, onCardQueued: @escaping () -> Void = {}) {
+    init(resume: String? = nil, onCardQueued: @escaping () -> Void = {}, onManage: (() -> Void)? = nil) {
         self.onCardQueued = onCardQueued
+        self.onManage = onManage
         self._model = State(initialValue: CreditCaptureModel(resume: resume))
     }
 
@@ -46,6 +50,7 @@ struct CreditCaptureView: View {
                     case .cardUnsynced: self.unsyncedPanel
                     case let .result(operation): self.resultPanel(operation)
                     }
+                    self.manageEntry
                 }
                 .padding(.horizontal, Space.s4)
                 .padding(.vertical, Space.s3)
@@ -71,6 +76,23 @@ struct CreditCaptureView: View {
             await self.model.load()
         }
         .task(id: self.model.watchKey) { await self.model.watch() }
+    }
+
+    // MARK: - 圖鑑管理
+
+    /// The photos already taken — including the ones still 待確認 — are managed somewhere this
+    /// sheet covers; from here the only route was to close it and find 圖鑑 → 我做的 → 管理.
+    @ViewBuilder
+    private var manageEntry: some View {
+        if let onManage {
+            HStack {
+                Spacer()
+                TujiNavTextAction(title: "圖鑑管理", isEnabled: !self.model.busy) {
+                    onManage()
+                    self.dismiss()
+                }
+            }
+        }
     }
 
     // MARK: - Wallet
