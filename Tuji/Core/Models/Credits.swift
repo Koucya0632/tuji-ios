@@ -180,6 +180,19 @@ extension CreditOperation {
                 !queued.contains($0.id)
         }
     }
+
+    /// The same question about one photo — what 圖片詳情's 繼續確認 reopens. `resumable(in:)`
+    /// answers with the newest photo still waiting, so an older one could only be reached by
+    /// finishing every photo taken after it.
+    static func resumable(
+        for imageId: String,
+        in operations: [CreditOperation],
+        queued: Set<String> = []
+    )
+        -> CreditOperation?
+    {
+        self.resumable(in: operations.filter { $0.imageId == imageId }, queued: queued)
+    }
 }
 
 struct CreditQuote: Decodable {

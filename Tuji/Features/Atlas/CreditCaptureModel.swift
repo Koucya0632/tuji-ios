@@ -51,6 +51,9 @@ final class CreditCaptureModel {
     /// 校正表單 for the result on screen.
     var form = CaptureCorrectionForm()
 
+    /// The photo 圖片詳情's 繼續確認 asked for: the sheet opens on that photo's result, not
+    /// on whichever unpicked result is newest.
+    private let resume: String?
     private let api: any CreditCaptureAPI
     private let queue: AtlasCaptureQueue
     /// Who is signed in, asked live: an answer that arrives after a sign-out or
@@ -83,6 +86,7 @@ final class CreditCaptureModel {
     ]
 
     init(
+        resume: String? = nil,
         api: any CreditCaptureAPI = LiveCreditCaptureAPI(),
         queue: AtlasCaptureQueue = .shared,
         account: @escaping @MainActor () -> UUID? = {
@@ -96,6 +100,7 @@ final class CreditCaptureModel {
         mutations: any AtlasMutationRefreshing = LiveAtlasMutationRefresher(),
         sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
+        self.resume = resume
         self.api = api
         self.queue = queue
         self.account = account
@@ -221,7 +226,12 @@ final class CreditCaptureModel {
             guard self.valid(stamp) else { return }
             self.history = operations
             if self.operation == nil, self.photo == nil {
-                self.operation = CreditOperation.resumable(in: operations, queued: self.queue.creditOperationIds)
+                let queued = self.queue.creditOperationIds
+                self.operation = if let resume = self.resume {
+                    CreditOperation.resumable(for: resume, in: operations, queued: queued)
+                } else {
+                    CreditOperation.resumable(in: operations, queued: queued)
+                }
                 if let imageId = self.operation?.imageId {
                     // The crop never left this phone's last session; show the upload instead.
                     let image = try? await self.api.image(id: imageId)
