@@ -44,7 +44,8 @@ struct CreditCaptureModelTests {
         journal: InMemoryPendingAcceptJournal? = nil,
         language: FakeLanguageContext = FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhEn),
         owned: [String] = [],
-        resume: String? = nil
+        resume: String? = nil,
+        setAside: InMemorySetAsideJournal = InMemorySetAsideJournal()
     )
         -> Stand
     {
@@ -60,7 +61,7 @@ struct CreditCaptureModelTests {
         )
         let model = CreditCaptureModel(
             resume: resume, api: api, queue: queue, account: { session.user }, pendingJournal: journal,
-            language: language,
+            setAside: setAside, language: language,
             ownedLemmas: { owned }, cards: cards, mutations: SpyAtlasMutationRefreshing(),
             sleep: { naps.asked.append($0) }
         )
@@ -131,6 +132,57 @@ struct CreditCaptureModelTests {
 
         #expect(s.model.operation?.id == "older")
         #expect(s.model.image?.id == "img-1")
+    }
+
+    @Test
+    func 換一張PutsTheResultAsideSoTheNextVisitOpensOnTheOneBehindIt() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [
+            CreditFixtures.operation(id: "newer", state: "committed", image: "img-2"),
+            CreditFixtures.operation(id: "older", state: "committed", image: "img-1")
+        ]
+        let aside = InMemorySetAsideJournal()
+        let first = self.stand(api: api, setAside: aside)
+        await first.model.load()
+        #expect(first.model.operation?.id == "newer")
+
+        first.model.retake()
+        await first.model.load()
+        #expect(first.model.operation?.id == "older")
+
+        first.model.retake()
+        let next = self.stand(api: api, setAside: aside)
+        await next.model.load()
+        #expect(next.model.operation == nil)
+    }
+
+    @Test
+    func 繼續確認StillOpensAResultThatWasSetAside() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [CreditFixtures.operation(id: "waiting", state: "committed", image: "img-1")]
+        let aside = InMemorySetAsideJournal()
+        let camera = self.stand(api: api, setAside: aside)
+        await camera.model.load()
+        camera.model.retake()
+
+        let detail = self.stand(api: api, resume: "img-1", setAside: aside)
+        await detail.model.load()
+
+        #expect(detail.model.operation?.id == "waiting")
+    }
+
+    @Test
+    func aResultNobodySetAsideStillReopens() async {
+        let api = FakeCreditCaptureAPI()
+        api.operationsValue = [CreditFixtures.operation(id: "waiting", state: "committed", image: "img-1")]
+        let aside = InMemorySetAsideJournal()
+        let first = self.stand(api: api, setAside: aside)
+        await first.model.load()
+
+        let next = self.stand(api: api, setAside: aside)
+        await next.model.load()
+
+        #expect(next.model.operation?.id == "waiting")
     }
 
     @Test

@@ -164,3 +164,29 @@ struct DefaultsPendingAcceptJournal: PendingAcceptJournal {
         self.defaults.removeObject(forKey: self.key(account, environment))
     }
 }
+
+/// The photos whose paid result 換一張 walked away from, one list per account. 拍照新增 stops
+/// reopening on them; 圖片詳情's 繼續確認 still does. Kept on this phone only: the result is
+/// not gone, just no longer in the way.
+@MainActor
+protocol SetAsideJournal {
+    func load(account: UUID) -> Set<String>
+    func add(_ imageId: String, account: UUID)
+}
+
+@MainActor
+struct DefaultsSetAsideJournal: SetAsideJournal {
+    var defaults: UserDefaults = .standard
+
+    private func key(_ account: UUID) -> String {
+        "tuji.credit-operation.set-aside.\(account.uuidString.lowercased())"
+    }
+
+    func load(account: UUID) -> Set<String> {
+        Set(self.defaults.stringArray(forKey: self.key(account)) ?? [])
+    }
+
+    func add(_ imageId: String, account: UUID) {
+        self.defaults.set(self.load(account: account).union([imageId]).sorted(), forKey: self.key(account))
+    }
+}
