@@ -56,6 +56,9 @@ struct CardWord: Codable, Identifiable, Hashable {
     /// /api/users/custom-words embeds it so WordDetailView can render without a
     /// second /api/atlas/items/{id}/detail round-trip. nil for public words.
     let detail: Word?
+    /// The author's public UID — only on 已收進 (`saved:`) words, so a picker
+    /// can leave out cards whose author this account has blocked.
+    let authorHandle: String?
 
     init(
         id: String,
@@ -68,7 +71,8 @@ struct CardWord: Codable, Identifiable, Hashable {
         readingSegments: [FuriganaSegment]? = nil,
         targetLanguage: TargetLanguage? = nil,
         audioUrls: [String: String]? = nil,
-        detail: Word? = nil
+        detail: Word? = nil,
+        authorHandle: String? = nil
     ) {
         self.id = id
         self.word = word
@@ -81,6 +85,7 @@ struct CardWord: Codable, Identifiable, Hashable {
         self.targetLanguage = targetLanguage
         self.audioUrls = audioUrls
         self.detail = detail
+        self.authorHandle = authorHandle
     }
 
     var imageURL: URL? {

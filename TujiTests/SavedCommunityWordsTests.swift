@@ -7,6 +7,7 @@
 // the public detail (author / 取消收藏 / 檢舉), and the `saved:` id prefix is
 // what carries that decision.
 
+import Foundation
 import Testing
 @testable import Tuji
 
@@ -40,6 +41,23 @@ struct SavedCommunityWordsTests {
         #expect("".savedCommunitySlug == nil)
         // A prefix with nothing after it is not a destination.
         #expect("saved:".savedCommunitySlug == nil)
+    }
+
+    /// The author's handle rides along so the 情境故事 picker can leave out a
+    /// blocked author's card; a payload without it (official words, an older
+    /// server) still decodes.
+    @Test
+    func savedWordsDecodeTheirAuthorHandle() throws {
+        let json = Data("""
+        {"id":"saved:kettle-3c0d274b","word":"kettle","chinese":"水壺","imageUrl":"",
+         "category":"community","pronunciation":"","authorHandle":"TJ73168628"}
+        """.utf8)
+        #expect(try JSONDecoder().decode(CardWord.self, from: json).authorHandle == "TJ73168628")
+
+        let plain = Data("""
+        {"id":"kettle","word":"kettle","chinese":"水壺","imageUrl":"","category":"kitchen","pronunciation":""}
+        """.utf8)
+        #expect(try JSONDecoder().decode(CardWord.self, from: plain).authorHandle == nil)
     }
 
     // MARK: - Merge

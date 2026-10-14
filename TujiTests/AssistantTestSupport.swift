@@ -5,7 +5,13 @@ import Foundation
 @testable import Tuji
 
 enum AssistantFixture {
-    static func word(_ id: String, word: String? = nil, chinese: String = "", category: String = "kitchen")
+    static func word(
+        _ id: String,
+        word: String? = nil,
+        chinese: String = "",
+        category: String = "kitchen",
+        authorHandle: String? = nil
+    )
         -> CardWord
     {
         CardWord(
@@ -14,7 +20,8 @@ enum AssistantFixture {
             chinese: chinese,
             imageUrl: "",
             category: category,
-            pronunciation: ""
+            pronunciation: "",
+            authorHandle: authorHandle
         )
     }
 

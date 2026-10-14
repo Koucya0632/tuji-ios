@@ -77,7 +77,8 @@ struct StoryBuilderModelTests {
         AssistantFixture.word("pen"),
         AssistantFixture.word("cup"),
         AssistantFixture.word("atlas:7c0d5a3e-0000-4000-8000-000000000001", word: "招き猫"),
-        AssistantFixture.word("saved:someone-elses-card")
+        AssistantFixture.word("saved:taken-in-card", category: "community", authorHandle: "TJ00000001"),
+        AssistantFixture.word("saved:blocked-authors-card", category: "community", authorHandle: "TJ00000002")
     ])
 
     private func makeModel() -> StoryBuilderModel {
@@ -85,7 +86,8 @@ struct StoryBuilderModelTests {
             repository: self.writer,
             dictionary: self.dictionary,
             language: FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhJa),
-            makeRequestId: self.ids.next
+            makeRequestId: self.ids.next,
+            isBlocked: { $0 == "TJ00000002" }
         )
     }
 
@@ -118,11 +120,12 @@ struct StoryBuilderModelTests {
     }
 
     @Test
-    func candidatesAreOfficialAndOwnCardsButNotOtherPeoplesCards() {
+    func candidatesAreOfficialOwnAndTakenInCardsButNotABlockedAuthors() {
         let ids = self.makeModel().candidates.map(\.id)
         #expect(ids.contains("apple"))
         #expect(ids.contains("atlas:7c0d5a3e-0000-4000-8000-000000000001"))
-        #expect(!ids.contains("saved:someone-elses-card"))
+        #expect(ids.contains("saved:taken-in-card"))
+        #expect(!ids.contains("saved:blocked-authors-card"))
     }
 
     @Test
