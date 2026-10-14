@@ -21,7 +21,7 @@ enum NavRoute: Hashable {
     /// 點數明細 — the balance, where it came from and where it went. Reached
     /// from 助手, the one screen that spends points a few at a time.
     case creditStatement
-    /// 情境故事 — pick 圖鑑 items, a place and a difficulty; 助手貓 writes a
+    /// 情境故事 — pick 圖鑑 items, a place and a difficulty; Moira, the cat, writes a
     /// short dialogue around them. Reached from 助手.
     case assistantStory
     case settings

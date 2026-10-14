@@ -179,7 +179,7 @@ struct StoryBuilderView: View {
             if self.model.writing == .writing {
                 HStack(spacing: Space.s2) {
                     TujiProgressBar(progress: nil).frame(width: 40)
-                    Text("助手貓正在寫故事…")
+                    Text("Moira 正在寫故事…")
                         .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk)
                 }
@@ -206,9 +206,9 @@ struct StoryBuilderView: View {
         guard let offer = self.model.offer else { return nil }
         let (low, high, held) = (offer.minPoints, offer.maxPoints, offer.available)
         if !self.model.canAfford {
-            return tujiLocalized("每個故事扣 \(low)–\(high) 點罐頭點數，你現在有 \(held) 點，不夠寫一個。")
+            return tujiLocalized("至少要有 \(high) 點罐頭點數才能寫故事，你現在有 \(held) 點。")
         }
-        return tujiLocalized("每個故事扣 \(low)–\(high) 點罐頭點數，你現在有 \(held) 點。")
+        return tujiLocalized("依實際用量扣罐頭點數，通常 \(low)–\(high) 點。你現在有 \(held) 點。")
     }
 
     static func sentence(for failure: StoryBuilderModel.Failure) -> String {
