@@ -14,7 +14,7 @@ import Testing
 
 struct AssistantIntentTests {
     private func parse(_ text: String) -> AssistantIntent? {
-        AssistantIntent.parse(text, categories: AssistantFixture.categories)
+        AssistantIntent.parse(text)
     }
 
     @Test
@@ -23,42 +23,11 @@ struct AssistantIntentTests {
         #expect(self.parse("  \n ") == nil)
     }
 
-    @Test(arguments: ["有哪些分類", "分类", "categories", "カテゴリを見せて", "主題"])
-    func asksForTheCategoryList(_ text: String) {
-        #expect(self.parse(text) == .categories)
-    }
-
-    @Test(arguments: ["廚房", "kitchen", "Kitchen", "廚房分類", "show me the kitchen category"])
-    func namesOneCategory(_ text: String) {
-        #expect(self.parse(text) == .category(id: "kitchen"))
-    }
-
-    /// 「廚房用具」 is a thing to look up, not the 廚房 category — a category
-    /// name only wins on its own, or when the text also says 分類.
-    @Test
-    func aCategoryNameInsideALongerWordIsALookup() {
-        #expect(self.parse("廚房用具") == .lookup(query: "廚房用具"))
-    }
-
-    @Test(arguments: ["我的收藏", "favorites", "saved", "お気に入り"])
-    func asksForFavoritesOverview(_ text: String) {
-        #expect(self.parse(text) == .favorites)
-    }
-
-    @Test(arguments: ["書籤", "我的书签", "bookmarks", "ブックマーク"])
-    func asksForBookmarks(_ text: String) {
-        #expect(self.parse(text) == .bookmarks)
-    }
-
-    @Test(arguments: ["物見收藏", "物见", "saved sightings"])
-    func asksForSavedCards(_ text: String) {
-        #expect(self.parse(text) == .savedCards)
-    }
-
-    /// 「收藏的合集」 contains 「收藏」 too — the narrower word has to win.
-    @Test(arguments: ["收藏的合集", "saved collections", "コレクション"])
-    func asksForSavedCollections(_ text: String) {
-        #expect(self.parse(text) == .savedCollections)
+    /// 分類 and 收藏 are no longer things the assistant answers — typed, they
+    /// are words like any other.
+    @Test(arguments: ["分類", "我的收藏", "bookmarks", "お気に入り"])
+    func formerCommandWordsAreLookups(_ text: String) {
+        #expect(self.parse(text) == .lookup(query: text.lowercased()))
     }
 
     @Test(arguments: [
@@ -84,20 +53,9 @@ struct AssistantIntentTests {
 @MainActor
 struct LocalAssistantResponderTests {
     private let dictionary = AssistantDictionary()
-    private let catalog = AssistantCatalog()
-    private let bookmarks = AssistantBookmarks()
-    private let shelf = AssistantShelf()
-    private let language = FakeLanguageContext(learningDirection: .zhJa)
 
-    private func responder(signedIn: Bool = true) -> LocalAssistantResponder {
-        LocalAssistantResponder(
-            dictionary: self.dictionary,
-            catalog: self.catalog,
-            bookmarks: self.bookmarks,
-            collections: self.shelf,
-            language: self.language,
-            isSignedIn: { signedIn }
-        )
+    private func responder() -> LocalAssistantResponder {
+        LocalAssistantResponder(dictionary: self.dictionary)
     }
 
     private func manyWords(_ count: Int, category: String = "kitchen") -> [CardWord] {
@@ -105,53 +63,10 @@ struct LocalAssistantResponderTests {
     }
 
     @Test
-    func greetingOffersTheThreeThingsItCanDo() {
+    func greetingOffersALookup() {
         let reply = self.responder().greeting()
         #expect(reply.outcome == .greeting)
-        #expect(reply.suggestions == [.categories, .favorites, .lookupPrompt])
-    }
-
-    /// `custom` and `community` are rows in the categories table, but they are
-    /// sources, and a theme with no words behind it is not worth offering.
-    @Test
-    func listsTheThemesThatHaveWords() async {
-        self.catalog.categories = AssistantFixture.categories + [
-            AssistantFixture.category("custom", name: "Custom", nameZh: "自製圖鑑"),
-            AssistantFixture.category("community", name: "Sightings", nameZh: "物見"),
-            AssistantFixture.category("empty", name: "Empty", nameZh: "空的")
-        ]
-        self.dictionary.words = [
-            AssistantFixture.word("pan", category: "kitchen"),
-            AssistantFixture.word("shirt", category: "clothing"),
-            AssistantFixture.word("atlas:mine", category: "custom"),
-            AssistantFixture.word("saved:theirs", category: "community")
-        ]
-        let reply = await self.responder().reply(to: .categories)
-        #expect(reply.outcome == .categories)
-        #expect(reply.attachment == .categories(AssistantFixture.categories))
-    }
-
-    @Test
-    func aCatalogueThatHasNotArrivedIsNotAnEmptyList() async {
-        self.catalog.categories = []
-        let reply = await self.responder().reply(to: .categories)
-        #expect(reply.outcome == .categoriesUnavailable)
-        #expect(reply.attachment == nil)
-    }
-
-    @Test
-    func aCategoryShowsAFewCardsAndPointsAtTheRest() async {
-        self.dictionary.words = self.manyWords(8) + [AssistantFixture.word("shirt", category: "clothing")]
-        let reply = await self.responder().reply(to: .category(id: "kitchen"))
-        #expect(reply.outcome == .category)
-        guard case let .words(shown, total, more) = reply.attachment else {
-            Issue.record("expected a words attachment")
-            return
-        }
-        #expect(shown.count == LocalAssistantResponder.previewLimit)
-        #expect(total == 8)
-        #expect(more == .categoryDetail(id: "kitchen"))
-        #expect(shown.allSatisfy { $0.category == "kitchen" })
+        #expect(reply.suggestions == [.lookupPrompt])
     }
 
     @Test
@@ -195,91 +110,8 @@ struct LocalAssistantResponderTests {
     }
 
     @Test
-    func bookmarksAreTheDictionaryWordsTheCacheHolds() async {
-        self.dictionary.words = [AssistantFixture.word("a"), AssistantFixture.word("b"), AssistantFixture.word("c")]
-        // `gone` is bookmarked but not in the current direction's dictionary.
-        self.bookmarks.favoriteIds = ["a", "c", "gone"]
-        let reply = await self.responder().reply(to: .bookmarks)
-        #expect(reply.outcome == .bookmarks)
-        #expect(reply.attachment == .words(
-            [AssistantFixture.word("a"), AssistantFixture.word("c")],
-            total: 2,
-            more: nil
-        ))
-    }
-
-    @Test
-    func savedCardsAreTheSavedNamespaceOnly() async {
-        self.dictionary.words = [
-            AssistantFixture.word("plain"),
-            AssistantFixture.word("atlas:mine"),
-            AssistantFixture.word("saved:theirs")
-        ]
-        let reply = await self.responder().reply(to: .savedCards)
-        #expect(reply.outcome == .savedCards)
-        #expect(reply.attachment == .words([AssistantFixture.word("saved:theirs")], total: 1, more: nil))
-    }
-
-    @Test
-    func nothingKeptYetIsItsOwnAnswer() async {
-        let responder = self.responder()
-        #expect(await responder.reply(to: .bookmarks).outcome == .nothingKept)
-        #expect(await responder.reply(to: .savedCards).outcome == .nothingKept)
-        #expect(await responder.reply(to: .savedCollections).outcome == .nothingKept)
-    }
-
-    /// The overview is answered from the device alone — it must not wait on the
-    /// one read that needs the network.
-    @Test
-    func theFavoritesOverviewDoesNotTouchTheNetwork() async {
-        let reply = await self.responder().reply(to: .favorites)
-        #expect(reply.outcome == .favorites)
-        #expect(reply.suggestions == [.bookmarks, .savedCards, .savedCollections])
-        #expect(self.shelf.requestedLanguages.isEmpty)
-    }
-
-    @Test
-    func savedCollectionsAreReadForTheLanguageBeingLearned() async {
-        self.shelf.result = .success([AssistantFixture.collection("one"), AssistantFixture.collection("two")])
-        let reply = await self.responder().reply(to: .savedCollections)
-        #expect(reply.outcome == .collections)
-        #expect(reply.attachment == .collections([
-            AssistantFixture.collection("one"),
-            AssistantFixture.collection("two")
-        ]))
-        #expect(self.shelf.requestedLanguages == [.ja])
-    }
-
-    @Test
-    func aSignedOutUserIsToldWhyRatherThanShownAFailure() async {
-        let reply = await self.responder(signedIn: false).reply(to: .savedCollections)
-        #expect(reply.outcome == .collectionsNeedSignIn)
-        #expect(self.shelf.requestedLanguages.isEmpty)
-    }
-
-    @Test
-    func anUnreachableShelfIsAReplyNotAnError() async {
-        self.shelf.result = .failure(ShelfUnreachable())
-        let reply = await self.responder().reply(to: .savedCollections)
-        #expect(reply.outcome == .collectionsUnreachable)
-        #expect(reply.attachment == nil)
-        // What still works offline.
-        #expect(reply.suggestions == [.bookmarks, .savedCards])
-    }
-
-    @Test
     func blankTextHasNoReply() async {
         #expect(await self.responder().reply(toText: "   ") == nil)
-    }
-
-    /// 「保存」 asks for the favourites and is also a word a learner may be
-    /// looking up. The command wins; the word stays one tap away.
-    @Test
-    func aCommandWordThatIsAlsoAnEntryOffersTheLookup() async {
-        self.dictionary.words = [AssistantFixture.word("hozon", word: "保存")]
-        let reply = await self.responder().reply(toText: "保存")
-        #expect(reply?.outcome == .favorites)
-        #expect(reply?.suggestions.first == .lookup(query: "保存"))
     }
 
     @Test
@@ -293,20 +125,44 @@ struct LocalAssistantResponderTests {
 
 // MARK: - 對話
 
+/// Answers like the device responder, except that the one question named
+/// `slow` waits at a gate — the stand-in for a model call still out.
+@MainActor
+private final class GatedResponder: AssistantResponding {
+    private let inner: LocalAssistantResponder
+    var gate: CheckedContinuation<Void, Never>?
+
+    init(dictionary: AssistantDictionary) {
+        self.inner = LocalAssistantResponder(dictionary: dictionary)
+    }
+
+    func greeting() -> AssistantReply {
+        self.inner.greeting()
+    }
+
+    func reply(toText text: String) async -> AssistantReply? {
+        await self.inner.reply(toText: text)
+    }
+
+    func reply(to intent: AssistantIntent) async -> AssistantReply {
+        if intent == .lookup(query: "slow") {
+            await withCheckedContinuation { self.gate = $0 }
+        }
+        return await self.inner.reply(to: intent)
+    }
+
+    func release() {
+        self.gate?.resume()
+        self.gate = nil
+    }
+}
+
 @MainActor
 struct AssistantChatModelTests {
     private let dictionary = AssistantDictionary([AssistantFixture.word("cat")])
-    private let shelf = AssistantShelf()
 
     private func model() -> AssistantChatModel {
-        AssistantChatModel(responder: LocalAssistantResponder(
-            dictionary: self.dictionary,
-            catalog: AssistantCatalog(),
-            bookmarks: AssistantBookmarks(),
-            collections: self.shelf,
-            language: FakeLanguageContext(),
-            isSignedIn: { true }
-        ))
+        AssistantChatModel(responder: LocalAssistantResponder(dictionary: self.dictionary))
     }
 
     private func outcomes(_ model: AssistantChatModel) -> [AssistantReply.Outcome?] {
@@ -319,7 +175,7 @@ struct AssistantChatModelTests {
     func opensWithTheGreetingAndItsChips() {
         let model = self.model()
         #expect(self.outcomes(model) == [.greeting])
-        #expect(model.suggestions == [.categories, .favorites, .lookupPrompt])
+        #expect(model.suggestions == [.lookupPrompt])
     }
 
     @Test
@@ -348,39 +204,36 @@ struct AssistantChatModelTests {
     @Test
     func aChipIsAnsweredAsItsIntent() async {
         let model = self.model()
-        model.choose(.categories)
+        model.choose(.lookupPrompt)
         await model.settle()
-        #expect(self.outcomes(model) == [.greeting, nil, .categories])
+        #expect(self.outcomes(model) == [.greeting, nil, .lookupPrompt])
     }
 
     @Test
     func chipsFollowTheLatestReply() async {
         let model = self.model()
-        model.choose(.favorites)
+        model.choose(.lookup(query: "zzz"))
         await model.settle()
-        #expect(model.suggestions == [.bookmarks, .savedCards, .savedCollections])
+        #expect(model.suggestions == [.lookupPrompt])
 
-        model.choose(.categories)
+        model.choose(.lookup(query: "cat"))
         await model.settle()
         #expect(model.suggestions.isEmpty)
     }
 
-    /// 收藏的合集 is the one slow answer. A question asked while it is still
-    /// out must get the only reply — not its own answer first and the stale
-    /// one underneath it.
+    /// A question asked while an earlier answer is still out must get the only
+    /// reply — not its own answer first and the stale one underneath it.
     @Test
     func aSlowAnswerIsDroppedOnceAnotherQuestionIsAsked() async {
-        self.shelf.holds = true
-        self.shelf.result = .success([AssistantFixture.collection("one")])
-        let model = self.model()
+        let responder = GatedResponder(dictionary: self.dictionary)
+        let model = AssistantChatModel(responder: responder)
 
-        model.choose(.savedCollections)
-        while self.shelf.gate == nil {
+        model.choose(.lookup(query: "slow"))
+        while responder.gate == nil {
             await Task.yield()
         }
         model.send("cat")
-        self.shelf.holds = false
-        self.shelf.release()
+        responder.release()
         await model.settle()
         // Let the overtaken task run to its guard.
         for _ in 0..<10 {

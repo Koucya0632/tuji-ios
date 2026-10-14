@@ -165,7 +165,7 @@ struct AssistantChatView: View {
 
             // It sits behind a chat field and part of it costs points, so it
             // owes the user the sentence that says which part.
-            Text("查分類、收藏和圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。")
+            Text("查圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -243,14 +243,6 @@ private struct AssistantReplyRow: View {
     @ViewBuilder
     private func attached(_ attachment: AssistantReply.Attachment) -> some View {
         switch attachment {
-        case let .categories(categories):
-            self.rows(categories) { category in
-                NavigationLink(value: NavRoute.categoryDetail(id: category.id)) {
-                    AssistantRow(title: category.nameZh, subtitle: nil) {
-                        Text(verbatim: category.emoji).font(.tujiH3)
-                    }
-                }
-            }
         case let .words(words, total, more):
             self.rows(words) { word in
                 NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
@@ -277,24 +269,6 @@ private struct AssistantReplyRow: View {
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-            }
-        case let .collections(collections):
-            self.rows(collections) { collection in
-                NavigationLink(
-                    value: NavRoute.atlasCollectionDetail(slug: collection.slug, preview: collection)
-                ) {
-                    AssistantRow(
-                        title: collection.title,
-                        subtitle: tujiLocalized("\(collection.itemCount) 張卡片")
-                    ) {
-                        CollectionIdentityTile(
-                            collectionID: collection.id,
-                            avatarColor: collection.avatarColor,
-                            avatarImageURL: collection.avatarURL,
-                            size: AssistantRow<EmptyView>.thumbSize
-                        )
-                    }
-                }
             }
         }
     }
@@ -362,6 +336,5 @@ private struct AssistantRow<Thumb: View>: View {
         AssistantChatView()
             .environment(StudyFocus.shared)
             .environment(SettingsStore.shared)
-            .environment(CollectionIdentityStore())
     }
 }

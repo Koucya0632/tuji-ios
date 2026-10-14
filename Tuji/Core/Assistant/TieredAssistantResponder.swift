@@ -1,10 +1,10 @@
 // 助手, tier two — the device first, a model only for what the device cannot answer.
 //
-// 分類, 收藏 and 詞條 are still answered by `LocalAssistantResponder`: free,
-// instant, offline. When a lookup finds nothing, this responder offers to ask
-// the model instead and says what that costs. The question is sent only after
-// the person taps the offer — asking spends 罐頭點數, and nothing here spends
-// them on a keyword rule's say-so.
+// 詞條 are still answered by `LocalAssistantResponder`: free, instant, offline.
+// When a lookup finds nothing, this responder offers to ask the model instead
+// and says what that costs. The question is sent only after the person taps the
+// offer — asking spends 罐頭點數, and nothing here spends them on a keyword
+// rule's say-so.
 
 import Foundation
 
@@ -139,7 +139,7 @@ final class TieredAssistantResponder: AssistantResponding {
                 text: answer.answer.isEmpty
                     ? tujiLocalized("我只能幫忙語言學習的問題。這次沒有扣點。")
                     : answer.answer,
-                suggestions: [.categories, .lookupPrompt]
+                suggestions: [.lookupPrompt]
             )
         }
         self.turns.append(AssistantTurn(role: .user, text: Self.clipped(question)))
@@ -158,7 +158,7 @@ final class TieredAssistantResponder: AssistantResponding {
             return AssistantReply(
                 outcome: .modelInsufficientPoints,
                 text: tujiLocalized("罐頭點數不夠問這一次。沒有扣點。"),
-                suggestions: [.categories, .favorites]
+                suggestions: [.lookupPrompt]
             )
         case APIError.rateLimited:
             return AssistantReply(
@@ -177,7 +177,7 @@ final class TieredAssistantResponder: AssistantResponding {
             return AssistantReply(
                 outcome: .modelUnavailable,
                 text: tujiLocalized("現在不能問 AI。沒有扣點。"),
-                suggestions: [.categories, .favorites]
+                suggestions: [.lookupPrompt]
             )
         default:
             return AssistantReply(

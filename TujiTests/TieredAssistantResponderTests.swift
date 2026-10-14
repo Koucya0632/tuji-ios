@@ -70,14 +70,7 @@ struct TieredAssistantResponderTests {
     private func responder() -> TieredAssistantResponder {
         let ids = RequestIds()
         return TieredAssistantResponder(
-            local: LocalAssistantResponder(
-                dictionary: self.dictionary,
-                catalog: AssistantCatalog(),
-                bookmarks: AssistantBookmarks(),
-                collections: AssistantShelf(),
-                language: self.language,
-                isSignedIn: { true }
-            ),
+            local: LocalAssistantResponder(dictionary: self.dictionary),
             model: self.model,
             dictionary: self.dictionary,
             language: self.language,
@@ -228,8 +221,8 @@ struct TieredAssistantResponderTests {
 
     @Test
     func otherIntentsStayOnTheDevice() async {
-        let reply = await self.responder().reply(to: .bookmarks)
-        #expect(reply.outcome == .nothingKept)
+        let reply = await self.responder().reply(to: .lookupPrompt)
+        #expect(reply.outcome == .lookupPrompt)
         #expect(self.model.asked.isEmpty)
         #expect(self.model.offersRead == 0)
     }
