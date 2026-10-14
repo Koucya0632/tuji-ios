@@ -54,6 +54,7 @@ final class AnimatedMascotRenderingTests: XCTestCase {
     }
 
     func testNativeHomeChatAndBackNavigation() async throws {
+        try await self.waitForNavigation { !StudyFocus.shared.active }
         XCTAssertFalse(StudyFocus.shared.active, "Snapshot hosting must release its focus ownership")
         let navigator = Self.navigator
         navigator.todayPath = NavigationPath()
@@ -76,11 +77,15 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         }
         try await Task.sleep(for: .milliseconds(250))
         navigator.push(.assistant)
-        try await Task.sleep(for: .milliseconds(450))
+        try await self.waitForNavigation {
+            self.fields(in: host.view).count == 1 && StudyFocus.shared.active
+        }
         XCTAssertTrue(StudyFocus.shared.active, "The assistant home hides the tab bar")
         XCTAssertEqual(self.fields(in: host.view).count, 1)
         navigator.push(.assistantChat(entry: .conversation))
-        try await Task.sleep(for: .milliseconds(600))
+        try await self.waitForNavigation {
+            self.fields(in: host.view).contains { $0.isFirstResponder }
+        }
         let field = try XCTUnwrap(self.fields(in: host.view).first { $0.isFirstResponder })
         XCTAssertTrue(StudyFocus.shared.active, "The chat keeps the tab bar hidden")
         XCTAssertLessThanOrEqual(field.convert(field.bounds, to: window).maxY, window.bounds.maxY)
@@ -112,9 +117,10 @@ final class AnimatedMascotRenderingTests: XCTestCase {
     }
 
     private func waitForNavigation(_ settled: () -> Bool) async throws {
-        // Keyboard dismissal can outlast the navigation animation. Observe the
-        // completed destination instead of checking midway through that pop.
-        for _ in 0..<60 {
+        // Keyboard focus/dismissal can outlast navigation, especially on a
+        // loaded CI simulator. Observe readiness instead of a fixed delay.
+        let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+        while ContinuousClock.now < deadline {
             if settled() { return }
             try await Task.sleep(for: .milliseconds(50))
         }
