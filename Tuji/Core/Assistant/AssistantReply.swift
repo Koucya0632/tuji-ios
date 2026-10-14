@@ -9,21 +9,9 @@ import Foundation
 struct AssistantReply: Equatable {
     enum Outcome: Equatable {
         case greeting
-        case categories
-        /// The catalogue has not arrived, so there is nothing to list yet.
-        case categoriesUnavailable
-        case category
         case words
         case noMatch
         case lookupPrompt
-        case favorites
-        case bookmarks
-        case savedCards
-        case collections
-        /// Nothing kept yet — of whichever kind was asked about.
-        case nothingKept
-        case collectionsNeedSignIn
-        case collectionsUnreachable
         /// Lookup found nothing; the model can be asked, for a price.
         case modelOffer
         case modelAnswer
@@ -36,11 +24,9 @@ struct AssistantReply: Equatable {
     }
 
     enum Attachment: Equatable {
-        case categories([TujiCategory])
         /// `total` is how many there are; `words` is the few shown. `more` is
         /// where the rest live, when there is such a place.
         case words([CardWord], total: Int, more: NavRoute?)
-        case collections([AtlasCollection])
     }
 
     let outcome: Outcome

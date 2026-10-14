@@ -1,75 +1,6 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
-    "嗨，我是 Tuji" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hi, I’m Tuji"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "こんにちは、Tujiです"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "嗨，我是 Tuji"
-          }
-        }
-      }
-    },
-    "查單字、找收藏，陪你一起學。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Look up words, revisit favorites, and learn with me."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "単語もお気に入りも、一緒に探して学ぼう。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查单字、找收藏，陪你一起学。"
-          }
-        }
-      }
-    },
-    "問問 Tuji" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask Tuji"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tujiに聞いてみよう"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "问问 Tuji"
-          }
-        }
-      }
-    },
     "AI 問答" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -93,6 +24,116 @@
         }
       }
     },
+    "問問 Moira" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask Moira"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moiraに聞いてみよう"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "问问 Moira"
+          }
+        }
+      }
+    },
+    "嗨，我可以幫你查圖鑑裡的詞。想找什麼？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi! I can look up words in the atlas for you. What are you looking for?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "こんにちは！図鑑の単語を調べられるよ。何を探してる？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗨，我可以帮你查图鉴里的词。想找什么？"
+          }
+        }
+      }
+    },
+    "嗨，我是 Moira" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi, I’m Moira"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "こんにちは、Moiraです"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗨，我是 Moira"
+          }
+        }
+      }
+    },
+    "查單字、問問題，陪你一起學。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look up words, ask questions, and learn with me."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単語を調べたり質問したり、一緒に学ぼう。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查单字、问问题，陪你一起学。"
+          }
+        }
+      }
+    },
+    "查圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looking up atlas words is free. Only asking AI uses Can Credits."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑の単語を調べるのは無料です。AIへの質問だけ缶詰ポイントを使います。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查图鉴里的词不用点数；问 AI 才会扣罐头点数。"
+          }
+        }
+      }
+    },
     "查找圖鑑中的單字與意思" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -112,52 +153,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查找图鉴中的单字与意思"
-          }
-        }
-      }
-    },
-    "依照生活主題探索單字" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Explore words by everyday topic"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "暮らしのテーマから単語を探す"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按照生活主题探索单字"
-          }
-        }
-      }
-    },
-    "找回書籤、物見卡片與收藏的合集" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revisit bookmarks, saved Sightings cards, and collections"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ブックマーク、保存した物見のカードやコレクションを探す"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "找回书签、物见卡片与收藏的合集"
           }
         }
       }
@@ -304,28 +299,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "。"
-          }
-        }
-      }
-    },
-    "「%@」有 %lld 張卡片。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\"%1$@\" has %2$lld cards."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%1$@」には%2$lld枚のカードがあります。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%1$@」有 %2$lld 张卡片。"
           }
         }
       }
@@ -2668,28 +2641,6 @@
         }
       }
     },
-    "你加了書籤的詞有 %lld 個。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You've bookmarked %lld words."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ブックマークした単語は%lld件です。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你加了书签的词有 %lld 个。"
-          }
-        }
-      }
-    },
     "你加書籤的字會出現在這裡" : {
       "localizations" : {
         "en" : {
@@ -2801,72 +2752,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你已经有一张「%@」的卡片，这会再新增一张。"
-          }
-        }
-      }
-    },
-    "你從物見收藏了 %lld 張卡片。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You've saved %lld cards from Sightings."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "物見から%lld枚のカードを保存しています。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你从物见收藏了 %lld 张卡片。"
-          }
-        }
-      }
-    },
-    "你收藏了 %lld 個合集。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You've saved %lld collections."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld件のコレクションを保存しています。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你收藏了 %lld 个合集。"
-          }
-        }
-      }
-    },
-    "你有 %lld 個書籤、%lld 張物見卡片。想看哪一種？" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You have %1$lld bookmarks and %2$lld Sightings cards. Which would you like to see?"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ブックマークが%1$lld件、物見のカードが%2$lld枚あります。どれを見ますか？"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你有 %1$lld 个书签、%2$lld 张物见卡片。想看哪一种？"
           }
         }
       }
@@ -4443,28 +4328,6 @@
         }
       }
     },
-    "分類還沒載入。連上網路後再問我一次。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The categories haven't loaded yet. Ask me again once you're online."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カテゴリがまだ読み込まれていません。オンラインになったらもう一度聞いてください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "分类还没加载。连上网络后再问我一次。"
-          }
-        }
-      }
-    },
     "切換 →" : {
       "localizations" : {
         "en" : {
@@ -5028,28 +4891,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "功能建议"
-          }
-        }
-      }
-    },
-    "加了書籤的詞會出現在這裡。在單字頁點書籤就能收進來。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Words you bookmark will show up here. Tap the bookmark on a word's page to keep it."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ブックマークした単語はここに表示されます。単語ページのブックマークをタップすると追加できます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "加了书签的词会出现在这里。在单字页点书签就能收进来。"
           }
         }
       }
@@ -6157,28 +5998,6 @@
         }
       }
     },
-    "嗨，我可以幫你查分類、收藏，還有圖鑑裡的詞。想找什麼？" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hi! I can look up categories, your saved items, and words in the atlas. What are you after?"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "こんにちは。カテゴリ、保存したもの、図鑑の単語を調べられます。何を探しますか？"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "嗨，我可以帮你查分类、收藏，还有图鉴里的词。想找什么？"
-          }
-        }
-      }
-    },
     "嘗試太頻繁，請稍後再試" : {
       "localizations" : {
         "en" : {
@@ -6491,28 +6310,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "图鉴管理"
-          }
-        }
-      }
-    },
-    "圖鑑裡有 %lld 個分類，點一個進去看。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The atlas has %lld categories. Tap one to open it."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "図鑑には%lld個のカテゴリがあります。タップして開けます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "图鉴里有 %lld 个分类，点一个进去看。"
           }
         }
       }
@@ -8929,28 +8726,6 @@
         }
       }
     },
-    "從物見收藏的卡片會出現在這裡。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cards you save from Sightings will show up here."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "物見から保存したカードはここに表示されます。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从物见收藏的卡片会出现在这里。"
-          }
-        }
-      }
-    },
     "從相簿選" : {
       "comment" : "A button label that says \"Pick from Photos\".",
       "isCommentAutoGenerated" : true,
@@ -10605,28 +10380,6 @@
         }
       }
     },
-    "收藏的合集會出現在這裡。到物見逛逛，看到喜歡的就收起來。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collections you save will show up here. Have a look around Sightings and keep the ones you like."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存したコレクションはここに表示されます。物見を見て回って、気に入ったものを保存しましょう。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "收藏的合集会出现在这里。到物见逛逛，看到喜欢的就收起来。"
-          }
-        }
-      }
-    },
     "收藏與設定會保留在伺服器。" : {
       "localizations" : {
         "en" : {
@@ -11729,28 +11482,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查「%@」这个词"
-          }
-        }
-      }
-    },
-    "查分類、收藏和圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Looking up categories, saved items and atlas words is free. Only asking AI uses Can Credits."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "カテゴリ、保存したもの、図鑑の単語を調べるのは無料です。AIへの質問だけ缶詰ポイントを使います。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查分类、收藏和图鉴里的词不用点数；问 AI 才会扣罐头点数。"
           }
         }
       }
@@ -13336,28 +13067,6 @@
         }
       }
     },
-    "現在讀不到收藏的合集，等網路好一點再問我。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I can't reach your saved collections right now. Ask me again when the connection is better."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "いまは保存したコレクションを読み込めません。接続が良くなったらもう一度聞いてください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "现在读不到收藏的合集，等网络好一点再问我。"
-          }
-        }
-      }
-    },
     "生成中" : {
       "comment" : "Label for a status in the Atlas app indicating that an image is being processed.",
       "isCommentAutoGenerated" : true,
@@ -13624,28 +13333,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "登录已过期，请重新登录"
-          }
-        }
-      }
-    },
-    "登入後才看得到收藏的合集。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sign in to see your saved collections."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存したコレクションを見るにはログインしてください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "登录后才看得到收藏的合集。"
           }
         }
       }

@@ -2,19 +2,15 @@ import SwiftUI
 
 /// Existing assistant capabilities, in the order offered on its home.
 enum AssistantHomeFeature: String, CaseIterable, Identifiable {
-    case lookup, categories, favorites, ask, story
+    case lookup, ask, story
 
     var id: String {
         self.rawValue
     }
 
-    static let shortcuts: [Self] = [.lookup, .categories, .favorites]
-
     var route: NavRoute {
         switch self {
         case .lookup: .assistantChat(entry: .intent(.lookupPrompt))
-        case .categories: .assistantChat(entry: .intent(.categories))
-        case .favorites: .assistantChat(entry: .intent(.favorites))
         case .ask: .assistantChat(entry: .conversation)
         case .story: .assistantStory
         }
@@ -23,8 +19,6 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var title: LocalizedStringKey {
         switch self {
         case .lookup: "查單字"
-        case .categories: "看分類"
-        case .favorites: "我的收藏"
         case .ask: "AI 問答"
         case .story: "情境故事"
         }
@@ -33,8 +27,6 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var detail: LocalizedStringKey {
         switch self {
         case .lookup: "查找圖鑑中的單字與意思"
-        case .categories: "依照生活主題探索單字"
-        case .favorites: "找回書籤、物見卡片與收藏的合集"
         case .ask: "詢問語言學習問題，確認後使用罐頭點數"
         case .story: "選 1–3 個單字，生成情境對話"
         }
@@ -43,8 +35,6 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .lookup: "text.magnifyingglass"
-        case .categories: "square.grid.2x2"
-        case .favorites: "bookmark"
         case .ask: "bubble.left.and.bubble.right"
         case .story: "text.book.closed"
         }
@@ -54,19 +44,17 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
 struct AssistantHomeView: View {
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(TabNavigator.self) private var navigator
-    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var draft = ""
     @FocusState private var fieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            TujiNavBar(leading: .back, compactTitle: Text("助手"), showsRule: true) {
+            TujiNavBar(leading: .back, showsRule: true) {
                 AssistantCreditLink()
             }
             ScrollView {
                 VStack(spacing: Space.s4) {
                     self.introduction
-                    self.shortcuts
                     self.questionField
                     self.features
                 }
@@ -87,11 +75,11 @@ struct AssistantHomeView: View {
         VStack(spacing: Space.s2) {
             AnimatedMascot()
                 .frame(height: 236)
-            Text("嗨，我是 Tuji")
+            Text("嗨，我是 Moira")
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
                 .accessibilityAddTraits(.isHeader)
-            Text("查單字、找收藏，陪你一起學。")
+            Text("查單字、問問題，陪你一起學。")
                 .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk2)
         }
@@ -99,43 +87,10 @@ struct AssistantHomeView: View {
         .frame(maxWidth: .infinity)
     }
 
-    @ViewBuilder
-    private var shortcuts: some View {
-        if self.typeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: Space.s2) {
-                self.shortcutLinks
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } else {
-            FlowLayout(spacing: Space.s2) {
-                self.shortcutLinks
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    private var shortcutLinks: some View {
-        ForEach(AssistantHomeFeature.shortcuts) { feature in
-            NavigationLink(value: feature.route) {
-                Text(feature.title)
-                    .font(.tujiBodySm(.strong))
-                    .foregroundStyle(.tujiInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, Space.s3)
-                    .padding(.vertical, Space.s2)
-                    .frame(minHeight: 44)
-                    .background(.tujiPaper2)
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("assistant-shortcut-\(feature.id)")
-        }
-    }
-
     private var questionField: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             HStack(spacing: Space.s2) {
-                TextField("問問 Tuji", text: self.$draft)
+                TextField("問問 Moira", text: self.$draft)
                     .focused(self.$fieldFocused)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -165,7 +120,7 @@ struct AssistantHomeView: View {
                 .accessibilityLabel(Text("送出"))
                 .accessibilityIdentifier("assistant-home-send")
             }
-            Text("查分類、收藏和圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。")
+            Text("查圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }

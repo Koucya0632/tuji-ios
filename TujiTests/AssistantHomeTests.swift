@@ -32,10 +32,7 @@ struct AssistantHomeTests {
         let dictionary = AssistantDictionary([AssistantFixture.word("cat", word: "cat")])
         let language = FakeLanguageContext()
         return AssistantChatModel(responder: TieredAssistantResponder(
-            local: LocalAssistantResponder(
-                dictionary: dictionary, catalog: AssistantCatalog(), bookmarks: AssistantBookmarks(),
-                collections: AssistantShelf(), language: language, isSignedIn: { true }
-            ),
+            local: LocalAssistantResponder(dictionary: dictionary),
             model: api, dictionary: dictionary, language: language
         ))
     }
@@ -44,12 +41,9 @@ struct AssistantHomeTests {
     func homeOffersOnlyExistingCapabilities() {
         #expect(AssistantHomeFeature.allCases.map(\.route) == [
             .assistantChat(entry: .intent(.lookupPrompt)),
-            .assistantChat(entry: .intent(.categories)),
-            .assistantChat(entry: .intent(.favorites)),
             .assistantChat(entry: .conversation),
             .assistantStory
         ])
-        #expect(AssistantHomeFeature.shortcuts == [.lookup, .categories, .favorites])
     }
 
     @Test
@@ -59,7 +53,7 @@ struct AssistantHomeTests {
         #expect(AssistantChatEntry.conversation.focusesComposer)
         #expect(AssistantChatEntry.intent(.lookupPrompt).focusesComposer)
         #expect(!AssistantChatEntry.text("cat").focusesComposer)
-        #expect(!AssistantChatEntry.intent(.categories).focusesComposer)
+        #expect(!AssistantChatEntry.intent(.lookup(query: "cat")).focusesComposer)
     }
 
     @Test
@@ -83,7 +77,7 @@ struct AssistantHomeTests {
         await model.settle()
         #expect(model.messages.count == 3)
         #expect(model.messages[1].body == .user("cat"))
-        model.choose(.categories)
+        model.choose(.lookupPrompt)
         await model.settle()
         let retained = model.messages
         #expect(!model.start(.text("cat")))
