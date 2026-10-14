@@ -1,4 +1,4 @@
-// 助手 — the screen. Reached by tapping the cat on 今天.
+// 助手 — the conversation, reached from the assistant home.
 //
 // The model is `AssistantChatModel`; what an answer contains is decided behind
 // `AssistantResponding`. This file only draws.
@@ -17,35 +17,19 @@ struct AssistantChatView: View {
     @State private var model: AssistantChatModel
     @State private var draft = ""
     @FocusState private var fieldFocused: Bool
+    private let entry: AssistantChatEntry
 
     /// The model is a parameter so a preview or a later tier can hand in one
     /// built over a different responder.
-    init(model: AssistantChatModel = AssistantChatModel()) {
+    init(model: AssistantChatModel = AssistantChatModel(), entry: AssistantChatEntry = .conversation) {
         _model = State(initialValue: model)
+        self.entry = entry
     }
 
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back, compactTitle: Text("助手"), showsRule: true) {
-                // Asking AI spends points a few at a time; the place they add
-                // up is one tap from where they are spent.
-                NavigationLink(value: NavRoute.creditStatement) {
-                    HStack(spacing: Space.s1) {
-                        Image("CreditCan")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 20, height: 20)
-                            .accessibilityHidden(true)
-                        Text("點數明細")
-                            .font(.tujiBodySm(.strong))
-                    }
-                    .foregroundStyle(.tujiInk)
-                    .padding(.horizontal, Space.s3)
-                    .frame(minHeight: 44)
-                    .background(.tujiPaper2)
-                    .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
+                AssistantCreditLink()
             }
             self.conversation
             self.composer
@@ -54,7 +38,12 @@ struct AssistantChatView: View {
         .toolbar(.hidden, for: .navigationBar)
         // The same flag 搜尋 uses: the custom tab bar would otherwise sit on top
         // of the input field.
-        .onAppear { self.studyFocus.enter() }
+        .onAppear {
+            self.studyFocus.enter()
+            if self.model.start(self.entry) {
+                self.fieldFocused = self.entry.focusesComposer
+            }
+        }
         .onDisappear { self.studyFocus.exit() }
     }
 

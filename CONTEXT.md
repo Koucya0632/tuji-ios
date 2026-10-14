@@ -410,7 +410,12 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 ## Domain — 助手
 
-- **助手 (`AssistantResponding`)** — the chat behind the cat on 今天. The seam is the
+- **助手首頁 (`AssistantHomeView`)** — behind the cat on 今天, an entry to the five
+  existing assistant capabilities. Its 2D cat breathes/blinks and wags on tap;
+  it makes no service request. `AssistantChatEntry` hands text or an intent to
+  a separate conversation. `AssistantChatModel.start` applies it once per model,
+  never again on a detail's return, and never spends points on entry.
+- **助手 (`AssistantResponding`)** — the conversation behind that home. The seam is the
   question → answer step. `LocalAssistantResponder` answers from what the device already
   holds: 分類, 詞條, 書籤, 物見卡片, and — its one network read — 收藏的合集. It calls no
   model and costs nothing. `TieredAssistantResponder` wraps it and adds the one paid step.

@@ -379,7 +379,9 @@ App 啟動
 
 ### 助手 — `Core/Assistant/`、`Features/Assistant/`
 
-- **入口**:今天頁 hero 右上角的吉祥物(旁邊的對話雲寫「有問題可以點擊我」)→ `NavRoute.assistant` → `AssistantChatView`。
+- **入口**:今天頁 hero 右上角的吉祥物(旁邊的對話雲寫「有問題可以點擊我」)→ `NavRoute.assistant` → `AssistantHomeView`。助手首頁沿用紙／墨／瞳黃，提供查單字、看分類、我的收藏、AI 問答、情境故事五個既有功能；首頁輸入問題後進入對話。
+- **動態角色**:首頁使用新的 2D 全身黑貓，由原生 `Canvas` 組合身體、尾巴、半閉眼與閉眼；輕微呼吸、不規則眨眼，點擊只甩尾。最多 30fps，離開／進背景停止，減少動態效果時靜止。
+- **對話導航**:`NavRoute.assistantChat(entry:)` 承接文字或既有意圖，`AssistantChatModel.start` 每段對話只執行一次，返回單字／分類詳情不重送也不清空訊息。進入 AI 問答只聚焦輸入框，不扣點；從首頁傳入的任何意圖都不能直接授權付費。
 - **第一級,免費**:分類、詞條、書籤、物見收藏的卡片都來自啟動時已在記憶體裡的 `CategoriesStore` / `WordsStore` / `LocalCache`,離線可用;只有「收藏的合集」會打一次既有的 `savedCollections`。不呼叫模型、不扣點。
 - **第二級,扣罐頭點數**:本機查不到(`noMatch`)時,`TieredAssistantResponder` 先讀 `GET /api/assistant/ask` 拿價格範圍與餘額,回一句「要問 AI 嗎？每次回答扣 1–5 點」並附「問 AI」選項。**打字永遠不會扣點,只有點那個選項才送出**。非罐頭點數帳號、功能未開、沒網路時讀不到報價,就維持第一級的「找不到」。
 - **送出的內容**:問題、介面語言、學習方向、問題裡提到的公開詞條 id(最多 8 個,伺服器自己讀詞條內容)、最近的模型問答(最多 6 則)。模型是 Claude Haiku 5.5,只回答語言學習的問題;範圍外的問題回一句說明、不扣點。
