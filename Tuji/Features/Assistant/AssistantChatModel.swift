@@ -30,6 +30,7 @@ final class AssistantChatModel {
     private var nextId = 0
     /// Which question the pending reply answers — see `ask`.
     private var asked = 0
+    private var started = false
 
     init(responder: AssistantResponding = TieredAssistantResponder()) {
         self.responder = responder
@@ -40,6 +41,23 @@ final class AssistantChatModel {
     var suggestions: [AssistantIntent] {
         guard case let .mascot(reply) = self.messages.last?.body else { return [] }
         return reply.suggestions
+    }
+
+    /// A pushed detail's return fires onAppear again; the original question
+    /// belongs to this conversation's creation, never to its next appearance.
+    @discardableResult
+    func start(_ entry: AssistantChatEntry) -> Bool {
+        guard !self.started else { return false }
+        self.started = true
+        switch entry {
+        case .conversation: break
+        case let .text(text): self.send(text)
+        case let .intent(.askModel(question)):
+            // An entry cannot authorize spending. Let the responder offer AI.
+            self.send(question)
+        case let .intent(intent): self.choose(intent)
+        }
+        return true
     }
 
     func send(_ text: String) {
