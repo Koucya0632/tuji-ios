@@ -141,6 +141,7 @@ struct AssistantChatView: View {
 
     private var composer: some View {
         VStack(spacing: Space.s2) {
+            self.storyEntry
             HStack(spacing: Space.s2) {
                 TextField("問我分類、收藏，或打一個字", text: self.$draft)
                     .focused(self.$fieldFocused)
@@ -185,6 +186,30 @@ struct AssistantChatView: View {
         .background(alignment: .top) {
             Rectangle().fill(.tujiRule).frame(height: Border.bw1)
         }
+    }
+
+    /// 情境故事 — the other thing 助手 does. Above the field rather than among
+    /// the chips: the chips are answers to what was just said, and this is
+    /// always there.
+    private var storyEntry: some View {
+        NavigationLink(value: NavRoute.assistantStory) {
+            HStack(spacing: Space.s2) {
+                Text("情境故事")
+                    .font(.tujiBodySm(.strong))
+                    .foregroundStyle(.tujiInk)
+                Text("選幾個單字，開始一段對話")
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+                    .lineLimit(1)
+                Spacer(minLength: Space.s2)
+                TujiRowAccessory()
+            }
+            .padding(.horizontal, Space.s3)
+            .frame(minHeight: 44)
+            .background(.tujiPaper2)
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
     }
 
     private var canSend: Bool {

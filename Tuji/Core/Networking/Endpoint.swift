@@ -133,6 +133,8 @@ enum Endpoint {
     /// 助手's one paid call. GET reads the price range and the balance; POST asks.
     case assistantOffer
     case assistantAsk
+    case assistantStoryOffer(uiLanguage: String)
+    case assistantStory
     case aiOperations
     case aiOperation(id: String)
     case aiOperationCancel(id: String)
@@ -450,6 +452,15 @@ enum Endpoint {
         case .assistantAsk:
             // A model call: seconds, not milliseconds.
             EndpointDescriptor(path: "/api/assistant/ask", policy: .privateFreshSlow)
+        case let .assistantStoryOffer(uiLanguage):
+            EndpointDescriptor(
+                path: "/api/assistant/story",
+                queryItems: [URLQueryItem(name: "uiLanguage", value: uiLanguage)],
+                policy: .privateFresh
+            )
+        case .assistantStory:
+            // A model call writing a whole scene: up to tens of seconds.
+            EndpointDescriptor(path: "/api/assistant/story", policy: .privateFreshSlow)
         case .aiOperations:
             EndpointDescriptor(path: "/api/ai/operations", policy: .privateFresh)
         case let .aiOperation(id):

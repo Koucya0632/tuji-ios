@@ -9,7 +9,7 @@ extension View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
-                case .assistant, .creditStatement: AssistantDestination(route: route)
+                case .assistant, .creditStatement, .assistantStory: AssistantDestination(route: route)
                 case .settings: SettingsView()
                 case .atlasManage: AtlasManageView(initialSection: .cards)
                 case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
@@ -44,17 +44,17 @@ private struct WordDestination: View {
     }
 }
 
-/// 助手 and the screen it links to. Two routes in one arm so the table above
-/// stays within what one function can hold; the pairing is real — 點數明細 is
-/// reached from 助手 and nowhere else.
+/// 助手 and the screens it links to. Three routes in one arm so the table above
+/// stays within what one function can hold; the grouping is real — 點數明細 and
+/// 情境故事 are reached from 助手 and nowhere else.
 private struct AssistantDestination: View {
     let route: NavRoute
 
     var body: some View {
-        if case .creditStatement = self.route {
-            CreditStatementView()
-        } else {
-            AssistantChatView()
+        switch self.route {
+        case .creditStatement: CreditStatementView()
+        case .assistantStory: StoryBuilderView()
+        default: AssistantChatView()
         }
     }
 }

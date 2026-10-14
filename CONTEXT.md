@@ -425,6 +425,15 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   a floor and a ceiling; the server decides it. The app does not print it under the
   answer — what was spent is read on 點數明細.
   _Avoid_：把第一級的查表叫「AI 回覆」；會扣點的只有「問 AI」這一步。
+- **情境故事 (`AssistantStoryWriting`, `StoryBuilderModel`)** — 助手's second paid step
+  (tuji-web `/api/assistant/story`, Claude Haiku 5.5). The person picks one to three
+  單字 — official or their own 自製 cards, never 物見 — then a 場地, a 場地情況 that belongs
+  to it, and a 難度; the model writes a short dialogue between 助手貓 and 你. The server
+  owns the places and levels (the offer labels them in uiLang), prices a story by its
+  tokens between a floor and a ceiling, and delivers nothing — and charges nothing — when
+  the story leaves out a picked word. The same three rules as 問 AI hold: the price is
+  said before the tap, the balance must cover the ceiling, and a failure keeps its request
+  id for the retry.
 - **點數明細 (`CreditStatement`)** — the balance, its sources, and the recent movements,
   built from one ledger page and the wallet returned beside it. The ledger records
   *changes*, never balances, so each row's 「餘 N 點」 is derived by walking back from what
