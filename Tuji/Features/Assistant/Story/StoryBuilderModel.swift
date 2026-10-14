@@ -46,6 +46,7 @@ final class StoryBuilderModel {
     private let dictionary: LocalDictionaryReading
     private let language: LanguageContext
     private let makeRequestId: @MainActor () -> String
+    private let isBlocked: @MainActor (String?) -> Bool
     /// One id per set of choices, reused when the same choices are sent again.
     private var pending: (payload: StoryPayload, requestId: String)?
 
@@ -53,12 +54,14 @@ final class StoryBuilderModel {
         repository: AssistantStoryWriting = LiveAssistantStoryRepository(),
         dictionary: LocalDictionaryReading = WordsStore.shared,
         language: LanguageContext = SettingsStore.shared,
-        makeRequestId: @escaping @MainActor () -> String = { UUID().uuidString.lowercased() }
+        makeRequestId: @escaping @MainActor () -> String = { UUID().uuidString.lowercased() },
+        isBlocked: @escaping @MainActor (String?) -> Bool = { BlockStore.shared.isBlocked($0) }
     ) {
         self.repository = repository
         self.dictionary = dictionary
         self.language = language
         self.makeRequestId = makeRequestId
+        self.isBlocked = isBlocked
     }
 
     // MARK: - 選項
@@ -74,10 +77,15 @@ final class StoryBuilderModel {
         }
     }
 
-    /// Items that can go into a story: the official dictionary and the person's
-    /// own cards. 物見 cards are someone else's, and the server refuses them.
+    /// Items that can go into a story: the official dictionary, the person's
+    /// own cards, and the 物見 cards they took in — except a blocked author's.
+    /// Blocking leaves those in 圖鑑, but a story is new use of the work. A
+    /// taken-down card never reaches the dictionary at all; the server checks
+    /// both again, so a stale block list only costs a refused request.
     var candidates: [CardWord] {
-        self.dictionary.words.filter { $0.id.savedCommunitySlug == nil }
+        self.dictionary.words.filter {
+            $0.id.savedCommunitySlug == nil || !self.isBlocked($0.authorHandle)
+        }
     }
 
     func isPicked(_ word: CardWord) -> Bool {

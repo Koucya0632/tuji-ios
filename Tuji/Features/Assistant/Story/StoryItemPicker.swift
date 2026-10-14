@@ -6,8 +6,8 @@
 // 官方 as the shelf of theme covers, and a theme's words as the same two
 // columns of `WordTile`s — tapping one picks it instead of opening it.
 //
-// 已收進 is not a chip: those are someone else's 物見 cards, the server refuses
-// them, and `StoryBuilderModel.candidates` already leaves them out.
+// 已收進 lists the 物見 cards taken in, minus a blocked author's
+// (`StoryBuilderModel.candidates`).
 
 import SwiftUI
 
@@ -17,13 +17,14 @@ struct StoryItemPicker: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(MasteryStore.self) private var mastery
     @Environment(LocalCache.self) private var cache
+    @Environment(BlockStore.self) private var blocks
 
     let model: StoryBuilderModel
     @State private var query = ""
     @State private var source: CardsSource = .official
     @State private var path: [TujiCategory] = []
 
-    static let sources: [CardsSource] = [.official, .mine, .bookmarked]
+    static let sources: [CardsSource] = [.official, .mine, .taken, .bookmarked]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +40,7 @@ struct StoryItemPicker: View {
         .background(Color.tujiPaper.ignoresSafeArea())
         .presentationDetents([.large])
         .warmsAccumulation(.themeIndex)
+        .task { await self.blocks.loadIfNeeded() }
     }
 
     // MARK: - Bits
@@ -188,7 +190,11 @@ struct StoryItemPicker: View {
                 MascotEmptyState(pose: .sleep, title: "還沒有書籤", message: "你加書籤的字會出現在這裡")
                     .tujiEmptyStatePlacement()
                     .frame(minHeight: 320)
-            case .official, .taken:
+            case .taken:
+                MascotEmptyState(pose: .sleep, title: "還沒有收進的字", message: "在物見收進的字會出現在這裡")
+                    .tujiEmptyStatePlacement()
+                    .frame(minHeight: 320)
+            case .official:
                 EmptyView()
             }
         }
