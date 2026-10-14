@@ -1,9 +1,10 @@
 // 情境故事 — 助手's second paid step, tuji-web `/api/assistant/story`.
 //
 // The person picks one to three 圖鑑 items, a place, what is happening there
-// and a difficulty; a model writes a short scene between 助手貓 and them. The
+// and a difficulty; a model writes a short scene between Moira, the cat, and them. The
 // server owns the list of places and levels (labelled in the interface
-// language), prices a story by its tokens between `minPoints` and `maxPoints`,
+// language), charges a story what its tokens cost — `minPoints`–`maxPoints` is
+// only the typical range, and `maxPoints` the balance a story needs to start —
 // and charges nothing for a story it cannot deliver.
 
 import Foundation
@@ -28,7 +29,10 @@ struct StoryOffer: Decodable, Equatable {
         let hint: String
     }
 
+    /// The typical range, said before the tap. Not a cap: a story is charged
+    /// what it cost.
     let minPoints: Int
+    /// Also the balance a story needs to start.
     let maxPoints: Int
     let available: Int
     let scenes: [Scene]
@@ -58,17 +62,29 @@ struct Story: Decodable, Equatable {
         /// Narration in the interface language; a spoken line in the language
         /// being learned.
         let text: String
-        /// Japanese lines only: the whole line in kana.
+        /// Japanese lines only: kana over each kanji run.
+        let furigana: [FuriganaSegment]?
+        /// Japanese lines only, when there is no `furigana`: the whole line in kana.
         let reading: String?
-        /// Spoken lines only: the line in the interface language.
+        /// Spoken lines only, and only when the interface language is not the
+        /// one being learned.
         let translation: String?
         /// Picked items this segment uses.
         let wordIds: [String]
     }
 
+    struct WordNote: Decodable, Equatable {
+        let id: String
+        /// What the word means, in the language being learned.
+        let note: String
+    }
+
     let title: String
     let intro: String
     let segments: [Segment]
+    /// Only when the interface language is the one being learned: a
+    /// translation would repeat each line, so the picked words are explained.
+    let wordNotes: [WordNote]?
 }
 
 struct StoryResult: Decodable, Equatable {

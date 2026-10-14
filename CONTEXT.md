@@ -428,11 +428,11 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 - **情境故事 (`AssistantStoryWriting`, `StoryBuilderModel`)** — 助手's second paid step
   (tuji-web `/api/assistant/story`, Claude Haiku 5.5). The person picks one to three
   單字 — official or their own 自製 cards, never 物見 — then a 場地, a 場地情況 that belongs
-  to it, and a 難度; the model writes a short dialogue between 助手貓 and 你. The server
-  owns the places and levels (the offer labels them in uiLang), prices a story by its
-  tokens between a floor and a ceiling, and delivers nothing — and charges nothing — when
+  to it, and a 難度; the model writes a short dialogue between Moira (the cat) and 你 — with a translation under each line, or, when the interface language is the one being learned, a same-language note per word instead; Japanese carries furigana over its kanji. The server
+  owns the places and levels (the offer labels them in uiLang), charges a story exactly what its
+  tokens cost (no ceiling; the 3–10 it shows is the typical range and the balance needed to start), and delivers nothing — and charges nothing — when
   the story leaves out a picked word. The same three rules as 問 AI hold: the price is
-  said before the tap, the balance must cover the ceiling, and a failure keeps its request
+  said before the tap, the balance must cover the typical high end before it starts, and a failure keeps its request
   id for the retry.
 - **點數明細 (`CreditStatement`)** — the balance, its sources, and the recent movements,
   built from one ledger page and the wallet returned beside it. The ledger records

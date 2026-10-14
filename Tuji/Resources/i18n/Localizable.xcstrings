@@ -1073,6 +1073,28 @@
         }
       }
     },
+    "Moira 正在寫故事…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moira is writing your story…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moiraがストーリーを書いています…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moira 正在写故事…"
+          }
+        }
+      }
+    },
     "Pro 已結束。超過 %lld 格的自製卡片將於 %@ 起鎖定，續訂 Pro 即可繼續使用。" : {
       "comment" : "Notice on 我 during the grace after Pro ended. %lld = the Lifetime slot cap (20); %@ = the date the over-cap custom cards lock.",
       "localizations" : {
@@ -2863,6 +2885,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "例如：生活日常"
+          }
+        }
+      }
+    },
+    "依實際用量扣罐頭點數，通常 %lld–%lld 點。你現在有 %lld 點。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charged by actual use, usually %1$lld–%2$lld Can Credits. You have %3$lld."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実際の使用量に応じて缶詰ポイントを使います（通常%1$lld〜%2$lldポイント）。現在%3$lldポイントあります。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依实际用量扣罐头点数，通常 %1$lld–%2$lld 点。你现在有 %3$lld 点。"
           }
         }
       }
@@ -5018,50 +5062,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "助手"
-          }
-        }
-      }
-    },
-    "助手貓" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Assistant cat"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アシスタント猫"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "助手猫"
-          }
-        }
-      }
-    },
-    "助手貓正在寫故事…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The assistant cat is writing your story…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アシスタント猫がストーリーを書いています…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "助手猫正在写故事…"
           }
         }
       }
@@ -11818,50 +11818,6 @@
         }
       }
     },
-    "每個故事扣 %lld–%lld 點罐頭點數，你現在有 %lld 點，不夠寫一個。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Each story costs %1$lld–%2$lld Can Credits. You have %3$lld, which isn't enough for one."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1つのストーリーで缶詰ポイントを%1$lld〜%2$lldポイント使います。現在%3$lldポイントで、足りません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每个故事扣 %1$lld–%2$lld 点罐头点数，你现在有 %3$lld 点，不够写一个。"
-          }
-        }
-      }
-    },
-    "每個故事扣 %lld–%lld 點罐頭點數，你現在有 %lld 點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Each story costs %1$lld–%2$lld Can Credits. You have %3$lld."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1つのストーリーで缶詰ポイントを%1$lld〜%2$lldポイント使います。現在%3$lldポイントあります。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每个故事扣 %1$lld–%2$lld 点罐头点数，你现在有 %3$lld 点。"
-          }
-        }
-      }
-    },
     "每天 3 分鐘" : {
       "localizations" : {
         "en" : {
@@ -15254,6 +15210,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "至少 8 个字符，英文、数字或符号皆可"
+          }
+        }
+      }
+    },
+    "至少要有 %lld 點罐頭點數才能寫故事，你現在有 %lld 點。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You need at least %1$lld Can Credits to write a story. You have %2$lld."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ストーリーを作るには缶詰ポイントが%1$lldポイント以上必要です。現在%2$lldポイントです。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至少要有 %1$lld 点罐头点数才能写故事，你现在有 %2$lld 点。"
           }
         }
       }

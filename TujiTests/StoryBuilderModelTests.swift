@@ -31,9 +31,15 @@ private final class StoryWriterFake: AssistantStoryWriting {
 
     static func result(available: Int = 96) -> StoryResult {
         StoryResult(
-            story: Story(title: "t", intro: "i", segments: [
-                .init(speaker: .cat, text: "りんごがあります。", reading: nil, translation: "有蘋果。", wordIds: ["apple"])
-            ]),
+            story: Story(
+                title: "t",
+                intro: "i",
+                segments: [.init(
+                    speaker: .cat, text: "りんごがあります。", furigana: nil, reading: nil,
+                    translation: "有蘋果。", wordIds: ["apple"]
+                )],
+                wordNotes: nil
+            ),
             charged: 4,
             available: available,
             minPoints: 3,
