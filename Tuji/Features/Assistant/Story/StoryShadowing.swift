@@ -95,7 +95,7 @@ struct ShadowingFeedback: View {
             Text("沒有聽到聲音").foregroundStyle(.tujiInk2)
         } else {
             HStack(spacing: Space.s3) {
-                Text(verbatim: "\(Int((score.ratio * 100).rounded()))%")
+                Text("正確率：\(Int((score.ratio * 100).rounded()))%")
                     .font(.tujiBody(.strong).monospacedDigit())
                     .foregroundStyle(.tujiInk)
                 if self.recorder.recording != nil {

@@ -201,6 +201,28 @@
         }
       }
     },
+    "正確率：%lld%%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accuracy: %lld%%"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正確率：%lld%%"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正确率：%lld%%"
+          }
+        }
+      }
+    },
     "聽我說的" : {
       "localizations" : {
         "en" : {

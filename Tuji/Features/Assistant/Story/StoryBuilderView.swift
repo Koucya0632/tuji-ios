@@ -2,9 +2,9 @@
 //
 // One page, top to bottom in the order of the decision: 單字, 場地, 情景,
 // 難度. The button at the bottom is the only thing that spends points, and it
-// says what it costs before it is tapped. As soon as a story has a title it
-// takes the page and the rest of it arrives there; closing it comes back to
-// the same choices.
+// says what it costs before it is tapped. Tapping it hands the page to the
+// story at once, and the story arrives there; closing it comes back to the
+// same choices, as does a write that fails before any of the story came in.
 
 import SwiftUI
 
@@ -21,9 +21,9 @@ struct StoryBuilderView: View {
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back, compactTitle: Text("情境故事"), showsRule: true)
-            if let story = self.model.story {
+            if self.model.story != nil || self.model.writing == .writing {
                 StoryReaderView(
-                    story: story,
+                    story: self.model.story,
                     language: self.model.storyLanguage,
                     picked: self.model.picked,
                     writing: self.model.writing
@@ -179,20 +179,10 @@ struct StoryBuilderView: View {
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            if self.model.writing == .writing {
-                HStack(spacing: Space.s2) {
-                    TujiProgressBar(progress: nil).frame(width: 40)
-                    Text("Moira 正在寫故事…")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk)
-                }
-                .frame(maxWidth: .infinity, minHeight: 52)
-            } else {
-                BBtn(title: "生成故事", fullWidth: true) {
-                    self.model.start()
-                }
-                .disabled(!self.model.canWrite)
+            BBtn(title: "生成故事", fullWidth: true) {
+                self.model.start()
             }
+            .disabled(!self.model.canWrite)
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
