@@ -25,6 +25,11 @@ enum NavRoute: Hashable {
     /// 情境故事 — pick 圖鑑 items, a place and a difficulty; Moira, the cat, writes a
     /// short dialogue around them. Reached from 助手.
     case assistantStory
+    /// 圖鑑主題對話 — chat with Moira about a 圖鑑 category. Reached from a
+    /// category page's 「用這個主題聊聊」, or a saved conversation.
+    case topicChat(TopicChatEntry)
+    /// 對話紀錄 — saved 主題對話 in the language being learned.
+    case topicChatHistory
     case settings
     /// 圖鑑管理 — opens on the current user's 圖鑑卡片.
     case atlasManage

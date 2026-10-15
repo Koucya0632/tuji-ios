@@ -52,6 +52,7 @@ struct CategoryView: View {
         // them sat inset, so the page looked like it had lost its margin.
         VStack(alignment: .leading, spacing: Space.s4) {
             self.hero
+            self.chatEntry.padding(.horizontal, Space.s4)
             Section {
                 self.grid.padding(.horizontal, Space.s4)
             } header: {
@@ -131,6 +132,37 @@ struct CategoryView: View {
             return tujiLocalized("探索與\(category.nameZh)相關的常用單字")
         }
         return description
+    }
+
+    /// 圖鑑主題對話's way in: the topic is this page's, so nothing is asked again.
+    /// Only for a category with enough words to talk about (the server's rule too).
+    @ViewBuilder
+    private var chatEntry: some View {
+        if self.filteredWords.count >= TopicPickerSheet.minimumWords, self.id != "community" {
+            NavigationLink(value: NavRoute.topicChat(.topic(self.id))) {
+                HStack(spacing: Space.s3) {
+                    Mascot(pose: .face, size: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("用這個主題聊聊")
+                            .font(.tujiBody(.strong))
+                            .foregroundStyle(.tujiInk)
+                        Text("Moira 先開口，你跟著換個詞說說看")
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: Space.s2)
+                    TujiRowAccessory()
+                }
+                .padding(.horizontal, Space.s3)
+                .padding(.vertical, Space.s2)
+                .frame(minHeight: 56)
+                .background(.tujiPaper2)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("category-topic-chat")
+        }
     }
 
     private var gridHeader: some View {
