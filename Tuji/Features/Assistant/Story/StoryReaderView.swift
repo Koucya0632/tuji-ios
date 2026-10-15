@@ -8,7 +8,9 @@
 // The story arrives whole but is read a segment at a time: 繼續 brings in the
 // next one and reads it aloud when it is a spoken line (narration is in the
 // interface language, so it is not). Each spoken line keeps a speaker button
-// for a replay. The words and the way out wait until the last segment is in;
+// for a replay, and a mic under it for 跟讀 — reading the line back and seeing
+// what was heard (`StoryShadowing`). Moving on, or replaying a line, drops a
+// try in progress. The words and the way out wait until the last segment is in;
 // 全部顯示 skips ahead for someone who would rather read it all at once.
 //
 // No `Spacer` beside a line: a sentence with furigana is a `FlowLayout`, and a
@@ -29,6 +31,7 @@ struct StoryReaderView: View {
 
     /// How many segments are on the page. Starts at the first.
     @State private var shown = 1
+    @State private var recorder = ShadowingRecorder()
 
     private static let faceSize: CGFloat = 32
     private static let bottomID = "story-bottom"
@@ -52,14 +55,15 @@ struct StoryReaderView: View {
                         ForEach(
                             Array(self.story.segments.prefix(self.shown).enumerated()),
                             id: \.offset
-                        ) { _, segment in
-                            self.segment(segment)
+                        ) { index, segment in
+                            self.segment(segment, index: index)
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                         }
                         if self.finished {
                             self.words
                             BBtn(title: "換個情境再寫一個", bg: .tujiPaper2, fullWidth: true) {
                                 self.speech.stop()
+                                self.recorder.cancel()
                                 self.close()
                             }
                             .padding(.top, Space.s2)
@@ -79,13 +83,17 @@ struct StoryReaderView: View {
                 self.continueBar
             }
         }
-        .onDisappear { self.speech.stop() }
+        .onDisappear {
+            self.speech.stop()
+            self.recorder.cancel()
+        }
     }
 
     private var continueBar: some View {
         HStack(spacing: Space.s3) {
             Button {
                 self.speech.stop()
+                self.recorder.cancel()
                 withAnimation(Motion.ease(Motion.d2)) {
                     self.shown = self.story.segments.count
                 }
@@ -109,6 +117,7 @@ struct StoryReaderView: View {
     private func advance() {
         guard !self.finished else { return }
         let next = self.story.segments[self.shown]
+        self.recorder.cancel()
         withAnimation(Motion.ease(Motion.d2)) {
             self.shown += 1
         }
@@ -120,7 +129,7 @@ struct StoryReaderView: View {
     }
 
     @ViewBuilder
-    private func segment(_ segment: Story.Segment) -> some View {
+    private func segment(_ segment: Story.Segment, index: Int) -> some View {
         switch segment.speaker {
         case .narrator:
             Text(verbatim: segment.text)
@@ -132,21 +141,32 @@ struct StoryReaderView: View {
             HStack(alignment: .top, spacing: Space.s2) {
                 Mascot(pose: .face, size: Self.faceSize)
                     .accessibilityLabel(Text(verbatim: "Moira"))
-                self.line(segment)
+                self.line(segment, index: index)
             }
             .padding(.trailing, Space.s5)
             .frame(maxWidth: .infinity, alignment: .leading)
         case .you:
-            self.line(segment)
+            self.line(segment, index: index)
                 .padding(.leading, Space.s5 + Self.faceSize)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 
-    private func line(_ segment: Story.Segment) -> some View {
+    private func line(_ segment: Story.Segment, index: Int) -> some View {
         HStack(alignment: .top, spacing: Space.s2) {
-            self.lineText(segment)
-            PronunciationButton(subject: .sentence(segment.text, language: self.language), size: 28, ground: .tujiPaper)
+            VStack(alignment: .leading, spacing: 0) {
+                self.lineText(segment)
+                ShadowingFeedback(recorder: self.recorder, line: index, language: self.language)
+            }
+            VStack(spacing: Space.s1) {
+                PronunciationButton(
+                    subject: .sentence(segment.text, language: self.language),
+                    size: 28,
+                    ground: .tujiPaper
+                )
+                .simultaneousGesture(TapGesture().onEnded { self.recorder.cancel() })
+                ShadowingButton(recorder: self.recorder, line: index, target: segment.text, language: self.language)
+            }
         }
         .padding(.horizontal, Space.s3)
         .padding(.vertical, Space.s2)
