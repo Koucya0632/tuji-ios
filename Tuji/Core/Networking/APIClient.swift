@@ -90,6 +90,59 @@ final class APIClient {
         return try await execute(request, ep: ep, method: "POST", decodeAs: T.self)
     }
 
+    /// A POST answered one line of JSON at a time (`application/x-ndjson`).
+    /// Throws as `post` does until the answer starts — a refusal is still a
+    /// status code — and afterwards hands over each line as it arrives.
+    /// Ending the iteration early cancels the request.
+    func postLines(_ ep: Endpoint, body: some Encodable) async throws -> AsyncThrowingStream<Data, Error> {
+        var req = try await buildRequest(ep, method: "POST", body: body)
+        req.setValue("application/x-ndjson", forHTTPHeaderField: "Accept")
+        log.info("POST \(ep.path, privacy: .public) (lines)")
+        var (bytes, resp) = try await self.openBytes(req)
+        if let http = resp as? HTTPURLResponse, http.statusCode == 401,
+           ep.descriptor.policy.access.mayRetryUnauthorized
+        {
+            let rejected = req.value(forHTTPHeaderField: "Authorization")
+                .map { String($0.dropFirst("Bearer ".count)) }
+            let token = try await auth.refreshedAccessToken(rejected: rejected)
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            (bytes, resp) = try await self.openBytes(req)
+        }
+        if let http = resp as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            var data = Data()
+            do {
+                for try await byte in bytes {
+                    data.append(byte)
+                }
+            } catch {
+                throw APIError.transport(error)
+            }
+            try APIError.check(resp, data: data)
+        }
+        let lines = bytes.lines
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    for try await line in lines where !line.isEmpty {
+                        continuation.yield(Data(line.utf8))
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: APIError.transport(error))
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    private func openBytes(_ req: URLRequest) async throws -> (URLSession.AsyncBytes, URLResponse) {
+        do {
+            return try await self.urlSession.bytes(for: req)
+        } catch {
+            throw APIError.transport(error)
+        }
+    }
+
     func delete(_ ep: Endpoint) async throws {
         _ = try await request(ep, method: "DELETE", body: Empty?.none, decodeAs: Empty.self)
     }
