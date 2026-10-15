@@ -34,39 +34,6 @@ nonisolated struct ShadowingScore: Equatable {
     /// lets one long word outweigh the rest of the sentence.
     let ratio: Double
 
-    enum Verdict: Equatable {
-        case great, close, again
-    }
-
-    var verdict: Verdict {
-        if self.ratio >= 0.85 { return .great }
-        if self.ratio >= 0.6 { return .close }
-        return .again
-    }
-
-    var missed: [String] {
-        self.words.filter { !$0.heard }.map(\.surface)
-    }
-
-    /// Missed words that sit next to each other, run together into one phrase:
-    /// the tokenizer cuts 置いてね into three pieces, and listing them one by
-    /// one reads as noise. `joiner` is what goes between two words of the
-    /// line's language — nothing for Japanese, a space for English.
-    func missedPhrases(joiner: String) -> [String] {
-        var phrases: [String] = []
-        var current: [String] = []
-        for word in self.words {
-            if word.heard {
-                if !current.isEmpty { phrases.append(current.joined(separator: joiner)) }
-                current = []
-            } else {
-                current.append(word.surface)
-            }
-        }
-        if !current.isEmpty { phrases.append(current.joined(separator: joiner)) }
-        return phrases
-    }
-
     /// Below this share of its characters a word is not counted as heard.
     private static let wordThreshold = 0.6
 

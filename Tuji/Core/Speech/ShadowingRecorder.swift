@@ -1,4 +1,6 @@
-// 跟讀 — listens to the person read a line back and scores it.
+// 跟讀 — listens to the person read a line back, scores it, and keeps the
+// recording so they can hear themselves. The recording is one temporary file,
+// replaced by the next try and never uploaded.
 //
 // Apple's speech recogniser, on the device whenever the language allows it, so
 // a try costs nothing and the audio does not leave the phone. When a language
@@ -42,6 +44,9 @@ final class ShadowingRecorder {
     /// Which line `phase` is about, so a line only shows its own result.
     private(set) var lineID: Int?
     private(set) var phase: Phase = .idle
+    /// The scored try's audio, while there is one to play back.
+    private(set) var recording: URL?
+    private(set) var isPlayingBack = false
 
     @ObservationIgnored private var target = ""
     @ObservationIgnored private var language: TargetLanguage = .en
@@ -49,6 +54,9 @@ final class ShadowingRecorder {
     @ObservationIgnored private var request: SFSpeechAudioBufferRecognitionRequest?
     @ObservationIgnored private var task: SFSpeechRecognitionTask?
     @ObservationIgnored private var timer: Task<Void, Never>?
+    @ObservationIgnored private var file: RecordingFile?
+    @ObservationIgnored private var player: AVAudioPlayer?
+    @ObservationIgnored private var playbackEnded: PlaybackEnded?
     /// Bumped on every start so a late callback from an earlier try is ignored.
     @ObservationIgnored private var attempt = 0
 
@@ -108,17 +116,22 @@ final class ShadowingRecorder {
             try session.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
             try session.setActive(true, options: .notifyOthersOnDeactivation)
             let input = engine.inputNode
+            let format = input.outputFormat(forBus: 0)
+            let file = try RecordingFile(url: Self.recordingURL, format: format)
+            self.file = file
             input.installTap(
                 onBus: 0,
                 bufferSize: 1024,
-                format: input.outputFormat(forBus: 0),
-                block: Self.tap(request)
+                format: format,
+                block: Self.tap(request, file: file)
             )
             engine.prepare()
             try engine.start()
         } catch {
             self.log.error("shadowing start failed: \(error.localizedDescription, privacy: .public)")
             engine.inputNode.removeTap(onBus: 0)
+            self.file?.close()
+            self.file = nil
             self.releaseSession()
             self.phase = .failed
             return
@@ -156,11 +169,15 @@ final class ShadowingRecorder {
     /// Drop everything, result included. Leaving the page, or starting again.
     func cancel() {
         self.attempt += 1
+        self.stopPlayback()
+        self.recording = nil
         self.timer?.cancel()
         self.timer = nil
         self.task?.cancel()
         self.task = nil
         self.closeMic()
+        self.file?.close()
+        self.file = nil
         self.request = nil
         self.lineID = nil
         self.phase = .idle
@@ -197,6 +214,7 @@ final class ShadowingRecorder {
         self.request = nil
         let score = ShadowingScore(target: self.target, heard: heard, language: self.language)
         self.phase = .scored(score, heard: heard)
+        self.closeFile()
         self.lastHeard = ""
     }
 
@@ -225,6 +243,46 @@ final class ShadowingRecorder {
         self.releaseSession()
     }
 
+    /// The try is over: the file is complete, and playable when it holds any sound.
+    private func closeFile() {
+        guard let file = self.file else { return }
+        self.file = nil
+        file.close()
+        self.recording = file.hasAudio ? file.url : nil
+    }
+
+    // MARK: - 聽自己
+
+    /// Plays the scored try, or stops it when it is already playing.
+    func playRecording() {
+        if self.isPlayingBack {
+            self.stopPlayback()
+            return
+        }
+        guard let recording else { return }
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+            let player = try AVAudioPlayer(contentsOf: recording)
+            let ended = PlaybackEnded { [weak self] in self?.stopPlayback() }
+            player.delegate = ended
+            guard player.play() else { return }
+            self.player = player
+            self.playbackEnded = ended
+            self.isPlayingBack = true
+        } catch {
+            self.log.error("shadowing playback failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    func stopPlayback() {
+        self.player?.stop()
+        self.player = nil
+        self.playbackEnded = nil
+        self.isPlayingBack = false
+    }
+
     private func releaseSession() {
         do {
             try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
@@ -242,9 +300,21 @@ final class ShadowingRecorder {
         }
     }
 
-    private nonisolated static func tap(_ request: SFSpeechAudioBufferRecognitionRequest) -> AVAudioNodeTapBlock {
+    private nonisolated static var recordingURL: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("shadowing.caf")
+    }
+
+    private nonisolated static func tap(
+        _ request: SFSpeechAudioBufferRecognitionRequest,
+        file: RecordingFile
+    )
+        -> AVAudioNodeTapBlock
+    {
         nonisolated(unsafe) let request = request
-        return { buffer, _ in request.append(buffer) }
+        return { buffer, _ in
+            request.append(buffer)
+            file.write(buffer)
+        }
     }
 
     private nonisolated static func handler(
@@ -270,5 +340,56 @@ final class ShadowingRecorder {
             SFSpeechRecognizer.requestAuthorization { continuation.resume(returning: $0) }
         }
         return status == .authorized
+    }
+}
+
+/// The mic's audio on its way to disk. Written from the audio thread, closed
+/// from the main actor after the tap is gone; the lock covers the overlap.
+private final nonisolated class RecordingFile: @unchecked Sendable {
+    let url: URL
+    private var file: AVAudioFile?
+    private var frames: AVAudioFramePosition = 0
+    private let lock = NSLock()
+
+    init(url: URL, format: AVAudioFormat) throws {
+        try? FileManager.default.removeItem(at: url)
+        self.url = url
+        self.file = try AVAudioFile(
+            forWriting: url,
+            settings: format.settings,
+            commonFormat: format.commonFormat,
+            interleaved: format.isInterleaved
+        )
+    }
+
+    var hasAudio: Bool {
+        self.lock.withLock { self.frames > 0 }
+    }
+
+    func write(_ buffer: AVAudioPCMBuffer) {
+        self.lock.withLock {
+            guard let file = self.file, (try? file.write(from: buffer)) != nil else { return }
+            self.frames += AVAudioFramePosition(buffer.frameLength)
+        }
+    }
+
+    func close() {
+        self.lock.withLock {
+            self.file?.close()
+            self.file = nil
+        }
+    }
+}
+
+/// Tells the recorder its playback reached the end.
+private final class PlaybackEnded: NSObject, AVAudioPlayerDelegate {
+    private let ended: @MainActor () -> Void
+
+    init(_ ended: @escaping @MainActor () -> Void) {
+        self.ended = ended
+    }
+
+    nonisolated func audioPlayerDidFinishPlaying(_: AVAudioPlayer, successfully _: Bool) {
+        Task { @MainActor in self.ended() }
     }
 }

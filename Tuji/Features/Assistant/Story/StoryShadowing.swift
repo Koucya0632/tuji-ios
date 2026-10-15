@@ -1,10 +1,10 @@
-// 情境故事 — 跟讀 on a spoken line: a mic under the speaker button, and what was
-// heard inside the bubble.
+// 情境故事 — 跟讀 on a spoken line: a mic under the speaker button, and the
+// result inside the bubble.
 //
-// The feedback says what the recogniser caught, not how good the accent was —
-// see `ShadowingScore`. Missed words are listed by name so the person knows
-// which part to try again, and the transcript is shown so a wrong reading is
-// visible rather than just a lower number.
+// The result is one number — how much of the line the recogniser caught, not
+// how good the accent was (see `ShadowingScore`) — and a button to hear the
+// try back. The transcript is not shown: the person judges their own reading
+// by listening to it beside the line's own voice.
 
 import SwiftUI
 
@@ -48,6 +48,7 @@ struct ShadowingFeedback: View {
     let recorder: ShadowingRecorder
     let line: Int
     let language: TargetLanguage
+    var speech: SpeechService = .shared
 
     @Environment(\.openURL) private var openURL
 
@@ -65,14 +66,7 @@ struct ShadowingFeedback: View {
         switch self.recorder.phase {
         case .idle:
             EmptyView()
-        case let .listening(heard):
-            VStack(alignment: .leading, spacing: 2) {
-                Text("正在聽…").foregroundStyle(.tujiInk2)
-                if !heard.isEmpty {
-                    Text(verbatim: heard).foregroundStyle(.tujiInk3)
-                }
-            }
-        case .finishing:
+        case .listening, .finishing:
             Text("正在聽…").foregroundStyle(.tujiInk2)
         case let .scored(score, heard):
             self.result(score, heard: heard)
@@ -100,37 +94,29 @@ struct ShadowingFeedback: View {
         if heard.isEmpty {
             Text("沒有聽到聲音").foregroundStyle(.tujiInk2)
         } else {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: Space.s2) {
-                    self.verdict(score.verdict)
-                        .font(.tujiBodySm.weight(.semibold))
+            HStack(spacing: Space.s3) {
+                Text(verbatim: "\(Int((score.ratio * 100).rounded()))%")
+                    .font(.tujiBody(.strong).monospacedDigit())
+                    .foregroundStyle(.tujiInk)
+                if self.recorder.recording != nil {
+                    Button {
+                        self.speech.stop()
+                        self.recorder.playRecording()
+                    } label: {
+                        HStack(spacing: Space.s1) {
+                            Image(systemName: self.recorder.isPlayingBack ? "stop.fill" : "play.fill")
+                                .font(.tujiIcon(11, weight: .bold))
+                            Text("聽我說的")
+                        }
+                        .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiInk)
-                    Text(verbatim: "\(Int((score.ratio * 100).rounded()))%")
-                        .font(.tujiBodySm.monospacedDigit())
-                        .foregroundStyle(.tujiInk2)
+                        .frame(minHeight: 44)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(self.recorder.isPlayingBack ? Text("停止播放") : Text("聽我說的"))
                 }
-                if !score.missed.isEmpty {
-                    Text("沒聽到：\(self.list(score))")
-                        .foregroundStyle(.tujiAlert)
-                }
-                Text("聽到：\(heard)").foregroundStyle(.tujiInk3)
             }
-        }
-    }
-
-    /// Missed phrases, listed the way the line's own language lists things.
-    private func list(_ score: ShadowingScore) -> String {
-        switch self.language {
-        case .ja: score.missedPhrases(joiner: "").joined(separator: "\u{3001}")
-        case .en: score.missedPhrases(joiner: " ").joined(separator: ", ")
-        }
-    }
-
-    private func verdict(_ verdict: ShadowingScore.Verdict) -> Text {
-        switch verdict {
-        case .great: Text("很好！")
-        case .close: Text("差不多了")
-        case .again: Text("再試一次")
         }
     }
 }

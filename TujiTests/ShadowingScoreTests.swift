@@ -1,35 +1,31 @@
-// 跟讀 — what counts as heard. Decisions only: which words, which verdict.
+// 跟讀 — what counts as heard. Decisions only: which words, what share.
 
 import Testing
 @testable import Tuji
 
 struct ShadowingScoreTests {
+    private func missed(_ score: ShadowingScore) -> [String] {
+        score.words.filter { !$0.heard }.map(\.surface)
+    }
+
     @Test
     func kanjiHeardAsKanaStillCounts() {
         let score = ShadowingScore(target: "傘はここに置いてね。", heard: "かさはここにおいてね", language: .ja)
-        #expect(score.missed.isEmpty)
-        #expect(score.verdict == .great)
+        #expect(self.missed(score).isEmpty)
+        #expect(score.ratio == 1)
     }
 
     @Test
     func katakanaAndHiraganaAreTheSameSound() {
         let score = ShadowingScore(target: "コーヒーをください", heard: "こーひーをください", language: .ja)
-        #expect(score.verdict == .great)
+        #expect(score.ratio == 1)
     }
 
     @Test
     func aJapaneseWordLeftOutIsMissed() {
         let score = ShadowingScore(target: "熱いから気をつけてね。", heard: "気をつけてね", language: .ja)
-        #expect(score.missed.contains("熱い"))
-        #expect(score.verdict != .great)
-    }
-
-    @Test
-    func missedWordsNextToEachOtherAreOnePhrase() {
-        let score = ShadowingScore(target: "いらっしゃいませ！傘はここに置いてね。", heard: "いらっしゃいませ", language: .ja)
-        #expect(score.missedPhrases(joiner: "") == ["傘はここに置いてね"])
-        let english = ShadowingScore(target: "Put your umbrella over here", heard: "put here", language: .en)
-        #expect(english.missedPhrases(joiner: " ") == ["your umbrella over"])
+        #expect(self.missed(score).contains("熱い"))
+        #expect(score.ratio < 1)
     }
 
     @Test
@@ -49,20 +45,19 @@ struct ShadowingScoreTests {
     @Test
     func anEnglishWordSaidWronglyIsMissed() {
         let score = ShadowingScore(target: "Put your umbrella here", heard: "put your umbrellas here", language: .en)
-        #expect(score.missed == ["umbrella"])
-        #expect(score.verdict == .close)
+        #expect(self.missed(score) == ["umbrella"])
+        #expect(score.ratio == 0.75)
     }
 
     @Test
-    func nothingHeardIsTryAgain() {
+    func nothingHeardIsZero() {
         let score = ShadowingScore(target: "Put your umbrella here", heard: "", language: .en)
         #expect(score.ratio == 0)
-        #expect(score.verdict == .again)
     }
 
     @Test
     func wordsHeardOutOfOrderAreNotAllCredited() {
         let score = ShadowingScore(target: "one two three four", heard: "four three two one", language: .en)
-        #expect(score.missed.count == 3)
+        #expect(self.missed(score).count == 3)
     }
 }
