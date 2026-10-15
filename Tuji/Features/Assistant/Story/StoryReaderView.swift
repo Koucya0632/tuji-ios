@@ -6,7 +6,8 @@
 // translation to lean on.
 //
 // The story arrives a segment at a time while Moira is still writing it — the
-// page opens on the title and intro — and is read a segment at a time: 繼續
+// page opens the moment 生成故事 is tapped, empty until the title and intro
+// come in — and is read a segment at a time: 繼續
 // brings in the next one that has arrived, and when the reader has caught up
 // with the writing the bar says so instead. 繼續 brings in the
 // next one and reads it aloud when it is a spoken line (narration is in the
@@ -23,7 +24,8 @@
 import SwiftUI
 
 struct StoryReaderView: View {
-    let story: Story
+    /// Nil until the title and intro have arrived.
+    let story: Story?
     /// What the spoken lines are in, for their voice.
     let language: TargetLanguage
     let picked: [CardWord]
@@ -42,8 +44,12 @@ struct StoryReaderView: View {
     private static let faceSize: CGFloat = 32
     private static let bottomID = "story-bottom"
 
+    private var segments: [Story.Segment] {
+        self.story?.segments ?? []
+    }
+
     private var caughtUp: Bool {
-        self.shown >= self.story.segments.count
+        self.shown >= self.segments.count
     }
 
     private var finished: Bool {
@@ -55,15 +61,17 @@ struct StoryReaderView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.s4) {
-                        Text(verbatim: self.story.title)
-                            .font(.tujiH2)
-                            .foregroundStyle(.tujiInk)
-                        Text(verbatim: self.story.intro)
-                            .font(.tujiBody)
-                            .foregroundStyle(.tujiInk2)
-                            .fixedSize(horizontal: false, vertical: true)
+                        if let story = self.story {
+                            Text(verbatim: story.title)
+                                .font(.tujiH2)
+                                .foregroundStyle(.tujiInk)
+                            Text(verbatim: story.intro)
+                                .font(.tujiBody)
+                                .foregroundStyle(.tujiInk2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                         ForEach(
-                            Array(self.story.segments.prefix(self.shown).enumerated()),
+                            Array(self.segments.prefix(self.shown).enumerated()),
                             id: \.offset
                         ) { index, segment in
                             self.segment(segment, index: index)
@@ -132,7 +140,7 @@ struct StoryReaderView: View {
             self.speech.stop()
             self.recorder.cancel()
             withAnimation(Motion.ease(Motion.d2)) {
-                self.shown = self.story.segments.count
+                self.shown = self.segments.count
             }
         } label: {
             Text("全部顯示")
@@ -147,7 +155,7 @@ struct StoryReaderView: View {
     /// Brings in the next segment and, when it is spoken, reads it.
     private func advance() {
         guard !self.caughtUp else { return }
-        let next = self.story.segments[self.shown]
+        let next = self.segments[self.shown]
         self.recorder.cancel()
         withAnimation(Motion.ease(Motion.d2)) {
             self.shown += 1
@@ -231,7 +239,7 @@ struct StoryReaderView: View {
 
     /// The note the story gave a word, when it gave one; otherwise its gloss.
     private func explanation(for word: CardWord) -> String {
-        self.story.wordNotes?.first { $0.id == word.id }?.note ?? word.chinese
+        self.story?.wordNotes?.first { $0.id == word.id }?.note ?? word.chinese
     }
 
     private var words: some View {

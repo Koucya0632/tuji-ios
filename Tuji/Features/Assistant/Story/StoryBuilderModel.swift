@@ -7,9 +7,10 @@
 // person taps the button that says what it costs; nothing here spends points
 // on its own.
 //
-// The story arrives in pieces. Once its title and intro exist it takes the
-// page and `writing` stays `.writing` while the segments come in; a failure
-// after that leaves what arrived on the page, charged nothing.
+// The story arrives in pieces: the page is the story's from the tap, `story`
+// fills in once its title and intro exist, and `writing` stays `.writing`
+// while the segments come in. A failure leaves what arrived on the page —
+// or, when nothing did, the choices with the reason — charged nothing.
 
 import Foundation
 import Observation
