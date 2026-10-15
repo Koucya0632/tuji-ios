@@ -12,19 +12,19 @@
 import Foundation
 
 /// The choices, the price range and the balance, read before anything is picked.
-struct StoryOffer: Decodable, Equatable {
-    struct Situation: Decodable, Equatable, Identifiable {
+struct StoryOffer: Codable, Equatable {
+    struct Situation: Codable, Equatable, Identifiable {
         let id: String
         let label: String
     }
 
-    struct Scene: Decodable, Equatable, Identifiable {
+    struct Scene: Codable, Equatable, Identifiable {
         let id: String
         let label: String
         let situations: [Situation]
     }
 
-    struct Level: Decodable, Equatable, Identifiable {
+    struct Level: Codable, Equatable, Identifiable {
         let id: String
         let label: String
         /// One line under the label: what the difficulty means.

@@ -46,6 +46,10 @@ struct AssistantHomeView: View {
     @Environment(TabNavigator.self) private var navigator
     @State private var draft = ""
     @FocusState private var fieldFocused: Bool
+    /// So 情境故事 opens on its choices rather than a loading bar.
+    var prefetchStoryOffer: () async -> Void = {
+        await StoryOfferCache.shared.prefetch(uiLanguage: UILanguage(code: SettingsStore.shared.uiLang).rawValue)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -68,6 +72,7 @@ struct AssistantHomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
+        .task { await self.prefetchStoryOffer() }
         .accessibilityIdentifier("assistant-home")
     }
 
