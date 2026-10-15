@@ -90,6 +90,28 @@
         }
       }
     },
+    "情景" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Situation"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "シチュエーション"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "情景"
+          }
+        }
+      }
+    },
     "查單字、問問題，陪你一起學。" : {
       "localizations" : {
         "en" : {
@@ -3558,28 +3580,6 @@
         }
       }
     },
-    "先選場地" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pick a place first"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先に場所を選んでください"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "先选场地"
-          }
-        }
-      }
-    },
     "先選學習主題，開始學新字" : {
       "localizations" : {
         "en" : {
@@ -6578,28 +6578,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "场地"
-          }
-        }
-      }
-    },
-    "場地情況" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "What's happening"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "シチュエーション"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "场地情况"
           }
         }
       }

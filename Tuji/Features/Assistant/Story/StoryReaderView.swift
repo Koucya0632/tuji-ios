@@ -5,7 +5,10 @@
 // their own pages — explained in the same language when there is no
 // translation to lean on.
 //
-// The story arrives whole but is read a segment at a time: 繼續 brings in the
+// The story arrives a segment at a time while Moira is still writing it — the
+// page opens on the title and intro — and is read a segment at a time: 繼續
+// brings in the next one that has arrived, and when the reader has caught up
+// with the writing the bar says so instead. 繼續 brings in the
 // next one and reads it aloud when it is a spoken line (narration is in the
 // interface language, so it is not). Each spoken line keeps a speaker button
 // for a replay, and a mic under it for 跟讀 — reading the line back and seeing
@@ -24,6 +27,9 @@ struct StoryReaderView: View {
     /// What the spoken lines are in, for their voice.
     let language: TargetLanguage
     let picked: [CardWord]
+    /// `.writing` while segments are still arriving; `.failed` when the
+    /// writing stopped partway.
+    let writing: StoryBuilderModel.Writing
     let close: () -> Void
     var speech: SpeechService = .shared
 
@@ -36,8 +42,12 @@ struct StoryReaderView: View {
     private static let faceSize: CGFloat = 32
     private static let bottomID = "story-bottom"
 
-    private var finished: Bool {
+    private var caughtUp: Bool {
         self.shown >= self.story.segments.count
+    }
+
+    private var finished: Bool {
+        self.caughtUp && self.writing != .writing
     }
 
     var body: some View {
@@ -60,6 +70,12 @@ struct StoryReaderView: View {
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                         }
                         if self.finished {
+                            if case let .failed(failure) = self.writing {
+                                Text(verbatim: StoryBuilderView.sentence(for: failure))
+                                    .font(.tujiBodySm)
+                                    .foregroundStyle(.tujiInk3)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                             self.words
                             BBtn(title: "換個情境再寫一個", bg: .tujiPaper2, fullWidth: true) {
                                 self.speech.stop()
@@ -91,20 +107,17 @@ struct StoryReaderView: View {
 
     private var continueBar: some View {
         HStack(spacing: Space.s3) {
-            Button {
-                self.speech.stop()
-                self.recorder.cancel()
-                withAnimation(Motion.ease(Motion.d2)) {
-                    self.shown = self.story.segments.count
+            if self.caughtUp {
+                HStack(spacing: Space.s2) {
+                    TujiProgressBar(progress: nil).frame(width: 40)
+                    Text("Moira 正在寫故事…")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk)
                 }
-            } label: {
-                Text("全部顯示")
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk3)
-                    .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, minHeight: 52)
+            } else {
+                self.advanceButtons
             }
-            .buttonStyle(.plain)
-            BBtn(title: "繼續", fullWidth: true, action: self.advance)
         }
         .padding(.horizontal, Space.s4)
         .padding(.vertical, Space.s3)
@@ -113,9 +126,27 @@ struct StoryReaderView: View {
         }
     }
 
+    @ViewBuilder
+    private var advanceButtons: some View {
+        Button {
+            self.speech.stop()
+            self.recorder.cancel()
+            withAnimation(Motion.ease(Motion.d2)) {
+                self.shown = self.story.segments.count
+            }
+        } label: {
+            Text("全部顯示")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk3)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.plain)
+        BBtn(title: "繼續", fullWidth: true, action: self.advance)
+    }
+
     /// Brings in the next segment and, when it is spoken, reads it.
     private func advance() {
-        guard !self.finished else { return }
+        guard !self.caughtUp else { return }
         let next = self.story.segments[self.shown]
         self.recorder.cancel()
         withAnimation(Motion.ease(Motion.d2)) {

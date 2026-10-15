@@ -1,9 +1,15 @@
 // 情境故事 — what the person has picked so far, and the one paid step at the end.
 //
-// The order on screen is the order of the decision: 圖鑑物品 → 場地 → 場地情況
-// → 難度 → 生成. Changing a place clears the situation, because situations
-// belong to a place. A story is written only when the person taps the button
-// that says what it costs; nothing here spends points on its own.
+// The order on screen is the order of the decision: 圖鑑物品 → 場地 → 情景
+// → 難度 → 生成. A situation can be picked before a place: the server gives
+// every place the same ones today, so they are offered from the start, and a
+// place that lacks the picked one clears it. A story is written only when the
+// person taps the button that says what it costs; nothing here spends points
+// on its own.
+//
+// The story arrives in pieces. Once its title and intro exist it takes the
+// page and `writing` stays `.writing` while the segments come in; a failure
+// after that leaves what arrived on the page, charged nothing.
 
 import Foundation
 import Observation
@@ -53,6 +59,8 @@ final class StoryBuilderModel {
     private let isBlocked: @MainActor (String?) -> Bool
     /// One id per set of choices, reused when the same choices are sent again.
     private var pending: (payload: StoryPayload, requestId: String)?
+    /// The write in flight, so leaving the story stops it.
+    private var writeTask: Task<Void, Never>?
 
     init(
         repository: AssistantStoryWriting = LiveAssistantStoryRepository(),
@@ -113,15 +121,25 @@ final class StoryBuilderModel {
         self.offer?.scenes.first { $0.id == self.sceneId }
     }
 
+    /// What can happen at the chosen place, or before one is chosen, every
+    /// situation any place offers, in the order first offered.
+    var situations: [StoryOffer.Situation] {
+        if let scene { return scene.situations }
+        var seen = Set<String>()
+        return (self.offer?.scenes ?? []).flatMap(\.situations).filter { seen.insert($0.id).inserted }
+    }
+
     func chooseScene(_ id: String) {
         guard id != self.sceneId else { return }
         self.sceneId = id
-        self.situationId = nil
+        if let situationId, !self.situations.contains(where: { $0.id == situationId }) {
+            self.situationId = nil
+        }
         self.choicesChanged()
     }
 
     func chooseSituation(_ id: String) {
-        guard self.scene?.situations.contains(where: { $0.id == id }) == true else { return }
+        guard self.situations.contains(where: { $0.id == id }) else { return }
         self.situationId = id
         self.choicesChanged()
     }
@@ -148,33 +166,72 @@ final class StoryBuilderModel {
         self.isComplete && self.canAfford && self.writing != .writing
     }
 
+    /// The button's way in: a write the page can stop by leaving.
+    func start() {
+        guard self.canWrite else { return }
+        self.writeTask = Task { await self.write() }
+    }
+
     func write() async {
         guard self.canWrite, let payload = self.payload() else { return }
         self.writing = .writing
         let language = self.language.learningDirection.targetLanguage
         do {
-            let result = try await self.repository.writeStory(payload)
-            self.pending = nil
-            self.storyLanguage = language
-            self.story = result.story
-            self.writing = .idle
-            self.offer = self.offer.map {
-                StoryOffer(
-                    minPoints: result.minPoints,
-                    maxPoints: result.maxPoints,
-                    available: result.available,
-                    scenes: $0.scenes,
-                    levels: $0.levels
-                )
+            let events = try await self.repository.writeStory(payload)
+            for try await event in events {
+                switch event {
+                case let .opening(title, intro):
+                    self.storyLanguage = language
+                    self.story = Story(title: title, intro: intro, segments: [], wordNotes: nil)
+                case let .segment(segment):
+                    self.story?.segments.append(segment)
+                case let .done(result):
+                    self.finish(result)
+                    return
+                }
             }
+            // Left on purpose: `stop()` already reset everything.
+            if Task.isCancelled { return }
+            // The answer ended without the whole story.
+            self.writing = .failed(.failed)
         } catch {
+            if Task.isCancelled { return }
             self.writing = .failed(self.failure(for: error))
         }
     }
 
-    /// Back to the choices, kept as they were, for another story.
+    private func finish(_ result: StoryResult) {
+        self.pending = nil
+        self.story = result.story
+        self.writing = .idle
+        self.offer = self.offer.map {
+            StoryOffer(
+                minPoints: result.minPoints,
+                maxPoints: result.maxPoints,
+                available: result.available,
+                scenes: $0.scenes,
+                levels: $0.levels
+            )
+        }
+    }
+
+    /// Back to the choices, kept as they were, for another story. A story
+    /// still being written is stopped; the server finishes and charges it as
+    /// it would a lost answer, so the next tap is a new request.
     func closeStory() {
+        self.stop()
         self.story = nil
+    }
+
+    /// Leaving the page: drop a write in flight.
+    func stop() {
+        guard let writeTask else { return }
+        writeTask.cancel()
+        self.writeTask = nil
+        if self.writing == .writing {
+            self.writing = .idle
+            self.pending = nil
+        }
     }
 
     private var uiLanguage: String {
@@ -219,6 +276,8 @@ final class StoryBuilderModel {
             .unavailable
         case let APIError.server(status, _) where status == 400:
             .itemsChanged
+        case let interrupted as StoryInterrupted where interrupted.code == "rate_limited":
+            .busy
         default:
             .failed
         }

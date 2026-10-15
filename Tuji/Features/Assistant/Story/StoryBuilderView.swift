@@ -1,9 +1,10 @@
 // 情境故事 — the screen. Reached from 助手.
 //
-// One page, top to bottom in the order of the decision: 單字, 場地, 場地情況,
+// One page, top to bottom in the order of the decision: 單字, 場地, 情景,
 // 難度. The button at the bottom is the only thing that spends points, and it
-// says what it costs before it is tapped. When a story arrives it takes the
-// page; closing it comes back to the same choices.
+// says what it costs before it is tapped. As soon as a story has a title it
+// takes the page and the rest of it arrives there; closing it comes back to
+// the same choices.
 
 import SwiftUI
 
@@ -21,7 +22,12 @@ struct StoryBuilderView: View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back, compactTitle: Text("情境故事"), showsRule: true)
             if let story = self.model.story {
-                StoryReaderView(story: story, language: self.model.storyLanguage, picked: self.model.picked) {
+                StoryReaderView(
+                    story: story,
+                    language: self.model.storyLanguage,
+                    picked: self.model.picked,
+                    writing: self.model.writing
+                ) {
                     self.model.closeStory()
                 }
             } else {
@@ -36,7 +42,10 @@ struct StoryBuilderView: View {
             StoryItemPicker(model: self.model)
         }
         .onAppear { self.studyFocus.enter() }
-        .onDisappear { self.studyFocus.exit() }
+        .onDisappear {
+            self.studyFocus.exit()
+            self.model.stop()
+        }
     }
 
     // MARK: - 選項
@@ -117,19 +126,13 @@ struct StoryBuilderView: View {
             }
         }
         VStack(alignment: .leading, spacing: Space.s2) {
-            self.heading(tujiLocalized("場地情況"))
-            if let scene = self.model.scene {
-                FlowLayout(spacing: Space.s2) {
-                    ForEach(scene.situations) { situation in
-                        self.chip(situation.label, selected: situation.id == self.model.situationId) {
-                            self.model.chooseSituation(situation.id)
-                        }
+            self.heading(tujiLocalized("情景"))
+            FlowLayout(spacing: Space.s2) {
+                ForEach(self.model.situations) { situation in
+                    self.chip(situation.label, selected: situation.id == self.model.situationId) {
+                        self.model.chooseSituation(situation.id)
                     }
                 }
-            } else {
-                Text("先選場地")
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk3)
             }
         }
         VStack(alignment: .leading, spacing: Space.s2) {
@@ -186,7 +189,7 @@ struct StoryBuilderView: View {
                 .frame(maxWidth: .infinity, minHeight: 52)
             } else {
                 BBtn(title: "生成故事", fullWidth: true) {
-                    Task { await self.model.write() }
+                    self.model.start()
                 }
                 .disabled(!self.model.canWrite)
             }

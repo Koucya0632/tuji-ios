@@ -11,6 +11,10 @@ import Testing
 private final class StoryWriterFake: AssistantStoryWriting {
     var offer: Result<StoryOffer, Error> = .success(StoryWriterFake.offer())
     var result: Result<StoryResult, Error> = .success(StoryWriterFake.result())
+    /// Sent after the opening, in place of the rest of the story.
+    var interruption: Error?
+    /// Ends the answer after the segments, without `done`.
+    var endsEarly = false
     private(set) var offerLanguages: [String] = []
     private(set) var written: [StoryPayload] = []
 
@@ -52,9 +56,24 @@ private final class StoryWriterFake: AssistantStoryWriting {
         return try self.offer.get()
     }
 
-    func writeStory(_ payload: StoryPayload) async throws -> StoryResult {
+    func writeStory(_ payload: StoryPayload) async throws -> AsyncThrowingStream<StoryEvent, Error> {
         self.written.append(payload)
-        return try self.result.get()
+        let result = try self.result.get()
+        let (interruption, endsEarly) = (self.interruption, self.endsEarly)
+        return AsyncThrowingStream { continuation in
+            continuation.yield(.opening(title: result.story.title, intro: result.story.intro))
+            if let interruption {
+                continuation.finish(throwing: interruption)
+                return
+            }
+            for segment in result.story.segments {
+                continuation.yield(.segment(segment))
+            }
+            if !endsEarly {
+                continuation.yield(.done(result))
+            }
+            continuation.finish()
+        }
     }
 }
 
@@ -158,6 +177,19 @@ struct StoryBuilderModelTests {
     }
 
     @Test
+    func situationsAreOfferedBeforeAPlace() async {
+        let model = self.makeModel()
+        await model.loadOffer()
+        #expect(model.situations.map(\.id) == ["shopping", "chat", "work"])
+        model.chooseSituation("chat")
+        #expect(model.situationId == "chat")
+        model.chooseScene("supermarket")
+        #expect(model.situationId == "chat")
+        model.chooseScene("office")
+        #expect(model.situationId == nil)
+    }
+
+    @Test
     func nothingIsWrittenUntilEveryChoiceIsMade() async {
         let model = self.makeModel()
         await model.loadOffer()
@@ -257,5 +289,79 @@ struct StoryBuilderModelTests {
         await model.write()
         #expect(model.writing == .failed(expected))
         #expect(model.story == nil)
+    }
+
+    @Test
+    func aStoryCutOffAfterItStartedKeepsWhatArrived() async {
+        self.writer.interruption = StoryInterrupted(code: "assistant_unavailable")
+        let model = await self.readyModel()
+        await model.write()
+        #expect(model.story?.title == "t")
+        #expect(model.story?.segments.isEmpty == true)
+        #expect(model.writing == .failed(.failed))
+        #expect(model.offer?.available == 100)
+    }
+
+    @Test
+    func anAnswerThatEndsWithoutTheWholeStoryIsAFailure() async {
+        self.writer.endsEarly = true
+        let model = await self.readyModel()
+        await model.write()
+        #expect(model.story?.segments.count == 1)
+        #expect(model.writing == .failed(.failed))
+    }
+}
+
+@MainActor
+struct StoryLineTests {
+    private func event(_ json: String) throws -> StoryEvent? {
+        try LiveAssistantStoryRepository.event(from: Data(json.utf8))
+    }
+
+    @Test
+    func eachLineBecomesAnEvent() throws {
+        #expect(try self.event(#"{"type":"opening","title":"t","intro":"i"}"#) == .opening(title: "t", intro: "i"))
+        let segment = try self.event(
+            #"{"type":"segment","segment":{"speaker":"cat","text":"a","wordIds":["apple"]}}"#
+        )
+        guard case let .segment(line) = segment else {
+            Issue.record("not a segment")
+            return
+        }
+        #expect(line.speaker == .cat)
+        #expect(line.wordIds == ["apple"])
+        let done = try self.event(
+            #"{"type":"done","story":{"title":"t","intro":"i","segments":[]},"charged":4,"available":96,"minPoints":3,"maxPoints":10}"#
+        )
+        guard case let .done(result) = done else {
+            Issue.record("not done")
+            return
+        }
+        #expect(result.charged == 4)
+        #expect(result.available == 96)
+    }
+
+    @Test
+    func anErrorLineStopsTheStoryWithItsCode() {
+        #expect(throws: StoryInterrupted(code: "rate_limited")) {
+            try self.event(#"{"type":"error","error":"rate_limited"}"#)
+        }
+    }
+
+    @Test
+    func aWholeAnswerFromAServerThatDoesNotStreamIsTheFinishedStory() throws {
+        let whole = try self.event(
+            #"{"story":{"title":"t","intro":"i","segments":[]},"charged":4,"available":96,"minPoints":3,"maxPoints":10}"#
+        )
+        guard case let .done(result) = whole else {
+            Issue.record("not done")
+            return
+        }
+        #expect(result.story.title == "t")
+    }
+
+    @Test
+    func aLineThisVersionDoesNotKnowIsSkipped() throws {
+        #expect(try self.event(#"{"type":"usage","tokens":3}"#) == nil)
     }
 }

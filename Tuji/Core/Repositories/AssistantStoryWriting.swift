@@ -5,7 +5,9 @@
 // server owns the list of places and levels (labelled in the interface
 // language), charges a story what its tokens cost — `minPoints`–`maxPoints` is
 // only the typical range, and `maxPoints` the balance a story needs to start —
-// and charges nothing for a story it cannot deliver.
+// and charges nothing for a story it cannot deliver. The story is streamed:
+// the title and intro first, then each segment as the model finishes it, so
+// reading starts seconds before the writing ends.
 
 import Foundation
 
@@ -81,7 +83,8 @@ struct Story: Decodable, Equatable {
 
     let title: String
     let intro: String
-    let segments: [Segment]
+    /// Grows while the story is being written.
+    var segments: [Segment]
     /// Only when the interface language is the one being learned: a
     /// translation would repeat each line, so the picked words are explained.
     let wordNotes: [WordNote]?
@@ -95,10 +98,39 @@ struct StoryResult: Decodable, Equatable {
     let maxPoints: Int
 }
 
+/// A story as it is written: the opening as soon as there is one, each
+/// segment as it closes, then the whole story and what it cost.
+enum StoryEvent: Equatable {
+    case opening(title: String, intro: String)
+    case segment(Story.Segment)
+    case done(StoryResult)
+}
+
+/// The server stopped partway, after the story had started arriving. Its
+/// `error` code; nothing was charged.
+struct StoryInterrupted: Error, Equatable {
+    let code: String
+}
+
 @MainActor
 protocol AssistantStoryWriting {
     func storyOffer(uiLanguage: String) async throws -> StoryOffer
-    func writeStory(_ payload: StoryPayload) async throws -> StoryResult
+    /// Throws before the first event the way any request does; a failure
+    /// after it ends the stream with `StoryInterrupted`.
+    func writeStory(_ payload: StoryPayload) async throws -> AsyncThrowingStream<StoryEvent, Error>
+}
+
+/// One line of the streamed answer.
+private struct StoryLine: Decodable {
+    enum Kind: String, Decodable {
+        case opening, segment, done, error
+    }
+
+    let type: Kind
+    let title: String?
+    let intro: String?
+    let segment: Story.Segment?
+    let error: String?
 }
 
 @MainActor
@@ -113,7 +145,47 @@ struct LiveAssistantStoryRepository: AssistantStoryWriting {
         try await self.api.get(.assistantStoryOffer(uiLanguage: uiLanguage))
     }
 
-    func writeStory(_ payload: StoryPayload) async throws -> StoryResult {
-        try await self.api.post(.assistantStory, body: payload)
+    func writeStory(_ payload: StoryPayload) async throws -> AsyncThrowingStream<StoryEvent, Error> {
+        let lines = try await self.api.postLines(.assistantStory, body: payload)
+        return AsyncThrowingStream { continuation in
+            let task = Task {
+                do {
+                    for try await data in lines {
+                        if let event = try Self.event(from: data) {
+                            continuation.yield(event)
+                        }
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    /// nil for a line this version does not know, so a new kind of line is
+    /// skipped rather than fatal. A server that does not stream answers with
+    /// the whole result in one body; that is the finished story.
+    static func event(from data: Data) throws -> StoryEvent? {
+        let decoder = JSONDecoder.tuji
+        guard let line = try? decoder.decode(StoryLine.self, from: data) else {
+            return (try? decoder.decode(StoryResult.self, from: data)).map(StoryEvent.done)
+        }
+        switch line.type {
+        case .opening:
+            guard let title = line.title, let intro = line.intro else { return nil }
+            return .opening(title: title, intro: intro)
+        case .segment:
+            return line.segment.map(StoryEvent.segment)
+        case .done:
+            do {
+                return try .done(decoder.decode(StoryResult.self, from: data))
+            } catch {
+                throw APIError.decoding(error)
+            }
+        case .error:
+            throw StoryInterrupted(code: line.error ?? "assistant_unavailable")
+        }
     }
 }
