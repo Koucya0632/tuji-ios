@@ -44,9 +44,12 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
 struct AssistantHomeView: View {
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(TabNavigator.self) private var navigator
-    @Environment(SettingsStore.self) private var settings
     @State private var draft = ""
     @FocusState private var fieldFocused: Bool
+    /// So 情境故事 opens on its choices rather than a loading bar.
+    var prefetchStoryOffer: () async -> Void = {
+        await StoryOfferCache.shared.prefetch(uiLanguage: UILanguage(code: SettingsStore.shared.uiLang).rawValue)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -69,10 +72,7 @@ struct AssistantHomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
-        // So 情境故事 opens on its choices rather than a loading bar.
-        .task {
-            await StoryOfferCache.shared.prefetch(uiLanguage: UILanguage(code: self.settings.uiLang).rawValue)
-        }
+        .task { await self.prefetchStoryOffer() }
         .accessibilityIdentifier("assistant-home")
     }
 
