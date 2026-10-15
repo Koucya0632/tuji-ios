@@ -191,6 +191,25 @@ struct StoryBuilderModelTests {
     }
 
     @Test
+    func theStoryKeepsTheLanguageItWasWrittenIn() async {
+        let language = FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhJa)
+        let model = StoryBuilderModel(
+            repository: self.writer,
+            dictionary: self.dictionary,
+            language: language,
+            makeRequestId: self.ids.next
+        )
+        await model.loadOffer()
+        model.toggle(self.dictionary.words[0])
+        model.chooseScene("supermarket")
+        model.chooseSituation("shopping")
+        model.chooseLevel("starter")
+        await model.write()
+        language.learningDirection = .zhEn
+        #expect(model.storyLanguage == .ja)
+    }
+
+    @Test
     func aRetryOfTheSameChoicesIsTheSameRequest() async {
         self.writer.result = .failure(APIError.transport(URLError(.timedOut)))
         let model = await self.readyModel()

@@ -5,6 +5,12 @@
 // their own pages — explained in the same language when there is no
 // translation to lean on.
 //
+// The story arrives whole but is read a segment at a time: 繼續 brings in the
+// next one and reads it aloud when it is a spoken line (narration is in the
+// interface language, so it is not). Each spoken line keeps a speaker button
+// for a replay. The words and the way out wait until the last segment is in;
+// 全部顯示 skips ahead for someone who would rather read it all at once.
+//
 // No `Spacer` beside a line: a sentence with furigana is a `FlowLayout`, and a
 // custom layout next to a spacer is offered half the row. Lines take the full
 // width and are pushed aside with padding instead.
@@ -13,30 +19,103 @@ import SwiftUI
 
 struct StoryReaderView: View {
     let story: Story
+    /// What the spoken lines are in, for their voice.
+    let language: TargetLanguage
     let picked: [CardWord]
     let close: () -> Void
+    var speech: SpeechService = .shared
+
+    @Environment(SettingsStore.self) private var settings
+
+    /// How many segments are on the page. Starts at the first.
+    @State private var shown = 1
 
     private static let faceSize: CGFloat = 32
+    private static let bottomID = "story-bottom"
+
+    private var finished: Bool {
+        self.shown >= self.story.segments.count
+    }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Space.s4) {
-                Text(verbatim: self.story.title)
-                    .font(.tujiH2)
-                    .foregroundStyle(.tujiInk)
-                Text(verbatim: self.story.intro)
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk2)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(Array(self.story.segments.enumerated()), id: \.offset) { _, segment in
-                    self.segment(segment)
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: Space.s4) {
+                        Text(verbatim: self.story.title)
+                            .font(.tujiH2)
+                            .foregroundStyle(.tujiInk)
+                        Text(verbatim: self.story.intro)
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        ForEach(
+                            Array(self.story.segments.prefix(self.shown).enumerated()),
+                            id: \.offset
+                        ) { _, segment in
+                            self.segment(segment)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        }
+                        if self.finished {
+                            self.words
+                            BBtn(title: "換個情境再寫一個", bg: .tujiPaper2, fullWidth: true) {
+                                self.speech.stop()
+                                self.close()
+                            }
+                            .padding(.top, Space.s2)
+                        }
+                        Color.clear.frame(height: 1).id(Self.bottomID)
+                    }
+                    .padding(.horizontal, Space.s4)
+                    .padding(.vertical, Space.s4)
                 }
-                self.words
-                BBtn(title: "換個情境再寫一個", bg: .tujiPaper2, fullWidth: true, action: self.close)
-                    .padding(.top, Space.s2)
+                .onChange(of: self.shown) {
+                    withAnimation(Motion.ease(Motion.d2)) {
+                        proxy.scrollTo(Self.bottomID, anchor: .bottom)
+                    }
+                }
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.vertical, Space.s4)
+            if !self.finished {
+                self.continueBar
+            }
+        }
+        .onDisappear { self.speech.stop() }
+    }
+
+    private var continueBar: some View {
+        HStack(spacing: Space.s3) {
+            Button {
+                self.speech.stop()
+                withAnimation(Motion.ease(Motion.d2)) {
+                    self.shown = self.story.segments.count
+                }
+            } label: {
+                Text("全部顯示")
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk3)
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            BBtn(title: "繼續", fullWidth: true, action: self.advance)
+        }
+        .padding(.horizontal, Space.s4)
+        .padding(.vertical, Space.s3)
+        .background(alignment: .top) {
+            Rectangle().fill(.tujiRule).frame(height: Border.bw1)
+        }
+    }
+
+    /// Brings in the next segment and, when it is spoken, reads it.
+    private func advance() {
+        guard !self.finished else { return }
+        let next = self.story.segments[self.shown]
+        withAnimation(Motion.ease(Motion.d2)) {
+            self.shown += 1
+        }
+        if next.speaker == .narrator {
+            self.speech.stop()
+        } else {
+            self.speech.speak(next.text, voice: .preferred(for: self.settings.current, language: self.language))
         }
     }
 
@@ -65,6 +144,16 @@ struct StoryReaderView: View {
     }
 
     private func line(_ segment: Story.Segment) -> some View {
+        HStack(alignment: .top, spacing: Space.s2) {
+            self.lineText(segment)
+            PronunciationButton(subject: .sentence(segment.text, language: self.language), size: 28, ground: .tujiPaper)
+        }
+        .padding(.horizontal, Space.s3)
+        .padding(.vertical, Space.s2)
+        .background(segment.speaker == .cat ? Color.tujiPaper2 : .tujiBrandPrimary.opacity(0.35))
+    }
+
+    private func lineText(_ segment: Story.Segment) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             if let furigana = segment.furigana, !furigana.isEmpty {
                 FuriganaSentence(segments: furigana)
@@ -87,9 +176,6 @@ struct StoryReaderView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, Space.s3)
-        .padding(.vertical, Space.s2)
-        .background(segment.speaker == .cat ? Color.tujiPaper2 : .tujiBrandPrimary.opacity(0.35))
     }
 
     /// The note the story gave a word, when it gave one; otherwise its gloss.

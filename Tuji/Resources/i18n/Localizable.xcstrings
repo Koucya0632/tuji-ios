@@ -3805,6 +3805,29 @@
         }
       }
     },
+    "全部顯示" : {
+      "comment" : "情境故事: shows every remaining segment of the story at once instead of one at a time.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show all"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて表示"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部显示"
+          }
+        }
+      }
+    },
     "公開之後，這裡就是別人看到的你。" : {
       "localizations" : {
         "en" : {
