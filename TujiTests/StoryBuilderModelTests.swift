@@ -90,6 +90,11 @@ private final class StoryRequestIds {
 struct StoryBuilderModelTests {
     private let writer = StoryWriterFake()
     private let ids = StoryRequestIds()
+    /// A device of its own: nothing kept by another test, or by the app.
+    private let defaults = UserDefaults(suiteName: "story-offer-\(UUID().uuidString)")!
+    private var offerCache: StoryOfferCache {
+        StoryOfferCache(defaults: self.defaults)
+    }
     private let dictionary = AssistantDictionary([
         AssistantFixture.word("apple", word: "りんご", chinese: "蘋果"),
         AssistantFixture.word("banana"),
@@ -100,9 +105,10 @@ struct StoryBuilderModelTests {
         AssistantFixture.word("saved:blocked-authors-card", category: "community", authorHandle: "TJ00000002")
     ])
 
-    private func makeModel() -> StoryBuilderModel {
+    private func makeModel(offerCache: StoryOfferCache? = nil) -> StoryBuilderModel {
         StoryBuilderModel(
             repository: self.writer,
+            offerCache: offerCache ?? self.offerCache,
             dictionary: self.dictionary,
             language: FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhJa),
             makeRequestId: self.ids.next,
@@ -136,6 +142,67 @@ struct StoryBuilderModelTests {
         let model = self.makeModel()
         await model.loadOffer()
         #expect(model.offerPhase == .failed)
+    }
+
+    @Test
+    func anOfferReadThisLaunchOpensThePageReadyToWrite() async {
+        let cache = self.offerCache
+        await cache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        self.writer.offer = .failure(APIError.transport(URLError(.notConnectedToInternet)))
+        let model = self.makeModel(offerCache: cache)
+        await model.loadOffer()
+        #expect(model.offerPhase == .loaded)
+        #expect(model.balanceKnown)
+        #expect(model.canAfford)
+    }
+
+    @Test
+    func anOfferFromAnEarlierLaunchShowsTheChoicesButNotTheBalance() async {
+        await self.offerCache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        self.writer.offer = .failure(APIError.transport(URLError(.notConnectedToInternet)))
+        // A new cache on the same defaults is the next launch.
+        let model = self.makeModel()
+        await model.loadOffer()
+        #expect(model.offer?.scenes.count == 2)
+        #expect(!model.balanceKnown)
+        #expect(!model.canAfford)
+        #expect(model.offerPhase == .failed)
+        self.writer.offer = .success(StoryWriterFake.offer(available: 5))
+        await model.loadOffer()
+        #expect(model.offerPhase == .loaded)
+        #expect(model.balanceKnown)
+        #expect(!model.canAfford)
+    }
+
+    @Test
+    func theHomeAndTheStoryPageShareOneRead() async {
+        let cache = self.offerCache
+        async let first: Void = cache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        async let second: Void = cache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        _ = await (first, second)
+        #expect(self.writer.offerLanguages == ["zh-Hant"])
+    }
+
+    @Test
+    func signingOutForgetsTheKeptOffer() async {
+        let cache = self.offerCache
+        await cache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        cache.reset()
+        #expect(cache.entry(uiLanguage: "zh-Hant") == nil)
+        #expect(self.offerCache.entry(uiLanguage: "zh-Hant") == nil)
+    }
+
+    @Test
+    func aWrittenStoryKeepsTheNewBalance() async {
+        let cache = self.offerCache
+        let model = self.makeModel(offerCache: cache)
+        await model.loadOffer()
+        model.toggle(self.dictionary.words[0])
+        model.chooseScene("supermarket")
+        model.chooseSituation("shopping")
+        model.chooseLevel("starter")
+        await model.write()
+        #expect(cache.entry(uiLanguage: "zh-Hant")?.offer.available == 96)
     }
 
     @Test
@@ -227,6 +294,7 @@ struct StoryBuilderModelTests {
         let language = FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhJa)
         let model = StoryBuilderModel(
             repository: self.writer,
+            offerCache: self.offerCache,
             dictionary: self.dictionary,
             language: language,
             makeRequestId: self.ids.next

@@ -196,7 +196,7 @@ struct StoryBuilderView: View {
         if case let .failed(failure) = self.model.writing {
             return Self.sentence(for: failure)
         }
-        guard let offer = self.model.offer else { return nil }
+        guard self.model.balanceKnown, let offer = self.model.offer else { return nil }
         let (low, high, held) = (offer.minPoints, offer.maxPoints, offer.available)
         if !self.model.canAfford {
             return tujiLocalized("至少要有 \(high) 點罐頭點數才能寫故事，你現在有 \(held) 點。")

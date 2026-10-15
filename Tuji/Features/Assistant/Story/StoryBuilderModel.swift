@@ -42,6 +42,10 @@ final class StoryBuilderModel {
 
     private(set) var offerPhase: LoadPhase = .idle
     private(set) var offer: StoryOffer?
+    /// Whether `offer.available` was read for this account since launch. One
+    /// remembered from an earlier launch shows the choices but cannot say
+    /// whether a story can be paid for.
+    private(set) var balanceKnown = false
     private(set) var picked: [CardWord] = []
     private(set) var sceneId: String?
     private(set) var situationId: String?
@@ -54,6 +58,7 @@ final class StoryBuilderModel {
     private(set) var storyLanguage: TargetLanguage = .en
 
     private let repository: AssistantStoryWriting
+    private let offerCache: StoryOfferCache
     private let dictionary: LocalDictionaryReading
     private let language: LanguageContext
     private let makeRequestId: @MainActor () -> String
@@ -65,12 +70,14 @@ final class StoryBuilderModel {
 
     init(
         repository: AssistantStoryWriting = LiveAssistantStoryRepository(),
+        offerCache: StoryOfferCache = .shared,
         dictionary: LocalDictionaryReading = WordsStore.shared,
         language: LanguageContext = SettingsStore.shared,
         makeRequestId: @escaping @MainActor () -> String = { UUID().uuidString.lowercased() },
         isBlocked: @escaping @MainActor (String?) -> Bool = { BlockStore.shared.isBlocked($0) }
     ) {
         self.repository = repository
+        self.offerCache = offerCache
         self.dictionary = dictionary
         self.language = language
         self.makeRequestId = makeRequestId
@@ -79,14 +86,23 @@ final class StoryBuilderModel {
 
     // MARK: - 選項
 
+    /// Shows the kept offer at once, when there is one, and reads it again
+    /// underneath for the balance.
     func loadOffer() async {
         guard self.offerPhase != .loading else { return }
+        if self.offer == nil, let entry = self.offerCache.entry(uiLanguage: self.uiLanguage) {
+            self.offer = entry.offer
+            self.balanceKnown = entry.current
+            self.offerPhase = .loaded
+        }
         self.offerPhase = self.offerPhase.reloading
         do {
-            self.offer = try await self.repository.storyOffer(uiLanguage: self.uiLanguage)
+            self.offer = try await self.offerCache.load(uiLanguage: self.uiLanguage, using: self.repository)
+            self.balanceKnown = true
             self.offerPhase = .loaded
         } catch {
-            if self.offer == nil { self.offerPhase = .failed } else { self.offerPhase = .loaded }
+            // Choices without a balance cannot be acted on: say it failed.
+            self.offerPhase = self.balanceKnown ? .loaded : .failed
         }
     }
 
@@ -159,7 +175,7 @@ final class StoryBuilderModel {
     /// The ceiling, not the floor: the server refuses an account holding less
     /// than a story could cost.
     var canAfford: Bool {
-        guard let offer else { return false }
+        guard self.balanceKnown, let offer else { return false }
         return offer.available >= offer.maxPoints
     }
 
@@ -213,6 +229,10 @@ final class StoryBuilderModel {
                 scenes: $0.scenes,
                 levels: $0.levels
             )
+        }
+        if let offer {
+            self.balanceKnown = true
+            self.offerCache.store(offer, uiLanguage: self.uiLanguage)
         }
     }
 

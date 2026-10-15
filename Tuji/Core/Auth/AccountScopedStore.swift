@@ -39,6 +39,7 @@ extension StudyReminders: AccountScopedStore {}
 extension WordListsStore: AccountScopedStore {}
 extension WordNotesStore: AccountScopedStore {}
 extension WordInsightsStore: AccountScopedStore {}
+extension StoryOfferCache: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -73,6 +74,7 @@ enum AccountScopedStores {
     ///   are this account's answer.
     /// - `WordNotesStore` — the notes are this account's writing.
     /// - `WordInsightsStore` — cached per tier, and the tier is this account's.
+    /// - `StoryOfferCache` — the offer carries this account's 罐頭點數 balance.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -89,7 +91,8 @@ enum AccountScopedStores {
             StudyReminders.shared,
             WordListsStore.shared,
             WordNotesStore.shared,
-            WordInsightsStore.shared
+            WordInsightsStore.shared,
+            StoryOfferCache.shared
         ]
     }
 
