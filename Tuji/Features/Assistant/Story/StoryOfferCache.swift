@@ -40,7 +40,8 @@ final class StoryOfferCache {
             return Entry(offer: offer, current: true)
         }
         guard let data = self.remembered[uiLanguage],
-              let offer = try? JSONDecoder().decode(StoryOffer.self, from: data) else { return nil }
+              let offer = try? JSONDecoder().decode(StoryOffer.self, from: data)
+        else { return nil }
         return Entry(offer: offer, current: false)
     }
 

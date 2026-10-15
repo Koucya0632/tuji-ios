@@ -91,10 +91,11 @@ struct StoryBuilderModelTests {
     private let writer = StoryWriterFake()
     private let ids = StoryRequestIds()
     /// A device of its own: nothing kept by another test, or by the app.
-    private let defaults = UserDefaults(suiteName: "story-offer-\(UUID().uuidString)")!
+    private let defaults = UserDefaults(suiteName: "story-offer-\(UUID().uuidString)") ?? .standard
     private var offerCache: StoryOfferCache {
         StoryOfferCache(defaults: self.defaults)
     }
+
     private let dictionary = AssistantDictionary([
         AssistantFixture.word("apple", word: "りんご", chinese: "蘋果"),
         AssistantFixture.word("banana"),
