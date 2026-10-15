@@ -41,6 +41,10 @@ final class StoryBuilderModel {
     private(set) var levelId: String?
     private(set) var writing: Writing = .idle
     private(set) var story: Story?
+    /// The language the story's spoken lines are in — the one being learned
+    /// when it was asked for, so a direction changed since does not give its
+    /// lines the wrong voice.
+    private(set) var storyLanguage: TargetLanguage = .en
 
     private let repository: AssistantStoryWriting
     private let dictionary: LocalDictionaryReading
@@ -147,9 +151,11 @@ final class StoryBuilderModel {
     func write() async {
         guard self.canWrite, let payload = self.payload() else { return }
         self.writing = .writing
+        let language = self.language.learningDirection.targetLanguage
         do {
             let result = try await self.repository.writeStory(payload)
             self.pending = nil
+            self.storyLanguage = language
             self.story = result.story
             self.writing = .idle
             self.offer = self.offer.map {
