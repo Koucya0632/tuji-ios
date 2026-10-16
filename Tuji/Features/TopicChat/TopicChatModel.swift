@@ -24,6 +24,8 @@ enum TopicChatEntry: Hashable {
     case topic(String)
     /// A saved conversation from 對話紀錄.
     case saved(chatId: String)
+    /// The assistant home's 主題對話: no topic yet, so the person picks one.
+    case choose
 }
 
 @MainActor
@@ -53,6 +55,8 @@ final class TopicChatModel {
         case loading
         /// There is a conversation to continue; ask before starting another.
         case choosing(TopicChatSummary)
+        /// No topic yet: the person picks one, and that starts the conversation.
+        case picking
         case ready
         case failed(Failure)
     }
@@ -229,6 +233,15 @@ final class TopicChatModel {
                     await self.startNew(topicId: topicId)
                     return
                 }
+            case .choose:
+                let list = try await self.repository.list(learning: self.direction, uiLanguage: self.uiLanguage)
+                self.history = list.chats
+                if let active = list.chats.first(where: { $0.id == list.active }) {
+                    self.phase = .choosing(active)
+                } else {
+                    self.phase = .picking
+                }
+                return
             }
         } catch {
             self.phase = .failed(Self.failure(for: error))
@@ -254,6 +267,12 @@ final class TopicChatModel {
             return
         }
         await self.pollWhilePending()
+    }
+
+    /// 開始新對話 when no topic came with the entry: pick one first.
+    func pickNewTopic() {
+        guard case .choosing = self.phase else { return }
+        self.phase = .picking
     }
 
     /// A new conversation on `topicId`. The one being continued in this direction ends, without a review.

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Existing assistant capabilities, in the order offered on its home.
 enum AssistantHomeFeature: String, CaseIterable, Identifiable {
-    case lookup, ask, story
+    case lookup, ask, story, topicChat
 
     var id: String {
         self.rawValue
@@ -13,6 +13,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
         case .lookup: .assistantChat(entry: .intent(.lookupPrompt))
         case .ask: .assistantChat(entry: .conversation)
         case .story: .assistantStory
+        case .topicChat: .topicChat(.choose)
         }
     }
 
@@ -21,6 +22,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
         case .lookup: "查單字"
         case .ask: "AI 問答"
         case .story: "情境故事"
+        case .topicChat: "主題對話"
         }
     }
 
@@ -29,6 +31,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
         case .lookup: "查找圖鑑中的單字與意思"
         case .ask: "詢問語言學習問題，確認後使用罐頭點數"
         case .story: "選 1–3 個單字，生成情境對話"
+        case .topicChat: "選一個圖鑑主題，和 Moira 聊聊"
         }
     }
 
@@ -37,6 +40,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
         case .lookup: "text.magnifyingglass"
         case .ask: "bubble.left.and.bubble.right"
         case .story: "text.book.closed"
+        case .topicChat: "bubble.left.and.text.bubble.right"
         }
     }
 }

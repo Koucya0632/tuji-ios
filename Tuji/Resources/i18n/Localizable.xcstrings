@@ -90,6 +90,28 @@
         }
       }
     },
+    "Moira 會用這個主題的詞先開口，你跟著換個詞說說看。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moira starts with words from this topic — swap in a word and say it back."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moiraがこのテーマの言葉で話しかけます。言葉を入れ替えて言ってみよう。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moira 会用这个主题的词先开口，你跟着换个词说说看。"
+          }
+        }
+      }
+    },
     "Moira 正在回覆…" : {
       "localizations" : {
         "en" : {
@@ -350,6 +372,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主题：%@"
+          }
+        }
+      }
+    },
+    "主題對話" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Topic chat"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーマで会話"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主题对话"
           }
         }
       }
@@ -1186,6 +1230,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "换主题后，对话会接着聊，学过的说法还能继续用。"
+          }
+        }
+      }
+    },
+    "換個主題開始新對話" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start a new chat on another topic"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のテーマで新しく始める"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换个主题开始新对话"
           }
         }
       }
@@ -2268,6 +2334,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "摸摸 Tuji"
+          }
+        }
+      }
+    },
+    "選一個圖鑑主題" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a topic"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑のテーマを選ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选一个图鉴主题"
+          }
+        }
+      }
+    },
+    "選一個圖鑑主題，和 Moira 聊聊" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a topic and chat with Moira"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑のテーマを選んで、Moiraとおしゃべり"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选一个图鉴主题，和 Moira 聊聊"
           }
         }
       }

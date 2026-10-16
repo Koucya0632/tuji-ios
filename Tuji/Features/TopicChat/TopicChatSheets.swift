@@ -9,62 +9,21 @@ struct TopicPickerSheet: View {
     let current: String?
     let pick: (String) -> Void
 
-    @Environment(CategoriesStore.self) private var categories
-    @Environment(WordsStore.self) private var words
     @Environment(\.dismiss) private var dismiss
 
     /// The server's `MIN_TOPIC_WORDS`.
     static let minimumWords = 6
 
-    private var topics: [(category: TujiCategory, count: Int)] {
-        self.categories.categories.compactMap { category in
-            guard category.id != "community" else { return nil }
-            let count = self.words.byCategory(category.id).count
-            return (category, count)
-        }
+    /// A catalogue theme (not 自製 or 物見) with enough words to talk about —
+    /// the same rule on the category page, in this list, and on the server.
+    static func canTalk(about categoryId: String, wordCount: Int) -> Bool {
+        wordCount >= self.minimumWords && ThemeCatalog.isTheme(categoryId)
     }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    ForEach(self.topics, id: \.category.id) { topic in
-                        let usable = topic.count >= Self.minimumWords
-                        Button {
-                            if topic.category.id == self.current {
-                                self.dismiss()
-                            } else {
-                                self.pick(topic.category.id)
-                            }
-                        } label: {
-                            HStack(spacing: Space.s3) {
-                                CategoryArtwork(category: topic.category)
-                                    .frame(width: 44, height: 44)
-                                    .clipped()
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(verbatim: topic.category.nameZh)
-                                        .font(.tujiBody(.strong))
-                                        .foregroundStyle(usable ? .tujiInk : .tujiInk3)
-                                    Text(usable ? "\(topic.count) 個詞" : "暫不可用")
-                                        .font(.tujiBodySm)
-                                        .foregroundStyle(.tujiInk3)
-                                }
-                                Spacer(minLength: Space.s2)
-                                if topic.category.id == self.current {
-                                    Text("目前主題")
-                                        .font(.tujiLabel)
-                                        .foregroundStyle(.tujiInk2)
-                                }
-                            }
-                            .frame(minHeight: 52)
-                            .contentShape(.rect)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!usable)
-                    }
-                } footer: {
-                    Text("換主題後，對話會接著聊，學過的說法還能繼續用。")
-                }
+            TopicChoiceList(current: self.current, dismiss: { self.dismiss() }, pick: self.pick) {
+                Text("換主題後，對話會接著聊，學過的說法還能繼續用。")
             }
             .navigationTitle(Text("更換圖鑑"))
             .navigationBarTitleDisplayMode(.inline)
@@ -72,6 +31,72 @@ struct TopicPickerSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { self.dismiss() }
                 }
+            }
+        }
+    }
+}
+
+/// The topics, as a list: in 更換圖鑑's sheet, and on the conversation screen
+/// itself when it was opened without one.
+struct TopicChoiceList<Footer: View>: View {
+    let current: String?
+    var dismiss: () -> Void = {}
+    /// Nil keeps the list's own; the conversation screen passes paper.
+    var rowBackground: Color?
+    let pick: (String) -> Void
+    @ViewBuilder let footer: () -> Footer
+
+    @Environment(CategoriesStore.self) private var categories
+    @Environment(WordsStore.self) private var words
+
+    private var topics: [(category: TujiCategory, count: Int)] {
+        let all = self.categories.categories
+        let present = Set(all.map(\.id).filter { !self.words.byCategory($0).isEmpty })
+        return ThemeCatalog.themes(from: all, presentIds: present).map {
+            ($0, self.words.byCategory($0.id).count)
+        }
+    }
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(self.topics, id: \.category.id) { topic in
+                    let usable = TopicPickerSheet.canTalk(about: topic.category.id, wordCount: topic.count)
+                    Button {
+                        if topic.category.id == self.current {
+                            self.dismiss()
+                        } else {
+                            self.pick(topic.category.id)
+                        }
+                    } label: {
+                        HStack(spacing: Space.s3) {
+                            CategoryArtwork(category: topic.category)
+                                .frame(width: 44, height: 44)
+                                .clipped()
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(verbatim: topic.category.nameZh)
+                                    .font(.tujiBody(.strong))
+                                    .foregroundStyle(usable ? .tujiInk : .tujiInk3)
+                                Text(usable ? "\(topic.count) 個詞" : "暫不可用")
+                                    .font(.tujiBodySm)
+                                    .foregroundStyle(.tujiInk3)
+                            }
+                            Spacer(minLength: Space.s2)
+                            if topic.category.id == self.current {
+                                Text("目前主題")
+                                    .font(.tujiLabel)
+                                    .foregroundStyle(.tujiInk2)
+                            }
+                        }
+                        .frame(minHeight: 52)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!usable)
+                    .listRowBackground(self.rowBackground)
+                }
+            } footer: {
+                self.footer()
             }
         }
         .task {

@@ -25,7 +25,12 @@ enum ThemeCatalog {
         -> [TujiCategory]
     {
         categories.filter {
-            $0.id != "custom" && $0.id != "community" && presentIds.contains($0.id)
+            self.isTheme($0.id) && presentIds.contains($0.id)
         }
+    }
+
+    /// 自製 and 物見 are categories in the catalogue but not themes.
+    static func isTheme(_ categoryId: String) -> Bool {
+        categoryId != "custom" && categoryId != "community"
     }
 }
