@@ -223,6 +223,32 @@ struct TopicChatModelTests {
     }
 
     @Test
+    func openedWithoutATopicItAsksForOneBeforeStarting() async {
+        let model = self.makeModel(entry: .choose)
+        await model.load()
+        #expect(model.phase == .picking)
+        #expect(self.fake.starts.isEmpty)
+        await model.startNew(topicId: "kitchen")
+        #expect(self.fake.starts.map(\.topicId) == ["kitchen"])
+        #expect(model.phase == .ready)
+    }
+
+    @Test
+    func openedWithoutATopicAConversationToContinueStillComesFirst() async {
+        self.fake.chats = [TopicChatFake.summary(topicId: "kitchen", answers: 3)]
+        self.fake.active = "chat-1"
+        let model = self.makeModel(entry: .choose)
+        await model.load()
+        guard case .choosing = model.phase else {
+            Issue.record("expected the choice, got \(model.phase)")
+            return
+        }
+        model.pickNewTopic()
+        #expect(model.phase == .picking)
+        #expect(self.fake.starts.isEmpty)
+    }
+
+    @Test
     func aConversationToContinueIsOfferedFirst() async {
         self.fake.chats = [TopicChatFake.summary(topicId: "kitchen", answers: 3)]
         self.fake.active = "chat-1"

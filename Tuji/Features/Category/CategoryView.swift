@@ -138,7 +138,7 @@ struct CategoryView: View {
     /// Only for a category with enough words to talk about (the server's rule too).
     @ViewBuilder
     private var chatEntry: some View {
-        if self.filteredWords.count >= TopicPickerSheet.minimumWords, self.id != "community" {
+        if TopicPickerSheet.canTalk(about: self.id, wordCount: self.filteredWords.count) {
             NavigationLink(value: NavRoute.topicChat(.topic(self.id))) {
                 HStack(spacing: Space.s3) {
                     Mascot(pose: .face, size: 36)

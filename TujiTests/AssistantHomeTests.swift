@@ -42,7 +42,8 @@ struct AssistantHomeTests {
         #expect(AssistantHomeFeature.allCases.map(\.route) == [
             .assistantChat(entry: .intent(.lookupPrompt)),
             .assistantChat(entry: .conversation),
-            .assistantStory
+            .assistantStory,
+            .topicChat(.choose)
         ])
     }
 

@@ -208,6 +208,8 @@ struct TopicChatView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         case let .choosing(active):
             self.resumeChoice(active)
+        case .picking:
+            self.topicChoice
         case let .failed(failure):
             self.failedState(failure)
         case .ready:
@@ -256,9 +258,39 @@ struct TopicChatView: View {
                         .font(.tujiBodySm)
                         .foregroundStyle(.tujiInk3)
                         .fixedSize(horizontal: false, vertical: true)
+                } else if self.model.entry == .choose {
+                    BBtn(title: "換個主題開始新對話", bg: .tujiPaper2, fullWidth: true) {
+                        self.model.pickNewTopic()
+                    }
+                    Text("開始新對話後，上次的對話會結束，仍可在對話紀錄裡閱讀。")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(Space.s4)
+        }
+    }
+
+    /// Opened without a topic: picking one starts the conversation.
+    private var topicChoice: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Space.s2) {
+                Text("選一個圖鑑主題")
+                    .font(.tujiH2)
+                    .foregroundStyle(.tujiInk)
+                    .accessibilityAddTraits(.isHeader)
+                Text("Moira 會用這個主題的詞先開口，你跟著換個詞說說看。")
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(Space.s4)
+            TopicChoiceList(current: nil, rowBackground: .tujiPaper, pick: { topicId in
+                Task { await self.model.startNew(topicId: topicId) }
+            }, footer: { EmptyView() })
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
         }
     }
 
