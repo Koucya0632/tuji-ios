@@ -135,6 +135,14 @@ enum Endpoint {
     case assistantAsk
     case assistantStoryOffer(uiLanguage: String)
     case assistantStory
+    /// 圖鑑主題對話: saved chats in one direction (GET).
+    case topicChats(learning: String, uiLanguage: String)
+    /// A new chat with its opening (POST).
+    case topicChatStart
+    /// One chat (GET reads, DELETE removes). `uiLanguage` names its topics.
+    case topicChat(id: String, uiLanguage: String?)
+    /// topic · opening · reply · assist · stop · end (POST).
+    case topicChatAction(id: String, action: String)
     case aiOperations
     case aiOperation(id: String)
     case aiOperationCancel(id: String)
@@ -461,6 +469,26 @@ enum Endpoint {
         case .assistantStory:
             // A model call writing a whole scene: up to tens of seconds.
             EndpointDescriptor(path: "/api/assistant/story", policy: .privateFreshSlow)
+        case let .topicChats(learning, uiLanguage):
+            EndpointDescriptor(
+                path: "/api/topic-chat",
+                queryItems: [
+                    URLQueryItem(name: "learningDirection", value: learning),
+                    URLQueryItem(name: "uiLanguage", value: uiLanguage)
+                ],
+                policy: .privateFresh
+            )
+        case .topicChatStart:
+            // Writes the opening: one model call.
+            EndpointDescriptor(path: "/api/topic-chat", policy: .privateFreshSlow)
+        case let .topicChat(id, uiLanguage):
+            EndpointDescriptor(
+                path: "/api/topic-chat/\(id)",
+                queryItems: uiLanguage.map { [URLQueryItem(name: "uiLanguage", value: $0)] } ?? [],
+                policy: .privateFresh
+            )
+        case let .topicChatAction(id, action):
+            EndpointDescriptor(path: "/api/topic-chat/\(id)/\(action)", policy: .privateFreshSlow)
         case .aiOperations:
             EndpointDescriptor(path: "/api/ai/operations", policy: .privateFresh)
         case let .aiOperation(id):

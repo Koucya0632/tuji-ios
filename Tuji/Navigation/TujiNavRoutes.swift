@@ -9,7 +9,8 @@ extension View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
-                case .assistant, .assistantChat, .creditStatement, .assistantStory: AssistantDestination(route: route)
+                case .assistant, .assistantChat, .creditStatement, .assistantStory, .topicChat, .topicChatHistory:
+                    AssistantDestination(route: route)
                 case .settings: SettingsView()
                 case .atlasManage: AtlasManageView(initialSection: .cards)
                 case let .atlasCollectionEdit(id): AtlasCollectionEditView(collectionId: id)
@@ -46,7 +47,8 @@ private struct WordDestination: View {
 
 /// 助手 and the screens it links to. Grouped in one arm so the table above
 /// stays within what one function can hold; the grouping is real — 點數明細 and
-/// 情境故事 are reached from 助手 and nowhere else.
+/// 情境故事 are reached from 助手, and 主題對話 is Moira's too (though it is
+/// opened from a category page).
 private struct AssistantDestination: View {
     let route: NavRoute
 
@@ -55,6 +57,8 @@ private struct AssistantDestination: View {
         case let .assistantChat(entry): AssistantChatView(entry: entry)
         case .creditStatement: CreditStatementView()
         case .assistantStory: StoryBuilderView()
+        case let .topicChat(entry): TopicChatView(entry: entry)
+        case .topicChatHistory: TopicChatHistoryView()
         default: AssistantHomeView()
         }
     }
