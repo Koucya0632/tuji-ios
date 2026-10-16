@@ -2,7 +2,7 @@
 //
 // Moira's turn is her line, its translation and reading (each switchable on
 // its own), the topic's pictures, and — on the newest turn only — 「跟著說」
-// with its options, plus whatever 給我提示 / 示範回答 / 簡單一點 opened. Older
+// with its options, plus whatever 示範回答 / 簡單一點 opened. Older
 // turns stay readable but offer nothing to tap that would answer them.
 //
 // No `Spacer` beside a sentence with furigana: `FuriganaSentence` is a custom
@@ -125,11 +125,11 @@ struct AITurnRow: View {
     let showReading: Bool
     /// The newest turn, open for an answer: the only one with answer actions.
     let isLatest: Bool
-    let hintShown: Bool
     let exampleShown: Bool
     let words: [CardWord]
     let fill: (String, ChatSupport) -> Void
-    let lookUp: (CardWord) -> Void
+    /// A picture opens its 圖鑑 entry.
+    let open: (CardWord) -> Void
 
     private static let faceSize: CGFloat = 32
 
@@ -182,9 +182,6 @@ struct AITurnRow: View {
                         .option
                     ) }
                 }
-                if self.hintShown {
-                    self.hint
-                }
                 if self.exampleShown, let example = self.turn.example {
                     self.example(example)
                 }
@@ -198,7 +195,7 @@ struct AITurnRow: View {
             HStack(spacing: Space.s2) {
                 ForEach(self.words) { word in
                     Button {
-                        self.lookUp(word)
+                        self.open(word)
                     } label: {
                         VStack(spacing: Space.s1) {
                             Color.tujiPaper2
@@ -252,39 +249,6 @@ struct AITurnRow: View {
         .overlay(alignment: .leading) {
             Rectangle().fill(.tujiBrandSecondary).frame(width: Border.bw2)
         }
-        .padding(.leading, Self.faceSize + Space.s2)
-    }
-
-    private var hint: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            Text("提示")
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiInk3)
-            if self.turn.keywords.isEmpty, self.turn.pattern == nil {
-                Text("這一題沒有額外提示，可以直接用自己的話回答。")
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk2)
-            }
-            ForEach(self.turn.keywords, id: \.self) { keyword in
-                HStack(alignment: .firstTextBaseline, spacing: Space.s2) {
-                    Text(verbatim: keyword.text)
-                        .font(.tujiBody(.strong))
-                        .foregroundStyle(.tujiInk)
-                    if let reading = keyword.reading {
-                        Text(verbatim: reading)
-                            .font(.tujiBodySm)
-                            .foregroundStyle(.tujiInk3)
-                    }
-                    Text(verbatim: keyword.meaning)
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                }
-            }
-        }
-        .padding(Space.s3)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tujiPaper2)
         .padding(.leading, Self.faceSize + Space.s2)
     }
 
@@ -405,8 +369,8 @@ struct OptionList: View {
     }
 }
 
-/// 幫我接話 — the five supports. The first two only open what came with the
-/// turn; the other three generate and share the free allowance.
+/// 幫我接話 — 示範回答 only opens what came with the turn; 簡單一點 and
+/// 換個問題 generate, free, a couple of times between answers.
 struct SupportTray: View {
     let model: TopicChatModel
     let generate: (TopicChatAssistKind) -> Void
@@ -414,9 +378,6 @@ struct SupportTray: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             FlowLayout(spacing: Space.s2) {
-                self.chip("給我提示", selected: self.model.hintShown, enabled: self.model.latestTurn != nil) {
-                    self.model.toggleHint()
-                }
                 self.chip(
                     "示範回答",
                     selected: self.model.exampleShown,
@@ -424,7 +385,6 @@ struct SupportTray: View {
                 ) {
                     self.model.toggleExample()
                 }
-                self.chip("幫我表達", selected: false, enabled: self.model.canAssist) { self.generate(.express) }
                 self.chip(
                     "簡單一點",
                     selected: false,
@@ -432,10 +392,6 @@ struct SupportTray: View {
                 ) { self.generate(.simplify) }
                 self.chip("換個問題", selected: false, enabled: self.model.canAssist) { self.generate(.another) }
             }
-            Text(verbatim: tujiLocalized("免費輔助還有 \(self.model.state?.assistsLeft ?? 0) 次（幫我表達、簡單一點、換個問題，回答後重新計算）"))
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
