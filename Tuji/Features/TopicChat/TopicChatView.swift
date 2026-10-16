@@ -325,6 +325,9 @@ struct TopicChatView: View {
                 .padding(.vertical, Space.s4)
             }
             .scrollDismissesKeyboard(.interactively)
+            // A tap anywhere in the conversation puts the keyboard away;
+            // simultaneous, so the buttons in it still work.
+            .simultaneousGesture(TapGesture().onEnded { self.fieldFocused = false })
             .onChange(of: self.scrollKey) {
                 withAnimation(self.reduceMotion ? nil : Motion.ease(Motion.d2)) {
                     proxy.scrollTo(self.model.latestTurn?.id ?? Self.bottomID, anchor: .top)
