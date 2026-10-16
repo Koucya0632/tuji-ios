@@ -3,7 +3,8 @@
 // Top: the topic (tap to change it) and a menu for the reading supports and
 // ending. Middle: the conversation, where only the newest turn offers answer
 // actions. Bottom: the draft, 送出／停止, and 幫我接話 — one entry that opens
-// the five supports rather than five buttons beside the field.
+// the five supports rather than five buttons beside the field. The mic inside
+// the field is 語音輸入: what is heard is written into the draft, never sent.
 
 import SwiftUI
 
@@ -13,11 +14,15 @@ struct TopicChatView: View {
     @Environment(\.presentPaywall) private var presentPaywall
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     @State private var model: TopicChatModel
     @State private var picking = false
     @State private var supportsOpen = false
     @State private var confirmingDelete = false
+    @State private var dictation = Dictation()
+    /// 語音輸入 listens for Chinese instead of the language being learned.
+    @State private var dictatingChinese = false
     @FocusState private var fieldFocused: Bool
 
     init(entry: TopicChatEntry) {
@@ -38,7 +43,12 @@ struct TopicChatView: View {
         .onAppear { self.studyFocus.enter() }
         .onDisappear {
             self.studyFocus.exit()
+            self.stopDictation()
             self.model.leave()
+        }
+        .onChange(of: self.fieldFocused) { _, focused in
+            // Typing takes the draft over from the mic.
+            if focused { self.stopDictation() }
         }
         .task {
             await self.categories.loadIfNeeded()
@@ -470,6 +480,9 @@ struct TopicChatView: View {
                 .foregroundStyle(.tujiInk)
                 .frame(minHeight: 44)
             }
+            if self.dictation.phase != .idle {
+                self.dictationBar
+            }
             if self.supportsOpen {
                 SupportTray(model: self.model) { kind in
                     self.supportsOpen = false
@@ -492,23 +505,27 @@ struct TopicChatView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("幫我接話"))
 
-                TextField("用學習的語言回答，或打中文也可以", text: self.$model.draft, axis: .vertical)
-                    .lineLimit(1...4)
-                    .focused(self.$fieldFocused)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk)
-                    .tint(.tujiInk)
-                    .padding(.horizontal, Space.s3)
-                    .padding(.vertical, Space.s3)
-                    .frame(minHeight: 52)
-                    .background(.tujiPaper2)
-                    .overlay {
-                        if self.fieldFocused {
-                            Rectangle().stroke(.tujiCurrent, lineWidth: Border.bw2)
-                        }
+                HStack(alignment: .bottom, spacing: 0) {
+                    TextField("用學習的語言回答，或打中文也可以", text: self.$model.draft, axis: .vertical)
+                        .lineLimit(1...4)
+                        .focused(self.$fieldFocused)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .font(.tujiBody)
+                        .foregroundStyle(.tujiInk)
+                        .tint(.tujiInk)
+                        .padding(.leading, Space.s3)
+                        .padding(.vertical, Space.s3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    self.micButton
+                }
+                .frame(minHeight: 52)
+                .background(.tujiPaper2)
+                .overlay {
+                    if self.fieldFocused || self.dictation.isListening {
+                        Rectangle().stroke(.tujiCurrent, lineWidth: Border.bw2)
                     }
+                }
 
                 self.sendButton
             }
@@ -542,6 +559,7 @@ struct TopicChatView: View {
             let enabled = self.model.canSend && self.model.canAfford
             Button {
                 self.supportsOpen = false
+                self.stopDictation()
                 self.model.send()
             } label: {
                 Image(systemName: "arrow.up")
@@ -554,6 +572,120 @@ struct TopicChatView: View {
             .disabled(!enabled)
             .accessibilityLabel(Text("送出"))
         }
+    }
+
+    // MARK: - 語音輸入
+
+    private var micButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            if self.dictation.isListening {
+                self.dictation.stop()
+            } else {
+                self.startDictation(chinese: self.dictatingChinese)
+            }
+        } label: {
+            Image(systemName: self.dictation.isListening ? "stop.fill" : "mic.fill")
+                .font(.tujiIcon(15, weight: .semibold))
+                .foregroundStyle(.tujiInk)
+                .frame(width: 44, height: 52)
+                .background(self.dictation.isListening ? Color.tujiCurrent : .clear)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(self.dictation.isListening ? Text("停止語音輸入") : Text("語音輸入"))
+    }
+
+    private var dictationBar: some View {
+        HStack(spacing: Space.s3) {
+            switch self.dictation.phase {
+            case .idle:
+                EmptyView()
+            case .listening:
+                Text(self.listeningLabel)
+                    .foregroundStyle(.tujiInk2)
+                Spacer(minLength: Space.s2)
+                Button(self.switchLabel) { self.startDictation(chinese: !self.dictatingChinese) }
+                    .font(.tujiBodySm(.strong))
+                Button("完成") { self.dictation.stop() }
+                    .font(.tujiBodySm(.strong))
+            case .denied:
+                Text("語音輸入需要麥克風和語音辨識的權限。")
+                    .foregroundStyle(.tujiInk2)
+                Spacer(minLength: Space.s2)
+                Button("打開設定") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { self.openURL(url) }
+                }
+                .font(.tujiBodySm(.strong))
+                self.dismissDictationProblem
+            case .unavailable:
+                Text("這台裝置不支援這個語言的語音辨識。")
+                    .foregroundStyle(.tujiInk2)
+                Spacer(minLength: Space.s2)
+                self.dismissDictationProblem
+            case .failed:
+                Text("沒辦法開始錄音，請再試一次。")
+                    .foregroundStyle(.tujiInk2)
+                Spacer(minLength: Space.s2)
+                self.dismissDictationProblem
+            }
+        }
+        .font(.tujiBodySm)
+        .lineLimit(2)
+        .buttonStyle(.plain)
+        .foregroundStyle(.tujiInk)
+        .frame(minHeight: 44)
+    }
+
+    private var dismissDictationProblem: some View {
+        Button {
+            self.stopDictation()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.tujiIcon(13, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
+        }
+        .accessibilityLabel(Text("關閉"))
+    }
+
+    private var listeningLabel: LocalizedStringKey {
+        if self.dictatingChinese { return "正在聽中文…" }
+        return self.isJapanese ? "正在聽日文…" : "正在聽英文…"
+    }
+
+    private var switchLabel: LocalizedStringKey {
+        if !self.dictatingChinese { return "改說中文" }
+        return self.isJapanese ? "改說日文" : "改說英文"
+    }
+
+    /// Listens in the language being learned, or in Chinese, and writes what is
+    /// heard after what the draft already holds. Starting again replaces the try.
+    private func startDictation(chinese: Bool) {
+        self.dictatingChinese = chinese
+        self.fieldFocused = false
+        self.supportsOpen = false
+        SpeechService.shared.stop()
+        self.model.beginDictation()
+        let model = self.model
+        Task {
+            await self.dictation.start(locale: self.dictationLocale(chinese: chinese)) { heard in
+                model.dictated(heard, chinese: chinese)
+            }
+        }
+    }
+
+    private func stopDictation() {
+        self.dictation.cancel()
+        self.model.endDictation()
+    }
+
+    private func dictationLocale(chinese: Bool) -> Locale {
+        if chinese {
+            // The person's own Chinese: simplified for a 简体 interface, else traditional.
+            return Locale(identifier: SettingsStore.shared.current.uiLang == "zh-Hans" ? "zh-CN" : "zh-TW")
+        }
+        return Locale(identifier: self.isJapanese ? "ja-JP" : "en-US")
     }
 
     /// What this conversation has taken so far, and what is left.

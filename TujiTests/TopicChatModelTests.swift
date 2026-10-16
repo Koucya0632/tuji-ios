@@ -189,11 +189,16 @@ struct TopicChatModelTests {
     private let ids = RequestIds()
     private let defaults = UserDefaults(suiteName: "topic-chat-\(UUID().uuidString)") ?? .standard
 
-    private func makeModel(entry: TopicChatEntry = .topic("street")) -> TopicChatModel {
+    private func makeModel(
+        entry: TopicChatEntry = .topic("street"),
+        direction: LearningDirection = .zhJa
+    )
+        -> TopicChatModel
+    {
         TopicChatModel(
             entry: entry,
             repository: self.fake,
-            language: FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhJa),
+            language: FakeLanguageContext(uiLang: "zh-Hant", learningDirection: direction),
             defaults: self.defaults,
             makeRequestId: self.ids.next,
             pollInterval: .milliseconds(1)
@@ -405,5 +410,56 @@ struct TopicChatModelTests {
         self.fake.listError = APIError.forbidden
         let model = await self.readyModel()
         #expect(model.phase == .failed(.membership))
+    }
+
+    // MARK: - 語音輸入
+
+    @Test
+    func whatIsHeardGoesAfterTheDraftAndReplacesTheLastTranscript() async {
+        let model = await self.readyModel()
+        model.draft = "公園に "
+        model.beginDictation()
+        model.dictated("行きたい", chinese: false)
+        model.dictated("行きたいです", chinese: false)
+        #expect(model.draft == "公園に行きたいです")
+    }
+
+    @Test
+    func englishJoinsWithASpaceButChineseDoesNot() {
+        let model = self.makeModel(direction: .zhEn)
+        model.draft = "I like"
+        model.beginDictation()
+        model.dictated("parks", chinese: false)
+        #expect(model.draft == "I like parks")
+        model.beginDictation()
+        model.dictated("公園", chinese: true)
+        #expect(model.draft == "I like parks公園")
+    }
+
+    @Test
+    func aWordHeardAfterTheDraftWasTakenOverIsDropped() async {
+        let model = await self.readyModel()
+        model.beginDictation()
+        model.dictated("公園", chinese: false)
+        // A draft that holds something asks first; the late word must not slip in meanwhile.
+        model.fill("銀行に行きたいです。", support: .option)
+        model.dictated("公園に行きたい", chinese: false)
+        #expect(model.draft == "公園")
+        #expect(model.pendingFill != nil)
+
+        model.beginDictation()
+        model.endDictation()
+        model.dictated("もう一度", chinese: false)
+        #expect(model.draft == "公園")
+    }
+
+    @Test
+    func sendingEndsDictation() async {
+        let model = await self.readyModel()
+        model.beginDictation()
+        model.dictated("公園です", chinese: false)
+        model.send()
+        model.dictated("公園です。", chinese: false)
+        #expect(model.draft.isEmpty)
     }
 }
