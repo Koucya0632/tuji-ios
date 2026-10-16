@@ -130,6 +130,8 @@ final class TopicChatModel {
     /// Bumped by every switch: only the newest one's answer is drawn.
     private var switchToken = 0
     private var exampleTurnId: String?
+    /// The draft as it was when 語音輸入 began; what is heard goes after it.
+    private var dictationBase: String?
 
     static let translationKey = "tuji.topicChat.showTranslation"
     static let readingKey = "tuji.topicChat.showReading"
@@ -321,6 +323,7 @@ final class TopicChatModel {
         )
         self.draft = ""
         self.draftSupport = []
+        self.dictationBase = nil
         self.runOutgoing()
     }
 
@@ -412,6 +415,8 @@ final class TopicChatModel {
     /// An option or the example. Never sends; a
     /// draft that already holds something asks before it is replaced.
     func fill(_ text: String, support: ChatSupport) {
+        // The draft is someone else's now; a word heard late must not overwrite it.
+        self.dictationBase = nil
         let current = self.draft.trimmingCharacters(in: .whitespacesAndNewlines)
         if current.isEmpty || current == text {
             self.draft = text
@@ -438,6 +443,26 @@ final class TopicChatModel {
             return
         }
         self.draftSupport.insert(pendingFill.support)
+    }
+
+    // MARK: - 語音輸入
+
+    /// What is heard from now on goes after what the draft already holds.
+    func beginDictation() {
+        self.dictationBase = self.draft.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// The whole transcript so far, in place of the last one. Chinese and
+    /// Japanese join without a space.
+    func dictated(_ heard: String, chinese: Bool) {
+        guard let base = self.dictationBase else { return }
+        let spaced = !chinese && self.language.learningDirection.targetLanguage != .ja
+        self.draft = base.isEmpty ? heard : base + (spaced ? " " : "") + heard
+    }
+
+    /// Typing, or anything else that takes the draft over, ends 語音輸入's hold on it.
+    func endDictation() {
+        self.dictationBase = nil
     }
 
     func restoreKeptDraft() {

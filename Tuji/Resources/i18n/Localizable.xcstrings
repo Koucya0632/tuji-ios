@@ -552,6 +552,29 @@
         }
       }
     },
+    "停止語音輸入" : {
+      "comment" : "Accessibility label of the mic button while it is listening.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop voice input"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声入力を停止"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止语音输入"
+          }
+        }
+      }
+    },
     "再送一次" : {
       "localizations" : {
         "en" : {
@@ -1146,6 +1169,75 @@
         }
       }
     },
+    "改說中文" : {
+      "comment" : "Button: switch voice input to listen for Chinese.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speak Chinese"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中国語で話す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改说中文"
+          }
+        }
+      }
+    },
+    "改說日文" : {
+      "comment" : "Button: switch voice input back to Japanese.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speak Japanese"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日本語で話す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改说日文"
+          }
+        }
+      }
+    },
+    "改說英文" : {
+      "comment" : "Button: switch voice input back to English.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speak English"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "英語で話す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改说英文"
+          }
+        }
+      }
+    },
     "整理回顧" : {
       "localizations" : {
         "en" : {
@@ -1341,6 +1433,75 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在整理回顾…"
+          }
+        }
+      }
+    },
+    "正在聽中文…" : {
+      "comment" : "Shown above the answer field while voice input listens for Chinese.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for Chinese…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中国語を聞いています…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在听中文…"
+          }
+        }
+      }
+    },
+    "正在聽日文…" : {
+      "comment" : "Shown above the answer field while voice input listens for Japanese.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for Japanese…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日本語を聞いています…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在听日文…"
+          }
+        }
+      }
+    },
+    "正在聽英文…" : {
+      "comment" : "Shown above the answer field while voice input listens for English.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening for English…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "英語を聞いています…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在听英文…"
           }
         }
       }
@@ -2222,6 +2383,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "话题的开场没有出现。主题已经换好了。"
+          }
+        }
+      }
+    },
+    "語音輸入" : {
+      "comment" : "Accessibility label of the mic button in the topic chat's answer field.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voice input"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声入力"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音输入"
+          }
+        }
+      }
+    },
+    "語音輸入需要麥克風和語音辨識的權限。" : {
+      "comment" : "Shown when microphone or speech recognition permission was refused for voice input.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voice input needs microphone and speech recognition access."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声入力にはマイクと音声認識の許可が必要です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音输入需要麦克风和语音识别的权限。"
           }
         }
       }

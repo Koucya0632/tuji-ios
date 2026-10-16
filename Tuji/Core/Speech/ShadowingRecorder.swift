@@ -12,9 +12,10 @@
 // wait if nothing ever was, and at a hard ceiling; tapping again stops it too.
 //
 // The audio tap and the recogniser's callbacks run off the main actor. Both are
-// built in `nonisolated` functions and hand plain strings back, because under
-// this target's default MainActor isolation a closure written inside a method
-// here would be MainActor-isolated, and the audio thread calling it traps.
+// built in `nonisolated` functions (the callback in `SpeechRecognition`) and
+// hand plain strings back, because under this target's default MainActor
+// isolation a closure written inside a method here would be MainActor-isolated,
+// and the audio thread calling it traps.
 //
 // The audio session is switched to play-and-record while listening and handed
 // back afterwards; `SpeechService` sets its own category again on the next play.
@@ -93,7 +94,7 @@ final class ShadowingRecorder {
         self.language = language
         self.phase = .listening(heard: "")
 
-        guard await Self.authorize() else {
+        guard await SpeechRecognition.authorize() else {
             if attempt == self.attempt { self.phase = .denied }
             return
         }
@@ -141,7 +142,7 @@ final class ShadowingRecorder {
         self.request = request
         self.task = recognizer.recognitionTask(
             with: request,
-            resultHandler: Self.handler { [weak self] text, isFinal, failed in
+            resultHandler: SpeechRecognition.handler { [weak self] text, isFinal, failed in
                 self?.receive(text: text, isFinal: isFinal, failed: failed, attempt: attempt)
             }
         )
@@ -315,31 +316,6 @@ final class ShadowingRecorder {
             request.append(buffer)
             file.write(buffer)
         }
-    }
-
-    private nonisolated static func handler(
-        _ deliver: @escaping @MainActor (String?, Bool, Bool) -> Void
-    )
-        -> (SFSpeechRecognitionResult?, Error?) -> Void
-    {
-        { result, error in
-            let text = result?.bestTranscription.formattedString
-            let isFinal = result?.isFinal ?? false
-            let failed = error != nil
-            Task { @MainActor in deliver(text, isFinal, failed) }
-        }
-    }
-
-    /// Microphone first, then speech recognition; both must be granted.
-    private nonisolated static func authorize() async -> Bool {
-        guard await AVAudioApplication.requestRecordPermission() else { return false }
-        let status = await withCheckedContinuation { (continuation: CheckedContinuation<
-            SFSpeechRecognizerAuthorizationStatus,
-            Never
-        >) in
-            SFSpeechRecognizer.requestAuthorization { continuation.resume(returning: $0) }
-        }
-        return status == .authorized
     }
 }
 
