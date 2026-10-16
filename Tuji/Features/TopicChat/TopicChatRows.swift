@@ -1,7 +1,7 @@
 // 圖鑑主題對話 — the pieces of the conversation.
 //
 // Moira's turn is her line, its translation and reading (each switchable on
-// its own), the topic's pictures, and — on the newest turn only — 「跟著說」
+// its own), and — on the newest turn only — 「跟著說」
 // with its options, plus whatever 示範回答 / 簡單一點 opened. Older
 // turns stay readable but offer nothing to tap that would answer them.
 //
@@ -126,10 +126,7 @@ struct AITurnRow: View {
     /// The newest turn, open for an answer: the only one with answer actions.
     let isLatest: Bool
     let exampleShown: Bool
-    let words: [CardWord]
     let fill: (String, ChatSupport) -> Void
-    /// A picture opens its 圖鑑 entry.
-    let open: (CardWord) -> Void
 
     private static let faceSize: CGFloat = 32
 
@@ -162,9 +159,6 @@ struct AITurnRow: View {
                 .background(.tujiPaper2)
             }
             .padding(.trailing, Space.s5)
-            if !self.words.isEmpty {
-                self.pictures
-            }
             if let simpler = self.turn.simpler {
                 self.simplerBlock(simpler)
             }
@@ -188,43 +182,6 @@ struct AITurnRow: View {
             }
         }
         .padding(.leading, 0)
-    }
-
-    private var pictures: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Space.s2) {
-                ForEach(self.words) { word in
-                    Button {
-                        self.open(word)
-                    } label: {
-                        VStack(spacing: Space.s1) {
-                            Color.tujiPaper2
-                                .frame(width: 64, height: 64)
-                                .overlay {
-                                    WordPicture(
-                                        url: word.imageURL,
-                                        kind: word.imageKind,
-                                        inset: Space.s1,
-                                        glyphSize: 16
-                                    )
-                                }
-                                .clipped()
-                            Text(verbatim: word.word)
-                                .font(.tujiLabel)
-                                .foregroundStyle(.tujiInk)
-                                .lineLimit(1)
-                                .frame(width: 64)
-                        }
-                        .contentShape(.rect)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(Text(verbatim: "\(word.word)，\(word.chinese)"))
-                    .accessibilityHint(Text("查看這個詞"))
-                }
-            }
-            .padding(.leading, Self.faceSize + Space.s2)
-        }
     }
 
     private func simplerBlock(_ simpler: ChatAITurn.Simpler) -> some View {

@@ -1279,28 +1279,6 @@
         }
       }
     },
-    "查看這個詞" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Look up this word"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この単語を見る"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查看这个词"
-          }
-        }
-      }
-    },
     "正在換到「%@」…" : {
       "localizations" : {
         "en" : {
