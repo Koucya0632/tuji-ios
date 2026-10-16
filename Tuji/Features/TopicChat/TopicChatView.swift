@@ -9,8 +9,6 @@ import SwiftUI
 
 struct TopicChatView: View {
     @Environment(StudyFocus.self) private var studyFocus
-    @Environment(TabNavigator.self) private var navigator
-    @Environment(WordsStore.self) private var words
     @Environment(CategoriesStore.self) private var categories
     @Environment(\.presentPaywall) private var presentPaywall
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -44,7 +42,6 @@ struct TopicChatView: View {
         }
         .task {
             await self.categories.loadIfNeeded()
-            await self.words.loadIfNeeded()
             await self.model.load()
         }
         .sheet(isPresented: self.$picking) {
@@ -363,9 +360,7 @@ struct TopicChatView: View {
                     showReading: self.model.showReading,
                     isLatest: isLatest,
                     exampleShown: isLatest && self.model.exampleShown,
-                    words: turn.wordIds.compactMap { self.words.find(id: $0) },
-                    fill: { text, support in self.model.fill(text, support: support) },
-                    open: { self.navigator.push(.wordDetail(id: $0.id)) }
+                    fill: { text, support in self.model.fill(text, support: support) }
                 )
             }
         }
