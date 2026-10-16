@@ -106,8 +106,9 @@ struct TopicChoiceList<Footer: View>: View {
     }
 }
 
-/// 回顧 — at the end of an ended conversation. Only what was said: the person's
-/// own sentences apart from Moira's, and a suggestion marked as one.
+/// 回顧 — at the end of an ended conversation: what the person takes away.
+/// Their sentences (a corrected one with what they wrote a tap away), the 答法
+/// they answered, and one suggestion marked as one. Only what was said.
 struct ChatReviewSection: View {
     let chat: TopicChatSummary
     let failed: Bool
@@ -131,25 +132,49 @@ struct ChatReviewSection: View {
                 Text("聊過：\(review.topics.map(\.name).joined(separator: "、"))")
                     .font(.tujiBodySm)
                     .foregroundStyle(.tujiInk2)
-                self.phrases(review.phrases.filter { $0.source == "you" }, title: "你說過的")
-                self.phrases(review.phrases.filter { $0.source == "moira" }, title: "Moira 示範過的")
+                if !review.sentences.isEmpty {
+                    self.section("你說過的") {
+                        ForEach(review.sentences, id: \.messageId) { sentence in
+                            ReviewSentenceRow(
+                                sentence: sentence,
+                                showTranslation: self.showTranslation,
+                                showReading: self.showReading
+                            )
+                        }
+                    }
+                }
+                if !review.answerTypes.isEmpty {
+                    self.section("練習過的答法") {
+                        ForEach(review.answerTypes, id: \.type) { answered in
+                            VStack(alignment: .leading, spacing: Space.s1) {
+                                Text(verbatim: answered.pattern)
+                                    .font(.tujiBody(.strong))
+                                    .foregroundStyle(.tujiInk)
+                                Text(AnswerTypeName.of(answered.type))
+                                    .font(.tujiLabel)
+                                    .foregroundStyle(.tujiInk3)
+                                Text(verbatim: "→ \(answered.answer)")
+                                    .font(.tujiBodySm)
+                                    .foregroundStyle(.tujiInk2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                }
                 if let tryNext = review.tryNext {
                     VStack(alignment: .leading, spacing: Space.s1) {
                         Text("下次可以試")
                             .font(.tujiLabel)
                             .foregroundStyle(.tujiBrandSecondary)
+                        Text(AnswerTypeName.of(tryNext.answerType))
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk3)
                         ChatSentence(
-                            text: tryNext,
+                            text: tryNext.text,
                             showTranslation: self.showTranslation,
                             showReading: self.showReading
                         )
                     }
-                }
-                if !review.nextIdea.isEmpty {
-                    Text(verbatim: review.nextIdea)
-                        .font(.tujiBody)
-                        .foregroundStyle(.tujiInk2)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             } else if self.failed {
                 Text("回顧沒有整理好。對話都還在，可以再試一次。")
@@ -177,21 +202,105 @@ struct ChatReviewSection: View {
         .background(.tujiPaper2)
     }
 
-    @ViewBuilder
-    private func phrases(_ phrases: [ChatReview.Phrase], title: LocalizedStringKey) -> some View {
-        if !phrases.isEmpty {
-            VStack(alignment: .leading, spacing: Space.s2) {
-                Text(title)
+    private func section(_ title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text(title)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
+            content()
+        }
+    }
+}
+
+/// One of 「你說過的」: the sentence to take away, and — when it was corrected
+/// or said for them — what the person wrote, behind a tap.
+private struct ReviewSentenceRow: View {
+    let sentence: ChatReview.Sentence
+    let showTranslation: Bool
+    let showReading: Bool
+    @State private var showsOriginal = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.s1) {
+            if let label = self.label {
+                Text(label)
                     .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
-                ForEach(Array(phrases.enumerated()), id: \.offset) { _, phrase in
-                    ChatSentence(
-                        text: phrase.text,
-                        showTranslation: self.showTranslation,
-                        showReading: self.showReading
-                    )
+                    .foregroundStyle(.tujiBrandSecondary)
+            }
+            ChatSentence(text: self.sentence.text, showTranslation: self.showTranslation, showReading: self.showReading)
+            if let original = self.sentence.original {
+                if self.showsOriginal {
+                    Text("你原本寫的：\(original)")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk3)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Button("看你原本寫的") { self.showsOriginal = true }
+                        .buttonStyle(.plain)
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk2)
+                        .frame(minHeight: 32, alignment: .leading)
                 }
             }
+        }
+    }
+
+    private var label: LocalizedStringKey? {
+        switch ReviewSentenceKind(rawValue: self.sentence.kind) {
+        case .expressed: "你想說的"
+        case .corrected: "順過的說法"
+        case .asSaid, nil: nil
+        }
+    }
+}
+
+private enum ReviewSentenceKind: String {
+    case expressed
+    case corrected
+    case asSaid = "as_said"
+}
+
+/// The name of a 答法, as the interface shows it.
+enum AnswerTypeName: String {
+    case what
+    case describe
+    case chooseOne = "choose_one"
+    case `where`
+    case when
+    case who
+    case howOften = "how_often"
+    case howMany = "how_many"
+    case wantTo = "want_to"
+    case like
+    case reason
+    case experience
+    case plan
+    case agree
+    case askBack = "ask_back"
+    case other
+
+    static func of(_ type: String) -> LocalizedStringKey {
+        (Self(rawValue: type) ?? .other).name
+    }
+
+    var name: LocalizedStringKey {
+        switch self {
+        case .what: "答法：什麼"
+        case .describe: "答法：怎麼樣"
+        case .chooseOne: "答法：選一個"
+        case .where: "答法：在哪裡"
+        case .when: "答法：什麼時候"
+        case .who: "答法：和誰"
+        case .howOften: "答法：多常"
+        case .howMany: "答法：多少"
+        case .wantTo: "答法：想做什麼"
+        case .like: "答法：喜歡什麼"
+        case .reason: "答法：為什麼"
+        case .experience: "答法：做過嗎"
+        case .plan: "答法：打算做什麼"
+        case .agree: "答法：我也是"
+        case .askBack: "答法：反問"
+        case .other: "答法：其他"
         }
     }
 }

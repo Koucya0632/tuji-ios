@@ -105,18 +105,36 @@ struct ChatReview: Codable, Equatable {
         let name: String
     }
 
-    struct Phrase: Codable, Equatable {
-        /// "you": the person said it. "moira": Moira showed it.
-        let source: String
+    /// 「你說過的」: one of the person's messages, as the sentence to take away.
+    struct Sentence: Codable, Equatable {
+        /// "as_said": their own words. "corrected": Moira's restating of a
+        /// sentence with a mistake. "expressed": how Moira said what they wrote
+        /// in another language.
+        let kind: String
         let text: ChatTargetText
+        /// What the person wrote, when `text` is not it.
+        let original: String?
         let messageId: String
     }
 
+    /// 「練習過的答法」: a 答法 the person answered, with its 跟著說 and their answer.
+    struct AnswerType: Codable, Equatable {
+        let type: String
+        let pattern: String
+        let answer: String
+        let messageId: String
+    }
+
+    /// 「下次可以試」 — a suggestion of a 答法 not tried yet, not something the person did.
+    struct TryNext: Codable, Equatable {
+        let answerType: String
+        let text: ChatTargetText
+    }
+
     let topics: [Topic]
-    let phrases: [Phrase]
-    /// 「下次可以試」 — a suggestion, not something the person did.
-    let tryNext: ChatTargetText?
-    let nextIdea: String
+    let sentences: [Sentence]
+    let answerTypes: [AnswerType]
+    let tryNext: TryNext?
 }
 
 struct TopicChatSummary: Codable, Equatable, Identifiable {
