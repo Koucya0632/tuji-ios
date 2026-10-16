@@ -439,6 +439,24 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   the story leaves out a picked word. The same three rules as 問 AI hold: the price is
   said before the tap, the balance must cover the typical high end before it starts, and a failure keeps its request
   id for the retry.
+- **主題對話 (topic chat)** — a conversation with Moira about one 圖鑑 category (the
+  **主題**), which can be changed mid-conversation. Each answer that gets a reply costs
+  罐頭點數. _Avoid_：「更換圖鑑」— what changes is the 主題.
+- **跟著說 (follow-along pattern)** — the sentence with one blank that answers *the
+  question Moira just asked*. It is derived from that question, never carried over from
+  an earlier turn because it was practised there; a turn that asks nothing has none.
+  _Avoid_：「句型練習」— the pattern serves the answer, not a drill.
+- **答法 (answer type)** — the kind of answer a question calls for: describe, choose one,
+  where, when, how often / how many, want to, like / prefer, reason, experience, plan,
+  agree, ask back. Every 跟著說 belongs to one, and it is the stable name for "what was
+  practised" — and a 答法 is practised only once the person answered it, not when Moira
+  merely asked. Repetition happens by Moira asking another question with the same 答法,
+  never by keeping a pattern the new question does not take.
+  _Avoid_：pattern key／句型分類 when it means kinds of desire (想去、想買) rather than kinds of answer.
+- **回顧 (review)** — what a person takes away from an ended 主題對話, kept with it in
+  對話紀錄 to come back to. It is built only from what was said, and it never enters
+  the 複習 schedule or changes how well a word is known.
+  _Avoid_：「學習成果」— it does not grade or measure; it hands back what is reusable.
 - **點數明細 (`CreditStatement`)** — the balance, its sources, and the recent movements,
   built from one ledger page and the wallet returned beside it. The ledger records
   *changes*, never balances, so each row's 「餘 N 點」 is derived by walking back from what
