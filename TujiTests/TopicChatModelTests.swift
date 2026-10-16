@@ -44,7 +44,7 @@ private final class TopicChatFake: TopicChatting {
     {
         TopicChatSummary(
             id: id, learningDirection: "zh-ja", topicId: topicId, topicName: topicId, topicVersion: 1,
-            status: status, updatedAt: "2026-10-16T00:00:00Z", answers: answers, review: nil
+            status: status, updatedAt: "2026-10-16T00:00:00Z", answers: answers, spent: 0, review: nil
         )
     }
 
@@ -267,7 +267,7 @@ struct TopicChatModelTests {
     @Test
     func sendingTakesTheDraftAndRecordsTheSupportsUsed() async {
         let model = await self.readyModel()
-        model.toggleHint()
+        model.toggleExample()
         model.fill("公園に行きたいです。", support: .option)
         model.send()
         #expect(model.draft.isEmpty)
@@ -279,11 +279,11 @@ struct TopicChatModelTests {
         let sent = self.fake.replies.first
         #expect(sent?.text == "公園に行きたいです。")
         #expect(sent?.replyTo == "a1")
-        #expect(sent?.support == ["hint", "option"])
+        #expect(sent?.support == ["example", "option"])
         #expect(model.outgoing == nil)
         #expect(model.latestTurn?.id == "a2")
         // A new turn closes what the old one opened.
-        #expect(model.hintShown == false)
+        #expect(model.exampleShown == false)
     }
 
     @Test
@@ -370,22 +370,6 @@ struct TopicChatModelTests {
         // Picking the topic already on screen sends nothing.
         await model.switchTopic(to: "zoo")
         #expect(self.fake.switches == ["zoo"])
-    }
-
-    @Test
-    func expressFillsTheDraftOnlyWhenBroughtIn() async {
-        let model = await self.readyModel()
-        model.express.idea = "我想買水"
-        await model.expressIdea()
-        #expect(model.express.result?.text == "水を買いたいです。")
-        #expect(model.draft.isEmpty)
-        #expect(model.state?.assistsLeft == 1)
-        // Asking again for the same idea on the same turn is the same request.
-        await model.expressIdea()
-        #expect(self.fake.assists.map(\.requestId) == ["request-2", "request-2"])
-        model.useExpressed()
-        #expect(model.draft == "水を買いたいです。")
-        #expect(model.draftSupport.contains(.express))
     }
 
     @Test

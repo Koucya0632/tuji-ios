@@ -19,9 +19,7 @@ struct TopicChatView: View {
     @State private var model: TopicChatModel
     @State private var picking = false
     @State private var supportsOpen = false
-    @State private var expressing = false
     @State private var confirmingDelete = false
-    @State private var lookedUp: CardWord?
     @FocusState private var fieldFocused: Bool
 
     init(entry: TopicChatEntry) {
@@ -53,20 +51,6 @@ struct TopicChatView: View {
             TopicPickerSheet(current: self.model.chat?.topicId) { topicId in
                 self.picking = false
                 Task { await self.model.switchTopic(to: topicId) }
-            }
-        }
-        .sheet(isPresented: self.$expressing) {
-            ExpressPanel(model: self.model) {
-                self.expressing = false
-            }
-        }
-        .sheet(item: self.$lookedUp) { word in
-            ChatWordSheet(word: word, canUse: self.model.isActive && self.model.latestTurn != nil) {
-                self.lookedUp = nil
-                self.model.fill(word.word, support: .hint)
-            } open: {
-                self.lookedUp = nil
-                self.navigator.push(.wordDetail(id: word.id))
             }
         }
         .confirmationDialog(
@@ -129,7 +113,7 @@ struct TopicChatView: View {
                         .lineLimit(1)
                 }
                 if self.model.isActive {
-                    Text("更換圖鑑")
+                    Text("更換主題")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                         .padding(.horizontal, Space.s2)
@@ -143,7 +127,7 @@ struct TopicChatView: View {
         .buttonStyle(.plain)
         .disabled(!self.model.isActive)
         .accessibilityElement(children: .combine)
-        .accessibilityHint(Text("更換圖鑑"))
+        .accessibilityHint(Text("更換主題"))
     }
 
     private var menu: some View {
@@ -378,11 +362,10 @@ struct TopicChatView: View {
                     showTranslation: self.model.showTranslation,
                     showReading: self.model.showReading,
                     isLatest: isLatest,
-                    hintShown: isLatest && self.model.hintShown,
                     exampleShown: isLatest && self.model.exampleShown,
                     words: turn.wordIds.compactMap { self.words.find(id: $0) },
                     fill: { text, support in self.model.fill(text, support: support) },
-                    lookUp: { self.lookedUp = $0 }
+                    open: { self.navigator.push(.wordDetail(id: $0.id)) }
                 )
             }
         }
@@ -491,13 +474,8 @@ struct TopicChatView: View {
             }
             if self.supportsOpen {
                 SupportTray(model: self.model) { kind in
-                    switch kind {
-                    case .express:
-                        self.expressing = true
-                    case .simplify, .another:
-                        self.supportsOpen = false
-                        Task { await self.model.assist(kind) }
-                    }
+                    self.supportsOpen = false
+                    Task { await self.model.assist(kind) }
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -580,13 +558,13 @@ struct TopicChatView: View {
         }
     }
 
-    /// Said before the tap: what a reply costs, what is left, and what is free.
+    /// What this conversation has taken so far, and what is left.
     private var priceLine: String {
         guard let offer = self.model.state?.offer else { return "" }
         if offer.available < offer.maxPoints {
             return tujiLocalized("罐頭點數剩 \(offer.available) 點，不夠送出回答（每次最多 \(offer.maxPoints) 點）。")
         }
-        return tujiLocalized("每次回覆 \(offer.minPoints)–\(offer.maxPoints) 點 · 剩 \(offer.available) 點 · 提示和開場不扣點")
+        return tujiLocalized("目前消耗點數：\(self.model.chat?.spent ?? 0)（剩 \(offer.available)）")
     }
 
     private var endedFooter: some View {
@@ -617,7 +595,7 @@ struct TopicChatView: View {
         case .unavailable: tujiLocalized("現在不能使用主題對話。")
         case .topicUnavailable: tujiLocalized("這個圖鑑暫時不能當主題，換一個試試。")
         case .outdated: tujiLocalized("對話已經往前了，請回答最新的問題。")
-        case .assistLimit: tujiLocalized("這一題的免費輔助用完了。已經生成的提示還在，也可以直接回答。")
+        case .assistLimit: tujiLocalized("這一題不能再換或簡化了，直接回答看看吧。")
         case .ended: tujiLocalized("這段對話已經結束。")
         case .failed: tujiLocalized("Moira 這次沒有回好，再試一次。沒有扣點。")
         }

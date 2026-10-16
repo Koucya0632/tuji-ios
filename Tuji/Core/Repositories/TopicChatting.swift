@@ -130,6 +130,8 @@ struct TopicChatSummary: Codable, Equatable, Identifiable {
     let updatedAt: String
     /// How many times the person answered. Zero means no review is offered.
     let answers: Int
+    /// Points this conversation's replies took. Nil from a server older than the field.
+    let spent: Int?
     let review: ChatReview?
 
     var isActive: Bool {

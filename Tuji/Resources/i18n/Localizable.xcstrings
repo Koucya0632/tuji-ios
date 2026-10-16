@@ -486,28 +486,6 @@
         }
       }
     },
-    "例如：我想買水" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "e.g. I want to buy water"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "例：お水を買いたい"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "例如：我想买水"
-          }
-        }
-      }
-    },
     "停止" : {
       "localizations" : {
         "en" : {
@@ -548,72 +526,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止播放"
-          }
-        }
-      }
-    },
-    "免費輔助還有 %lld 次" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld free helps left"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無料サポート：あと %lld 回"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "免费辅助还有 %lld 次"
-          }
-        }
-      }
-    },
-    "免費輔助還有 %lld 次（幫我表達、簡單一點、換個問題，回答後重新計算）" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld free helps left (Help me say it, Make it easier, Ask something else; resets when you answer)"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無料サポート：あと %lld 回（言い方を手伝って・もっとやさしく・別の質問にする。答えるとリセットされます）"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "免费辅助还有 %lld 次（帮我表达、简单一点、换个问题，回答后重新计算）"
-          }
-        }
-      }
-    },
-    "再說一次" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Try again"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "もう一度"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再说一次"
           }
         }
       }
@@ -702,28 +614,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加在后面"
-          }
-        }
-      }
-    },
-    "可以這樣說" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can say"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "こう言えます"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "可以这样说"
           }
         }
       }
@@ -1058,28 +948,6 @@
         }
       }
     },
-    "帶入回答" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Use as my answer"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "答えに入れる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "带入回答"
-          }
-        }
-      }
-    },
     "幫我接話" : {
       "localizations" : {
         "en" : {
@@ -1098,50 +966,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "帮我接话"
-          }
-        }
-      }
-    },
-    "幫我表達" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Help me say it"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言い方を手伝って"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帮我表达"
-          }
-        }
-      }
-    },
-    "幫我說" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Say it for me"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言い方を教えて"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "帮我说"
           }
         }
       }
@@ -1344,7 +1168,7 @@
         }
       }
     },
-    "更換圖鑑" : {
+    "更換主題" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1355,13 +1179,13 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "図鑑を変える"
+            "value" : "テーマを変更"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "更换图鉴"
+            "value" : "更换主题"
           }
         }
       }
@@ -1543,28 +1367,6 @@
         }
       }
     },
-    "每次回覆 %lld–%lld 點 · 剩 %lld 點 · 提示和開場不扣點" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld–%lld credits per reply · %lld left · Hints and openings are free"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "返事1回 %lld–%lld ポイント · 残り %lld · ヒントと始まりは無料"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每次回复 %lld–%lld 点 · 剩 %lld 点 · 提示和开场不扣点"
-          }
-        }
-      }
-    },
     "現在不能使用主題對話。" : {
       "localizations" : {
         "en" : {
@@ -1627,28 +1429,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用「%@」开始新对话"
-          }
-        }
-      }
-    },
-    "用你熟悉的語言寫下想說的話，Moira 幫你換成可以回答的句子。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Write what you want to say in a language you're comfortable with, and Moira will turn it into a sentence you can answer with."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言いたいことを話しやすい言葉で書いてね。Moira が答えに使える文にします。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用你熟悉的语言写下想说的话，Moira 帮你换成可以回答的句子。"
           }
         }
       }
@@ -1719,28 +1499,6 @@
         }
       }
     },
-    "用這個回答" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Answer with this"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "これで答える"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "用这个回答"
-          }
-        }
-      }
-    },
     "目前主題" : {
       "localizations" : {
         "en" : {
@@ -1763,24 +1521,24 @@
         }
       }
     },
-    "看完整詞條" : {
+    "目前消耗點數：%lld（剩 %lld）" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "See full entry"
+            "value" : "Points used so far: %lld (%lld left)"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "単語の詳細を見る"
+            "value" : "これまでの消費ポイント：%lld（残り %lld）"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "看完整词条"
+            "value" : "目前消耗点数：%lld（剩 %lld）"
           }
         }
       }
@@ -1869,28 +1627,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "结束并回顾"
-          }
-        }
-      }
-    },
-    "給我提示" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Give me a hint"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヒントを見る"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "给我提示"
           }
         }
       }
@@ -2138,46 +1874,24 @@
         }
       }
     },
-    "這一題沒有額外提示，可以直接用自己的話回答。" : {
+    "這一題不能再換或簡化了，直接回答看看吧。" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No extra hints for this one. Just answer in your own words."
+            "value" : "This question can't be changed or simplified any more — try answering it."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "この質問には追加のヒントがありません。自分の言葉で答えてみてね。"
+            "value" : "この質問はこれ以上変えたり簡単にしたりできません。そのまま答えてみよう。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这一题没有额外提示，可以直接用自己的话回答。"
-          }
-        }
-      }
-    },
-    "這一題的免費輔助用完了。已經生成的提示還在，也可以直接回答。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You've used the free helps for this question. The hints you already have are still here, and you can just answer."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この質問の無料サポートは使い切りました。出したヒントは残っているし、そのまま答えてもOKです。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这一题的免费辅助用完了。已经生成的提示还在，也可以直接回答。"
+            "value" : "这一题不能再换或简化了，直接回答看看吧。"
           }
         }
       }
@@ -2200,6 +1914,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这个图鉴暂时不能当主题，换一个试试。"
+          }
+        }
+      }
+    },
+    "這段對話共消耗 %lld 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This chat used %lld points in total"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この会話の消費ポイント：合計 %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这段对话共消耗 %lld 点"
           }
         }
       }

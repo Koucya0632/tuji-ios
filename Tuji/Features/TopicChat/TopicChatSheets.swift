@@ -1,9 +1,9 @@
-// 圖鑑主題對話 — what opens over the conversation: the topic picker, 幫我表達,
-// a word from the pictures, the review, and the list of saved conversations.
+// 圖鑑主題對話 — what opens over the conversation: the topic picker, the
+// review, and the list of saved conversations.
 
 import SwiftUI
 
-/// 更換圖鑑. The catalogue categories with enough words in the language being
+/// 更換主題. The catalogue categories with enough words in the language being
 /// learned to carry a conversation; the server makes the same check.
 struct TopicPickerSheet: View {
     let current: String?
@@ -25,7 +25,7 @@ struct TopicPickerSheet: View {
             TopicChoiceList(current: self.current, dismiss: { self.dismiss() }, pick: self.pick) {
                 Text("換主題後，對話會接著聊，學過的說法還能繼續用。")
             }
-            .navigationTitle(Text("更換圖鑑"))
+            .navigationTitle(Text("更換主題"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -36,7 +36,7 @@ struct TopicPickerSheet: View {
     }
 }
 
-/// The topics, as a list: in 更換圖鑑's sheet, and on the conversation screen
+/// The topics, as a list: in 更換主題's sheet, and on the conversation screen
 /// itself when it was opened without one.
 struct TopicChoiceList<Footer: View>: View {
     let current: String?
@@ -106,130 +106,6 @@ struct TopicChoiceList<Footer: View>: View {
     }
 }
 
-/// 幫我表達 — write the idea in whatever language comes easiest; the sentence
-/// comes back here and reaches the draft only on 帶入回答. Nothing typed here
-/// becomes a chat message.
-struct ExpressPanel: View {
-    @Bindable var model: TopicChatModel
-    let close: () -> Void
-
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.s4) {
-                    Text("用你熟悉的語言寫下想說的話，Moira 幫你換成可以回答的句子。")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    TextField("例如：我想買水", text: self.$model.express.idea, axis: .vertical)
-                        .lineLimit(2...5)
-                        .focused(self.$focused)
-                        .font(.tujiBody)
-                        .padding(Space.s3)
-                        .background(.tujiPaper2)
-                    if let result = self.model.express.result {
-                        VStack(alignment: .leading, spacing: Space.s2) {
-                            Text("可以這樣說")
-                                .font(.tujiLabel)
-                                .tracking(0.5)
-                                .foregroundStyle(.tujiBrandSecondary)
-                            ChatSentence(
-                                text: result,
-                                showTranslation: true,
-                                showReading: self.model.showReading
-                            )
-                        }
-                        .padding(Space.s3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.tujiPaper2)
-                        BBtn(title: "帶入回答", fullWidth: true) {
-                            self.model.useExpressed()
-                            self.close()
-                        }
-                    }
-                    if let failure = self.model.express.failure {
-                        Text(verbatim: TopicChatView.sentence(for: failure))
-                            .font(.tujiBodySm)
-                            .foregroundStyle(.tujiInk3)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    if self.model.express.working {
-                        TujiProgressBar(progress: nil).frame(width: 60)
-                    } else {
-                        BBtn(
-                            title: self.model.express.result == nil ? "幫我說" : "再說一次",
-                            bg: self.model.express.result == nil ? .tujiBrandPrimary : .tujiPaper2,
-                            fullWidth: true
-                        ) {
-                            Task { await self.model.expressIdea() }
-                        }
-                        .disabled(self.model.express.idea.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                    Text("免費輔助還有 \(self.model.state?.assistsLeft ?? 0) 次")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                }
-                .padding(Space.s4)
-            }
-            .background(Color.tujiPaper)
-            .navigationTitle(Text("幫我表達"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
-                        self.model.closeExpress()
-                        self.close()
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-        .onAppear { self.focused = true }
-    }
-}
-
-/// A topic picture, explained. 用這個回答 is the only way it reaches the draft.
-struct ChatWordSheet: View {
-    let word: CardWord
-    let canUse: Bool
-    let use: () -> Void
-    let open: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            HStack(spacing: Space.s3) {
-                Color.tujiPaper2
-                    .frame(width: 88, height: 88)
-                    .overlay { WordPicture(url: self.word.imageURL, kind: self.word.imageKind, inset: Space.s2) }
-                    .clipped()
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: self.word.word)
-                        .font(.tujiH2)
-                        .foregroundStyle(.tujiInk)
-                    if let reading = self.word.reading, reading != self.word.word {
-                        Text(verbatim: reading)
-                            .font(.tujiBodySm)
-                            .foregroundStyle(.tujiInk3)
-                    }
-                    Text(verbatim: self.word.chinese)
-                        .font(.tujiBody)
-                        .foregroundStyle(.tujiInk2)
-                }
-                Spacer(minLength: 0)
-            }
-            if self.canUse {
-                BBtn(title: "用這個回答", fullWidth: true, action: self.use)
-            }
-            BBtn(title: "看完整詞條", bg: .tujiPaper2, fullWidth: true, action: self.open)
-        }
-        .padding(Space.s4)
-        .presentationDetents([.height(self.canUse ? 300 : 240)])
-        .background(Color.tujiPaper)
-    }
-}
-
 /// 回顧 — at the end of an ended conversation. Only what was said: the person's
 /// own sentences apart from Moira's, and a suggestion marked as one.
 struct ChatReviewSection: View {
@@ -245,6 +121,9 @@ struct ChatReviewSection: View {
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
+            Text("這段對話共消耗 \(self.chat.spent ?? 0) 點")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk2)
             if let review = self.chat.review {
                 Text("回顧")
                     .font(.tujiH3)

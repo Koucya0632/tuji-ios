@@ -7,8 +7,8 @@
 // server sent back, so nothing here has to guess whether a reply landed.
 //
 // Product rules this keeps (docs/ATLAS_AI_CONVERSATION_DESIGN.md):
-// - Nothing is ever sent for the person: options, the example and 幫我表達
-//   only fill the draft, and a draft that already holds something asks first.
+// - Nothing is ever sent for the person: options and the example only fill
+//   the draft, and a draft that already holds something asks first.
 // - One answer at a time. While it is written the draft stays editable and
 //   sending waits; 停止 stops it, and a stopped or failed answer can be sent
 //   again under the same request id (never charged twice) or taken back to edit.
@@ -98,22 +98,6 @@ final class TopicChatModel {
         let support: ChatSupport
     }
 
-    /// 幫我表達's panel.
-    struct Express: Equatable {
-        var idea = ""
-        var result: ChatTargetText?
-        var working = false
-        var failure: Failure?
-        /// One id per (turn, idea), reused when the same idea is asked again.
-        var request: Request?
-
-        struct Request: Equatable {
-            let messageId: String
-            let idea: String
-            let requestId: String
-        }
-    }
-
     private(set) var phase: Phase = .idle
     private(set) var state: TopicChatState?
     var draft = ""
@@ -124,9 +108,7 @@ final class TopicChatModel {
     private(set) var actionFailure: Failure?
     private(set) var keptDraft: KeptDraft?
     private(set) var pendingFill: PendingFill?
-    var express = Express()
-    /// The latest turn's 給我提示 and 示範回答, opened or not.
-    private(set) var hintShown = false
+    /// The latest turn's 示範回答, opened or not.
     private(set) var exampleShown = false
     private(set) var history: [TopicChatSummary] = []
 
@@ -147,7 +129,7 @@ final class TopicChatModel {
     private var replyTask: Task<Void, Never>?
     /// Bumped by every switch: only the newest one's answer is drawn.
     private var switchToken = 0
-    private var hintTurnId: String?
+    private var exampleTurnId: String?
 
     static let translationKey = "tuji.topicChat.showTranslation"
     static let readingKey = "tuji.topicChat.showReading"
@@ -427,7 +409,7 @@ final class TopicChatModel {
 
     // MARK: - 草稿
 
-    /// An option, the example, a word or 幫我表達's sentence. Never sends; a
+    /// An option or the example. Never sends; a
     /// draft that already holds something asks before it is replaced.
     func fill(_ text: String, support: ChatSupport) {
         let current = self.draft.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -472,14 +454,7 @@ final class TopicChatModel {
 
     // MARK: - 幫我接話
 
-    /// 給我提示 — what was generated with the turn; no request, no charge.
-    func toggleHint() {
-        self.syncTurnSupports()
-        self.hintShown.toggle()
-        if self.hintShown { self.draftSupport.insert(.hint) }
-    }
-
-    /// 示範回答 — likewise.
+    /// 示範回答 — what was generated with the turn; no request, no charge.
     func toggleExample() {
         self.syncTurnSupports()
         self.exampleShown.toggle()
@@ -489,14 +464,13 @@ final class TopicChatModel {
     /// A newer turn closes what was opened under the old one.
     private func syncTurnSupports() {
         let id = self.latestTurn?.id
-        if id != self.hintTurnId {
-            self.hintTurnId = id
-            self.hintShown = false
+        if id != self.exampleTurnId {
+            self.exampleTurnId = id
             self.exampleShown = false
         }
     }
 
-    /// 簡單一點 / 換個問題 — free, two between answers, shared with 幫我表達.
+    /// 簡單一點 / 換個問題 — free, two between answers.
     func assist(_ kind: TopicChatAssistKind) async {
         guard kind != .express, self.canAssist, let chat, let turn = self.latestTurn else { return }
         self.work = kind == .simplify ? .simplify : .another
@@ -515,44 +489,9 @@ final class TopicChatModel {
         }
     }
 
-    /// 幫我表達 — the person's idea in their own words, back as one sentence to bring into the draft.
-    func expressIdea() async {
-        let idea = self.express.idea.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !idea.isEmpty, !self.express.working, let chat, let turn = self.latestTurn else { return }
-        var requestId = self.makeRequestId()
-        if let earlier = self.express.request, earlier.messageId == turn.id, earlier.idea == idea {
-            requestId = earlier.requestId
-        }
-        self.express.request = Express.Request(messageId: turn.id, idea: idea, requestId: requestId)
-        self.express.working = true
-        self.express.failure = nil
-        defer { self.express.working = false }
-        do {
-            let state = try await self.repository.assist(id: chat.id, TopicChatAssistBody(
-                kind: .express, requestId: requestId, uiLanguage: self.uiLanguage, messageId: turn.id, text: idea
-            ))
-            self.apply(state)
-            self.express.result = state.express
-            if state.express == nil { self.express.failure = .failed }
-        } catch {
-            self.express.failure = Self.failure(for: error)
-        }
-    }
-
-    /// 帶入回答.
-    func useExpressed() {
-        guard let result = self.express.result else { return }
-        self.fill(result.text, support: .express)
-        self.express = Express()
-    }
-
-    func closeExpress() {
-        self.express = Express()
-    }
-
     // MARK: - 換主題
 
-    /// 更換圖鑑. The conversation stays; the draft is set aside; an answer still
+    /// 更換主題. The conversation stays; the draft is set aside; an answer still
     /// being written is let go (the server will not land it under the new topic).
     func switchTopic(to topicId: String) async {
         guard self.isActive, let chat, topicId != chat.topicId else { return }
