@@ -118,8 +118,10 @@ final class AnimatedMascotRenderingTests: XCTestCase {
 
     private func waitForNavigation(_ settled: () -> Bool) async throws {
         // Keyboard focus/dismissal can outlast navigation, especially on a
-        // loaded CI simulator. Observe readiness instead of a fixed delay.
-        let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+        // loaded CI simulator where parallel @MainActor suites starve this one.
+        // Observe readiness instead of a fixed delay; the ceiling only bounds a
+        // real hang, so it is generous (10s timed out on CI, #286).
+        let deadline = ContinuousClock.now.advanced(by: .seconds(60))
         while ContinuousClock.now < deadline {
             if settled() { return }
             try await Task.sleep(for: .milliseconds(50))
