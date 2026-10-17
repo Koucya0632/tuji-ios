@@ -31,10 +31,16 @@ final class VocabularyModel {
     var selectedSense = ""
     var mode: VocabularyMode = .lookup
     private(set) var offer: VocabularyOffer?
+    /// The offer was read from the server since launch, so its balance can
+    /// decide spending. One kept from an earlier launch is only shown.
+    private(set) var offerCurrent = false
     private(set) var turns: [VocabularyTurn] = []
     /// The turn the conversation should bring into view: a new one, or one
     /// opened from 查詞紀錄. The tick lets the same card be asked for twice.
     private(set) var spotlight: Spotlight?
+    /// `history` came from a read (or a kept one), not just the empty start:
+    /// only then may it stand as a filter's kept list.
+    @ObservationIgnored private var historyLoaded = false
     private(set) var history: [VocabularyRecord] = []
     private(set) var nextCursor: String?
     private(set) var pending: VocabularyInput?
@@ -43,6 +49,8 @@ final class VocabularyModel {
     private(set) var message: String?
     private(set) var historyMessage: String?
     private let repository: VocabularyStudying
+    private let offerCache: AssistantOfferCache<VocabularyOffer>
+    private let historyCache: AssistantHistoryCache<VocabularyRecord>
     private let language: LanguageContext
     private let identity: ViewerIdentity
     private let journal: VocabularyJournaling
@@ -69,6 +77,8 @@ final class VocabularyModel {
     init(
         query: String = "",
         repository: VocabularyStudying = LiveVocabularyRepository(),
+        offerCache: AssistantOfferCache<VocabularyOffer> = AssistantOfferCaches.vocabulary,
+        historyCache: AssistantHistoryCache<VocabularyRecord> = AssistantHistoryCaches.vocabulary,
         language: LanguageContext = SettingsStore.shared,
         identity: ViewerIdentity = AuthService.shared,
         journal: VocabularyJournaling = DefaultsVocabularyJournal(),
@@ -77,6 +87,8 @@ final class VocabularyModel {
     ) {
         self.query = query
         self.repository = repository
+        self.offerCache = offerCache
+        self.historyCache = historyCache
         self.language = language
         self.identity = identity
         self.journal = journal
@@ -100,6 +112,11 @@ final class VocabularyModel {
     /// changes how new cards are explained, not which saved ones are yours.
     var scopeID: String {
         "\(self.identity.uid ?? "")|\(self.learning)"
+    }
+
+    /// Changes when the kept balance stops being trusted; the page loads again on it.
+    var offerRevision: Int {
+        self.offerCache.revision
     }
 
     var price: VocabularyOffer.Price? {
@@ -149,7 +166,8 @@ final class VocabularyModel {
     }
 
     private func canSpend(on mode: VocabularyMode) -> Bool {
-        !self.busy && self.pending == nil && self.identity.uid != nil && self.offer?.enabled == true &&
+        !self.busy && self.pending == nil && self.identity.uid != nil && self.offerCurrent &&
+            self.offer?.enabled == true &&
             self.price(for: mode).map { (self.offer?.available ?? 0) >= $0.maxPoints } == true
     }
 
@@ -170,9 +188,11 @@ final class VocabularyModel {
             self.turns = []
             self.spotlight = nil
             self.history = []
+            self.historyLoaded = false
             self.nextCursor = nil
             self.pending = nil
             self.offer = nil
+            self.offerCurrent = false
             self.busy = false
             self.message = nil
             self.selectedSense = ""
@@ -180,7 +200,12 @@ final class VocabularyModel {
         guard let owner = self.owner else { self.message = tujiLocalized("登入後即可使用 AI 查詞。")
             return
         }
-        await self.refreshOffer(scope: scope)
+        // Entering does not read the balance again when this launch already has it.
+        if let entry = self.offerCache.entry(owner: owner) {
+            self.offer = entry.offer
+            self.offerCurrent = entry.current
+        }
+        if !self.offerCurrent { await self.refreshOffer(scope: scope) }
         guard scope == self.scopeID else { return }
         if let input = self.journal.pending(owner: owner)
             .first(where: { $0.learningDirection == self.learning })
@@ -193,11 +218,16 @@ final class VocabularyModel {
         }
     }
 
+    /// Shared with 助手's prefetch; also how the balance comes back after a card
+    /// or a refusal, since neither carries it.
     private func refreshOffer(scope: String) async {
+        guard let owner = self.owner else { return }
+        let repository = self.repository
         do {
-            let offer = try await self.repository.offer()
+            let offer = try await self.offerCache.load(owner: owner) { try await repository.offer() }
             guard scope == self.scopeID else { return }
             self.offer = offer
+            self.offerCurrent = true
         } catch {
             guard scope == self.scopeID else { return }
             self.message = tujiLocalized("暫時無法取得價格，請重新整理。")
@@ -311,6 +341,7 @@ final class VocabularyModel {
 
     private func accept(_ record: VocabularyRecord, owner: String) {
         guard record.status != .pending else { return }
+        self.historyCache.invalidate(owner: owner)
         self.journal.remove(id: record.id, owner: owner)
         if self.pending?.requestId == record.id { self.pending = nil }
         if record.status == .deleted {
@@ -358,8 +389,23 @@ final class VocabularyModel {
         self.message = nil
     }
 
-    func loadHistory(favorite: Bool, more: Bool = false) async {
+    /// Opening 查詞紀錄 again shows the list this launch already read; `force`
+    /// (pull to refresh, 重試) reads it anyway.
+    func loadHistory(favorite: Bool, more: Bool = false, force: Bool = false) async {
         guard !more || !self.loadingHistory else { return }
+        let filter = Self.historyFilterKey(learning: self.learning, favorite: favorite)
+        if !more, !force, let owner = self.owner,
+           let kept = self.historyCache.page(owner: owner, filter: filter)
+        {
+            self.historyRequest = UUID()
+            self.loadingHistory = false
+            self.historyMessage = nil
+            self.historyFavorites = favorite
+            self.history = kept.records
+            self.historyLoaded = true
+            self.nextCursor = kept.nextCursor
+            return
+        }
         let request = UUID()
         self.historyRequest = request
         self.loadingHistory = true
@@ -375,7 +421,9 @@ final class VocabularyModel {
             guard scope == self.scopeID, request == self.historyRequest else { return }
             self.historyFavorites = favorite
             self.history = more ? self.history + list.records : list.records
+            self.historyLoaded = true
             self.nextCursor = list.nextCursor
+            self.keepHistory()
         } catch {
             if scope == self.scopeID, request == self.historyRequest {
                 self.historyMessage = tujiLocalized("無法讀取查詞紀錄，請重試。")
@@ -393,6 +441,9 @@ final class VocabularyModel {
                 guard row.id == updated.id else { return row }
                 return self.historyFavorites && !updated.favorite ? nil : updated
             }
+            // The other filter's list holds this row too: only the open one is right.
+            if let owner = self.owner { self.historyCache.invalidate(owner: owner) }
+            self.keepHistory()
         } catch {
             guard scope == self.scopeID else { return }
             self.message = tujiLocalized("無法更新書籤，請重試。")
@@ -407,7 +458,23 @@ final class VocabularyModel {
             guard scope == self.scopeID else { return }
             self.history.removeAll { $0.id == record.id }
             self.turns.removeAll { $0.id == record.id }
+            if let owner = self.owner { self.historyCache.invalidate(owner: owner) }
+            self.keepHistory()
         } catch { self.historyMessage = tujiLocalized("無法刪除紀錄，請重試。") }
+    }
+
+    private static func historyFilterKey(learning: String, favorite: Bool) -> String {
+        "\(learning)|\(favorite)"
+    }
+
+    /// The list on screen, as the kept one for its filter.
+    private func keepHistory() {
+        guard self.historyLoaded, let owner = self.owner else { return }
+        self.historyCache.store(
+            .init(records: self.history, nextCursor: self.nextCursor),
+            owner: owner,
+            filter: Self.historyFilterKey(learning: self.learning, favorite: self.historyFavorites)
+        )
     }
 
     private func append(_ turn: VocabularyTurn) {

@@ -207,6 +207,54 @@ struct StoryBuilderModelTests {
     }
 
     @Test
+    func enteringAgainDoesNotReadTheBalanceAgain() async {
+        let cache = self.offerCache
+        await cache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        await cache.prefetch(uiLanguage: "zh-Hant", using: self.writer)
+        let model = self.makeModel(offerCache: cache)
+        await model.loadOffer()
+        await self.makeModel(offerCache: cache).loadOffer()
+        #expect(self.writer.offerLanguages == ["zh-Hant"])
+        #expect(model.balanceKnown)
+    }
+
+    @Test
+    func aDeliveredPurchaseMakesThePageReadTheBalanceAgain() async {
+        let cache = self.offerCache
+        let model = self.makeModel(offerCache: cache)
+        await model.loadOffer()
+        let revision = model.offerRevision
+        self.writer.offer = .success(StoryWriterFake.offer(available: 300))
+        cache.balanceChanged()
+        #expect(model.offerRevision != revision)
+        await model.loadOffer()
+        #expect(self.writer.offerLanguages.count == 2)
+        #expect(model.offer?.available == 300)
+        #expect(model.balanceKnown)
+    }
+
+    @Test
+    func aFailedStoryReadsTheBalanceAgainAndKeepsTheChoices() async {
+        let model = await self.readyModel()
+        self.writer.offer = .success(StoryWriterFake.offer(available: 40))
+        self.writer.result = .failure(APIError.server(status: 503, body: nil))
+        await model.write()
+        #expect(self.writer.offerLanguages.count == 2)
+        #expect(model.offer?.available == 40)
+        #expect(model.offerPhase == .loaded)
+    }
+
+    @Test
+    func aFailedReReadAfterAFailedStoryKeepsTheChoices() async {
+        let model = await self.readyModel()
+        self.writer.offer = .failure(APIError.transport(URLError(.notConnectedToInternet)))
+        self.writer.result = .failure(APIError.transport(URLError(.timedOut)))
+        await model.write()
+        #expect(model.offerPhase == .loaded)
+        #expect(model.balanceKnown)
+    }
+
+    @Test
     func candidatesAreOfficialOwnAndTakenInCardsButNotABlockedAuthors() {
         let ids = self.makeModel().candidates.map(\.id)
         #expect(ids.contains("apple"))

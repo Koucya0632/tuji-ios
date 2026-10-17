@@ -37,7 +37,7 @@ struct StoryBuilderView: View {
         }
         .background(Color.tujiPaper.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
-        .task { await self.model.loadOffer() }
+        .task(id: self.model.offerRevision) { await self.model.loadOffer() }
         .sheet(isPresented: self.$picking) {
             StoryItemPicker(model: self.model)
         }

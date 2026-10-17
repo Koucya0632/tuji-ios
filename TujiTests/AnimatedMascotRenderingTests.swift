@@ -105,7 +105,7 @@ final class AnimatedMascotRenderingTests: XCTestCase {
 
     private func homeSnapshot(language: String, size: CGSize, largeType: Bool) async throws {
         let content = NavigationStack {
-            AssistantHomeView(prefetchStoryOffer: {})
+            AssistantHomeView(prefetchOffers: {})
         }
         .environment(StudyFocus.shared)
         .environment(Self.navigator)

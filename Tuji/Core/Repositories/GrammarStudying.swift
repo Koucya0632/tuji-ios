@@ -76,15 +76,15 @@ struct GrammarInput: Codable, Equatable {
     let maxPoints: Int
 }
 
-struct GrammarOffer: Decodable, Equatable {
-    struct Price: Decodable, Equatable {
+struct GrammarOffer: Codable, Equatable {
+    struct Price: Codable, Equatable {
         let mode: GrammarMode
         let minPoints: Int
         let maxPoints: Int
     }
 
     /// Why generation is closed: switched off for everyone, or a member feature.
-    enum Reason: String, Decodable, Equatable {
+    enum Reason: String, Codable, Equatable {
         case disabled, membership
     }
 

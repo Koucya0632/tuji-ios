@@ -48,9 +48,23 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
 
 struct AssistantHomeView: View {
     @Environment(StudyFocus.self) private var studyFocus
-    /// So 情境故事 opens on its choices rather than a loading bar.
-    var prefetchStoryOffer: () async -> Void = {
-        await StoryOfferCache.shared.prefetch(uiLanguage: UILanguage(code: SettingsStore.shared.uiLang).rawValue)
+    /// So 情境故事 opens on its choices, and AI 查詞 and AI 語法 on their prices,
+    /// rather than waiting for them.
+    var prefetchOffers: @MainActor () async -> Void = {
+        let owner = AuthService.shared.uid
+        // Tasks, not `async let`: those run off the main actor, where the offers
+        // cannot be decoded.
+        let story = Task {
+            await StoryOfferCache.shared.prefetch(uiLanguage: UILanguage(code: SettingsStore.shared.uiLang).rawValue)
+        }
+        let vocabulary = Task {
+            await AssistantOfferCaches.vocabulary
+                .prefetch(owner: owner) { try await LiveVocabularyRepository().offer() }
+        }
+        let grammar = Task {
+            await AssistantOfferCaches.grammar.prefetch(owner: owner) { try await LiveGrammarRepository().offer() }
+        }
+        _ = await (story.value, vocabulary.value, grammar.value)
     }
 
     var body: some View {
@@ -72,7 +86,7 @@ struct AssistantHomeView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
-        .task { await self.prefetchStoryOffer() }
+        .task { await self.prefetchOffers() }
         .accessibilityIdentifier("assistant-home")
     }
 
