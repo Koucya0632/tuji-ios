@@ -34,14 +34,13 @@ struct VocabularyResultView: View {
         }
     }
 
-    private func section(_ title: String, index: Int, @ViewBuilder content: () -> some View) -> some View {
+    private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text(title).font(.tujiH3).accessibilityAddTraits(.isHeader)
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Space.s3).background(.tujiPaper2)
-        .id("vocabulary-section-\(index)")
     }
 
     private func line(_ value: VocabularyLine) -> some View {
@@ -74,8 +73,8 @@ struct VocabularyResultView: View {
 
     @ViewBuilder
     private func lookup(_ value: VocabularyLookup) -> some View {
-        self.section(tujiLocalized("詞義速查"), index: 0) { self.headword(value.headword) }
-        self.section(tujiLocalized("釋義詳解"), index: 1) {
+        self.section(tujiLocalized("詞義速查")) { self.headword(value.headword) }
+        self.section(tujiLocalized("釋義詳解")) {
             ForEach(Array(value.senses.enumerated()), id: \.offset) { _, sense in
                 VStack(alignment: .leading, spacing: Space.s2) {
                     if sense.relevant { Text("目前相關詞義").font(.tujiLabel).foregroundStyle(.tujiInk3) }
@@ -86,10 +85,10 @@ struct VocabularyResultView: View {
                 }
             }
         }
-        self.section(tujiLocalized("常見表達"), index: 2) {
+        self.section(tujiLocalized("常見表達")) {
             ForEach(Array(value.expressions.enumerated()), id: \.offset) { _, example in self.line(example) }
         }
-        self.section(tujiLocalized("相關詞彙"), index: 3) {
+        self.section(tujiLocalized("相關詞彙")) {
             if value.related.isEmpty { Text("沒有需要補充的內容。").font(.tujiBodySm) }
             ForEach(Array(value.related.enumerated()), id: \.offset) { _, item in
                 Text(verbatim: item.term).font(.tujiBody(.strong))
@@ -100,7 +99,7 @@ struct VocabularyResultView: View {
 
     @ViewBuilder
     private func analysis(_ value: VocabularyAnalysis) -> some View {
-        self.section(tujiLocalized("近義詞辨析"), index: 0) {
+        self.section(tujiLocalized("近義詞辨析")) {
             if value.comparisons.isEmpty { Text("沒有需要補充的內容。").font(.tujiBodySm) }
             ForEach(Array(value.comparisons.enumerated()), id: \.offset) { _, item in
                 Text(verbatim: item.term).font(.tujiBody(.strong))
@@ -109,16 +108,16 @@ struct VocabularyResultView: View {
                 ForEach(Array(item.examples.enumerated()), id: \.offset) { _, example in self.line(example) }
             }
         }
-        self.section(tujiLocalized("用法解析"), index: 1) {
+        self.section(tujiLocalized("用法解析")) {
             ForEach(Array(value.usage.enumerated()), id: \.offset) { _, item in
                 Text(verbatim: item.title).font(.tujiBody(.strong))
                 Text(verbatim: item.explanation).font(.tujiBodySm)
             }
         }
-        self.section(tujiLocalized("自然例句"), index: 2) {
+        self.section(tujiLocalized("自然例句")) {
             ForEach(Array(value.examples.enumerated()), id: \.offset) { _, example in self.line(example) }
         }
-        self.section(tujiLocalized("搭配拓展"), index: 3) {
+        self.section(tujiLocalized("搭配拓展")) {
             ForEach(Array(value.collocations.enumerated()), id: \.offset) { _, item in
                 Text(verbatim: item.phrase).font(.tujiBody(.strong))
                 Text(verbatim: item.meaning).font(.tujiBodySm)
@@ -130,13 +129,13 @@ struct VocabularyResultView: View {
 
     @ViewBuilder
     private func mnemonic(_ value: VocabularyMnemonic) -> some View {
-        self.section(tujiLocalized("聯想記憶"), index: 0) { Text(verbatim: value.association).font(.tujiBody) }
-        self.section(tujiLocalized("小技巧"), index: 1) { Text(verbatim: value.technique).font(.tujiBody) }
-        self.section(tujiLocalized("易複述"), index: 2) {
+        self.section(tujiLocalized("聯想記憶")) { Text(verbatim: value.association).font(.tujiBody) }
+        self.section(tujiLocalized("小技巧")) { Text(verbatim: value.technique).font(.tujiBody) }
+        self.section(tujiLocalized("易複述")) {
             Text(verbatim: value.retelling).font(.tujiBody(.strong))
             self.line(value.example)
         }
-        self.section(tujiLocalized("背詞輔助"), index: 3) {
+        self.section(tujiLocalized("背詞輔助")) {
             Text(verbatim: value.quiz.question).font(.tujiBody)
             DisclosureGroup("給我提示") { Text(verbatim: value.quiz.hint).font(.tujiBodySm) }
             Button(self.revealed ? "隱藏答案" : "揭示答案") { self.revealed.toggle() }

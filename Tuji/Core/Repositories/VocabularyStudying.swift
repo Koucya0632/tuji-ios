@@ -21,14 +21,6 @@ enum VocabularyMode: String, Codable, CaseIterable, Identifiable {
         case .mnemonic: tujiLocalized("用一眼能記住的聯想，降低背詞難度。")
         }
     }
-
-    var sections: [String] {
-        switch self {
-        case .lookup: [tujiLocalized("詞義速查"), tujiLocalized("釋義詳解"), tujiLocalized("常見表達"), tujiLocalized("相關詞彙")]
-        case .analysis: [tujiLocalized("近義詞辨析"), tujiLocalized("用法解析"), tujiLocalized("自然例句"), tujiLocalized("搭配拓展")]
-        case .mnemonic: [tujiLocalized("聯想記憶"), tujiLocalized("小技巧"), tujiLocalized("易複述"), tujiLocalized("背詞輔助")]
-        }
-    }
 }
 
 struct VocabularyInput: Codable, Equatable {

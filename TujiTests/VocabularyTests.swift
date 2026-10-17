@@ -54,6 +54,7 @@ final class VocabularyTestAPI: VocabularyStudying {
     var loseResponse = false
     var fail = false
     var hold = false
+    var reject: APIError?
     var continuation: CheckedContinuation<Void, Never>?
     var saved: [String: VocabularyRecord] = [:]
     var fixtures: [VocabularyRecord]
@@ -75,6 +76,7 @@ final class VocabularyTestAPI: VocabularyStudying {
 
     func generate(_ input: VocabularyInput) async throws -> VocabularyRecord {
         self.calls.append(input)
+        if let reject { throw reject }
         if self.hold { await withCheckedContinuation { self.continuation = $0 } }
         let fixture = self.fixtures.first { $0.input?.mode == input.mode }
         let record = VocabularyRecord(
@@ -157,6 +159,13 @@ struct VocabularyTests {
         if case .mnemonic = records[2].result?.content {} else { Issue.record("Expected mnemonic") }
     }
 
+    /// Types a word into the composer and sends it, as one tap on 送出 would.
+    private func send(_ model: VocabularyModel, _ word: String = "borrow", mode: VocabularyMode? = nil) async {
+        model.query = word
+        if let mode { model.mode = mode }
+        await model.generate()
+    }
+
     @Test
     func entryTypingSwitchingAndChoosingNeverGenerate() async throws {
         let api = try VocabularyTestAPI(), model = self.model(api)
@@ -168,24 +177,45 @@ struct VocabularyTests {
         model.context = "the river bank"
         model.choose(VocabularyCandidate(term: "bank", meaning: "河岸"), mode: .analysis)
         #expect(api.calls.isEmpty)
+        #expect(model.turns.isEmpty)
         #expect(model.canGenerate)
         #expect(model.context == "the river bank")
+        #expect(model.mode == .analysis)
+        #expect(model.selectedSense == "河岸")
     }
 
     @Test(arguments: VocabularyMode.allCases)
-    func anyModeCanGenerateDirectlyAndRevisitWithoutCharging(_ mode: VocabularyMode) async throws {
+    func sendingClearsTheDraftAndTheCardArrivesAsATurn(_ mode: VocabularyMode) async throws {
         let api = try VocabularyTestAPI(), model = self.model(api)
         await model.load()
         model.mode = mode
+        model.context = "I borrow books"
         await model.generate()
         #expect(api.calls.count == 1)
         #expect(api.calls[0].mode == mode)
+        #expect(api.calls[0].query == "borrow")
+        #expect(api.calls[0].context == "I borrow books")
         #expect(api.calls[0].maxPoints == (mode == .analysis ? 10 : 5))
-        let saved = model.current
-        model.mode = mode == .lookup ? .analysis : .lookup
-        model.mode = mode
-        #expect(model.current == saved)
+        #expect(model.query.isEmpty)
+        #expect(model.context.isEmpty)
+        #expect(model.mode == mode)
+        #expect(model.turns.map(\.id) == [api.calls[0].requestId])
+        #expect(model.turns.last?.record?.status == .completed)
+        #expect(model.spotlight?.id == api.calls[0].requestId)
+        // An empty draft cannot be sent again by accident.
+        await model.generate()
         #expect(api.calls.count == 1)
+    }
+
+    @Test
+    func turnsStayInTheOrderTheyWereAsked() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        await self.send(model, "borrow")
+        await self.send(model, "lend", mode: .mnemonic)
+        #expect(model.turns.map(\.input.query) == ["borrow", "lend"])
+        #expect(model.turns.map(\.input.mode) == [.lookup, .mnemonic])
+        #expect(model.turns.allSatisfy { $0.record?.status == .completed })
     }
 
     @Test
@@ -197,11 +227,16 @@ struct VocabularyTests {
         while api.continuation == nil {
             await Task.yield()
         }
+        // The pending turn is already on screen, without a card yet.
+        #expect(model.turns.count == 1)
+        #expect(model.turns[0].record == nil)
+        model.query = "borrow"
         await model.generate()
         #expect(api.calls.count == 1)
         api.continuation?.resume()
         await task.value
-        #expect(model.current?.status == .completed)
+        #expect(model.turns.count == 1)
+        #expect(model.turns[0].record?.status == .completed)
     }
 
     @Test
@@ -212,11 +247,17 @@ struct VocabularyTests {
         api.loseResponse = true
         await model.generate()
         #expect(model.pending != nil)
+        #expect(model.turns.first?.record == nil)
+        model.query = "borrow"
         #expect(!model.canGenerate)
         let relaunched = self.model(api, journal: journal)
+        relaunched.query = ""
         await relaunched.load()
         #expect(relaunched.pending == nil)
-        #expect(relaunched.current?.charged == 3)
+        #expect(relaunched.turns.map(\.id) == model.turns.map(\.id))
+        #expect(relaunched.turns.first?.record?.charged == 3)
+        // The relaunched screen does not put the old question back into the draft.
+        #expect(relaunched.query.isEmpty)
         #expect(api.calls.count == 1)
         #expect(journal.pending(owner: "TJvocabulary").isEmpty)
     }
@@ -230,6 +271,8 @@ struct VocabularyTests {
         await model.load()
         #expect(api.calls.map(\.requestId) == [input.requestId])
         #expect(model.pending == nil)
+        #expect(model.turns.map(\.id) == [input.requestId])
+        #expect(model.turns.first?.record != nil)
     }
 
     @Test
@@ -238,14 +281,42 @@ struct VocabularyTests {
         await model.load()
         api.fail = true
         await model.generate()
-        #expect(model.current?.status == .failed)
+        #expect(model.turns.last?.record?.status == .failed)
+        #expect(model.turns.last?.failureNote != nil)
         #expect(model.pending == nil)
         await model.load()
         #expect(api.calls.count == 1)
         api.fail = false
+        let failed = try #require(model.turns.last)
+        model.edit(failed)
+        #expect(model.query == "borrow")
+        #expect(api.calls.count == 1)
         await model.generate()
         #expect(api.calls.count == 2)
         #expect(api.calls[0].requestId != api.calls[1].requestId)
+        #expect(model.turns.count == 2)
+    }
+
+    @Test
+    func rejectedRequestSaysWhyOnItsTurnAndEditRefillsTheDraft() async throws {
+        let api = try VocabularyTestAPI(), journal = VocabularyTestJournal()
+        let model = self.model(api, journal: journal)
+        await model.load()
+        api.reject = .conflict(reason: "price_changed", message: nil)
+        model.mode = .analysis
+        model.context = "I borrow books"
+        await model.generate()
+        let turn = try #require(model.turns.last)
+        #expect(turn.rejection != nil)
+        #expect(turn.record == nil)
+        #expect(model.pending == nil)
+        #expect(journal.pending(owner: "TJvocabulary").isEmpty)
+        model.mode = .lookup
+        model.edit(turn)
+        #expect(model.query == "borrow")
+        #expect(model.context == "I borrow books")
+        #expect(model.mode == .analysis)
+        #expect(api.calls.count == 1)
     }
 
     @Test
@@ -267,26 +338,23 @@ struct VocabularyTests {
         await model.load()
         await model.generate()
         #expect(api.calls.isEmpty)
+        #expect(model.turns.isEmpty)
     }
 
     @Test
-    func editingDoesNotAttachOldResultsAndLanguageOrAccountChangesClearPrivateContent() async throws {
+    func languageOrAccountChangesClearTheConversation() async throws {
         let api = try VocabularyTestAPI(), viewer = VocabularyTestViewer(),
             language = FakeLanguageContext(learningDirection: .zhEn)
         let model = self.model(api, viewer: viewer, language: language)
         await model.load()
         await model.generate()
-        #expect(model.current != nil)
-        model.query = "lend"
-        #expect(model.current == nil)
-        model.query = "borrow"
-        #expect(model.current != nil)
+        #expect(model.turns.count == 1)
         language.learningDirection = .zhJa
         await model.load()
-        #expect(model.results.isEmpty)
+        #expect(model.turns.isEmpty)
         viewer.uid = "TJother"
         await model.load()
-        #expect(model.results.isEmpty)
+        #expect(model.turns.isEmpty)
         #expect(model.history.isEmpty)
     }
 
@@ -295,18 +363,20 @@ struct VocabularyTests {
         let api = try VocabularyTestAPI(), model = self.model(api)
         await model.load()
         await model.generate()
-        let record = try #require(model.current)
+        let record = try #require(model.turns.last?.record)
         await model.toggleFavorite(record)
         await model.loadHistory(favorite: true)
         #expect(model.history.count == 1)
-        #expect(model.current?.favorite == true)
+        #expect(model.turns.last?.record?.favorite == true)
+        // Reading 查詞紀錄 does not pour it into the conversation.
+        #expect(model.turns.count == 1)
         api.enabled = false
         await model.load()
         await model.loadHistory(favorite: false)
         #expect(model.history.count == 1)
         await model.delete(record)
         #expect(model.history.isEmpty)
-        #expect(model.current == nil)
+        #expect(model.turns.isEmpty)
         #expect(api.calls.count == 1)
     }
 
@@ -330,16 +400,17 @@ struct VocabularyTests {
         let model = self.model(api, language: language)
         await model.load()
         await model.generate()
-        let card = try #require(model.current)
+        let card = try #require(model.turns.last?.record)
         language.uiLang = "ja"
         await model.load()
-        // A typed query finds only cards explained in the current language…
-        #expect(model.current == nil)
         await model.loadHistory(favorite: false)
         #expect(model.history.map(\.id) == [card.id])
-        // …but a card opened from 查詞紀錄 is shown in the language it was made in.
+        // A card opened from 查詞紀錄 joins the conversation in the language it was made in, once.
         model.open(card)
-        #expect(model.current?.id == card.id)
+        model.open(card)
+        #expect(model.turns.map(\.id) == [card.id])
+        #expect(model.turns.last?.input.uiLanguage == "zh-Hant")
+        #expect(model.spotlight?.id == card.id)
         #expect(api.calls.count == 1)
     }
 
@@ -395,20 +466,29 @@ struct VocabularyTests {
     }
 
     @Test
-    func onlyMnemonicKeepsAnotherCardAsTheMainAction() async throws {
+    func onlyTheNewestCardOffersAnotherAndOnlyMnemonicAsTheMainAction() async throws {
         let api = try VocabularyTestAPI(), model = self.model(api)
         await model.load()
-        #expect(!model.regenerationIsSecondary)
-        await model.generate()
-        #expect(model.regenerationIsSecondary)
-        model.mode = .mnemonic
-        await model.generate()
-        #expect(model.current?.input?.mode == .mnemonic)
-        #expect(!model.regenerationIsSecondary)
-        // Regenerating keeps both paid cards.
-        model.mode = .lookup
-        await model.generate()
+        await self.send(model, "borrow")
+        let lookup = try #require(model.turns.last)
+        #expect(model.regeneration(for: lookup) == .secondary(maxPoints: 5))
+        await self.send(model, "borrow", mode: .mnemonic)
+        let mnemonic = try #require(model.turns.last)
+        #expect(model.regeneration(for: lookup) == nil)
+        #expect(model.regeneration(for: mnemonic) == .main(maxPoints: 5))
+        // Another card is a new paid request for the same question; both cards stay.
+        await model.regenerate(mnemonic)
         #expect(api.calls.count == 3)
+        #expect(api.calls[2].requestId != api.calls[1].requestId)
+        #expect(api.calls[2].query == "borrow")
+        #expect(api.calls[2].mode == .mnemonic)
+        #expect(model.turns.count == 3)
         #expect(api.saved.count == 3)
+        // An older card can no longer be regenerated.
+        await model.regenerate(lookup)
+        #expect(api.calls.count == 3)
+        api.available = 4
+        await model.load()
+        #expect(try model.regeneration(for: #require(model.turns.last)) == nil)
     }
 }
