@@ -1,15 +1,40 @@
 import Foundation
 import Observation
 
+/// One exchange on the AI 查詞 screen: what was asked, and Moira's card once it is
+/// back. The conversation is the screen's memory only; 查詞紀錄 is what is kept.
+struct VocabularyTurn: Identifiable, Equatable {
+    let input: VocabularyInput
+    var record: VocabularyRecord?
+    /// The server refused the request outright; nothing was charged.
+    var rejection: String?
+
+    var id: String {
+        self.input.requestId
+    }
+
+    var failureNote: String? {
+        if let rejection { return rejection }
+        guard let record, record.status == .failed else { return nil }
+        if let message = record.result?.message, !message.isEmpty { return message }
+        return record.error == "insufficient_credits" ? tujiLocalized("罐頭點數不足，這次沒有扣點。") :
+            tujiLocalized("未能生成有效內容，這次沒有扣點。")
+    }
+}
+
 @MainActor
 @Observable
 final class VocabularyModel {
+    /// The draft in the composer. Sending clears it; the turn keeps what was sent.
     var query: String
     var context = ""
     var selectedSense = ""
     var mode: VocabularyMode = .lookup
     private(set) var offer: VocabularyOffer?
-    private(set) var results: [VocabularyRecord] = []
+    private(set) var turns: [VocabularyTurn] = []
+    /// The turn the conversation should bring into view: a new one, or one
+    /// opened from 查詞紀錄. The tick lets the same card be asked for twice.
+    private(set) var spotlight: Spotlight?
     private(set) var history: [VocabularyRecord] = []
     private(set) var nextCursor: String?
     private(set) var pending: VocabularyInput?
@@ -27,9 +52,19 @@ final class VocabularyModel {
     private var scope = ""
     private var historyFavorites = false
     private var historyRequest = UUID()
-    /// A card opened from 查詞紀錄 is shown even when it was explained in another
-    /// interface language; a typed query only finds cards made in the current one.
-    private var openedID: String?
+
+    struct Spotlight: Equatable {
+        let id: String
+        let tick: Int
+    }
+
+    /// Another card for the newest turn: 助記 offers it as the main action; for
+    /// 查詞 and 深度解析 a second card is mostly the same card again, so asking
+    /// for one is a quieter choice under the card.
+    enum Regeneration: Equatable {
+        case main(maxPoints: Int)
+        case secondary(maxPoints: Int)
+    }
 
     init(
         query: String = "",
@@ -68,22 +103,14 @@ final class VocabularyModel {
     }
 
     var price: VocabularyOffer.Price? {
-        self.offer?.modes.first { $0.mode == self.mode }
+        self.price(for: self.mode)
     }
 
-    var current: VocabularyRecord? {
-        self.results.last { record in
-            guard let input = record.input else { return false }
-            return input.mode == self.mode && input.query == self.query
-                .trimmingCharacters(in: .whitespacesAndNewlines) &&
-                input.context == self.context.trimmingCharacters(in: .whitespacesAndNewlines) &&
-                (input.mode == .lookup || input.selectedSense == self.selectedSense) &&
-                input.learningDirection == self.learning &&
-                (input.uiLanguage == self.uiLanguage || record.id == self.openedID)
-        }
+    func price(for mode: VocabularyMode) -> VocabularyOffer.Price? {
+        self.offer?.modes.first { $0.mode == mode }
     }
 
-    /// Why 生成 cannot be pressed for a reason the person can act on. Input
+    /// Why 送出 cannot be pressed for a reason the person can act on. Input
     /// problems (blank, too long) are said beside the field instead.
     enum Blocker: Equatable {
         case membership, disabled, insufficientPoints
@@ -114,19 +141,25 @@ final class VocabularyModel {
         }
     }
 
-    /// 助記 offers another one as the main action; for 查詞 and 深度解析 a second
-    /// card is mostly the same card again, so asking for one is a quieter choice
-    /// under the card.
-    var regenerationIsSecondary: Bool {
-        self.current?.status == .completed && self.mode != .mnemonic
-    }
-
     var canGenerate: Bool {
         let word = self.query.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !self.busy && self.pending == nil && self.identity.uid != nil && self.offer?.enabled == true &&
+        return self.canSpend(on: self.mode) &&
             !word.isEmpty && word.count <= 120 && word.contains(where: { $0.isLetter || $0.isNumber }) &&
-            self.context.count <= 800 && self.selectedSense.count <= 300 &&
-            self.price.map { (self.offer?.available ?? 0) >= $0.maxPoints } == true
+            self.context.count <= 800 && self.selectedSense.count <= 300
+    }
+
+    private func canSpend(on mode: VocabularyMode) -> Bool {
+        !self.busy && self.pending == nil && self.identity.uid != nil && self.offer?.enabled == true &&
+            self.price(for: mode).map { (self.offer?.available ?? 0) >= $0.maxPoints } == true
+    }
+
+    /// Only the newest completed card offers another, and only when it can be paid for.
+    func regeneration(for turn: VocabularyTurn) -> Regeneration? {
+        guard turn.id == self.turns.last?.id, turn.record?.status == .completed,
+              self.canSpend(on: turn.input.mode), let price = self.price(for: turn.input.mode)
+        else { return nil }
+        return turn.input.mode == .mnemonic ? .main(maxPoints: price.maxPoints) :
+            .secondary(maxPoints: price.maxPoints)
     }
 
     func load() async {
@@ -134,7 +167,8 @@ final class VocabularyModel {
         if self.scope != scope {
             self.scope = scope
             self.owner = self.identity.uid
-            self.results = []
+            self.turns = []
+            self.spotlight = nil
             self.history = []
             self.nextCursor = nil
             self.pending = nil
@@ -142,7 +176,6 @@ final class VocabularyModel {
             self.busy = false
             self.message = nil
             self.selectedSense = ""
-            self.openedID = nil
         }
         guard let owner = self.owner else { self.message = tujiLocalized("登入後即可使用 AI 查詞。")
             return
@@ -152,11 +185,8 @@ final class VocabularyModel {
         if let input = self.journal.pending(owner: owner)
             .first(where: { $0.learningDirection == self.learning })
         {
-            if self.query.isEmpty {
-                self.query = input.query
-                self.context = input.context
-                self.selectedSense = input.selectedSense
-                self.mode = input.mode
+            if !self.turns.contains(where: { $0.id == input.requestId }) {
+                self.append(VocabularyTurn(input: input))
             }
             self.pending = input
             await self.reconcile()
@@ -174,15 +204,40 @@ final class VocabularyModel {
         }
     }
 
-    /// The only fresh paid request. Never called by entry, mode selection, or a lookup chip.
+    /// The only fresh paid request from the composer. Never called by entry, mode
+    /// selection, or a candidate chip — those only fill the draft.
     func generate() async {
-        guard self.canGenerate, let price = self.price, let offer = self.offer, let owner = self.owner else { return }
-        let input = VocabularyInput(
-            requestId: UUID().uuidString.lowercased(),
-            mode: self.mode,
+        guard self.canGenerate else { return }
+        let draft = (
             query: self.query.trimmingCharacters(in: .whitespacesAndNewlines),
             context: self.context.trimmingCharacters(in: .whitespacesAndNewlines),
-            selectedSense: self.selectedSense,
+            sense: self.selectedSense
+        )
+        self.query = ""
+        self.context = ""
+        self.selectedSense = ""
+        await self.start(mode: self.mode, query: draft.query, context: draft.context, sense: draft.sense)
+    }
+
+    /// Another card for what the newest turn asked; a new request, charged again.
+    func regenerate(_ turn: VocabularyTurn) async {
+        guard self.regeneration(for: turn) != nil else { return }
+        await self.start(
+            mode: turn.input.mode,
+            query: turn.input.query,
+            context: turn.input.context,
+            sense: turn.input.selectedSense
+        )
+    }
+
+    private func start(mode: VocabularyMode, query: String, context: String, sense: String) async {
+        guard let price = self.price(for: mode), let offer = self.offer, let owner = self.owner else { return }
+        let input = VocabularyInput(
+            requestId: UUID().uuidString.lowercased(),
+            mode: mode,
+            query: query,
+            context: context,
+            selectedSense: sense,
             uiLanguage: self.uiLanguage,
             learningDirection: self.learning,
             pricingVersion: offer.pricingVersion,
@@ -190,6 +245,7 @@ final class VocabularyModel {
         )
         self.journal.save(input, owner: owner)
         self.pending = input
+        self.append(VocabularyTurn(input: input))
         await self.send(input, owner: owner, scope: self.scopeID)
     }
 
@@ -208,7 +264,7 @@ final class VocabularyModel {
             if Self.definitelyRejected(error) {
                 self.journal.remove(id: input.requestId, owner: owner)
                 self.pending = nil
-                self.message = Self.failureMessage(error)
+                self.update(input.requestId) { $0.rejection = Self.failureMessage(error) }
                 await self.refreshOffer(scope: scope)
             } else {
                 self.message = tujiLocalized("確認生成結果中，請稍後重試確認。")
@@ -257,39 +313,48 @@ final class VocabularyModel {
         guard record.status != .pending else { return }
         self.journal.remove(id: record.id, owner: owner)
         if self.pending?.requestId == record.id { self.pending = nil }
-        self.results.removeAll { $0.id == record.id }
-        if record.status != .deleted { self.results.append(record) }
-        if record.status == .failed {
-            self.message = record.result?.message.isEmpty == false ? record.result?.message :
-                (record
-                    .error == "insufficient_credits" ? tujiLocalized("罐頭點數不足，這次沒有扣點。") :
-                    tujiLocalized("未能生成有效內容，這次沒有扣點。"))
-        } else { self.message = nil }
+        if record.status == .deleted {
+            self.turns.removeAll { $0.id == record.id }
+        } else if self.turns.contains(where: { $0.id == record.id }) {
+            // The card is far taller than the wait it replaces: bring its turn up again.
+            self.update(record.id) { $0.record = record }
+            self.focus(record.id)
+        }
+        self.message = nil
     }
 
+    /// Puts a candidate into the composer. Spending stays with 送出.
     func choose(_ candidate: VocabularyCandidate, mode: VocabularyMode) {
         self.query = candidate.term
         self.selectedSense = candidate.meaning
         self.mode = mode
         self.message = nil
-        self.openedID = nil
     }
 
     func editQuery() {
         self.selectedSense = ""
         self.message = nil
-        self.openedID = nil
     }
 
+    /// 改一下: what a turn asked goes back into the composer.
+    func edit(_ turn: VocabularyTurn) {
+        self.query = turn.input.query
+        self.context = turn.input.context
+        self.selectedSense = turn.input.selectedSense
+        self.mode = turn.input.mode
+        self.message = nil
+    }
+
+    /// A card from 查詞紀錄 joins the conversation once, in whatever language it
+    /// was explained in, and is brought into view.
     func open(_ record: VocabularyRecord) {
         guard let input = record.input else { return }
-        self.query = input.query
-        self.context = input.context
-        self.selectedSense = input.selectedSense
-        self.mode = input.mode
-        self.openedID = record.id
-        self.results.removeAll { $0.id == record.id }
-        self.results.append(record)
+        if self.turns.contains(where: { $0.id == record.id }) {
+            self.update(record.id) { $0.record = record }
+            self.focus(record.id)
+        } else {
+            self.append(VocabularyTurn(input: input, record: record))
+        }
         self.message = nil
     }
 
@@ -311,9 +376,6 @@ final class VocabularyModel {
             self.historyFavorites = favorite
             self.history = more ? self.history + list.records : list.records
             self.nextCursor = list.nextCursor
-            let ids = Set(list.records.map(\.id))
-            self.results.removeAll { ids.contains($0.id) }
-            self.results = (self.results + list.records).sorted { $0.createdAt < $1.createdAt }
         } catch {
             if scope == self.scopeID, request == self.historyRequest {
                 self.historyMessage = tujiLocalized("無法讀取查詞紀錄，請重試。")
@@ -326,7 +388,7 @@ final class VocabularyModel {
         do {
             let updated = try await self.repository.favorite(id: record.id, value: !record.favorite)
             guard scope == self.scopeID else { return }
-            self.results = self.results.map { $0.id == updated.id ? updated : $0 }
+            self.update(updated.id) { $0.record = updated }
             self.history = self.history.compactMap { row in
                 guard row.id == updated.id else { return row }
                 return self.historyFavorites && !updated.favorite ? nil : updated
@@ -344,8 +406,22 @@ final class VocabularyModel {
             try await self.repository.delete(id: record.id)
             guard scope == self.scopeID else { return }
             self.history.removeAll { $0.id == record.id }
-            self.results.removeAll { $0.id == record.id }
+            self.turns.removeAll { $0.id == record.id }
         } catch { self.historyMessage = tujiLocalized("無法刪除紀錄，請重試。") }
+    }
+
+    private func append(_ turn: VocabularyTurn) {
+        self.turns.append(turn)
+        self.focus(turn.id)
+    }
+
+    private func focus(_ id: String) {
+        self.spotlight = Spotlight(id: id, tick: (self.spotlight?.tick ?? 0) + 1)
+    }
+
+    private func update(_ id: String, _ change: (inout VocabularyTurn) -> Void) {
+        guard let index = self.turns.firstIndex(where: { $0.id == id }) else { return }
+        change(&self.turns[index])
     }
 
     private static func definitelyRejected(_ error: Error) -> Bool {

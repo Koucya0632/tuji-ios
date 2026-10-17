@@ -438,7 +438,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   詞條's free detail, so finding the word in 圖鑑 does not stop it from charging — but when
   the word is there — an official 詞條 whose word or Chinese meaning is exactly what was
   typed; 自製 cards do not count — the free 詞條 is pointed to beside the button (or how
-  many, when the meaning matches several), so the free path is always in sight. Only the tap on 生成 spends; a saved card is reread for free.
+  many, when the meaning matches several), so the free path is always in sight. It is a conversation with Moira that lasts while the
+  screen is open: only 送出, or asking for another card under the newest one, spends; a
+  saved card is reread for free.
   _Avoid_：「查單字」for this — that name was the free local lookup it replaced.
 - **助記 (mnemonic)** — AI 查詞's memory-aid mode: an imagined scene, a memory technique, a
   sentence to retell and a recall question for one chosen meaning.
