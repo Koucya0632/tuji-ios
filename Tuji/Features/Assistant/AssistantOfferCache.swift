@@ -173,8 +173,10 @@ enum AssistantOfferCaches {
     static let vocabulary = AssistantOfferCache<VocabularyOffer>(defaultsKey: "tuji.vocabulary.offer.v1")
     static let grammar = AssistantOfferCache<GrammarOffer>(defaultsKey: "tuji.grammar.offer.v1")
 
+    /// Every kept 罐頭點數 balance in 助手, 情境故事's included.
     static func balanceChanged() {
         self.vocabulary.balanceChanged()
         self.grammar.balanceChanged()
+        StoryOfferCache.shared.balanceChanged()
     }
 }

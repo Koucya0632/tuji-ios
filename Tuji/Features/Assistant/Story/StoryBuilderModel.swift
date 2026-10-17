@@ -86,14 +86,20 @@ final class StoryBuilderModel {
 
     // MARK: - 選項
 
-    /// Shows the kept offer at once, when there is one, and reads it again
-    /// underneath for the balance.
+    /// Changes when the kept balance stops being trusted; the page loads again on it.
+    var offerRevision: Int {
+        self.offerCache.revision
+    }
+
+    /// Shows the kept offer at once, when there is one. Entering does not read
+    /// the balance again when this launch already has it.
     func loadOffer() async {
         guard self.offerPhase != .loading else { return }
-        if self.offer == nil, let entry = self.offerCache.entry(uiLanguage: self.uiLanguage) {
+        if let entry = self.offerCache.entry(uiLanguage: self.uiLanguage) {
             self.offer = entry.offer
             self.balanceKnown = entry.current
             self.offerPhase = .loaded
+            if entry.current { return }
         }
         self.offerPhase = self.offerPhase.reloading
         do {
@@ -211,10 +217,22 @@ final class StoryBuilderModel {
             if Task.isCancelled { return }
             // The answer ended without the whole story.
             self.writing = .failed(.failed)
+            await self.refreshBalance()
         } catch {
             if Task.isCancelled { return }
             self.writing = .failed(self.failure(for: error))
+            await self.refreshBalance()
         }
+    }
+
+    /// A failure does not say what is left, and some are charged. The choices
+    /// stay as they are; if this read fails too, the server still checks the
+    /// balance before it charges.
+    private func refreshBalance() async {
+        guard let offer = try? await self.offerCache.load(uiLanguage: self.uiLanguage, using: self.repository)
+        else { return }
+        self.offer = offer
+        self.balanceKnown = true
     }
 
     private func finish(_ result: StoryResult) {
@@ -252,6 +270,8 @@ final class StoryBuilderModel {
         if self.writing == .writing {
             self.writing = .idle
             self.pending = nil
+            // The server finishes it and charges it: the kept balance is behind.
+            self.offerCache.balanceChanged()
         }
     }
 
