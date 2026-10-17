@@ -200,6 +200,8 @@ final class StoreKitService {
             }
             await transaction.finish()
             self.syncError = nil
+            // Points or a membership: AI 查詞 and AI 語法 hold the balance from before.
+            AssistantOfferCaches.balanceChanged()
         }
         self.deliveries[transaction.id] = task
         defer { self.deliveries[transaction.id] = nil }

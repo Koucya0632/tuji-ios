@@ -46,7 +46,7 @@ struct VocabularyView: View {
         .toolbar(.hidden, for: .navigationBar)
         .onAppear { self.studyFocus.enter() }
         .onDisappear { self.studyFocus.exit() }
-        .task(id: self.model.scopeID) { await self.model.load() }
+        .task(id: "\(self.model.scopeID)|\(self.model.offerRevision)") { await self.model.load() }
         .sheet(isPresented: self.$showingHistory) { VocabularyHistoryView(model: self.model) }
         .accessibilityIdentifier("vocabulary-screen")
     }
@@ -242,7 +242,9 @@ struct VocabularyView: View {
                     "每次 \(price.minPoints)–\(price.maxPoints) 點，最多扣 \(price.maxPoints) 點；目前有 \(offer.available) 點。"
                 )
                 .font(.tujiLabel).foregroundStyle(.tujiInk3)
-            } else if self.model.offer == nil, self.model.message != nil {
+            }
+            // Not in the chain above: a kept offer still shows its prices offline.
+            if !self.model.offerCurrent, self.model.message != nil {
                 Button("重新整理價格") { Task { await self.model.load() } }.font(.tujiBodySm)
             }
         }

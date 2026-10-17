@@ -31,6 +31,9 @@ final class VocabularyModel {
     var selectedSense = ""
     var mode: VocabularyMode = .lookup
     private(set) var offer: VocabularyOffer?
+    /// The offer was read from the server since launch, so its balance can
+    /// decide spending. One kept from an earlier launch is only shown.
+    private(set) var offerCurrent = false
     private(set) var turns: [VocabularyTurn] = []
     /// The turn the conversation should bring into view: a new one, or one
     /// opened from 查詞紀錄. The tick lets the same card be asked for twice.
@@ -43,6 +46,7 @@ final class VocabularyModel {
     private(set) var message: String?
     private(set) var historyMessage: String?
     private let repository: VocabularyStudying
+    private let offerCache: AssistantOfferCache<VocabularyOffer>
     private let language: LanguageContext
     private let identity: ViewerIdentity
     private let journal: VocabularyJournaling
@@ -69,6 +73,7 @@ final class VocabularyModel {
     init(
         query: String = "",
         repository: VocabularyStudying = LiveVocabularyRepository(),
+        offerCache: AssistantOfferCache<VocabularyOffer> = AssistantOfferCaches.vocabulary,
         language: LanguageContext = SettingsStore.shared,
         identity: ViewerIdentity = AuthService.shared,
         journal: VocabularyJournaling = DefaultsVocabularyJournal(),
@@ -77,6 +82,7 @@ final class VocabularyModel {
     ) {
         self.query = query
         self.repository = repository
+        self.offerCache = offerCache
         self.language = language
         self.identity = identity
         self.journal = journal
@@ -100,6 +106,11 @@ final class VocabularyModel {
     /// changes how new cards are explained, not which saved ones are yours.
     var scopeID: String {
         "\(self.identity.uid ?? "")|\(self.learning)"
+    }
+
+    /// Changes when the kept balance stops being trusted; the page loads again on it.
+    var offerRevision: Int {
+        self.offerCache.revision
     }
 
     var price: VocabularyOffer.Price? {
@@ -149,7 +160,8 @@ final class VocabularyModel {
     }
 
     private func canSpend(on mode: VocabularyMode) -> Bool {
-        !self.busy && self.pending == nil && self.identity.uid != nil && self.offer?.enabled == true &&
+        !self.busy && self.pending == nil && self.identity.uid != nil && self.offerCurrent &&
+            self.offer?.enabled == true &&
             self.price(for: mode).map { (self.offer?.available ?? 0) >= $0.maxPoints } == true
     }
 
@@ -173,6 +185,7 @@ final class VocabularyModel {
             self.nextCursor = nil
             self.pending = nil
             self.offer = nil
+            self.offerCurrent = false
             self.busy = false
             self.message = nil
             self.selectedSense = ""
@@ -180,7 +193,12 @@ final class VocabularyModel {
         guard let owner = self.owner else { self.message = tujiLocalized("登入後即可使用 AI 查詞。")
             return
         }
-        await self.refreshOffer(scope: scope)
+        // Entering does not read the balance again when this launch already has it.
+        if let entry = self.offerCache.entry(owner: owner) {
+            self.offer = entry.offer
+            self.offerCurrent = entry.current
+        }
+        if !self.offerCurrent { await self.refreshOffer(scope: scope) }
         guard scope == self.scopeID else { return }
         if let input = self.journal.pending(owner: owner)
             .first(where: { $0.learningDirection == self.learning })
@@ -193,11 +211,16 @@ final class VocabularyModel {
         }
     }
 
+    /// Shared with 助手's prefetch; also how the balance comes back after a card
+    /// or a refusal, since neither carries it.
     private func refreshOffer(scope: String) async {
+        guard let owner = self.owner else { return }
+        let repository = self.repository
         do {
-            let offer = try await self.repository.offer()
+            let offer = try await self.offerCache.load(owner: owner) { try await repository.offer() }
             guard scope == self.scopeID else { return }
             self.offer = offer
+            self.offerCurrent = true
         } catch {
             guard scope == self.scopeID else { return }
             self.message = tujiLocalized("暫時無法取得價格，請重新整理。")

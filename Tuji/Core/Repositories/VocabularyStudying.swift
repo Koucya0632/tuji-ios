@@ -35,8 +35,8 @@ struct VocabularyInput: Codable, Equatable {
     let maxPoints: Int
 }
 
-struct VocabularyOffer: Decodable, Equatable {
-    struct Price: Decodable, Equatable {
+struct VocabularyOffer: Codable, Equatable {
+    struct Price: Codable, Equatable {
         let mode: VocabularyMode
         let minPoints: Int
         let maxPoints: Int
@@ -44,7 +44,7 @@ struct VocabularyOffer: Decodable, Equatable {
 
     /// Why generation is closed: switched off for everyone, or a member feature.
     /// Too few points is not a reason here — the app compares `available` itself.
-    enum Reason: String, Decodable, Equatable {
+    enum Reason: String, Codable, Equatable {
         case disabled, membership
     }
 

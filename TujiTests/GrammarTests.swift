@@ -142,6 +142,12 @@ final class GrammarTestAPI: GrammarStudying {
 
 @MainActor
 struct GrammarTests {
+    /// One per test: Swift Testing makes a new instance for each.
+    private let offerCache = AssistantOfferCache<GrammarOffer>(
+        defaultsKey: "offer",
+        defaults: UserDefaults(suiteName: "grammar-offer-\(UUID().uuidString)") ?? .standard
+    )
+
     private func model(
         _ api: GrammarTestAPI,
         journal: GrammarJournaling = GrammarTestJournal(),
@@ -154,6 +160,7 @@ struct GrammarTests {
         GrammarModel(
             query: "〜たことがある",
             repository: api,
+            offerCache: self.offerCache,
             language: language,
             identity: viewer,
             journal: journal,
@@ -304,6 +311,7 @@ struct GrammarTests {
         #expect(model.blocker == .insufficientPoints)
         #expect(!model.canGenerate)
         api.reason = .membership
+        self.offerCache.balanceChanged()
         await model.load()
         #expect(model.blocker == .membership)
         api.saved["x"] = try GrammarFixtures.records()[0]

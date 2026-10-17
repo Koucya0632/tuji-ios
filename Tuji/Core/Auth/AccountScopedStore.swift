@@ -40,6 +40,7 @@ extension WordListsStore: AccountScopedStore {}
 extension WordNotesStore: AccountScopedStore {}
 extension WordInsightsStore: AccountScopedStore {}
 extension StoryOfferCache: AccountScopedStore {}
+extension AssistantOfferCache: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -75,6 +76,7 @@ enum AccountScopedStores {
     /// - `WordNotesStore` — the notes are this account's writing.
     /// - `WordInsightsStore` — cached per tier, and the tier is this account's.
     /// - `StoryOfferCache` — the offer carries this account's 罐頭點數 balance.
+    /// - `AssistantOfferCaches` — the same, for AI 查詞 and AI 語法.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -92,7 +94,9 @@ enum AccountScopedStores {
             WordListsStore.shared,
             WordNotesStore.shared,
             WordInsightsStore.shared,
-            StoryOfferCache.shared
+            StoryOfferCache.shared,
+            AssistantOfferCaches.vocabulary,
+            AssistantOfferCaches.grammar
         ]
     }
 

@@ -130,18 +130,23 @@ final class VocabularyTestAPI: VocabularyStudying {
 
 @MainActor
 struct VocabularyTests {
+    /// One per test: Swift Testing makes a new instance for each.
+    private let offerCache = Self.offerCache()
+
     private func model(
-        _ api: VocabularyTestAPI,
+        _ api: VocabularyStudying,
         journal: VocabularyJournaling = VocabularyTestJournal(),
         viewer: VocabularyTestViewer = VocabularyTestViewer(),
         language: FakeLanguageContext = FakeLanguageContext(learningDirection: .zhEn),
-        dictionary: FakeDictionary = FakeDictionary(words: [])
+        dictionary: FakeDictionary = FakeDictionary(words: []),
+        offerCache: AssistantOfferCache<VocabularyOffer>? = nil
     )
         -> VocabularyModel
     {
         VocabularyModel(
             query: "borrow",
             repository: api,
+            offerCache: offerCache ?? self.offerCache,
             language: language,
             identity: viewer,
             journal: journal,
@@ -157,6 +162,89 @@ struct VocabularyTests {
         if case .lookup = records[0].result?.content {} else { Issue.record("Expected lookup") }
         if case .analysis = records[1].result?.content {} else { Issue.record("Expected analysis") }
         if case .mnemonic = records[2].result?.content {} else { Issue.record("Expected mnemonic") }
+    }
+
+    /// Its own defaults, so no test reads an offer another one kept.
+    private static func offerCache(_ defaults: UserDefaults? = nil) -> AssistantOfferCache<VocabularyOffer> {
+        AssistantOfferCache(
+            defaultsKey: "offer",
+            defaults: defaults ?? UserDefaults(suiteName: "vocabulary-offer-\(UUID().uuidString)") ?? .standard
+        )
+    }
+
+    @Test
+    func aReturnVisitDoesNotReadTheBalanceAgain() async throws {
+        let api = try VocabularyTestAPI()
+        await self.model(api).load()
+        api.available = 7
+        let again = self.model(api)
+        await again.load()
+        #expect(api.offers == 1)
+        #expect(again.offer?.available == 100)
+        #expect(again.offerCurrent)
+        #expect(again.canGenerate)
+    }
+
+    @Test
+    func aDeliveredPurchaseMakesTheOpenPageReadTheBalanceAgain() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        let revision = model.offerRevision
+        api.available = 300
+        self.offerCache.balanceChanged()
+        #expect(model.offerRevision != revision)
+        await model.load()
+        #expect(api.offers == 2)
+        #expect(model.offer?.available == 300)
+        #expect(model.offerCurrent)
+    }
+
+    @Test
+    func spendingReadsTheBalanceAgain() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        api.available = 97
+        await self.send(model)
+        #expect(api.offers == 2)
+        #expect(model.offer?.available == 97)
+    }
+
+    @Test
+    func anOfferFromAnEarlierLaunchIsShownButCannotSpend() async throws {
+        let api = try VocabularyTestAPI()
+        let defaults = UserDefaults(suiteName: "vocabulary-offer-\(UUID().uuidString)") ?? .standard
+        await self.model(api, offerCache: Self.offerCache(defaults)).load()
+        // A relaunch: the memory is gone, the disk is not, and the server is out of reach.
+        let failing = OfferControlAPI(api)
+        failing.failOffer = true
+        let relaunched = VocabularyModel(
+            query: "borrow",
+            repository: failing,
+            offerCache: Self.offerCache(defaults),
+            language: FakeLanguageContext(learningDirection: .zhEn),
+            identity: VocabularyTestViewer(),
+            journal: VocabularyTestJournal(),
+            dictionary: FakeDictionary(words: []),
+            pollInterval: .milliseconds(1)
+        )
+        await relaunched.load()
+        #expect(relaunched.offer?.available == 100)
+        #expect(!relaunched.offerCurrent)
+        #expect(!relaunched.canGenerate)
+        #expect(relaunched.message != nil)
+    }
+
+    @Test
+    func theCacheJoinsAnAskOnItsWayAndKeepsAccountsApart() async throws {
+        let api = try VocabularyTestAPI(), cache = Self.offerCache()
+        async let first = cache.load(owner: "TJa") { try await api.offer() }
+        async let second = cache.load(owner: "TJa") { try await api.offer() }
+        _ = try await (first, second)
+        #expect(api.offers == 1)
+        #expect(cache.entry(owner: "TJa")?.current == true)
+        #expect(cache.entry(owner: "TJb") == nil)
+        cache.reset()
+        #expect(cache.entry(owner: "TJa") == nil)
     }
 
     /// Types a word into the composer and sends it, as one tap on 送出 would.
@@ -327,6 +415,7 @@ struct VocabularyTests {
         await model.generate()
         #expect(api.calls.isEmpty)
         api.available = 100
+        self.offerCache.balanceChanged()
         await model.load()
         for query in [" ", "???", String(repeating: "a", count: 121)] {
             model.query = query
@@ -335,6 +424,7 @@ struct VocabularyTests {
         #expect(api.calls.isEmpty)
         model.query = "borrow"
         api.enabled = false
+        self.offerCache.balanceChanged()
         await model.load()
         await model.generate()
         #expect(api.calls.isEmpty)
@@ -371,6 +461,7 @@ struct VocabularyTests {
         // Reading 查詞紀錄 does not pour it into the conversation.
         #expect(model.turns.count == 1)
         api.enabled = false
+        self.offerCache.balanceChanged()
         await model.load()
         await model.loadHistory(favorite: false)
         #expect(model.history.count == 1)
@@ -420,14 +511,17 @@ struct VocabularyTests {
         await model.load()
         #expect(model.blocker == nil)
         api.reason = .membership
+        self.offerCache.balanceChanged()
         await model.load()
         #expect(model.blocker == .membership)
         #expect(!model.canGenerate)
         api.reason = .disabled
+        self.offerCache.balanceChanged()
         await model.load()
         #expect(model.blocker == .disabled)
         api.reason = nil
         api.available = 4
+        self.offerCache.balanceChanged()
         await model.load()
         #expect(model.blocker == .insufficientPoints)
         await model.generate()
@@ -488,7 +582,43 @@ struct VocabularyTests {
         await model.regenerate(lookup)
         #expect(api.calls.count == 3)
         api.available = 4
+        self.offerCache.balanceChanged()
         await model.load()
         #expect(try model.regeneration(for: #require(model.turns.last)) == nil)
+    }
+}
+
+/// The test API, except that the offer cannot be read when `failOffer` is set.
+@MainActor
+final class OfferControlAPI: VocabularyStudying {
+    let base: VocabularyTestAPI
+    var failOffer = false
+    init(_ base: VocabularyTestAPI) {
+        self.base = base
+    }
+
+    func offer() async throws -> VocabularyOffer {
+        if self.failOffer { throw APIError.transport(URLError(.notConnectedToInternet)) }
+        return try await self.base.offer()
+    }
+
+    func generate(_ input: VocabularyInput) async throws -> VocabularyRecord {
+        try await self.base.generate(input)
+    }
+
+    func record(id: String) async throws -> VocabularyRecord {
+        try await self.base.record(id: id)
+    }
+
+    func records(learning: String, favorite: Bool, cursor: String?) async throws -> VocabularyRecords {
+        try await self.base.records(learning: learning, favorite: favorite, cursor: cursor)
+    }
+
+    func favorite(id: String, value: Bool) async throws -> VocabularyRecord {
+        try await self.base.favorite(id: id, value: value)
+    }
+
+    func delete(id: String) async throws {
+        try await self.base.delete(id: id)
     }
 }
