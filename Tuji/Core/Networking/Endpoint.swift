@@ -135,7 +135,8 @@ enum Endpoint {
     case assistantAsk
     case vocabularyOffer
     case vocabularyGenerate
-    case vocabularyRecords(uiLanguage: String, learning: String, favorite: Bool, cursor: String?)
+    /// 查詞紀錄 is per learning direction only; a card keeps the language it was explained in.
+    case vocabularyRecords(learning: String, favorite: Bool, cursor: String?)
     case vocabularyRecord(id: String)
     case assistantStoryOffer(uiLanguage: String)
     case assistantStory
@@ -465,9 +466,8 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/assistant/vocabulary", policy: .privateFreshSlow)
         case let .vocabularyRecord(id):
             EndpointDescriptor(path: "/api/assistant/vocabulary/records/\(id)", policy: .privateFresh)
-        case let .vocabularyRecords(uiLanguage, learning, favorite, cursor):
+        case let .vocabularyRecords(learning, favorite, cursor):
             EndpointDescriptor(path: "/api/assistant/vocabulary/records", queryItems: [
-                URLQueryItem(name: "uiLanguage", value: uiLanguage),
                 URLQueryItem(name: "learningDirection", value: learning),
                 URLQueryItem(name: "favorite", value: favorite ? "true" : "false")
             ] + (cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []), policy: .privateFresh)

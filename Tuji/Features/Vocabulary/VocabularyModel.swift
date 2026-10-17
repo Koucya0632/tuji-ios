@@ -21,11 +21,15 @@ final class VocabularyModel {
     private let language: LanguageContext
     private let identity: ViewerIdentity
     private let journal: VocabularyJournaling
+    private let dictionary: LocalDictionaryReading
     private let pollInterval: Duration
     private var owner: String?
     private var scope = ""
     private var historyFavorites = false
     private var historyRequest = UUID()
+    /// A card opened from 查詞紀錄 is shown even when it was explained in another
+    /// interface language; a typed query only finds cards made in the current one.
+    private var openedID: String?
 
     init(
         query: String = "",
@@ -33,6 +37,7 @@ final class VocabularyModel {
         language: LanguageContext = SettingsStore.shared,
         identity: ViewerIdentity = AuthService.shared,
         journal: VocabularyJournaling = DefaultsVocabularyJournal(),
+        dictionary: LocalDictionaryReading = WordsStore.shared,
         pollInterval: Duration = .seconds(2)
     ) {
         self.query = query
@@ -40,6 +45,7 @@ final class VocabularyModel {
         self.language = language
         self.identity = identity
         self.journal = journal
+        self.dictionary = dictionary
         self.pollInterval = pollInterval
     }
 
@@ -55,8 +61,10 @@ final class VocabularyModel {
         self.learning == "zh-ja" ? .ja : .en
     }
 
+    /// 查詞紀錄 is per account and learning direction; the interface language
+    /// changes how new cards are explained, not which saved ones are yours.
     var scopeID: String {
-        "\(self.identity.uid ?? "")|\(self.uiLanguage)|\(self.learning)"
+        "\(self.identity.uid ?? "")|\(self.learning)"
     }
 
     var price: VocabularyOffer.Price? {
@@ -70,8 +78,47 @@ final class VocabularyModel {
                 .trimmingCharacters(in: .whitespacesAndNewlines) &&
                 input.context == self.context.trimmingCharacters(in: .whitespacesAndNewlines) &&
                 (input.mode == .lookup || input.selectedSense == self.selectedSense) &&
-                input.uiLanguage == self.uiLanguage && input.learningDirection == self.learning
+                input.learningDirection == self.learning &&
+                (input.uiLanguage == self.uiLanguage || record.id == self.openedID)
         }
+    }
+
+    /// Why 生成 cannot be pressed for a reason the person can act on. Input
+    /// problems (blank, too long) are said beside the field instead.
+    enum Blocker: Equatable {
+        case membership, disabled, insufficientPoints
+    }
+
+    var blocker: Blocker? {
+        guard let offer = self.offer else { return nil }
+        switch offer.reason {
+        case .disabled: return .disabled
+        case .membership: return .membership
+        case nil where !offer.enabled: return .disabled
+        case nil: break
+        }
+        guard let price = self.price else { return nil }
+        return offer.available < price.maxPoints ? .insufficientPoints : nil
+    }
+
+    /// Official 詞條 whose word or Chinese meaning is exactly what was typed — the
+    /// free path to point at beside the paid button. 自製 and 物見 cards do not count.
+    var catalogMatches: [CardWord] {
+        let needle = self.query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !needle.isEmpty else { return [] }
+        var seen = Set<String>()
+        return self.dictionary.words.filter { word in
+            word.id.atlasItemId == nil && word.id.savedCommunitySlug == nil &&
+                (word.word.lowercased() == needle || word.chinese.lowercased() == needle) &&
+                seen.insert(word.id).inserted
+        }
+    }
+
+    /// 助記 offers another one as the main action; for 查詞 and 深度解析 a second
+    /// card is mostly the same card again, so asking for one is a quieter choice
+    /// under the card.
+    var regenerationIsSecondary: Bool {
+        self.current?.status == .completed && self.mode != .mnemonic
     }
 
     var canGenerate: Bool {
@@ -95,6 +142,7 @@ final class VocabularyModel {
             self.busy = false
             self.message = nil
             self.selectedSense = ""
+            self.openedID = nil
         }
         guard let owner = self.owner else { self.message = tujiLocalized("登入後即可使用 AI 查詞。")
             return
@@ -102,7 +150,7 @@ final class VocabularyModel {
         await self.refreshOffer(scope: scope)
         guard scope == self.scopeID else { return }
         if let input = self.journal.pending(owner: owner)
-            .first(where: { $0.uiLanguage == self.uiLanguage && $0.learningDirection == self.learning })
+            .first(where: { $0.learningDirection == self.learning })
         {
             if self.query.isEmpty {
                 self.query = input.query
@@ -224,11 +272,13 @@ final class VocabularyModel {
         self.selectedSense = candidate.meaning
         self.mode = mode
         self.message = nil
+        self.openedID = nil
     }
 
     func editQuery() {
         self.selectedSense = ""
         self.message = nil
+        self.openedID = nil
     }
 
     func open(_ record: VocabularyRecord) {
@@ -237,6 +287,7 @@ final class VocabularyModel {
         self.context = input.context
         self.selectedSense = input.selectedSense
         self.mode = input.mode
+        self.openedID = record.id
         self.results.removeAll { $0.id == record.id }
         self.results.append(record)
         self.message = nil
@@ -252,7 +303,6 @@ final class VocabularyModel {
         defer { if request == self.historyRequest { self.loadingHistory = false } }
         do {
             let list = try await self.repository.records(
-                uiLanguage: self.uiLanguage,
                 learning: self.learning,
                 favorite: favorite,
                 cursor: more ? self.nextCursor : nil
@@ -283,7 +333,7 @@ final class VocabularyModel {
             }
         } catch {
             guard scope == self.scopeID else { return }
-            self.message = tujiLocalized("無法更新收藏，請重試。")
+            self.message = tujiLocalized("無法更新書籤，請重試。")
             self.historyMessage = self.message
         }
     }
