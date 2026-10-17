@@ -10,7 +10,7 @@ extension View {
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
                 case .assistant, .creditStatement, .assistantStory, .topicChat, .topicChatHistory,
-                     .vocabulary:
+                     .vocabulary, .grammar:
                     AssistantDestination(route: route)
                 case .settings: SettingsView()
                 case .atlasManage: AtlasManageView(initialSection: .cards)
@@ -58,6 +58,7 @@ private struct AssistantDestination: View {
         case .creditStatement: CreditStatementView()
         case .assistantStory: StoryBuilderView()
         case let .vocabulary(query): VocabularyView(query: query)
+        case .grammar: GrammarView()
         case let .topicChat(entry): TopicChatView(entry: entry)
         case .topicChatHistory: TopicChatHistoryView()
         default: AssistantHomeView()

@@ -136,6 +136,11 @@ enum Endpoint {
     /// 查詞紀錄 is per learning direction only; a card keeps the language it was explained in.
     case vocabularyRecords(learning: String, favorite: Bool, cursor: String?)
     case vocabularyRecord(id: String)
+    /// AI 語法: the same shape as 查詞, its own records. 語法紀錄 can narrow to one 模版.
+    case grammarOffer
+    case grammarGenerate
+    case grammarRecords(learning: String, favorite: Bool, mode: String?, cursor: String?)
+    case grammarRecord(id: String)
     case assistantStoryOffer(uiLanguage: String)
     case assistantStory
     /// 圖鑑主題對話: saved chats in one direction (GET).
@@ -464,6 +469,22 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/assistant/vocabulary", policy: .privateFreshSlow)
         case let .vocabularyRecord(id):
             EndpointDescriptor(path: "/api/assistant/vocabulary/records/\(id)", policy: .privateFresh)
+        case .grammarOffer:
+            EndpointDescriptor(path: "/api/assistant/grammar", policy: .privateFresh)
+        case .grammarGenerate:
+            EndpointDescriptor(path: "/api/assistant/grammar", policy: .privateFreshLong)
+        case let .grammarRecord(id):
+            EndpointDescriptor(path: "/api/assistant/grammar/records/\(id)", policy: .privateFresh)
+        case let .grammarRecords(learning, favorite, mode, cursor):
+            EndpointDescriptor(
+                path: "/api/assistant/grammar/records",
+                queryItems: [
+                    URLQueryItem(name: "learningDirection", value: learning),
+                    URLQueryItem(name: "favorite", value: favorite ? "true" : "false")
+                ] + (mode.map { [URLQueryItem(name: "mode", value: $0)] } ?? [])
+                    + (cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []),
+                policy: .privateFresh
+            )
         case let .vocabularyRecords(learning, favorite, cursor):
             EndpointDescriptor(path: "/api/assistant/vocabulary/records", queryItems: [
                 URLQueryItem(name: "learningDirection", value: learning),

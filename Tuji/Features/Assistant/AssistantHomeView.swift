@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Existing assistant capabilities, in the order offered on its home.
 enum AssistantHomeFeature: String, CaseIterable, Identifiable {
-    case lookup, story, topicChat
+    case lookup, grammar, story, topicChat
 
     var id: String {
         self.rawValue
@@ -11,6 +11,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var route: NavRoute {
         switch self {
         case .lookup: .vocabulary(query: "")
+        case .grammar: .grammar
         case .story: .assistantStory
         case .topicChat: .topicChat(.choose)
         }
@@ -19,6 +20,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var title: LocalizedStringKey {
         switch self {
         case .lookup: "AI 查詞"
+        case .grammar: "AI 語法"
         case .story: "情境故事"
         case .topicChat: "主題對話"
         }
@@ -27,6 +29,7 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var detail: LocalizedStringKey {
         switch self {
         case .lookup: "查詞、深入解析與助記，使用罐頭點數"
+        case .grammar: "解釋句型、比較用法與語法練習，使用罐頭點數"
         case .story: "選 1–3 個單字，生成情境對話"
         case .topicChat: "選一個圖鑑主題，和 Moira 聊聊"
         }
@@ -35,6 +38,8 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .lookup: "text.magnifyingglass"
+        // Not text.book.closed: 情境故事 already has it, two rows down.
+        case .grammar: "character.book.closed"
         case .story: "text.book.closed"
         case .topicChat: "bubble.left.and.text.bubble.right"
         }
