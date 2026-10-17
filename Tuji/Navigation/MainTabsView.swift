@@ -107,33 +107,47 @@ struct MainTabsView: View {
     /// pushed on the current tab, so the page-swipe never fights
     /// NavigationStack's own edge-swipe-to-go-back gesture (nor the
     /// horizontal scroll inside study's CompleteView).
+    ///
+    /// The keyboard is handed to the pages by hand. A horizontal `ScrollView`
+    /// keeps the keyboard's safe area to itself: the pager shrank, but the page
+    /// inside kept its full height and the keyboard covered whatever sat at its
+    /// bottom — 主題對話's input field. So the pager ignores the keyboard, and
+    /// each page is padded by however much shorter the keyboard made it.
     private var pager: some View {
-        GeometryReader { geo in
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
-                    ForEach(MainTab.allCases, id: \.self) { tab in
-                        self.page(for: tab)
-                            .frame(width: geo.size.width, height: geo.size.height)
-                            .id(tab)
-                    }
-                }
-                .scrollTargetLayout()
+        GeometryReader { avoiding in
+            GeometryReader { geo in
+                self.pages(size: geo.size, keyboard: max(0, geo.size.height - avoiding.size.height))
             }
-            .scrollTargetBehavior(.paging)
-            .scrollPosition(id: self.selectedScrollBinding, anchor: .center)
-            .scrollDisabled(
-                !TabShellDecisions.swipeEnabled(
-                    currentTabAtRoot: self.navigator.currentTabAtRoot,
-                    studyFocusActive: self.studyFocus.active
-                )
-            )
-            // Horizontal only. `scrollIndicators` reads from the environment, so
-            // it applies to *every* scroll view below it — and this one sits
-            // above all four tabs. Unqualified, it was hiding the vertical bar
-            // in 圖鑑, 今天, 我 and 物見 as a side effect of hiding the pager's
-            // own, which is why nothing in the app had a scroll position to read.
-            .scrollIndicators(.hidden, axes: .horizontal)
+            .ignoresSafeArea(.keyboard)
         }
+    }
+
+    private func pages(size: CGSize, keyboard: CGFloat) -> some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 0) {
+                ForEach(MainTab.allCases, id: \.self) { tab in
+                    self.page(for: tab)
+                        .padding(.bottom, keyboard)
+                        .frame(width: size.width, height: size.height)
+                        .id(tab)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: self.selectedScrollBinding, anchor: .center)
+        .scrollDisabled(
+            !TabShellDecisions.swipeEnabled(
+                currentTabAtRoot: self.navigator.currentTabAtRoot,
+                studyFocusActive: self.studyFocus.active
+            )
+        )
+        // Horizontal only. `scrollIndicators` reads from the environment, so
+        // it applies to *every* scroll view below it — and this one sits
+        // above all four tabs. Unqualified, it was hiding the vertical bar
+        // in 圖鑑, 今天, 我 and 物見 as a side effect of hiding the pager's
+        // own, which is why nothing in the app had a scroll position to read.
+        .scrollIndicators(.hidden, axes: .horizontal)
     }
 
     @ViewBuilder
