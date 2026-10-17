@@ -382,8 +382,10 @@ private struct TabBarButton: View {
     var body: some View {
         Button(action: self.action) {
             VStack(spacing: Space.s1) {
-                Image(systemName: self.tab.iconName)
-                    .font(.tujiIcon(20, weight: .semibold))
+                Image(self.tab.iconName)
+                    .renderingMode(.template)
+                    .resizable()
+                    .frame(width: 26, height: 26)
                 Text(self.tab.titleZh)
                     .font(.tujiLabel)
                     // No tracking, unlike every other tujiLabel: the +0.5pt is a
