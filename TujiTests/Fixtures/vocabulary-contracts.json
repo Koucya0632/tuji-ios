@@ -1,0 +1,176 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-000000000000",
+    "status": "completed",
+    "input": {
+      "requestId": "00000000-0000-4000-8000-000000000000",
+      "mode": "lookup",
+      "query": "borrow",
+      "context": "",
+      "selectedSense": "",
+      "uiLanguage": "zh-Hant",
+      "learningDirection": "zh-en",
+      "pricingVersion": "vocabulary-2026-10-v1",
+      "maxPoints": 5
+    },
+    "result": {
+      "outcome": "completed",
+      "message": "",
+      "candidates": [],
+      "content": {
+        "mode": "lookup",
+        "headword": {
+          "text": "borrow",
+          "reading": null,
+          "partOfSpeech": "動詞",
+          "meaning": "借入，暫時拿來使用後歸還。"
+        },
+        "senses": [
+          {
+            "term": "borrow",
+            "meaning": "借入",
+            "explanation": "主詞是借用物品的人。",
+            "relevant": true
+          }
+        ],
+        "expressions": [
+          {
+            "text": "Can I borrow your pen?",
+            "reading": null,
+            "translation": "我可以借你的筆嗎？",
+            "note": "借用對方的物品。"
+          }
+        ],
+        "related": [
+          {
+            "term": "lend",
+            "relation": "借出：主詞是提供物品的人。"
+          }
+        ]
+      }
+    },
+    "charged": 3,
+    "favorite": false,
+    "createdAt": "2026-10-17T00:00:00.000Z",
+    "templateVersion": "vocabulary-2026-10-v1",
+    "error": null
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "status": "completed",
+    "input": {
+      "requestId": "00000000-0000-4000-8000-000000000001",
+      "mode": "analysis",
+      "query": "borrow",
+      "context": "",
+      "selectedSense": "",
+      "uiLanguage": "zh-Hant",
+      "learningDirection": "zh-en",
+      "pricingVersion": "vocabulary-2026-10-v1",
+      "maxPoints": 10
+    },
+    "result": {
+      "outcome": "completed",
+      "message": "",
+      "candidates": [],
+      "content": {
+        "mode": "analysis",
+        "headword": {
+          "text": "borrow",
+          "reading": null,
+          "partOfSpeech": "動詞",
+          "meaning": "借入，暫時拿來使用後歸還。"
+        },
+        "comparisons": [
+          {
+            "term": "lend",
+            "difference": "borrow 是借入，lend 是借出。",
+            "whenToUse": "借用別人的東西用 borrow。",
+            "examples": [
+              {
+                "text": "Can I borrow your pen?",
+                "reading": null,
+                "translation": "我可以借你的筆嗎？",
+                "note": "借用對方的物品。"
+              }
+            ]
+          }
+        ],
+        "usage": [
+          {
+            "title": "borrow ... from",
+            "explanation": "from 後面接出借者。"
+          }
+        ],
+        "examples": [
+          {
+            "text": "Can I borrow your pen?",
+            "reading": null,
+            "translation": "我可以借你的筆嗎？",
+            "note": "借用對方的物品。"
+          }
+        ],
+        "collocations": [
+          {
+            "phrase": "borrow a book",
+            "meaning": "借一本書",
+            "pattern": "borrow + 物品"
+          }
+        ]
+      }
+    },
+    "charged": 3,
+    "favorite": false,
+    "createdAt": "2026-10-17T00:00:01.000Z",
+    "templateVersion": "vocabulary-2026-10-v1",
+    "error": null
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "status": "completed",
+    "input": {
+      "requestId": "00000000-0000-4000-8000-000000000002",
+      "mode": "mnemonic",
+      "query": "borrow",
+      "context": "",
+      "selectedSense": "",
+      "uiLanguage": "zh-Hant",
+      "learningDirection": "zh-en",
+      "pricingVersion": "vocabulary-2026-10-v1",
+      "maxPoints": 5
+    },
+    "result": {
+      "outcome": "completed",
+      "message": "",
+      "candidates": [],
+      "content": {
+        "mode": "mnemonic",
+        "headword": {
+          "text": "borrow",
+          "reading": null,
+          "partOfSpeech": "動詞",
+          "meaning": "借入，暫時拿來使用後歸還。"
+        },
+        "association": "想像一本書從朋友手上來到你手裡，之後你會還回去。",
+        "technique": "用動作方向記：borrow 是借進來。",
+        "retelling": "我把書借進來，就是 borrow。",
+        "example": {
+          "text": "Can I borrow your pen?",
+          "reading": null,
+          "translation": "我可以借你的筆嗎？",
+          "note": "借用對方的物品。"
+        },
+        "quiz": {
+          "question": "向朋友借筆，選 borrow 還是 lend？",
+          "answer": "borrow",
+          "hint": "想想筆來到誰手上。"
+        }
+      }
+    },
+    "charged": 3,
+    "favorite": false,
+    "createdAt": "2026-10-17T00:00:02.000Z",
+    "templateVersion": "vocabulary-2026-10-v1",
+    "error": null
+  }
+]

@@ -133,6 +133,10 @@ enum Endpoint {
     /// 助手's one paid call. GET reads the price range and the balance; POST asks.
     case assistantOffer
     case assistantAsk
+    case vocabularyOffer
+    case vocabularyGenerate
+    case vocabularyRecords(uiLanguage: String, learning: String, favorite: Bool, cursor: String?)
+    case vocabularyRecord(id: String)
     case assistantStoryOffer(uiLanguage: String)
     case assistantStory
     /// 圖鑑主題對話: saved chats in one direction (GET).
@@ -455,6 +459,18 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/ai/quotes", policy: .privateFresh)
         case .creditLedger:
             EndpointDescriptor(path: "/api/credits/ledger", policy: .privateFresh)
+        case .vocabularyOffer:
+            EndpointDescriptor(path: "/api/assistant/vocabulary", policy: .privateFresh)
+        case .vocabularyGenerate:
+            EndpointDescriptor(path: "/api/assistant/vocabulary", policy: .privateFreshSlow)
+        case let .vocabularyRecord(id):
+            EndpointDescriptor(path: "/api/assistant/vocabulary/records/\(id)", policy: .privateFresh)
+        case let .vocabularyRecords(uiLanguage, learning, favorite, cursor):
+            EndpointDescriptor(path: "/api/assistant/vocabulary/records", queryItems: [
+                URLQueryItem(name: "uiLanguage", value: uiLanguage),
+                URLQueryItem(name: "learningDirection", value: learning),
+                URLQueryItem(name: "favorite", value: favorite ? "true" : "false")
+            ] + (cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []), policy: .privateFresh)
         case .assistantOffer:
             EndpointDescriptor(path: "/api/assistant/ask", policy: .privateFresh)
         case .assistantAsk:

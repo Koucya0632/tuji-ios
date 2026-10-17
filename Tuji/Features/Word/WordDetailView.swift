@@ -118,6 +118,13 @@ struct WordDetailPage: View {
             // Notes are for official words only (the server refuses 自製 ids).
             if w.id.atlasItemId == nil {
                 WordNoteSection(wordId: w.id).padding(.horizontal, Space.s4)
+                NavigationLink(value: NavRoute.vocabulary(query: w.word)) {
+                    Label("AI 查詞", systemImage: "sparkle.magnifyingglass")
+                        .font(.tujiBodySm(.strong))
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .background(.tujiPaper2)
+                }
+                .padding(.horizontal, Space.s4)
             }
             WordDetailSections(word: w).padding(.horizontal, Space.s4)
         }
