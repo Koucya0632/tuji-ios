@@ -53,7 +53,7 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         try await self.homeSnapshot(language: "zh-Hant", size: CGSize(width: 375, height: 667), largeType: true)
     }
 
-    func testNativeHomeChatAndBackNavigation() async throws {
+    func testNativeHomeAndBackNavigation() async throws {
         try await self.waitForNavigation { !StudyFocus.shared.active }
         XCTAssertFalse(StudyFocus.shared.active, "Snapshot hosting must release its focus ownership")
         let navigator = Self.navigator
@@ -77,39 +77,13 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         }
         try await Task.sleep(for: .milliseconds(250))
         navigator.push(.assistant)
-        try await self.waitForNavigation {
-            self.fields(in: host.view).count == 1 && StudyFocus.shared.active
-        }
+        try await self.waitForNavigation { StudyFocus.shared.active }
         XCTAssertTrue(StudyFocus.shared.active, "The assistant home hides the tab bar")
-        XCTAssertEqual(self.fields(in: host.view).count, 1)
-        navigator.push(.assistantChat(entry: .conversation))
-        try await self.waitForNavigation {
-            self.fields(in: host.view).contains { $0.isFirstResponder }
-        }
-        let field = try XCTUnwrap(self.fields(in: host.view).first { $0.isFirstResponder })
-        XCTAssertTrue(StudyFocus.shared.active, "The chat keeps the tab bar hidden")
-        XCTAssertLessThanOrEqual(field.convert(field.bounds, to: window).maxY, window.bounds.maxY)
-        let keyboard = host.view.keyboardLayoutGuide.layoutFrame
-        if keyboard.height > 100 {
-            XCTAssertLessThanOrEqual(field.convert(field.bounds, to: host.view).maxY, keyboard.minY)
-        }
         self.attach(UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
             window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-        }, name: "assistant-chat-keyboard")
+        }, name: "assistant-home")
         navigator.todayPath.removeLast()
-        try await self.waitForNavigation {
-            let fields = self.fields(in: host.view)
-            return fields.count == 1 && fields.allSatisfy { $0 !== field } && StudyFocus.shared.active
-        }
-        self.attach(UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
-            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-        }, name: "assistant-home-return")
-        XCTAssertTrue(StudyFocus.shared.active, "Returning to the home keeps its focus ownership")
-        XCTAssertEqual(self.fields(in: host.view).count, 1)
-        navigator.todayPath.removeLast()
-        try await self.waitForNavigation {
-            self.fields(in: host.view).isEmpty && !StudyFocus.shared.active
-        }
+        try await self.waitForNavigation { !StudyFocus.shared.active }
         self.attach(UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
             window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
         }, name: "assistant-tab-root")
@@ -127,10 +101,6 @@ final class AnimatedMascotRenderingTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(50))
         }
         XCTFail("Navigation did not settle")
-    }
-
-    private func fields(in view: UIView) -> [UITextField] {
-        (view as? UITextField).map { [$0] } ?? view.subviews.flatMap { self.fields(in: $0) }
     }
 
     private func homeSnapshot(language: String, size: CGSize, largeType: Bool) async throws {

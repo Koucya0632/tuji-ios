@@ -1,5 +1,4 @@
-// Fixtures and fakes shared by the 助手 suites: the device-only responder
-// (AssistantTests) and the paid tier on top of it (TieredAssistantResponderTests).
+// Fixtures and fakes shared by the 助手 suites.
 
 import Foundation
 @testable import Tuji

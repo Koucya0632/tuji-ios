@@ -131,8 +131,6 @@ enum Endpoint {
     /// 點數明細: the newest page of point movements, with the wallet beside it.
     case creditLedger
     /// 助手's one paid call. GET reads the price range and the balance; POST asks.
-    case assistantOffer
-    case assistantAsk
     case vocabularyOffer
     case vocabularyGenerate
     /// 查詞紀錄 is per learning direction only; a card keeps the language it was explained in.
@@ -471,11 +469,6 @@ enum Endpoint {
                 URLQueryItem(name: "learningDirection", value: learning),
                 URLQueryItem(name: "favorite", value: favorite ? "true" : "false")
             ] + (cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []), policy: .privateFresh)
-        case .assistantOffer:
-            EndpointDescriptor(path: "/api/assistant/ask", policy: .privateFresh)
-        case .assistantAsk:
-            // A model call: seconds, not milliseconds.
-            EndpointDescriptor(path: "/api/assistant/ask", policy: .privateFreshSlow)
         case let .assistantStoryOffer(uiLanguage):
             EndpointDescriptor(
                 path: "/api/assistant/story",

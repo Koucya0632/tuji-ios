@@ -1540,29 +1540,6 @@
         }
       }
     },
-    "AI 問答" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask AI"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AIに質問"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 问答"
-          }
-        }
-      }
-    },
     "Moira 先開口，你跟著換個詞說說看" : {
       "localizations" : {
         "en" : {
@@ -2154,50 +2131,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加在后面"
-          }
-        }
-      }
-    },
-    "問問 Moira" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask Moira"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Moiraに聞いてみよう"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "问问 Moira"
-          }
-        }
-      }
-    },
-    "嗨，我可以幫你查圖鑑裡的詞。想找什麼？" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hi! I can look up words in the atlas for you. What are you looking for?"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "こんにちは！図鑑の単語を調べられるよ。何を探してる？"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "嗨，我可以帮你查图鉴里的词。想找什么？"
           }
         }
       }
@@ -2821,46 +2754,24 @@
         }
       }
     },
-    "查單字、問問題，陪你一起學。" : {
+    "查單字、讀故事，陪你一起學。" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Look up words, ask questions, and learn with me."
+            "value" : "Look up words, read stories, and learn with me."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "単語を調べたり質問したり、一緒に学ぼう。"
+            "value" : "単語を調べたり物語を読んだり、一緒に学ぼう。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "查单字、问问题，陪你一起学。"
-          }
-        }
-      }
-    },
-    "查圖鑑裡的詞不用點數；問 AI 才會扣罐頭點數。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Looking up atlas words is free. Only asking AI uses Can Credits."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "図鑑の単語を調べるのは無料です。AIへの質問だけ缶詰ポイントを使います。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查图鉴里的词不用点数；问 AI 才会扣罐头点数。"
+            "value" : "查单字、读故事，陪你一起学。"
           }
         }
       }
@@ -3833,29 +3744,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "草稿里已经有内容"
-          }
-        }
-      }
-    },
-    "詢問語言學習問題，確認後使用罐頭點數" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask about language learning; AI uses Can Points after confirmation"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "語学の疑問を質問。AIの利用は確認後に缶詰ポイントを消費"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "询问语言学习问题，确认后使用罐头点数"
           }
         }
       }
@@ -4977,28 +4865,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 建议"
-          }
-        }
-      }
-    },
-    "AI 現在沒有回應，等一下再試。沒有扣點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI isn't responding right now. Try again in a moment. Nothing was charged."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AIから応答がありません。少し待ってからもう一度お試しください。ポイントは消費されていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI 现在没有回应，等一下再试。没有扣点。"
           }
         }
       }
@@ -9983,50 +9849,6 @@
         }
       }
     },
-    "問得有點快，等一下再問我。沒有扣點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That's a lot of questions at once. Ask me again in a moment. Nothing was charged."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "質問が少し続きすぎました。少し待ってからもう一度どうぞ。ポイントは消費されていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "问得有点快，等一下再问我。没有扣点。"
-          }
-        }
-      }
-    },
-    "問我分類、收藏，或打一個字" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ask, or type a word"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "質問するか、単語を入力"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "问我分类、收藏，或打一个字"
-          }
-        }
-      }
-    },
     "問題回報" : {
       "localizations" : {
         "en" : {
@@ -10474,72 +10296,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "图鉴管理"
-          }
-        }
-      }
-    },
-    "圖鑑裡沒有這個。問 AI 每次扣 %lld–%lld 點罐頭點數，你現在有 %lld 點，不夠問一次。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That isn't in the atlas. Asking AI costs %1$lld–%2$lld Can Credits per answer, and you have %3$lld, which isn't enough for one question."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "図鑑には見つかりませんでした。AIへの質問は1回につき缶詰ポイントを%1$lld〜%2$lldポイント使います。現在%3$lldポイントで、1回分に足りません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "图鉴里没有这个。问 AI 每次扣 %1$lld–%2$lld 点罐头点数，你现在有 %3$lld 点，不够问一次。"
-          }
-        }
-      }
-    },
-    "圖鑑裡沒有這個。要問 AI 嗎？每次回答扣 %lld–%lld 點罐頭點數，你現在有 %lld 點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That isn't in the atlas. Ask AI instead? Each answer costs %1$lld–%2$lld Can Credits, and you have %3$lld."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "図鑑には見つかりませんでした。AIに聞きますか？1回の回答で缶詰ポイントを%1$lld〜%2$lldポイント使います。現在%3$lldポイントあります。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "图鉴里没有这个。要问 AI 吗？每次回答扣 %1$lld–%2$lld 点罐头点数，你现在有 %3$lld 点。"
-          }
-        }
-      }
-    },
-    "圖鑑裡還沒有「%@」。試試用中文查，或換個說法。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\"%@\" isn't in the atlas yet. Try another word for it."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」は図鑑にまだありません。別の言い方で試してみてください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "图鉴里还没有「%@」。试试用中文查，或换个说法。"
           }
         }
       }
@@ -13225,28 +12981,6 @@
         }
       }
     },
-    "我只能幫忙語言學習的問題。這次沒有扣點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I can only help with language-learning questions. Nothing was charged."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "お手伝いできるのは語学学習の質問だけです。ポイントは消費されていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "我只能帮忙语言学习的问题。这次没有扣点。"
-          }
-        }
-      }
-    },
     "我的圖鑑卡片" : {
       "comment" : "The section header for the user's custom atlas cards.",
       "isCommentAutoGenerated" : true,
@@ -13634,50 +13368,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "找个单字试试"
-          }
-        }
-      }
-    },
-    "找到 %lld 個跟「%@」有關的詞。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Found %1$lld words matching \"%2$@\"."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%2$@」に関する単語が%1$lld件見つかりました。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "找到 %1$lld 个跟「%2$@」有关的词。"
-          }
-        }
-      }
-    },
-    "把想查的字打給我，用中文或正在學的語言都可以。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Type the word you want. Your own language or the one you're learning both work."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "調べたい単語を入力してください。母語でも学習中の言語でも大丈夫です。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "把想查的字打给我，用中文或正在学的语言都可以。"
           }
         }
       }
@@ -14519,28 +14209,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收藏合集后查看全部 %lld 张卡片"
-          }
-        }
-      }
-    },
-    "收藏的合集" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Saved collections"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存したコレクション"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "收藏的合集"
           }
         }
       }
@@ -15625,50 +15293,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "本月点数已领满"
-          }
-        }
-      }
-    },
-    "查「%@」這個詞" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Look up \"%@\""
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」を調べる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查「%@」这个词"
-          }
-        }
-      }
-    },
-    "查單字" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Look up a word"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "単語を調べる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "查单字"
           }
         }
       }
@@ -17234,28 +16858,6 @@
         }
       }
     },
-    "現在不能問 AI。沒有扣點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AI isn't available right now. Nothing was charged."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "いまはAIに質問できません。ポイントは消費されていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "现在不能问 AI。没有扣点。"
-          }
-        }
-      }
-    },
     "現在不能寫故事。沒有扣點。" : {
       "localizations" : {
         "en" : {
@@ -17925,28 +17527,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "看一张图，记住一个字"
-          }
-        }
-      }
-    },
-    "看全部 %lld 筆" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "See all %lld"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld件すべて見る"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "看全部 %lld 条"
           }
         }
       }
@@ -19133,28 +18713,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "罐头点数"
-          }
-        }
-      }
-    },
-    "罐頭點數不夠問這一次。沒有扣點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You don't have enough Can Credits for this question. Nothing was charged."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この質問には缶詰ポイントが足りません。ポイントは消費されていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "罐头点数不够问这一次。没有扣点。"
           }
         }
       }
@@ -22278,28 +21836,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通知已关闭"
-          }
-        }
-      }
-    },
-    "連不上網路，問不到 AI。沒有扣點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I can't reach the network, so I couldn't ask AI. Nothing was charged."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ネットワークに接続できず、AIに質問できませんでした。ポイントは消費されていません。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "连不上网络，问不到 AI。没有扣点。"
           }
         }
       }
