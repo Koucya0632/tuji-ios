@@ -185,6 +185,28 @@
         }
       }
     },
+    "依實際用量扣罐頭點數，通常 %lld–%lld 點。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Charged by actual use, usually %1$lld–%2$lld Can Credits."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "実際の使用量に応じて缶詰ポイントを使います（通常%1$lld〜%2$lldポイント）。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依实际用量扣罐头点数，通常 %1$lld–%2$lld 点。"
+          }
+        }
+      }
+    },
     "修正：%@" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -848,6 +870,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在出题，约需半分钟；离开后可到纪录查看。"
+          }
+        }
+      }
+    },
+    "每次 %lld–%lld 點，最多扣 %lld 點。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld–%lld points per result, up to %lld points."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1回%lld〜%lldポイント、上限%lldポイント。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次 %lld–%lld 点，最多扣 %lld 点。"
           }
         }
       }
@@ -3125,29 +3170,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在生成，离开后可到纪录查看。"
-          }
-        }
-      }
-    },
-    "每次 %lld–%lld 點，最多扣 %lld 點；目前有 %lld 點。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld–%lld points per result, up to %lld points. Available: %lld."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1回%lld〜%lldポイント、上限%lldポイント。残高：%lldポイント。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每次 %lld–%lld 点，最多扣 %lld 点；目前有 %lld 点。"
           }
         }
       }
@@ -8961,28 +8983,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "例如：生活日常"
-          }
-        }
-      }
-    },
-    "依實際用量扣罐頭點數，通常 %lld–%lld 點。你現在有 %lld 點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Charged by actual use, usually %1$lld–%2$lld Can Credits. You have %3$lld."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "実際の使用量に応じて缶詰ポイントを使います（通常%1$lld〜%2$lldポイント）。現在%3$lldポイントあります。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "依实际用量扣罐头点数，通常 %1$lld–%2$lld 点。你现在有 %3$lld 点。"
           }
         }
       }
@@ -20874,28 +20874,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "至少 8 个字符，英文、数字或符号皆可"
-          }
-        }
-      }
-    },
-    "至少要有 %lld 點罐頭點數才能寫故事，你現在有 %lld 點。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You need at least %1$lld Can Credits to write a story. You have %2$lld."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ストーリーを作るには缶詰ポイントが%1$lldポイント以上必要です。現在%2$lldポイントです。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "至少要有 %1$lld 点罐头点数才能写故事，你现在有 %2$lld 点。"
           }
         }
       }

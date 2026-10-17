@@ -178,15 +178,15 @@ final class StoryBuilderModel {
         !self.picked.isEmpty && self.sceneId != nil && self.situationId != nil && self.levelId != nil
     }
 
-    /// The ceiling, not the floor: the server refuses an account holding less
-    /// than a story could cost.
-    var canAfford: Bool {
-        guard self.balanceKnown, let offer else { return false }
-        return offer.available >= offer.maxPoints
+    /// The offer has been read this launch. Whether the points cover a story
+    /// is the server's to say: the kept balance can be behind, so the page
+    /// neither shows it nor judges by it.
+    var offerReady: Bool {
+        self.balanceKnown && self.offer != nil
     }
 
     var canWrite: Bool {
-        self.isComplete && self.canAfford && self.writing != .writing
+        self.isComplete && self.offerReady && self.writing != .writing
     }
 
     /// The button's way in: a write the page can stop by leaving.

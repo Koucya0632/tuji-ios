@@ -86,6 +86,8 @@ final class GrammarTestAPI: GrammarStudying {
     func generate(_ input: GrammarInput) async throws -> GrammarRecord {
         self.calls.append(input)
         if let reject { throw reject }
+        // As the server does: the balance is checked before anything is charged.
+        if input.maxPoints > self.available { throw APIError.conflict(reason: "insufficient_credits", message: nil) }
         let fixture = self.fixtures.first { $0.input?.mode == input.mode }
         let result = self.clarify ? GrammarReply(
             outcome: "clarification",
@@ -306,11 +308,13 @@ struct GrammarTests {
         let api = try GrammarTestAPI(), model = self.model(api)
         api.available = 9
         await model.load()
-        model.mode = .explain
-        #expect(model.canGenerate)
         model.mode = .compare
+        // Not judged on the page: the server refuses it, and says why.
+        #expect(model.blocker == nil)
+        #expect(model.canGenerate)
+        await model.generate()
         #expect(model.blocker == .insufficientPoints)
-        #expect(!model.canGenerate)
+        #expect(api.saved.isEmpty)
         api.reason = .membership
         self.offerCache.balanceChanged()
         await model.load()

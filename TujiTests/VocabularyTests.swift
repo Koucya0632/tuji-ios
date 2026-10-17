@@ -78,6 +78,8 @@ final class VocabularyTestAPI: VocabularyStudying {
     func generate(_ input: VocabularyInput) async throws -> VocabularyRecord {
         self.calls.append(input)
         if let reject { throw reject }
+        // As the server does: the balance is checked before anything is charged.
+        if input.maxPoints > self.available { throw APIError.conflict(reason: "insufficient_credits", message: nil) }
         if self.hold { await withCheckedContinuation { self.continuation = $0 } }
         let fixture = self.fixtures.first { $0.input?.mode == input.mode }
         let record = VocabularyRecord(
@@ -460,14 +462,8 @@ struct VocabularyTests {
     }
 
     @Test
-    func insufficientPointsInvalidInputAndDisabledFeatureCannotGenerate() async throws {
+    func invalidInputAndDisabledFeatureCannotGenerate() async throws {
         let api = try VocabularyTestAPI(), model = self.model(api)
-        api.available = 4
-        await model.load()
-        await model.generate()
-        #expect(api.calls.isEmpty)
-        api.available = 100
-        self.offerCache.balanceChanged()
         await model.load()
         for query in [" ", "???", String(repeating: "a", count: 121)] {
             model.query = query
@@ -571,13 +567,28 @@ struct VocabularyTests {
         self.offerCache.balanceChanged()
         await model.load()
         #expect(model.blocker == .disabled)
-        api.reason = nil
+    }
+
+    @Test
+    func aShortfallIsTheServersToSayAndAPurchaseClearsIt() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
         api.available = 4
+        await model.load()
+        // The kept balance is not judged on the page: the request goes, and is refused.
+        #expect(model.blocker == nil)
+        #expect(model.canGenerate)
+        await model.generate()
+        #expect(api.calls.count == 1)
+        #expect(model.blocker == .insufficientPoints)
+        #expect(model.turns.last?.rejection != nil)
+        #expect(api.saved.isEmpty)
+        // Sending is still allowed: the monthly grant may have come in meanwhile.
+        model.query = "lend"
+        #expect(model.canGenerate)
+        api.available = 100
         self.offerCache.balanceChanged()
         await model.load()
-        #expect(model.blocker == .insufficientPoints)
-        await model.generate()
-        #expect(api.calls.isEmpty)
+        #expect(model.blocker == nil)
     }
 
     @Test
@@ -633,9 +644,11 @@ struct VocabularyTests {
         // An older card can no longer be regenerated.
         await model.regenerate(lookup)
         #expect(api.calls.count == 3)
+        // Too few points is the server's to say, for another card as for a first one.
         api.available = 4
-        self.offerCache.balanceChanged()
-        await model.load()
+        try await model.regenerate(#require(model.turns.last))
+        #expect(api.calls.count == 4)
+        #expect(model.blocker == .insufficientPoints)
         #expect(try model.regeneration(for: #require(model.turns.last)) == nil)
     }
 }

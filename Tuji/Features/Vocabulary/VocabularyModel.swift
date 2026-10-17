@@ -34,6 +34,9 @@ final class VocabularyModel {
     /// The offer was read from the server since launch, so its balance can
     /// decide spending. One kept from an earlier launch is only shown.
     private(set) var offerCurrent = false
+    /// The server said the points are short. The page does not show or judge
+    /// the balance itself: the kept one can be behind.
+    private(set) var outOfPoints = false
     private(set) var turns: [VocabularyTurn] = []
     /// The turn the conversation should bring into view: a new one, or one
     /// opened from 查詞紀錄. The tick lets the same card be asked for twice.
@@ -141,8 +144,7 @@ final class VocabularyModel {
         case nil where !offer.enabled: return .disabled
         case nil: break
         }
-        guard let price = self.price else { return nil }
-        return offer.available < price.maxPoints ? .insufficientPoints : nil
+        return self.outOfPoints ? .insufficientPoints : nil
     }
 
     /// Official 詞條 whose word or Chinese meaning is exactly what was typed — the
@@ -167,8 +169,7 @@ final class VocabularyModel {
 
     private func canSpend(on mode: VocabularyMode) -> Bool {
         !self.busy && self.pending == nil && self.identity.uid != nil && self.offerCurrent &&
-            self.offer?.enabled == true &&
-            self.price(for: mode).map { (self.offer?.available ?? 0) >= $0.maxPoints } == true
+            self.offer?.enabled == true && self.price(for: mode) != nil
     }
 
     /// Only the newest completed card offers another, and only when it can be paid for.
@@ -205,7 +206,11 @@ final class VocabularyModel {
             self.offer = entry.offer
             self.offerCurrent = entry.current
         }
-        if !self.offerCurrent { await self.refreshOffer(scope: scope) }
+        if !self.offerCurrent {
+            // A first read, or one after a purchase: a shortfall said before is over.
+            self.outOfPoints = false
+            await self.refreshOffer(scope: scope)
+        }
         guard scope == self.scopeID else { return }
         if let input = self.journal.pending(owner: owner)
             .first(where: { $0.learningDirection == self.learning })
@@ -262,6 +267,7 @@ final class VocabularyModel {
 
     private func start(mode: VocabularyMode, query: String, context: String, sense: String) async {
         guard let price = self.price(for: mode), let offer = self.offer, let owner = self.owner else { return }
+        self.outOfPoints = false
         let input = VocabularyInput(
             requestId: UUID().uuidString.lowercased(),
             mode: mode,
@@ -295,6 +301,9 @@ final class VocabularyModel {
                 self.journal.remove(id: input.requestId, owner: owner)
                 self.pending = nil
                 self.update(input.requestId) { $0.rejection = Self.failureMessage(error) }
+                if case let APIError.conflict(reason, _) = error, reason == "insufficient_credits" {
+                    self.outOfPoints = true
+                }
                 await self.refreshOffer(scope: scope)
             } else {
                 self.message = tujiLocalized("確認生成結果中，請稍後重試確認。")
@@ -341,6 +350,7 @@ final class VocabularyModel {
 
     private func accept(_ record: VocabularyRecord, owner: String) {
         guard record.status != .pending else { return }
+        if record.status == .failed, record.error == "insufficient_credits" { self.outOfPoints = true }
         self.historyCache.invalidate(owner: owner)
         self.journal.remove(id: record.id, owner: owner)
         if self.pending?.requestId == record.id { self.pending = nil }

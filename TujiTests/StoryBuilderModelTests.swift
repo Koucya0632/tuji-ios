@@ -154,7 +154,7 @@ struct StoryBuilderModelTests {
         await model.loadOffer()
         #expect(model.offerPhase == .loaded)
         #expect(model.balanceKnown)
-        #expect(model.canAfford)
+        #expect(model.offerReady)
     }
 
     @Test
@@ -166,13 +166,13 @@ struct StoryBuilderModelTests {
         await model.loadOffer()
         #expect(model.offer?.scenes.count == 2)
         #expect(!model.balanceKnown)
-        #expect(!model.canAfford)
+        #expect(!model.offerReady)
         #expect(model.offerPhase == .failed)
         self.writer.offer = .success(StoryWriterFake.offer(available: 5))
         await model.loadOffer()
         #expect(model.offerPhase == .loaded)
         #expect(model.balanceKnown)
-        #expect(!model.canAfford)
+        #expect(model.offerReady)
     }
 
     @Test
@@ -316,13 +316,15 @@ struct StoryBuilderModelTests {
     }
 
     @Test
-    func aBalanceUnderTheCeilingCannotWrite() async {
+    func aLowBalanceIsTheServersToRefuse() async {
+        // The page does not judge by the kept balance: it can be behind.
         self.writer.offer = .success(StoryWriterFake.offer(available: 9))
         let model = await self.readyModel()
-        #expect(model.isComplete)
-        #expect(!model.canAfford)
+        #expect(model.canWrite)
+        self.writer.result = .failure(APIError.conflict(reason: "insufficient_credits", message: nil))
         await model.write()
-        #expect(self.writer.written.isEmpty)
+        #expect(self.writer.written.count == 1)
+        #expect(model.writing == .failed(.insufficientPoints))
     }
 
     @Test

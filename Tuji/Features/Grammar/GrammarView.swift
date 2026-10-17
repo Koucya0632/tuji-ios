@@ -303,11 +303,9 @@ struct GrammarView: View {
                     BBtn(title: "補充點數", fullWidth: false) { self.presentPaywall() }
                 }
                 .accessibilityIdentifier("grammar-insufficient")
-            } else if let price = self.model.price, let offer = self.model.offer {
-                Text(
-                    "每次 \(price.minPoints)–\(price.maxPoints) 點，最多扣 \(price.maxPoints) 點；目前有 \(offer.available) 點。"
-                )
-                .font(.tujiLabel).foregroundStyle(.tujiInk3)
+            } else if let price = self.model.price {
+                Text("每次 \(price.minPoints)–\(price.maxPoints) 點，最多扣 \(price.maxPoints) 點。")
+                    .font(.tujiLabel).foregroundStyle(.tujiInk3)
             }
             // Not in the chain above: a kept offer still shows its prices offline.
             if !self.model.offerCurrent, self.model.message != nil {
