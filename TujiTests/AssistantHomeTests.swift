@@ -40,7 +40,7 @@ struct AssistantHomeTests {
     @Test
     func homeOffersOnlyExistingCapabilities() {
         #expect(AssistantHomeFeature.allCases.map(\.route) == [
-            .assistantChat(entry: .intent(.lookupPrompt)),
+            .vocabulary(query: ""),
             .assistantChat(entry: .conversation),
             .assistantStory,
             .topicChat(.choose)

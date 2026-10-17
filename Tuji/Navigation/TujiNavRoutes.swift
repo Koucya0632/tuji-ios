@@ -9,7 +9,8 @@ extension View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
-                case .assistant, .assistantChat, .creditStatement, .assistantStory, .topicChat, .topicChatHistory:
+                case .assistant, .assistantChat, .creditStatement, .assistantStory, .topicChat, .topicChatHistory,
+                     .vocabulary:
                     AssistantDestination(route: route)
                 case .settings: SettingsView()
                 case .atlasManage: AtlasManageView(initialSection: .cards)
@@ -57,6 +58,7 @@ private struct AssistantDestination: View {
         case let .assistantChat(entry): AssistantChatView(entry: entry)
         case .creditStatement: CreditStatementView()
         case .assistantStory: StoryBuilderView()
+        case let .vocabulary(query): VocabularyView(query: query)
         case let .topicChat(entry): TopicChatView(entry: entry)
         case .topicChatHistory: TopicChatHistoryView()
         default: AssistantHomeView()
