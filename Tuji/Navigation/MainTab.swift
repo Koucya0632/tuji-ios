@@ -31,14 +31,16 @@ enum MainTab: Hashable, CaseIterable {
         }
     }
 
+    /// Asset-catalog template images (`tab-*.imageset`), drawn as one family
+    /// and cropped on a shared square so their relative sizes survive.
     var iconName: String {
         switch self {
-        case .today: "sun.max.fill"
-        case .cards: "books.vertical.fill"
+        case .today: "tab-today"
+        case .cards: "tab-atlas"
         // Binoculars, not two people: 物見 names things seen, and the two
         // person glyphs also made this tab and 我 read as a pair.
-        case .community: "binoculars.fill"
-        case .me: "person.fill"
+        case .community: "tab-discover"
+        case .me: "tab-me"
         }
     }
 }
