@@ -15,7 +15,7 @@ struct GrammarHistoryView: View {
                         .font(.tujiLabel).foregroundStyle(.tujiInk2)
                     if let message = self.model.historyMessage {
                         Text(message).font(.tujiBodySm)
-                        Button("重試") { Task { await self.model.loadHistory(self.filter) } }
+                        Button("重試") { Task { await self.model.loadHistory(self.filter, force: true) } }
                     }
                     if self.model.loadingHistory { ProgressView() }
                     if self.model.history.isEmpty, !self.model.loadingHistory, self.model.historyMessage == nil {
@@ -36,7 +36,7 @@ struct GrammarHistoryView: View {
             .task(id: "\(self.model.scopeID)|\(self.filter.favorite)|\(self.filter.mode?.rawValue ?? "")") {
                 await self.model.loadHistory(self.filter)
             }
-            .refreshable { await self.model.loadHistory(self.filter) }
+            .refreshable { await self.model.loadHistory(self.filter, force: true) }
             .confirmationDialog("刪除這份語法紀錄？", isPresented: Binding(
                 get: { self.deleting != nil }, set: { if !$0 { self.deleting = nil } }
             ), titleVisibility: .visible) {

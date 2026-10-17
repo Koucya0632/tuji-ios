@@ -15,7 +15,7 @@ struct VocabularyHistoryView: View {
                         .font(.tujiLabel).foregroundStyle(.tujiInk2)
                     if let message = self.model.historyMessage {
                         Text(message).font(.tujiBodySm)
-                        Button("重試") { Task { await self.model.loadHistory(favorite: self.favorites) } }
+                        Button("重試") { Task { await self.model.loadHistory(favorite: self.favorites, force: true) } }
                     }
                     if self.model.loadingHistory { ProgressView() }
                     if self.model.history.isEmpty, !self.model.loadingHistory, self.model.historyMessage == nil {
@@ -36,7 +36,7 @@ struct VocabularyHistoryView: View {
             .task(id: "\(self.model.scopeID)|\(self.favorites)") {
                 await self.model.loadHistory(favorite: self.favorites)
             }
-            .refreshable { await self.model.loadHistory(favorite: self.favorites) }
+            .refreshable { await self.model.loadHistory(favorite: self.favorites, force: true) }
             .confirmationDialog("刪除這份查詞紀錄？", isPresented: Binding(
                 get: { self.deleting != nil }, set: { if !$0 { self.deleting = nil } }
             ), titleVisibility: .visible) {

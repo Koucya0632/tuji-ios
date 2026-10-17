@@ -38,6 +38,9 @@ final class VocabularyModel {
     /// The turn the conversation should bring into view: a new one, or one
     /// opened from 查詞紀錄. The tick lets the same card be asked for twice.
     private(set) var spotlight: Spotlight?
+    /// `history` came from a read (or a kept one), not just the empty start:
+    /// only then may it stand as a filter's kept list.
+    @ObservationIgnored private var historyLoaded = false
     private(set) var history: [VocabularyRecord] = []
     private(set) var nextCursor: String?
     private(set) var pending: VocabularyInput?
@@ -47,6 +50,7 @@ final class VocabularyModel {
     private(set) var historyMessage: String?
     private let repository: VocabularyStudying
     private let offerCache: AssistantOfferCache<VocabularyOffer>
+    private let historyCache: AssistantHistoryCache<VocabularyRecord>
     private let language: LanguageContext
     private let identity: ViewerIdentity
     private let journal: VocabularyJournaling
@@ -74,6 +78,7 @@ final class VocabularyModel {
         query: String = "",
         repository: VocabularyStudying = LiveVocabularyRepository(),
         offerCache: AssistantOfferCache<VocabularyOffer> = AssistantOfferCaches.vocabulary,
+        historyCache: AssistantHistoryCache<VocabularyRecord> = AssistantHistoryCaches.vocabulary,
         language: LanguageContext = SettingsStore.shared,
         identity: ViewerIdentity = AuthService.shared,
         journal: VocabularyJournaling = DefaultsVocabularyJournal(),
@@ -83,6 +88,7 @@ final class VocabularyModel {
         self.query = query
         self.repository = repository
         self.offerCache = offerCache
+        self.historyCache = historyCache
         self.language = language
         self.identity = identity
         self.journal = journal
@@ -182,6 +188,7 @@ final class VocabularyModel {
             self.turns = []
             self.spotlight = nil
             self.history = []
+            self.historyLoaded = false
             self.nextCursor = nil
             self.pending = nil
             self.offer = nil
@@ -334,6 +341,7 @@ final class VocabularyModel {
 
     private func accept(_ record: VocabularyRecord, owner: String) {
         guard record.status != .pending else { return }
+        self.historyCache.invalidate(owner: owner)
         self.journal.remove(id: record.id, owner: owner)
         if self.pending?.requestId == record.id { self.pending = nil }
         if record.status == .deleted {
@@ -381,8 +389,23 @@ final class VocabularyModel {
         self.message = nil
     }
 
-    func loadHistory(favorite: Bool, more: Bool = false) async {
+    /// Opening 查詞紀錄 again shows the list this launch already read; `force`
+    /// (pull to refresh, 重試) reads it anyway.
+    func loadHistory(favorite: Bool, more: Bool = false, force: Bool = false) async {
         guard !more || !self.loadingHistory else { return }
+        let filter = Self.historyFilterKey(learning: self.learning, favorite: favorite)
+        if !more, !force, let owner = self.owner,
+           let kept = self.historyCache.page(owner: owner, filter: filter)
+        {
+            self.historyRequest = UUID()
+            self.loadingHistory = false
+            self.historyMessage = nil
+            self.historyFavorites = favorite
+            self.history = kept.records
+            self.historyLoaded = true
+            self.nextCursor = kept.nextCursor
+            return
+        }
         let request = UUID()
         self.historyRequest = request
         self.loadingHistory = true
@@ -398,7 +421,9 @@ final class VocabularyModel {
             guard scope == self.scopeID, request == self.historyRequest else { return }
             self.historyFavorites = favorite
             self.history = more ? self.history + list.records : list.records
+            self.historyLoaded = true
             self.nextCursor = list.nextCursor
+            self.keepHistory()
         } catch {
             if scope == self.scopeID, request == self.historyRequest {
                 self.historyMessage = tujiLocalized("無法讀取查詞紀錄，請重試。")
@@ -416,6 +441,9 @@ final class VocabularyModel {
                 guard row.id == updated.id else { return row }
                 return self.historyFavorites && !updated.favorite ? nil : updated
             }
+            // The other filter's list holds this row too: only the open one is right.
+            if let owner = self.owner { self.historyCache.invalidate(owner: owner) }
+            self.keepHistory()
         } catch {
             guard scope == self.scopeID else { return }
             self.message = tujiLocalized("無法更新書籤，請重試。")
@@ -430,7 +458,23 @@ final class VocabularyModel {
             guard scope == self.scopeID else { return }
             self.history.removeAll { $0.id == record.id }
             self.turns.removeAll { $0.id == record.id }
+            if let owner = self.owner { self.historyCache.invalidate(owner: owner) }
+            self.keepHistory()
         } catch { self.historyMessage = tujiLocalized("無法刪除紀錄，請重試。") }
+    }
+
+    private static func historyFilterKey(learning: String, favorite: Bool) -> String {
+        "\(learning)|\(favorite)"
+    }
+
+    /// The list on screen, as the kept one for its filter.
+    private func keepHistory() {
+        guard self.historyLoaded, let owner = self.owner else { return }
+        self.historyCache.store(
+            .init(records: self.history, nextCursor: self.nextCursor),
+            owner: owner,
+            filter: Self.historyFilterKey(learning: self.learning, favorite: self.historyFavorites)
+        )
     }
 
     private func append(_ turn: VocabularyTurn) {

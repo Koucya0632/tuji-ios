@@ -161,6 +161,7 @@ struct GrammarTests {
             query: "〜たことがある",
             repository: api,
             offerCache: self.offerCache,
+            historyCache: AssistantHistoryCache(),
             language: language,
             identity: viewer,
             journal: journal,
@@ -343,6 +344,26 @@ struct GrammarTests {
         await model.load()
         #expect(model.turns.isEmpty)
         #expect(model.query.isEmpty && model.compareWith.isEmpty)
+    }
+
+    @Test
+    func eachTemplateFilterKeepsItsOwnListAndDeletingDropsThem() async throws {
+        let api = try GrammarTestAPI(), model = self.model(api)
+        await model.load()
+        model.mode = .practice
+        await model.generate()
+        model.query = "〜ばかり"
+        model.mode = .explain
+        await model.generate()
+        await model.loadHistory(.init(favorite: false, mode: .practice))
+        await model.loadHistory(.init(favorite: false, mode: .explain))
+        await model.loadHistory(.init(favorite: false, mode: .practice))
+        #expect(api.listed.count == 2)
+        #expect(model.history.map(\.input?.mode) == [.practice])
+        let set = try #require(model.history.first)
+        await model.delete(set)
+        await model.loadHistory(.init(favorite: false, mode: .explain))
+        #expect(api.listed.count == 3)
     }
 
     @Test

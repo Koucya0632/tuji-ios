@@ -48,6 +48,7 @@ enum VocabularyFixtures {
 final class VocabularyTestAPI: VocabularyStudying {
     var calls: [VocabularyInput] = []
     var offers = 0
+    var lists = 0
     var available = 100
     var enabled = true
     var reason: VocabularyOffer.Reason?
@@ -101,7 +102,8 @@ final class VocabularyTestAPI: VocabularyStudying {
     }
 
     func records(learning: String, favorite: Bool, cursor: String?) async throws -> VocabularyRecords {
-        VocabularyRecords(records: self.saved.values.filter {
+        self.lists += 1
+        return VocabularyRecords(records: self.saved.values.filter {
             $0.input?.learningDirection == learning && (!favorite || $0.favorite)
         }, nextCursor: nil)
     }
@@ -147,6 +149,7 @@ struct VocabularyTests {
             query: "borrow",
             repository: api,
             offerCache: offerCache ?? self.offerCache,
+            historyCache: AssistantHistoryCache(),
             language: language,
             identity: viewer,
             journal: journal,
@@ -200,6 +203,54 @@ struct VocabularyTests {
     }
 
     @Test
+    func reopeningTheHistoryShowsTheKeptListUntilItChanges() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        await self.send(model)
+        await model.loadHistory(favorite: false)
+        await model.loadHistory(favorite: false)
+        #expect(api.lists == 1)
+        #expect(model.history.count == 1)
+        // Pull to refresh always reads.
+        await model.loadHistory(favorite: false, force: true)
+        #expect(api.lists == 2)
+        // A new card makes the kept list behind.
+        await self.send(model, "lend")
+        await model.loadHistory(favorite: false)
+        #expect(api.lists == 3)
+        #expect(model.history.count == 2)
+    }
+
+    @Test
+    func aBookmarkDropsTheOtherFiltersKeptList() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        await self.send(model)
+        await model.loadHistory(favorite: true)
+        #expect(model.history.isEmpty)
+        await model.loadHistory(favorite: false)
+        let reads = api.lists
+        if let record = model.history.first { await model.toggleFavorite(record) }
+        // The open list was updated in place and kept; the 書籤 one is re-read.
+        await model.loadHistory(favorite: false)
+        #expect(api.lists == reads)
+        await model.loadHistory(favorite: true)
+        #expect(api.lists == reads + 1)
+        #expect(model.history.count == 1)
+    }
+
+    @Test
+    func aBookmarkFromTheConversationDoesNotKeepAnEmptyList() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        await self.send(model)
+        if let record = model.turns.last?.record { await model.toggleFavorite(record) }
+        await model.loadHistory(favorite: false)
+        #expect(api.lists == 1)
+        #expect(model.history.count == 1)
+    }
+
+    @Test
     func spendingReadsTheBalanceAgain() async throws {
         let api = try VocabularyTestAPI(), model = self.model(api)
         await model.load()
@@ -221,6 +272,7 @@ struct VocabularyTests {
             query: "borrow",
             repository: failing,
             offerCache: Self.offerCache(defaults),
+            historyCache: AssistantHistoryCache(),
             language: FakeLanguageContext(learningDirection: .zhEn),
             identity: VocabularyTestViewer(),
             journal: VocabularyTestJournal(),

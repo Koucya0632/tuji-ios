@@ -46,6 +46,9 @@ final class GrammarModel {
     private(set) var offerCurrent = false
     private(set) var turns: [GrammarTurn] = []
     private(set) var spotlight: Spotlight?
+    /// `history` came from a read (or a kept one), not just the empty start:
+    /// only then may it stand as a filter's kept list.
+    @ObservationIgnored private var historyLoaded = false
     private(set) var history: [GrammarRecord] = []
     private(set) var nextCursor: String?
     private(set) var pending: GrammarInput?
@@ -59,6 +62,7 @@ final class GrammarModel {
     let progress: GrammarProgressStoring
     private let repository: GrammarStudying
     private let offerCache: AssistantOfferCache<GrammarOffer>
+    private let historyCache: AssistantHistoryCache<GrammarRecord>
     private let language: LanguageContext
     private let identity: ViewerIdentity
     private let journal: GrammarJournaling
@@ -90,6 +94,7 @@ final class GrammarModel {
         query: String = "",
         repository: GrammarStudying = LiveGrammarRepository(),
         offerCache: AssistantOfferCache<GrammarOffer> = AssistantOfferCaches.grammar,
+        historyCache: AssistantHistoryCache<GrammarRecord> = AssistantHistoryCaches.grammar,
         language: LanguageContext = SettingsStore.shared,
         identity: ViewerIdentity = AuthService.shared,
         journal: GrammarJournaling = DefaultsGrammarJournal(),
@@ -99,6 +104,7 @@ final class GrammarModel {
         self.query = query
         self.repository = repository
         self.offerCache = offerCache
+        self.historyCache = historyCache
         self.language = language
         self.identity = identity
         self.journal = journal
@@ -187,6 +193,7 @@ final class GrammarModel {
             self.turns = []
             self.spotlight = nil
             self.history = []
+            self.historyLoaded = false
             self.nextCursor = nil
             self.pending = nil
             self.offer = nil
@@ -402,6 +409,7 @@ final class GrammarModel {
 
     private func accept(_ record: GrammarRecord, owner: String) {
         guard record.status != .pending else { return }
+        self.historyCache.invalidate(owner: owner)
         self.journal.remove(id: record.id, owner: owner)
         if self.pending?.requestId == record.id { self.pending = nil }
         if record.status == .deleted {
@@ -498,8 +506,22 @@ final class GrammarModel {
 
     // MARK: - 語法紀錄
 
-    func loadHistory(_ filter: HistoryFilter, more: Bool = false) async {
+    /// Opening 語法紀錄 again shows the list this launch already read; `force`
+    /// (pull to refresh, 重試) reads it anyway.
+    func loadHistory(_ filter: HistoryFilter, more: Bool = false, force: Bool = false) async {
         guard !more || !self.loadingHistory else { return }
+        if !more, !force, let owner = self.owner,
+           let kept = self.historyCache.page(owner: owner, filter: self.historyFilterKey(filter))
+        {
+            self.historyRequest = UUID()
+            self.loadingHistory = false
+            self.historyMessage = nil
+            self.historyFilter = filter
+            self.history = kept.records
+            self.historyLoaded = true
+            self.nextCursor = kept.nextCursor
+            return
+        }
         let request = UUID()
         self.historyRequest = request
         self.loadingHistory = true
@@ -516,7 +538,9 @@ final class GrammarModel {
             guard scope == self.scopeID, request == self.historyRequest else { return }
             self.historyFilter = filter
             self.history = more ? self.history + list.records : list.records
+            self.historyLoaded = true
             self.nextCursor = list.nextCursor
+            self.keepHistory()
         } catch {
             if scope == self.scopeID, request == self.historyRequest {
                 self.historyMessage = tujiLocalized("無法讀取語法紀錄，請重試。")
@@ -534,6 +558,9 @@ final class GrammarModel {
                 guard row.id == updated.id else { return row }
                 return self.historyFilter.favorite && !updated.favorite ? nil : updated
             }
+            // The other filters' lists hold this row too: only the open one is right.
+            if let owner = self.owner { self.historyCache.invalidate(owner: owner) }
+            self.keepHistory()
         } catch {
             guard scope == self.scopeID else { return }
             self.message = tujiLocalized("無法更新書籤，請重試。")
@@ -552,7 +579,23 @@ final class GrammarModel {
             }
             self.history.removeAll { $0.id == record.id }
             self.turns.removeAll { $0.id == record.id }
+            if let owner = self.owner { self.historyCache.invalidate(owner: owner) }
+            self.keepHistory()
         } catch { self.historyMessage = tujiLocalized("無法刪除紀錄，請重試。") }
+    }
+
+    private func historyFilterKey(_ filter: HistoryFilter) -> String {
+        "\(self.learning)|\(filter.favorite)|\(filter.mode?.rawValue ?? "")"
+    }
+
+    /// The list on screen, as the kept one for its filter.
+    private func keepHistory() {
+        guard self.historyLoaded, let owner = self.owner else { return }
+        self.historyCache.store(
+            .init(records: self.history, nextCursor: self.nextCursor),
+            owner: owner,
+            filter: self.historyFilterKey(self.historyFilter)
+        )
     }
 
     private func append(_ turn: GrammarTurn) {
