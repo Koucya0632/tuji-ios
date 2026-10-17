@@ -412,26 +412,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 ## Domain — 助手
 
-- **助手首頁 (`AssistantHomeView`)** — behind the cat on 今天, an entry to the four
-  assistant capabilities: AI 查詞, 問 AI, 情境故事, 主題對話. Its 2D cat breathes/blinks and wags on tap;
-  it makes no service request. `AssistantChatEntry` hands text or an intent to
-  a separate conversation. `AssistantChatModel.start` applies it once per model,
-  never again on a detail's return, and never spends points on entry.
-- **助手 (`AssistantResponding`)** — the conversation behind that home. The seam is the
-  question → answer step. `LocalAssistantResponder` answers from what the device already
-  holds: 分類, 詞條, 書籤, 物見卡片, and — its one network read — 收藏的合集. It calls no
-  model and costs nothing. `TieredAssistantResponder` wraps it and adds the one paid step.
-- **問 AI (`AssistantAsking`)** — the question the device could not answer, sent to a model
-  (Claude Haiku 5.5, tuji-web `/api/assistant/ask`) and paid in 罐頭點數. Three rules hold
-  it together: **a lookup that found something never reaches the model** (a free answer is
-  not improved by a paid one); **typing never spends points** — an empty lookup only makes
-  the *offer*, priced as a range, and the question leaves when the person taps it
-  (`AssistantIntent.askModel` is never produced by `parse`); and **a failure charges
-  nothing and keeps its request id**, so a retry after a lost response is the same request
-  to the server rather than a second charge. The price follows the answer's tokens between
-  a floor and a ceiling; the server decides it. The app does not print it under the
-  answer — what was spent is read on 點數明細.
-  _Avoid_：把第一級的查表叫「AI 回覆」；會扣點的只有「問 AI」這一步。
+- **助手首頁 (`AssistantHomeView`)** — behind the cat on 今天, an entry to the three
+  assistant capabilities: AI 查詞, 情境故事, 主題對話. Its 2D cat breathes/blinks and wags on tap;
+  it makes no service request. The free-form 問 AI conversation (and its home question
+  field) was removed on 2026-10-17; the server's `/api/assistant/ask` no longer has an iOS caller.
 - **AI 查詞 (vocabulary)** — a paid card about one word or short phrase, in one of three
   modes: 查詞 (meaning at a glance), 單詞深度解析 (near-synonyms, usage, collocations) and
   助記 (a memory aid). It replaced 查單字 on 助手首頁. It is a different product from a

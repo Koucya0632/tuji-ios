@@ -16,9 +16,6 @@ enum NavRoute: Hashable {
     case search(query: String?)
     /// 助手首頁 — the existing cat entry on 今天.
     case assistant
-    /// Its conversation shares the stack with word/category details, retaining
-    /// messages and applying the initial entry only once.
-    case assistantChat(entry: AssistantChatEntry)
     /// 點數明細 — the balance, where it came from and where it went. Reached
     /// from 助手, the one screen that spends points a few at a time.
     case creditStatement
