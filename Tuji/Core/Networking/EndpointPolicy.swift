@@ -99,6 +99,14 @@ extension EndpointPolicy {
         cachePolicy: .reloadIgnoringLocalCacheData,
         timeout: 60
     )
+
+    /// AI 語法: a practice set is five questions with every option explained,
+    /// 30–50 s on the server, which can run to 120 s. Waiting it out beats
+    /// timing out into a second request for the same result.
+    static let privateFreshLong = EndpointPolicy(
+        cachePolicy: .reloadIgnoringLocalCacheData,
+        timeout: 130
+    )
 }
 
 /// One endpoint's complete description. Built once per request by `APIClient`.

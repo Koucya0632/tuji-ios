@@ -57,7 +57,7 @@ struct VocabularyView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s5) {
-                    VocabularyMoiraRow {
+                    MoiraReplyRow {
                         Text("打一個單字、短語或中文意思給我，選好查詞、深度解析或助記再送出。")
                             .font(.tujiBody)
                             .fixedSize(horizontal: false, vertical: true)
@@ -65,7 +65,7 @@ struct VocabularyView: View {
                     ForEach(self.model.turns) { turn in
                         VStack(alignment: .leading, spacing: Space.s3) {
                             VocabularyAskRow(input: turn.input)
-                            VocabularyMoiraRow { self.reply(turn) }
+                            MoiraReplyRow { self.reply(turn) }
                         }
                         .id(turn.id)
                     }
@@ -348,21 +348,6 @@ struct VocabularyView: View {
 }
 
 // MARK: - 對話的兩邊
-
-/// Moira's side: her face, and the words beside it rather than in a bubble —
-/// a card is far longer than a bubble can hold.
-private struct VocabularyMoiraRow<Content: View>: View {
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        HStack(alignment: .top, spacing: Space.s2) {
-            Mascot(pose: .face, size: 36)
-            VStack(alignment: .leading, spacing: Space.s3) { self.content }
-                .frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
-        }
-        .accessibilityElement(children: .contain)
-    }
-}
 
 /// What was asked: the word, the mode, and the sense or sentence that narrowed it.
 private struct VocabularyAskRow: View {

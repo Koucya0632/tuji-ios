@@ -1,0 +1,453 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-000000000000",
+    "status": "completed",
+    "input": {
+      "requestId": "00000000-0000-4000-8000-000000000000",
+      "mode": "explain",
+      "query": "〜たことがある",
+      "context": "",
+      "compareWith": "",
+      "focus": "",
+      "difficulty": "basic",
+      "practiceType": "mixed",
+      "sourceRecordId": null,
+      "uiLanguage": "zh-Hant",
+      "learningDirection": "zh-ja",
+      "pricingVersion": "grammar-2026-10-v1",
+      "maxPoints": 8
+    },
+    "result": {
+      "outcome": "completed",
+      "message": "",
+      "candidates": [],
+      "content": {
+        "mode": "explain",
+        "summary": {
+          "name": "〜たことがある",
+          "meaning": "表示曾經有過的經驗",
+          "explanation": "說自己或別人過去做過某件事的經驗。",
+          "highlight": null
+        },
+        "structure": {
+          "formula": "動詞た形 ＋ ことがある",
+          "parts": [
+            {
+              "part": "動詞た形",
+              "role": "過去做過的動作"
+            },
+            {
+              "part": "ことがある",
+              "role": "表示有這樣的經驗"
+            }
+          ],
+          "breakdown": null,
+          "forms": "行く → 行った、食べる → 食べた"
+        },
+        "rules": [
+          {
+            "title": "說的是經驗",
+            "explanation": "不用在昨天剛做的事。"
+          },
+          {
+            "title": "否定",
+            "explanation": "〜たことがない 表示從來沒有。"
+          }
+        ],
+        "examples": [
+          {
+            "text": "日本に行ったことがあります。",
+            "reading": "にほんにいったことがあります。",
+            "translation": "我去過日本。",
+            "note": "最基本的經驗句。"
+          },
+          {
+            "text": "寿司を食べたことがない。",
+            "reading": "すしをたべたことがない。",
+            "translation": "我沒吃過壽司。",
+            "note": "否定形。"
+          },
+          {
+            "text": "富士山に登ったことがありますか。",
+            "reading": null,
+            "translation": "你爬過富士山嗎？",
+            "note": "問對方的經驗。"
+          }
+        ],
+        "scenes": [
+          {
+            "situation": "自我介紹",
+            "use": "說自己去過的地方。",
+            "avoid": null
+          },
+          {
+            "situation": "聊旅行",
+            "use": "問對方有沒有去過。",
+            "avoid": "說今天早上做的事不用這個句型。"
+          }
+        ]
+      }
+    },
+    "charged": 4,
+    "favorite": false,
+    "createdAt": "2026-10-18T00:00:00.000Z",
+    "templateVersion": "grammar-2026-10-v1",
+    "error": null
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000001",
+    "status": "completed",
+    "input": {
+      "requestId": "00000000-0000-4000-8000-000000000001",
+      "mode": "compare",
+      "query": "〜たことがある",
+      "context": "",
+      "compareWith": "",
+      "focus": "",
+      "difficulty": "basic",
+      "practiceType": "mixed",
+      "sourceRecordId": null,
+      "uiLanguage": "zh-Hant",
+      "learningDirection": "zh-ja",
+      "pricingVersion": "grammar-2026-10-v1",
+      "maxPoints": 10
+    },
+    "result": {
+      "outcome": "completed",
+      "message": "",
+      "candidates": [],
+      "content": {
+        "mode": "compare",
+        "a": {
+          "name": "〜たことがある",
+          "meaning": "曾經有過的經驗"
+        },
+        "b": {
+          "name": "〜ことがある",
+          "meaning": "有時會發生"
+        },
+        "chosenBecause": "兩者只差一個た形，初學者很容易混淆。",
+        "summary": "前者說過去的經驗，後者說偶爾會發生的事。",
+        "similarity": {
+          "shared": "都用ことがある結尾。",
+          "aFocus": "過去有沒有經驗。",
+          "bFocus": "現在偶爾會發生。",
+          "interchangeable": "not"
+        },
+        "dimensions": [
+          {
+            "aspect": "接續",
+            "a": "動詞た形",
+            "b": "動詞辭書形"
+          },
+          {
+            "aspect": "意思",
+            "a": "經驗",
+            "b": "有時候"
+          },
+          {
+            "aspect": "時間",
+            "a": "過去",
+            "b": "習慣、現在"
+          }
+        ],
+        "pitfalls": [
+          {
+            "wrong": "昨日、映画を見たことがある。",
+            "fixed": "昨日、映画を見た。",
+            "kind": "meaning",
+            "reason": "昨天的單一事件不是經驗。"
+          }
+        ],
+        "substitutions": [
+          {
+            "situation": "談吃納豆",
+            "a": {
+              "text": "納豆を食べたことがある。",
+              "reading": null,
+              "translation": "我吃過納豆。",
+              "note": null
+            },
+            "b": {
+              "text": "納豆を食べることがある。",
+              "reading": null,
+              "translation": "我有時會吃納豆。",
+              "note": null
+            },
+            "verdict": "not",
+            "explanation": "換了意思就變了。"
+          }
+        ]
+      }
+    },
+    "charged": 4,
+    "favorite": false,
+    "createdAt": "2026-10-18T00:00:00.000Z",
+    "templateVersion": "grammar-2026-10-v1",
+    "error": null
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000002",
+    "status": "completed",
+    "input": {
+      "requestId": "00000000-0000-4000-8000-000000000002",
+      "mode": "practice",
+      "query": "〜たことがある",
+      "context": "",
+      "compareWith": "",
+      "focus": "",
+      "difficulty": "basic",
+      "practiceType": "mixed",
+      "sourceRecordId": null,
+      "uiLanguage": "zh-Hant",
+      "learningDirection": "zh-ja",
+      "pricingVersion": "grammar-2026-10-v1",
+      "maxPoints": 15
+    },
+    "result": {
+      "outcome": "completed",
+      "message": "",
+      "candidates": [],
+      "content": {
+        "mode": "practice",
+        "focus": "〜たことがある",
+        "difficulty": "basic",
+        "questions": [
+          {
+            "id": "q1",
+            "kind": "choice",
+            "context": null,
+            "prompt": "日本に（　）ことがあります。",
+            "options": [
+              {
+                "id": "a",
+                "text": "行った"
+              },
+              {
+                "id": "b",
+                "text": "行くb"
+              },
+              {
+                "id": "c",
+                "text": "行くc"
+              },
+              {
+                "id": "d",
+                "text": "行くd"
+              }
+            ],
+            "solution": "日本に行ったことがあります。",
+            "answer": "a",
+            "explanations": [
+              {
+                "optionId": "a",
+                "reason": "經驗要用た形接ことがある。"
+              },
+              {
+                "optionId": "b",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "c",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "d",
+                "reason": "辭書形接ことがある是「有時會」。"
+              }
+            ],
+            "point": "說經驗：動詞た形＋ことがある。"
+          },
+          {
+            "id": "q2",
+            "kind": "choice",
+            "context": null,
+            "prompt": "日本に（　）ことがあります。",
+            "options": [
+              {
+                "id": "a",
+                "text": "行くa"
+              },
+              {
+                "id": "b",
+                "text": "行った"
+              },
+              {
+                "id": "c",
+                "text": "行くc"
+              },
+              {
+                "id": "d",
+                "text": "行くd"
+              }
+            ],
+            "solution": "日本に行ったことがあります。",
+            "answer": "b",
+            "explanations": [
+              {
+                "optionId": "a",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "b",
+                "reason": "經驗要用た形接ことがある。"
+              },
+              {
+                "optionId": "c",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "d",
+                "reason": "辭書形接ことがある是「有時會」。"
+              }
+            ],
+            "point": "說經驗：動詞た形＋ことがある。"
+          },
+          {
+            "id": "q3",
+            "kind": "choice",
+            "context": null,
+            "prompt": "日本に（　）ことがあります。",
+            "options": [
+              {
+                "id": "a",
+                "text": "行くa"
+              },
+              {
+                "id": "b",
+                "text": "行くb"
+              },
+              {
+                "id": "c",
+                "text": "行った"
+              },
+              {
+                "id": "d",
+                "text": "行くd"
+              }
+            ],
+            "solution": "日本に行ったことがあります。",
+            "answer": "c",
+            "explanations": [
+              {
+                "optionId": "a",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "b",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "c",
+                "reason": "經驗要用た形接ことがある。"
+              },
+              {
+                "optionId": "d",
+                "reason": "辭書形接ことがある是「有時會」。"
+              }
+            ],
+            "point": "說經驗：動詞た形＋ことがある。"
+          },
+          {
+            "id": "q4",
+            "kind": "context",
+            "context": "朋友問你有沒有去過北海道，你去年去過一次。",
+            "prompt": "最自然的回答是哪一句？",
+            "options": [
+              {
+                "id": "a",
+                "text": "行くa"
+              },
+              {
+                "id": "b",
+                "text": "行くb"
+              },
+              {
+                "id": "c",
+                "text": "行くc"
+              },
+              {
+                "id": "d",
+                "text": "行った"
+              }
+            ],
+            "solution": "行った",
+            "answer": "d",
+            "explanations": [
+              {
+                "optionId": "a",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "b",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "c",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "d",
+                "reason": "經驗要用た形接ことがある。"
+              }
+            ],
+            "point": "說經驗：動詞た形＋ことがある。"
+          },
+          {
+            "id": "q5",
+            "kind": "context",
+            "context": "朋友問你有沒有去過北海道，你去年去過一次。",
+            "prompt": "最自然的回答是哪一句？",
+            "options": [
+              {
+                "id": "a",
+                "text": "行った"
+              },
+              {
+                "id": "b",
+                "text": "行くb"
+              },
+              {
+                "id": "c",
+                "text": "行くc"
+              },
+              {
+                "id": "d",
+                "text": "行くd"
+              }
+            ],
+            "solution": "行った",
+            "answer": "a",
+            "explanations": [
+              {
+                "optionId": "a",
+                "reason": "經驗要用た形接ことがある。"
+              },
+              {
+                "optionId": "b",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "c",
+                "reason": "辭書形接ことがある是「有時會」。"
+              },
+              {
+                "optionId": "d",
+                "reason": "辭書形接ことがある是「有時會」。"
+              }
+            ],
+            "point": "說經驗：動詞た形＋ことがある。"
+          }
+        ],
+        "takeaways": [
+          "經驗用た形＋ことがある。"
+        ]
+      }
+    },
+    "charged": 4,
+    "favorite": false,
+    "createdAt": "2026-10-18T00:00:00.000Z",
+    "templateVersion": "grammar-2026-10-v1",
+    "error": null
+  }
+]

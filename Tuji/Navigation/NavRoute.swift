@@ -23,6 +23,8 @@ enum NavRoute: Hashable {
     /// short dialogue around them. Reached from 助手.
     case assistantStory
     case vocabulary(query: String)
+    /// AI 語法 — explain, compare and practise grammar with Moira. Reached from 助手, under AI 查詞.
+    case grammar
     /// 圖鑑主題對話 — chat with Moira about a 圖鑑 category. Reached from a
     /// category page's 「用這個主題聊聊」, or a saved conversation.
     case topicChat(TopicChatEntry)
