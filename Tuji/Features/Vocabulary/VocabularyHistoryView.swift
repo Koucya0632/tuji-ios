@@ -10,7 +10,7 @@ struct VocabularyHistoryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s3) {
-                    Toggle("只看收藏", isOn: self.$favorites).font(.tujiBody)
+                    Toggle("只看書籤", isOn: self.$favorites).font(.tujiBody)
                     Text("已生成的內容可免費重看；重新生成會再次使用點數。")
                         .font(.tujiLabel).foregroundStyle(.tujiInk2)
                     if let message = self.model.historyMessage {
@@ -58,7 +58,16 @@ struct VocabularyHistoryView: View {
             } label: {
                 VStack(alignment: .leading, spacing: Space.s2) {
                     Text(verbatim: record.result?.content?.headword.text ?? record.input?.query ?? "").font(.tujiH3)
-                    Text(record.input?.mode.title ?? "").font(.tujiLabel)
+                    HStack(spacing: Space.s2) {
+                        Text(record.input?.mode.title ?? "").font(.tujiLabel)
+                        // A card keeps the language it was explained in; say so when it is not this one.
+                        if let code = record.input?.uiLanguage, code != self.model.uiLanguage {
+                            Text(verbatim: UILanguage(code: code).nativeName)
+                                .font(.tujiLabel).foregroundStyle(.tujiInk3)
+                                .padding(.horizontal, Space.s1)
+                                .overlay(Rectangle().stroke(Color.tujiInk3, lineWidth: 1))
+                        }
+                    }
                     Text(verbatim: record.result?.content?.headword.meaning ?? "").font(.tujiBodySm)
                     Text(verbatim: String(record.createdAt.prefix(10))).font(.tujiLabel).foregroundStyle(.tujiInk3)
                 }
@@ -67,9 +76,9 @@ struct VocabularyHistoryView: View {
             .buttonStyle(.plain)
             VStack {
                 Button { Task { await self.model.toggleFavorite(record) } } label: {
-                    Image(systemName: record.favorite ? "star.fill" : "star").frame(width: 44, height: 44)
+                    Image(systemName: record.favorite ? "bookmark.fill" : "bookmark").frame(width: 44, height: 44)
                 }
-                .accessibilityLabel(Text(record.favorite ? "取消收藏" : "收藏"))
+                .accessibilityLabel(Text(record.favorite ? "移除書籤" : "加入書籤"))
                 Button { self.deleting = record } label: { Image(systemName: "trash").frame(width: 44, height: 44) }
                     .accessibilityLabel(Text("刪除"))
             }

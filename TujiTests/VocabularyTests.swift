@@ -50,6 +50,7 @@ final class VocabularyTestAPI: VocabularyStudying {
     var offers = 0
     var available = 100
     var enabled = true
+    var reason: VocabularyOffer.Reason?
     var loseResponse = false
     var fail = false
     var hold = false
@@ -64,7 +65,8 @@ final class VocabularyTestAPI: VocabularyStudying {
     func offer() async throws -> VocabularyOffer {
         self.offers += 1
         return VocabularyOffer(
-            enabled: self.enabled,
+            enabled: self.enabled && self.reason == nil,
+            reason: self.reason,
             available: self.available,
             pricingVersion: "vocabulary-2026-10-v1",
             modes: VocabularyMode.allCases.map { .init(mode: $0, minPoints: 1, maxPoints: $0 == .analysis ? 10 : 5) }
@@ -96,16 +98,9 @@ final class VocabularyTestAPI: VocabularyStudying {
         return value
     }
 
-    func records(
-        uiLanguage: String,
-        learning: String,
-        favorite: Bool,
-        cursor: String?
-    ) async throws
-        -> VocabularyRecords
-    {
+    func records(learning: String, favorite: Bool, cursor: String?) async throws -> VocabularyRecords {
         VocabularyRecords(records: self.saved.values.filter {
-            $0.input?.uiLanguage == uiLanguage && $0.input?.learningDirection == learning && (!favorite || $0.favorite)
+            $0.input?.learningDirection == learning && (!favorite || $0.favorite)
         }, nextCursor: nil)
     }
 
@@ -137,7 +132,8 @@ struct VocabularyTests {
         _ api: VocabularyTestAPI,
         journal: VocabularyJournaling = VocabularyTestJournal(),
         viewer: VocabularyTestViewer = VocabularyTestViewer(),
-        language: FakeLanguageContext = FakeLanguageContext(learningDirection: .zhEn)
+        language: FakeLanguageContext = FakeLanguageContext(learningDirection: .zhEn),
+        dictionary: FakeDictionary = FakeDictionary(words: [])
     )
         -> VocabularyModel
     {
@@ -147,6 +143,7 @@ struct VocabularyTests {
             language: language,
             identity: viewer,
             journal: journal,
+            dictionary: dictionary,
             pollInterval: .milliseconds(1)
         )
     }
@@ -315,14 +312,103 @@ struct VocabularyTests {
 
     @Test
     func endpointsCarryPrivateLanguageScopedContracts() {
-        let list = Endpoint.vocabularyRecords(uiLanguage: "ja", learning: "zh-ja", favorite: true, cursor: "id")
+        let list = Endpoint.vocabularyRecords(learning: "zh-ja", favorite: true, cursor: "id")
         let query = Dictionary(uniqueKeysWithValues: list.descriptor.queryItems.map { ($0.name, $0.value) })
-        #expect(query["uiLanguage"] == "ja")
+        // 查詞紀錄 is scoped by learning direction alone.
+        #expect(query["uiLanguage"] == nil)
         #expect(query["learningDirection"] == "zh-ja")
         for endpoint in [list, .vocabularyOffer, .vocabularyGenerate, .vocabularyRecord(id: "id")] {
             #expect(endpoint.descriptor.policy.access == .authenticated)
             #expect(endpoint.descriptor.policy.cachePolicy == .reloadIgnoringLocalCacheData)
         }
         #expect(Endpoint.vocabularyGenerate.descriptor.policy.timeout == 60)
+    }
+
+    @Test
+    func changingInterfaceLanguageKeepsPaidCardsAndOpensThemFromHistory() async throws {
+        let api = try VocabularyTestAPI(), language = FakeLanguageContext(learningDirection: .zhEn)
+        let model = self.model(api, language: language)
+        await model.load()
+        await model.generate()
+        let card = try #require(model.current)
+        language.uiLang = "ja"
+        await model.load()
+        // A typed query finds only cards explained in the current language…
+        #expect(model.current == nil)
+        await model.loadHistory(favorite: false)
+        #expect(model.history.map(\.id) == [card.id])
+        // …but a card opened from 查詞紀錄 is shown in the language it was made in.
+        model.open(card)
+        #expect(model.current?.id == card.id)
+        #expect(api.calls.count == 1)
+    }
+
+    @Test
+    func blockersSayWhyGenerationIsClosed() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        #expect(model.blocker == nil)
+        api.reason = .membership
+        await model.load()
+        #expect(model.blocker == .membership)
+        #expect(!model.canGenerate)
+        api.reason = .disabled
+        await model.load()
+        #expect(model.blocker == .disabled)
+        api.reason = nil
+        api.available = 4
+        await model.load()
+        #expect(model.blocker == .insufficientPoints)
+        await model.generate()
+        #expect(api.calls.isEmpty)
+    }
+
+    @Test
+    func catalogHintPointsOnlyAtOfficialWordsThatMatchExactly() throws {
+        func word(_ id: String, _ text: String, _ chinese: String) -> CardWord {
+            CardWord(
+                id: id,
+                word: text,
+                chinese: chinese,
+                imageUrl: "",
+                category: "test",
+                pronunciation: "",
+                reading: nil
+            )
+        }
+        let dictionary = FakeDictionary(words: [
+            word("borrow", "borrow", "借入"),
+            word("lend", "lend", "借出"),
+            word("loan", "loan", "借出"),
+            word("borrower", "borrower", "借款人"),
+            word("atlas:1", "borrow", "借入"),
+            word("saved:x", "borrow", "借入")
+        ])
+        let model = try self.model(VocabularyTestAPI(), dictionary: dictionary)
+        #expect(model.catalogMatches.map(\.id) == ["borrow"])
+        model.query = " 借入 "
+        #expect(model.catalogMatches.map(\.id) == ["borrow"])
+        model.query = "借出"
+        #expect(model.catalogMatches.map(\.id) == ["lend", "loan"])
+        model.query = "borro"
+        #expect(model.catalogMatches.isEmpty)
+    }
+
+    @Test
+    func onlyMnemonicKeepsAnotherCardAsTheMainAction() async throws {
+        let api = try VocabularyTestAPI(), model = self.model(api)
+        await model.load()
+        #expect(!model.regenerationIsSecondary)
+        await model.generate()
+        #expect(model.regenerationIsSecondary)
+        model.mode = .mnemonic
+        await model.generate()
+        #expect(model.current?.input?.mode == .mnemonic)
+        #expect(!model.regenerationIsSecondary)
+        // Regenerating keeps both paid cards.
+        model.mode = .lookup
+        await model.generate()
+        #expect(api.calls.count == 3)
+        #expect(api.saved.count == 3)
     }
 }

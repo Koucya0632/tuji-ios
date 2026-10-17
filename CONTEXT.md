@@ -141,8 +141,10 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   one to cover another. They differ along two axes: *what object* (a word or a collection)
   and *what intent* (keep it, or learn it). The distinction is load-bearing, because only
   the learning half changes what the user is asked to review tomorrow.
-  - **書籤 (bookmark a word)** — "I want to look at this word again." A dictionary word,
-    device-local copy of the account's list, never reaches the study queue.
+  - **書籤 (bookmark)** — "I want to look at this again." Marks a dictionary word
+    (device-local copy of the account's list) or an AI 查詞 card (kept with that card in
+    查詞紀錄). The two lists are separate: a card's 書籤 never shows in 圖鑑's 書籤 filter.
+    Neither reaches the study queue.
   - **收藏 (save a collection)** — "I want this collection." It is *not* merely a marker:
     it unlocks browsing every member and counts toward the author's cumulative save count
     (the altruistic signal on their Author profile). It creates no cards.
@@ -248,7 +250,7 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   The split reads the subject's *script*, not `targetLanguage`: that field is optional, and
   バスマット is a `.term` too. The ladder gates the stage on the same value, so a scheduled
   拼字 task always has a board.
-- **補充 (enrichment)** — the AI pass that fills a captured item's 釋義, 助記, 詞源 and the
+- **補充 (enrichment)** — the AI pass that fills a captured item's 釋義, 記憶小撇步, 詞源 and the
   per-language gloss. One pass is three to four paid model calls, not one. It runs **once
   per confirmed card, as the included fulfillment of the 識別操作 that made it**, on the
   server's worker — no client triggers it and no read does (docs/adr/0016). Its states live
@@ -410,8 +412,8 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 ## Domain — 助手
 
-- **助手首頁 (`AssistantHomeView`)** — behind the cat on 今天, an entry to the five
-  existing assistant capabilities. Its 2D cat breathes/blinks and wags on tap;
+- **助手首頁 (`AssistantHomeView`)** — behind the cat on 今天, an entry to the four
+  assistant capabilities: AI 查詞, 問 AI, 情境故事, 主題對話. Its 2D cat breathes/blinks and wags on tap;
   it makes no service request. `AssistantChatEntry` hands text or an intent to
   a separate conversation. `AssistantChatModel.start` applies it once per model,
   never again on a detail's return, and never spends points on entry.
@@ -430,6 +432,23 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   a floor and a ceiling; the server decides it. The app does not print it under the
   answer — what was spent is read on 點數明細.
   _Avoid_：把第一級的查表叫「AI 回覆」；會扣點的只有「問 AI」這一步。
+- **AI 查詞 (vocabulary)** — a paid card about one word or short phrase, in one of three
+  modes: 查詞 (meaning at a glance), 單詞深度解析 (near-synonyms, usage, collocations) and
+  助記 (a memory aid). It replaced 查單字 on 助手首頁. It is a different product from a
+  詞條's free detail, so finding the word in 圖鑑 does not stop it from charging — but when
+  the word is there — an official 詞條 whose word or Chinese meaning is exactly what was
+  typed; 自製 cards do not count — the free 詞條 is pointed to beside the button (or how
+  many, when the meaning matches several), so the free path is always in sight. Only the tap on 生成 spends; a saved card is reread for free.
+  _Avoid_：「查單字」for this — that name was the free local lookup it replaced.
+- **助記 (mnemonic)** — AI 查詞's memory-aid mode: an imagined scene, a memory technique, a
+  sentence to retell and a recall question for one chosen meaning.
+  _Avoid_：助記 for the short memory tip 補充 stores on a 詞條 — that is 記憶小撇步.
+- **記憶小撇步 (memory tip)** — the short memory tip 補充 writes onto a 詞條.
+- **查詞紀錄 (vocabulary history)** — the one home of a person's AI 查詞 cards, kept per
+  learning direction. Changing the interface language hides none of them: a card keeps
+  the language it was explained in, and the list says which. A card belongs to no 詞條: it is not shown on a
+  詞條's detail, not stored as 筆記, and never enters 複習, even when it was made from that
+  詞條's page.
 - **情境故事 (`AssistantStoryWriting`, `StoryBuilderModel`)** — 助手's second paid step
   (tuji-web `/api/assistant/story`, Claude Haiku 5.5). The person picks one to three
   單字 — official or their own 自製 cards, never 物見 — then a 場地, a 場地情況 that belongs

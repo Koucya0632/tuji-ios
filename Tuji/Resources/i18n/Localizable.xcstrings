@@ -162,6 +162,167 @@
         }
       }
     },
+    "圖鑑裡有這個詞，免費看詳情" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This word is in your atlas — see it free"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑にある単語です。無料で詳細を見る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图鉴里有这个词，免费看详情"
+          }
+        }
+      }
+    },
+    "圖鑑裡有 %lld 個相關詞，免費看詳情" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld matching words in your atlas — see them free"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑に関連する単語が %lld 件あります。無料で詳細を見る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图鉴里有 %lld 个相关词，免费看详情"
+          }
+        }
+      }
+    },
+    "AI 查詞是會員功能" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI word lookup is a member feature"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI単語学習は会員向けの機能です"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 查词是会员功能"
+          }
+        }
+      }
+    },
+    "成為永久會員就能用罐頭點數查詞；既有紀錄仍可閱讀。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Become a lifetime member to look up words with credits. Your saved cards stay readable."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久会員になるとポイントで単語学習を使えます。保存済みの内容はそのまま読めます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "成为永久会员就能用罐头点数查词；已有记录仍可阅读。"
+          }
+        }
+      }
+    },
+    "內容不理想？重新生成（最多 %lld 點）" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not quite right? Generate again (up to %lld credits)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容がいまひとつですか？ 再生成（上限 %lld ポイント）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容不理想？重新生成（最多 %lld 点）"
+          }
+        }
+      }
+    },
+    "只看書籤" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bookmarks only"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークのみ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只看书签"
+          }
+        }
+      }
+    },
+    "無法更新書籤，請重試。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't update the bookmark. Try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークを更新できませんでした。もう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法更新书签，请重试。"
+          }
+        }
+      }
+    },
     "詞義速查" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -484,29 +645,6 @@
         }
       }
     },
-    "只看收藏" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Favorites only"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "お気に入りのみ"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "只看收藏"
-          }
-        }
-      }
-    },
     "已生成的內容可免費重看；重新生成會再次使用點數。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -618,29 +756,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除后无法复原；重新生成会再次使用点数。"
-          }
-        }
-      }
-    },
-    "取消收藏" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove from favorites"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "お気に入りから削除"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "取消收藏"
           }
         }
       }
@@ -779,29 +894,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法读取查词纪录，请重试。"
-          }
-        }
-      }
-    },
-    "無法更新收藏，請重試。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Could not update favorites. Please retry."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "お気に入りを更新できませんでした。もう一度お試しください。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法更新收藏，请重试。"
           }
         }
       }
@@ -1400,29 +1492,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "换个助记"
-          }
-        }
-      }
-    },
-    "重新生成" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Generate again"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "再生成"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重新生成"
           }
         }
       }

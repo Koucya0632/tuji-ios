@@ -50,7 +50,14 @@ struct VocabularyOffer: Decodable, Equatable {
         let maxPoints: Int
     }
 
+    /// Why generation is closed: switched off for everyone, or a member feature.
+    /// Too few points is not a reason here — the app compares `available` itself.
+    enum Reason: String, Decodable, Equatable {
+        case disabled, membership
+    }
+
     let enabled: Bool
+    var reason: Reason?
     let available: Int
     let pricingVersion: String
     let modes: [Price]
@@ -189,8 +196,7 @@ protocol VocabularyStudying {
     func offer() async throws -> VocabularyOffer
     func generate(_ input: VocabularyInput) async throws -> VocabularyRecord
     func record(id: String) async throws -> VocabularyRecord
-    func records(uiLanguage: String, learning: String, favorite: Bool, cursor: String?) async throws
-        -> VocabularyRecords
+    func records(learning: String, favorite: Bool, cursor: String?) async throws -> VocabularyRecords
     func favorite(id: String, value: Bool) async throws -> VocabularyRecord
     func delete(id: String) async throws
 }
@@ -213,20 +219,8 @@ struct LiveVocabularyRepository: VocabularyStudying {
         return value.record
     }
 
-    func records(
-        uiLanguage: String,
-        learning: String,
-        favorite: Bool,
-        cursor: String?
-    ) async throws
-        -> VocabularyRecords
-    {
-        try await self.api.get(.vocabularyRecords(
-            uiLanguage: uiLanguage,
-            learning: learning,
-            favorite: favorite,
-            cursor: cursor
-        ))
+    func records(learning: String, favorite: Bool, cursor: String?) async throws -> VocabularyRecords {
+        try await self.api.get(.vocabularyRecords(learning: learning, favorite: favorite, cursor: cursor))
     }
 
     func favorite(id: String, value: Bool) async throws -> VocabularyRecord {
