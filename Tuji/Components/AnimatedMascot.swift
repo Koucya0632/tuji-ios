@@ -31,7 +31,8 @@ struct AnimatedMascot: View {
             }
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        // No press dimming: the cat answers by wagging, the moment a finger lands.
+        .buttonStyle(MascotPress(onPress: self.wag))
         .accessibilityLabel(Text("摸摸 Tuji"))
         .accessibilityHint(Text("點擊讓 Tuji 甩尾巴"))
         .accessibilityIdentifier("assistant-mascot")
@@ -54,13 +55,31 @@ struct AnimatedMascot: View {
         }
     }
 
-    private func pet() {
+    private func wag() {
         if self.animating {
             self.wagStarted = Date()
+        }
+    }
+
+    private func pet() {
+        // A touch already wagged on press; VoiceOver activation never presses.
+        if self.wagStarted.map({ Date().timeIntervalSince($0) > 1.65 }) ?? true {
+            self.wag()
         }
         if self.reduceMotion || UIAccessibility.isVoiceOverRunning {
             UIAccessibility.post(notification: .announcement, argument: tujiLocalized("Tuji 收到你的摸摸了。"))
         }
+    }
+}
+
+private struct MascotPress: ButtonStyle {
+    let onPress: () -> Void
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed { self.onPress() }
+            }
     }
 }
 
