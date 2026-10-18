@@ -70,6 +70,29 @@
         }
       }
     },
+    "Moira 收到你的摸摸了。" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moira felt your gentle pat."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moiraになでなでが届きました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moira 收到你的摸摸了。"
+          }
+        }
+      }
+    },
     "一次一題，確認答案後才會看到解析。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -617,6 +640,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "换一组题目（最多 %lld 点）"
+          }
+        }
+      }
+    },
+    "摸摸 Moira" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pet Moira"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moiraをなでる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摸摸 Moira"
           }
         }
       }
@@ -5899,29 +5945,6 @@
         }
       }
     },
-    "摸摸 Tuji" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pet Tuji"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tujiをなでる"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "摸摸 Tuji"
-          }
-        }
-      }
-    },
     "選一個圖鑑主題" : {
       "localizations" : {
         "en" : {
@@ -6185,52 +6208,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "首次作答答对 %lld／%lld 题"
-          }
-        }
-      }
-    },
-    "點擊讓 Tuji 甩尾巴" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap to make Tuji wag its tail"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "タップするとTujiがしっぽを振ります"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "点击让 Tuji 甩尾巴"
-          }
-        }
-      }
-    },
-    "Tuji 收到你的摸摸了。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tuji felt your gentle pat."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tujiになでなでが届きました。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tuji 收到你的摸摸了。"
           }
         }
       }
@@ -25363,6 +25340,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点底下中间的相机，拍一张就能做卡片。"
+          }
+        }
+      }
+    },
+    "點擊讓 Moira 甩尾巴" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap for a tail wag from Moira"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タップするとMoiraがしっぽを振ります"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击让 Moira 甩尾巴"
           }
         }
       }

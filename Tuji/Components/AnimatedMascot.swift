@@ -33,8 +33,8 @@ struct AnimatedMascot: View {
         }
         // No press dimming: the cat answers by wagging, the moment a finger lands.
         .buttonStyle(MascotPress(onPress: self.wag))
-        .accessibilityLabel(Text("摸摸 Tuji"))
-        .accessibilityHint(Text("點擊讓 Tuji 甩尾巴"))
+        .accessibilityLabel(Text("摸摸 Moira"))
+        .accessibilityHint(Text("點擊讓 Moira 甩尾巴"))
         .accessibilityIdentifier("assistant-mascot")
         .onAppear { self.visible = true }
         .onDisappear { self.visible = false }
@@ -67,7 +67,7 @@ struct AnimatedMascot: View {
             self.wag()
         }
         if self.reduceMotion || UIAccessibility.isVoiceOverRunning {
-            UIAccessibility.post(notification: .announcement, argument: tujiLocalized("Tuji 收到你的摸摸了。"))
+            UIAccessibility.post(notification: .announcement, argument: tujiLocalized("Moira 收到你的摸摸了。"))
         }
     }
 }
