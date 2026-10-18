@@ -16911,28 +16911,6 @@
         }
       }
     },
-    "有問題可以點擊我" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Got a question? Tap me"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "質問があればタップしてね"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "有问题可以点击我"
-          }
-        }
-      }
-    },
     "有效至 %@，每月補滿、不累積" : {
       "localizations" : {
         "en" : {
@@ -25340,6 +25318,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点底下中间的相机，拍一张就能做卡片。"
+          }
+        }
+      }
+    },
+    "點擊我一起學習" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap me to learn together"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タップして一緒に学ぼう"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击我一起学习"
           }
         }
       }
