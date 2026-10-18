@@ -346,7 +346,7 @@ struct TodayView: View {
         .overlay(alignment: .topTrailing) {
             NavigationLink(value: NavRoute.assistant) {
                 HStack(alignment: .bottom, spacing: 0) {
-                    Text("有問題可以點擊我")
+                    Text("點擊我一起學習")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk)
                         .lineLimit(1)

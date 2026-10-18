@@ -6189,6 +6189,28 @@
         }
       }
     },
+    "點擊我一起學習" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap me to learn together"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タップして一緒に学ぼう"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击我一起学习"
+          }
+        }
+      }
+    },
     "點擊讓 Tuji 甩尾巴" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -16930,28 +16952,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有印象，但要再看几次"
-          }
-        }
-      }
-    },
-    "有問題可以點擊我" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Got a question? Tap me"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "質問があればタップしてね"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "有问题可以点击我"
           }
         }
       }
