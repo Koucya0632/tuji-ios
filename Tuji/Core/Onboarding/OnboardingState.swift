@@ -1,8 +1,6 @@
-// Tracks whether the user has been through the marketing intro pages,
-// the per-account Setup picker, and the first-run feature tour. All are
-// persisted in UserDefaults.
+// Tracks whether the user has been through the per-account Setup picker and
+// the first-run feature tour. Both are persisted in UserDefaults.
 //
-// introDone is device-global (it's marketing for any user).
 // tourDone is device-global (the tour explains the UI, not the account).
 // setupDone is per-user (each new account gets its own picker).
 
@@ -27,14 +25,9 @@ protocol OnboardingRecord: AnyObject {
 final class OnboardingState: OnboardingRecord {
     static let shared = OnboardingState()
 
-    private let introKey = "tuji.onboarding.introDone"
     private let tourKey = "tuji.onboarding.tourDone"
     private let reviewHintKey = "tuji.study.reviewHintTaught"
     private let learningDirectionKey = "tuji.learning.direction"
-
-    var introDone: Bool {
-        didSet { UserDefaults.standard.set(introDone, forKey: introKey) }
-    }
 
     var tourDone: Bool {
         didSet { UserDefaults.standard.set(tourDone, forKey: tourKey) }
@@ -64,7 +57,6 @@ final class OnboardingState: OnboardingRecord {
     private(set) var setupDoneByUser: [String: Bool] = [:]
 
     private init() {
-        introDone = UserDefaults.standard.bool(forKey: introKey)
         tourDone = UserDefaults.standard.bool(forKey: tourKey)
         reviewHintTaught = UserDefaults.standard.bool(forKey: reviewHintKey)
         learningDirection = UserDefaults.standard.string(forKey: learningDirectionKey)

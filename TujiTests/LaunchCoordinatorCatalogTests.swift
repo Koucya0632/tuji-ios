@@ -27,8 +27,7 @@ struct LaunchCoordinatorCatalogTests {
         )
         let context = LaunchDestinationContext(
             account: .signedIn(userID: userID, setupDone: true),
-            learningDirectionSelected: true,
-            introDone: true
+            learningDirectionSelected: true
         )
 
         let start = Task { await coordinator.start() }
@@ -81,8 +80,7 @@ struct LaunchCoordinatorCatalogTests {
         await self.yieldUntil { finalizationStarts == 1 }
         let context = LaunchDestinationContext(
             account: .signedIn(userID: userID, setupDone: false),
-            learningDirectionSelected: true,
-            introDone: true
+            learningDirectionSelected: true
         )
 
         #expect(coordinator.launchReady)
@@ -118,8 +116,7 @@ struct LaunchCoordinatorCatalogTests {
         await coordinator.waitForBackgroundWork()
         let context = LaunchDestinationContext(
             account: .signedIn(userID: userID, setupDone: true),
-            learningDirectionSelected: true,
-            introDone: true
+            learningDirectionSelected: true
         )
 
         #expect(attemptedCatalogLoad)
@@ -221,8 +218,7 @@ struct LaunchCoordinatorCatalogTests {
             catalogReady: coordinator.catalogReady(for: account),
             context: LaunchDestinationContext(
                 account: account,
-                learningDirectionSelected: true,
-                introDone: true
+                learningDirectionSelected: true
             )
         ) == .splash)
 

@@ -1,5 +1,6 @@
-// First screen when not signed in. Offers Apple / Google / Email sign-in;
-// the app is used with an account.
+// Step 2 of the run-in: make an account. Offers Apple / Google / Email
+// sign-in; the app is used with an account, so this says what the account
+// keeps rather than only showing the logo.
 
 import SwiftUI
 
@@ -23,9 +24,26 @@ struct WelcomeView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
-            Spacer()
-            TujiBrandLockup(scale: 0.88)
-            Spacer()
+            OnboardingStepBar(step: .account)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.s4) {
+                    MascotFigure(pose: .cheer, size: 120)
+                        .frame(maxWidth: .infinity)
+                    VStack(alignment: .leading, spacing: Space.s2) {
+                        Text("建立帳號，開始收集單字")
+                            .font(.tujiH1)
+                            .foregroundStyle(.tujiInk)
+                        Text("學過的字、你的圖鑑和連續天數都存在帳號裡，換手機也不會不見。")
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk3)
+                    }
+                }
+                .padding(.horizontal, Space.s4)
+                .padding(.top, Space.s5)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollBounceBehavior(.basedOnSize)
 
             VStack(spacing: Space.s3) {
                 AppleSignInButton()
@@ -84,6 +102,7 @@ struct WelcomeView: View {
             // 392 > 375) the Apple button logs an Auto Layout conflict.
             .frame(maxWidth: 360)
             .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s3)
             .padding(.bottom, Space.s5)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

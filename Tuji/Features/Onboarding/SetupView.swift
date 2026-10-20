@@ -1,4 +1,11 @@
-// Per-user Setup picker shown once after the user's first sign-in.
+// Step 3 of the run-in: the daily goal, shown once after the user's first
+// sign-in.
+//
+// Themes are no longer asked here. Setup still writes them — the server needs
+// at least one — but seeds them from `SetupChoices` without a question: the
+// beginner set for a new account, the account's own for a returning one. A
+// grid of twenty themes was the longest decision in the run-in, made before
+// the user had seen a single card. 設定 › 學習主題 changes them later.
 //
 // Saves to /api/users/settings via APIClient and marks the per-user
 // setupDone flag in OnboardingState; RootView then advances to MainTabs.
@@ -31,51 +38,34 @@ struct SetupView: View {
     @State private var showReSignIn: Bool = false
     @State private var initializedDefaults = false
 
-    private let goals = [5, 10, 20]
-
     var body: some View {
         VStack(spacing: 0) {
+            OnboardingStepBar(step: .goal)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.s4) {
-                    Text("先幫你排一份\n學習節奏")
-                        .font(.tujiH2)
-                        .foregroundStyle(.tujiInk)
-                        .padding(.top, Space.s4)
-                        .padding(.horizontal, Space.s4)
-
-                    section(title: "你對學習什麼主題有興趣？") {
-                        if categories.categories.isEmpty {
-                            HStack {
-                                TujiProgressBar(progress: nil).frame(width: 56)
-                                Text("載入主題中…")
-                                    .font(.tujiLabel)
-                                    .foregroundStyle(.tujiInk3)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, Space.s4)
-                        } else {
-                            LazyVGrid(
-                                columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2), count: 3),
-                                spacing: Space.s2
-                            ) {
-                                ForEach(categories.categories) { c in
-                                    categoryTile(category: c, selected: topicIds.contains(c.id)) {
-                                        if topicIds.contains(c.id) {
-                                            topicIds.remove(c.id)
-                                        } else {
-                                            topicIds.insert(c.id)
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    MascotSpeechBubble(pose: .think, text: "最後一題！")
+                    VStack(alignment: .leading, spacing: Space.s2) {
+                        Text("每天想學幾個字？")
+                            .font(.tujiH1)
+                            .foregroundStyle(.tujiInk)
+                        Text("先從一個做得到的量開始，之後可以在設定裡調整。")
+                            .font(.tujiBodySm)
+                            .foregroundStyle(.tujiInk3)
                     }
 
-                    section(title: "每日目標") {
-                        HStack(spacing: Space.s2) {
-                            ForEach(goals, id: \.self) { g in
-                                tile(label: "\(g) 題", selected: dailyGoal == g) {
-                                    dailyGoal = g
+                    VStack(spacing: Space.s2) {
+                        ForEach(Self.goals, id: \.count) { goal in
+                            OnboardingChoice(
+                                title: Text("\(goal.count) 題"),
+                                detail: Text(goal.detail),
+                                selected: self.dailyGoal == goal.count,
+                                action: { self.dailyGoal = goal.count }
+                            ) {
+                                if self.dailyGoal == goal.count {
+                                    Image(systemName: "checkmark")
+                                        .font(.tujiIcon(20, weight: .bold))
+                                        .accessibilityHidden(true)
                                 }
                             }
                         }
@@ -101,21 +91,24 @@ struct SetupView: View {
                                         )
                                 }
                                 .buttonStyle(.plain)
+                            } else if !initializedDefaults {
+                                Button("重試") {
+                                    Task { await self.loadDefaults() }
+                                }
+                                .font(.tujiBodySm(.strong))
+                                .foregroundStyle(.tujiBrandSecondary)
                             }
                         }
-                        .padding(.horizontal, Space.s4)
                     }
                 }
-                .padding(.bottom, Space.s4)
+                .padding(.horizontal, Space.s4)
+                .padding(.vertical, Space.s5)
             }
 
-            Divider().background(.tujiRule.opacity(0.2))
-
             BBtn(
-                // Not 「開始使用」: that is already the last onboarding page's
-                // button and the tour's closing card, and this is a third tap
-                // in the same run-in.
-                title: saving ? "儲存中..." : "完成設定",
+                // Not 「開始使用」: that is the tour's closing card, the next
+                // thing this user sees.
+                title: saving ? "儲存中..." : (initializedDefaults ? "開始學習" : "準備中..."),
                 bg: .tujiBrandPrimary,
                 fg: .tujiInk,
                 fullWidth: true,
@@ -126,14 +119,7 @@ struct SetupView: View {
             .padding(.vertical, Space.s4)
         }
         .background(.tujiPaper)
-        .task {
-            // Settings too: a returning account on a new device starts from its
-            // own themes and goal, and those are on the account, not here.
-            async let categoriesLoad: Void = categories.loadIfNeeded()
-            async let settingsLoad: Void = settingsStore.loadIfNeeded()
-            _ = await (categoriesLoad, settingsLoad)
-            seedDefaults()
-        }
+        .task { await self.loadDefaults() }
         .onChange(of: categories.categories) { _, _ in
             seedDefaults()
         }
@@ -141,58 +127,27 @@ struct SetupView: View {
 
     // MARK: - Bits
 
-    private func section(title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            Text(title)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-                .padding(.horizontal, Space.s4)
-            content()
-                .padding(.horizontal, Space.s4)
-        }
+    private struct Goal {
+        let count: Int
+        let detail: LocalizedStringKey
     }
 
-    private func tile(label: LocalizedStringKey, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(.tujiBodySm(.strong))
-                .foregroundStyle(.tujiInk2)
-                .padding(.vertical, Space.s3)
-                .frame(maxWidth: .infinity)
-                .background(
-                    selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
-                    in: .rect(cornerRadius: Radius.r0)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.r0)
-                        .stroke(
-                            selected ? Color.tujiCurrent : .tujiRule,
-                            lineWidth: selected ? 1.5 : 1
-                        )
-                )
-        }
-    }
+    private static let goals = [
+        Goal(count: 5, detail: "輕鬆開始，零碎時間就夠"),
+        Goal(count: 10, detail: "推薦，每天穩穩前進"),
+        Goal(count: 20, detail: "認真衝刺，進步最快")
+    ]
 
-    private func categoryTile(category: TujiCategory, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(category.nameZh)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk2)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .padding(.vertical, Space.s4)
-                .frame(maxWidth: .infinity)
-                .background(
-                    selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
-                    in: .rect(cornerRadius: Radius.r0)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: Radius.r0)
-                        .stroke(
-                            selected ? Color.tujiCurrent : .tujiRule,
-                            lineWidth: selected ? 1.5 : 1
-                        )
-                )
+    /// Settings too: a returning account on a new device starts from its own
+    /// themes and goal, and those are on the account, not here.
+    private func loadDefaults() async {
+        error = nil
+        async let categoriesLoad: Void = categories.loadIfNeeded()
+        async let settingsLoad: Void = settingsStore.loadIfNeeded()
+        _ = await (categoriesLoad, settingsLoad)
+        seedDefaults()
+        if !initializedDefaults, categories.lastError != nil {
+            error = tujiLocalized("載入失敗，請檢查網路後再試一次。")
         }
     }
 

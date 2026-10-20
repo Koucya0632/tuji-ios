@@ -75,9 +75,6 @@ struct RootView: View {
         case .learningDirection:
             LearningDirectionOnboardingView()
 
-        case .onboarding:
-            OnboardingFlow()
-
         case .welcome:
             WelcomeView()
 
@@ -112,8 +109,7 @@ struct RootView: View {
         let presentation = self.launch.presentation(
             for: LaunchDestinationContext(
                 account: self.launchAccount,
-                learningDirectionSelected: self.onboarding.learningDirection != nil,
-                introDone: self.onboarding.introDone
+                learningDirectionSelected: self.onboarding.learningDirection != nil
             )
         )
         switch presentation {

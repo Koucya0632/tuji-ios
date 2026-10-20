@@ -25489,6 +25489,328 @@
           }
         }
       }
+    },
+    "建立帳號，開始收集單字" : {
+      "comment" : "Onboarding sign-in screen headline.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create an account and start collecting words"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントを作って、単語集めを始めよう"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建账号，开始收集单词"
+          }
+        }
+      }
+    },
+    "學過的字、你的圖鑑和連續天數都存在帳號裡，換手機也不會不見。" : {
+      "comment" : "Onboarding sign-in screen: what the account keeps.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Words you've learned, your atlas and your streak are saved to your account, so nothing is lost when you switch phones."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "覚えた単語、図鑑、連続日数はアカウントに保存されるので、機種変更しても消えません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学过的字、你的图鉴和连续天数都存在账号里，换手机也不会丢失。"
+          }
+        }
+      }
+    },
+    "嗨，我是 Tuji！" : {
+      "comment" : "Mascot greeting on the onboarding language picker.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi, I'm Tuji!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "やあ、Tujiだよ！"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗨，我是 Tuji！"
+          }
+        }
+      }
+    },
+    "你想學哪種語言？" : {
+      "comment" : "Onboarding language picker headline.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which language do you want to learn?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どの言語を学びたいですか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你想学哪种语言？"
+          }
+        }
+      }
+    },
+    "看圖記單字，聽英文發音" : {
+      "comment" : "Onboarding language option: English.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn words from pictures, with English audio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵で単語を覚えて、英語の発音を聞く"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看图记单词，听英文发音"
+          }
+        }
+      }
+    },
+    "看圖記單字，聽日文發音，附假名" : {
+      "comment" : "Onboarding language option: Japanese.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn words from pictures, with Japanese audio and furigana"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵で単語を覚えて、日本語の発音を聞く（ふりがな付き）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看图记单词，听日文发音，附假名"
+          }
+        }
+      }
+    },
+    "最後一題！" : {
+      "comment" : "Mascot line on the onboarding daily-goal step.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "One last question!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あと1問！"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最后一题！"
+          }
+        }
+      }
+    },
+    "每天想學幾個字？" : {
+      "comment" : "Onboarding daily-goal headline.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How many words a day?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1日に何語学びたい？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天想学几个字？"
+          }
+        }
+      }
+    },
+    "先從一個做得到的量開始，之後可以在設定裡調整。" : {
+      "comment" : "Onboarding daily-goal subtitle.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start with an amount you can keep up. You can change it later in Settings."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続けられる量から始めよう。あとで設定から変更できます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先从一个做得到的量开始，之后可以在设置里调整。"
+          }
+        }
+      }
+    },
+    "準備中..." : {
+      "comment" : "Onboarding finish button while defaults are loading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getting ready..."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "準備中..."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "准备中..."
+          }
+        }
+      }
+    },
+    "輕鬆開始，零碎時間就夠" : {
+      "comment" : "Daily goal option: 5 questions.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An easy start that fits spare moments"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "気軽にスタート、すき間時間で十分"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轻松开始，零碎时间就够"
+          }
+        }
+      }
+    },
+    "推薦，每天穩穩前進" : {
+      "comment" : "Daily goal option: 10 questions (recommended).",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recommended, steady progress every day"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "おすすめ、毎日着実に"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推荐，每天稳稳前进"
+          }
+        }
+      }
+    },
+    "認真衝刺，進步最快" : {
+      "comment" : "Daily goal option: 20 questions.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go all in for the fastest progress"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本気モード、いちばん早く上達"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "认真冲刺，进步最快"
+          }
+        }
+      }
+    },
+    "載入失敗，請檢查網路後再試一次。" : {
+      "comment" : "Onboarding setup: defaults failed to load.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load. Check your connection and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "読み込めませんでした。接続を確認してもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载失败，请检查网络后再试一次。"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
