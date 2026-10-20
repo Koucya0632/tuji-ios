@@ -180,7 +180,6 @@ struct TodayView: View {
         .accessibilityLabel(Text("打卡"))
         .accessibilityValue(Text("連續 \(self.progress.streak?.current ?? 0) 天"))
         .accessibilityHint(self.checkInBadge ? Text("有點數可以領取") : Text(verbatim: ""))
-        .tourAnchor(.streak)
     }
 
     private var checkInBadge: Bool {
@@ -367,6 +366,7 @@ struct TodayView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("問問助手"))
+            .tourAnchor(.assistant)
             .offset(x: -Space.s4, y: -44)
         }
         .tourAnchor(.hero)
@@ -423,7 +423,6 @@ struct TodayView: View {
             // colour for that.
             TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.2), fill: .tujiCurrent)
         }
-        .tourAnchor(.dailyGoal)
     }
 
     @ViewBuilder

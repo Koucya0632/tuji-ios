@@ -1,5 +1,5 @@
 // First-run feature tour plumbing: highlight targets, the anchor
-// preference that carries their frames up the tree, and the 5-step
+// preference that carries their frames up the tree, and the 4-step
 // script. Views mark their highlight targets with .tourAnchor(_:);
 // MainTabsView resolves the collected anchors and drives
 // FeatureTourOverlay.
@@ -14,13 +14,9 @@ nonisolated enum TourTarget: Hashable {
     case hero
     /// The 複習/學新字 button pair inside the hero.
     case heroCTAs
-    /// Daily-goal progress block inside the hero.
-    case dailyGoal
-    /// Streak chip in the Today top bar.
-    case streak
-    /// The floating tab bar pill.
-    case tabBar
-    /// The 拍照 action in the middle of the tab bar.
+    /// The cat on the Today hero, which is the way into 助手.
+    case assistant
+    /// The 拍照 action in the tab bar.
     case capture
 }
 
@@ -65,6 +61,12 @@ struct TourStep: Identifiable {
     let title: LocalizedStringKey
     let text: LocalizedStringKey
 
+    /// Only what a new user would not find alone, all on 今天.
+    ///
+    /// The tab bar and the daily goal are no longer steps. The bar names its
+    /// own tabs, and its step was wrong four times as they changed; each tab
+    /// now introduces itself on the first visit (`TabTip`). The goal reads 0
+    /// on day one and explains itself after the first lesson.
     static var steps: [TourStep] {
         [
             TourStep(
@@ -75,69 +77,42 @@ struct TourStep: Identifiable {
                 shape: .pill,
                 pose: .wave,
                 title: "每天從這裡開始",
-                text: "點「學新字」認識新單字，用「複習」複習快忘記的字。"
+                text: "學新字認識新單字，複習幫你記牢快忘的字。"
             ),
             TourStep(
                 id: 1,
                 tab: .today,
-                target: .dailyGoal,
-                fallback: .streak,
+                // The cat gives no sign that it can be pressed — the speech
+                // bubble beside it is the only hint — which makes it the one
+                // thing on 今天 a new user is least likely to find.
+                target: .assistant,
+                fallback: nil,
                 shape: .rounded(Radius.r0),
-                pose: .think,
-                title: "每日目標與連續天數",
-                text: "完成今日目標，連續學習的火焰就會一天天累積。"
+                pose: .face,
+                title: "有問題就點我",
+                text: "查單字、找收藏、問我問題都可以。"
             ),
             TourStep(
                 id: 2,
                 tab: .today,
-                target: .tabBar,
-                fallback: nil,
-                // Squared: the cutout frames the ink navigation slab, which is
-                // a rectangle with the app's usual zero radius. It was a pill
-                // when the bar was one full-width strip.
-                shape: .rounded(Radius.r0),
-                pose: .face,
-                // This step has now been wrong four times. It first said
-                // "四個分頁" listing 主頁/圖鑑/進度/我的 and missed 社群 entirely;
-                // the fix added 社群 but kept three tab names that no longer
-                // exist, so the tour pointed at the bar and read out 主頁, 進度
-                // and 我的 to every new user; the count went stale the day 拍照
-                // moved into the middle of the bar; and then *this* line said
-                // "中間的黃色按鈕" the day 拍照 became its own block on the right.
-                //
-                // Counting them went wrong twice and pointing at them went
-                // wrong once, so this copy now does neither: it names what each
-                // one is for and lets the cutout say where. Whatever it says
-                // must match what the bar renders, and there is still nothing
-                // that makes a divergence fail to compile.
-                title: "底下這一排",
-                text: "今天開始學習、圖鑑收集單字、物見看大家收的東西、我查看成果與帳號，黃色按鈕隨時可以拍照收字。"
-            ),
-            TourStep(
-                id: 3,
-                // Stays on 今天: the capture slot is in the tab bar, so it is on
-                // screen whichever tab is showing, and this step used to switch
-                // to 圖鑑 only because that is where the button lived.
-                tab: .today,
                 target: .capture,
                 fallback: nil,
                 // Round, because what it frames is: `MascotEye` is the one
-                // circle in the app. The cutout squared off for one release,
-                // when 拍照 was briefly a rectangular yellow key.
+                // circle in the app.
                 shape: .pill,
                 pose: .peek,
                 title: "拍照收字",
-                text: "Tuji 的招牌功能！對準身邊的物品拍一張，AI 幫你把它變成單字卡。"
+                text: "拍下身邊的東西，變成你自己的單字卡。"
             ),
             TourStep(
-                id: 4,
-                tab: .cards,
+                id: 3,
+                tab: .today,
                 target: nil,
                 fallback: nil,
                 shape: .rounded(Radius.r0),
                 pose: .cheer,
-                title: "開始你的第一課吧",
-                text: "都準備好了，現在就開始今天的學習！"
+                title: "先來學第一個字吧！",
+                text: "跟著圖片認識今天的新單字。"
             )
         ]
     }
@@ -156,7 +131,7 @@ enum TourAdvance: Equatable {
     case finish
 }
 
-/// The five-step tour as decisions rather than as `@State` on the tab shell.
+/// The tour as decisions rather than as `@State` on the tab shell.
 ///
 /// It was ~60 lines inside `MainTabsView`: an index, a transitioning flag, a
 /// four-condition start guard behind a 900 ms sleep, an advance that branched on
@@ -170,8 +145,8 @@ enum TourAdvance: Equatable {
 struct FeatureTourFlow {
     let steps: [TourStep]
 
-    init() {
-        self.steps = TourStep.steps
+    init(steps: [TourStep] = TourStep.steps) {
+        self.steps = steps
     }
 
     /// May the tour open at all?
@@ -201,8 +176,10 @@ struct FeatureTourFlow {
     }
 
     /// Where the shell lands when the tour ends by finishing rather than by
-    /// being skipped. The closing card invites the reader to start today's
-    /// study, which lives on 主頁 — so finishing goes there and skipping stays
-    /// put, which is the only difference between the two.
+    /// being skipped. The closing card's 開始學習 opens 學新字, which lives on
+    /// 今天 — so finishing goes there and skipping stays put.
     static let tabAfterFinishing: MainTab = .today
+
+    /// What 開始學習 on the closing card opens.
+    static let routeAfterFinishing: NavRoute = .studyLanding(mode: .new)
 }

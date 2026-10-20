@@ -27,6 +27,8 @@ final class OnboardingState: OnboardingRecord {
 
     private let tourKey = "tuji.onboarding.tourDone"
     private let reviewHintKey = "tuji.study.reviewHintTaught"
+    private let tabTipsArmedKey = "tuji.onboarding.tabTipsArmed"
+    private let tabTipsSeenKey = "tuji.onboarding.tabTipsSeen"
     private let learningDirectionKey = "tuji.learning.direction"
 
     var tourDone: Bool {
@@ -39,6 +41,19 @@ final class OnboardingState: OnboardingRecord {
     /// Device-global like `tourDone`: it teaches the UI, not the account.
     var reviewHintTaught: Bool {
         didSet { UserDefaults.standard.set(reviewHintTaught, forKey: reviewHintKey) }
+    }
+
+    /// Set when the first-run tour ends, so the tabs it no longer walks
+    /// through introduce themselves (`TabTip`). Only then: someone who took
+    /// the old tour, which did walk the tab bar, never sees them.
+    /// Device-global like `tourDone`.
+    var tabTipsArmed: Bool {
+        didSet { UserDefaults.standard.set(tabTipsArmed, forKey: tabTipsArmedKey) }
+    }
+
+    /// The tabs whose first-visit tip has been seen, by `TabTip.key`.
+    var tabTipsSeen: Set<String> {
+        didSet { UserDefaults.standard.set(Array(tabTipsSeen).sorted(), forKey: tabTipsSeenKey) }
     }
 
     /// Read here — launch routing asks it before any settings exist — but
@@ -59,6 +74,8 @@ final class OnboardingState: OnboardingRecord {
     private init() {
         tourDone = UserDefaults.standard.bool(forKey: tourKey)
         reviewHintTaught = UserDefaults.standard.bool(forKey: reviewHintKey)
+        tabTipsArmed = UserDefaults.standard.bool(forKey: tabTipsArmedKey)
+        tabTipsSeen = Set(UserDefaults.standard.stringArray(forKey: tabTipsSeenKey) ?? [])
         learningDirection = UserDefaults.standard.string(forKey: learningDirectionKey)
             .flatMap(LearningDirection.init(rawValue:))
     }
