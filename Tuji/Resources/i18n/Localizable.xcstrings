@@ -25489,6 +25489,397 @@
           }
         }
       }
+    },
+    "建立帳號，開始收集單字" : {
+      "comment" : "Onboarding sign-in screen headline.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create an account and start collecting words"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントを作って、単語集めを始めよう"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "创建账号，开始收集单词"
+          }
+        }
+      }
+    },
+    "嗨，我是 Moira！" : {
+      "comment" : "Mascot greeting on the onboarding language picker.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hi, I'm Moira!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "やあ、Moiraだよ！"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗨，我是 Moira！"
+          }
+        }
+      }
+    },
+    "你想學哪種語言？" : {
+      "comment" : "Onboarding language picker headline.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which language do you want to learn?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どの言語を学びたいですか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你想学哪种语言？"
+          }
+        }
+      }
+    },
+    "看圖記單字，聽英文發音" : {
+      "comment" : "Onboarding language option: English.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn words from pictures, with English audio"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵で単語を覚えて、英語の発音を聞く"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看图记单词，听英文发音"
+          }
+        }
+      }
+    },
+    "看圖記單字，聽日文發音，附假名" : {
+      "comment" : "Onboarding language option: Japanese.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn words from pictures, with Japanese audio and furigana"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵で単語を覚えて、日本語の発音を聞く（ふりがな付き）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看图记单词，听日文发音，附假名"
+          }
+        }
+      }
+    },
+    "載入失敗，請檢查網路後再試一次。" : {
+      "comment" : "Onboarding setup: defaults failed to load.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't load. Check your connection and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "読み込めませんでした。接続を確認してもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加载失败，请检查网络后再试一次。"
+          }
+        }
+      }
+    },
+    "學新字認識新單字，複習幫你記牢快忘的字。" : {
+      "comment" : "Feature tour step 1: the New words / Review buttons.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New words introduces new ones; Review locks in the ones you're about to forget."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「新出単語」で新しい単語に出会い、「復習」で忘れかけた単語を定着させよう。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学新字认识新单词，复习帮你记牢快忘的字。"
+          }
+        }
+      }
+    },
+    "有問題就點我" : {
+      "comment" : "Feature tour step 2 title: the mascot opens the assistant.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap me if you have a question"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "わからないことがあったら、わたしをタップ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有问题就点我"
+          }
+        }
+      }
+    },
+    "查單字、找收藏、問我問題都可以。" : {
+      "comment" : "Feature tour step 2 body: what the assistant does.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look up words, find your saved ones, or just ask me."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単語を調べたり、保存した単語を探したり、質問したりできるよ。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查单词、找收藏、问我问题都可以。"
+          }
+        }
+      }
+    },
+    "拍下身邊的東西，變成你自己的單字卡。" : {
+      "comment" : "Feature tour step 3 body: photo capture.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Snap something around you and turn it into your own word card."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身の回りのものを撮って、自分だけの単語カードにしよう。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍下身边的东西，变成你自己的单词卡。"
+          }
+        }
+      }
+    },
+    "先來學第一個字吧！" : {
+      "comment" : "Feature tour closing card title.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Let's learn your first word!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "さっそく最初の単語を覚えよう！"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先来学第一个字吧！"
+          }
+        }
+      }
+    },
+    "跟著圖片認識今天的新單字。" : {
+      "comment" : "Feature tour closing card body.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meet today's new words through pictures."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵を見ながら今日の新しい単語を覚えよう。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跟着图片认识今天的新单词。"
+          }
+        }
+      }
+    },
+    "之後再說" : {
+      "comment" : "Feature tour closing card: dismiss without starting study.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maybe later"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あとで"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "之后再说"
+          }
+        }
+      }
+    },
+    "單字都收在這裡，上面可以切換官方主題、你拍的和收藏。" : {
+      "comment" : "First-visit tip on the Atlas tab.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All your words live here. Switch between official topics, your photos and saved words up top."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単語はすべてここに。上で公式テーマ、撮った単語、保存した単語を切り替えられるよ。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单词都收在这里，上面可以切换官方主题、你拍的和收藏。"
+          }
+        }
+      }
+    },
+    "看看大家都拍了什麼，喜歡的可以收進自己的圖鑑。" : {
+      "comment" : "First-visit tip on the Sightings tab.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See what everyone has snapped, and add the ones you like to your own Atlas."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "みんなが撮ったものを見てみよう。気に入ったら自分の図鑑に追加できるよ。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看看大家都拍了什么，喜欢的可以收进自己的图鉴。"
+          }
+        }
+      }
+    },
+    "連續天數、學習成果和設定都在這裡。" : {
+      "comment" : "First-visit tip on the Me tab.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your streak, progress and settings are all here."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連続日数、学習の成果、設定はここにあるよ。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连续天数、学习成果和设置都在这里。"
+          }
+        }
+      }
+    },
+    "點一下關閉" : {
+      "comment" : "Accessibility hint: tap to dismiss the tab tip.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to dismiss"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "タップして閉じる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点一下关闭"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

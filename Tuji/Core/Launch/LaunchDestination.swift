@@ -12,7 +12,6 @@ enum LaunchAccountState: Equatable {
 struct LaunchDestinationContext: Equatable {
     let account: LaunchAccountState
     let learningDirectionSelected: Bool
-    let introDone: Bool
 }
 
 /// The coordinator's render contract. RootView either keeps the single static
@@ -33,7 +32,6 @@ enum LaunchTransitionPolicy {
 enum LaunchDestination: Hashable {
     case splash
     case learningDirection
-    case onboarding
     case welcome
     case setup(userID: UUID)
     case main
@@ -55,7 +53,7 @@ enum LaunchDestination: Hashable {
             guard context.learningDirectionSelected else {
                 return .learningDirection
             }
-            return context.introDone ? .welcome : .onboarding
+            return .welcome
 
         case let .signedIn(userID, setupDone):
             guard context.learningDirectionSelected else {

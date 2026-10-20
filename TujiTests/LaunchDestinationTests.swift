@@ -9,8 +9,7 @@ struct LaunchDestinationTests {
         let userID = UUID()
 
         #expect(self.resolve(.signedOut, learning: false) == .learningDirection)
-        #expect(self.resolve(.signedOut, learning: true, introDone: false) == .onboarding)
-        #expect(self.resolve(.signedOut, learning: true, introDone: true) == .welcome)
+        #expect(self.resolve(.signedOut, learning: true) == .welcome)
         #expect(self.resolve(
             .signedIn(userID: userID, setupDone: false),
             learning: true
@@ -53,8 +52,7 @@ struct LaunchDestinationTests {
     func launchGateAlwaysWinsBeforeRouting() {
         let context = LaunchDestinationContext(
             account: .signedOut,
-            learningDirectionSelected: true,
-            introDone: true
+            learningDirectionSelected: true
         )
 
         #expect(LaunchDestination.resolve(
@@ -73,7 +71,6 @@ struct LaunchDestinationTests {
     private func resolve(
         _ account: LaunchAccountState,
         learning: Bool,
-        introDone: Bool = true,
         catalogReady: Bool = true
     )
         -> LaunchDestination
@@ -83,8 +80,7 @@ struct LaunchDestinationTests {
             catalogReady: catalogReady,
             context: LaunchDestinationContext(
                 account: account,
-                learningDirectionSelected: learning,
-                introDone: introDone
+                learningDirectionSelected: learning
             )
         )
     }

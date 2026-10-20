@@ -1,8 +1,6 @@
-// Tracks whether the user has been through the marketing intro pages,
-// the per-account Setup picker, and the first-run feature tour. All are
-// persisted in UserDefaults.
+// Tracks whether the user has been through the per-account Setup picker and
+// the first-run feature tour. Both are persisted in UserDefaults.
 //
-// introDone is device-global (it's marketing for any user).
 // tourDone is device-global (the tour explains the UI, not the account).
 // setupDone is per-user (each new account gets its own picker).
 
@@ -27,14 +25,11 @@ protocol OnboardingRecord: AnyObject {
 final class OnboardingState: OnboardingRecord {
     static let shared = OnboardingState()
 
-    private let introKey = "tuji.onboarding.introDone"
     private let tourKey = "tuji.onboarding.tourDone"
     private let reviewHintKey = "tuji.study.reviewHintTaught"
+    private let tabTipsArmedKey = "tuji.onboarding.tabTipsArmed"
+    private let tabTipsSeenKey = "tuji.onboarding.tabTipsSeen"
     private let learningDirectionKey = "tuji.learning.direction"
-
-    var introDone: Bool {
-        didSet { UserDefaults.standard.set(introDone, forKey: introKey) }
-    }
 
     var tourDone: Bool {
         didSet { UserDefaults.standard.set(tourDone, forKey: tourKey) }
@@ -46,6 +41,19 @@ final class OnboardingState: OnboardingRecord {
     /// Device-global like `tourDone`: it teaches the UI, not the account.
     var reviewHintTaught: Bool {
         didSet { UserDefaults.standard.set(reviewHintTaught, forKey: reviewHintKey) }
+    }
+
+    /// Set when the first-run tour ends, so the tabs it no longer walks
+    /// through introduce themselves (`TabTip`). Only then: someone who took
+    /// the old tour, which did walk the tab bar, never sees them.
+    /// Device-global like `tourDone`.
+    var tabTipsArmed: Bool {
+        didSet { UserDefaults.standard.set(tabTipsArmed, forKey: tabTipsArmedKey) }
+    }
+
+    /// The tabs whose first-visit tip has been seen, by `TabTip.key`.
+    var tabTipsSeen: Set<String> {
+        didSet { UserDefaults.standard.set(Array(tabTipsSeen).sorted(), forKey: tabTipsSeenKey) }
     }
 
     /// Read here — launch routing asks it before any settings exist — but
@@ -64,9 +72,10 @@ final class OnboardingState: OnboardingRecord {
     private(set) var setupDoneByUser: [String: Bool] = [:]
 
     private init() {
-        introDone = UserDefaults.standard.bool(forKey: introKey)
         tourDone = UserDefaults.standard.bool(forKey: tourKey)
         reviewHintTaught = UserDefaults.standard.bool(forKey: reviewHintKey)
+        tabTipsArmed = UserDefaults.standard.bool(forKey: tabTipsArmedKey)
+        tabTipsSeen = Set(UserDefaults.standard.stringArray(forKey: tabTipsSeenKey) ?? [])
         learningDirection = UserDefaults.standard.string(forKey: learningDirectionKey)
             .flatMap(LearningDirection.init(rawValue:))
     }

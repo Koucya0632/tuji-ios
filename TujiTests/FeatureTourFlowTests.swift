@@ -1,4 +1,4 @@
-// Pins the five-step tour's index machine.
+// Pins the tour's index machine.
 //
 // It was ~60 lines of `@State` and private methods on `MainTabsView`: a
 // four-condition start guard behind a 900 ms sleep, an advance that branched on
@@ -73,7 +73,7 @@ struct FeatureTourFlowTests {
     /// card lives on another tab, so the pager has to move first.
     @Test
     func aStepOnAnotherTabCrossesToIt() throws {
-        let flow = FeatureTourFlow()
+        let flow = Self.crossTabFlow
         let boundary = try #require(
             (0..<(flow.steps.count - 1)).first { flow.steps[$0].tab != flow.steps[$0 + 1].tab },
             "the tour no longer changes tab; this branch has nothing to pin"
@@ -95,7 +95,7 @@ struct FeatureTourFlowTests {
     /// reader who swiped the pager mid-tour is already where the next card is.
     @Test
     func theTabBeingShownDecidesNotTheStepsOwn() throws {
-        let flow = FeatureTourFlow()
+        let flow = Self.crossTabFlow
         let boundary = try #require(
             (0..<(flow.steps.count - 1)).first { flow.steps[$0].tab != flow.steps[$0 + 1].tab }
         )
@@ -110,5 +110,74 @@ struct FeatureTourFlowTests {
     @Test
     func finishingLandsWhereTheClosingCardPoints() {
         #expect(FeatureTourFlow.tabAfterFinishing == .today)
+        #expect(FeatureTourFlow.routeAfterFinishing == .studyLanding(mode: .new))
+    }
+
+    /// The shipped script stays on 今天 — each other tab introduces itself
+    /// instead (`TabTip`) — and ends on the card that starts 學新字.
+    @Test
+    func theScriptStaysOnTodayAndEndsOnTheClosingCard() {
+        let steps = TourStep.steps
+        #expect(steps.allSatisfy { $0.tab == .today })
+        #expect(steps.last?.target == nil)
+        #expect(steps.map(\.id) == Array(steps.indices))
+    }
+
+    /// The cross-tab branch is kept for a script that needs it; the shipped one
+    /// does not, so it is pinned against a two-tab fixture.
+    private static let crossTabFlow = FeatureTourFlow(steps: [
+        TourStep(
+            id: 0,
+            tab: .today,
+            target: .heroCTAs,
+            fallback: nil,
+            shape: .pill,
+            pose: .wave,
+            title: "a",
+            text: "a"
+        ),
+        TourStep(id: 1, tab: .cards, target: nil, fallback: nil, shape: .pill, pose: .cheer, title: "b", text: "b")
+    ])
+}
+
+struct TabTipTests {
+    private func shows(
+        _ tab: MainTab,
+        armed: Bool = true,
+        seen: Set<String> = [],
+        atRoot: Bool = true,
+        tourRunning: Bool = false,
+        studyFocusActive: Bool = false
+    )
+        -> Bool
+    {
+        TabTip.shows(
+            on: tab, armed: armed, seen: seen, atRoot: atRoot,
+            tourRunning: tourRunning, studyFocusActive: studyFocusActive
+        )
+    }
+
+    @Test
+    func everyTabButTodayHasATip() {
+        for tab in MainTab.allCases {
+            #expect((TabTip.key(for: tab) != nil) == (tab != .today))
+            #expect((TabTip.text(for: tab) != nil) == (tab != .today))
+        }
+    }
+
+    @Test
+    func aFreshTabAtItsRootShowsItsTip() {
+        #expect(self.shows(.cards))
+        #expect(!self.shows(.today))
+    }
+
+    /// Someone who took the old tour never armed them.
+    @Test
+    func unarmedSeenOrBusyKeepsItHidden() {
+        #expect(!self.shows(.cards, armed: false))
+        #expect(!self.shows(.cards, seen: ["cards"]))
+        #expect(!self.shows(.cards, atRoot: false))
+        #expect(!self.shows(.cards, tourRunning: true))
+        #expect(!self.shows(.cards, studyFocusActive: true))
     }
 }

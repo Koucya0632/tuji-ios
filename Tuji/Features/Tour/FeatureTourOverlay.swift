@@ -169,7 +169,17 @@ struct FeatureTourOverlay: View {
                     .font(.tujiBodySm)
                     .foregroundStyle(.tujiPaper.opacity(0.8))
                     .multilineTextAlignment(.center)
-                BBtn(title: "開始使用", bg: .tujiBrandPrimary, fg: .tujiInk, fullWidth: true, action: self.onNext)
+                // Finishing opens 學新字 — the card says "learn your first
+                // word", so the button does it instead of only closing.
+                BBtn(title: "開始學習", bg: .tujiBrandPrimary, fg: .tujiInk, fullWidth: true, action: self.onNext)
+                Button(action: self.onSkip) {
+                    Text("之後再說")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiPaper.opacity(0.6))
+                        .frame(height: 44)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
             }
         }
         .accessibilityAddTraits(.isModal)
@@ -198,7 +208,7 @@ struct FeatureTourOverlay: View {
 
         FeatureTourOverlay(
             steps: TourStep.steps,
-            index: 4,
+            index: 3,
             transitioning: false,
             anchors: [:],
             onSkip: {},

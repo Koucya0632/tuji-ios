@@ -41,12 +41,18 @@ struct MainTabsView: View {
             self.pager
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+            // In the column, not over the page: it sits on the bar and pushes
+            // the page up rather than covering the bottom of it.
+            if self.tabBarVisible, let tip = self.visibleTabTip {
+                TabTipBubble(text: tip.text) { self.dismissTabTip(tip.tab) }
+                    .transition(.opacity)
+            }
+
             if self.tabBarVisible {
                 TujiTabBar(
                     selected: self.$navigator.selected,
                     onCapture: { self.showCapture = true }
                 )
-                .tourAnchor(.tabBar)
                 .transition(.move(edge: .bottom))
             }
         }
@@ -71,6 +77,12 @@ struct MainTabsView: View {
         .environment(self.navigator)
         .environment(self.checkIn)
         .animation(Motion.ease(Motion.d2), value: self.tabBarVisible)
+        .animation(Motion.ease(Motion.d2), value: self.visibleTabTip?.tab)
+        // Shown and walked away from counts as read: it is one line, and a tip
+        // that waits for a tap on every visit turns into a nag.
+        .onChange(of: self.navigator.selected) { old, _ in
+            if self.tabTipShows(on: old) { self.dismissTabTip(old) }
+        }
         .background(.tujiPaper)
         .allowsHitTesting(self.tourIndex == nil)
         .accessibilityHidden(self.tourIndex != nil)
@@ -278,17 +290,46 @@ struct MainTabsView: View {
 
     private func finishTour() {
         self.endTour(landingOn: FeatureTourFlow.tabAfterFinishing)
+        // Next runloop turn, like a deep link's push: the tab switch lands first.
+        DispatchQueue.main.async {
+            self.navigator.push(FeatureTourFlow.routeAfterFinishing, on: FeatureTourFlow.tabAfterFinishing)
+        }
     }
 
     /// Skipping and finishing differ in exactly one thing: where the reader is
     /// left. They were two near-identical bodies for that one line.
     private func endTour(landingOn tab: MainTab?) {
         self.onboarding.tourDone = true
+        self.onboarding.tabTipsArmed = true
         self.tourTransitioning = false
         withAnimation(self.tourAnimation) { self.tourIndex = nil }
         if let tab {
             withAnimation(.easeInOut(duration: 0.25)) { self.navigator.selected = tab }
         }
+    }
+
+    // MARK: - First-visit tab tips
+
+    private var visibleTabTip: (tab: MainTab, text: LocalizedStringKey)? {
+        let tab = self.navigator.selected
+        guard self.tabTipShows(on: tab), let text = TabTip.text(for: tab) else { return nil }
+        return (tab, text)
+    }
+
+    private func tabTipShows(on tab: MainTab) -> Bool {
+        TabTip.shows(
+            on: tab,
+            armed: self.onboarding.tabTipsArmed,
+            seen: self.onboarding.tabTipsSeen,
+            atRoot: self.navigator.depth(of: tab) == 0,
+            tourRunning: self.tourIndex != nil,
+            studyFocusActive: self.studyFocus.active
+        )
+    }
+
+    private func dismissTabTip(_ tab: MainTab) {
+        guard let key = TabTip.key(for: tab) else { return }
+        self.onboarding.tabTipsSeen.insert(key)
     }
 
     private func consumePendingLink() {
