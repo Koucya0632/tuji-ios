@@ -15,6 +15,13 @@ Gather the words you want to learn into your own lists, then study and review st
 ■ Snap a photo, grow your own picture dictionary (members)
 Don't know what something is called? Just take a photo. AI recognizes it and makes a card — picture, meaning and example sentences — that goes straight into your study and reviews.
 
+■ Ask Moira: AI vocabulary, grammar, stories and chat (uses Can Points)
+Tap Moira on the Today screen:
+• AI vocabulary: look up a word or phrase, get an in-depth analysis, or ask Moira for a memory aid.
+• AI grammar: have a grammar point explained, compare similar ones, or get a practice set.
+• Story time: pick a few words you're learning and a situation, and Moira writes a short dialogue between the two of you. Read each line back aloud.
+• Topic chat: pick a picture-dictionary topic and chat with Moira in the language you're learning. "Say it like this" helps when you're stuck, you can speak instead of typing, and the chat ends with a review.
+
 ■ 物見: see what others have collected
 Anyone can browse published picture dictionaries and collections. Members can save what they like, add it to their studies, and publish their own.
 
@@ -28,7 +35,7 @@ Anyone can browse published picture dictionaries and collections. Members can sa
 —— Lifetime Membership and Can Points ——
 • Free: sign in to study the Fruits and Bedroom series, and browse every other official series.
 • Lifetime Membership (one-time purchase): every official series, 200 personal atlas cards, saving/studying/publishing in 物見, 20 personal word lists, and notes.
-• AI uses Can Points. Standard and high-precision recognition each cost 100 points per request, including basic content enrichment for one card. The cost is shown before you start.
+• AI features use Can Points, and the cost is shown before every request. Photo recognition (standard or high-precision) costs 100 points, including basic content enrichment for one card; vocabulary, grammar, stories and topic chat are charged by length.
 • Members receive 1,000 free points each month. The unused monthly allowance resets next month and does not accumulate. Daily check-in grants 10 points, up to 300 newly granted points per month.
 • Purchased and check-in points never expire. Optional packs contain 1,000, 4,000 or 7,000 points.
 • Prices vary by region and are shown in the app. Membership and point packs are one-time purchases with no automatic renewal.
