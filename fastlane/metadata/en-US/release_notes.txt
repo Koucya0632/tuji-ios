@@ -1,1 +1,11 @@
-Some feature improvements
+Meet Moira! Tap Moira on the Today screen for:
+• AI vocabulary: lookups, in-depth analysis and memory aids
+• AI grammar: explanations, comparisons of similar grammar, and practice
+• Story time: a short dialogue built from the words you're learning, with read-aloud practice for every line
+• Topic chat: chat with Moira about a picture-dictionary topic, by voice or text, with a review at the end
+These features use Can Points.
+
+Also new:
+• Onboarding now asks for your language before sign-in
+• New tab bar icons
+• "Rate Tuji" in Settings
