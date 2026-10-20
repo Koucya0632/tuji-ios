@@ -42,11 +42,55 @@
             </array>
         </dict>
 
-        <!-- User-generated content: favorited word IDs, learned word IDs, -->
-        <!-- mastery / SRS state, study history.                            -->
+        <!-- User-generated content: favorites, word lists, notes, mastery / -->
+        <!-- SRS state, study history, 物見 posts, and the text sent to the  -->
+        <!-- AI features (查詞, 語法, 情境故事, 主題對話; dictation arrives as  -->
+        <!-- text — audio stays with Apple's recogniser).                   -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
             <string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+
+        <!-- Photos taken or picked for 自製圖鑑 are uploaded to make cards. -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypePhotosorVideos</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+
+        <!-- Account id and the public TJ UID. -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeUserID</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+
+        <!-- Lifetime membership and 罐頭點數 purchases, verified server-side. -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypePurchaseHistory</string>
             <key>NSPrivacyCollectedDataTypeLinked</key>
             <true/>
             <key>NSPrivacyCollectedDataTypeTracking</key>
@@ -71,7 +115,8 @@
             </array>
         </dict>
 
-        <!-- OSLog diagnostics remain anonymous and on-device. -->
+        <!-- Crashlytics non-fatal reports (CrashReporting.record): a fixed -->
+        <!-- category plus flow/step and app version, never raw errors.    -->
         <dict>
             <key>NSPrivacyCollectedDataType</key>
             <string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
