@@ -41,7 +41,8 @@ struct MembershipBenefitsTests {
         #expect(rows.contains { $0.contains("物見") })
         #expect(rows.contains { $0.contains("筆記") })
         #expect(rows.contains { $0.contains("詞表") })
-        #expect(rows.contains { $0.contains("自製圖鑑") && $0.contains("罐頭點數") })
+        #expect(rows.contains { $0.contains("自製圖鑑") })
+        #expect(rows.contains { $0.contains("AI") && $0.contains("罐頭點數") })
         // No monthly AI quota under points: it is paid per use.
         #expect(!rows.contains { $0.contains("每月") })
     }
