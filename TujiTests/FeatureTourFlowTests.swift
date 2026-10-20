@@ -126,7 +126,16 @@ struct FeatureTourFlowTests {
     /// The cross-tab branch is kept for a script that needs it; the shipped one
     /// does not, so it is pinned against a two-tab fixture.
     private static let crossTabFlow = FeatureTourFlow(steps: [
-        TourStep(id: 0, tab: .today, target: .heroCTAs, fallback: nil, shape: .pill, pose: .wave, title: "a", text: "a"),
+        TourStep(
+            id: 0,
+            tab: .today,
+            target: .heroCTAs,
+            fallback: nil,
+            shape: .pill,
+            pose: .wave,
+            title: "a",
+            text: "a"
+        ),
         TourStep(id: 1, tab: .cards, target: nil, fallback: nil, shape: .pill, pose: .cheer, title: "b", text: "b")
     ])
 }
@@ -139,7 +148,9 @@ struct TabTipTests {
         atRoot: Bool = true,
         tourRunning: Bool = false,
         studyFocusActive: Bool = false
-    ) -> Bool {
+    )
+        -> Bool
+    {
         TabTip.shows(
             on: tab, armed: armed, seen: seen, atRoot: atRoot,
             tourRunning: tourRunning, studyFocusActive: studyFocusActive

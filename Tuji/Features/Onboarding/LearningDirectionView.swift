@@ -48,7 +48,9 @@ struct LearningDirectionOnboardingView: View {
         name: LocalizedStringKey,
         detail: LocalizedStringKey,
         glyph: String
-    ) -> some View {
+    )
+        -> some View
+    {
         OnboardingChoice(
             title: Text(name),
             detail: Text(detail),
