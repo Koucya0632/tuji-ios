@@ -28,8 +28,8 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
 
     var detail: LocalizedStringKey {
         switch self {
-        case .lookup: "查詞、深入解析與助記，使用罐頭點數"
-        case .grammar: "解釋句型、比較用法與語法練習，使用罐頭點數"
+        case .lookup: "查詞、深入解析與助記"
+        case .grammar: "解釋句型、比較用法與語法練習"
         case .story: "選 1–3 個單字，生成情境對話"
         case .topicChat: "選一個圖鑑主題，和 Moira 聊聊"
         }
