@@ -1,19 +1,19 @@
-// The run-in a new user walks before 今天: pick a language, make an account,
-// set a daily goal. The feature tour then takes over inside the app, so it is
-// not a step here.
+// The run-in a new user walks before 今天: pick a language, make an account.
+// The account's first settings are written without asking (SetupView), and
+// the feature tour then takes over inside the app, so neither is a step here.
 //
 // There used to be three marketing pages between the language and the
 // account. They told a user what the app does before letting them do it, and
 // every page of that is a cost paid before the first word (D.11.4) — so they
-// are gone, and the three screens that remain share one step bar.
+// are gone, and the two screens that remain share one step bar.
 
 import SwiftUI
 
 enum OnboardingStep: Int, CaseIterable {
-    case language, account, goal
+    case language, account
 }
 
-/// The D.10 step bar, cut into the onboarding's three steps.
+/// The D.10 step bar, cut into the onboarding's steps.
 struct OnboardingStepBar: View {
     let step: OnboardingStep
 
@@ -25,8 +25,7 @@ struct OnboardingStepBar: View {
 }
 
 /// A full-width choice on paper2 that inverts to an ink block when chosen
-/// (D.11.4). Used for the language and the daily goal, so both read as the
-/// same kind of question.
+/// (D.11.4).
 struct OnboardingChoice<Trailing: View>: View {
     let title: Text
     let detail: Text

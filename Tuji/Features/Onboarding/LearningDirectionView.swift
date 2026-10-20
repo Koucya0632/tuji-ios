@@ -19,7 +19,7 @@ struct LearningDirectionOnboardingView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: Space.s4) {
                         Spacer(minLength: 0)
-                        MascotSpeechBubble(pose: .wave, text: "嗨，我是 Tuji！")
+                        MascotSpeechBubble(pose: .wave, text: "嗨，我是 Moira！")
                         VStack(alignment: .leading, spacing: Space.s2) {
                             Text("你想學哪種語言？")
                                 .font(.tujiH1)
