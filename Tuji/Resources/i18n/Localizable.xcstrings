@@ -479,6 +479,50 @@
         }
       }
     },
+    "1. 內容仍然屬於你" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. It is still yours"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 内容はあなたのものです"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 内容仍然属于你"
+          }
+        }
+      }
+    },
+    "1. 卡片與合集" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Cards and collections"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. カードとコレクション"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 卡片与合集"
+          }
+        }
+      }
+    },
     "1. 購買後如未生效，請稍等幾分鐘後重新開啟 App。" : {
       "localizations" : {
         "en" : {
@@ -501,6 +545,116 @@
         }
       }
     },
+    "1. 送出前的審核" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Review before publishing"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 公開前の審査"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 送出前的审核"
+          }
+        }
+      }
+    },
+    "1. 違法或有害的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. Illegal or harmful content"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 違法または有害な内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1. 违法或有害的内容"
+          }
+        }
+      }
+    },
+    "2. 作者主頁" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. Author profile"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 作者ページ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 作者主页"
+          }
+        }
+      }
+    },
+    "2. 侵害他人權利的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. Content that violates others' rights"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 他人の権利を侵害する内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 侵害他人权利的内容"
+          }
+        }
+      }
+    },
+    "2. 公開後的處理" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. After publishing"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 公開後の対応"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 公开后的处理"
+          }
+        }
+      }
+    },
     "2. 已購買但會員不見了，請依序嘗試：" : {
       "localizations" : {
         "en" : {
@@ -519,6 +673,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "2. 已购买但会员不见了，请依序尝试："
+          }
+        }
+      }
+    },
+    "2. 想收回就取消公開" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. To take it back, unpublish"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 取り下げたいときは「公開をやめる」"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2. 想收回就取消公开"
+          }
+        }
+      }
+    },
+    "3. 干擾學習的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. Content that gets in the way of learning"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. 学習の妨げになる内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. 干扰学习的内容"
+          }
+        }
+      }
+    },
+    "3. 檢舉與封鎖" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. Reporting and blocking"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. 通報とブロック"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3. 举报与屏蔽"
           }
         }
       }
@@ -1548,6 +1768,28 @@
         }
       }
     },
+    "Tuji 想做的是一本大家一起長出來的圖鑑：你把身邊的東西拍成卡片、整理成合集公開到物見，別人就能拿來學。為了讓物見一直是個能安心學語言的地方，我們和每一位作者約定以下幾件事。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuji wants to be an atlas that everyone grows together: you photograph things around you, turn them into cards, gather them into a collection and publish it to Sightings, and others can learn from it. To keep Sightings a place where people can learn a language with peace of mind, we ask every author to agree to the following."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuji が目指しているのは、みんなで育てていく図鑑です。身の回りのものを撮ってカードにし、コレクションにまとめて物見に公開すれば、ほかの人がそれを使って学べます。物見がいつでも安心して言葉を学べる場所であるように、すべての作者と次のことを約束します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tuji 想做的是一本大家一起长出来的图鉴：你把身边的东西拍成卡片、整理成合集公开到物见，别人就能拿来学。为了让物见一直是个能安心学语言的地方，我们和每一位作者约定以下几件事。"
+          }
+        }
+      }
+    },
     "Tuji 探險者" : {
       "localizations" : {
         "en" : {
@@ -2432,6 +2674,28 @@
         }
       }
     },
+    "仇恨、歧視、騷擾、威脅或霸凌他人的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hate, discrimination, harassment, threats or bullying"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "憎悪、差別、嫌がらせ、脅迫、いじめにあたる内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仇恨、歧视、骚扰、威胁或霸凌他人的内容"
+          }
+        }
+      }
+    },
     "今天" : {
       "localizations" : {
         "en" : {
@@ -2883,6 +3147,28 @@
         }
       }
     },
+    "以上規則同樣適用於暱稱、簽名、頭像與合集名稱。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These rules also apply to nicknames, bios, profile photos and collection names."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これらのルールは、ニックネーム、ひとこと、プロフィール画像、コレクション名にも適用されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以上规则同样适用于昵称、签名、头像与合集名称。"
+          }
+        }
+      }
+    },
     "伺服器出了點問題（%lld），請稍後再試" : {
       "localizations" : {
         "en" : {
@@ -2970,6 +3256,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你不会再看到这个人公开的内容。已经收进图鉴的字不受影响，随时可以解除。"
+          }
+        }
+      }
+    },
+    "你公開的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your published content"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたが公開した内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你公开的内容"
           }
         }
       }
@@ -3537,6 +3845,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "侵犯版权"
+          }
+        }
+      }
+    },
+    "侵犯著作權、商標或肖像權的圖片與文字，例如翻拍書本或他人作品" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Images or text that infringe copyright, trademarks or personality rights, such as photos of book pages or other people's work"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "著作権・商標権・肖像権を侵害する画像や文章（本のページや他人の作品を撮影したものなど）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "侵犯著作权、商标或肖像权的图片与文字，例如翻拍书本或他人作品"
           }
         }
       }
@@ -4501,6 +4831,28 @@
         }
       }
     },
+    "公開前請先閱讀《平台公約》" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please read the Community Guidelines before publishing"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公開する前にコミュニティガイドラインをお読みください"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公开前请先阅读《平台公约》"
+          }
+        }
+      }
+    },
     "公開卡片" : {
       "localizations" : {
         "en" : {
@@ -4543,6 +4895,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "公开合集"
+          }
+        }
+      }
+    },
+    "公開期間，我們會為了在物見上顯示、讓其他人學習而使用它。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "While it is public, we use it to show it on Sightings and let others learn from it."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公開している間は、物見に表示し、ほかの人が学べるようにするために使用します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公开期间，我们会为了在物见上显示、让其他人学习而使用它。"
           }
         }
       }
@@ -5728,6 +6102,28 @@
         }
       }
     },
+    "刻意寫錯的單字、翻譯或讀音" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deliberately wrong words, translations or readings"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "わざと間違えた単語・訳・読み"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "故意写错的单词、翻译或读音"
+          }
+        }
+      }
+    },
     "前往更新" : {
       "localizations" : {
         "en" : {
@@ -6401,6 +6797,28 @@
         }
       }
     },
+    "取消公開隨時可以做，也可以之後再公開，不會有任何影響。直接刪除公開中的卡片，會讓已經收進的人失去複習進度，所以請先取消公開。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can unpublish at any time and publish again later, with no penalty. Deleting a card that is live takes away the review progress of everyone who took it in, so please unpublish first."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「公開をやめる」はいつでもでき、あとでまた公開することもできます。不利益は一切ありません。公開中のカードを削除すると、取り込んだ人の学習の進みも失われるので、まず公開をやめてください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消公开随时可以做，也可以之后再公开，不会有任何影响。直接删除公开中的卡片，会让已经收进的人失去复习进度，所以请先取消公开。"
+          }
+        }
+      }
+    },
     "取消收藏這個合集？" : {
       "localizations" : {
         "en" : {
@@ -6786,6 +7204,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "向上拉看完整详情"
+          }
+        }
+      }
+    },
+    "哪些內容會公開" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What becomes public"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公開されるもの"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "哪些内容会公开"
           }
         }
       }
@@ -7415,6 +7855,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "图鉴卡片"
+          }
+        }
+      }
+    },
+    "圖鑑卡片預設只有你自己看得到。卡片要放進合集、連同合集一起送出審核，全部通過後才會出現在物見。物見上的內容，所有人都能瀏覽，也能收進自己的圖鑑學習。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atlas cards are visible only to you by default. A card has to be added to a collection and submitted for review along with it, and only appears on Sightings once everything passes. Anyone can browse what is on Sightings and take it into their own Atlas to study."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑のカードは、最初は自分にしか見えません。カードをコレクションに入れ、コレクションごと審査に出し、すべて通過してはじめて物見に表示されます。物見の内容は誰でも閲覧でき、自分の図鑑に取り込んで学ぶこともできます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图鉴卡片默认只有你自己看得到。卡片要放进合集、连同合集一起送出审核，全部通过后才会出现在物见。物见上的内容，所有人都能浏览，也能收进自己的图鉴学习。"
           }
         }
       }
@@ -8431,6 +8893,28 @@
         }
       }
     },
+    "審核與處理" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review and enforcement"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "審査と対応"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "审核与处理"
+          }
+        }
+      }
+    },
     "寫下你自己的記法、例句或提醒…" : {
       "localizations" : {
         "en" : {
@@ -9081,6 +9565,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已公开"
+          }
+        }
+      }
+    },
+    "已公開的內容若違反本公約，我們可能直接將它下架。情節嚴重或一再違反的帳號，可能被限制公開功能或停權。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If published content breaks these guidelines, we may take it down. Accounts with serious or repeated violations may lose the ability to publish or be suspended."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公開済みの内容がこのガイドラインに違反している場合、取り下げることがあります。悪質な違反や違反を繰り返すアカウントは、公開機能の制限や利用停止となる場合があります。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已公开的内容若违反本公约，我们可能直接将它下架。情节严重或一再违反的账号，可能被限制公开功能或停权。"
           }
         }
       }
@@ -9969,6 +10475,28 @@
         }
       }
     },
+    "平台公約" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community Guidelines"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コミュニティガイドライン"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "平台公约"
+          }
+        }
+      }
+    },
     "底下這一排" : {
       "localizations" : {
         "en" : {
@@ -9987,6 +10515,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "底下这一排"
+          }
+        }
+      }
+    },
+    "廣告、垃圾訊息、導流到其他服務" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ads, spam, or steering people to other services"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "広告、スパム、ほかのサービスへの誘導"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "广告、垃圾信息、导流到其他服务"
           }
         }
       }
@@ -13504,6 +14054,28 @@
         }
       }
     },
+    "未經同意拍到可辨識的他人，尤其是兒童" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifiable people photographed without their consent, especially children"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本人の同意なく写り込んだ、特定できる他人（特に子ども）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未经同意拍到可辨识的他人，尤其是儿童"
+          }
+        }
+      }
+    },
     "未能生成有效內容，這次沒有扣點。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -13570,6 +14142,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未通过。修改后可以再送一次。"
+          }
+        }
+      }
+    },
+    "本公約是《使用條款》的一部分，並可能隨功能調整而更新。有任何問題，歡迎透過「意見收集」告訴我們。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These guidelines are part of the Terms of Service and may be updated as features change. If you have any questions, let us know through Feedback."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このガイドラインは利用規約の一部であり、機能の変更に合わせて更新されることがあります。ご不明な点があれば、「フィードバック」からお知らせください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本公约是《使用条款》的一部分，并可能随功能调整而更新。有任何问题，欢迎通过「意见收集」告诉我们。"
           }
         }
       }
@@ -14296,6 +14890,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "步骤 %lld / %lld"
+          }
+        }
+      }
+    },
+    "每個帳號都有公開的作者主頁，會顯示你的暱稱、簽名、頭像，以及你公開的合集。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every account has a public author profile that shows your nickname, bio, profile photo and the collections you have published."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのアカウントには公開の作者ページがあり、ニックネーム、ひとこと、プロフィール画像、公開したコレクションが表示されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个账号都有公开的作者主页，会显示你的昵称、签名、头像，以及你公开的合集。"
           }
         }
       }
@@ -16899,6 +17515,28 @@
         }
       }
     },
+    "看到違反公約的卡片、合集或作者，請直接檢舉。檢舉會送給審核人員，對方不會知道是誰檢舉的。不想再看到某位作者的內容，可以封鎖對方：對方不會收到通知，你已經收進圖鑑的卡片也不受影響。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you see a card, collection or author that breaks these guidelines, please report it. Reports go to our moderators, and the person you report is never told who reported them. If you no longer want to see an author's content, you can block them: they are not notified, and cards you have already taken into your Atlas are not affected."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ガイドラインに違反するカード、コレクション、作者を見つけたら通報してください。通報は審査担当者に送られ、誰が通報したかは相手に知らされません。ある作者の内容を見たくない場合は、ブロックできます。相手に通知は届かず、すでに自分の図鑑に取り込んだカードにも影響はありません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看到违反公约的卡片、合集或作者，请直接举报。举报会送给审核人员，对方不会知道是谁举报的。不想再看到某位作者的内容，可以屏蔽对方：对方不会收到通知，你已经收进图鉴的卡片也不受影响。"
+          }
+        }
+      }
+    },
     "看圖片" : {
       "localizations" : {
         "en" : {
@@ -17300,6 +17938,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "示范回答"
+          }
+        }
+      }
+    },
+    "禁止公開的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What must not be published"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公開が禁止されている内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "禁止公开的内容"
           }
         }
       }
@@ -19369,6 +20029,50 @@
         }
       }
     },
+    "與學習無關、只為了湊數的卡片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards unrelated to learning, made only to pad out the numbers"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学習と関係のない、数合わせだけのカード"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与学习无关、只为了凑数的卡片"
+          }
+        }
+      }
+    },
+    "色情、性暗示、血腥暴力等令人不適的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pornographic, sexually suggestive, gory, violent or otherwise disturbing content"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "性的な内容、性的なほのめかし、残虐・暴力的な表現など、不快感を与える内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "色情、性暗示、血腥暴力等令人不适的内容"
+          }
+        }
+      }
+    },
     "花幾分鐘複習，記得更牢。" : {
       "localizations" : {
         "en" : {
@@ -21047,6 +21751,28 @@
         }
       }
     },
+    "證件、信用卡、病歷、密碼、住址等私人資訊" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private information such as IDs, credit cards, medical records, passwords or addresses"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "身分証、クレジットカード、カルテ、パスワード、住所などの個人情報"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "证件、信用卡、病历、密码、住址等私人信息"
+          }
+        }
+      }
+    },
     "譯義" : {
       "localizations" : {
         "en" : {
@@ -22092,6 +22818,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "送出后会先经过审核，通过才会出现在物见。"
+          }
+        }
+      }
+    },
+    "送出的卡片與合集會先經過審核。沒有通過的內容只會留在你自己的圖鑑裡，不會出現在物見。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cards and collections you submit are reviewed first. Anything that does not pass stays in your own Atlas and never appears on Sightings."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "審査に出したカードとコレクションは、まず審査を受けます。通過しなかった内容は自分の図鑑に残るだけで、物見には表示されません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "送出的卡片与合集会先经过审核。没有通过的内容只会留在你自己的图鉴里，不会出现在物见。"
           }
         }
       }
@@ -23393,6 +24141,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "达成"
+          }
+        }
+      }
+    },
+    "違反法律，或鼓勵危險、違法行為的內容" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anything that breaks the law, or encourages dangerous or illegal behaviour"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "法律に違反する内容、または危険・違法な行為をあおる内容"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "违反法律，或鼓励危险、违法行为的内容"
           }
         }
       }

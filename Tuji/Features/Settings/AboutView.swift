@@ -24,6 +24,10 @@ struct AboutView: View {
                     .padding(.top, Space.s5)
 
                 TujiSection {
+                    NavigationLink { CommunityGuidelinesView() } label: {
+                        TujiRow("平台公約")
+                    }
+                    .tujiRowStyle()
                     NavigationLink { AboutCreditsView() } label: {
                         TujiRow("資料來源與授權")
                     }
