@@ -72,7 +72,7 @@ struct AboutView: View {
             .font(.tujiBodySm)
             .tint(.tujiInk2)
 
-            Text(verbatim: "© 2026 Hong Kuok Wai. All rights reserved.")
+            Text(verbatim: "© 2026 Tuji. All rights reserved.")
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
