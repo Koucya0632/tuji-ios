@@ -4831,6 +4831,28 @@
         }
       }
     },
+    "公開前請先閱讀《平台公約》" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please read the Community Guidelines before publishing"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公開する前にコミュニティガイドラインをお読みください"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公开前请先阅读《平台公约》"
+          }
+        }
+      }
+    },
     "公開卡片" : {
       "localizations" : {
         "en" : {

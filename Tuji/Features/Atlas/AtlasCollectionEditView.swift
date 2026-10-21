@@ -28,6 +28,7 @@ struct AtlasCollectionEditView: View {
     @State private var showDiscardConfirm = false
     @State private var showDeleteConfirm = false
     @State private var showPicker = false
+    @State private var showGuidelines = false
     @State private var showsAllMembers = false
     @State private var avatar = ImageIntake(encoding: .collection, crop: .square(mask: .square))
 
@@ -87,6 +88,18 @@ struct AtlasCollectionEditView: View {
         .task {
             self.connectAvatarUpload()
             await self.vm.load()
+        }
+        // A sheet, not a push: reading the rules is a detour from publishing, and
+        // closing it should land back on this screen with nothing moved.
+        .sheet(isPresented: self.$showGuidelines) {
+            NavigationStack {
+                CommunityGuidelinesView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("完成") { self.showGuidelines = false }
+                        }
+                    }
+            }
         }
         // Only the loaded screen can open this, so the collection's language and
         // review status are known by the time it does — no default stands in for
@@ -409,6 +422,14 @@ struct AtlasCollectionEditView: View {
                     self.showConfirm = true
                 }
                 .disabled(!self.vm.canSubmit)
+                Button { self.showGuidelines = true } label: {
+                    Text("公開前請先閱讀《平台公約》")
+                        .font(.tujiBodySm)
+                        .underline()
+                        .foregroundStyle(.tujiInk2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .buttonStyle(.plain)
                 if self.vm.members.isEmpty {
                     Text("合集至少要有一張卡片才能公開。")
                         .font(.tujiLabel)
