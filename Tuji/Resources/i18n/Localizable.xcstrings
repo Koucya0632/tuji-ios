@@ -20681,6 +20681,248 @@
         }
       }
     },
+    "記憶曲線" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memory curve"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記憶曲線"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记忆曲线"
+          }
+        }
+      }
+    },
+    "了解記憶曲線與複習機制" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn how the memory curve and reviews work"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記憶曲線と復習の仕組みを見る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "了解记忆曲线与复习机制"
+          }
+        }
+      }
+    },
+    "剛學的字，忘得最快" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New words fade fastest"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "覚えたての単語ほど早く忘れる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刚学的字，忘得最快"
+          }
+        }
+      }
+    },
+    "沒有複習的話，新學的字幾天內就會忘掉一大半——這就是遺忘曲線。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Without review, most of what you just learned is gone within a few days — that's the forgetting curve."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復習しないと、覚えた単語の大半は数日で忘れてしまいます。これが忘却曲線です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有复习的话，新学的字几天内就会忘掉一大半——这就是遗忘曲线。"
+          }
+        }
+      }
+    },
+    "在快忘的時候複習" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review just before you forget"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘れかけた頃に復習する"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在快忘的时候复习"
+          }
+        }
+      }
+    },
+    "每次在快要忘記時複習一次，記憶就更牢，下次複習的間隔也會拉長：幾小時、幾天、幾週，到幾個月。花的時間越來越少，記得越來越久。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each review right before you'd forget makes the memory stronger, and the next review comes later: hours, then days, weeks, months. Less time spent, longer remembered."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忘れかけた頃に復習するたびに記憶が強くなり、次の復習までの間隔も長くなります。数時間、数日、数週間、そして数か月へ。かける時間は少なく、覚えている期間は長く。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次在快要忘记时复习一次，记忆就更牢，下次复习的间隔也会拉长：几小时、几天、几周，到几个月。花的时间越来越少，记得越来越久。"
+          }
+        }
+      }
+    },
+    "所以先複習，再學新字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So review first, then learn new words"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "だから、復習してから新しい単語へ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所以先复习，再学新字"
+          }
+        }
+      }
+    },
+    "待複習超過 20 個字時，今天的新字會開始減量；超過 100 個就先暫停新字，等你清掉一些。這樣學過的字不會白學。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Once more than 20 words are due, today's new words are reduced; past 100, new words pause until you clear some. That way nothing you've learned goes to waste."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復習待ちが 20 語を超えると今日の新しい単語が減り、100 語を超えると、いくつか片付けるまで新しい単語はお休みになります。覚えた単語を無駄にしないためです。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待复习超过 20 个字时，今天的新字会开始减量；超过 100 个就先暂停新字，等你清掉一些。这样学过的字不会白学。"
+          }
+        }
+      }
+    },
+    "按時複習" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reviewed on time"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時間どおりに復習"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按时复习"
+          }
+        }
+      }
+    },
+    "不複習" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No review"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復習なし"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不复习"
+          }
+        }
+      }
+    },
+    "時間 →" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time →"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時間 →"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时间 →"
+          }
+        }
+      }
+    },
     "要複習的字有點多，先清一些再學新字" : {
       "localizations" : {
         "en" : {

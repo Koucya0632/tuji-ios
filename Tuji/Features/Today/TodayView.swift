@@ -34,6 +34,7 @@ struct TodayView: View {
     /// sheet and the 學新字 finish screen read one wallet.
     @Environment(CheckInModel.self) private var checkIn
     @State private var showingCheckIn = false
+    @State private var showingReviewCurve = false
 
     /// One snapshot of everything 首頁's decisions depend on, read from the
     /// environment here and answered in `TodayDecisions`. Reading the stores in
@@ -121,6 +122,9 @@ struct TodayView: View {
                     fallbackStreak: self.progress.streak,
                     onStudy: self.studyFromCheckIn
                 )
+            }
+            .tujiSheet(isPresented: self.$showingReviewCurve, title: "記憶曲線", height: 540) {
+                ReviewCurveSheet()
             }
         }
     }
@@ -321,10 +325,29 @@ struct TodayView: View {
                 .tourAnchor(.heroCTAs)
 
                 if let hint = self.heroHint {
-                    Text(hint)
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiPaper.opacity(0.6))
-                        .fixedSize(horizontal: false, vertical: true)
+                    if self.hintExplainsReviewBacklog {
+                        Button {
+                            self.showingReviewCurve = true
+                        } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: Space.s1) {
+                                Image(systemName: "exclamationmark.circle")
+                                    .font(.tujiIcon(13, weight: .semibold))
+                                Text(hint)
+                                    .multilineTextAlignment(.leading)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiPaper.opacity(0.6))
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint(Text("了解記憶曲線與複習機制"))
+                    } else {
+                        Text(hint)
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiPaper.opacity(0.6))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }
@@ -467,6 +490,16 @@ struct TodayView: View {
         case .noCards: "這個主題目前還沒有可學的字"
         case .reviewBacklog: "要複習的字有點多，先清一些再學新字"
         case .noThemes, .none: nil
+        }
+    }
+
+    /// The two hints that come from the review backlog (`StudyQuotas`) —
+    /// the ones that read as a rule, so the ones that offer the why.
+    private var hintExplainsReviewBacklog: Bool {
+        switch self.decisions.heroHint {
+        case .newBlocked: self.decisions.newBlock == .reviewBacklog
+        case .quotaAdjusted: true
+        case .nothingToReview, nil: false
         }
     }
 
