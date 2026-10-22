@@ -481,6 +481,18 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   into it — the person bought one recognition), carrying the net points taken after any
   compensation. It holds numbers only — never what was asked or answered. When a person
   deletes their account their rows stay, no longer tied to anyone.
+- **抽讀 (read-through)** — a developer reading a batch of real AI 查詞, AI 語法 and 主題對話
+  records, with who wrote them left out, to find where Moira answered wrongly or badly
+  before changing a prompt. It is the only reason we read what people asked; 用量紀錄 is
+  where we read what it cost. 情境故事 has nothing to read: its inputs are all picked from
+  what the server offers, so a 樣本 shows the same thing. What is read is rewritten before
+  it is kept anywhere, and a good answer enters official content only after a person
+  rewrites it (ADR-0019).
+  _Avoid_：「樣本」for this — a 樣本 is generated from made-up input to preview a prompt;
+  抽讀 reads what real people asked.
+- **缺詞統計 (missing-word count)** — the words that at least three different people asked
+  AI 查詞 or AI 語法 about and that 圖鑑 does not have, with only how many asked. It
+  points at what 圖鑑 should add; a word asked by fewer people is never shown (ADR-0019).
 - **意圖 (`AssistantIntent`)** — what was asked, before anything is looked up. Free text is
   read by a keyword table that recognises every interface language at once (what someone
   types has nothing to do with uiLang); anything unrecognised is a 詞條 lookup, ranked by
