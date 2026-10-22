@@ -467,6 +467,20 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   *changes*, never balances, so each row's 「餘 N 點」 is derived by walking back from what
   is held now. Held points count toward it (a reservation has spent nothing), and a
   reserve or a release — which changes no total — is not a row.
+- **實際倍率 (realised markup)** — whether a paid AI feature's price is right: for one
+  feature under one price list, the points it took (valued at the cheapest rate a point is
+  sold at) divided by what the model cost — counting every run the model made, including
+  the ones that charged nothing (off-topic, a story that left out a picked word, a retry).
+  It is read against the designed 3×; below that, either the price ceiling bit or too many
+  runs were thrown away. It is an operator's number, never shown to the person.
+  _Avoid_：毛利 — the store's cut is not in it, and the cost is estimated from token counts,
+  not taken from the bill.
+- **用量紀錄 (usage record)** — the one place every paid AI feature's cost is kept, so
+  實際倍率 is read from one source: a row per model call for 助手 (a resent request is two
+  rows — the model ran twice), and a row per 識別操作 for 拍照做卡 (its retries are summed
+  into it — the person bought one recognition), carrying the net points taken after any
+  compensation. It holds numbers only — never what was asked or answered. When a person
+  deletes their account their rows stay, no longer tied to anyone.
 - **意圖 (`AssistantIntent`)** — what was asked, before anything is looked up. Free text is
   read by a keyword table that recognises every interface language at once (what someone
   types has nothing to do with uiLang); anything unrecognised is a 詞條 lookup, ranked by
