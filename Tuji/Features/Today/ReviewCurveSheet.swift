@@ -119,9 +119,12 @@ private struct ForgettingCurveChart: View {
 
     private func legend(_ label: LocalizedStringKey, color: Color, dashed: Bool) -> some View {
         HStack(spacing: Space.s1) {
-            Path { $0.move(to: .init(x: 0, y: 5)); $0.addLine(to: .init(x: 16, y: 5)) }
-                .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dashed ? [3, 3] : []))
-                .frame(width: 16, height: 10)
+            Path { path in
+                path.move(to: .init(x: 0, y: 5))
+                path.addLine(to: .init(x: 16, y: 5))
+            }
+            .stroke(color, style: StrokeStyle(lineWidth: 2, dash: dashed ? [3, 3] : []))
+            .frame(width: 16, height: 10)
             Text(label)
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk.opacity(0.7))
