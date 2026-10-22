@@ -23,6 +23,7 @@ extension View {
                 case let .studyLanding(mode): StudyLauncherView(mode: mode)
                 case let .wordDetail(id): WordDestination(id: id)
                 case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
+                case .atlasSearch: AtlasSearchView()
                 case let .categoryDetail(id): CategoryView(id: id)
                 }
             }

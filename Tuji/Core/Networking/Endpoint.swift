@@ -106,6 +106,8 @@ enum Endpoint {
     /// force-reload) makes the request a distinct edge-cache key so pull-to-refresh
     /// and post-publish bypass Vercel's CDN copy, not just the on-device cache.
     case atlasPublicCollections(lang: String, limit: Int, cacheBust: String?)
+    /// 物見 search — 合集 and public cards matching `q`, in one learning language.
+    case atlasPublicSearch(q: String, lang: String)
     /// A public collection's detail (meta + author + member items).
     case atlasPublicCollection(slug: String)
     /// Signed-in reader's saved collection shelf.
@@ -413,6 +415,17 @@ enum Endpoint {
                     URLQueryItem(name: "lang", value: lang),
                     URLQueryItem(name: "limit", value: String(limit))
                 ] + (cacheBust.map { [URLQueryItem(name: "_cb", value: $0)] } ?? []),
+                policy: .publicCached
+            )
+        case let .atlasPublicSearch(q, lang):
+            // Public and edge-cached like the browse feed; `lang` is required
+            // for the same reason (the backend 400s without it).
+            EndpointDescriptor(
+                path: "/api/atlas/public/search",
+                queryItems: [
+                    URLQueryItem(name: "q", value: q),
+                    URLQueryItem(name: "lang", value: lang)
+                ],
                 policy: .publicCached
             )
         case let .atlasPublicCollection(slug):

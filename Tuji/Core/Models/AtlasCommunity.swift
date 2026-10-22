@@ -355,6 +355,12 @@ struct AtlasPublicCollectionsResponse: Decodable {
     @LossyArray var collections: [AtlasCollection]
 }
 
+/// GET /api/atlas/public/search — 物見 search.
+struct AtlasPublicSearchResponse: Decodable {
+    @LossyArray var collections: [AtlasCollection]
+    @LossyArray var items: [AtlasPublicItem]
+}
+
 /// GET /api/atlas/public/collections/{slug}
 struct AtlasCollectionDetailResponse: Decodable {
     let collection: AtlasCollection
