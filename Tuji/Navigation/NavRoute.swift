@@ -50,6 +50,8 @@ enum NavRoute: Hashable {
     /// immediately and refreshes in place; four sites used to construct this
     /// destination themselves.
     case atlasPublicItem(item: AtlasPublicItem)
+    /// 物見搜尋 — 合集 and public cards, in the current learning language.
+    case atlasSearch
     case studyCategories
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)

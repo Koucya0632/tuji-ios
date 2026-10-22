@@ -11,3 +11,11 @@ protocol CollectionsBrowsing {
 }
 
 extension LiveAtlasRepository: CollectionsBrowsing {}
+
+/// 物見 search. Its own seam so `AtlasSearchModel` can be driven by a stub.
+@MainActor
+protocol AtlasPublicSearching {
+    func searchPublic(q: String, lang: TargetLanguage) async throws -> AtlasPublicSearchResponse
+}
+
+extension LiveAtlasRepository: AtlasPublicSearching {}

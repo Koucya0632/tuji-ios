@@ -164,6 +164,11 @@ struct LiveAtlasRepository {
         return response.collections
     }
 
+    /// 物見 search, scoped to one learning language like the browse feed.
+    func searchPublic(q: String, lang: TargetLanguage) async throws -> AtlasPublicSearchResponse {
+        try await self.api.get(.atlasPublicSearch(q: q, lang: lang.rawValue))
+    }
+
     func collection(slug: String) async throws -> AtlasCollectionDetailResponse {
         try await self.api.get(.atlasPublicCollection(slug: slug))
     }

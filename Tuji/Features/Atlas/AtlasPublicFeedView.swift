@@ -89,15 +89,29 @@ struct AtlasPublicFeedView: View {
 
     // MARK: Content
 
+    /// 搜尋 sits at the end of the shelf row, drawn the way 圖鑑's is — the
+    /// row already exists, so it costs no height.
     private var segmentedControl: some View {
-        TujiSegmented(
-            options: PublicAtlasBrowsingModel.Shelf.allCases.map {
-                ($0, self.title(for: $0))
-            },
-            selection: self.$section
-        )
+        HStack(spacing: 0) {
+            TujiSegmented(
+                options: PublicAtlasBrowsingModel.Shelf.allCases.map {
+                    ($0, self.title(for: $0))
+                },
+                selection: self.$section
+            )
+            .accessibilityLabel(Text("物見區段"))
+            NavigationLink(value: NavRoute.atlasSearch) {
+                Image(systemName: "magnifyingglass")
+                    .font(.tujiIcon(18, weight: .bold))
+                    .foregroundStyle(.tujiInk2)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, Space.s2)
+            .accessibilityLabel(Text("搜尋物見"))
+        }
         .padding(.bottom, Space.s3)
-        .accessibilityLabel(Text("物見區段"))
     }
 
     private var content: some View {
