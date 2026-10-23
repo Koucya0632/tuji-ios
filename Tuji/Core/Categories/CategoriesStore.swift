@@ -13,6 +13,9 @@ final class CategoriesStore {
     static let shared = CategoriesStore()
 
     private(set) var categories: [TujiCategory] = []
+    /// 主題組合, from the same response as `categories` — so a preset never
+    /// names a theme this snapshot does not have.
+    private(set) var presets: [TopicPreset] = []
     private(set) var loading: Bool = false
     private(set) var lastError: Error?
 
@@ -27,12 +30,12 @@ final class CategoriesStore {
     /// Coalescing, the publish guard and the loading flag — see `LoadFlights`,
     /// which 單字 and 設定 hold too.
     @ObservationIgnored private let flights = LoadFlights<CatalogContext>()
-    @ObservationIgnored private var categoryCache: [String: [TujiCategory]] = [:]
+    @ObservationIgnored private var categoryCache: [String: CategoriesResponse] = [:]
     @ObservationIgnored private var categoryInFlight: [String: CategoryFlight] = [:]
 
     private struct CategoryFlight {
         let id: UUID
-        let task: Task<Result<[TujiCategory], Error>, Never>
+        let task: Task<Result<CategoriesResponse, Error>, Never>
     }
 
     init(repository: CatalogRepository = LiveCatalogRepository.shared) {
@@ -76,13 +79,14 @@ final class CategoriesStore {
 
     /// Runs only for a result that is still the one being waited for — the
     /// staleness guard lives in `LoadFlights`.
-    private func publish(_ result: Result<[TujiCategory], Error>, for context: CatalogContext) {
+    private func publish(_ result: Result<CategoriesResponse, Error>, for context: CatalogContext) {
         self.loadedContext = context
         self.loaded = true
         switch result {
-        case let .success(categories):
-            self.categories = categories
-            self.log.info("loaded \(categories.count, privacy: .public) categories")
+        case let .success(response):
+            self.categories = response.categories
+            self.presets = response.presets
+            self.log.info("loaded \(response.categories.count, privacy: .public) categories")
         case let .failure(error):
             // Keep the last good categories visible while exposing retry state.
             self.lastError = error
@@ -94,7 +98,7 @@ final class CategoriesStore {
         language: String,
         reuseCached: Bool
     ) async
-        -> Result<[TujiCategory], Error>
+        -> Result<CategoriesResponse, Error>
     {
         if reuseCached, let cached = self.categoryCache[language] {
             return .success(cached)
@@ -105,10 +109,9 @@ final class CategoriesStore {
 
         let flightID = UUID()
         let repository = self.repository
-        let task = Task { () -> Result<[TujiCategory], Error> in
+        let task = Task { () -> Result<CategoriesResponse, Error> in
             do {
-                let response = try await repository.loadCategories(lang: language)
-                return .success(response.categories)
+                return try await .success(repository.loadCategories(lang: language))
             } catch {
                 return .failure(error)
             }
@@ -119,8 +122,8 @@ final class CategoriesStore {
         if flightIsCurrent {
             self.categoryInFlight[language] = nil
         }
-        if flightIsCurrent, case let .success(categories) = result {
-            self.categoryCache[language] = categories
+        if flightIsCurrent, case let .success(response) = result {
+            self.categoryCache[language] = response
         }
         return result
     }
@@ -138,6 +141,7 @@ final class CategoriesStore {
         self.categoryInFlight.removeAll()
         self.categoryCache.removeAll()
         self.categories = []
+        self.presets = []
         self.loading = false
         self.loaded = false
     }

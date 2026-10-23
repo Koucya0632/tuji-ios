@@ -4,7 +4,7 @@
 // a new user goes from sign-in straight to 今天. But the account still needs
 // them written — the server will not hand out new words with no theme — so
 // this runs once after the first sign-in on a device, behind the brand
-// surface, and seeds both from `SetupChoices`: the beginner themes and the
+// surface, and seeds both from `SetupChoices`: the default 主題組合 and the
 // default goal for a new account, the account's own for a returning one.
 // 設定 changes either later.
 //
@@ -94,6 +94,7 @@ struct SetupView: View {
         let seed = SetupChoices.seed(
             account: self.settingsStore.loadedForCurrentAccount ? self.settingsStore.current : nil,
             catalogIds: Set(self.categories.categories.map(\.id)),
+            presets: self.categories.presets,
             firstThemesFallback: self.categories.categories.map(\.id)
         )
 

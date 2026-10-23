@@ -1,6 +1,29 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
+    "不知道學什麼？你在日本是…" : {
+      "comment" : "Heading above the 主題組合 chips (留學生／打工度假／旅遊) at the top of the 學習主題 picker: for someone who does not know which themes to study.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not sure what to study? In Japan, you're…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何を学ぶか迷ったら。日本でのあなたは…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不知道学什么？你在日本是…"
+          }
+        }
+      }
+    },
     "搜尋物見" : {
       "localizations" : {
         "en" : {
