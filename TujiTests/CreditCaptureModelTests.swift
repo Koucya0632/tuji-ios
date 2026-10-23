@@ -395,6 +395,30 @@ struct CreditCaptureModelTests {
     }
 
     @Test
+    func aRunThatAnswersIsNotAConnectionFailureWhenOnlyTheBalanceMisses() async {
+        let api = FakeCreditCaptureAPI()
+        api.polls = Array(repeating: .failure(AtlasFakeError.boom), count: 3)
+            + [.success(CreditFixtures.operation(state: "committed", candidates: [CreditFixtures.keyboard]))]
+        let s = self.stand(api: api)
+        await self.ready(s)
+        await s.model.start(language: .en)
+
+        await s.model.poll()
+        await s.model.poll()
+        await s.model.poll()
+        #expect(s.model.message != nil)
+        // The run ends on a poll whose balance read fails. Polling stops here, so a
+        // banner left up now would sit over the result with nothing to lift it.
+        api.walletError = AtlasFakeError.boom
+        await s.model.poll()
+        #expect(s.model.message == nil)
+        guard case .result = s.model.panel else {
+            Issue.record("expected the result panel, got \(s.model.panel)")
+            return
+        }
+    }
+
+    @Test
     func anAnswerThatArrivesForAnotherAccountIsDropped() async {
         let api = FakeCreditCaptureAPI()
         let s = self.stand(api: api)

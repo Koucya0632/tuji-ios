@@ -440,7 +440,6 @@ final class CreditCaptureModel {
             let value = try await self.api.operation(id: id)
             guard self.valid(stamp), self.operation?.id == id else { return }
             self.adopt(value)
-            try await self.refreshWallet(stamp)
             self.pollFailures = 0
             // Only lift the banner poll() raised; other messages belong to their own actions.
             if self.message == self.pollMessage { self.message = nil }
@@ -449,6 +448,13 @@ final class CreditCaptureModel {
             self.pollFailures += 1
             self.log.error("poll failed (\(self.pollFailures)): \(error.localizedDescription, privacy: .public)")
             if self.pollFailures >= Self.pollFailureLimit { self.message = self.pollMessage }
+            return
+        }
+        // The run answered, so the connection is not what failed. A missed balance read
+        // used to count as a failed poll; on the poll that ends a run there is no next
+        // poll, and the banner sat over the result for good.
+        do { try await self.refreshWallet(stamp) } catch {
+            self.log.error("wallet refresh after poll failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
