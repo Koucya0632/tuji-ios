@@ -5,9 +5,22 @@ import Testing
 /// What choosing a 主題組合 does, and when one reads as chosen — see
 /// `TopicPresetChoice` and CONTEXT.md.
 struct TopicPresetChoiceTests {
-    private let catalog: Set<String> = ["campus", "bank", "restaurant", "onsen-ryokan", "kitchen", "custom", "community"]
+    private let catalog: Set<String> = [
+        "campus",
+        "bank",
+        "restaurant",
+        "onsen-ryokan",
+        "kitchen",
+        "custom",
+        "community"
+    ]
     private let student = TopicPreset(id: "student", name: "留學生", categoryIds: ["campus", "bank"], isDefault: true)
-    private let travel = TopicPreset(id: "travel", name: "旅遊", categoryIds: ["restaurant", "onsen-ryokan"], isDefault: false)
+    private let travel = TopicPreset(
+        id: "travel",
+        name: "旅遊",
+        categoryIds: ["restaurant", "onsen-ryokan"],
+        isDefault: false
+    )
 
     /// Replaces the public themes; the sources are not topics and stay put.
     @Test
@@ -38,8 +51,16 @@ struct TopicPresetChoiceTests {
 
     @Test
     func chosenOnlyWhileThePublicThemesMatchExactly() {
-        #expect(TopicPresetChoice.isChosen(self.student, selection: ["campus", "bank", "custom"], catalogIds: self.catalog))
-        #expect(!TopicPresetChoice.isChosen(self.student, selection: ["campus", "bank", "kitchen"], catalogIds: self.catalog))
+        #expect(TopicPresetChoice.isChosen(
+            self.student,
+            selection: ["campus", "bank", "custom"],
+            catalogIds: self.catalog
+        ))
+        #expect(!TopicPresetChoice.isChosen(
+            self.student,
+            selection: ["campus", "bank", "kitchen"],
+            catalogIds: self.catalog
+        ))
         #expect(!TopicPresetChoice.isChosen(self.student, selection: ["campus"], catalogIds: self.catalog))
     }
 
@@ -52,7 +73,7 @@ struct TopicPresetChoiceTests {
     /// Whole or not at all: one locked theme locks the preset.
     @Test
     func anyLockedThemeLocksThePreset() {
-        let free: Set<String> = ["campus", "bank"]
+        let free: Set = ["campus", "bank"]
         #expect(!TopicPresetChoice.isLocked(self.student, catalogIds: self.catalog) { !free.contains($0) })
         let mixed = TopicPreset(id: "wh", name: "打工度假", categoryIds: ["bank", "restaurant"], isDefault: false)
         #expect(TopicPresetChoice.isLocked(mixed, catalogIds: self.catalog) { !free.contains($0) })
@@ -64,12 +85,15 @@ struct TopicPresetChoiceTests {
     @Test
     func aResponseWithoutPresetsDecodesToNone() throws {
         let json = Data(#"{"categories":[]}"#.utf8)
-        #expect(try JSONDecoder().decode(CategoriesResponse.self, from: json).presets == [])
+        #expect(try JSONDecoder().decode(CategoriesResponse.self, from: json).presets.isEmpty)
     }
 
     @Test
     func presetsDecodeFromTheCategoriesResponse() throws {
-        let json = Data(#"{"categories":[],"presets":[{"id":"student","name":"留學生","categoryIds":["campus"],"isDefault":true}]}"#.utf8)
+        let json = Data(
+            #"{"categories":[],"presets":[{"id":"student","name":"留學生","categoryIds":["campus"],"isDefault":true}]}"#
+                .utf8
+        )
         let presets = try JSONDecoder().decode(CategoriesResponse.self, from: json).presets
         #expect(presets == [TopicPreset(id: "student", name: "留學生", categoryIds: ["campus"], isDefault: true)])
     }

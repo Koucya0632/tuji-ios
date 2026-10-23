@@ -32,7 +32,9 @@ struct SetupChoices: Equatable {
         catalogIds: Set<String>,
         presets: [TopicPreset],
         firstThemesFallback: [String]
-    ) -> SetupChoices {
+    )
+        -> SetupChoices
+    {
         if let account {
             let existing = Set(account.studyCategories).intersection(catalogIds)
             if !existing.isEmpty {

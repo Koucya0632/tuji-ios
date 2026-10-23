@@ -14,7 +14,12 @@ struct SetupChoicesTests {
         account.studyCategories = ["office", "street"]
         account.dailyGoal = 30
 
-        let seed = SetupChoices.seed(account: account, catalogIds: self.catalog, presets: [], firstThemesFallback: self.order)
+        let seed = SetupChoices.seed(
+            account: account,
+            catalogIds: self.catalog,
+            presets: [],
+            firstThemesFallback: self.order
+        )
 
         #expect(seed.topicIds == ["office", "street"])
         #expect(seed.dailyGoal == 30)
@@ -27,14 +32,24 @@ struct SetupChoicesTests {
         var account = UserSettings.default
         account.studyCategories = []
 
-        let seed = SetupChoices.seed(account: account, catalogIds: self.catalog, presets: [], firstThemesFallback: self.order)
+        let seed = SetupChoices.seed(
+            account: account,
+            catalogIds: self.catalog,
+            presets: [],
+            firstThemesFallback: self.order
+        )
 
         #expect(seed.topicIds == ["kitchen", "bathroom", "living-room", "custom", "community"])
     }
 
     @Test
     func settingsThatHaveNotArrivedAreNotTreatedAsTheAccounts() {
-        let seed = SetupChoices.seed(account: nil, catalogIds: self.catalog, presets: [], firstThemesFallback: self.order)
+        let seed = SetupChoices.seed(
+            account: nil,
+            catalogIds: self.catalog,
+            presets: [],
+            firstThemesFallback: self.order
+        )
         #expect(seed.topicIds.contains("kitchen"))
         #expect(seed.dailyGoal == UserSettings.default.dailyGoal)
     }
@@ -44,7 +59,12 @@ struct SetupChoicesTests {
         var account = UserSettings.default
         account.studyCategories = ["retired-theme"]
 
-        let seed = SetupChoices.seed(account: account, catalogIds: self.catalog, presets: [], firstThemesFallback: self.order)
+        let seed = SetupChoices.seed(
+            account: account,
+            catalogIds: self.catalog,
+            presets: [],
+            firstThemesFallback: self.order
+        )
 
         #expect(!seed.topicIds.contains("retired-theme"))
         #expect(seed.topicIds.contains("kitchen"))
