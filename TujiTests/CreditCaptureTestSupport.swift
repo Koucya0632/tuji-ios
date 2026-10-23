@@ -7,6 +7,8 @@ import Foundation
 final class FakeCreditCaptureAPI: CreditCaptureAPI {
     var catalogValue = CreditFixtures.catalog()
     var walletValue = CreditFixtures.wallet(available: 1000, version: "1")
+    /// Set, `wallet()` fails with it.
+    var walletError: Error?
     var operationsValue: [CreditOperation] = []
     /// Photos `image(id:)` cannot answer for, by id.
     var imageErrors: [String: Error] = [:]
@@ -37,6 +39,7 @@ final class FakeCreditCaptureAPI: CreditCaptureAPI {
 
     func wallet() async throws -> CreditWallet {
         self.walletReads += 1
+        if let error = self.walletError { throw error }
         return self.walletValue
     }
 
