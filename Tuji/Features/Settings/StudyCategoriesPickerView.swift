@@ -102,6 +102,8 @@ struct StudyCategoriesPickerView: View {
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
+            // Sized to their names, not stretched across the row: a preset is
+            // a shortcut beside the grid, not another row of tiles.
             HStack(spacing: Space.s2) {
                 ForEach(self.categories.presets) { preset in
                     let locked = TopicPresetChoice.isLocked(
@@ -114,7 +116,7 @@ struct StudyCategoriesPickerView: View {
                         selection: self.selectedIds,
                         catalogIds: self.catalogIds
                     )
-                    self.chip(title: preset.name, selected: chosen, locked: locked) {
+                    self.chip(title: preset.name, selected: chosen, locked: locked, compact: true) {
                         if locked {
                             self.presentPaywall()
                         } else {
@@ -166,11 +168,13 @@ struct StudyCategoriesPickerView: View {
     }
 
     /// One look for a theme tile and a 主題組合 chip: both are a pick that is
-    /// either on, off, or behind membership.
+    /// either on, off, or behind membership. `compact` is the chip — a capsule
+    /// as wide as its name; otherwise a tile filling its grid column.
     private func chip(
         title: String,
         selected: Bool,
         locked: Bool,
+        compact: Bool = false,
         action: @escaping () -> Void
     )
         -> some View
@@ -188,14 +192,15 @@ struct StudyCategoriesPickerView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .padding(.vertical, Space.s4)
-            .frame(maxWidth: .infinity)
+            .padding(.vertical, compact ? Space.s2 : Space.s4)
+            .padding(.horizontal, compact ? Space.s4 : 0)
+            .frame(maxWidth: compact ? nil : .infinity)
             .background(
                 selected ? Color.tujiCurrent.opacity(0.18) : .tujiPaper,
-                in: .rect(cornerRadius: Radius.r0)
+                in: self.chipShape(compact: compact)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
+                self.chipShape(compact: compact)
                     .stroke(
                         selected ? Color.tujiCurrent : .tujiRule,
                         lineWidth: selected ? 1.5 : 1
@@ -205,6 +210,10 @@ struct StudyCategoriesPickerView: View {
         .buttonStyle(.plain)
         .accessibilityHint(locked ? Text("成為會員後可學習") : Text(verbatim: ""))
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func chipShape(compact: Bool) -> AnyShape {
+        compact ? AnyShape(Capsule()) : AnyShape(.rect(cornerRadius: Radius.r0))
     }
 
     private func toggle(_ id: String) {
