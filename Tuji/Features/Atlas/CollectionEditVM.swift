@@ -214,14 +214,26 @@ final class CollectionEditVM {
         return self.metaSaved
     }
 
+    /// How an avatar upload ended, so the screen can tell a photo worth sending
+    /// again from one the server will never take.
+    enum AvatarUpdate: Equatable {
+        case updated(color: String)
+        /// The photo itself was turned down (moderation, unreadable). 重試 would
+        /// send the same bytes for the same answer.
+        case refused(String)
+        case failed(String)
+    }
+
     /// Uploads one already-confirmed square crop. The public avatar image and
     /// its fallback color move together; any error deliberately leaves
     /// the previously loaded identity untouched.
+    ///
+    /// The error is the avatar's own, not `actionError`: that line sits by 公開合集
+    /// and read as a failed publish (「伺服器出了點問題（422）」 under the button).
     @discardableResult
-    func updateAvatar(_ imageData: Data) async -> String? {
+    func updateAvatar(_ imageData: Data) async -> AvatarUpdate? {
         guard !self.uploadingAvatar else { return nil }
         self.uploadingAvatar = true
-        self.actionError = nil
         defer { self.uploadingAvatar = false }
         do {
             let response = try await self.repo.updateCollectionAvatar(
@@ -230,10 +242,14 @@ final class CollectionEditVM {
             )
             self.avatarColor = response.avatarColor
             self.avatarPreviewURL = URL(string: response.avatarPreviewUrl ?? response.avatarImageUrl)
-            return response.avatarColor
+            return .updated(color: response.avatarColor)
+        } catch let APIError.server(status, _) where status == 422 {
+            // tuji-web `collection-avatar-core.ts`: `avatar_rejected`, the image check said no.
+            return .refused(tujiLocalized("這張照片無法設為合集頭像，請換一張再試。"))
+        } catch let APIError.server(status, _) where status == 400 {
+            return .refused(tujiLocalized("無法讀取這張照片，請換一張再試。"))
         } catch {
-            self.actionError = tujiUserMessage(for: error)
-            return nil
+            return .failed(tujiUserMessage(for: error))
         }
     }
 

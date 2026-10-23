@@ -51,6 +51,19 @@ struct ImageIntakeTests {
     }
 
     @Test
+    func aRefusedPhotoOffersNoRetry() async throws {
+        // The server turned the photo itself down; the same bytes get the same answer.
+        let intake = ImageIntake(encoding: .collection, crop: .square(mask: .square)) { _ in
+            .refused("換一張")
+        }
+
+        try await intake.handleCropped(self.sampleImageData())
+
+        #expect(intake.errorMessage == "換一張")
+        #expect(!intake.canRetry)
+    }
+
+    @Test
     func aScreenWithItsOwnButtonsSkipsTheChooser() {
         // 拍照新增's source panel carries the remaining-allowance line and the
         // capacity warning, so it opens a source directly.
