@@ -217,6 +217,17 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   numbers and silently stop the screen from updating. Two of the five are seams —
   `StudySelectionReading` (the 學習主題 selection + `settingsLoaded`, which travel together
   because the selection is the scope every number is measured against).
+- **主題組合 (`TopicPreset`)** — a named group of public 主題 for one way of being in Japan
+  (留學生、打工度假、旅遊), offered to someone who does not know what to study. Choosing one is the same
+  as re-ticking the 學習主題 by hand in one go — it replaces the public 主題 and leaving the sources (自製圖鑑、物見收藏)
+  as they were; the account never records which 主題組合 it came from, so a 主題 added to the
+  組合 later does not reach anyone who already chose it. A 組合 reads as chosen only while
+  the ticked public 主題 are exactly its 主題 — one more or one fewer and it is not.
+  A 組合 is locked for an account when any one of its 主題 is: it is chosen whole or not at
+  all. Which 主題 are free is a pricing decision kept apart from the 組合 — today the free
+  主題 happen to contain all of 留學生, and editing the 組合 never changes what is free. The same 組合 for every learning
+  direction. _Avoid_：系列 (a content release batch)、合集 (物見 collections)、身分 (the account
+  identity)、路線.
 - **learning direction / target language** — the 合集 and 公開圖鑑 feeds auto-scope to the
   user's current learning language (日文 learners see 日文 collections). No manual switch.
 - **當前圖鑑語言 (`\.targetLanguage`)** — the session's target language as a *screen* sees

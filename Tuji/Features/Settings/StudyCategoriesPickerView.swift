@@ -8,6 +8,9 @@
 // the new category scope; the progress totals recompute client-side from
 // the same selection (ProgressStore.seenCount / totalCount), so they need
 // no invalidation.
+//
+// Above the grid, the 主題組合 for someone who does not know what to pick.
+// A preset is a shortcut through the same write — see `TopicPresetChoice`.
 
 import SwiftUI
 
@@ -70,6 +73,9 @@ struct StudyCategoriesPickerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, Space.s4)
                 } else {
+                    if !self.categories.presets.isEmpty {
+                        self.presetRow
+                    }
                     self.actions
                     self.grid
                 }
@@ -84,6 +90,44 @@ struct StudyCategoriesPickerView: View {
 
     private var selectedIds: Set<String> {
         Set(self.store.current.studyCategories)
+    }
+
+    private var catalogIds: Set<String> {
+        Set(self.categories.categories.map(\.id))
+    }
+
+    private var presetRow: some View {
+        VStack(alignment: .leading, spacing: Space.s2) {
+            Text("不知道學什麼？你在日本是…")
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(.tujiInk3)
+            HStack(spacing: Space.s2) {
+                ForEach(self.categories.presets) { preset in
+                    let locked = TopicPresetChoice.isLocked(
+                        preset,
+                        catalogIds: self.catalogIds,
+                        isThemeLocked: self.isLocked
+                    )
+                    let chosen = !locked && TopicPresetChoice.isChosen(
+                        preset,
+                        selection: self.selectedIds,
+                        catalogIds: self.catalogIds
+                    )
+                    self.chip(title: preset.name, selected: chosen, locked: locked) {
+                        if locked {
+                            self.presentPaywall()
+                        } else {
+                            self.setSelection(Array(TopicPresetChoice.applying(
+                                preset,
+                                to: self.selectedIds,
+                                catalogIds: self.catalogIds
+                            )))
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private var actions: some View {
@@ -110,7 +154,7 @@ struct StudyCategoriesPickerView: View {
         ) {
             ForEach(self.categories.categories) { c in
                 let locked = self.isLocked(c.id)
-                self.tile(category: c, selected: !locked && self.selectedIds.contains(c.id), locked: locked) {
+                self.chip(title: c.nameZh, selected: !locked && self.selectedIds.contains(c.id), locked: locked) {
                     if locked {
                         self.presentPaywall()
                     } else {
@@ -121,8 +165,10 @@ struct StudyCategoriesPickerView: View {
         }
     }
 
-    private func tile(
-        category: TujiCategory,
+    /// One look for a theme tile and a 主題組合 chip: both are a pick that is
+    /// either on, off, or behind membership.
+    private func chip(
+        title: String,
         selected: Bool,
         locked: Bool,
         action: @escaping () -> Void
@@ -136,7 +182,7 @@ struct StudyCategoriesPickerView: View {
                         .font(.tujiIcon(10, weight: .semibold))
                         .foregroundStyle(.tujiInk3)
                 }
-                Text(category.nameZh)
+                Text(title)
                     .font(.tujiLabel)
                     .foregroundStyle(locked ? .tujiInk3 : .tujiInk2)
                     .lineLimit(1)
@@ -158,6 +204,7 @@ struct StudyCategoriesPickerView: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint(locked ? Text("成為會員後可學習") : Text(verbatim: ""))
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private func toggle(_ id: String) {
