@@ -56,6 +56,9 @@ enum ImageIntakeDelivery: Equatable {
     /// own, because a server's description of the failure beats a generic line;
     /// nil falls back to the generic one.
     case rejected(String?)
+    /// Turned down for what the photo is — sending the same bytes again gets the
+    /// same answer, so nothing is parked and there is no 重試, only 換一張.
+    case refused(String)
 }
 
 @MainActor
@@ -212,6 +215,9 @@ final class ImageIntake {
             self.phase = .idle
         case let .rejected(message):
             self.phase = .failed(message ?? tujiLocalized("上傳失敗，請再試一次。"))
+        case let .refused(message):
+            self.retryData = nil
+            self.phase = .failed(message)
         }
     }
 }

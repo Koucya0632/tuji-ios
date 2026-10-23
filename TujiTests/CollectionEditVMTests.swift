@@ -101,9 +101,9 @@ struct CollectionEditVMTests {
         let vm = CollectionEditVM(collectionId: "col1", repo: fake)
         await vm.load()
 
-        let color = await vm.updateAvatar(Data([1, 2, 3]))
+        let update = await vm.updateAvatar(Data([1, 2, 3]))
 
-        #expect(color == "#cc7733")
+        #expect(update == .updated(color: "#cc7733"))
         #expect(vm.avatarColor == "#cc7733")
         #expect(vm.avatarPreviewURL?.absoluteString == "https://public.example/new")
         #expect(!vm.uploadingAvatar)
@@ -124,11 +124,34 @@ struct CollectionEditVMTests {
         let vm = CollectionEditVM(collectionId: "col1", repo: fake)
         await vm.load()
 
-        #expect(await vm.updateAvatar(Data([1, 2, 3])) == nil)
+        guard case .failed = await vm.updateAvatar(Data([1, 2, 3])) else {
+            Issue.record("expected a retryable failure")
+            return
+        }
         #expect(vm.avatarColor == "#335577")
         #expect(vm.avatarPreviewURL?.absoluteString == "https://private.example/old")
-        #expect(vm.errorMessage != nil)
+        // The avatar has its own error line; the one by 公開合集 is for publishing.
+        #expect(vm.errorMessage == nil)
         #expect(!vm.uploadingAvatar)
+    }
+
+    @Test
+    func aPhotoTheImageCheckTurnsDownIsRefusedNotRetried() async {
+        let fake = FakeCollectionEditing(
+            response: .init(collection: self.edit(avatarColor: "#335577"), items: [])
+        )
+        fake.avatarError = APIError.server(
+            status: 422,
+            body: #"{"error":"avatar_rejected","message":"這張圖片無法設為集合頭像，請換一張再試"}"#
+        )
+        let vm = CollectionEditVM(collectionId: "col1", repo: fake)
+        await vm.load()
+
+        let update = await vm.updateAvatar(Data([1, 2, 3]))
+
+        #expect(update == .refused(tujiLocalized("這張照片無法設為合集頭像，請換一張再試。")))
+        #expect(vm.avatarColor == "#335577")
+        #expect(vm.errorMessage == nil)
     }
 
     @Test

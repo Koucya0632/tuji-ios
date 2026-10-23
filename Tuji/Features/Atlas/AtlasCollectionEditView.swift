@@ -313,7 +313,13 @@ struct AtlasCollectionEditView: View {
         let identities = self.identities
         let feed = self.feedRefresh
         self.avatar.onDeliver { data in
-            guard let color = await vm.updateAvatar(data) else { return .rejected(nil) }
+            let color: String
+            switch await vm.updateAvatar(data) {
+            case let .updated(value): color = value
+            case let .refused(message): return .refused(message)
+            case let .failed(message): return .rejected(message)
+            case nil: return .rejected(nil)
+            }
             identities.publish(
                 collectionID: vm.collectionId,
                 avatarColor: color,
