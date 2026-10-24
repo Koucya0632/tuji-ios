@@ -91,12 +91,16 @@ struct CommunityMyPageRow: View {
         .contentShape(.rect)
     }
 
+    /// Fresh on every appearance, past the edge cache — the same read the author page
+    /// itself makes for its owner. This row used to load once, from the CDN copy, so it
+    /// said 公開卡片 13 over a page that said 17 for up to a day after publishing.
     private func load() async {
-        if case .loaded = self.phase { return }
         do {
-            let author = try await self.authors.load(handle: self.uid, refresh: false).author
+            let author = try await self.authors.load(handle: self.uid, refresh: true).author
             self.phase = .loaded(author)
         } catch {
+            // A row already on screen keeps its numbers rather than vanishing.
+            if case .loaded = self.phase { return }
             // Still silent to the user: a network problem here must not cost
             // them the collection list below, and an error where a person's
             // name should be is worse than no row. But it is now a *state*, so
