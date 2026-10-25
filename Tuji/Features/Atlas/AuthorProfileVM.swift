@@ -61,6 +61,11 @@ final class AuthorProfileVM {
     /// switch to and the items stand alone.
     var segment: Segment = .collections
 
+    /// Narrows the 圖鑑 half to one language; nil shows every group. Only
+    /// offered when the author has published in more than one language — see
+    /// `showsLanguageFilter`.
+    var languageFilter: TargetLanguage?
+
     private let profiles: AuthorProfileLoading
 
     init(
@@ -91,6 +96,21 @@ final class AuthorProfileVM {
         self.showsSegmentedControl ? self.segment : .items
     }
 
+    /// A filter needs at least two languages to choose between.
+    var showsLanguageFilter: Bool {
+        self.groups.count > 1
+    }
+
+    /// The groups to render under the current filter. A filter naming a
+    /// language the author no longer has falls back to everything rather than
+    /// leaving the page empty.
+    var visibleGroups: [LanguageGroup] {
+        guard let filter = self.languageFilter,
+              let match = self.groups.first(where: { $0.language == filter })
+        else { return self.groups }
+        return [match]
+    }
+
     /// Whether the page has settled into a state where an authoring entry means
     /// something. `notFound` counts on purpose: an author with nothing public
     /// yet is exactly who needs 建立合集, and on their own page that phase is the
@@ -119,6 +139,13 @@ final class AuthorProfileVM {
             // Reset on every load: a reload that drops the last collection must
             // not leave the page pointing at a tab that no longer exists.
             self.segment = response.collections.isEmpty ? .items : .collections
+            // Keep the viewer's pick across a refresh, but only while that
+            // language still has a group to show.
+            if let filter = self.languageFilter,
+               !self.groups.contains(where: { $0.language == filter })
+            {
+                self.languageFilter = nil
+            }
             self.phase = .ready
         } catch APIError.notFound {
             self.clear()
@@ -134,6 +161,7 @@ final class AuthorProfileVM {
         self.items = []
         self.groups = []
         self.collections = []
+        self.languageFilter = nil
     }
 
     /// Groups by language in order of first appearance. The server sends items

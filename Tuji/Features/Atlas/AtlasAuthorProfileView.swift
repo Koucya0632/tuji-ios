@@ -208,10 +208,6 @@ struct AtlasAuthorProfileView: View {
     /// icons *or* one text action, never both (`TujiNavIcon`).
     private var createCollectionEntry: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text("挑幾張自己的圖鑑組成一組，公開後會出現在物見。")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-                .fixedSize(horizontal: false, vertical: true)
             BBtn(
                 title: "建立合集",
                 bg: .tujiPaper2,
@@ -381,18 +377,57 @@ struct AtlasAuthorProfileView: View {
                     .foregroundStyle(.tujiInk3)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                ForEach(self.vm.groups) { group in
+                if self.vm.showsLanguageFilter {
+                    self.languageFilterRow
+                }
+                ForEach(self.vm.visibleGroups) { group in
                     self.languageGroup(group)
                 }
             }
         }
     }
 
-    /// One language's items. The heading is dropped when the author only ever
-    /// published in one language — labelling a single group explains nothing.
+    /// 全部 plus one chip per language the author published in. Same chip as
+    /// 圖鑑's source row, so it reads as a filter rather than a second segment.
+    private var languageFilterRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Space.s2) {
+                self.languageChip(nil, title: tujiLocalized("全部"))
+                ForEach(self.vm.groups) { group in
+                    // Both halves already resolved (label via tujiLocalized, count a
+                    // number), so this must not become a "%@ (%lld)" catalog key.
+                    self.languageChip(group.language, title: "\(group.language.label) (\(group.count))")
+                }
+            }
+        }
+        .scrollClipDisabled()
+    }
+
+    private func languageChip(_ language: TargetLanguage?, title: String) -> some View {
+        let selected = self.vm.languageFilter == language
+        return Button {
+            guard !selected else { return }
+            withAnimation(Motion.ease(Motion.d1)) {
+                self.vm.languageFilter = language
+            }
+        } label: {
+            Text(verbatim: title)
+                .font(.tujiLabel)
+                .tracking(0.5)
+                .foregroundStyle(selected ? Color.tujiPaper : .tujiInk2)
+                .padding(.horizontal, Space.s3)
+                .frame(height: 36)
+                .background(selected ? Color.tujiInk : .tujiPaper2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
+    }
+
+    /// One language's items. The heading is dropped when only one group is on
+    /// screen — a single-language author, or a filter whose chip already names it.
     private func languageGroup(_ group: AuthorProfileVM.LanguageGroup) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            if self.vm.groups.count > 1 {
+            if self.vm.visibleGroups.count > 1 {
                 // verbatim: both halves are already resolved (the label through
                 // tujiLocalized, the count a number), so this must not become a
                 // "%@ (%lld)" catalog key.
