@@ -203,6 +203,63 @@ struct AuthorProfileVMTests {
         #expect(vm.groups.map(\.language) == [.en, .ja])
     }
 
+    // MARK: - Language filter
+
+    @Test
+    func languageFilterNarrowsToOneGroup() async {
+        let fake = FakeAuthorProfileLoading()
+        fake.result = .success(.init(
+            author: self.author(),
+            items: [
+                self.item(id: "a", language: .ja),
+                self.item(id: "b", language: .en),
+                self.item(id: "c", language: .ja)
+            ]
+        ))
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
+        await vm.load()
+
+        #expect(vm.showsLanguageFilter)
+        #expect(vm.visibleGroups.count == 2)
+
+        vm.languageFilter = .en
+        #expect(vm.visibleGroups.map(\.language) == [.en])
+
+        vm.languageFilter = nil
+        #expect(vm.visibleGroups.count == 2)
+    }
+
+    /// A single-language author has nothing to choose between.
+    @Test
+    func languageFilterHiddenForOneLanguage() async {
+        let fake = FakeAuthorProfileLoading()
+        fake.result = .success(.init(author: self.author(), items: [self.item(id: "a", language: .ja)]))
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
+        await vm.load()
+
+        #expect(!vm.showsLanguageFilter)
+    }
+
+    /// A reload that drops the filtered language must not strand the page on
+    /// an empty filter.
+    @Test
+    func reloadClearsFilterForVanishedLanguage() async {
+        let fake = FakeAuthorProfileLoading()
+        fake.result = .success(.init(
+            author: self.author(),
+            items: [self.item(id: "a", language: .ja), self.item(id: "b", language: .en)]
+        ))
+        let vm = AuthorProfileVM(handle: "mika_k", profiles: fake)
+        await vm.load()
+        vm.languageFilter = .en
+
+        fake.result = .success(.init(author: self.author(), items: [self.item(id: "a", language: .ja)]))
+        await vm.load()
+
+        #expect(vm.languageFilter == nil)
+        #expect(vm.visibleGroups.map(\.language) == [.ja])
+    }
+
     // MARK: - Segments
 
     /// Most authors have none. A segmented control that advertises an empty room
