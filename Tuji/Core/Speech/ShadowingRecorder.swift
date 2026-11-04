@@ -11,11 +11,10 @@
 // stops by itself after a pause once something has been heard, after a longer
 // wait if nothing ever was, and at a hard ceiling; tapping again stops it too.
 //
-// The audio tap and the recogniser's callbacks run off the main actor. Both are
-// built in `nonisolated` functions (the callback in `SpeechRecognition`) and
-// hand plain strings back, because under this target's default MainActor
-// isolation a closure written inside a method here would be MainActor-isolated,
-// and the audio thread calling it traps.
+// The mic, the recogniser and the recording file are `SpeechListening`'s,
+// shared with 語音輸入; this keeps the timing and the score. When the system
+// takes the mic away (a call, the route changing), the try is scored on what
+// was heard so far.
 //
 // The audio session is switched to play-and-record while listening and handed
 // back afterwards; `SpeechService` sets its own category again on the next play.
@@ -23,7 +22,6 @@
 import AVFoundation
 import Observation
 import OSLog
-import Speech
 
 @MainActor
 @Observable
@@ -52,13 +50,12 @@ final class ShadowingRecorder {
     private(set) var recording: URL?
     private(set) var isPlayingBack = false
 
+    @ObservationIgnored private let input: SpeechListening
+    @ObservationIgnored private let sleep: SpeechSleep
     @ObservationIgnored private var target = ""
     @ObservationIgnored private var language: TargetLanguage = .en
-    @ObservationIgnored private var engine: AVAudioEngine?
-    @ObservationIgnored private var request: SFSpeechAudioBufferRecognitionRequest?
-    @ObservationIgnored private var task: SFSpeechRecognitionTask?
     @ObservationIgnored private var timer: Task<Void, Never>?
-    @ObservationIgnored private var file: RecordingFile?
+    @ObservationIgnored private var ceiling: Task<Void, Never>?
     @ObservationIgnored private var player: AVAudioPlayer?
     @ObservationIgnored private var playbackEnded: PlaybackEnded?
     /// Bumped on every start so a late callback from an earlier try is ignored.
@@ -69,11 +66,21 @@ final class ShadowingRecorder {
     /// Stop after this long without a new word, once something was heard.
     /// Long enough for the breath between two sentences of a line, and for the
     /// recogniser, which reports a word a beat after it is said.
-    private static let pause: Duration = .milliseconds(2500)
+    static let pause: Duration = .milliseconds(2500)
     /// Give up after this long if nothing is heard at all.
-    private static let silence: Duration = .seconds(6)
+    static let silence: Duration = .seconds(6)
     /// Never listen longer than this.
-    private static let ceiling: Duration = .seconds(20)
+    static let maximum: Duration = .seconds(20)
+    /// How long a stopped try waits for the recogniser's last word.
+    static let lastWord: Duration = .seconds(2)
+
+    init(
+        input: SpeechListening = LiveSpeechInput(category: "shadowing"),
+        sleep: @escaping SpeechSleep = SpeechTiming.realSleep
+    ) {
+        self.input = input
+        self.sleep = sleep
+    }
 
     var isListening: Bool {
         if case .listening = self.phase { return true }
@@ -97,78 +104,57 @@ final class ShadowingRecorder {
         self.language = language
         self.phase = .listening(heard: "")
 
-        guard await SpeechRecognition.authorize() else {
+        guard await self.input.authorize() else {
             if attempt == self.attempt { self.phase = .denied }
             return
         }
         guard attempt == self.attempt else { return }
-        guard let recognizer = SFSpeechRecognizer(locale: Self.locale(for: language)) else {
+
+        let events = SpeechListenEvents(
+            result: { [weak self] text, isFinal, failed in
+                self?.receive(text: text, isFinal: isFinal, failed: failed, attempt: attempt)
+            },
+            interrupted: { [weak self] in
+                guard let self, attempt == self.attempt else { return }
+                self.stop()
+            }
+        )
+        let request = SpeechListenRequest(locale: Self.locale(for: language), recordTo: Self.recordingURL)
+        switch self.input.open(request, events: events) {
+        case .listening: break
+        case .unsupported:
             self.phase = .unavailable
             return
-        }
-        guard recognizer.isAvailable else {
+        case .offline:
             self.phase = .offline
             return
-        }
-
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true
-        request.taskHint = .dictation
-        if recognizer.supportsOnDeviceRecognition {
-            request.requiresOnDeviceRecognition = true
-        }
-
-        let engine = AVAudioEngine()
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-            let input = engine.inputNode
-            let format = input.outputFormat(forBus: 0)
-            let file = try RecordingFile(url: Self.recordingURL, format: format)
-            self.file = file
-            input.installTap(
-                onBus: 0,
-                bufferSize: 1024,
-                format: format,
-                block: Self.tap(request, file: file)
-            )
-            engine.prepare()
-            try engine.start()
-        } catch {
-            self.log.error("shadowing start failed: \(error.localizedDescription, privacy: .public)")
-            engine.inputNode.removeTap(onBus: 0)
-            self.file?.close()
-            self.file = nil
-            self.releaseSession()
+        case .failed:
             self.phase = .failed
             return
         }
 
-        self.engine = engine
-        self.request = request
-        self.task = recognizer.recognitionTask(
-            with: request,
-            resultHandler: SpeechRecognition.handler { [weak self] text, isFinal, failed in
-                self?.receive(text: text, isFinal: isFinal, failed: failed, attempt: attempt)
-            }
-        )
         self.arm(after: Self.silence, attempt: attempt)
-        self.ceilingTimer(attempt: attempt)
+        let sleep = self.sleep
+        self.ceiling = Task { [weak self] in
+            await sleep(Self.maximum)
+            guard !Task.isCancelled, let self, attempt == self.attempt else { return }
+            self.stop()
+        }
     }
 
     /// The person is done: close the mic and score what was heard.
     func stop() {
         guard case .listening = self.phase else { return }
-        self.closeMic()
+        self.input.endAudio()
+        self.ceiling?.cancel()
         self.phase = .finishing
-        self.request?.endAudio()
         let attempt = self.attempt
         // The final result normally follows within a moment. If it does not,
         // score the last partial rather than leave the line spinning.
         self.timer?.cancel()
+        let sleep = self.sleep
         self.timer = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(2))
+            await sleep(Self.lastWord)
             guard !Task.isCancelled, let self, attempt == self.attempt, self.phase == .finishing else { return }
             self.finish(heard: self.lastHeard)
         }
@@ -181,12 +167,10 @@ final class ShadowingRecorder {
         self.recording = nil
         self.timer?.cancel()
         self.timer = nil
-        self.task?.cancel()
-        self.task = nil
-        self.closeMic()
-        self.file?.close()
-        self.file = nil
-        self.request = nil
+        self.ceiling?.cancel()
+        self.ceiling = nil
+        self.input.cancel()
+        self.lastHeard = ""
         self.lineID = nil
         self.phase = .idle
     }
@@ -210,7 +194,7 @@ final class ShadowingRecorder {
         if isFinal || failed {
             // A failure with nothing heard is "nothing heard", which scores as
             // try again — the recogniser reports silence as an error.
-            self.closeMic()
+            self.input.endAudio()
             self.finish(heard: self.lastHeard)
         }
     }
@@ -218,45 +202,22 @@ final class ShadowingRecorder {
     private func finish(heard: String) {
         self.timer?.cancel()
         self.timer = nil
-        self.task = nil
-        self.request = nil
+        self.ceiling?.cancel()
+        self.ceiling = nil
         let score = ShadowingScore(target: self.target, heard: heard, language: self.language)
         self.phase = .scored(score, heard: heard)
-        self.closeFile()
+        self.recording = self.input.finishRecording()
         self.lastHeard = ""
     }
 
     private func arm(after delay: Duration, attempt: Int) {
         self.timer?.cancel()
+        let sleep = self.sleep
         self.timer = Task { [weak self] in
-            try? await Task.sleep(for: delay)
+            await sleep(delay)
             guard !Task.isCancelled, let self, attempt == self.attempt else { return }
             self.stop()
         }
-    }
-
-    private func ceilingTimer(attempt: Int) {
-        Task { [weak self] in
-            try? await Task.sleep(for: Self.ceiling)
-            guard let self, attempt == self.attempt else { return }
-            self.stop()
-        }
-    }
-
-    private func closeMic() {
-        guard let engine = self.engine else { return }
-        engine.stop()
-        engine.inputNode.removeTap(onBus: 0)
-        self.engine = nil
-        self.releaseSession()
-    }
-
-    /// The try is over: the file is complete, and playable when it holds any sound.
-    private func closeFile() {
-        guard let file = self.file else { return }
-        self.file = nil
-        file.close()
-        self.recording = file.hasAudio ? file.url : nil
     }
 
     // MARK: - 聽自己
@@ -291,14 +252,6 @@ final class ShadowingRecorder {
         self.isPlayingBack = false
     }
 
-    private func releaseSession() {
-        do {
-            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            self.log.error("shadowing session release failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
     // MARK: - Off the main actor
 
     private nonisolated static func locale(for language: TargetLanguage) -> Locale {
@@ -310,57 +263,6 @@ final class ShadowingRecorder {
 
     private nonisolated static var recordingURL: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("shadowing.caf")
-    }
-
-    private nonisolated static func tap(
-        _ request: SFSpeechAudioBufferRecognitionRequest,
-        file: RecordingFile
-    )
-        -> AVAudioNodeTapBlock
-    {
-        nonisolated(unsafe) let request = request
-        return { buffer, _ in
-            request.append(buffer)
-            file.write(buffer)
-        }
-    }
-}
-
-/// The mic's audio on its way to disk. Written from the audio thread, closed
-/// from the main actor after the tap is gone; the lock covers the overlap.
-private final nonisolated class RecordingFile: @unchecked Sendable {
-    let url: URL
-    private var file: AVAudioFile?
-    private var frames: AVAudioFramePosition = 0
-    private let lock = NSLock()
-
-    init(url: URL, format: AVAudioFormat) throws {
-        try? FileManager.default.removeItem(at: url)
-        self.url = url
-        self.file = try AVAudioFile(
-            forWriting: url,
-            settings: format.settings,
-            commonFormat: format.commonFormat,
-            interleaved: format.isInterleaved
-        )
-    }
-
-    var hasAudio: Bool {
-        self.lock.withLock { self.frames > 0 }
-    }
-
-    func write(_ buffer: AVAudioPCMBuffer) {
-        self.lock.withLock {
-            guard let file = self.file, (try? file.write(from: buffer)) != nil else { return }
-            self.frames += AVAudioFramePosition(buffer.frameLength)
-        }
-    }
-
-    func close() {
-        self.lock.withLock {
-            self.file?.close()
-            self.file = nil
-        }
     }
 }
 
