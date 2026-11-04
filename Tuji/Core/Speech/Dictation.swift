@@ -3,17 +3,17 @@
 //
 // Apple's recogniser, on the device whenever the language allows it, as for
 // 跟讀 (`ShadowingRecorder`). One language at a time: the recogniser listens for
-// one locale, so switching language starts again.
+// one locale, so switching language starts again. The mic and recogniser are
+// `SpeechListening`'s; this keeps the timing.
 //
 // It stops by itself after a pause once something has been heard, after a
-// longer wait if nothing ever was, and at a hard ceiling; `stop` ends it too.
-// `cancel` drops it, and anything the recogniser says afterwards is ignored —
-// for when the draft is about to be sent or typed into.
+// longer wait if nothing ever was, at a hard ceiling, and when the system takes
+// the mic away (a call, the route changing); `stop` ends it too. `cancel` drops
+// it, and anything the recogniser says afterwards is ignored — for when the
+// draft is about to be sent or typed into.
 
-import AVFoundation
+import Foundation
 import Observation
-import OSLog
-import Speech
 
 @MainActor
 @Observable
@@ -35,24 +35,29 @@ final class Dictation {
     /// The language being listened for, while listening or after a problem.
     private(set) var locale: Locale?
 
-    @ObservationIgnored private var engine: AVAudioEngine?
-    @ObservationIgnored private var request: SFSpeechAudioBufferRecognitionRequest?
-    @ObservationIgnored private var task: SFSpeechRecognitionTask?
+    @ObservationIgnored private let input: SpeechListening
+    @ObservationIgnored private let sleep: SpeechSleep
     @ObservationIgnored private var timer: Task<Void, Never>?
     @ObservationIgnored private var ceiling: Task<Void, Never>?
     @ObservationIgnored private var heard: (String) -> Void = { _ in }
     /// Bumped on every start and cancel so a late callback from an earlier try is ignored.
     @ObservationIgnored private var attempt = 0
 
-    @ObservationIgnored private let log = Logger(subsystem: "app.tuji.ios", category: "dictation")
-
     /// Stop after this long without a new word, once something was heard —
     /// longer than 跟讀's, because the person is thinking of what to say, not reading.
-    private static let pause: Duration = .seconds(3)
+    static let pause: Duration = .seconds(3)
     /// Give up after this long if nothing is heard at all.
-    private static let silence: Duration = .seconds(8)
+    static let silence: Duration = .seconds(8)
     /// Never listen longer than this.
-    private static let maximum: Duration = .seconds(60)
+    static let maximum: Duration = .seconds(60)
+
+    init(
+        input: SpeechListening = LiveSpeechInput(category: "dictation"),
+        sleep: @escaping SpeechSleep = SpeechTiming.realSleep
+    ) {
+        self.input = input
+        self.sleep = sleep
+    }
 
     var isListening: Bool {
         self.phase == .listening
@@ -66,61 +71,38 @@ final class Dictation {
         self.heard = heard
         self.phase = .listening
 
-        guard await SpeechRecognition.authorize() else {
+        guard await self.input.authorize() else {
             if attempt == self.attempt { self.phase = .denied }
             return
         }
         guard attempt == self.attempt else { return }
-        guard let recognizer = SFSpeechRecognizer(locale: locale) else {
+
+        let events = SpeechListenEvents(
+            result: { [weak self] text, isFinal, failed in
+                self?.receive(text: text, isFinal: isFinal, failed: failed, attempt: attempt)
+            },
+            interrupted: { [weak self] in
+                guard let self, attempt == self.attempt else { return }
+                self.stop()
+            }
+        )
+        switch self.input.open(SpeechListenRequest(locale: locale, punctuate: true), events: events) {
+        case .listening: break
+        case .unsupported:
             self.phase = .unavailable
             return
-        }
-        guard recognizer.isAvailable else {
+        case .offline:
             self.phase = .offline
             return
-        }
-
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true
-        request.taskHint = .dictation
-        request.addsPunctuation = true
-        if recognizer.supportsOnDeviceRecognition {
-            request.requiresOnDeviceRecognition = true
-        }
-
-        let engine = AVAudioEngine()
-        do {
-            let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-            let input = engine.inputNode
-            input.installTap(
-                onBus: 0,
-                bufferSize: 1024,
-                format: input.outputFormat(forBus: 0),
-                block: Self.tap(request)
-            )
-            engine.prepare()
-            try engine.start()
-        } catch {
-            self.log.error("dictation start failed: \(error.localizedDescription, privacy: .public)")
-            engine.inputNode.removeTap(onBus: 0)
-            self.releaseSession()
+        case .failed:
             self.phase = .failed
             return
         }
 
-        self.engine = engine
-        self.request = request
-        self.task = recognizer.recognitionTask(
-            with: request,
-            resultHandler: SpeechRecognition.handler { [weak self] text, isFinal, failed in
-                self?.receive(text: text, isFinal: isFinal, failed: failed, attempt: attempt)
-            }
-        )
         self.arm(after: Self.silence, attempt: attempt)
+        let sleep = self.sleep
         self.ceiling = Task { [weak self] in
-            try? await Task.sleep(for: Self.maximum)
+            await sleep(Self.maximum)
             guard !Task.isCancelled, let self, attempt == self.attempt else { return }
             self.stop()
         }
@@ -129,8 +111,7 @@ final class Dictation {
     /// The person is done: close the mic and let the recogniser give its last word.
     func stop() {
         guard self.phase == .listening else { return }
-        self.closeMic()
-        self.request?.endAudio()
+        self.input.endAudio()
         self.timer?.cancel()
         self.ceiling?.cancel()
         self.phase = .idle
@@ -143,10 +124,7 @@ final class Dictation {
         self.timer = nil
         self.ceiling?.cancel()
         self.ceiling = nil
-        self.task?.cancel()
-        self.task = nil
-        self.request = nil
-        self.closeMic()
+        self.input.cancel()
         self.heard = { _ in }
         self.phase = .idle
     }
@@ -163,42 +141,20 @@ final class Dictation {
         }
         if isFinal || failed {
             // The recogniser reports silence as an error; nothing heard is not a problem to show.
-            self.closeMic()
+            self.input.endAudio()
             self.timer?.cancel()
             self.ceiling?.cancel()
-            self.task = nil
-            self.request = nil
             if self.phase == .listening { self.phase = .idle }
         }
     }
 
     private func arm(after delay: Duration, attempt: Int) {
         self.timer?.cancel()
+        let sleep = self.sleep
         self.timer = Task { [weak self] in
-            try? await Task.sleep(for: delay)
+            await sleep(delay)
             guard !Task.isCancelled, let self, attempt == self.attempt else { return }
             self.stop()
         }
-    }
-
-    private func closeMic() {
-        guard let engine = self.engine else { return }
-        engine.stop()
-        engine.inputNode.removeTap(onBus: 0)
-        self.engine = nil
-        self.releaseSession()
-    }
-
-    private func releaseSession() {
-        do {
-            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            self.log.error("dictation session release failed: \(error.localizedDescription, privacy: .public)")
-        }
-    }
-
-    private nonisolated static func tap(_ request: SFSpeechAudioBufferRecognitionRequest) -> AVAudioNodeTapBlock {
-        nonisolated(unsafe) let request = request
-        return { buffer, _ in request.append(buffer) }
     }
 }
