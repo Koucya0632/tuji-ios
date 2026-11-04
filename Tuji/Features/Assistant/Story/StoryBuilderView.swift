@@ -22,8 +22,9 @@ struct StoryBuilderView: View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back, compactTitle: Text("情境故事"), showsRule: true)
             if self.model.story != nil || self.model.writing == .writing {
-                StoryReaderView(
+                StoryStageView(
                     story: self.model.story,
+                    sceneId: self.model.sceneId,
                     language: self.model.storyLanguage,
                     picked: self.model.picked,
                     writing: self.model.writing
