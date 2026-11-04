@@ -454,19 +454,15 @@ struct StoryStageDemo: View {
     }
 
     private typealias Ruby = [(String, String?)]
+    private typealias Who = Story.Segment.Speaker
 
-    private static func line(
-        _ speaker: Story.Segment.Speaker,
-        _ text: String,
-        _ furigana: Ruby?,
-        _ translation: String?
-    ) -> Story.Segment {
+    private static func line(_ speaker: Who, _ text: String, _ ruby: Ruby?, _ tr: String?) -> Story.Segment {
         Story.Segment(
             speaker: speaker,
             text: text,
-            furigana: furigana?.map { FuriganaSegment(text: $0.0, ruby: $0.1) },
+            furigana: ruby?.map { FuriganaSegment(text: $0.0, ruby: $0.1) },
             reading: nil,
-            translation: translation,
+            translation: tr,
             wordIds: []
         )
     }
