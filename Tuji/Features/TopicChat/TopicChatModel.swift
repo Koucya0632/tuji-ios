@@ -169,6 +169,12 @@ final class TopicChatModel {
         self.state?.chat
     }
 
+    /// The open chat's language, which can differ from the settings' after a
+    /// switch made while it is open. Dictation listens in this one.
+    private var writesJapanese: Bool {
+        (self.chat?.learningDirection ?? self.direction) == LearningDirection.zhJa.rawValue
+    }
+
     var isActive: Bool {
         self.chat?.isActive ?? false
     }
@@ -437,7 +443,7 @@ final class TopicChatModel {
         case .replace:
             self.draft = pendingFill.text
         case .append:
-            let joiner = self.language.learningDirection.targetLanguage == .ja ? "" : " "
+            let joiner = self.writesJapanese ? "" : " "
             self.draft = self.draft.trimmingCharacters(in: .whitespacesAndNewlines) + joiner + pendingFill.text
         case .cancel:
             return
@@ -456,7 +462,7 @@ final class TopicChatModel {
     /// Japanese join without a space.
     func dictated(_ heard: String, chinese: Bool) {
         guard let base = self.dictationBase else { return }
-        let spaced = !chinese && self.language.learningDirection.targetLanguage != .ja
+        let spaced = !chinese && !self.writesJapanese
         self.draft = base.isEmpty ? heard : base + (spaced ? " " : "") + heard
     }
 
