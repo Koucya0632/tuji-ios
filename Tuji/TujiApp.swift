@@ -140,8 +140,17 @@ struct TujiApp: App {
         }
     }
 
+    @ViewBuilder
     private var rootContent: some View {
-        // Every lock outside a sheet opens 付費頁 from here — see `PaywallHost`.
-        RootView().paywallHost()
+        #if DEBUG
+            if let scene = StoryStageDemo.requestedScene {
+                StoryStageDemo(sceneId: scene)
+            } else {
+                RootView().paywallHost()
+            }
+        #else
+            // Every lock outside a sheet opens 付費頁 from here — see `PaywallHost`.
+            RootView().paywallHost()
+        #endif
     }
 }
