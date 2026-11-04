@@ -99,7 +99,7 @@ struct StoryStageView: View {
     // MARK: - Moira
 
     private var pose: MascotPose {
-        if self.finished && self.shown == self.segments.count && !self.segments.isEmpty { return .cheer }
+        if self.finished, self.shown == self.segments.count, !self.segments.isEmpty { return .cheer }
         let last = self.segments.prefix(self.shown).last { $0.speaker != .narrator }
         switch last?.speaker {
         case .you: return .think
@@ -176,9 +176,18 @@ struct StoryStageView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     VStack(spacing: Space.s1) {
-                        PronunciationButton(subject: .sentence(current.text, language: self.language), size: 28, ground: .tujiPaper2)
-                            .simultaneousGesture(TapGesture().onEnded { self.recorder.cancel() })
-                        ShadowingButton(recorder: self.recorder, line: self.shown - 1, target: current.text, language: self.language)
+                        PronunciationButton(
+                            subject: .sentence(current.text, language: self.language),
+                            size: 28,
+                            ground: .tujiPaper2
+                        )
+                        .simultaneousGesture(TapGesture().onEnded { self.recorder.cancel() })
+                        ShadowingButton(
+                            recorder: self.recorder,
+                            line: self.shown - 1,
+                            target: current.text,
+                            language: self.language
+                        )
                     }
                 }
             }
@@ -217,7 +226,7 @@ struct StoryStageView: View {
         if self.typed == .max {
             HStack {
                 Spacer()
-                if self.caughtUp && self.writing == .writing && self.story != nil {
+                if self.caughtUp, self.writing == .writing, self.story != nil {
                     self.waiting
                 } else {
                     Image(systemName: "arrowtriangle.down.fill")
@@ -444,7 +453,14 @@ struct StoryStageDemo: View {
         }
     }
 
-    private static func line(_ speaker: Story.Segment.Speaker, _ text: String, _ furigana: [(String, String?)]?, _ translation: String?) -> Story.Segment {
+    private typealias Ruby = [(String, String?)]
+
+    private static func line(
+        _ speaker: Story.Segment.Speaker,
+        _ text: String,
+        _ furigana: Ruby?,
+        _ translation: String?
+    ) -> Story.Segment {
         Story.Segment(
             speaker: speaker,
             text: text,
@@ -455,15 +471,24 @@ struct StoryStageDemo: View {
         )
     }
 
+    private static let tasty: Ruby = [("この", nil), ("りんご", nil), ("、", nil), ("美味", "おい"), ("しそうですね。", nil)]
+    private static let howMany: Ruby = [("いくつ", nil), ("買", "か"), ("いますか。", nil)]
+    private static let three: Ruby = [("三", "みっ"), ("つ", nil), ("買", "か"), ("いましょう。", nil)]
+
+    // Sample story content, not interface copy: kept out of the `title:` call
+    // so the localisation check does not read it as a key.
+    private static let sampleTitle = "和Moira一起買蘋果"
+    private static let sampleIntro = "你和Moira走進超市，在水果區看到一籃紅色的蘋果。你想買一些回家，Moira陪你一起挑選。"
+
     static let story = Story(
-        title: "和Moira一起買蘋果",
-        intro: "你和Moira走進超市，在水果區看到一籃紅色的蘋果。你想買一些回家，Moira陪你一起挑選。",
+        title: sampleTitle,
+        intro: sampleIntro,
         segments: [
-            line(.cat, "このりんご、おいしそうですね。", [("この", nil), ("りんご", nil), ("、", nil), ("美味", "おい"), ("しそうですね。", nil)], "這個蘋果看起來很好吃呢。"),
-            line(.you, "いくつ買いますか。", [("いくつ", nil), ("買", "か"), ("いますか。", nil)], "要買幾個？"),
+            line(.cat, "このりんご、美味しそうですね。", tasty, "這個蘋果看起來很好吃呢。"),
+            line(.you, "いくつ買いますか。", howMany, "要買幾個？"),
             line(.narrator, "Moira 拿起一顆蘋果，仔細看了看。", nil, nil),
-            line(.cat, "三つ買いましょう。", [("三", "みっ"), ("つ", nil), ("買", "か"), ("いましょう。", nil)], "買三個吧。"),
-            line(.you, "はい、そうしましょう。", nil, "好，就這麼辦。"),
+            line(.cat, "三つ買いましょう。", three, "買三個吧。"),
+            line(.you, "はい、そうしましょう。", nil, "好，就這麼辦。")
         ],
         wordNotes: nil
     )
