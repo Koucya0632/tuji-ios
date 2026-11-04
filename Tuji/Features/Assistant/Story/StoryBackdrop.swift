@@ -91,10 +91,6 @@ private struct Painter {
                 }
             }
         }
-        // Hanging sign, at the left so it clears the stage's top chips.
-        let sign = self.box(0.04, 0.04, 0.28, 0.09)
-        self.fill(sign, .tujiBrandPrimary)
-        self.frame(sign, 2)
     }
 
     mutating func office() {
