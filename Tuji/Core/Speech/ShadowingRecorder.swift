@@ -102,7 +102,7 @@ final class ShadowingRecorder {
         self.lineID = line
         self.target = target
         self.language = language
-        self.phase = .listening(heard: "")
+        // Not .listening yet: while the system asks for the mic, nothing is.
 
         guard await self.input.authorize() else {
             if attempt == self.attempt { self.phase = .denied }
@@ -121,7 +121,8 @@ final class ShadowingRecorder {
         )
         let request = SpeechListenRequest(locale: Self.locale(for: language), recordTo: Self.recordingURL)
         switch self.input.open(request, events: events) {
-        case .listening: break
+        case .listening:
+            self.phase = .listening(heard: "")
         case .unsupported:
             self.phase = .unavailable
             return

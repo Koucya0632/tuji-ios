@@ -20,8 +20,18 @@ private final class FakeSpeechInput: SpeechListening {
         self.events[self.events.count - 1]
     }
 
+    /// When set, `authorize` waits for `answer(_:)`, as the system prompt does.
+    var asks = false
+    private var question: CheckedContinuation<Bool, Never>?
+
     func authorize() async -> Bool {
-        self.authorized
+        guard self.asks else { return self.authorized }
+        return await withCheckedContinuation { self.question = $0 }
+    }
+
+    func answer(_ granted: Bool) {
+        self.question?.resume(returning: granted)
+        self.question = nil
     }
 
     func open(_ request: SpeechListenRequest, events: SpeechListenEvents) -> SpeechOpenOutcome {
@@ -222,6 +232,44 @@ struct DictationTests {
     }
 
     @Test
+    func itIsNotListeningWhileTheSystemAsksForTheMic() async {
+        let dictation = self.make(), box = Box()
+        self.input.asks = true
+        let starting = Task { await self.start(dictation, into: box) }
+        await SpeechClock.settle()
+        #expect(dictation.phase == .idle)
+        #expect(self.input.opened.isEmpty)
+        self.input.answer(true)
+        await starting.value
+        #expect(dictation.phase == .listening)
+    }
+
+    @Test
+    func refusingTheMicGoesStraightToDenied() async {
+        let dictation = self.make(), box = Box()
+        self.input.asks = true
+        let starting = Task { await self.start(dictation, into: box) }
+        await SpeechClock.settle()
+        self.input.answer(false)
+        await starting.value
+        #expect(dictation.phase == .denied)
+        #expect(self.input.opened.isEmpty)
+    }
+
+    @Test
+    func cancellingWhileTheSystemAsksOpensNothing() async {
+        let dictation = self.make(), box = Box()
+        self.input.asks = true
+        let starting = Task { await self.start(dictation, into: box) }
+        await SpeechClock.settle()
+        dictation.cancel()
+        self.input.answer(true)
+        await starting.value
+        #expect(dictation.phase == .idle)
+        #expect(self.input.opened.isEmpty)
+    }
+
+    @Test
     func problemsAreToldApart() async {
         let dictation = self.make(), box = Box()
         self.input.authorized = false
@@ -333,6 +381,20 @@ struct ShadowingRecorderTests {
             await self.clock.advance(.seconds(2))
         }
         #expect(recorder.isListening)
+    }
+
+    @Test
+    func aLineIsNotListeningWhileTheSystemAsksForTheMic() async {
+        let recorder = self.make()
+        self.input.asks = true
+        let starting = Task { await self.start(recorder, line: 3) }
+        await SpeechClock.settle()
+        #expect(recorder.phase == .idle)
+        #expect(!recorder.isActive(line: 3))
+        self.input.answer(true)
+        await starting.value
+        #expect(recorder.phase == .listening(heard: ""))
+        #expect(recorder.isActive(line: 3))
     }
 
     @Test

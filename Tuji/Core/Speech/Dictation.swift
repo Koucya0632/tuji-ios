@@ -69,7 +69,7 @@ final class Dictation {
         let attempt = self.attempt
         self.locale = locale
         self.heard = heard
-        self.phase = .listening
+        // Not .listening yet: while the system asks for the mic, nothing is.
 
         guard await self.input.authorize() else {
             if attempt == self.attempt { self.phase = .denied }
@@ -87,7 +87,8 @@ final class Dictation {
             }
         )
         switch self.input.open(SpeechListenRequest(locale: locale, punctuate: true), events: events) {
-        case .listening: break
+        case .listening:
+            self.phase = .listening
         case .unsupported:
             self.phase = .unavailable
             return
