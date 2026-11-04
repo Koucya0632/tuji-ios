@@ -23694,6 +23694,29 @@
         }
       }
     },
+    "現在連不上語音辨識，請確認網路後再試。" : {
+      "comment" : "Shown when the speech recogniser for the language exists but can't be reached now, usually a server-only language with no network.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Speech recognition isn't reachable right now. Check your connection and try again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声認識に接続できません。ネットワークを確認してもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现在连不上语音识别，请检查网络后再试。"
+          }
+        }
+      }
+    },
     "這台裝置的相機無法啟動，可以改從相簿選一張照片。" : {
       "localizations" : {
         "en" : {

@@ -84,6 +84,8 @@ struct ShadowingFeedback: View {
             }
         case .unavailable:
             Text("這台裝置不支援這個語言的語音辨識。").foregroundStyle(.tujiInk2)
+        case .offline:
+            Text("現在連不上語音辨識，請確認網路後再試。").foregroundStyle(.tujiInk2)
         case .failed:
             Text("沒辦法開始錄音，請再試一次。").foregroundStyle(.tujiInk2)
         }

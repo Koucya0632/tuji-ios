@@ -437,6 +437,18 @@ struct TopicChatModelTests {
     }
 
     @Test
+    func theOpenChatsLanguageDecidesTheJoinNotTheSettings() async {
+        // Settings say English, but the open chat is Japanese: dictation listens
+        // in Japanese, so what is heard joins without a space.
+        let model = self.makeModel(direction: .zhEn)
+        await model.load()
+        model.draft = "公園に"
+        model.beginDictation()
+        model.dictated("行きたい", chinese: false)
+        #expect(model.draft == "公園に行きたい")
+    }
+
+    @Test
     func aWordHeardAfterTheDraftWasTakenOverIsDropped() async {
         let model = await self.readyModel()
         model.beginDictation()

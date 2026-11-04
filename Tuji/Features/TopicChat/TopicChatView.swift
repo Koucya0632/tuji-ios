@@ -623,6 +623,11 @@ struct TopicChatView: View {
                     .foregroundStyle(.tujiInk2)
                 Spacer(minLength: Space.s2)
                 self.dismissDictationProblem
+            case .offline:
+                Text("現在連不上語音辨識，請確認網路後再試。")
+                    .foregroundStyle(.tujiInk2)
+                Spacer(minLength: Space.s2)
+                self.dismissDictationProblem
             case .failed:
                 Text("沒辦法開始錄音，請再試一次。")
                     .foregroundStyle(.tujiInk2)

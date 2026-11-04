@@ -39,6 +39,9 @@ final class ShadowingRecorder {
         case denied
         /// No recogniser for this language on this device.
         case unavailable
+        /// The recogniser exists but can't be reached now: a language that
+        /// only runs on Apple's servers, with no network.
+        case offline
         case failed
     }
 
@@ -99,8 +102,12 @@ final class ShadowingRecorder {
             return
         }
         guard attempt == self.attempt else { return }
-        guard let recognizer = SFSpeechRecognizer(locale: Self.locale(for: language)), recognizer.isAvailable else {
+        guard let recognizer = SFSpeechRecognizer(locale: Self.locale(for: language)) else {
             self.phase = .unavailable
+            return
+        }
+        guard recognizer.isAvailable else {
+            self.phase = .offline
             return
         }
 
