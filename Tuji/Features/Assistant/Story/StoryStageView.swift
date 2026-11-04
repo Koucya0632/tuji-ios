@@ -345,28 +345,30 @@ struct StoryStageView: View {
                     .foregroundStyle(.tujiInk3)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text("故事裡的單字")
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiInk3)
-            ForEach(self.picked) { word in
-                NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                    HStack(spacing: Space.s3) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(verbatim: word.word)
-                                .font(.tujiBody(.strong))
-                                .foregroundStyle(.tujiInk)
-                            Text(verbatim: self.story?.wordNotes?.first { $0.id == word.id }?.note ?? word.chinese)
-                                .font(.tujiBodySm)
-                                .foregroundStyle(.tujiInk3)
+            if !self.picked.isEmpty {
+                Text("故事裡的單字")
+                    .font(.tujiLabel)
+                    .tracking(0.5)
+                    .foregroundStyle(.tujiInk3)
+                ForEach(self.picked) { word in
+                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
+                        HStack(spacing: Space.s3) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(verbatim: word.word)
+                                    .font(.tujiBody(.strong))
+                                    .foregroundStyle(.tujiInk)
+                                Text(verbatim: self.story?.wordNotes?.first { $0.id == word.id }?.note ?? word.chinese)
+                                    .font(.tujiBodySm)
+                                    .foregroundStyle(.tujiInk3)
+                            }
+                            Spacer(minLength: Space.s2)
+                            TujiRowAccessory()
                         }
-                        Spacer(minLength: Space.s2)
-                        TujiRowAccessory()
+                        .frame(minHeight: 48)
+                        .contentShape(.rect)
                     }
-                    .frame(minHeight: 48)
-                    .contentShape(.rect)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             HStack(spacing: Space.s2) {
                 BBtn(title: "再看一次", bg: .tujiPaper2, fullWidth: true) {
@@ -427,66 +429,3 @@ struct StoryStageView: View {
         .presentationDetents([.medium, .large])
     }
 }
-
-#if DEBUG
-/// A finished story at a chosen place, for looking at the stage without
-/// spending points. Launch with `-StoryStageDemo <sceneId>`.
-struct StoryStageDemo: View {
-    let sceneId: String
-
-    static var requestedScene: String? {
-        let args = ProcessInfo.processInfo.arguments
-        guard let index = args.firstIndex(of: "-StoryStageDemo") else { return nil }
-        return args.indices.contains(index + 1) ? args[index + 1] : "supermarket"
-    }
-
-    var body: some View {
-        NavigationStack {
-            StoryStageView(
-                story: Self.story,
-                sceneId: self.sceneId,
-                language: .ja,
-                picked: [],
-                writing: .idle,
-                close: {}
-            )
-        }
-    }
-
-    private typealias Ruby = [(String, String?)]
-    private typealias Who = Story.Segment.Speaker
-
-    private static func line(_ speaker: Who, _ text: String, _ ruby: Ruby?, _ tr: String?) -> Story.Segment {
-        Story.Segment(
-            speaker: speaker,
-            text: text,
-            furigana: ruby?.map { FuriganaSegment(text: $0.0, ruby: $0.1) },
-            reading: nil,
-            translation: tr,
-            wordIds: []
-        )
-    }
-
-    private static let tasty: Ruby = [("この", nil), ("りんご", nil), ("、", nil), ("美味", "おい"), ("しそうですね。", nil)]
-    private static let howMany: Ruby = [("いくつ", nil), ("買", "か"), ("いますか。", nil)]
-    private static let three: Ruby = [("三", "みっ"), ("つ", nil), ("買", "か"), ("いましょう。", nil)]
-
-    // Sample story content, not interface copy: kept out of the `title:` call
-    // so the localisation check does not read it as a key.
-    private static let sampleTitle = "和Moira一起買蘋果"
-    private static let sampleIntro = "你和Moira走進超市，在水果區看到一籃紅色的蘋果。你想買一些回家，Moira陪你一起挑選。"
-
-    static let story = Story(
-        title: sampleTitle,
-        intro: sampleIntro,
-        segments: [
-            line(.cat, "このりんご、美味しそうですね。", tasty, "這個蘋果看起來很好吃呢。"),
-            line(.you, "いくつ買いますか。", howMany, "要買幾個？"),
-            line(.narrator, "Moira 拿起一顆蘋果，仔細看了看。", nil, nil),
-            line(.cat, "三つ買いましょう。", three, "買三個吧。"),
-            line(.you, "はい、そうしましょう。", nil, "好，就這麼辦。")
-        ],
-        wordNotes: nil
-    )
-}
-#endif
