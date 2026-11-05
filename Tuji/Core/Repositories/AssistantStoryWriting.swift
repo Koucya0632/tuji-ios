@@ -73,6 +73,13 @@ struct Story: Decodable, Equatable {
         let translation: String?
         /// Picked items this segment uses.
         let wordIds: [String]
+        /// Best-effort presentation metadata; never needed to read the story.
+        var stage: StageCue?
+    }
+
+    struct StageCue: Decodable, Equatable {
+        let areaId: String?
+        let moiraAction: String?
     }
 
     struct WordNote: Decodable, Equatable {
@@ -88,6 +95,37 @@ struct Story: Decodable, Equatable {
     /// Only when the interface language is the one being learned: a
     /// translation would repeat each line, so the picked words are explained.
     let wordNotes: [WordNote]?
+}
+
+extension Story.Segment {
+    private enum CodingKeys: String, CodingKey {
+        case speaker, text, furigana, reading, translation, wordIds, stage
+    }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(
+            speaker: values.decode(Speaker.self, forKey: .speaker),
+            text: values.decode(String.self, forKey: .text),
+            furigana: values.decodeIfPresent([FuriganaSegment].self, forKey: .furigana),
+            reading: values.decodeIfPresent(String.self, forKey: .reading),
+            translation: values.decodeIfPresent(String.self, forKey: .translation),
+            wordIds: values.decode([String].self, forKey: .wordIds),
+            stage: try? values.decodeIfPresent(Story.StageCue.self, forKey: .stage)
+        )
+    }
+}
+
+extension Story.StageCue {
+    private enum CodingKeys: String, CodingKey { case areaId, moiraAction }
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            areaId: try? values.decode(String.self, forKey: .areaId),
+            moiraAction: try? values.decode(String.self, forKey: .moiraAction)
+        )
+    }
 }
 
 struct StoryResult: Decodable, Equatable {

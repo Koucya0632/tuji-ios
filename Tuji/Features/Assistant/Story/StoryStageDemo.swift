@@ -48,14 +48,24 @@ struct StoryStageDemo: View {
     private typealias Ruby = [(String, String?)]
     private typealias Who = Story.Segment.Speaker
 
-    private static func line(_ speaker: Who, _ text: String, _ ruby: Ruby?, _ tr: String?) -> Story.Segment {
+    private static func line(
+        _ speaker: Who,
+        _ text: String,
+        _ ruby: Ruby?,
+        _ tr: String?,
+        area: String = "produce",
+        action: String = "listen"
+    )
+        -> Story.Segment
+    {
         Story.Segment(
             speaker: speaker,
             text: text,
             furigana: ruby?.map { FuriganaSegment(text: $0.0, ruby: $0.1) },
             reading: nil,
             translation: tr,
-            wordIds: []
+            wordIds: [],
+            stage: .init(areaId: area, moiraAction: action)
         )
     }
 
@@ -72,11 +82,13 @@ struct StoryStageDemo: View {
         title: sampleTitle,
         intro: sampleIntro,
         segments: [
-            line(.cat, "このりんご、美味しそうですね。", tasty, "這個蘋果看起來很好吃呢。"),
+            line(.cat, "このりんご、美味しそうですね。", tasty, "這個蘋果看起來很好吃呢。", action: "point"),
             line(.you, "いくつ買いますか。", howMany, "要買幾個？"),
-            line(.narrator, "Moira 拿起一顆蘋果，仔細看了看。", nil, nil),
-            line(.cat, "三つ買いましょう。", three, "買三個吧。"),
-            line(.you, "はい、そうしましょう。", nil, "好，就這麼辦。")
+            line(.narrator, "Moira 拿起一顆蘋果，仔細看了看。", nil, nil, action: "hold_apple"),
+            line(.cat, "三つ買いましょう。", three, "買三個吧。", action: "hold_apple"),
+            line(.you, "はい、そうしましょう。", nil, "好，就這麼辦。", action: "nod"),
+            line(.narrator, "結帳之後，Moira 提起購物袋，準備一起回家。", nil, nil, area: "checkout", action: "carry_bag"),
+            line(.cat, "また来ましょう。", nil, "下次再來吧。", area: "checkout", action: "goodbye")
         ],
         wordNotes: nil
     )

@@ -423,6 +423,9 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
 
 ## Domain — 助手
 
+- **舞台閱讀** — 把生成故事呈現為場景背景、Moira 立繪與對話框的閱讀方式，由讀者點擊推進。故事可自由發展，不必依照素材排列的順序演出。
+- **演出提示** — 故事當下所在區域與 Moira 動作的呈現線索。它描述畫面，不是劇情限制；沒有符合素材時使用通用內景或通用姿勢。
+
 - **助手首頁 (`AssistantHomeView`)** — behind the cat on 今天, an entry to the three
   assistant capabilities: AI 查詞, 情境故事, 主題對話. Its 2D cat breathes/blinks and wags on tap;
   it makes no service request. The free-form 問 AI conversation (and its home question

@@ -40,6 +40,7 @@ struct StoryStageView: View {
     @State private var typing: Task<Void, Never>?
     @State private var translating = false
     @State private var backlog = false
+    @State private var practicing = false
     @State private var recorder = ShadowingRecorder()
 
     private var segments: [Story.Segment] {
@@ -58,35 +59,63 @@ struct StoryStageView: View {
         self.caughtUp && self.writing != .writing
     }
 
+    private var isSupermarket: Bool {
+        self.sceneId == "supermarket"
+    }
+
+    private var presentation: SupermarketPresentation {
+        .init(segment: self.current)
+    }
+
     var body: some View {
         GeometryReader { geo in
-            ZStack(alignment: .bottom) {
-                StoryBackdrop(sceneId: self.sceneId)
-                self.moira(in: geo.size)
-                // The tap that moves on lives on its own layer and on the box,
-                // never on the whole stack, so the chips and the box's own
-                // buttons do not also advance the story.
-                Color.clear
-                    .contentShape(.rect)
-                    .onTapGesture { self.tap() }
-                VStack(spacing: Space.s2) {
-                    Spacer(minLength: 0)
+            if self.isSupermarket {
+                SupermarketStageLayout(
+                    presentation: self.presentation, reduceMotion: self.reduceMotion, advance: self.tap
+                ) {
                     if self.ended {
                         self.ending
                     } else {
-                        self.box
-                            .contentShape(.rect)
-                            .onTapGesture { self.tap() }
+                        self.supermarketBox(maxHeight: geo.size.height * 0.45)
                     }
                 }
-                .padding(.horizontal, Space.s3)
-                .padding(.bottom, Space.s3)
-                self.topBar
-                    .frame(maxHeight: .infinity, alignment: .top)
+                .overlay(alignment: .top) { self.topBar }
+            } else {
+                ZStack(alignment: .bottom) {
+                    StoryBackdrop(sceneId: self.sceneId)
+                    self.moira(in: geo.size)
+                    // The tap that moves on lives on its own layer and on the box,
+                    // never on the whole stack, so the chips and the box's own
+                    // buttons do not also advance the story.
+                    Color.clear
+                        .contentShape(.rect)
+                        .onTapGesture { self.tap() }
+                    VStack(spacing: Space.s2) {
+                        Spacer(minLength: 0)
+                        if self.ended {
+                            self.ending
+                        } else {
+                            self.box
+                                .contentShape(.rect)
+                                .onTapGesture { self.tap() }
+                        }
+                    }
+                    .padding(.horizontal, Space.s3)
+                    .padding(.bottom, Space.s3)
+                    self.topBar
+                        .frame(maxHeight: .infinity, alignment: .top)
+                }
             }
         }
         .clipped()
         .sheet(isPresented: self.$backlog) { self.backlogSheet }
+        .sheet(isPresented: self.$practicing, onDismiss: self.stopPractice) {
+            if let current = self.current {
+                StoryPracticeSheet(
+                    segment: current, line: self.shown - 1, language: self.language, recorder: self.recorder
+                )
+            }
+        }
         .onAppear { self.typeOut() }
         .onChange(of: self.story?.intro) { self.typeOut() }
         .onDisappear {
@@ -120,6 +149,59 @@ struct StoryStageView: View {
     }
 
     // MARK: - Box
+
+    private func supermarketBox(maxHeight: CGFloat) -> some View {
+        SupermarketDialogue(
+            name: self.name,
+            isReader: self.current?.speaker == .you,
+            maxHeight: maxHeight,
+            contentKey: self.shown
+        ) {
+            VStack(alignment: .leading, spacing: Space.s2) {
+                if let current = self.current {
+                    if current.speaker == .narrator {
+                        Text(verbatim: self.typedPart(current.text))
+                            .font(.tujiBody)
+                            .foregroundStyle(.tujiInk2)
+                    } else {
+                        self.lineText(current)
+                        if self.translating, let translation = current.translation, self.typed == .max {
+                            Text(verbatim: translation).font(.tujiBodySm).foregroundStyle(.tujiInk2)
+                        }
+                    }
+                } else if let story = self.story {
+                    Text(verbatim: self.typedPart(story.intro)).font(.tujiBody).foregroundStyle(.tujiInk)
+                } else {
+                    self.waiting
+                }
+            }
+            .contentShape(.rect)
+            .onTapGesture { self.tap() }
+        } controls: {
+            StoryStageControls(
+                segment: self.current, translating: self.$translating,
+                waiting: self.caughtUp && self.writing == .writing,
+                replay: {
+                    guard let current = self.current else { return }
+                    self.recorder.cancel()
+                    self.speech.speak(
+                        current.text,
+                        voice: .preferred(for: self.settings.current, language: self.language)
+                    )
+                },
+                practice: {
+                    self.stopPractice()
+                    self.practicing = true
+                },
+                advance: self.tap
+            )
+        }
+    }
+
+    private func stopPractice() {
+        self.speech.stop()
+        self.recorder.cancel()
+    }
 
     private var name: String? {
         guard let current else { return self.story?.title }
@@ -251,10 +333,21 @@ struct StoryStageView: View {
 
     private var topBar: some View {
         HStack(spacing: Space.s2) {
+            if self.isSupermarket {
+                Text(verbatim: self.presentation.area.label)
+                    .font(.tujiBodySm(.strong))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .foregroundStyle(.tujiInk)
+                    .padding(Space.s2)
+                    .background(Color.tujiPaper.opacity(0.94))
+            }
             Spacer()
-            self.chip(Text("譯"), on: self.translating) { self.translating.toggle() }
-                .accessibilityLabel(Text(self.translating ? "隱藏翻譯" : "顯示翻譯"))
-            self.chip(Text("履歷"), on: false) {
+            if !self.isSupermarket {
+                self.chip(Text("譯"), on: self.translating) { self.translating.toggle() }
+                    .accessibilityLabel(Text(self.translating ? "隱藏翻譯" : "顯示翻譯"))
+            }
+            self.chip(self.isSupermarket ? Text("紀錄") : Text("履歷"), on: false) {
                 self.speech.stop()
                 self.recorder.cancel()
                 self.backlog = true
@@ -281,7 +374,7 @@ struct StoryStageView: View {
     // MARK: - Moving on
 
     private func tap() {
-        guard !self.ended, self.story != nil else { return }
+        guard !self.ended, !self.practicing, !self.backlog, self.story != nil else { return }
         if self.typed != .max {
             self.typing?.cancel()
             self.typed = .max
@@ -289,6 +382,7 @@ struct StoryStageView: View {
         }
         if !self.caughtUp {
             let next = self.segments[self.shown]
+            self.speech.stop()
             self.recorder.cancel()
             self.shown += 1
             self.typeOut()
@@ -311,28 +405,6 @@ struct StoryStageView: View {
             return current.text
         }
         return self.story?.intro
-    }
-
-    private func typeOut() {
-        self.typing?.cancel()
-        guard !self.reduceMotion, let text = self.typeable, !text.isEmpty else {
-            self.typed = .max
-            return
-        }
-        self.typed = 0
-        let count = text.count
-        self.typing = Task { @MainActor in
-            while self.typed < count {
-                try? await Task.sleep(for: .milliseconds(32))
-                if Task.isCancelled { return }
-                self.typed += 1
-            }
-            self.typed = .max
-        }
-    }
-
-    private func typedPart(_ text: String) -> String {
-        self.typed == .max ? text : String(text.prefix(self.typed))
     }
 
     // MARK: - Ending
@@ -389,43 +461,32 @@ struct StoryStageView: View {
     // MARK: - 履歷
 
     private var backlogSheet: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Space.s3) {
-                    if let story {
-                        Text(verbatim: story.title).font(.tujiH3).foregroundStyle(.tujiInk)
-                        Text(verbatim: story.intro).font(.tujiBodySm).foregroundStyle(.tujiInk2)
-                    }
-                    ForEach(Array(self.segments.prefix(self.shown).enumerated()), id: \.offset) { _, segment in
-                        VStack(alignment: .leading, spacing: 2) {
-                            switch segment.speaker {
-                            case .narrator:
-                                Text(verbatim: segment.text).font(.tujiBodySm).italic().foregroundStyle(.tujiInk3)
-                            case .cat, .you:
-                                Text(verbatim: segment.speaker == .cat ? "Moira" : tujiLocalized("你"))
-                                    .font(.tujiLabel)
-                                    .foregroundStyle(.tujiInk3)
-                                Text(verbatim: segment.text).font(.tujiBody(.strong)).foregroundStyle(.tujiInk)
-                                if let translation = segment.translation {
-                                    Text(verbatim: translation).font(.tujiBodySm).foregroundStyle(.tujiInk2)
-                                }
-                            }
-                        }
-                        .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding(Space.s4)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color.tujiPaper)
-            .navigationTitle(Text("履歷"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("關閉") { self.backlog = false }
-                }
-            }
+        StoryTranscriptSheet(story: self.story, shown: self.shown, isSupermarket: self.isSupermarket) {
+            self.backlog = false
         }
-        .presentationDetents([.medium, .large])
+    }
+}
+
+private extension StoryStageView {
+    func typeOut() {
+        self.typing?.cancel()
+        guard !self.reduceMotion, let text = self.typeable, !text.isEmpty else {
+            self.typed = .max
+            return
+        }
+        self.typed = 0
+        let count = text.count
+        self.typing = Task { @MainActor in
+            while self.typed < count {
+                try? await Task.sleep(for: .milliseconds(32))
+                if Task.isCancelled { return }
+                self.typed += 1
+            }
+            self.typed = .max
+        }
+    }
+
+    func typedPart(_ text: String) -> String {
+        self.typed == .max ? text : String(text.prefix(self.typed))
     }
 }

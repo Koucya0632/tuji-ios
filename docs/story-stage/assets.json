@@ -1,0 +1,233 @@
+{
+  "tool": "built-in imagegen",
+  "assets": [
+    {
+      "id": "general",
+      "transparent": false,
+      "prompt": "Photorealistic portrait 2:3 background plate for a mobile visual novel, inside a modern everyday Japanese supermarket. Warm wood display fixtures, ivory ceiling, clean pale beige tile floor, soft natural ceiling light, coherent real-world materials. Eye-level camera slightly looking down, a wide open unobstructed floor in the lower half and especially left foreground, shelves on sides receding into store depth, general grocery merchandise without a dominant fruit, freezer or checkout focus. Floor starts at about 58 percent of image height. No people, no animals, no characters, no text, no UI, no labels, no logos, no watermarks. This is an independent environmental photography asset, not a phone mockup. Believable ordinary supermarket rather than an extravagant luxury shop. Portrait composition.",
+      "path": "sources/general.png",
+      "assetName": "story-supermarket-general",
+      "sourceSha256": "5c915d60794c9e573b114aa528860d385e46baf380c0e8d255be69f31458256f",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "listen",
+      "transparent": true,
+      "prompt": "Create a single standalone transparent-background 2D visual-novel sprite of Moira, the black-cat mascot seen in the reference mobile mockup. Use the image only as character identity and flat 2D art-style reference; remove the whole environment and ALL user interface. Clean crisp black outlines, flat solid color shapes with just one restrained cel-shaded tone. Black kitten with large round golden eyes, white chest tuft, white paw tips, pink inner ears, long curved tail. No realistic fur strands or 3D rendering. Exact same face and proportions as reference. Pose LISTEN: seated upright, head gently tilted toward viewer's right, both front paws resting on ground, attentive warm closed-mouth expression. Full body including ears, paws and tail, no cropping. Consistent canvas: square 1024 by 1024, ears near y=110, feet baseline y=900, body centered, visible character fills roughly 80 percent of height. No objects held, no shadow, no ground, no background, no text, no checkerboard; genuine alpha transparency.",
+      "path": "sources/listen.png",
+      "visibleBounds": {
+        "left": 0.19138755980861244,
+        "top": 0.05422647527910686,
+        "right": 0.8157894736842105,
+        "bottom": 0.9457735247208932
+      },
+      "assetName": "story-moira-listen",
+      "sourceSha256": "dce079f6bbb006b2c69262ea9c80a44f1dcf7f3f2f08a8c99d7d515a43a2dce4",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "entrance",
+      "transparent": false,
+      "prompt": "Create an independent photorealistic portrait 2:3 background plate for the SAME Japanese supermarket as the reference image. Match exactly its warm wood fixtures, pale beige floor, ivory ceiling, realistic natural light, ordinary store aesthetic and eye-level slightly downward camera perspective. This view is just inside the store's entrance, glass automatic doors visible on the right, neat nested shopping baskets nearby, aisle opening deeper on left. Do not put doors across the foreground standing area. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate mascot overlay. Depth and floor perspective match the reference. No people, animals, characters, UI, text, labels, logos or watermark. Photography, not an illustration. One single environment background.",
+      "path": "sources/entrance.png",
+      "assetName": "story-supermarket-entrance",
+      "sourceSha256": "f3e7e877e4d30053ee612f235144b30da188d8b0901809d13a44d3cc3b31d593",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "produce",
+      "transparent": false,
+      "prompt": "Create an independent photorealistic portrait 2:3 background plate for the SAME Japanese supermarket as the reference image. Match exactly its warm wood fixtures, pale beige floor, ivory ceiling, realistic natural light, ordinary store aesthetic and eye-level slightly downward camera perspective. This view is the fruit section, apple crates and fresh fruit displays along the RIGHT side, more produce receding behind. Keep fruit at realistic shelf scale, no text signs. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate mascot overlay. Depth and floor perspective match the reference. No people, animals, characters, UI, text, labels, logos or watermark. Photography, not an illustration. One single environment background.",
+      "path": "sources/produce.png",
+      "assetName": "story-supermarket-produce",
+      "sourceSha256": "7233c5a36251e5a1e1893e3da5855421e27e130ba4f81e14d6b61a8347a90d27",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "checkout",
+      "transparent": false,
+      "prompt": "Create an independent photorealistic portrait 2:3 background plate for the SAME Japanese supermarket as the reference image. Match exactly its warm wood fixtures, pale beige floor, ivory ceiling, realistic natural light, ordinary store aesthetic and eye-level slightly downward camera perspective. This view is the checkout zone, a checkout counter and payment terminal on the RIGHT side with no cashier, orderly checkout equipment, store aisles in distance. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate mascot overlay. Depth and floor perspective match the reference. No people, animals, characters, UI, text, labels, logos or watermark. Photography, not an illustration. One single environment background.",
+      "path": "sources/checkout.png",
+      "assetName": "story-supermarket-checkout",
+      "sourceSha256": "aea1830050c1febc22147e38a23b54577d778830110940eae61037374f5d97e5",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "greet",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: GREETING: seated, one forepaw raised with visible pink pads in a small friendly welcoming wave, open eyes and small happy mouth. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/greet.png",
+      "visibleBounds": {
+        "left": 0.189792663476874,
+        "top": 0.05582137161084529,
+        "right": 0.8181818181818182,
+        "bottom": 0.9457735247208932
+      },
+      "assetName": "story-moira-greet",
+      "sourceSha256": "18527ceecba2537e3ab6d9d60801946901a172aa1390534ff792e9870e9ad245",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "think",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: THINKING: seated, one forepaw gently touching chin, eyes looking thoughtfully up to the right, mouth closed. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/think.png",
+      "visibleBounds": {
+        "left": 0.189792663476874,
+        "top": 0.050239234449760764,
+        "right": 0.8181818181818182,
+        "bottom": 0.9473684210526315
+      },
+      "assetName": "story-moira-think",
+      "sourceSha256": "9d73fad05fb54dda0c328ab823bac1ffb51c561de472aa4dc10e5e5001f351ac",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "confused",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: CONFUSED: seated, head tilted to the other side, one forepaw slightly lifted in a questioning gesture, asymmetrical concerned eyebrows. No question-mark symbol. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/confused.png",
+      "visibleBounds": {
+        "left": 0.189792663476874,
+        "top": 0.03987240829346093,
+        "right": 0.8133971291866029,
+        "bottom": 0.9465709728867624
+      },
+      "assetName": "story-moira-confused",
+      "sourceSha256": "a18f066e70346ab855a2b9038aeda0b6482b53ec0207d0f755893425b018abbe",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "surprised",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: SURPRISED: seated upright, round wide eyes, tiny open O-shaped mouth, both forepaws slightly lifted in surprise, hind paws grounded. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/surprised.png",
+      "visibleBounds": {
+        "left": 0.19138755980861244,
+        "top": 0.05342902711323764,
+        "right": 0.8125996810207337,
+        "bottom": 0.9393939393939394
+      },
+      "assetName": "story-moira-surprised",
+      "sourceSha256": "f0441a7e54b5140db60122d4acea16eaa1a79d41dc0a648ee64422de9459b1a0",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "point",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: POINTING: seated upright, one foreleg clearly extended toward viewer's RIGHT, gesturing with the paw toward something outside the image, other front paw on ground. Friendly open smile. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/point.png",
+      "visibleBounds": {
+        "left": 0.1850079744816587,
+        "top": 0.05422647527910686,
+        "right": 0.8851674641148325,
+        "bottom": 0.9457735247208932
+      },
+      "assetName": "story-moira-point",
+      "sourceSha256": "88d23a5619eaf83d6cea592a2467d7ba30c34812b961d142c6d269f3d80a56a3",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "nod",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: CONFIRMING: seated, head slightly bowed in a friendly nod, content closed eyes and relaxed smile, both forepaws on ground. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/nod.png",
+      "visibleBounds": {
+        "left": 0.19059011164274323,
+        "top": 0.08851674641148326,
+        "right": 0.8014354066985646,
+        "bottom": 0.9465709728867624
+      },
+      "assetName": "story-moira-nod",
+      "sourceSha256": "742437105e07cbdcf374d83881ebb6b4e1cd3d87a4724b76c2107f8476608a61",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "goodbye",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: FAREWELL: seated in a slight three-quarter turn toward viewer's right, one forepaw lifted in a broad goodbye wave, eyes happily narrowed, tail gently raised, all body parts within frame. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/goodbye.png",
+      "visibleBounds": {
+        "left": 0.14274322169059012,
+        "top": 0.05422647527910686,
+        "right": 0.8748006379585327,
+        "bottom": 0.9457735247208932
+      },
+      "assetName": "story-moira-goodbye",
+      "sourceSha256": "d4037688640e8b1900c329e11456bdd39d28955389fa9d4d527e721d8aee0716",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "hold_apple",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: HOLD APPLE: seated, carefully holding one small red apple between the two front paws at chest level, apple visibly supported, looking down at it with curious pleased eyes. Exactly one apple and four legs total. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/hold_apple.png",
+      "visibleBounds": {
+        "left": 0.19059011164274323,
+        "top": 0.05342902711323764,
+        "right": 0.8022328548644339,
+        "bottom": 0.9385964912280702
+      },
+      "assetName": "story-moira-hold_apple",
+      "sourceSha256": "3b68c530a2b2969364e9c80cfe32cb06c3ab1231177519b29d66847eb8e0399c",
+      "size": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "id": "carry_bag",
+      "transparent": true,
+      "prompt": "Create ONE transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference sprite, with the same clean black outline, flat solid colors and minimal cel shading. Preserve black body, oversized round golden eyes, white chest tuft and paw tips, pink inner ears, small brown nose, curved tail, face design and head/body proportions. Change only pose and expression: CARRY BAG: seated, holding the handle of one small plain kraft paper grocery bag in one front paw beside the body at floor level, other front paw grounded, proud friendly expression. Bag has no logo or text. Full-body independent sprite. Match canvas and scale to reference: square, consistent ears-to-feet visual height, full tail/ears/paws visible, comfortable transparent margins. Character body centered. Flat illustrated 2D, NO realistic fur strands, no 3D volume, no sticker border. No text, UI, environment, background, floor, shadow or checkerboard; genuine alpha transparency. Do not draw multiple characters or multiple pose panels.",
+      "path": "sources/carry_bag.png",
+      "visibleBounds": {
+        "left": 0.18181818181818182,
+        "top": 0.05582137161084529,
+        "right": 0.8476874003189793,
+        "bottom": 0.9433811802232854
+      },
+      "assetName": "story-moira-carry_bag",
+      "sourceSha256": "f056cc6db66e50915a1a2b5daa02483943f388676f8fa30579989825cb3cca57",
+      "size": [
+        1254,
+        1254
+      ]
+    }
+  ]
+}
