@@ -14,10 +14,8 @@ import Foundation
 
 enum NavRoute: Hashable {
     case search(query: String?)
-    /// 助手首頁 — the existing cat entry on 今天.
-    case assistant
     /// 點數明細 — the balance, where it came from and where it went. Reached
-    /// from 助手, the one screen that spends points a few at a time.
+    /// from 今天's 和 Moira 一起, the one block that spends points a few at a time.
     case creditStatement
     /// 情境故事 — pick 圖鑑 items, a place and a difficulty; Moira, the cat, writes a
     /// short dialogue around them. Reached from 助手.

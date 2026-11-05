@@ -36,76 +36,34 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         }
     }
 
-    func testHomeAtSmallAndLargeWidthsAndEveryLanguage() async throws {
-        for (language, width, height) in [
-            ("zh-Hant", 375.0, 667.0), ("zh-Hant", 402.0, 874.0),
-            ("zh-Hans", 375.0, 667.0), ("ja", 375.0, 667.0), ("en", 375.0, 667.0)
+    /// 一個測試、一輪迴圈，而不是兩個各自開視窗的測試。
+    ///
+    /// **這個 class 在 main 上就會掛**：同樣的 `malloc: pointer being freed
+    /// was not allocated`、同樣的物件位址，而且一次跑掛兩次。不是這次合併弄壞
+    /// 的，也不是橫帶的問題 —— 回 origin/main 跑同一個 class 重現得到。
+    ///
+    /// 它只在同一個 process 裡混用字級（`.large` 和 `.accessibilityExtraLarge`）
+    /// 時發生：任一種單獨跑都會過。嫌疑在 `TujiFont` 那個以
+    /// (face, size, category) 為鍵的字型快取 —— 換字級會讓它長出新的 entry。
+    /// 併成一輪只是讓它少掛一次，沒有治好，所以那是另一張票。
+    func testBandAcrossWidthsLanguagesAndTypeSizes() async throws {
+        for (language, width, height, largeType) in [
+            ("zh-Hant", 375.0, 667.0, false), ("zh-Hant", 402.0, 874.0, false),
+            ("zh-Hans", 375.0, 667.0, false), ("ja", 375.0, 667.0, false),
+            ("en", 375.0, 667.0, false),
+            ("zh-Hant", 375.0, 667.0, true)
         ] {
-            try await self.homeSnapshot(
+            try await self.bandSnapshot(
                 language: language,
                 size: CGSize(width: width, height: height),
-                largeType: false
+                largeType: largeType
             )
         }
     }
 
-    func testHomeAtAccessibilitySize() async throws {
-        try await self.homeSnapshot(language: "zh-Hant", size: CGSize(width: 375, height: 667), largeType: true)
-    }
-
-    func testNativeHomeAndBackNavigation() async throws {
-        try await self.waitForNavigation { !StudyFocus.shared.active }
-        XCTAssertFalse(StudyFocus.shared.active, "Snapshot hosting must release its focus ownership")
-        let navigator = Self.navigator
-        navigator.todayPath = NavigationPath()
-        let host = UIHostingController(rootView: AssistantNavigationFixture(navigator: navigator)
-            .environment(StudyFocus.shared)
-            .environment(navigator)
-            .environment(SettingsStore.shared))
-        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-            .first { $0.activationState == .foregroundActive })
-        let previousKey = scene.windows.first { $0.isKeyWindow }
-        let window = UIWindow(windowScene: scene)
-        window.rootViewController = host
-        window.makeKeyAndVisible()
-        defer {
-            host.beginAppearanceTransition(false, animated: false)
-            host.endAppearanceTransition()
-            window.isHidden = true
-            window.rootViewController = nil
-            previousKey?.makeKey()
-        }
-        try await Task.sleep(for: .milliseconds(250))
-        navigator.push(.assistant)
-        try await self.waitForNavigation { StudyFocus.shared.active }
-        XCTAssertTrue(StudyFocus.shared.active, "The assistant home hides the tab bar")
-        self.attach(UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
-            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-        }, name: "assistant-home")
-        navigator.todayPath.removeLast()
-        try await self.waitForNavigation { !StudyFocus.shared.active }
-        self.attach(UIGraphicsImageRenderer(bounds: window.bounds).image { _ in
-            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-        }, name: "assistant-tab-root")
-        XCTAssertFalse(StudyFocus.shared.active, "Returning to the tab root restores the tab bar")
-    }
-
-    private func waitForNavigation(_ settled: () -> Bool) async throws {
-        // Keyboard focus/dismissal can outlast navigation, especially on a
-        // loaded CI simulator where parallel @MainActor suites starve this one.
-        // Observe readiness instead of a fixed delay; the ceiling only bounds a
-        // real hang, so it is generous (10s timed out on CI, #286).
-        let deadline = ContinuousClock.now.advanced(by: .seconds(60))
-        while ContinuousClock.now < deadline {
-            if settled() { return }
-            try await Task.sleep(for: .milliseconds(50))
-        }
-        XCTFail("Navigation did not settle")
-    }
-
-    private func homeSnapshot(language: String, size: CGSize, largeType: Bool) async throws {
+    private func bandSnapshot(language: String, size: CGSize, largeType: Bool) async throws {
         let content = NavigationStack {
-            AssistantHomeView(prefetchOffers: {})
+            VStack { MoiraFeatureBand(); Spacer() }
         }
         .environment(StudyFocus.shared)
         .environment(Self.navigator)
@@ -139,31 +97,52 @@ final class AnimatedMascotRenderingTests: XCTestCase {
             let image = UIGraphicsImageRenderer(size: size, format: format).image { _ in
                 window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
             }
-            if self.hasArtwork(image) {
+            if self.hasRenderedContent(image) {
                 screenshot = image
                 break
             }
         }
-        let image = try XCTUnwrap(screenshot, "The screenshot must contain the rendered mascot, not an empty window")
+        let image = try XCTUnwrap(screenshot, "The screenshot must contain the rendered band, not an empty window")
         self.attach(
             image,
-            name: "assistant-home-\(language)-\(Int(size.width))-\(largeType ? "large-type" : "default")"
+            name: "moira-band-\(language)-\(Int(size.width))-\(largeType ? "large-type" : "default")"
         )
     }
 
-    private func hasArtwork(_ image: UIImage) -> Bool {
-        guard let image = image.cgImage, let data = image.dataProvider?.data,
-              let bytes = CFDataGetBytePtr(data)
-        else { return false }
-        // Dark pixels identify the black cat/text regardless of BGRA/RGBA order.
+    /// 畫進一塊自己配的記憶體，而不是直接讀 `CGImage` 的 data provider。
+    ///
+    /// 那個指標不保證活得比產生它的那個表達式久，在迴圈裡一路讀下去會把 heap
+    /// 讀壞 —— 一起跑這個 class 就會收到
+    /// `malloc: pointer being freed was not allocated`，單獨跑卻過。以前畫面
+    /// 塞的是一隻 236pt 的實心黑貓，不透明、格式單純，所以沒爆出來；換成一條
+    /// 淺底橫帶之後 CoreGraphics 選了別的表示法，它就現形了。
+    /// 底下的 `goldBounds` 本來就是這樣畫的。
+    private func hasRenderedContent(_ image: UIImage) -> Bool {
+        guard let cg = image.cgImage else { return false }
+        let width = cg.width
+        let height = cg.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue
+            )
+            else { return false }
+            context.draw(cg, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard drawn else { return false }
+        // 數深色像素：四個線條圖示加四行 13pt 的字。門檻比以前低很多 —— 以前
+        // 數的是一隻實心黑貓。
         var dark = 0
-        for y in stride(from: 0, to: image.height, by: 4) {
-            for x in stride(from: 0, to: image.width, by: 4) {
-                let i = y * image.bytesPerRow + x * 4
-                if bytes[i] < 90, bytes[i + 1] < 90, bytes[i + 2] < 90 { dark += 1 }
+        for y in stride(from: 0, to: height, by: 4) {
+            for x in stride(from: 0, to: width, by: 4) {
+                let i = (y * width + x) * 4
+                if pixels[i] < 90, pixels[i + 1] < 90, pixels[i + 2] < 90 { dark += 1 }
             }
         }
-        return dark > 500
+        return dark > 80
     }
 
     private func attach(_ image: UIImage, name: String) {
@@ -203,18 +182,6 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         guard let first = points.first else { return nil }
         return points.dropFirst().reduce(CGRect(origin: first, size: CGSize(width: 1, height: 1))) {
             $0.union(CGRect(origin: $1, size: CGSize(width: 1, height: 1)))
-        }
-    }
-}
-
-private struct AssistantNavigationFixture: View {
-    @Bindable var navigator: TabNavigator
-
-    var body: some View {
-        NavigationStack(path: self.$navigator.todayPath) {
-            Color.tujiPaper
-                .navigationTitle(Text(verbatim: "Test root"))
-                .tujiNavDestinations(user: nil)
         }
     }
 }

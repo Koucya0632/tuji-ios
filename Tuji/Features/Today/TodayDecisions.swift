@@ -1,5 +1,9 @@
 // What 首頁 says and offers, derived from the day's state.
 //
+// 墨塊從「兩條進度 + 兩顆按鈕 + 一行提示」收成「一個標題 + 一條總進度 +
+// 一顆按鈕 + 最多一行」之後，這裡答的問題也跟著換了：`subtitle` 的七個
+// case 跟 `heroHint` 的三個，收斂成 `heading` / `call` / `footer`。
+//
 // These eight decisions used to be `private var`s on `TodayView` — a 7-branch
 // subtitle, a 5-branch block reason, a 3-level denominator fallback — reading
 // across six environment stores inside a 802-line View. Nothing could reach
@@ -17,19 +21,49 @@
 
 import Foundation
 
-/// Which line sits under the greeting. One case per thing 首頁 can truthfully
-/// say, in the order the rules resolve.
-enum TodaySubtitle: Equatable {
-    case pickThemes
-    /// Stats have not arrived. A neutral line beats a wrong verdict —
-    /// 「都學過了」 flashing on a brand-new account while the first fetch is in
-    /// flight is worse than saying nothing specific.
+/// 墨塊的標題說什麼。View 拿 id 去查名字 —— 這個模組不認得主題的名字，
+/// 也不該認得：它答的是「有沒有主題、第一個是哪個、總共幾個」。
+enum TodayHeading: Equatable {
+    /// Settings 還沒到。沒有名字可以報，也還不能說「沒選主題」—— 一個空的
+    /// 主題清單在 settings 落地之前什麼都不代表。
     case unknown
-    case reviewDue(count: Int)
-    case goalReached
-    case newDoneToday(count: Int)
-    case newAvailable
-    case allLearnedInThemes
+    case noThemes
+    case themes(firstId: String, count: Int)
+}
+
+/// 背單字 這顆按鈕待會會做什麼。
+///
+/// 它取代了原本並排的 複習／學新字。模式不再是使用者選的，是這裡挑的 ——
+/// 有欠複習就複習，否則學新字。規則本身不是新的（打卡表單的 `studyFromCheckIn`
+/// 早就是這樣選），新的是它成了唯一的入口：一個有字要複習的人，不能再自己
+/// 決定今天只學新字。`footer` 的 `.switchToNew` 是那條退路。
+enum TodayCall: Equatable {
+    /// 還沒選主題 —— 按鈕直接去選。
+    case pickThemes
+    /// stats 還沒到。按鈕照樣可以按，只是說不出數字 ——
+    /// 一個在第一次抓取落地前就報出來的數量是猜的。
+    case unknown
+    case study(mode: StudyMode, count: Int)
+    case blocked(TodayBlock)
+}
+
+/// 按鈕死掉的兩個理由。兩個都是「選的主題給不出字」，差別在為什麼。
+enum TodayBlock: Equatable {
+    /// 選的主題都學過了。
+    case themesExhausted
+    /// 選的主題在目前的牌組裡沒有字。
+    case noCards
+}
+
+/// 按鈕底下那一行。永遠最多一行，說的永遠是「你還能做的另一件事」。
+///
+/// 它接手了原本 `heroHint` 的位子。那三個 case 裡有兩個是在解釋某顆按鈕為什麼
+/// 反灰 —— 按鈕併成一顆之後就沒有那回事了。
+enum TodayFooter: Equatable {
+    /// 正要去複習，但新字也還能學：給一個切過去的出口。
+    case switchToNew
+    /// 按鈕死了，唯一的出路是換主題。
+    case changeThemes
 }
 
 /// Why 學新字 is unavailable, so the hero can explain the dead-end instead of
@@ -152,40 +186,41 @@ struct TodayDecisions {
         self.newBlock != .none
     }
 
-    var subtitle: TodaySubtitle {
+    var heading: TodayHeading {
+        if self.showThemePrompt { return .noThemes }
+        guard let first = self.studyCategories.first else { return .unknown }
+        return .themes(firstId: first, count: self.studyCategories.count)
+    }
+
+    /// 今天這一輪會抽幾個新字：每日目標，被主題裡剩下的字數蓋住。
+    ///
+    /// 沒有走 `StudyQuotas.computeNewLimit`，因為走得到這裡就表示 `due == 0`，
+    /// 而那個函式只在積壓超過 20 才開始削 —— 在這裡它一定回傳 goal。積壓削減
+    /// 仍然成立，只是它成立的時候按鈕在複習模式，根本不報新字的數。
+    var newCount: Int {
+        max(0, min(self.newAvailable, max(1, self.inputs.dailyGoal)))
+    }
+
+    var call: TodayCall {
         if self.showThemePrompt { return .pickThemes }
         guard let stats = self.inputs.stats else { return .unknown }
-        if stats.due > 0 { return .reviewDue(count: stats.due) }
-        // Goal reached wins over everything below so this line can never
-        // contradict the 達成 badge on the hero card.
-        if self.dailyGoalReached { return .goalReached }
-        if let done = stats.todayNew, done > 0 { return .newDoneToday(count: done) }
-        if self.newAvailable > 0 { return .newAvailable }
-        return .allLearnedInThemes
+        if stats.due > 0 { return .study(mode: .review, count: stats.due) }
+        switch self.newBlock {
+        case .noThemes: return .pickThemes
+        case .noCards: return .blocked(.noCards)
+        case .allLearned: return .blocked(.themesExhausted)
+        // 走到這裡 `due == 0`，而 computeNewLimit 只在 due > 100 時歸零，
+        // 所以這個分支到不了。真的到了，結果跟「主題給不出字」一樣。
+        case .reviewBacklog: return .blocked(.themesExhausted)
+        case .none: return .study(mode: .new, count: self.newCount)
+        }
     }
 
-    /// The backlog-tapers-new-quota decision + counts. Unchanged rule, moved
-    /// here from `TodayView.newQuotaAdjustment` so every 首頁 decision has one
-    /// home instead of one having been rescued and the rest left behind.
-    /// Which of the three captions the hero shows, if any.
-    ///
-    /// 新字被擋 wins over 配額調整 wins over 沒有要複習的字, and none of them
-    /// speaks before stats have landed — a hint about today's numbers, shown
-    /// before today's numbers exist, is a guess.
-    var heroHint: TodayHeroHint? {
-        if self.newBlock != .none, self.newBlock != .noThemes { return .newBlocked }
-        if self.quotaAdjustment != nil { return .quotaAdjusted }
-        if self.reviewDisabled, self.inputs.stats != nil { return .nothingToReview }
-        return nil
-    }
-
-    var quotaAdjustment: (due: Int, limit: Int)? {
-        guard let stats = self.inputs.stats else { return nil }
-        let goal = max(1, self.inputs.dailyGoal)
-        guard (stats.todayNew ?? 0) < goal else { return nil }
-        guard self.newAvailable > 0 else { return nil }
-        let limit = StudyQuotas.computeNewLimit(goal: goal, due: stats.due)
-        guard limit > 0, limit < goal else { return nil }
-        return (due: stats.due, limit: limit)
+    var footer: TodayFooter? {
+        switch self.call {
+        case .pickThemes, .unknown: nil
+        case let .study(mode, _): mode == .review && !self.newDisabled ? .switchToNew : nil
+        case .blocked: .changeThemes
+        }
     }
 }

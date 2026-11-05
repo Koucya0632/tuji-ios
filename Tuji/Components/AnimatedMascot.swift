@@ -1,9 +1,20 @@
 import SwiftUI
 import UIKit
 
-/// The only looping motion on the assistant home. The rest of the app keeps
-/// Motion's interaction curves; the cat's breathing/gestures have their own clock.
+/// The only looping motion on 今天. The rest of the app keeps Motion's
+/// interaction curves; the cat's breathing/gestures have their own clock.
 struct AnimatedMascot: View {
+    /// 呼叫端說「現在沒人在看」。
+    ///
+    /// `visible` 靠的是 `onAppear`/`onDisappear`，而那兩個在分頁之間切換時
+    /// 不會觸發 —— `MainTabsView` 把四個分頁放在同一個 HStack 裡全部保持掛載，
+    /// 它自己的註解就寫了這件事。貓本來住在助手首頁，那是一個 push 進去的畫面，
+    /// 離開就會 disappear，所以沒人發現；搬到 今天 之後，使用者滑去 圖鑑、
+    /// 物見、我，這個 30fps 的 TimelineView 會一直跑下去。
+    ///
+    /// 所以掛載與否不夠，呼叫端得補一句「我這一頁現在是不是在前面」。
+    var paused: Bool = false
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var visible = false
@@ -12,7 +23,7 @@ struct AnimatedMascot: View {
     @State private var wagStarted: Date?
 
     private var animating: Bool {
-        self.visible && self.scenePhase == .active && !self.reduceMotion
+        self.visible && !self.paused && self.scenePhase == .active && !self.reduceMotion
     }
 
     var body: some View {
