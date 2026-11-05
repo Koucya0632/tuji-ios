@@ -63,7 +63,10 @@ final class AnimatedMascotRenderingTests: XCTestCase {
 
     private func bandSnapshot(language: String, size: CGSize, largeType: Bool) async throws {
         let content = NavigationStack {
-            VStack { MoiraFeatureBand(); Spacer() }
+            VStack {
+                MoiraFeatureBand()
+                Spacer()
+            }
         }
         .environment(StudyFocus.shared)
         .environment(Self.navigator)
