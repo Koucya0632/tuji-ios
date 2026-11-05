@@ -115,10 +115,10 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15-intel
-    # Hosted Mac startup/build/result collection can exceed 20 minutes even
-    # when all 1,258 tests pass. Keep the crash/count guards; allow the job
-    # enough time to finish collecting their result on a slower runner.
-    timeout-minutes: 30
+    # A cold Intel run completed all 1,258 tests and the count/crash guards
+    # in 29 minutes, then hit the 30-minute limit while saving the SPM cache.
+    # Allow cleanup to finish without weakening any validation steps.
+    timeout-minutes: 40
     # 刻意不設 needs: lint — 之前 Lint 紅了整條測試就被跳過，
     # style 問題不該擋正確性檢查。
     steps:
