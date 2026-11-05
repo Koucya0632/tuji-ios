@@ -20,6 +20,7 @@ extension View {
                 case let .authorProfile(handle, isSelf):
                     AtlasAuthorProfileView(handle: handle, isSelf: isSelf)
                 case .studyCategories: StudyCategoriesPickerView()
+                case .progressStats: ProgressStatsView()
                 case let .studyLanding(mode): StudyLauncherView(mode: mode)
                 case let .wordDetail(id): WordDestination(id: id)
                 case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)

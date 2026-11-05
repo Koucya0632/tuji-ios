@@ -15,6 +15,9 @@
 //   3. 提示行變成 `TodayDecisions.footer`，永遠最多一行，說的永遠是「你還能
 //      做的另一件事」，而不是「這顆按鈕為什麼不能按」。
 //
+// 墨塊上另外有三顆圖示，三顆都不印字：標題右邊的 ⚙ 換學習主題，右上角的折線圖
+// 開 學習統計（我 頁上的那幾塊數字），右下角的 ⓘ 開 記憶曲線。
+//
 // 「和 Moira 一起」是併進來的 `AssistantHomeView`：一隻會呼吸的貓加四個入口。
 // 原本那一頁的招呼和靜態揮手貓都沒搬，見 `AssistantFeatures.swift`。
 //
@@ -276,9 +279,7 @@ struct TodayView: View {
             self.heroProgress
             VStack(spacing: Space.s2) {
                 self.studyButton
-                if let footer = self.decisions.footer {
-                    self.heroFooter(footer)
-                }
+                self.heroFootRow
             }
         }
         .padding(Space.s4)
@@ -287,10 +288,12 @@ struct TodayView: View {
         .tourAnchor(.hero)
     }
 
-    /// 標題列：你在學哪些主題，加上改主題和看記憶曲線。
+    /// 標題列：你在學哪些主題，加上改主題和看統計。
     ///
-    /// 記憶曲線本來掛在提示行上 —— 只有在「複習積壓」那兩種提示出現時才摸得到，
-    /// 也就是大部分日子都摸不到。它現在是一顆固定的按鈕。
+    /// 右邊那個折線圖一度是 記憶曲線 的入口。那是一張「為什麼今天先複習」的
+    /// 解釋圖，不是你的數字 —— 而一個折線圖的圖示擺在首頁右上角，點下去誰都
+    /// 以為會看到自己的數字。所以圖示留在原位、改開 我 的那幾塊統計；曲線換成
+    /// 一個問號性質的圖示，搬到墨塊右下角（見 `reviewCurveButton`）。
     private var heroHeading: some View {
         HStack(spacing: 0) {
             Text(self.headingText)
@@ -308,7 +311,7 @@ struct TodayView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("更換學習主題"))
             Spacer(minLength: Space.s2)
-            Button { self.showingReviewCurve = true } label: {
+            NavigationLink(value: NavRoute.progressStats) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.tujiIcon(16, weight: .semibold))
                     .foregroundStyle(.tujiPaper.opacity(0.85))
@@ -316,7 +319,7 @@ struct TodayView: View {
                     .contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("記憶曲線"))
+            .accessibilityLabel(Text("學習統計"))
         }
     }
 
@@ -404,7 +407,44 @@ struct TodayView: View {
         }
     }
 
-    /// 按鈕底下那一行。
+    /// 按鈕底下那一列：中間最多一行退路，右下角一顆記憶曲線。
+    ///
+    /// 這一列永遠在，即使沒有退路可給。好處是墨塊的高度不再隨當天的狀態上下
+    /// 跳，壞處是沒有退路的日子多出 44pt —— 但那 44pt 本來就在最壞的情況裡，
+    /// 底下 Moira 區離 tab bar 的距離是照「有退路」那天量的，所以把高度釘在
+    /// 最大值不會讓已經量過的那一版變矮。
+    private var heroFootRow: some View {
+        ZStack(alignment: .bottomTrailing) {
+            if let footer = self.decisions.footer {
+                self.heroFooter(footer)
+                    // 讓開右下角那顆圖示：這行字在最大字級下會長到撞上它。
+                    .padding(.horizontal, 40)
+            }
+            self.reviewCurveButton
+        }
+    }
+
+    /// 記憶曲線。
+    ///
+    /// 它解釋的是「為什麼今天先複習」，而解釋該待在被解釋的東西旁邊 —— 按鈕
+    /// 上寫著「複習 26」，疑問就是在那裡冒出來的。
+    private var reviewCurveButton: some View {
+        Button { self.showingReviewCurve = true } label: {
+            Image(systemName: "exclamationmark.circle")
+                .font(.tujiIcon(16, weight: .semibold))
+                .foregroundStyle(.tujiPaper.opacity(0.75))
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        // 44 的打擊區把圖示往內推了 6pt。拉回去，跟標題列那兩顆 32 的圖示
+        // 對齊同一條線 —— 多出來的那 6pt 落在墨塊自己的留白裡，順便讓真正的
+        // 角落也點得到。
+        .padding(.trailing, -6)
+        .accessibilityLabel(Text("記憶曲線"))
+    }
+
+    /// 退路那一行。
     @ViewBuilder
     private func heroFooter(_ footer: TodayFooter) -> some View {
         switch footer {

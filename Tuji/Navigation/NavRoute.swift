@@ -51,6 +51,9 @@ enum NavRoute: Hashable {
     /// 物見搜尋 — 合集 and public cards, in the current learning language.
     case atlasSearch
     case studyCategories
+    /// 學習統計 — 我 的完成度、熟練度、連續天數、熱力圖和主題明細，從 今天
+    /// 墨塊右上角的折線圖進來。同一組 section，兩個宿主。
+    case progressStats
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)
     case categoryDetail(id: String)
