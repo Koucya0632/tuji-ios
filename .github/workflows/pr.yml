@@ -113,7 +113,10 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15
-    timeout-minutes: 20
+    # Hosted Mac startup/build/result collection can exceed 20 minutes even
+    # when all 1,258 tests pass. Keep the crash/count guards; allow the job
+    # enough time to finish collecting their result on a slower runner.
+    timeout-minutes: 30
     # 刻意不設 needs: lint — 之前 Lint 紅了整條測試就被跳過，
     # style 問題不該擋正確性檢查。
     steps:
