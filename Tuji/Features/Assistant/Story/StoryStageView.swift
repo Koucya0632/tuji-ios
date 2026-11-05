@@ -1,22 +1,3 @@
-// 情境故事 — read as a stage (prototype). The place fills the screen, Moira
-// stands in it, and one segment at a time sits in a box along the bottom:
-// a name plate for whoever speaks, nothing for narration. Tapping anywhere
-// moves on; tapping while a line is still typing finishes it first.
-//
-// The opening — title and intro — is the first thing in the box. A spoken
-// line is read aloud as it comes in, keeps its speaker and 跟讀 buttons in the
-// box, and shows its translation only while 譯 is on, so the box stays small
-// enough to leave Moira in view. Japanese with kana over it appears whole
-// (a furigana sentence cannot be typed out unit by unit without the ruby
-// jumping); everything else types out unless motion is reduced.
-//
-// 履歷 lists every segment already shown. When the reader catches up with a
-// story still being written the box says so; after the last one, the picked
-// words and the way out take the box's place.
-//
-// The person is never drawn: 你 is the camera. Moira's pose follows who is
-// talking: waving on her lines, thinking on yours, cheering at the end.
-
 import SwiftUI
 
 struct StoryStageView: View {
@@ -59,24 +40,27 @@ struct StoryStageView: View {
         self.caughtUp && self.writing != .writing
     }
 
-    private var isSupermarket: Bool {
-        self.sceneId == "supermarket"
+    private var isIllustrated: Bool {
+        self.sceneId.flatMap(StoryStagePresentation.Scene.init(rawValue:)) != nil
     }
 
-    private var presentation: SupermarketPresentation {
-        .init(segment: self.current)
+    private var presentation: StoryStagePresentation {
+        .init(
+            scene: self.sceneId.flatMap(StoryStagePresentation.Scene.init(rawValue:)) ?? .supermarket,
+            segment: self.current
+        )
     }
 
     var body: some View {
         GeometryReader { geo in
-            if self.isSupermarket {
-                SupermarketStageLayout(
+            if self.isIllustrated {
+                StoryStageLayout(
                     presentation: self.presentation, reduceMotion: self.reduceMotion, advance: self.tap
                 ) {
                     if self.ended {
-                        self.ending
+                        self.ending(maxHeight: geo.size.height * 0.45)
                     } else {
-                        self.supermarketBox(maxHeight: geo.size.height * 0.45)
+                        self.dialogueBox(maxHeight: geo.size.height * 0.45)
                     }
                 }
                 .overlay(alignment: .top) { self.topBar }
@@ -93,7 +77,7 @@ struct StoryStageView: View {
                     VStack(spacing: Space.s2) {
                         Spacer(minLength: 0)
                         if self.ended {
-                            self.ending
+                            self.ending(maxHeight: geo.size.height * 0.45)
                         } else {
                             self.box
                                 .contentShape(.rect)
@@ -116,7 +100,7 @@ struct StoryStageView: View {
                 )
             }
         }
-        .onAppear { self.typeOut() }
+        .onAppear { self.prepareStage() }
         .onChange(of: self.story?.intro) { self.typeOut() }
         .onDisappear {
             self.typing?.cancel()
@@ -150,8 +134,8 @@ struct StoryStageView: View {
 
     // MARK: - Box
 
-    private func supermarketBox(maxHeight: CGFloat) -> some View {
-        SupermarketDialogue(
+    private func dialogueBox(maxHeight: CGFloat) -> some View {
+        StoryDialogue(
             name: self.name,
             isReader: self.current?.speaker == .you,
             maxHeight: maxHeight,
@@ -196,11 +180,6 @@ struct StoryStageView: View {
                 advance: self.tap
             )
         }
-    }
-
-    private func stopPractice() {
-        self.speech.stop()
-        self.recorder.cancel()
     }
 
     private var name: String? {
@@ -320,21 +299,12 @@ struct StoryStageView: View {
         }
     }
 
-    private var waiting: some View {
-        HStack(spacing: Space.s2) {
-            TujiProgressBar(progress: nil).frame(width: 32)
-            Text("Moira 正在寫故事…")
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-        }
-    }
-
     // MARK: - Top bar
 
     private var topBar: some View {
         HStack(spacing: Space.s2) {
-            if self.isSupermarket {
-                Text(verbatim: self.presentation.area.label)
+            if self.isIllustrated {
+                Text(verbatim: self.presentation.label)
                     .font(.tujiBodySm(.strong))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -343,11 +313,11 @@ struct StoryStageView: View {
                     .background(Color.tujiPaper.opacity(0.94))
             }
             Spacer()
-            if !self.isSupermarket {
+            if !self.isIllustrated {
                 self.chip(Text("譯"), on: self.translating) { self.translating.toggle() }
                     .accessibilityLabel(Text(self.translating ? "隱藏翻譯" : "顯示翻譯"))
             }
-            self.chip(self.isSupermarket ? Text("紀錄") : Text("履歷"), on: false) {
+            self.chip(self.isIllustrated ? Text("紀錄") : Text("履歷"), on: false) {
                 self.speech.stop()
                 self.recorder.cancel()
                 self.backlog = true
@@ -409,65 +379,57 @@ struct StoryStageView: View {
 
     // MARK: - Ending
 
-    private var ending: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            if case let .failed(failure) = self.writing {
-                Text(verbatim: StoryBuilderView.sentence(for: failure))
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if !self.picked.isEmpty {
-                Text("故事裡的單字")
-                    .font(.tujiLabel)
-                    .tracking(0.5)
-                    .foregroundStyle(.tujiInk3)
-                ForEach(self.picked) { word in
-                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                        HStack(spacing: Space.s3) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(verbatim: word.word)
-                                    .font(.tujiBody(.strong))
-                                    .foregroundStyle(.tujiInk)
-                                Text(verbatim: self.story?.wordNotes?.first { $0.id == word.id }?.note ?? word.chinese)
-                                    .font(.tujiBodySm)
-                                    .foregroundStyle(.tujiInk3)
-                            }
-                            Spacer(minLength: Space.s2)
-                            TujiRowAccessory()
-                        }
-                        .frame(minHeight: 48)
-                        .contentShape(.rect)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            HStack(spacing: Space.s2) {
-                BBtn(title: "再看一次", bg: .tujiPaper2, fullWidth: true) {
-                    self.ended = false
-                    self.shown = 0
-                    self.typeOut()
-                }
-                BBtn(title: "換個情境", fullWidth: true, action: self.close)
-            }
-            .padding(.top, Space.s1)
+    private func ending(maxHeight: CGFloat) -> some View {
+        StoryEndingPanel(story: self.story, picked: self.picked, writing: self.writing, maxHeight: maxHeight) {
+            self.ended = false
+            self.shown = 0
+            self.typeOut()
+        } close: {
+            self.close()
         }
-        .padding(Space.s3)
-        .background(.tujiPaper.opacity(0.96))
-        .overlay(Rectangle().stroke(.tujiInk, lineWidth: Border.bw1))
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
     }
 
     // MARK: - 履歷
 
     private var backlogSheet: some View {
-        StoryTranscriptSheet(story: self.story, shown: self.shown, isSupermarket: self.isSupermarket) {
+        StoryTranscriptSheet(story: self.story, shown: self.shown, isIllustrated: self.isIllustrated) {
             self.backlog = false
         }
     }
 }
 
 private extension StoryStageView {
+    func prepareStage() {
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-StoryStageDemo"), let index = args.firstIndex(of: "-StoryStageLine"),
+           args.indices.contains(index + 1), let line = Int(args[index + 1])
+        {
+            self.shown = min(max(0, line), self.segments.count)
+            self.translating = args.contains("-StoryStageTranslation")
+        }
+        if args.contains("-StoryStageDemo"), args.contains("-StoryStageEnding") {
+            self.shown = self.segments.count
+            self.ended = true
+        }
+        #endif
+        self.typeOut()
+    }
+
+    func stopPractice() {
+        self.speech.stop()
+        self.recorder.cancel()
+    }
+
+    var waiting: some View {
+        HStack(spacing: Space.s2) {
+            TujiProgressBar(progress: nil).frame(width: 32)
+            Text("Moira 正在寫故事…")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk3)
+        }
+    }
+
     func typeOut() {
         self.typing?.cancel()
         guard !self.reduceMotion, let text = self.typeable, !text.isEmpty else {
