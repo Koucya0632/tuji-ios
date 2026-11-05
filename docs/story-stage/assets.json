@@ -228,6 +228,367 @@
         1254,
         1254
       ]
+    },
+    {
+      "id": "office-general",
+      "prompt": "Independent photorealistic portrait 2:3 environment plate for a mobile visual novel. An ordinary contemporary Japanese place, believable daily-life architecture rather than luxury or science fiction. Eye-level camera with a slight downward angle, natural room perspective, light neutral surfaces and warm wood details, soft clear daylight and realistic ceiling lighting. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate full-body cat sprite. Put defining furniture mostly in the right half and in the distance. Floor/wall perspective consistent with a character sitting in the foreground. No people, animals, characters, user interface, captions, logos, watermarks, or readable prominent text. Real photography, no illustration. Scene: A modest bright Japanese office interior, cream walls and pale floor, wood-trim glass partitions, distant organized desks and understated cabinets. A general open circulation area with no workstation, meeting table or kitchenette dominating the foreground.",
+      "path": "sources/office-general.png",
+      "transparent": false,
+      "assetName": "story-office-general",
+      "sourceSha256": "538f08956c8a58de884a6c65ec5803fa352806b9aa87643eb131fccf3d5900a9",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "restaurant-general",
+      "prompt": "Independent photorealistic portrait 2:3 environment plate for a mobile visual novel. An ordinary contemporary Japanese place, believable daily-life architecture rather than luxury or science fiction. Eye-level camera with a slight downward angle, natural room perspective, light neutral surfaces and warm wood details, soft clear daylight and realistic ceiling lighting. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate full-body cat sprite. Put defining furniture mostly in the right half and in the distance. Floor/wall perspective consistent with a character sitting in the foreground. No people, animals, characters, user interface, captions, logos, watermarks, or readable prominent text. Real photography, no illustration. Scene: A comfortable everyday Japanese casual restaurant interior. Light oak furnishings, neutral cream walls, daylight through windows and warm pendant lights. Distant tables and simple dining chairs, a clear aisle and open floor in front. No food plates in foreground.",
+      "path": "sources/restaurant-general.png",
+      "transparent": false,
+      "assetName": "story-restaurant-general",
+      "sourceSha256": "ade6d8ede8bb21ba0f365eb2fc30588f7fa07dc30dda0c0b4b114b2c82a73a4e",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "station-general",
+      "prompt": "Independent photorealistic portrait 2:3 environment plate for a mobile visual novel. An ordinary contemporary Japanese place, believable daily-life architecture rather than luxury or science fiction. Eye-level camera with a slight downward angle, natural room perspective, light neutral surfaces and warm wood details, soft clear daylight and realistic ceiling lighting. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate full-body cat sprite. Put defining furniture mostly in the right half and in the distance. Floor/wall perspective consistent with a character sitting in the foreground. No people, animals, characters, user interface, captions, logos, watermarks, or readable prominent text. Real photography, no illustration. Scene: An everyday clean Japanese commuter railway station interior hall. Pale gray tile floor, cream walls, practical lights and restrained wood trim. Distant passageways, subtle unreadable information displays. General circulation space, without a ticket gate, train or platform dominating the view. Tactile paving can run on the far right, away from the clear left foreground.",
+      "path": "sources/station-general.png",
+      "transparent": false,
+      "assetName": "story-station-general",
+      "sourceSha256": "0bf3c7577aba3bbd2e28fd62bb39b649c93eea4ee8f468a160a6cb915840a879",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "home-general",
+      "prompt": "Independent photorealistic portrait 2:3 environment plate for a mobile visual novel. An ordinary contemporary Japanese place, believable daily-life architecture rather than luxury or science fiction. Eye-level camera with a slight downward angle, natural room perspective, light neutral surfaces and warm wood details, soft clear daylight and realistic ceiling lighting. Keep the lower half mostly open floor, especially the LEFT foreground, for a separate full-body cat sprite. Put defining furniture mostly in the right half and in the distance. Floor/wall perspective consistent with a character sitting in the foreground. No people, animals, characters, user interface, captions, logos, watermarks, or readable prominent text. Real photography, no illustration. Scene: A modest comfortable Japanese apartment interior connecting the rooms. Pale oak floor, warm cream walls, simple wooden doors, low sideboard and a small green plant on the right, soft daylight. Neutral household interior without a bed, kitchen or sofa dominating the view.",
+      "path": "sources/home-general.png",
+      "transparent": false,
+      "assetName": "story-home-general",
+      "sourceSha256": "d0cebc3fe1336252f39eb055fb443fd74f74c521e61f95369997e68260defb23",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "read_document",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: READ DOCUMENT: sitting upright, holding a small single cream sheet of paper in both front paws at chest height, head gently lowered, eyes attentively looking at the paper. Only a few faint gray lines on paper, no readable text. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/read_document.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.18899521531100477,
+        "top": 0.05980861244019139,
+        "right": 0.7822966507177034,
+        "bottom": 0.9417862838915471
+      },
+      "assetName": "story-moira-read_document",
+      "sourceSha256": "ae0c0d46b4c84b7e6ce46b26dc9ccf232e81d66b31203e4c367abcab5be9ab63",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "use_laptop",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: USE LAPTOP: seated behind a small open plain gray laptop at ground level in front of the body, both front paws visibly touching its keyboard, looking attentively down at the screen. Laptop has no logo or readable text. Hind paws and tail visible at sides, ears and whole silhouette uncropped. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/use_laptop.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.1339712918660287,
+        "top": 0.07017543859649122,
+        "right": 0.8628389154704944,
+        "bottom": 0.9282296650717703
+      },
+      "assetName": "story-moira-use_laptop",
+      "sourceSha256": "a0f7930d476f55f609926e7b68e5901d0b4e0c47a7ab8110779e417887f567f5",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "read_menu",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: READ MENU: seated with a small open two-panel cream restaurant menu held in both front paws on the lap, looking down with a curious friendly expression. Faint small blocks on menu, no readable words, no food items or restaurant background. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/read_menu.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.18899521531100477,
+        "top": 0.05582137161084529,
+        "right": 0.8038277511961722,
+        "bottom": 0.9441786283891547
+      },
+      "assetName": "story-moira-read_menu",
+      "sourceSha256": "1c43dd95da23b7282a97671e1428911e549a3fa78b6c77292a77bc0776d1414d",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "hold_cup",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: HOLD CUP: seated, both front paws gently holding one small plain white ceramic cup with a handle at chest level. Looking warmly toward the viewer. No steam and no visible contents, so it fits different beverages. No table or other items. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/hold_cup.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.18899521531100477,
+        "top": 0.05342902711323764,
+        "right": 0.8165869218500797,
+        "bottom": 0.9409888357256778
+      },
+      "assetName": "story-moira-hold_cup",
+      "sourceSha256": "62300653674079fc4a39f410c84429655d6f7e5474eaa47a2d08a87f210b1b03",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "hold_ticket",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: HOLD TICKET: seated, one front paw presenting a small pale mint rectangular paper train ticket, other front paw on the ground. Happy attentive expression. Ticket has a simple darker green stripe and tiny abstract marks, no readable text or real code. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/hold_ticket.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.1762360446570973,
+        "top": 0.05342902711323764,
+        "right": 0.8548644338118022,
+        "bottom": 0.9457735247208932
+      },
+      "assetName": "story-moira-hold_ticket",
+      "sourceSha256": "145e5acaa014c30fc298c98028102239ef1c47d682ba97887853b4b228d066fc",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "check_map",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: CHECK MAP: seated, holding a small unfolded paper route map in both front paws, eyes looking down in thoughtful concentration. A few thin blue and orange abstract route lines on paper, no readable text, no location names. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/check_map.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.18899521531100477,
+        "top": 0.05502392344497608,
+        "right": 0.8141945773524721,
+        "bottom": 0.937799043062201
+      },
+      "assetName": "story-moira-check_map",
+      "sourceSha256": "8480e16cb66191d85369c726eba45f29b314166650ff9c74d2cdddfda8b2ef7a",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "read_book",
+      "prompt": "Create ONE independent transparent-background 2D visual-novel sprite of EXACTLY the same Moira kitten as the reference. Preserve the clean black outline, flat solid colors, minimal cel shading, oversized round golden eyes, black kitten body, white chest tuft and paw tips, pink inner ears, small brown nose and curved tail. Same face design, cute proportions and body scale as the reference. Change pose and expression only: READ BOOK: seated, holding a small open forest-green hardcover book in both front paws on the lap, looking down peacefully at its cream pages. No readable text or cover title. Full body with all ears, tail and paws inside the square canvas, comfortable transparent margins, consistent head-to-foot visual height and foot baseline matching the reference. Cat body centered. No realistic fur strands, no 3D render, no sticker outline, no additional characters, shadow, floor, environment, UI, checkerboard or watermark. Genuine alpha transparency.",
+      "path": "sources/read_book.png",
+      "transparent": true,
+      "visibleBounds": {
+        "left": 0.18899521531100477,
+        "top": 0.05661881977671451,
+        "right": 0.7854864433811802,
+        "bottom": 0.9417862838915471
+      },
+      "assetName": "story-moira-read_book",
+      "sourceSha256": "97fbea2930aa7c307d715332386032d2c4fdc97c78396770ecd5ddf47366ead6",
+      "size": [
+        1254,
+        1254
+      ],
+      "reference": "sources/listen.png"
+    },
+    {
+      "id": "office-desk",
+      "scene": "office",
+      "area": "desk",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show a working desk area inside this exact office, white desks with a monitor, keyboard and a few plain files mostly on the right; carpet-free pale floor. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/office-general.png",
+      "path": "sources/office-desk.png",
+      "transparent": false,
+      "assetName": "story-office-desk",
+      "sourceSha256": "d802d7f9115cd295d730155c881456ea9684c80bf2a45eab0a1bfbcb1a66d7c0",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "office-meeting",
+      "scene": "office",
+      "area": "meeting",
+      "prompt": "Create a new finished photorealistic portrait 2:3 background, viewed from INSIDE the meeting room of the Japanese office in the reference. The CAMERA IS INSIDE THE ROOM, not in the hallway and not looking through a doorway. Match reference light oak trim, cream walls, pale office floor, white acoustic ceiling, fluorescent neutral warm daylight. Room-sized conference table and black office chairs occupy the RIGHT side and right middle-distance; blank whiteboard on far wall, windows with blinds on back wall. LEFT foreground is unobstructed continuous room floor for a full-body 2D cat actor; no glass partition across foreground, no doorway between camera and table. Realistic everyday modest office meeting room, coherent perspective, defining objects clearly visible at middle height, eye-level slightly downward viewpoint. No people, animals, characters, interface, dialogue boxes, readable writing, logos or watermark.",
+      "reference": "sources/office-general.png",
+      "path": "sources/office-meeting.png",
+      "transparent": false,
+      "assetName": "story-office-meeting",
+      "sourceSha256": "ce7fd9e31659833d32ccbf0b3346c72a39074fc7f4d8a0b0a3bead4098f3f5e3",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "office-breakroom",
+      "scene": "office",
+      "area": "breakroom",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the small staff break area in this exact office, kitchenette counter and cabinets on the right, electric kettle, refrigerator, compact table in the distance. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/office-general.png",
+      "path": "sources/office-breakroom.png",
+      "transparent": false,
+      "assetName": "story-office-breakroom",
+      "sourceSha256": "4d4c43ad381f05b98e6ec41cecf570e17f3b0d9041bbed469c83248002d08ceb",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "restaurant-entrance",
+      "scene": "restaurant",
+      "area": "entrance",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the interior entrance vestibule of this exact restaurant, wooden entrance door and cream noren curtain, small host stand to the right; a glimpse of the same dining room in the background. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/restaurant-general.png",
+      "path": "sources/restaurant-entrance.png",
+      "transparent": false,
+      "assetName": "story-restaurant-entrance",
+      "sourceSha256": "777991e61adc058f95fc25987762f2d444570f1f5824b836bb6b15fe35d787fc",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "restaurant-dining",
+      "scene": "restaurant",
+      "area": "dining",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the dining area of this exact restaurant, a neatly set wooden dining table with plain menu and water glasses on the right, same wood chairs and pendant lights. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/restaurant-general.png",
+      "path": "sources/restaurant-dining.png",
+      "transparent": false,
+      "assetName": "story-restaurant-dining",
+      "sourceSha256": "829de0ac1f2dc9b260ace97f193ff12947539dc8a6a2734a858aa087bc573104",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "restaurant-checkout",
+      "scene": "restaurant",
+      "area": "checkout",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the checkout counter inside this exact restaurant, a modest wooden register counter on the right with a small plain dark POS terminal, same dining room behind. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/restaurant-general.png",
+      "path": "sources/restaurant-checkout.png",
+      "transparent": false,
+      "assetName": "story-restaurant-checkout",
+      "sourceSha256": "b5c3054e13041cc9824c748a39b1c5c6f46eaf3534b7c643eb47b52ef9702ab0",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "station-concourse",
+      "scene": "station",
+      "area": "concourse",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the central concourse inside this exact small Japanese commuter railway station, ticket vending machines and information boards in the right distance, same cream walls and wooden accents, no close readable lettering. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/station-general.png",
+      "path": "sources/station-concourse.png",
+      "transparent": false,
+      "assetName": "story-station-concourse",
+      "sourceSha256": "ae8bf1c309322247e1fc011cdc7ff31960e6bd5fdae01ab64b4cd290576fce92",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "station-gate",
+      "scene": "station",
+      "area": "gate",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the ticket gate area in this exact small Japanese commuter railway station, two modern green-accented ticket gates on the right, clear safe open pedestrian floor on the left foreground, same cream architecture and wood details. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/station-general.png",
+      "path": "sources/station-gate.png",
+      "transparent": false,
+      "assetName": "story-station-gate",
+      "sourceSha256": "a96ce65e60523948ec5abd6e5db431f3f59cd56a208afce0e7c78654d722e686",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "station-platform",
+      "scene": "station",
+      "area": "platform",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the covered platform of this exact small Japanese commuter railway station, pale columns with restrained wood trim, roof above, a bench on the right; tracks far to the right beyond a visible safe yellow tactile strip, viewpoint safely behind the strip on the platform and generous safe flat floor on the left; no train. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/station-general.png",
+      "path": "sources/station-platform.png",
+      "transparent": false,
+      "assetName": "story-station-platform",
+      "sourceSha256": "655856dfb44b9feb407ea90ad166d107aac8966026fb43bdc75d5098830c18fe",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "home-living",
+      "scene": "home",
+      "area": "living",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the living room of this exact modest Japanese apartment, a light fabric sofa, low wooden coffee table, small bookcase to the right, matching cream walls and light wooden floor. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/home-general.png",
+      "path": "sources/home-living.png",
+      "transparent": false,
+      "assetName": "story-home-living",
+      "sourceSha256": "2a7119b9931cb707085d47e6e8c091ae82227e9b4c589977bd6a8d0ddf9c08b4",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "home-kitchen",
+      "scene": "home",
+      "area": "kitchen",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the kitchen in this exact modest Japanese apartment, light wood cabinets and pale countertop with sink and induction hob mostly on the right, a refrigerator and window in the background, uncluttered. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/home-general.png",
+      "path": "sources/home-kitchen.png",
+      "transparent": false,
+      "assetName": "story-home-kitchen",
+      "sourceSha256": "1850d2fea4e4d95b16a29b2b6b263b111359c93f0697f54f3b8e3a1efe97a815",
+      "size": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "id": "home-bedroom",
+      "scene": "home",
+      "area": "bedroom",
+      "prompt": "Create one finished photorealistic background image for a portrait iPhone visual novel stage, 2:3 portrait. Use the provided reference as the exact same location's architectural, material, lighting and photographic-style bible. Show the bedroom of this exact modest Japanese apartment, neatly made simple bed with ivory bedding on the right, a wooden nightstand and curtained window, matching cream walls and wooden floor. This must be a new appropriate view of the same coherent location, not a collage. Warm neutral daylight, realistic everyday Japanese setting, straight vertical lines and natural camera perspective. Compose for a full-body 2D cat actor standing on the LEFT: leave the lower left and central foreground as clear continuous walkable floor with enough open space; put defining furniture and equipment on the RIGHT and middle distance, eye level low enough to see the room, no foreground obstacles. No people, no animals, no character, no interface, no dialogue boxes, no subtitles, no logos, no legible writing or watermarks. Maintain the reference's overall exposure and warm-white palette, crisp but natural photographic detail.",
+      "reference": "sources/home-general.png",
+      "path": "sources/home-bedroom.png",
+      "transparent": false,
+      "assetName": "story-home-bedroom",
+      "sourceSha256": "1c2893a341b3272d08412b9a5320680096f0b73e72c223eb38cfc15b62e4e006",
+      "size": [
+        1024,
+        1536
+      ]
     }
   ]
 }

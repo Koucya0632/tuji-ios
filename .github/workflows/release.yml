@@ -28,7 +28,8 @@ permissions:
 jobs:
   testflight:
     name: TestFlight
-    runs-on: macos-15
+    # Match the validated PR environment while arm64 hosts are capacity-limited.
+    runs-on: macos-15-intel
     timeout-minutes: 30
 
     env:

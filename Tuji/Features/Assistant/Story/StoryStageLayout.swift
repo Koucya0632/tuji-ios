@@ -1,15 +1,15 @@
 import SwiftUI
 
 /// Keeps the illustration above the *measured* dialogue, including translation.
-struct SupermarketStageLayout<Panel: View>: View {
-    let presentation: SupermarketPresentation
+struct StoryStageLayout<Panel: View>: View {
+    let presentation: StoryStagePresentation
     let reduceMotion: Bool
     let advance: () -> Void
     let panel: Panel
     @State private var panelHeight: CGFloat = 180
 
     init(
-        presentation: SupermarketPresentation,
+        presentation: StoryStagePresentation,
         reduceMotion: Bool,
         advance: @escaping () -> Void,
         @ViewBuilder panel: () -> Panel
@@ -23,15 +23,15 @@ struct SupermarketStageLayout<Panel: View>: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
-                Image(self.presentation.area.imageName)
+                Image(self.presentation.backgroundImageName)
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
-                    .id(self.presentation.area)
+                    .id(self.presentation.backgroundImageName)
                     .transition(.opacity)
                     .accessibilityHidden(true)
-                SupermarketMoira(
+                StoryStageMoira(
                     action: self.presentation.action,
                     size: CGSize(
                         width: geometry.size.width,
@@ -55,8 +55,8 @@ struct SupermarketStageLayout<Panel: View>: View {
     }
 }
 
-private struct SupermarketMoira: View {
-    let action: SupermarketPresentation.Action
+private struct StoryStageMoira: View {
+    let action: StoryStagePresentation.Action
     let size: CGSize
 
     var body: some View {
@@ -84,7 +84,7 @@ private struct SupermarketMoira: View {
     }
 }
 
-struct SupermarketDialogue<Content: View, Controls: View>: View {
+struct StoryDialogue<Content: View, Controls: View>: View {
     let name: String?
     let isReader: Bool
     let maxHeight: CGFloat
