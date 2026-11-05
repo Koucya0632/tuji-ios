@@ -58,7 +58,7 @@ struct StoryStageView: View {
                     presentation: self.presentation, reduceMotion: self.reduceMotion, advance: self.tap
                 ) {
                     if self.ended {
-                        self.ending
+                        self.ending(maxHeight: geo.size.height * 0.45)
                     } else {
                         self.dialogueBox(maxHeight: geo.size.height * 0.45)
                     }
@@ -77,7 +77,7 @@ struct StoryStageView: View {
                     VStack(spacing: Space.s2) {
                         Spacer(minLength: 0)
                         if self.ended {
-                            self.ending
+                            self.ending(maxHeight: geo.size.height * 0.45)
                         } else {
                             self.box
                                 .contentShape(.rect)
@@ -379,53 +379,14 @@ struct StoryStageView: View {
 
     // MARK: - Ending
 
-    private var ending: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            if case let .failed(failure) = self.writing {
-                Text(verbatim: StoryBuilderView.sentence(for: failure))
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if !self.picked.isEmpty {
-                Text("故事裡的單字")
-                    .font(.tujiLabel)
-                    .tracking(0.5)
-                    .foregroundStyle(.tujiInk3)
-                ForEach(self.picked) { word in
-                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                        HStack(spacing: Space.s3) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(verbatim: word.word)
-                                    .font(.tujiBody(.strong))
-                                    .foregroundStyle(.tujiInk)
-                                Text(verbatim: self.story?.wordNotes?.first { $0.id == word.id }?.note ?? word.chinese)
-                                    .font(.tujiBodySm)
-                                    .foregroundStyle(.tujiInk3)
-                            }
-                            Spacer(minLength: Space.s2)
-                            TujiRowAccessory()
-                        }
-                        .frame(minHeight: 48)
-                        .contentShape(.rect)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            HStack(spacing: Space.s2) {
-                BBtn(title: "再看一次", bg: .tujiPaper2, fullWidth: true) {
-                    self.ended = false
-                    self.shown = 0
-                    self.typeOut()
-                }
-                BBtn(title: "換個情境", fullWidth: true, action: self.close)
-            }
-            .padding(.top, Space.s1)
+    private func ending(maxHeight: CGFloat) -> some View {
+        StoryEndingPanel(story: self.story, picked: self.picked, writing: self.writing, maxHeight: maxHeight) {
+            self.ended = false
+            self.shown = 0
+            self.typeOut()
+        } close: {
+            self.close()
         }
-        .padding(Space.s3)
-        .background(.tujiPaper.opacity(0.96))
-        .overlay(Rectangle().stroke(.tujiInk, lineWidth: Border.bw1))
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
     }
 
     // MARK: - 履歷
@@ -446,6 +407,10 @@ private extension StoryStageView {
         {
             self.shown = min(max(0, line), self.segments.count)
             self.translating = args.contains("-StoryStageTranslation")
+        }
+        if args.contains("-StoryStageDemo"), args.contains("-StoryStageEnding") {
+            self.shown = self.segments.count
+            self.ended = true
         }
         #endif
         self.typeOut()

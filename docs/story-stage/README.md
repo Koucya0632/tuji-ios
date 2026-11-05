@@ -28,13 +28,14 @@ There are 20 background JPEGs and 17 transparent sprite PNGs, approximately 21.5
 - Audio, translation and practice have independent hit targets. Translation persists within the story. Practice opens a sheet without recording; leaving it or the reader cancels recording and playback.
 - The dialogue text scrolls within a maximum 45% of stage height after accounting for the measured nameplate and controls. A finite width is required when measuring the ruby layout. Each new segment resets the text scroll position.
 - At accessibility sizes, controls become a single row of 44-point icon buttons with full accessibility labels. Artwork scales into the remaining space and reserves clearance below the scene controls. Reduce Motion disables the 200 ms artwork fades.
+- The ending keeps restart/change actions visible while the selected words and notes scroll within the same measured panel.
 - Transcript contains only already-shown segments of the current story. It is not a saved-story library.
 
 ## Verification
 
 `StoryFormatTests`, `StoryStagePresentationTests` and the backend story tests cover old replies, lossy optional metadata, chunked streaming/final parity, missing words and the existing paid operation. Artwork tests check every declared asset and grounding bounds.
 
-Debug launch: `-StoryStageDemo <sceneId>` has a local story for each of the five places, covering all regions and prop actions without spending points. `-StoryStageLine <number> -StoryStageTranslation` starts at a selected line with translation for visual QA; these options are Debug-only and only act with the demo. `-StoryStageScrollToEnd` is a Debug-only probe for inspecting long text at accessibility sizes; it is absent from Release behavior.
+Debug launch: `-StoryStageDemo <sceneId>` has a local story for each of the five places, covering all regions and prop actions without spending points. `-StoryStageLine <number> -StoryStageTranslation` starts at a selected line with translation for visual QA; `-StoryStageEnding` opens the three-word ending fixture; these options are Debug-only and only act with the demo. `-StoryStageScrollToEnd` is a Debug-only probe for inspecting long text at accessibility sizes; it is absent from Release behavior.
 
 Deploy the additive backend first, then the iOS beta. No route, database migration, pricing formula or request-ID behavior is changed.
 

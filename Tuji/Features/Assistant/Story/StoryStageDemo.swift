@@ -42,6 +42,10 @@ struct StoryStageDemo: View {
         CardWord(
             id: "demo-kau", word: "買う", chinese: "買", imageUrl: "", category: "daily",
             pronunciation: "kau", reading: "かう", targetLanguage: .ja
+        ),
+        CardWord(
+            id: "demo-ikutsu", word: "いくつ", chinese: "幾個", imageUrl: "", category: "daily",
+            pronunciation: "ikutsu", targetLanguage: .ja
         )
     ]
 
