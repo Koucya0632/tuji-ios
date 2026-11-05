@@ -17,9 +17,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Explicit Intel hosts avoid intermittent arm64 allocation failures. Keep
+  # caches architecture-scoped because .build contains executable artifacts.
   lint:
     name: Lint
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 5
     env:
       # 釘版：brew install 抓 latest，工具一升版規則就變、CI 就無預警轉紅
@@ -55,7 +57,7 @@ jobs:
 
   release-build:
     name: Release build
-    runs-on: macos-15
+    runs-on: macos-15-intel
     timeout-minutes: 25
     # 自己一個 job，不是塞進 Build & Test：那個 job 本來就貼著 timeout 在跑，
     # 第一次嘗試把這一步加進去，整條在 21 分 25 秒被 20 分鐘的 timeout 砍掉。
@@ -82,9 +84,9 @@ jobs:
             .build
             .swiftpm
             ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Package.resolved') }}
           restore-keys: |
-            spm-${{ runner.os }}-
+            spm-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Create stub Secrets.xcconfig
         run: |
@@ -112,7 +114,7 @@ jobs:
 
   build-test:
     name: Build & Test
-    runs-on: macos-15
+    runs-on: macos-15-intel
     # Hosted Mac startup/build/result collection can exceed 20 minutes even
     # when all 1,258 tests pass. Keep the crash/count guards; allow the job
     # enough time to finish collecting their result on a slower runner.
@@ -143,9 +145,9 @@ jobs:
             .build
             .swiftpm
             ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Package.resolved') }}
           restore-keys: |
-            spm-${{ runner.os }}-
+            spm-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Create stub Secrets.xcconfig
         # PR job 不簽章，用空 Secrets 讓 build 跑得起來
