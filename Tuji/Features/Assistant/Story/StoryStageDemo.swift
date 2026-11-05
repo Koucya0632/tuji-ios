@@ -21,10 +21,10 @@ struct StoryStageDemo: View {
             VStack(spacing: 0) {
                 TujiNavBar(leading: .back, compactTitle: Text("情境故事"), showsRule: true)
                 StoryStageView(
-                    story: Self.story,
+                    story: self.demoStory,
                     sceneId: self.sceneId,
                     language: .ja,
-                    picked: Self.picked,
+                    picked: self.sceneId == "supermarket" ? Self.picked : [],
                     writing: .idle,
                     close: {}
                 )
@@ -44,6 +44,10 @@ struct StoryStageDemo: View {
             pronunciation: "kau", reading: "かう", targetLanguage: .ja
         )
     ]
+
+    private var demoStory: Story {
+        StoryStageDemoStories.story(sceneId: self.sceneId) ?? Self.story
+    }
 
     private typealias Ruby = [(String, String?)]
     private typealias Who = Story.Segment.Speaker

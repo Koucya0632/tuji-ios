@@ -3,7 +3,7 @@ import SwiftUI
 struct StoryTranscriptSheet: View {
     let story: Story?
     let shown: Int
-    let isSupermarket: Bool
+    let isIllustrated: Bool
     let close: () -> Void
 
     var body: some View {
@@ -39,7 +39,7 @@ struct StoryTranscriptSheet: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(Color.tujiPaper)
-            .navigationTitle(self.isSupermarket ? Text("紀錄") : Text("履歷"))
+            .navigationTitle(self.isIllustrated ? Text("紀錄") : Text("履歷"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

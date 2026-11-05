@@ -1,22 +1,3 @@
-// 情境故事 — read as a stage (prototype). The place fills the screen, Moira
-// stands in it, and one segment at a time sits in a box along the bottom:
-// a name plate for whoever speaks, nothing for narration. Tapping anywhere
-// moves on; tapping while a line is still typing finishes it first.
-//
-// The opening — title and intro — is the first thing in the box. A spoken
-// line is read aloud as it comes in, keeps its speaker and 跟讀 buttons in the
-// box, and shows its translation only while 譯 is on, so the box stays small
-// enough to leave Moira in view. Japanese with kana over it appears whole
-// (a furigana sentence cannot be typed out unit by unit without the ruby
-// jumping); everything else types out unless motion is reduced.
-//
-// 履歷 lists every segment already shown. When the reader catches up with a
-// story still being written the box says so; after the last one, the picked
-// words and the way out take the box's place.
-//
-// The person is never drawn: 你 is the camera. Moira's pose follows who is
-// talking: waving on her lines, thinking on yours, cheering at the end.
-
 import SwiftUI
 
 struct StoryStageView: View {
@@ -59,24 +40,27 @@ struct StoryStageView: View {
         self.caughtUp && self.writing != .writing
     }
 
-    private var isSupermarket: Bool {
-        self.sceneId == "supermarket"
+    private var isIllustrated: Bool {
+        self.sceneId.flatMap(StoryStagePresentation.Scene.init(rawValue:)) != nil
     }
 
-    private var presentation: SupermarketPresentation {
-        .init(segment: self.current)
+    private var presentation: StoryStagePresentation {
+        .init(
+            scene: self.sceneId.flatMap(StoryStagePresentation.Scene.init(rawValue:)) ?? .supermarket,
+            segment: self.current
+        )
     }
 
     var body: some View {
         GeometryReader { geo in
-            if self.isSupermarket {
-                SupermarketStageLayout(
+            if self.isIllustrated {
+                StoryStageLayout(
                     presentation: self.presentation, reduceMotion: self.reduceMotion, advance: self.tap
                 ) {
                     if self.ended {
                         self.ending
                     } else {
-                        self.supermarketBox(maxHeight: geo.size.height * 0.45)
+                        self.dialogueBox(maxHeight: geo.size.height * 0.45)
                     }
                 }
                 .overlay(alignment: .top) { self.topBar }
@@ -116,7 +100,7 @@ struct StoryStageView: View {
                 )
             }
         }
-        .onAppear { self.typeOut() }
+        .onAppear { self.prepareStage() }
         .onChange(of: self.story?.intro) { self.typeOut() }
         .onDisappear {
             self.typing?.cancel()
@@ -150,8 +134,8 @@ struct StoryStageView: View {
 
     // MARK: - Box
 
-    private func supermarketBox(maxHeight: CGFloat) -> some View {
-        SupermarketDialogue(
+    private func dialogueBox(maxHeight: CGFloat) -> some View {
+        StoryDialogue(
             name: self.name,
             isReader: self.current?.speaker == .you,
             maxHeight: maxHeight,
@@ -196,11 +180,6 @@ struct StoryStageView: View {
                 advance: self.tap
             )
         }
-    }
-
-    private func stopPractice() {
-        self.speech.stop()
-        self.recorder.cancel()
     }
 
     private var name: String? {
@@ -320,21 +299,12 @@ struct StoryStageView: View {
         }
     }
 
-    private var waiting: some View {
-        HStack(spacing: Space.s2) {
-            TujiProgressBar(progress: nil).frame(width: 32)
-            Text("Moira 正在寫故事…")
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
-        }
-    }
-
     // MARK: - Top bar
 
     private var topBar: some View {
         HStack(spacing: Space.s2) {
-            if self.isSupermarket {
-                Text(verbatim: self.presentation.area.label)
+            if self.isIllustrated {
+                Text(verbatim: self.presentation.label)
                     .font(.tujiBodySm(.strong))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
@@ -343,11 +313,11 @@ struct StoryStageView: View {
                     .background(Color.tujiPaper.opacity(0.94))
             }
             Spacer()
-            if !self.isSupermarket {
+            if !self.isIllustrated {
                 self.chip(Text("譯"), on: self.translating) { self.translating.toggle() }
                     .accessibilityLabel(Text(self.translating ? "隱藏翻譯" : "顯示翻譯"))
             }
-            self.chip(self.isSupermarket ? Text("紀錄") : Text("履歷"), on: false) {
+            self.chip(self.isIllustrated ? Text("紀錄") : Text("履歷"), on: false) {
                 self.speech.stop()
                 self.recorder.cancel()
                 self.backlog = true
@@ -461,13 +431,40 @@ struct StoryStageView: View {
     // MARK: - 履歷
 
     private var backlogSheet: some View {
-        StoryTranscriptSheet(story: self.story, shown: self.shown, isSupermarket: self.isSupermarket) {
+        StoryTranscriptSheet(story: self.story, shown: self.shown, isIllustrated: self.isIllustrated) {
             self.backlog = false
         }
     }
 }
 
 private extension StoryStageView {
+    func prepareStage() {
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-StoryStageDemo"), let index = args.firstIndex(of: "-StoryStageLine"),
+           args.indices.contains(index + 1), let line = Int(args[index + 1])
+        {
+            self.shown = min(max(0, line), self.segments.count)
+            self.translating = args.contains("-StoryStageTranslation")
+        }
+        #endif
+        self.typeOut()
+    }
+
+    func stopPractice() {
+        self.speech.stop()
+        self.recorder.cancel()
+    }
+
+    var waiting: some View {
+        HStack(spacing: Space.s2) {
+            TujiProgressBar(progress: nil).frame(width: 32)
+            Text("Moira 正在寫故事…")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk3)
+        }
+    }
+
     func typeOut() {
         self.typing?.cancel()
         guard !self.reduceMotion, let text = self.typeable, !text.isEmpty else {

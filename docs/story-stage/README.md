@@ -1,16 +1,26 @@
-# Supermarket story stage
+# Illustrated story stages
 
-The supermarket reader uses independent photographic backgrounds and transparent 2D Moira sprites. Other places retain the existing stage. Artwork is bundled; the reader never downloads or generates an image.
+All five current places (supermarket, office, restaurant, station, home) use independent photographic backgrounds and transparent 2D Moira sprites. Unknown future places retain the existing stage. Artwork is bundled; the reader never downloads or generates an image.
 
 ## Presentation contract
 
 `Story.Segment.stage` is optional and has optional string fields `areaId` and `moiraAction`. It is a complete snapshot for that segment, not a transition command. Both streamed segments and the final story use the same normalized cues. Missing, malformed and unknown cues must never invalidate sentence text, translations, readings or word IDs.
 
-Areas: `general`, `entrance`, `produce`, `checkout`. Unknown areas use `general`. Dairy shelves, freezers and stock rooms use the general interior. No fixed route is imposed on a generated story.
+Each place has a general interior plus three regions:
 
-Actions: `greet`, `listen`, `think`, `confused`, `surprised`, `point`, `nod`, `goodbye`, `hold_apple`, `carry_bag`. The opening uses `greet`; an unknown action uses `listen` for the reader's line, otherwise `think`. Props describe Moira's actual current actions, never merely a mentioned object or the person's action.
+| Place | Regions | Prop actions |
+| --- | --- | --- |
+| supermarket | entrance / produce / checkout | hold_apple / carry_bag |
+| office | desk / meeting / breakroom | read_document / use_laptop |
+| restaurant | entrance / dining / checkout | read_menu / hold_cup |
+| station | concourse / gate / platform | hold_ticket / check_map |
+| home | living / kitchen / bedroom | read_book / hold_cup |
 
-`SupermarketPresentation` owns cue resolution. `StorySpriteMetrics` records measured alpha bounds, so different silhouettes share a visible-height scale and ground baseline. Asset names and source-image hashes are in `assets.json`; each entry also records the exact built-in imagegen prompt. Backgrounds are encoded as JPEG for bundling, and sprite PNG alpha is preserved. The source archive is delivered separately with the project artifacts.
+All places share greet / listen / think / confused / surprised / point / nod / goodbye. `StoryStagePresentation` owns resolution and checks both fields independently against the selected place. Unknown or unrelated areas resolve to that place's general interior. The opening uses greet; unknown or unrelated actions use listen for the reader, otherwise think. Props describe Moira's actual current actions, never a mentioned object or the person's action. The same cup sprite is shared by restaurant and home.
+
+There are 20 background JPEGs and 17 transparent sprite PNGs, approximately 21.5 MB total. No fixed route is imposed on stories. Unsupported areas remain general (for example dairy/freezer shelves, restaurant kitchens, train interiors, or home bathrooms).
+
+`StorySpriteMetrics` records measured alpha bounds, so different silhouettes share a visible-height scale and ground baseline. Asset names and source-image hashes are in `assets.json`; each entry also records the exact built-in imagegen prompt. Backgrounds are encoded as JPEG for bundling, and sprite PNG alpha is preserved. The source archive is delivered separately with the project artifacts.
 
 ## Reading behavior
 
@@ -24,6 +34,9 @@ Actions: `greet`, `listen`, `think`, `confused`, `surprised`, `point`, `nod`, `g
 
 `StoryFormatTests`, `StoryStagePresentationTests` and the backend story tests cover old replies, lossy optional metadata, chunked streaming/final parity, missing words and the existing paid operation. Artwork tests check every declared asset and grounding bounds.
 
-Debug launch: `-StoryStageDemo supermarket` exercises an apple-shopping story, prop actions and a checkout transition without spending points. Other scene IDs exercise the original stage. `-StoryStageScrollToEnd` is a Debug-only probe for inspecting long text at accessibility sizes; it is absent from Release behavior.
+Debug launch: `-StoryStageDemo <sceneId>` has a local story for each of the five places, covering all regions and prop actions without spending points. `-StoryStageLine <number> -StoryStageTranslation` starts at a selected line with translation for visual QA; these options are Debug-only and only act with the demo. `-StoryStageScrollToEnd` is a Debug-only probe for inspecting long text at accessibility sizes; it is absent from Release behavior.
 
 Deploy the additive backend first, then the iOS beta. No route, database migration, pricing formula or request-ID behavior is changed.
+
+
+The model-only `propEvidence` field quotes the current narration before selecting a prop action. The backend checks that the quote is verbatim, names Moira, and belongs to that narration. Spoken lines may continue only an already established prop; the next narration clears it unless it supplies fresh evidence. The quote is stripped before streaming or returning a segment, preserving the public two-field stage shape. This is a conservative display guard, not natural-language verification. The same stateful resolver processes streamed and final segments in order; spoken suggestions cannot change the established area. Unknown or missing area hints still fall back to general.
