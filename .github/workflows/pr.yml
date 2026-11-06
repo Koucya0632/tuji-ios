@@ -233,6 +233,11 @@ jobs:
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Unit tests
+        # 這一步也要帶 -clonedSourcePackagesDirPath。`test-without-building` 自己
+        # 會再檢查一次套件，少了這個參數它會去 build/SourcePackages 找，而現在
+        # 那裡是空的（上一步解析到 repo 根目錄了），於是整組 25 個套件在跑測試
+        # 前又被抓一遍 —— run 42162818815 的 Unit tests 就有 50 行 Fetching /
+        # Checking out。三步指到同一個目錄，一趟 run 才真的只抓一次。
         run: |
           set -o pipefail
           xcodebuild test-without-building \
@@ -241,6 +246,8 @@ jobs:
             -configuration Debug \
             -destination "id=${{ steps.sim.outputs.udid }}" \
             -derivedDataPath build \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile \
             -enableCodeCoverage YES \
             CODE_SIGNING_ALLOWED=NO \
             | tee "$RUNNER_TEMP/xcodebuild-test.log" \
