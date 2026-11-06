@@ -119,20 +119,22 @@ jobs:
   build-test:
     name: Build & Test
     runs-on: macos-15-intel
-    # 這個預算是照「每一趟都是冷啟動」抓的，因為每一趟真的都是冷啟動。
+    # 這個預算是照「cache 沒命中也要跑得完」抓的。
     #
-    # 下面那個 SPM cache 從來沒命中過：`pr.yml` 只有 `on: pull_request`，所以
-    # main 永遠不會存一份 cache，而 PR run 存下來的 cache 只有自己那條分支讀
-    # 得到。換到 macos-15-intel 之後 key 又多了 runner.arch，連舊的也一起失
-    # 效。（key 本身還有個毛病：`hashFiles('**/Package.resolved')` 算出來是空
-    # 字串 —— Package.resolved 在 .gitignore 裡，checkout 裡根本沒有這個檔 ——
-    # 所以 key 其實是固定的 `spm-macOS-X64-`，換套件也不會換 key。）
+    # 一趟冷的 Intel run（run 42156112040，2026-11-06）：setup 0.6 分 +
+    # resolve 3 分 + build-for-testing 19.5 分 + 測試 16.5 分，整個 job
+    # 39 分 48 秒。40 分鐘的上限曾經在測試跑到一半時把整條砍掉，所以留 60。
     #
-    # 一趟冷的 Intel run：setup 4.5 分 + build-for-testing 23.5 分 + 測試
-    # 12 分以上。原本 40 分鐘的上限在測試跑到一半時把整個 job 砍掉，而被砍掉
-    # 的 job 連 post-job 的 cache 都不會存 —— 於是下一趟還是冷的。
-    # 要真的拆掉這個循環得讓 main 自己存一份 cache，那是另一條 PR 的事；
-    # 這裡先把預算開到跑得完。
+    # 下面那個 cache 以前從來沒命中過，三個毛病都修掉了：
+    #   - key 是常數：`hashFiles('**/Package.resolved')` 算出來是空字串（那個
+    #     檔不在版控裡），key 固定是 `spm-macOS-X64-`。現在 Package.resolved
+    #     進了版控，key 吃它的 hash。
+    #   - 沒有人存得起來：`pr.yml` 只有 `on: pull_request`，而 PR 分支存的
+    #     cache 只有自己讀得到。改由 cache-warm.yml 在 main 上存。
+    #   - 命中也沒人用：resolve 跟 build-for-testing 各自解析到不同目錄，同樣
+    #     的 25 個套件會被抓兩遍（3 分 42 秒 + 2 分 33 秒）。現在兩步都指到同
+    #     一個 -clonedSourcePackagesDirPath。
+    # 命中的時候 resolve 只剩十幾秒。
     timeout-minutes: 60
     # 刻意不設 needs: lint — 之前 Lint 紅了整條測試就被跳過，
     # style 問題不該擋正確性檢查。
