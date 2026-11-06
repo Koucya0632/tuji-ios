@@ -264,6 +264,49 @@ struct CompletionInputsMappingTests {
 
         #expect(today.completion == CompletionReadout(shared))
     }
+
+    // MARK: - Free themes (首頁's 解鎖全部主題)
+
+    /// Counted across every free theme, picked or not.
+    @Test
+    func freeThemesCountEveryFreeThemeNotJustThePick() async {
+        let progress = await self.makeProgress([
+            CategoryProgress(category: "campus", total: 50, seen: 50),
+            CategoryProgress(category: "fruits", total: 34, seen: 10),
+            CategoryProgress(category: "kitchen", total: 64, seen: 0),
+        ])
+        let free = FreeThemesProgress(studyable: ["campus", "fruits"], progress: progress)
+
+        #expect(free == FreeThemesProgress(total: 84, unseen: 24))
+        #expect(free?.allLearned == false)
+    }
+
+    /// A withdrawn word leaves one theme's seen above its total. Summed, that
+    /// surplus would cancel another theme's unlearned words and offer
+    /// 解鎖全部主題 with free words still left.
+    @Test
+    func aSeenSurplusInOneFreeThemeDoesNotHideAnothersUnlearnedWords() async {
+        let progress = await self.makeProgress([
+            CategoryProgress(category: "campus", total: 50, seen: 53),
+            CategoryProgress(category: "bank", total: 12, seen: 9),
+        ])
+        let free = FreeThemesProgress(studyable: ["campus", "bank"], progress: progress)
+
+        #expect(free?.unseen == 3)
+        #expect(free?.allLearned == false)
+    }
+
+    /// No gate — a member, policy v1, or before the entitlement arrives — and
+    /// an empty list, which ProgressStore would read as every category.
+    @Test
+    func noFreeThemeProgressWithoutAGate() async {
+        let progress = await self.makeProgress([
+            CategoryProgress(category: "campus", total: 50, seen: 50)
+        ])
+
+        #expect(FreeThemesProgress(studyable: nil, progress: progress) == nil)
+        #expect(FreeThemesProgress(studyable: [], progress: progress) == nil)
+    }
 }
 
 // MARK: - Mapping fakes

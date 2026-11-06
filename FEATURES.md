@@ -191,6 +191,7 @@ App 啟動
   - `復習` disabled 條件:`due == 0`。
   - `學新字` disabled 原因(`NewBlockReason`):未選主題(noThemes)/ 所選主題無卡片(noCards)/ 主題新字學完(allLearned)/ 復習積壓把新字額度壓到 0(reviewBacklog)。
   - 每個灰掉的按鈕都有一行說明(不留無聲死按鈕);另有「因為還有 N 個字要複習,今天新字先調整為 M 個」的額度調降提示。
+  - **全部免費主題學完(非會員)**:按鈕死掉時底下那一行本來是「換幾個主題」,但非會員能換的主題全部上鎖,所以改成「解鎖全部主題」,點了直接開付費頁(`TodayBlock.freeThemesLearned` → `TodayFooter.unlockAllThemes`)。看的是**全部**免費主題(`FreeThemesProgress`,依伺服器的 `studyableCategories`),不只所選的:只選了留學生、但水果和臥室還沒學的人,仍然看到「換幾個主題」。未學字數逐主題計算,下架字造成某主題 seen 超過 total 時,不會蓋掉別的主題還沒學的字。
 
 ### 主題格
 

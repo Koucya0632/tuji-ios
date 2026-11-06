@@ -35,6 +35,7 @@ struct TodayView: View {
     @Environment(MasteryStore.self) private var mastery
     @Environment(AuthService.self) private var auth
     @Environment(TabNavigator.self) private var navigator
+    @Environment(\.presentPaywall) private var presentPaywall
 
     /// 打卡. Owned by `MainTabsView`, not by the sheet, so the chip's dot, the
     /// sheet and the 學新字 finish screen read one wallet.
@@ -56,7 +57,11 @@ struct TodayView: View {
                 ),
                 dailyGoal: self.settings.current.dailyGoal,
                 stats: self.studyStats.stats,
-                progressLoaded: self.progress.phase == .loaded
+                progressLoaded: self.progress.phase == .loaded,
+                freeThemes: FreeThemesProgress(
+                    studyable: self.settings.studyableCategories,
+                    progress: self.progress
+                )
             )
         )
     }
@@ -452,22 +457,35 @@ struct TodayView: View {
             self.footerLink("學新字", route: .studyLanding(mode: .new))
         case .changeThemes:
             self.footerLink("換幾個主題", route: .studyCategories)
+        case .unlockAllThemes:
+            // 非會員學完了全部免費主題。「換幾個主題」會把他送去一整排鎖頭，
+            // 再由鎖頭開付費頁 —— 這裡直接開。
+            Button { self.presentPaywall() } label: {
+                self.footerLabel("解鎖全部主題")
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .accessibilityHint(Text("開啟永久會員方案"))
         }
     }
 
-    /// 13pt 的字只有 18pt 高，所以打擊區靠上下的 padding 撐到 44pt。
     private func footerLink(_ title: LocalizedStringKey, route: NavRoute) -> some View {
         NavigationLink(value: route) {
-            Text(title)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiPaper.opacity(0.85))
-                .underline()
-                .padding(.horizontal, Space.s3)
-                .padding(.vertical, 13)
-                .contentShape(.rect)
+            self.footerLabel(title)
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
+    }
+
+    /// 13pt 的字只有 18pt 高，所以打擊區靠上下的 padding 撐到 44pt。
+    private func footerLabel(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.tujiLabel)
+            .foregroundStyle(.tujiPaper.opacity(0.85))
+            .underline()
+            .padding(.horizontal, Space.s3)
+            .padding(.vertical, 13)
+            .contentShape(.rect)
     }
 
     // MARK: - 和 Moira 一起

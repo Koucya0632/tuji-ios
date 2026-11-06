@@ -26,7 +26,8 @@ struct TodayDecisionsTests {
         seenInSelection: Int = 40,
         totalInSelection: Int = 120,
         dictionaryCount: Int = 480,
-        dictionaryCountInSelection: Int = 60
+        dictionaryCountInSelection: Int = 60,
+        freeThemes: FreeThemesProgress? = nil
     )
         -> TodayDecisions.Inputs
     {
@@ -41,7 +42,8 @@ struct TodayDecisionsTests {
             ),
             dailyGoal: dailyGoal,
             stats: stats,
-            progressLoaded: progressLoaded
+            progressLoaded: progressLoaded,
+            freeThemes: freeThemes
         )
     }
 
@@ -228,5 +230,78 @@ struct TodayDecisionsTests {
         #expect(d.call == .study(mode: .review, count: 7))
         #expect(d.newDisabled)
         #expect(d.footer == nil)
+    }
+
+    // MARK: - 免費主題都學完了
+
+    /// 選的學完了，免費的也全部學完了：能換的主題全部上鎖，「換幾個主題」
+    /// 只會把人帶到一排鎖頭前面。
+    @Test("非會員學完全部免費主題，出口改成解鎖")
+    func aNonMemberWithEveryFreeThemeLearnedIsOfferedUnlock() {
+        let d = TodayDecisions(self.inputs(
+            studyCategories: ["campus", "bank"],
+            stats: StudyStats(total: 62, seen: 62, due: 0, new: 0, todayNew: 0),
+            seenInSelection: 62,
+            totalInSelection: 62,
+            freeThemes: FreeThemesProgress(total: 220, unseen: 0)
+        ))
+        #expect(d.call == .blocked(.freeThemesLearned))
+        #expect(d.footer == .unlockAllThemes)
+    }
+
+    /// 只選了留學生、學完了，但水果和臥室還是免費、還沒學 —— 換主題才是
+    /// 老實的下一步，不是付錢。
+    @Test("還有沒選的免費主題沒學，出口還是換主題")
+    func freeThemesLeftUnpickedKeepChangeThemes() {
+        let d = TodayDecisions(self.inputs(
+            studyCategories: ["campus"],
+            stats: StudyStats(total: 50, seen: 50, due: 0, new: 0, todayNew: 0),
+            seenInSelection: 50,
+            totalInSelection: 50,
+            freeThemes: FreeThemesProgress(total: 220, unseen: 78)
+        ))
+        #expect(d.call == .blocked(.themesExhausted))
+        #expect(d.footer == .changeThemes)
+    }
+
+    /// 會員（和 policy v1）根本沒有免費主題的進度。
+    @Test("會員學完選的主題，不會被叫去解鎖")
+    func aMemberIsNeverOfferedUnlock() {
+        let d = TodayDecisions(self.inputs(
+            stats: StudyStats(total: 120, seen: 120, due: 0, new: 0, todayNew: 0),
+            seenInSelection: 120,
+            freeThemes: nil
+        ))
+        #expect(d.call == .blocked(.themesExhausted))
+        #expect(d.footer == .changeThemes)
+    }
+
+    /// 還有字要複習的時候，按鈕照樣去複習；解鎖等到按鈕真的死了才出現。
+    @Test("有字要複習時先複習，不出現解鎖")
+    func reviewsDueComeBeforeUnlock() {
+        let d = TodayDecisions(self.inputs(
+            stats: StudyStats(total: 220, seen: 220, due: 4, new: 0, todayNew: 0),
+            seenInSelection: 220,
+            totalInSelection: 220,
+            freeThemes: FreeThemesProgress(total: 220, unseen: 0)
+        ))
+        #expect(d.call == .study(mode: .review, count: 4))
+        #expect(d.footer == nil)
+    }
+
+    /// progress 落地之前每個數都是 0；0 個沒學，不等於全部學完。
+    @Test("progress 還沒到，不說免費主題學完了")
+    func freeThemesAreNotCalledLearnedBeforeProgressLoads() {
+        let d = TodayDecisions(self.inputs(
+            progressLoaded: false,
+            freeThemes: FreeThemesProgress(total: 220, unseen: 0)
+        ))
+        #expect(!d.freeThemesLearned)
+    }
+
+    /// 這個學習方向底下免費主題一張卡都沒有，是空的牌組，不是學完的牌組。
+    @Test("免費主題沒有卡，不算學完")
+    func freeThemesWithNoCardsAreNotLearned() {
+        #expect(!FreeThemesProgress(total: 0, unseen: 0).allLearned)
     }
 }

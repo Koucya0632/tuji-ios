@@ -21077,6 +21077,29 @@
         }
       }
     },
+    "解鎖全部主題" : {
+      "comment" : "Link under the disabled study button on 首頁 when a non-member has learned every word in every free topic; opens the Lifetime Membership paywall. One short line.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlock all topics"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのテーマを解放"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解锁全部主题"
+          }
+        }
+      }
+    },
     "解除中…" : {
       "localizations" : {
         "en" : {
@@ -25681,6 +25704,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重点：%@"
+          }
+        }
+      }
+    },
+    "開啟永久會員方案" : {
+      "comment" : "VoiceOver hint on the 首頁 解鎖全部主題 link: tapping it opens the Lifetime Membership paywall.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens Lifetime Membership"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久会員のプランを開きます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开永久会员方案"
           }
         }
       }
