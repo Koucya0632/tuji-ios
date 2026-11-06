@@ -14,10 +14,8 @@ import Foundation
 
 enum NavRoute: Hashable {
     case search(query: String?)
-    /// 助手首頁 — the existing cat entry on 今天.
-    case assistant
     /// 點數明細 — the balance, where it came from and where it went. Reached
-    /// from 助手, the one screen that spends points a few at a time.
+    /// from 今天's 和 Moira 一起, the one block that spends points a few at a time.
     case creditStatement
     /// 情境故事 — pick 圖鑑 items, a place and a difficulty; Moira, the cat, writes a
     /// short dialogue around them. Reached from 助手.
@@ -53,6 +51,9 @@ enum NavRoute: Hashable {
     /// 物見搜尋 — 合集 and public cards, in the current learning language.
     case atlasSearch
     case studyCategories
+    /// 學習統計 — 我 的完成度、熟練度、連續天數、熱力圖和主題明細，從 今天
+    /// 墨塊右上角的折線圖進來。同一組 section，兩個宿主。
+    case progressStats
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)
     case categoryDetail(id: String)

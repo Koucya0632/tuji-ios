@@ -27738,6 +27738,258 @@
           }
         }
       }
+    },
+    "背單字" : {
+      "comment" : "首頁墨塊上唯一那顆按鈕。它可能是複習、也可能是學新字 —— 右邊的 「複習 %lld」／「新字 %lld」才說是哪一種。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単語を覚える"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背单字"
+          }
+        }
+      }
+    },
+    "選學習主題" : {
+      "comment" : "同一顆按鈕，在使用者還沒選過主題時的樣子。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick topics"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーマを選ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选学习主题"
+          }
+        }
+      }
+    },
+    "複習 %lld" : {
+      "comment" : "按鈕右邊，說這一輪會做什麼、幾個。%lld 是要複習的字數。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "復習 %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复习 %lld"
+          }
+        }
+      }
+    },
+    "新字 %lld" : {
+      "comment" : "按鈕右邊，說這一輪會做什麼、幾個。%lld 是今天會抽幾個新字。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新出 %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新字 %lld"
+          }
+        }
+      }
+    },
+    "%@ 等 %lld 個主題" : {
+      "comment" : "墨塊標題：你在學哪些主題。%@ 是其中一個主題的名字，%lld 是總共幾個（含那一個）。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · %lld topics"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ほか %lld テーマ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 等 %lld 个主题"
+          }
+        }
+      }
+    },
+    "%lld 個學習主題" : {
+      "comment" : "同一個標題，在查不到主題名字時的樣子。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld study topics"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学習テーマ %lld 件"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个学习主题"
+          }
+        }
+      }
+    },
+    "%lld / %lld 字" : {
+      "comment" : "墨塊上那條進度的數字：學過的字 / 選的主題總共有幾個字。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld words"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld 語"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld 字"
+          }
+        }
+      }
+    },
+    "換幾個主題" : {
+      "comment" : "按鈕底下那一行，只在選的主題都學完、按鈕變灰的時候出現。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick other topics"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のテーマにする"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换几个主题"
+          }
+        }
+      }
+    },
+    "這一區是 Moira" : {
+      "comment" : "新手導覽指著首頁的 Moira 區（一隻貓加四個入口）時的標題。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This corner is Moira’s"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここはMoiraの場所"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这一区是 Moira"
+          }
+        }
+      }
+    },
+    "查單字、讀故事、聊主題。她會用掉一點點數。" : {
+      "comment" : "同一步導覽的內文。最後一句是在先說清楚這些功能要花點數。",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look up words, read stories, talk topics. She spends a few points."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "単語を調べる、物語を読む、テーマで話す。少しポイントを使います。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查单字、读故事、聊主题。她会用掉一点点数。"
+          }
+        }
+      }
+    },
+    "學習統計" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study stats"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学習統計"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学习统计"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

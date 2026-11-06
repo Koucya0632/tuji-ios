@@ -82,15 +82,16 @@ struct TourStep: Identifiable {
             TourStep(
                 id: 1,
                 tab: .today,
-                // The cat gives no sign that it can be pressed — the speech
-                // bubble beside it is the only hint — which makes it the one
-                // thing on 今天 a new user is least likely to find.
+                // 這一步本來在指 hero 右上那隻 96pt 的靜態貓 —— 一張圖，沒有
+                // 任何跡象說它可以按，所以它是 今天 上最難被找到的東西。助手
+                // 首頁併進來之後它指的是整個「和 Moira 一起」：一隻會呼吸的貓
+                // 加四個寫著名字的入口。還留著這一步，是因為它們要花點數。
                 target: .assistant,
                 fallback: nil,
                 shape: .rounded(Radius.r0),
                 pose: .face,
-                title: "有問題就點我",
-                text: "查單字、找收藏、問我問題都可以。"
+                title: "這一區是 Moira",
+                text: "查單字、讀故事、聊主題。她會用掉一點點數。"
             ),
             TourStep(
                 id: 2,

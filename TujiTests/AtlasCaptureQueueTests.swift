@@ -15,10 +15,21 @@ struct AtlasCaptureQueueTests {
         credits: FakeCreditConfirming = FakeCreditConfirming(),
         journal: InMemoryCaptureJobJournal = InMemoryCaptureJobJournal(),
         mutations: SpyAtlasMutationRefreshing = SpyAtlasMutationRefreshing(),
-        // Generous on purpose: parallel @MainActor suites starve each other on
-        // CI for well over 5s, and a deadline that passes mid-test turns a
-        // "waits for the fill-in" assertion into a timing coin flip.
-        deadline: Duration = .seconds(60)
+        // 大到在測試裡燒不完，不是「再寬鬆一點」。
+        //
+        // `awaitFulfillment` 的期限走 `ContinuousClock` —— 真實時間，不是測試
+        // 跑了幾步。這些 suite 都是 `@MainActor`，在 CI 上彼此餓著對方，單一
+        // 測試的牆上時間動輒兩百多秒。原本的 60 秒在 arm64 的 runner 上還撐得
+        // 住；main 把 runner 換成 `macos-15-intel` 之後，一次 36 分鐘的
+        // Build & Test 就足以讓兩次輪詢之間跨過 60 秒，
+        // `aCreditCaptureConfirmsMakesCardsWaitsForTheFillInThenFinishes` 於是
+        // 只輪詢到一次就被期限趕出迴圈。給一個燒不完的數字才是真的拆掉這顆
+        // 骰子 —— 調大一點只是把它擲得久一點。
+        //
+        // 不會因此掛住：走預設值的測試，fill-in 都會自己結束（fake 的 `fillIn`
+        // 用完就一直回 completed），期限從來不是它們的出口。唯一真的要期限開火
+        // 的 `aFillInThatNeverEndsStillFinishesTheJobAtTheDeadline` 自己帶 30ms。
+        deadline: Duration = .seconds(3600)
     )
         -> AtlasCaptureQueue
     {

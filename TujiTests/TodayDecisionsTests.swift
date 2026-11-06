@@ -1,10 +1,14 @@
-// Pins 首頁's decisions — the subtitle, the 學新字 gate, the 主題進度 fraction.
+// Pins 首頁's decisions — the heading, the one button, the line under it,
+// the 學新字 gate, the 主題進度 fraction.
 //
 // Before `TodayDecisions` existed these were `private var`s on an 802-line
 // `View`, so the only one under test was the single rule someone had already
-// lifted into a `static func`. The five quota tests below are that file,
-// carried over unchanged; everything after them is what could not be reached
-// at all.
+// lifted into a `static func`.
+//
+// 墨塊收成一顆按鈕之後，`subtitle` 的七個 case 和 `heroHint` 的三個換成了
+// `heading` / `call` / `footer`，這裡跟著換。`quotaAdjustment` 和它的兩個測試
+// 一起刪掉了：它只服務那行提示，而提示沒了 —— 底下那條削減規則本身由
+// `StudyQuotasTests` 直接盯著，沒有少掉覆蓋。
 //
 // The decisions return enums rather than copy, so none of this needs a bundle
 // or a locale.
@@ -41,80 +45,70 @@ struct TodayDecisionsTests {
         )
     }
 
-    // MARK: - Quota adjustment (carried over from TodayViewHintTests)
+    // MARK: - 標題
 
-    @Test
-    func showsAdjustedNewQuotaWhenBacklogTapersGoal() {
-        let adj = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 40, due: 77, new: 80, todayNew: 2)
-        )).quotaAdjustment
-
-        #expect(adj?.due == 77)
-        #expect(adj?.limit == 5)
+    @Test("標題報第一個主題的 id 和總數 —— 名字是 View 去查的")
+    func headingNamesTheFirstThemeAndCounts() {
+        let d = TodayDecisions(self.inputs(studyCategories: ["kitchen", "station", "fruit"]))
+        #expect(d.heading == .themes(firstId: "kitchen", count: 3))
     }
 
-    @Test
-    func hidesAdjustedNewQuotaWhenBacklogIsSmall() {
-        let adj = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 40, due: 20, new: 80, todayNew: 2)
-        )).quotaAdjustment
-
-        #expect(adj == nil)
+    /// 空的主題清單在 settings 落地之前什麼都不代表，所以標題不能說「還沒選」。
+    @Test("settings 還沒到的時候，標題不宣稱任何事")
+    func headingWaitsForSettings() {
+        #expect(TodayDecisions(self.inputs(settingsLoaded: false, studyCategories: [])).heading == .unknown)
+        #expect(TodayDecisions(self.inputs(studyCategories: [])).heading == .noThemes)
     }
 
-    @Test
-    func hidesAdjustedNewQuotaWhenBacklogBlocksNewCards() {
-        let adj = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 40, due: 101, new: 80, todayNew: 2)
-        )).quotaAdjustment
+    // MARK: - 那顆按鈕
 
-        #expect(adj == nil)
-    }
-
-    @Test
-    func hidesAdjustedNewQuotaWhenDailyGoalAlreadyReached() {
-        let adj = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 40, due: 77, new: 80, todayNew: 10)
-        )).quotaAdjustment
-
-        #expect(adj == nil)
-    }
-
-    @Test
-    func hidesAdjustedNewQuotaWhenNoNewWordsAvailable() {
-        let adj = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 120, due: 77, new: 0, todayNew: 2),
-            seenInSelection: 120,
-            totalInSelection: 120
-        )).quotaAdjustment
-
-        #expect(adj == nil)
-    }
-
-    // MARK: - Subtitle
-
-    @Test("a review backlog outranks everything else the line could say")
-    func subtitlePrefersReviewBacklog() {
+    /// 兩顆按鈕併成一顆之後，這條是整個合併最重的一個決定：有字要複習的人
+    /// 不能再自己選今天只學新字。
+    @Test("有字要複習就複習，不管新字還剩多少")
+    func callPrefersReview() {
         let d = TodayDecisions(self.inputs(
             stats: StudyStats(total: 120, seen: 40, due: 7, new: 80, todayNew: 20)
         ))
-        #expect(d.subtitle == .reviewDue(count: 7))
+        #expect(d.call == .study(mode: .review, count: 7))
     }
 
-    @Test("the goal-reached line cannot contradict the 達成 badge")
-    func subtitleGoalReachedBeatsNewProgress() {
-        // todayNew(12) >= goal(10) so the badge is showing; the line must agree
-        // rather than saying 「今天已學 12 個新字，繼續加油」.
-        let d = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 40, due: 0, new: 80, todayNew: 12)
+    @Test("沒字要複習就學新字，數量是每日目標蓋在主題剩下的字數上")
+    func callFallsToNewCappedByGoalAndRemainder() {
+        let plenty = TodayDecisions(self.inputs(
+            dailyGoal: 10,
+            stats: StudyStats(total: 120, seen: 40, due: 0, new: 80, todayNew: 0)
         ))
-        #expect(d.dailyGoalReached)
-        #expect(d.subtitle == .goalReached)
+        #expect(plenty.call == .study(mode: .new, count: 10))
+
+        let nearlyDone = TodayDecisions(self.inputs(
+            dailyGoal: 10,
+            stats: StudyStats(total: 120, seen: 117, due: 0, new: 3, todayNew: 0),
+            seenInSelection: 117
+        ))
+        #expect(nearlyDone.call == .study(mode: .new, count: 3))
     }
 
-    @Test("no verdict is offered before stats arrive")
-    func subtitleWaitsForStats() {
-        #expect(TodayDecisions(self.inputs(stats: nil)).subtitle == .unknown)
+    /// 一個在第一次抓取落地前就報出來的數量是猜的。
+    @Test("stats 還沒到就不報數字")
+    func callWaitsForStats() {
+        #expect(TodayDecisions(self.inputs(stats: nil)).call == .unknown)
+    }
+
+    @Test("主題學完了，按鈕死掉，唯一的出路是換主題")
+    func callBlocksWhenThemesAreExhausted() {
+        let d = TodayDecisions(self.inputs(
+            stats: StudyStats(total: 120, seen: 120, due: 0, new: 0, todayNew: 0),
+            seenInSelection: 120
+        ))
+        #expect(d.call == .blocked(.themesExhausted))
+        #expect(d.footer == .changeThemes)
+    }
+
+    @Test("沒選主題的時候，按鈕自己就是那張提示卡")
+    func callAsksForThemes() {
+        let d = TodayDecisions(self.inputs(studyCategories: []))
+        #expect(d.call == .pickThemes)
+        #expect(d.footer == nil)
     }
 
     @Test("an empty theme list only means 'pick themes' once settings have loaded")
@@ -202,52 +196,37 @@ struct TodayDecisionsTests {
         )
     }
 
-    // MARK: - Which hint speaks
+    // MARK: - 底下那一行
 
-    /// The precedence lived in a `private var` on `TodayView`, next to a second,
-    /// hand-written copy of the "wait for stats" guard. Nothing could reach it.
-    @Test
-    func aBlockedNewStageOutranksEverythingElse() {
-        // Themes selected, none of their cards left → .allLearned, and a due
-        // count of 0 would otherwise say 沒有要複習的字.
+    /// 這一行接手了 `heroHint` 的位子，但問的是另一個問題。舊的三個 case 有
+    /// 兩個在解釋某顆按鈕為什麼反灰 —— 按鈕併成一顆之後就沒有那回事了。
+    @Test("要去複習、而且新字也還能學，才給一條切過去的出口")
+    func footerOffersNewOnlyBesideReview() {
         let d = TodayDecisions(self.inputs(
-            stats: StudyStats(total: 120, seen: 120, due: 0, new: 0, todayNew: 0),
-            seenInSelection: 120,
-            totalInSelection: 120
+            stats: StudyStats(total: 120, seen: 40, due: 7, new: 80, todayNew: 0)
         ))
-        #expect(d.newBlock == .allLearned)
-        #expect(d.heroHint == .newBlocked)
+        #expect(d.call == .study(mode: .review, count: 7))
+        #expect(d.footer == .switchToNew)
     }
 
-    /// Nothing to review is the last thing said, not the first.
-    @Test
-    func anEmptyReviewQueueSpeaksOnlyWhenNothingElseDoes() {
+    @Test("已經在學新字的時候沒有這一行 —— 沒有別的可以改")
+    func footerIsSilentInNewMode() {
         let d = TodayDecisions(self.inputs(
             stats: StudyStats(total: 120, seen: 40, due: 0, new: 80, todayNew: 0)
         ))
-        #expect(d.reviewDisabled)
-        #expect(d.heroHint == .nothingToReview)
+        #expect(d.call == .study(mode: .new, count: 10))
+        #expect(d.footer == nil)
     }
 
-    /// A hint about today's numbers, shown before today's numbers exist, is a
-    /// guess. `reviewDisabled` is already true for a nil `stats` (due == 0), so
-    /// without this guard the hero would claim there is nothing to review while
-    /// the request was still in the air.
-    @Test
-    func noHintSpeaksBeforeStatsArrive() {
-        let d = TodayDecisions(self.inputs(stats: nil))
-        #expect(d.reviewDisabled)
-        #expect(d.heroHint == nil)
-    }
-
-    /// Picking no themes is answered by the theme prompt, not by a caption.
-    @Test
-    func noThemesSelectedIsNotAHint() {
+    /// 出口得走得通。主題裡的字都學過了，「學新字」就是一條死路。
+    @Test("新字被擋的時候不給出口")
+    func footerIsSilentWhenNewIsBlocked() {
         let d = TodayDecisions(self.inputs(
-            studyCategories: [],
-            stats: StudyStats(total: 120, seen: 40, due: 3, new: 80, todayNew: 0)
+            stats: StudyStats(total: 120, seen: 120, due: 7, new: 0, todayNew: 0),
+            seenInSelection: 120
         ))
-        #expect(d.newBlock == .noThemes)
-        #expect(d.heroHint == nil)
+        #expect(d.call == .study(mode: .review, count: 7))
+        #expect(d.newDisabled)
+        #expect(d.footer == nil)
     }
 }
