@@ -241,6 +241,7 @@
 				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
 				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"$(BUILD_DIR)/../../SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run",
 			);
 			name = "Upload Crashlytics dSYMs";
 			outputFileListPaths = (
@@ -249,7 +250,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ \"${CONFIGURATION}\" = \"Debug\" ] || [ \"${CONFIGURATION}\" = \"CreditsSandbox\" ]; then\n  echo \"Crashlytics: Debug build; skipping dSYM upload\"\n  exit 0\nfi\n\nGOOGLE_PLIST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"\nif [ ! -f \"${GOOGLE_PLIST}\" ]; then\n  echo \"error: Missing Tuji/GoogleService-Info.plist. See CRASH_REPORTING.md.\"\n  exit 1\nfi\n\n# SPM checkouts normally sit under derived data, but -clonedSourcePackagesDirPath\n# moves them. pr.yml puts them at $SRCROOT/SourcePackages so that one restored SPM\n# cache serves every job, so look in both places rather than assuming the first.\nCRASHLYTICS_RUN=\"\"\nfor CANDIDATE in \"${BUILD_DIR%/Build/*}/SourcePackages\" \"${SRCROOT}/SourcePackages\"; do\n  if [ -x \"${CANDIDATE}/checkouts/firebase-ios-sdk/Crashlytics/run\" ]; then\n    CRASHLYTICS_RUN=\"${CANDIDATE}/checkouts/firebase-ios-sdk/Crashlytics/run\"\n    break\n  fi\ndone\nif [ -z \"${CRASHLYTICS_RUN}\" ]; then\n  echo \"error: Crashlytics upload tool not found under ${BUILD_DIR%/Build/*}/SourcePackages or ${SRCROOT}/SourcePackages\"\n  exit 1\nfi\n\n\"${CRASHLYTICS_RUN}\"\n";
+			shellScript = "if [ \"${CONFIGURATION}\" = \"Debug\" ] || [ \"${CONFIGURATION}\" = \"CreditsSandbox\" ]; then\n  echo \"Crashlytics: Debug build; skipping dSYM upload\"\n  exit 0\nfi\n\nGOOGLE_PLIST=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist\"\nif [ ! -f \"${GOOGLE_PLIST}\" ]; then\n  echo \"error: Missing Tuji/GoogleService-Info.plist. See CRASH_REPORTING.md.\"\n  exit 1\nfi\n\nCRASHLYTICS_RUN=\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\nif [ ! -x \"${CRASHLYTICS_RUN}\" ]; then\n  echo \"error: Crashlytics upload tool not found at ${CRASHLYTICS_RUN}\"\n  exit 1\nfi\n\n\"${CRASHLYTICS_RUN}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

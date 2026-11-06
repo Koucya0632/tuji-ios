@@ -79,17 +79,18 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      # 只讀不寫：cache 是 cache-warm.yml 在 push main 時存的（為什麼寫在那個
-      # 檔的開頭 —— PR 分支存的 cache 只有那條 PR 自己讀得到）。path 與 key
-      # 必須跟那邊逐字一樣，actions/cache 會把 path 清單算進 entry 的版本。
-      - name: Restore SPM cache
-        uses: actions/cache/restore@v5
-        with:
-          path: SourcePackages
-          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Tuji.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-${{ runner.arch }}-
-
+      # 這個 job 刻意不共用 build-test 那份 SPM cache，讓套件照預設解析到
+      # build-release/ 底下。共用的辦法是 -clonedSourcePackagesDirPath 把
+      # checkout 搬到 repo 根目錄，但這個 job 編的是 TestFlight 設定，會跑到
+      # Tuji target 的「Upload Crashlytics dSYMs」script phase，而五個
+      # configuration 都是 ENABLE_USER_SCRIPT_SANDBOXING = YES —— checkout 一
+      # 離開 derived data，腳本就讀不到那個工具：
+      #   error: Sandbox: bash deny(1) file-read-data
+      #     .../SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run
+      # 要繞得把 run、它旁邊的 upload-symbols、CrashlyticsInputFiles.xcfilelist
+      # 一個個宣告成 inputPaths 才給得起讀取權（沙箱只放行宣告過的輸入），而且
+      # firebase-ios-sdk 一升版就可能再變一次。換來的只有這個 job 自己的解析
+      # 時間（約 3 分，而預算是 25 分），不值得拿 TestFlight 的出版路徑去換。
       - name: Create stub Secrets.xcconfig
         run: |
           cat > Config/Secrets.xcconfig <<EOF
@@ -103,11 +104,6 @@ jobs:
           EOF
 
       # 不跑測試，只編譯。
-      #
-      # -clonedSourcePackagesDirPath 把 SPM checkout 搬到 $SRCROOT/SourcePackages
-      # （repo 根目錄）。Tuji target 的「Upload Crashlytics dSYMs」script phase 要
-      # 去那裡找 firebase-ios-sdk 的 run 工具 —— 兩邊是約好的路徑，要改這個目錄名
-      # 得連 project.pbxproj 裡那段一起改。
       - name: Build TestFlight configuration
         run: |
           set -o pipefail
@@ -116,7 +112,6 @@ jobs:
             -scheme Tuji-TestFlight \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build-release \
-            -clonedSourcePackagesDirPath SourcePackages \
             -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
