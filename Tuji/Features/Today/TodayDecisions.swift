@@ -51,6 +51,10 @@ enum TodayCall: Equatable {
 enum TodayBlock: Equatable {
     /// 選的主題都學過了。
     case themesExhausted
+    /// 選的主題都學過了，而且這是一個非會員、全部免費主題也都學完了：
+    /// 能換的主題全部上鎖，「換幾個主題」指不到任何學得到的東西。見
+    /// `FreeThemesProgress`。
+    case freeThemesLearned
     /// 選的主題在目前的牌組裡沒有字。
     case noCards
 }
@@ -64,6 +68,46 @@ enum TodayFooter: Equatable {
     case switchToNew
     /// 按鈕死了，唯一的出路是換主題。
     case changeThemes
+    /// 按鈕死了，而能換的主題都要會員：出路是付費頁。
+    case unlockAllThemes
+}
+
+/// How far a non-member is through every theme they may study — picked or not.
+///
+/// The selection's own numbers cannot answer this. A non-member who picked only
+/// 留學生 and learned all of it still has 水果 and 臥室 to add, and 「換幾個主題」
+/// is the right thing to offer. One who has learned every free theme has
+/// nothing that line could lead to: each theme they could switch to is locked,
+/// and the way on is membership — which 首頁 used to leave them to find for
+/// themselves, through the theme picker and a padlock.
+struct FreeThemesProgress: Equatable {
+    /// Published cards across the free themes.
+    var total: Int
+    /// Cards not yet studied, counted theme by theme. Not `total − seen`: a
+    /// withdrawn word leaves one theme's seen above its total, and summed, that
+    /// surplus would hide another theme's unlearned words.
+    var unseen: Int
+
+    var allLearned: Bool {
+        self.total > 0 && self.unseen == 0
+    }
+}
+
+extension FreeThemesProgress {
+    /// nil when nothing is gated: members, policy v1, and before the first
+    /// entitlement sync (`StudyCategoryDefaults.liveStudyable`).
+    @MainActor
+    init?(studyable: [String]?, progress: ProgressStore) {
+        // An empty filter means "every category" to ProgressStore, so a gate
+        // that lists nothing must not be read as the whole dictionary.
+        guard let studyable, !studyable.isEmpty else { return nil }
+        self.init(
+            total: progress.totalCount(filter: studyable),
+            unseen: studyable.reduce(0) { left, theme in
+                left + max(0, progress.totalCount(filter: [theme]) - progress.seenCount(filter: [theme]))
+            }
+        )
+    }
 }
 
 /// Why 學新字 is unavailable, so the hero can explain the dead-end instead of
@@ -110,6 +154,9 @@ struct TodayDecisions {
         /// which an account with no themes answered the same way as a read
         /// that had not arrived.
         var progressLoaded: Bool
+        /// Every free theme's progress, for a non-member; nil for everyone
+        /// else.
+        var freeThemes: FreeThemesProgress?
     }
 
     let inputs: Inputs
@@ -208,7 +255,7 @@ struct TodayDecisions {
         switch self.newBlock {
         case .noThemes: return .pickThemes
         case .noCards: return .blocked(.noCards)
-        case .allLearned: return .blocked(.themesExhausted)
+        case .allLearned: return .blocked(self.freeThemesLearned ? .freeThemesLearned : .themesExhausted)
         // 走到這裡 `due == 0`，而 computeNewLimit 只在 due > 100 時歸零，
         // 所以這個分支到不了。真的到了，結果跟「主題給不出字」一樣。
         case .reviewBacklog: return .blocked(.themesExhausted)
@@ -220,7 +267,16 @@ struct TodayDecisions {
         switch self.call {
         case .pickThemes, .unknown: nil
         case let .study(mode, _): mode == .review && !self.newDisabled ? .switchToNew : nil
+        case .blocked(.freeThemesLearned): .unlockAllThemes
         case .blocked: .changeThemes
         }
+    }
+
+    /// A non-member has learned every word in every free theme. Waits for
+    /// progress, as `newAvailable`'s scoped answer does: before it lands every
+    /// count is zero, and that is not the same as everything learned.
+    var freeThemesLearned: Bool {
+        guard self.inputs.progressLoaded else { return false }
+        return self.inputs.freeThemes?.allLearned ?? false
     }
 }
