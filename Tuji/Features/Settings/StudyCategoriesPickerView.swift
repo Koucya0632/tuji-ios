@@ -11,6 +11,11 @@
 //
 // Above the grid, the 主題組合 for someone who does not know what to pick.
 // A preset is a shortcut through the same write — see `TopicPresetChoice`.
+//
+// A long press on a theme tile opens that theme's 圖鑑 — 今天 lost its theme
+// grid, and this is the screen that still lists every theme by name. The push
+// goes through `TabNavigator`, so both ways in (今天's ⚙, 設定) must reach
+// this screen as a `NavRoute`, not a destination link.
 
 import SwiftUI
 
@@ -21,6 +26,7 @@ struct StudyCategoriesPickerView: View {
     /// the locks when the entitlement snapshot arrives.
     @State private var atlas = AtlasStore.shared
     @Environment(\.presentPaywall) private var presentPaywall
+    @Environment(TabNavigator.self) private var navigator
 
     /// nil = every theme may be studied (members, and before the cutover).
     private var studyable: Set<String>? {
@@ -50,6 +56,9 @@ struct StudyCategoriesPickerView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.s4) {
                 Text("選你想學的主題。學新字與主題進度只會算這些主題；複習不分主題，所有學過的字都會排進來。")
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk3)
+                Text("長按主題可以看它的圖鑑。")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
                 if self.studyable != nil {
@@ -163,6 +172,19 @@ struct StudyCategoriesPickerView: View {
                         self.toggle(c.id)
                     }
                 }
+                // Locked themes too: 圖鑑 is browsable without membership.
+                // High priority, not `.onLongPressGesture`: on a Button that
+                // one loses to the tap, so a hold toggled the theme instead.
+                // This way a tap still reaches the Button once the hold fails.
+                .highPriorityGesture(
+                    LongPressGesture(minimumDuration: 0.35).onEnded { _ in
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        self.navigator.push(.categoryDetail(id: c.id))
+                    }
+                )
+                .accessibilityAction(named: Text("查看圖鑑")) {
+                    self.navigator.push(.categoryDetail(id: c.id))
+                }
             }
         }
     }
@@ -237,6 +259,7 @@ struct StudyCategoriesPickerView: View {
 #Preview {
     NavigationStack {
         StudyCategoriesPickerView()
+            .environment(TabNavigator())
             .environment(SettingsStore.shared)
             .environment(CategoriesStore.shared)
     }

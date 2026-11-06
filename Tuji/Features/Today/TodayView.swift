@@ -1,6 +1,6 @@
 // Today (首頁).
 //
-// 問候 → 墨塊 → Moira 和她的四個入口 → 主題格子。
+// 問候 → 墨塊 → Moira 和她的四個入口。
 //
 // 墨塊收過一次。它本來是「兩條進度（今日目標、主題進度）+ 兩顆並排按鈕
 // （複習、學新字）+ 一行解釋某顆按鈕為什麼反灰的提示」，現在是「主題標題 +
@@ -21,8 +21,7 @@
 // 「和 Moira 一起」是併進來的 `AssistantHomeView`：一隻會呼吸的貓加四個入口。
 // 原本那一頁的招呼和靜態揮手貓都沒搬，見 `AssistantFeatures.swift`。
 //
-// 螢幕量測沿用：整頁算成一屏高，主題格子吃剩下的高度。墨塊和 Moira 區變高之後
-// 剩的高度通常是負的，格子就退回兩排的下限、頁面開始捲 —— 這正是設計要的樣子。
+// 主題格子（墨塊下面那幾格選過的主題）刪了：主題從墨塊的 ⚙ 換，進度在 我 頁。
 
 import SwiftUI
 
@@ -32,7 +31,6 @@ struct TodayView: View {
     @Environment(ProgressStore.self) private var progress
     @Environment(StudyStatsStore.self) private var studyStats
     @Environment(SettingsStore.self) private var settings
-    @Environment(MasteryStore.self) private var mastery
     @Environment(AuthService.self) private var auth
     @Environment(TabNavigator.self) private var navigator
     @Environment(\.presentPaywall) private var presentPaywall
@@ -67,65 +65,50 @@ struct TodayView: View {
     }
 
     var body: some View {
-        GeometryReader { screen in
-            ScrollView {
-                // No shared horizontal padding: the ink block bleeds to the screen
-                // edges, so each section owns its own margin. A block with 24pt of
-                // paper on either side is "a card"; one that reaches the edges is
-                // "this part of the screen", and the difference in weight is large.
-                VStack(alignment: .leading, spacing: Space.s4) {
-                    self.greeting.padding(.horizontal, Space.s4)
-                    self.hero
-                    self.moiraSection
-                    self.themesGrid
-                }
-                .padding(.top, Space.s3)
-                .padding(.bottom, Space.s4)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { total in
-                    // The tab bar's inset comes off the screen: content is free
-                    // to scroll under the bar, but the strip is not free to end
-                    // under it.
-                    let page = screen.size.height - screen.safeAreaInsets.bottom
-                    self.themeStripSpace = page - (total - self.themeStripHeight)
-                }
+        ScrollView {
+            // No shared horizontal padding: the ink block bleeds to the screen
+            // edges, so each section owns its own margin. A block with 24pt of
+            // paper on either side is "a card"; one that reaches the edges is
+            // "this part of the screen", and the difference in weight is large.
+            VStack(alignment: .leading, spacing: Space.s4) {
+                self.greeting.padding(.horizontal, Space.s4)
+                self.hero
+                self.moiraSection
             }
-            // A new screen size (rotation, Stage Manager) invalidates the
-            // measurement, and the content's own height may not change with it,
-            // so nothing above would fire. Dropping back to the floor makes the
-            // strip re-measure from scratch.
-            .onChange(of: screen.size.height) { self.themeStripSpace = nil }
-            .background(.tujiPaper)
-            // Metadata only (VoiceOver, back-button label on pushed screens,
-            // multitasking window title) — the greeting is the visible title, so
-            // the system nav bar itself stays hidden.
-            .navigationTitle("主頁")
-            .toolbar(.hidden, for: .navigationBar)
-            .refreshable {
-                // What a pull re-reads is `LearningRefresh`'s to say. This list was
-                // written here, and 我 and 清除學習進度 each wrote their own.
-                await LiveLearningRefresher().refresh(after: .pulledToday)
-            }
-            .warmsAccumulation(.todayHero) {
-                self.prefetchStudyQueue()
-                self.prefetchAssistantOffers()
-            }
-            .task { await self.checkIn.loadRewardIfStale() }
-            // A new answer today re-reads the wallet regardless of age: the
-            // first one is what makes the points claimable.
-            .onChange(of: self.progress.streak?.todayCount) { old, new in
-                guard let old, let new, new > old else { return }
-                Task { await self.checkIn.loadReward() }
-            }
-            .tujiSheet(isPresented: self.$showingCheckIn, title: "打卡", height: 640) {
-                CheckInSheet(
-                    model: self.checkIn,
-                    fallbackStreak: self.progress.streak,
-                    onStudy: self.studyFromCheckIn
-                )
-            }
-            .tujiSheet(isPresented: self.$showingReviewCurve, title: "記憶曲線", height: 540) {
-                ReviewCurveSheet()
-            }
+            .padding(.top, Space.s3)
+            .padding(.bottom, Space.s4)
+        }
+        .background(.tujiPaper)
+        // Metadata only (VoiceOver, back-button label on pushed screens,
+        // multitasking window title) — the greeting is the visible title, so
+        // the system nav bar itself stays hidden.
+        .navigationTitle("主頁")
+        .toolbar(.hidden, for: .navigationBar)
+        .refreshable {
+            // What a pull re-reads is `LearningRefresh`'s to say. This list was
+            // written here, and 我 and 清除學習進度 each wrote their own.
+            await LiveLearningRefresher().refresh(after: .pulledToday)
+        }
+        .warmsAccumulation(.todayHero) {
+            self.prefetchStudyQueue()
+            self.prefetchAssistantOffers()
+        }
+        .task { await self.checkIn.loadRewardIfStale() }
+        // A new answer today re-reads the wallet regardless of age: the
+        // first one is what makes the points claimable.
+        .onChange(of: self.progress.streak?.todayCount) { old, new in
+            guard let old, let new, new > old else { return }
+            Task { await self.checkIn.loadReward() }
+        }
+        .tujiSheet(isPresented: self.$showingCheckIn, title: "打卡", height: 640) {
+            CheckInSheet(
+                model: self.checkIn,
+                fallbackStreak: self.progress.streak,
+                onStudy: self.studyFromCheckIn
+            )
+        }
+        .tujiSheet(isPresented: self.$showingReviewCurve, title: "記憶曲線", height: 540) {
+            ReviewCurveSheet()
         }
     }
 
@@ -507,81 +490,6 @@ struct TodayView: View {
             MoiraFeatureBand()
         }
         .tourAnchor(.assistant)
-    }
-
-    // MARK: - 主題格子
-
-    /// One theme tile's height, scaled with the text size. Only the window's
-    /// floor is computed from it, so an estimate is enough — a measurement
-    /// would have to happen before the tiles it measures are laid out.
-    @ScaledMetric(relativeTo: .body) private var themeTileHeight: CGFloat = 68
-
-    /// The height the page's measurement leaves for the strip. Nil until the
-    /// first pass, which is what `themeStripHeight`'s floor stands in for.
-    @State private var themeStripSpace: CGFloat?
-
-    /// 格子，沒有標頭。
-    ///
-    /// 標頭本來是「主題」加一行底線的「更換學習主題」。兩個都搬進墨塊了：標題
-    /// 說的是同一組主題，⚙ 做的是同一件事。底下那張「還沒選學習主題」的提示卡
-    /// 也一起刪了 —— 墨塊的 `.pickThemes` 整塊就是那張卡。
-    @ViewBuilder
-    private var themesGrid: some View {
-        let tiles = self.themeTiles
-        if !tiles.isEmpty {
-            ScrollView(.vertical) {
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: Space.s2),
-                        GridItem(.flexible(), spacing: Space.s2)
-                    ],
-                    spacing: Space.s2
-                ) {
-                    ForEach(tiles, id: \.id) { c in
-                        NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
-                            CategoryTile(
-                                category: c,
-                                wordCount: self.words.byCategory(c.id).count,
-                                status: self.themeStatus(for: c.id)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, Space.s4)
-            }
-            .frame(height: self.themeStripHeight)
-        }
-    }
-
-    /// What the page's measurement left for the strip, clamped to a floor of two
-    /// rows and the gap between them — below that the page scrolls instead, the
-    /// way it does at the largest text sizes.
-    private var themeStripHeight: CGFloat {
-        max(self.themeStripSpace ?? 0, self.themeTileHeight * 2 + Space.s2)
-    }
-
-    /// Exactly the selected themes (that have words).
-    private var themeTiles: [TujiCategory] {
-        let presentIds = Set(self.words.categories)
-        let known = self.categories.categories.filter { presentIds.contains($0.id) }
-        let selected = Set(StudyCategoryDefaults.effective(
-            selected: self.settings.current.studyCategories,
-            studyable: StudyCategoryDefaults.liveStudyable
-        ))
-        guard !selected.isEmpty else { return [] }
-        return known.filter { selected.contains($0.id) }
-    }
-
-    /// Completion state for a theme tile. The rule itself lives on ThemeStatus
-    /// so 圖鑑·官方's shelf asks the same question the same way.
-    private func themeStatus(for id: String) -> ThemeStatus {
-        ThemeStatus.of(
-            words: self.words.byCategory(id),
-            masteryScore: { self.mastery.score(for: $0) },
-            progress: self.progress.categoryProgress,
-            categoryId: id
-        )
     }
 }
 

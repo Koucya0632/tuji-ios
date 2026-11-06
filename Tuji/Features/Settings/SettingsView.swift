@@ -214,7 +214,7 @@ struct SettingsView: View {
                     }
                     .tujiRowStyle()
                     .settingsInert(!self.store.isEditable)
-                    NavigationLink { StudyCategoriesPickerView() } label: {
+                    NavigationLink(value: NavRoute.studyCategories) {
                         TujiRow(
                             "學習主題",
                             subtitle: "學新字與主題進度只涵蓋你選的主題",
