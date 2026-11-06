@@ -156,7 +156,7 @@ struct TodayDecisions {
         var progressLoaded: Bool
         /// Every free theme's progress, for a non-member; nil for everyone
         /// else.
-        var freeThemes: FreeThemesProgress? = nil
+        var freeThemes: FreeThemesProgress?
     }
 
     let inputs: Inputs

@@ -273,7 +273,7 @@ struct CompletionInputsMappingTests {
         let progress = await self.makeProgress([
             CategoryProgress(category: "campus", total: 50, seen: 50),
             CategoryProgress(category: "fruits", total: 34, seen: 10),
-            CategoryProgress(category: "kitchen", total: 64, seen: 0),
+            CategoryProgress(category: "kitchen", total: 64, seen: 0)
         ])
         let free = FreeThemesProgress(studyable: ["campus", "fruits"], progress: progress)
 
@@ -288,7 +288,7 @@ struct CompletionInputsMappingTests {
     func aSeenSurplusInOneFreeThemeDoesNotHideAnothersUnlearnedWords() async {
         let progress = await self.makeProgress([
             CategoryProgress(category: "campus", total: 50, seen: 53),
-            CategoryProgress(category: "bank", total: 12, seen: 9),
+            CategoryProgress(category: "bank", total: 12, seen: 9)
         ])
         let free = FreeThemesProgress(studyable: ["campus", "bank"], progress: progress)
 
