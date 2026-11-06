@@ -30,7 +30,7 @@ jobs:
     name: TestFlight
     # Match the validated PR environment while arm64 hosts are capacity-limited.
     runs-on: macos-15-intel
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     env:
       # App Store Connect API key（.p8 base64）— match 取 portal + pilot 上傳用
@@ -113,6 +113,11 @@ jobs:
           cat Config/Version.xcconfig
 
       - name: Build + upload to TestFlight
+        env:
+          # Cold Intel hosts can exceed fastlane's default 24s final attempt
+          # before the archive starts. Allow the settings query to finish.
+          FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT: '120'
+          FASTLANE_XCODEBUILD_SETTINGS_RETRIES: '2'
         run: |
           bundle exec fastlane beta \
             scheme:"${{ steps.meta.outputs.scheme }}" \
