@@ -17,8 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Explicit Intel hosts avoid intermittent arm64 allocation failures. Keep
-  # caches architecture-scoped because .build contains executable artifacts.
+  # Explicit Intel hosts avoid intermittent arm64 allocation failures. The SPM
+  # cache key keeps runner.arch so that changing host type can never hand one
+  # architecture the other's checkout — the cache itself is package sources plus
+  # the fat xcframeworks under SourcePackages/artifacts.
   lint:
     name: Lint
     runs-on: macos-15-intel
@@ -77,14 +79,14 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Cache SPM
-        uses: actions/cache@v5
+      # 只讀不寫：cache 是 cache-warm.yml 在 push main 時存的（為什麼寫在那個
+      # 檔的開頭 —— PR 分支存的 cache 只有那條 PR 自己讀得到）。path 與 key
+      # 必須跟那邊逐字一樣，actions/cache 會把 path 清單算進 entry 的版本。
+      - name: Restore SPM cache
+        uses: actions/cache/restore@v5
         with:
-          path: |
-            .build
-            .swiftpm
-            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Package.resolved') }}
+          path: SourcePackages
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Tuji.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
           restore-keys: |
             spm-${{ runner.os }}-${{ runner.arch }}-
 
@@ -109,6 +111,8 @@ jobs:
             -scheme Tuji-TestFlight \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build-release \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
 
@@ -138,14 +142,14 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Cache SPM
-        uses: actions/cache@v5
+      # 只讀不寫：cache 是 cache-warm.yml 在 push main 時存的（為什麼寫在那個
+      # 檔的開頭 —— PR 分支存的 cache 只有那條 PR 自己讀得到）。path 與 key
+      # 必須跟那邊逐字一樣，actions/cache 會把 path 清單算進 entry 的版本。
+      - name: Restore SPM cache
+        uses: actions/cache/restore@v5
         with:
-          path: |
-            .build
-            .swiftpm
-            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Package.resolved') }}
+          path: SourcePackages
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Tuji.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
           restore-keys: |
             spm-${{ runner.os }}-${{ runner.arch }}-
 
@@ -163,10 +167,23 @@ jobs:
           EOF
 
       - name: Resolve dependencies
+        # -clonedSourcePackagesDirPath：固定 SPM 的 checkout 位置，不要跟著
+        # -derivedDataPath 跑。沒有這個參數時這一步解析到預設的
+        # ~/Library/Developer/Xcode/DerivedData/Tuji-*/SourcePackages，而下一步
+        # 的 build-for-testing 帶著 -derivedDataPath build，會到
+        # build/SourcePackages 重抓一次 —— 2026-11-05 那趟就是這樣：這一步花了
+        # 3 分 42 秒，build-for-testing 開頭又把同樣的 25 個套件抓了一遍
+        # （2 分 33 秒）。兩步指到同一個目錄，restore 回來的那份才有人用。
+        #
+        # -onlyUsePackageVersionsFromResolvedFile：只用 Package.resolved 裡的
+        # 版本，解不出來就紅，不要安靜地升版。否則 main 暖的 cache 跟 PR 要的
+        # 版本會對不上 —— key 一樣而內容不同，是最難查的那種 cache bug。
         run: |
           xcodebuild -resolvePackageDependencies \
             -project Tuji.xcodeproj \
-            -scheme Tuji-Debug
+            -scheme Tuji-Debug \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile
 
       - name: Build for testing
         run: |
@@ -177,6 +194,8 @@ jobs:
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
 

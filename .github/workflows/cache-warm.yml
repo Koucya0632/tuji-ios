@@ -1,0 +1,91 @@
+# =============================================================================
+# cache-warm.yml — Tuji iOS（把 SPM cache 存在 main 上）
+# 觸發：push main（合併後自動跑一趟）＋ 手動
+# 跑：只解析套件。不編譯、不跑測試。
+# 目標：< 5 分鐘（命中的時候 < 2 分）
+#
+# 為什麼需要這條 workflow —— Actions 的 cache 作用域是不對稱的：
+# default branch 存的 cache 所有分支都讀得到，PR 分支存的只有那條 PR 自己讀
+# 得到。`pr.yml` 只有 `on: pull_request`，所以 main 從來沒存過一份，每條新 PR
+# 都是從零開始。而冷啟動的 Build & Test 本來就貼著 timeout 在跑，被 timeout
+# 砍掉的 job 連 post-job 的 cache 步驟都不會執行 —— 於是
+# 「冷 → 逾時 → 沒存 → 下一趟還是冷」這個圈永遠繞不出來。
+#
+# 這條 workflow 把「存」從 PR 搬到 main：pr.yml 那邊改成只讀（restore-only），
+# 整個 repo 只有這裡會寫 cache。順帶解掉額度問題 —— 每條 PR 各存一份
+# 567 MB 的副本，2026-11-06 盤點時有 15 份、共 8.5 GB，而 repo 的上限是
+# 10 GB，等於這些副本在互相擠掉對方。
+# =============================================================================
+
+name: Cache warm
+
+on:
+  push:
+    branches: [main]
+  # 合併完想立刻暖一份、或 cache 被 LRU 擠掉時手動補。
+  workflow_dispatch:
+
+# 連續合併時只留最後一趟就好。
+concurrency:
+  group: cache-warm
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  spm:
+    name: Resolve & save SPM cache
+    # 跟 pr.yml 的三個 macOS job 同一種 host。cache key 帶 runner.arch，
+    # 換 host 種類就讀不到彼此的 cache。
+    runs-on: macos-15-intel
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      # 這裡用完整的 actions/cache（讀＋寫）。key 完全命中時 post-job 不會重存，
+      # 所以 Package.resolved 沒動的 push 跑完大約一分鐘。
+      #
+      # path 必須跟 pr.yml 那兩個 restore 步驟逐字一樣：actions/cache 會把 path
+      # 清單算進 entry 的版本，差一個字就當成另一份 cache，永遠不會命中。
+      - name: Cache SPM
+        uses: actions/cache@v5
+        with:
+          path: SourcePackages
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Tuji.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+
+      - name: Create stub Secrets.xcconfig
+        # 解析也要讀得到專案設定，少了這個檔 xcodebuild 會抱怨。
+        run: |
+          cat > Config/Secrets.xcconfig <<EOF
+          TUJI_DEV_TEAM = STUBSTUBST
+          TUJI_SUPABASE_PROJECT_DEV = stub-dev
+          TUJI_SUPABASE_PROJECT_PROD = stub-prod
+          TUJI_SUPABASE_ANON_KEY_DEV = stub
+          TUJI_SUPABASE_ANON_KEY_PROD = stub
+          TUJI_GOOGLE_CLIENT_ID = stub
+          TUJI_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.stub
+          EOF
+
+      - name: Resolve dependencies
+        # -clonedSourcePackagesDirPath：固定 SPM 的 checkout 位置，不跟著
+        # -derivedDataPath 跑。pr.yml 的每一步都指到同一個相對路徑，所以這裡
+        # 存下來的那份，PR 那邊才拿得到。
+        # -onlyUsePackageVersionsFromResolvedFile：只照 Package.resolved 的版本
+        # 解析，解不出來就紅，不要安靜地升版 —— 否則 main 暖的 cache 跟 PR 要
+        # 的版本會對不上，key 相同而內容不同是最難查的那種 cache bug。
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Tuji.xcodeproj \
+            -scheme Tuji-Debug \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile
+
+      - name: Show what will be cached
+        run: |
+          du -sh SourcePackages
+          ls SourcePackages/checkouts | tr '\n' ' '
