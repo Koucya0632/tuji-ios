@@ -28036,6 +28036,50 @@
           }
         }
       }
+    },
+    "長按主題可以看它的圖鑑。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Long-press a topic to open its Atlas."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーマを長押しすると、その図鑑が開きます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "长按主题可以看它的图鉴。"
+          }
+        }
+      }
+    },
+    "查看圖鑑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Atlas"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図鑑を見る"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看图鉴"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
