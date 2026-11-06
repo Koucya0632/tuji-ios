@@ -17,8 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Explicit Intel hosts avoid intermittent arm64 allocation failures. Keep
-  # caches architecture-scoped because .build contains executable artifacts.
+  # Explicit Intel hosts avoid intermittent arm64 allocation failures. The SPM
+  # cache key keeps runner.arch so that changing host type can never hand one
+  # architecture the other's checkout — the cache itself is package sources plus
+  # the fat xcframeworks under SourcePackages/artifacts.
   lint:
     name: Lint
     runs-on: macos-15-intel
@@ -77,17 +79,18 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Cache SPM
-        uses: actions/cache@v5
-        with:
-          path: |
-            .build
-            .swiftpm
-            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-${{ runner.arch }}-
-
+      # 這個 job 刻意不共用 build-test 那份 SPM cache，讓套件照預設解析到
+      # build-release/ 底下。共用的辦法是 -clonedSourcePackagesDirPath 把
+      # checkout 搬到 repo 根目錄，但這個 job 編的是 TestFlight 設定，會跑到
+      # Tuji target 的「Upload Crashlytics dSYMs」script phase，而五個
+      # configuration 都是 ENABLE_USER_SCRIPT_SANDBOXING = YES —— checkout 一
+      # 離開 derived data，腳本就讀不到那個工具：
+      #   error: Sandbox: bash deny(1) file-read-data
+      #     .../SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run
+      # 要繞得把 run、它旁邊的 upload-symbols、CrashlyticsInputFiles.xcfilelist
+      # 一個個宣告成 inputPaths 才給得起讀取權（沙箱只放行宣告過的輸入），而且
+      # firebase-ios-sdk 一升版就可能再變一次。換來的只有這個 job 自己的解析
+      # 時間（約 3 分，而預算是 25 分），不值得拿 TestFlight 的出版路徑去換。
       - name: Create stub Secrets.xcconfig
         run: |
           cat > Config/Secrets.xcconfig <<EOF
@@ -109,26 +112,29 @@ jobs:
             -scheme Tuji-TestFlight \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build-release \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
 
   build-test:
     name: Build & Test
     runs-on: macos-15-intel
-    # 這個預算是照「每一趟都是冷啟動」抓的，因為每一趟真的都是冷啟動。
+    # 這個預算是照「cache 沒命中也要跑得完」抓的。
     #
-    # 下面那個 SPM cache 從來沒命中過：`pr.yml` 只有 `on: pull_request`，所以
-    # main 永遠不會存一份 cache，而 PR run 存下來的 cache 只有自己那條分支讀
-    # 得到。換到 macos-15-intel 之後 key 又多了 runner.arch，連舊的也一起失
-    # 效。（key 本身還有個毛病：`hashFiles('**/Package.resolved')` 算出來是空
-    # 字串 —— Package.resolved 在 .gitignore 裡，checkout 裡根本沒有這個檔 ——
-    # 所以 key 其實是固定的 `spm-macOS-X64-`，換套件也不會換 key。）
+    # 一趟冷的 Intel run（run 42156112040，2026-11-06）：setup 0.6 分 +
+    # resolve 3 分 + build-for-testing 19.5 分 + 測試 16.5 分，整個 job
+    # 39 分 48 秒。40 分鐘的上限曾經在測試跑到一半時把整條砍掉，所以留 60。
     #
-    # 一趟冷的 Intel run：setup 4.5 分 + build-for-testing 23.5 分 + 測試
-    # 12 分以上。原本 40 分鐘的上限在測試跑到一半時把整個 job 砍掉，而被砍掉
-    # 的 job 連 post-job 的 cache 都不會存 —— 於是下一趟還是冷的。
-    # 要真的拆掉這個循環得讓 main 自己存一份 cache，那是另一條 PR 的事；
-    # 這裡先把預算開到跑得完。
+    # 下面那個 cache 以前從來沒命中過，三個毛病都修掉了：
+    #   - key 是常數：`hashFiles('**/Package.resolved')` 算出來是空字串（那個
+    #     檔不在版控裡），key 固定是 `spm-macOS-X64-`。現在 Package.resolved
+    #     進了版控，key 吃它的 hash。
+    #   - 沒有人存得起來：`pr.yml` 只有 `on: pull_request`，而 PR 分支存的
+    #     cache 只有自己讀得到。改由 cache-warm.yml 在 main 上存。
+    #   - 命中也沒人用：resolve 跟 build-for-testing 各自解析到不同目錄，同樣
+    #     的 25 個套件會被抓兩遍（3 分 42 秒 + 2 分 33 秒）。現在兩步都指到同
+    #     一個 -clonedSourcePackagesDirPath。
+    # 命中的時候 resolve 只剩十幾秒。
     timeout-minutes: 60
     # 刻意不設 needs: lint — 之前 Lint 紅了整條測試就被跳過，
     # style 問題不該擋正確性檢查。
@@ -149,14 +155,14 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Cache SPM
-        uses: actions/cache@v5
+      # 只讀不寫：cache 是 cache-warm.yml 在 push main 時存的（為什麼寫在那個
+      # 檔的開頭 —— PR 分支存的 cache 只有那條 PR 自己讀得到）。path 與 key
+      # 必須跟那邊逐字一樣，actions/cache 會把 path 清單算進 entry 的版本。
+      - name: Restore SPM cache
+        uses: actions/cache/restore@v5
         with:
-          path: |
-            .build
-            .swiftpm
-            ~/Library/Developer/Xcode/DerivedData/**/SourcePackages
-          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Package.resolved') }}
+          path: SourcePackages
+          key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Tuji.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
           restore-keys: |
             spm-${{ runner.os }}-${{ runner.arch }}-
 
@@ -174,10 +180,23 @@ jobs:
           EOF
 
       - name: Resolve dependencies
+        # -clonedSourcePackagesDirPath：固定 SPM 的 checkout 位置，不要跟著
+        # -derivedDataPath 跑。沒有這個參數時這一步解析到預設的
+        # ~/Library/Developer/Xcode/DerivedData/Tuji-*/SourcePackages，而下一步
+        # 的 build-for-testing 帶著 -derivedDataPath build，會到
+        # build/SourcePackages 重抓一次 —— 2026-11-05 那趟就是這樣：這一步花了
+        # 3 分 42 秒，build-for-testing 開頭又把同樣的 25 個套件抓了一遍
+        # （2 分 33 秒）。兩步指到同一個目錄，restore 回來的那份才有人用。
+        #
+        # -onlyUsePackageVersionsFromResolvedFile：只用 Package.resolved 裡的
+        # 版本，解不出來就紅，不要安靜地升版。否則 main 暖的 cache 跟 PR 要的
+        # 版本會對不上 —— key 一樣而內容不同，是最難查的那種 cache bug。
         run: |
           xcodebuild -resolvePackageDependencies \
             -project Tuji.xcodeproj \
-            -scheme Tuji-Debug
+            -scheme Tuji-Debug \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile
 
       - name: Build for testing
         run: |
@@ -188,6 +207,8 @@ jobs:
             -configuration Debug \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build \
+            -clonedSourcePackagesDirPath SourcePackages \
+            -onlyUsePackageVersionsFromResolvedFile \
             CODE_SIGNING_ALLOWED=NO \
             | xcbeautify --renderer github-actions
 

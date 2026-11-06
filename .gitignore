@@ -43,14 +43,23 @@ DerivedData/
 # ---------- Swift Package Manager ----------
 .swiftpm/
 .build/
+# CI 固定的 SPM checkout 目錄（-clonedSourcePackagesDirPath，見 pr.yml）。
+# 本機照同樣的指令跑過也會留下來，1.4 GB。
+SourcePackages/
+
 Package.resolved
-# 注意：Package.resolved 要不要進 repo 看團隊偏好
-# 進 repo  → 鎖住依賴版本，CI / 同事拿到一致結果（推薦）
-# 不進    → 每次解析最新 patch
-# 上面的 .swiftpm/ 已含 Package.resolved，若要進 repo 改成：
-#   .swiftpm/*
-#   !.swiftpm/Package.resolved
-# v1 採「不進 repo」策略，等多人協作時再切換
+# 例外：工作區那一份 Package.resolved 進 repo，白名單在檔尾「例外清單」。
+#
+# 原本採「不進 repo」策略。代價是 CI 每趟都重新解析，而專案用的是
+# upToNextMajorVersion、KeychainAccess 更是直接釘 branch master —— 等於
+# 「上游今天有沒有推 commit」會決定 main 是綠還是紅，而且 CI 編譯的跟開發機
+# 根本不是同一組版本。2026-11-05 的一趟 CI 比本機新了八個套件
+# （supabase-swift 2.47.0→2.55.6、Nuke 13.0.6→13.2.1、xctest-dynamic-overlay
+# 1.9.0→1.13.1、GoogleUtilities 8.1.0→8.1.5 ...），沒有人改過任何一行。
+#
+# 進 repo 之後它也是 SPM cache 的 key 來源：沒有這個檔，
+# `hashFiles('**/Package.resolved')` 算出來是空字串，key 變成固定的
+# `spm-macOS-X64-`，換套件不會換 key。
 
 
 # ---------- CocoaPods（若未來真的需要才用，預設不開）----------
@@ -154,3 +163,17 @@ supabase/.temp/
 
 # 共用的 Scheme（CI 要靠這個跑）— 上面 xcuserdata 已排除，明列確保
 !**/xcshareddata/xcschemes/*.xcscheme
+
+# 鎖依賴版本的 Package.resolved（理由見上面 SPM 那段）。
+# 整個 project.xcworkspace 被 *.xcworkspace 排除掉了，而 git 不能在父目錄被
+# 排除的情況下 re-include 裡面的檔案 —— 上面那兩條 `!*.xcworkspace/...` 其實
+# 從來沒生效過，就是這個原因。所以目錄要一層一層拉回來，再把每一層其餘的
+# 內容關掉：只開這一個檔，contents.xcworkspacedata 與 xcshareddata/ 底下的
+# 本機狀態（IDEWorkspaceChecks、WorkspaceSettings）維持現狀不進 repo。
+!*.xcodeproj/project.xcworkspace/
+*.xcodeproj/project.xcworkspace/*
+!*.xcodeproj/project.xcworkspace/xcshareddata/
+*.xcodeproj/project.xcworkspace/xcshareddata/*
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
