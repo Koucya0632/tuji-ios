@@ -103,6 +103,11 @@ jobs:
           EOF
 
       # 不跑測試，只編譯。
+      #
+      # -clonedSourcePackagesDirPath 把 SPM checkout 搬到 $SRCROOT/SourcePackages
+      # （repo 根目錄）。Tuji target 的「Upload Crashlytics dSYMs」script phase 要
+      # 去那裡找 firebase-ios-sdk 的 run 工具 —— 兩邊是約好的路徑，要改這個目錄名
+      # 得連 project.pbxproj 裡那段一起改。
       - name: Build TestFlight configuration
         run: |
           set -o pipefail
