@@ -51,8 +51,12 @@ struct SettingsStoreLoadingTests {
             defaults: defaults,
             signedInUserProvider: { nil },
             // These tests are about load coalescing, not the direction fan-out;
-            // without this they would reach the real singletons.
-            directionRefresh: InertLearningDirectionRefresher()
+            // without these two they would reach the real singletons — and
+            // `OnboardingState.shared` answers from the device's own
+            // UserDefaults, which is state no test put there and the next one
+            // inherits. See the fixture note in CatalogWarmingTests.
+            directionRefresh: InertLearningDirectionRefresher(),
+            onboarding: OnboardingRecordFake()
         )
         let userID = UUID()
 
@@ -95,8 +99,12 @@ struct SettingsStoreLoadingTests {
             defaults: defaults,
             signedInUserProvider: { nil },
             // These tests are about load coalescing, not the direction fan-out;
-            // without this they would reach the real singletons.
-            directionRefresh: InertLearningDirectionRefresher()
+            // without these two they would reach the real singletons — and
+            // `OnboardingState.shared` answers from the device's own
+            // UserDefaults, which is state no test put there and the next one
+            // inherits. See the fixture note in CatalogWarmingTests.
+            directionRefresh: InertLearningDirectionRefresher(),
+            onboarding: OnboardingRecordFake()
         )
         let accountA = UUID()
         let accountB = UUID()
@@ -142,8 +150,12 @@ struct SettingsStoreLoadingTests {
             defaults: defaults,
             signedInUserProvider: { nil },
             // These tests are about load coalescing, not the direction fan-out;
-            // without this they would reach the real singletons.
-            directionRefresh: InertLearningDirectionRefresher()
+            // without these two they would reach the real singletons — and
+            // `OnboardingState.shared` answers from the device's own
+            // UserDefaults, which is state no test put there and the next one
+            // inherits. See the fixture note in CatalogWarmingTests.
+            directionRefresh: InertLearningDirectionRefresher(),
+            onboarding: OnboardingRecordFake()
         )
         let userID = UUID()
 

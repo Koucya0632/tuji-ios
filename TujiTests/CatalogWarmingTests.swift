@@ -112,7 +112,17 @@ struct LiveCatalogWarmerTests {
                 repository: WarmerUserRepository(),
                 defaults: defaults,
                 signedInUserProvider: { nil },
-                directionRefresh: InertDirectionRefresher()
+                directionRefresh: InertDirectionRefresher(),
+                // 學習語言 is one device fact kept in two places: this store
+                // reads it from `defaults`, `OnboardingState` from
+                // `UserDefaults.standard`. Same key, so in the app they cannot
+                // disagree. Isolating only `defaults` left onboarding
+                // answering for the real simulator, and that disagreement
+                // reads as a 學習語言 switch — a different catalog request, so
+                // the signed-in warm fetched the public list a second time.
+                // Which is why this suite passed on CI's freshly created
+                // simulator and failed on any where 日文 had ever been picked.
+                onboarding: OnboardingRecordFake()
             ),
             words: WordsStore(repository: repo),
             categories: CategoriesStore(repository: repo),
@@ -184,6 +194,29 @@ struct LiveCatalogWarmerTests {
         await warmer.warm(for: .anonymous)
         await warmer.warm(for: .signedIn(userID: UUID()))
 
+        #expect(f.repo.wordsLoads == 1)
+        #expect(f.repo.customLoads == 1)
+    }
+
+    /// The same pair of warms on a device that has already answered the
+    /// first-run picker — which is the state nearly every real launch is in.
+    ///
+    /// The direction is set *through the store*, so the defaults mirror and the
+    /// onboarding record agree, exactly as they do in the app: both halves are
+    /// the one `tuji.learning.direction` key. So the signed-in warm is still a
+    /// request for the same language and the public list is not fetched twice.
+    /// Asserted because the previous test only ever exercised `.zhEn`, the
+    /// value `UserSettings.default` happens to carry.
+    @Test
+    func aDirectionAlreadyOnRecordCostsNoSecondPublicFetch() async throws {
+        let f = try self.fixture()
+        f.settings.setLearningDirection(.zhJa, persist: false)
+        let warmer = f.warmer
+
+        await warmer.warm(for: .anonymous)
+        await warmer.warm(for: .signedIn(userID: UUID()))
+
+        #expect(f.settings.current.learningDirection == .zhJa)
         #expect(f.repo.wordsLoads == 1)
         #expect(f.repo.customLoads == 1)
     }
