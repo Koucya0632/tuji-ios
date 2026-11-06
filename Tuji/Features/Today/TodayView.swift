@@ -1,21 +1,28 @@
-// Today (首頁) — design §III.E.
+// Today (首頁).
 //
-// Greeting → streak chip → hero card with stats + 2 CTAs → themes grid.
-// What the screen needs loaded is named by `AccumulationLoading`, shared with
-// 我 · 進度 and 主題.
+// 問候 → 墨塊 → Moira 和她的四個入口 → 主題格子。
 //
-// There used to be a `TodayVM` here. It held `me` / `loading` / `error` and no
-// view read any of the three: it fetched GET /api/users/me on every appearance
-// and every pull-to-refresh, wrote the response to a property nobody rendered,
-// and threw it away. (That endpoint is not cheap — it is four queries including
-// the account's whole learned set — and it has no side effect, so nothing was
-// riding on the call either.) Its only real work was two `loadIfStale` calls,
-// which arrived as *parameters* rather than as an injected seam, so no test
-// could reach them. Both now live in the warm policy.
+// 墨塊收過一次。它本來是「兩條進度（今日目標、主題進度）+ 兩顆並排按鈕
+// （複習、學新字）+ 一行解釋某顆按鈕為什麼反灰的提示」，現在是「主題標題 +
+// 一條總進度 + 一顆按鈕 + 最多一行」。三件事跟著變：
 //
-// One thing it did that nothing does now: it caught the load error. Nothing
-// rendered `vm.error` either, so 首頁 already failed silently — giving the
-// screen a real error surface is a separate decision, not a regression here.
+//   1. 兩顆按鈕併成一顆。模式由 `TodayDecisions.call` 挑 —— 有欠複習就複習，
+//      否則學新字。代價寫在那裡：有字要複習的人不能再自己選今天只學新字，
+//      按鈕底下那行 `.switchToNew` 是唯一的退路。
+//   2. 今日目標那條刪掉，主題進度那條改成總字數。首頁因此沒有每日回饋迴圈了
+//      —— 這是知情的取捨，不是遺漏。連帶「達成」徽章也沒了，它本來就長在
+//      今日目標那條上。
+//   3. 提示行變成 `TodayDecisions.footer`，永遠最多一行，說的永遠是「你還能
+//      做的另一件事」，而不是「這顆按鈕為什麼不能按」。
+//
+// 墨塊上另外有三顆圖示，三顆都不印字：標題右邊的 ⚙ 換學習主題，右上角的折線圖
+// 開 學習統計（我 頁上的那幾塊數字），右下角的 ⓘ 開 記憶曲線。
+//
+// 「和 Moira 一起」是併進來的 `AssistantHomeView`：一隻會呼吸的貓加四個入口。
+// 原本那一頁的招呼和靜態揮手貓都沒搬，見 `AssistantFeatures.swift`。
+//
+// 螢幕量測沿用：整頁算成一屏高，主題格子吃剩下的高度。墨塊和 Moira 區變高之後
+// 剩的高度通常是負的，格子就退回兩排的下限、頁面開始捲 —— 這正是設計要的樣子。
 
 import SwiftUI
 
@@ -28,7 +35,6 @@ struct TodayView: View {
     @Environment(MasteryStore.self) private var mastery
     @Environment(AuthService.self) private var auth
     @Environment(TabNavigator.self) private var navigator
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// 打卡. Owned by `MainTabsView`, not by the sheet, so the chip's dot, the
     /// sheet and the 學新字 finish screen read one wallet.
@@ -43,9 +49,6 @@ struct TodayView: View {
     private var decisions: TodayDecisions {
         TodayDecisions(
             .init(
-                // The eight 完成度 facts, read the one way the app reads them —
-                // 我 calls the same initializer. They used to be assembled here
-                // and again in `MeProgressSections`, both inside `View` bodies.
                 completion: .init(
                     settings: self.settings,
                     progress: self.progress,
@@ -59,26 +62,17 @@ struct TodayView: View {
     }
 
     var body: some View {
-        // The page is measured so that it comes out one screen tall: the themes
-        // strip is the section that stretches, and it can only take the slack if
-        // something works out how much slack there is. `maxHeight: .infinity`
-        // cannot do it — inside a ScrollView the proposal is unbounded, so a
-        // flexible child takes its *ideal* height (the whole grid) and the page
-        // grows instead. So the strip is given a measured height, and the
-        // measurement is the page's own: everything that is not the strip is
-        // `total - strip`, and what is left of the screen after that is the
-        // strip's. It settles in one extra layout pass and re-settles whenever
-        // the text size moves it.
         GeometryReader { screen in
             ScrollView {
                 // No shared horizontal padding: the ink block bleeds to the screen
                 // edges, so each section owns its own margin. A block with 24pt of
                 // paper on either side is "a card"; one that reaches the edges is
                 // "this part of the screen", and the difference in weight is large.
-                VStack(alignment: .leading, spacing: Space.s5) {
+                VStack(alignment: .leading, spacing: Space.s4) {
                     self.greeting.padding(.horizontal, Space.s4)
                     self.hero
-                    self.themesSection
+                    self.moiraSection
+                    self.themesGrid
                 }
                 .padding(.top, Space.s3)
                 .padding(.bottom, Space.s4)
@@ -107,7 +101,8 @@ struct TodayView: View {
                 await LiveLearningRefresher().refresh(after: .pulledToday)
             }
             .warmsAccumulation(.todayHero) {
-                self.prefetchStudyQueues()
+                self.prefetchStudyQueue()
+                self.prefetchAssistantOffers()
             }
             .task { await self.checkIn.loadRewardIfStale() }
             // A new answer today re-reads the wallet regardless of age: the
@@ -130,29 +125,25 @@ struct TodayView: View {
     }
 
     /// Warm the study queue in the background (JSON only — card images stay
-    /// lazy) so tapping 複習 / 學新字 skips the "載入練習中…" spinner. Only the
-    /// enabled CTAs are prefetched, so a disabled button costs nothing, and the
-    /// fetch replaces — not duplicates — the launcher's request for users who do
-    /// study. Runs as the warm policy's `then`, so settings + stats (which drive
-    /// the params) are already warm. StudyQueueStore's TTL + signature avoid
-    /// re-fetching on tab swaps.
-    private func prefetchStudyQueues() {
-        if !self.reviewDisabled {
-            Task { await StudyQueueStore.shared.prefetch(mode: .review) }
-        }
-        if !self.newDisabled {
-            Task { await StudyQueueStore.shared.prefetch(mode: .new) }
-        }
+    /// lazy) so tapping 背單字 skips the "載入練習中…" spinner.
+    ///
+    /// One mode, not two. It used to prefetch whichever of 複習／學新字 was
+    /// enabled, which on a normal day meant two fetches for two buttons; there
+    /// is one button now and `call` already knows which queue it will ask for.
+    private func prefetchStudyQueue() {
+        guard case let .study(mode, _) = self.decisions.call else { return }
+        Task { await StudyQueueStore.shared.prefetch(mode: mode) }
+    }
+
+    /// 情境故事 / AI 查詞 / AI 語法 的報價，預熱。
+    ///
+    /// 本來掛在助手首頁的 `.task`。那一頁沒了，入口搬到這裡，預熱就跟著搬。
+    private func prefetchAssistantOffers() {
+        Task { await AssistantHomeFeature.prefetchOffers() }
     }
 
     // MARK: - Top bar
 
-    /// The row this used to sit in is gone. It held the word "Tuji" beside these
-    /// two controls — the app's own name, told to someone already inside the app
-    /// — and the row's height came from the search button rather than from the
-    /// word, so deleting the word alone would have freed nothing. The controls
-    /// moved onto the greeting's date line and the whole row went with it,
-    /// worth about 56pt at the top of the tab.
     private var searchButton: some View {
         NavigationLink(value: NavRoute.search(query: nil)) {
             Image(systemName: "magnifyingglass")
@@ -192,11 +183,17 @@ struct TodayView: View {
         )
     }
 
-    /// 去學習 from inside the sheet: close it and take the hero's own advice —
-    /// 複習 when it is lit, otherwise 學新字.
+    /// 去學習 from inside the sheet: close it and take the hero's own advice.
+    /// One button now, so there is one answer — the same `call` the hero reads,
+    /// rather than this screen's own second copy of the review-first rule.
     private func studyFromCheckIn() {
         self.showingCheckIn = false
-        self.navigator.push(.studyLanding(mode: self.reviewDisabled ? .new : .review))
+        switch self.decisions.call {
+        case let .study(mode, _): self.navigator.push(.studyLanding(mode: mode))
+        case .pickThemes: self.navigator.push(.studyCategories)
+        case .unknown: self.navigator.push(.studyLanding(mode: .review))
+        case .blocked: break
+        }
     }
 
     @ViewBuilder
@@ -219,19 +216,24 @@ struct TodayView: View {
 
     // MARK: - Greeting
 
+    /// 日期列 + 一句招呼。
+    ///
+    /// 招呼底下那行副標沒了。它是 `TodayDecisions.subtitle` 的七個 case —— 其中
+    /// 四個在講今日目標或今天學了幾個，而今日目標那條已經不在畫面上；剩下的
+    /// 搬進了墨塊自己的標題、按鈕和那一行。
     private var greeting: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            // Search and the streak ride the date rather than the headline
-            // below it: the headline is concatenated precisely so a long
-            // localization wraps as one flowing line, and taking ~90pt off its
-            // right edge would cost it an extra line — more than the row saved.
             HStack(spacing: Space.s3) {
                 Text(self.dateLabel)
                     .font(.tujiLabel)
                     .tracking(2)
-                    .foregroundStyle(.tujiInk3)
+                    // 墨3 在紙上只有 3.6:1，而這是 13pt 的字。同一句話在墨2 上
+                    // 是 9.2:1，看起來幾乎一樣。
+                    .foregroundStyle(.tujiInk2)
                 Spacer(minLength: Space.s3)
                 self.searchButton
+                // 罐頭跟火焰站一起：兩個都是「你的計數器」。
+                AssistantCreditLink()
                 self.streakChip
             }
             // Concatenated so long localizations (en/ja) wrap as one flowing
@@ -241,9 +243,6 @@ struct TodayView: View {
                 + Text("。"))
                 .font(.tujiH2)
                 .foregroundStyle(.tujiInk)
-            Text(self.subtitle)
-                .font(.tujiBodySm)
-                .foregroundStyle(.tujiInk3)
         }
     }
 
@@ -272,263 +271,227 @@ struct TodayView: View {
         return f.string(from: Date()).uppercased()
     }
 
-    /// The words for `decisions.subtitle`. The verdict lives in
-    /// `TodayDecisions`; this maps it to copy.
-    private var subtitle: LocalizedStringKey {
-        switch self.decisions.subtitle {
-        case .pickThemes: "先選學習主題，開始學新字"
-        case .unknown: "今天想學點什麼呢？"
-        case let .reviewDue(count): "今天有 \(count) 個字要複習"
-        case .goalReached: "今天目標達成，明天再來"
-        case let .newDoneToday(count): "今天已學 \(count) 個新字，繼續加油"
-        case .newAvailable: "今天還沒學新字，挑一個來試試"
-        case .allLearnedInThemes: "這些主題的字都學過了，多選幾個主題吧"
-        }
-    }
-
-    // MARK: - Hero card (deep ink)
+    // MARK: - 墨塊
 
     private var hero: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                VStack(alignment: .leading, spacing: Space.s3) {
-                    self.dailyGoalProgress
-                    self.heroProgress
-                }
-                .padding(.trailing, 96)
-
-                // The pair is one control, so the two pills are one height:
-                // 複習 is two characters in every language and its neighbour
-                // is not, so the moment the longer label wraps — a large
-                // Dynamic Type size, a language that needs the room — an
-                // unconstrained HStack draws a short button beside a tall
-                // one and the row reads as two unrelated things. Each label
-                // fills the row's height, `fixedSize` keeps that height at
-                // the taller label's ideal rather than the parent's.
-                HStack(spacing: Space.s3) {
-                    NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
-                        Text("複習")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .buttonStyle(HeroPillStyle(role: self.reviewDisabled ? .secondary : .primary))
-                    .disabled(self.reviewDisabled)
-
-                    NavigationLink(value: NavRoute.studyLanding(mode: .new)) {
-                        Text("學新字")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .buttonStyle(HeroPillStyle(role: self.reviewDisabled && !self
-                            .newDisabled ? .primary : .secondary))
-                    .disabled(self.newDisabled)
-                }
-                .fixedSize(horizontal: false, vertical: true)
-                .tourAnchor(.heroCTAs)
-
-                if let hint = self.heroHint {
-                    if self.hintExplainsReviewBacklog {
-                        Button {
-                            self.showingReviewCurve = true
-                        } label: {
-                            HStack(alignment: .firstTextBaseline, spacing: Space.s1) {
-                                Image(systemName: "exclamationmark.circle")
-                                    .font(.tujiIcon(13, weight: .semibold))
-                                Text(hint)
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            .font(.tujiLabel)
-                            .foregroundStyle(.tujiPaper.opacity(0.6))
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint(Text("了解記憶曲線與複習機制"))
-                    } else {
-                        Text(hint)
-                            .font(.tujiLabel)
-                            .foregroundStyle(.tujiPaper.opacity(0.6))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
+        VStack(alignment: .leading, spacing: Space.s3) {
+            self.heroHeading
+            self.heroProgress
+            VStack(spacing: Space.s2) {
+                self.studyButton
+                self.heroFootRow
             }
         }
         .padding(Space.s4)
-        .padding(.top, Space.s5)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tujiInk)
-        // Applied over the background rather than inside it, so the cat can
-        // straddle the top edge instead of sitting within the block. Its body is
-        // ink, so the half that overlaps reads as a silhouette and only the
-        // yellow eyes come forward — the gesture the logo already uses.
-        //
-        // The cat is also the way into 助手. A picture gives no sign that it
-        // can be pressed, so the cat says so — in a speech bubble, the one
-        // rounded container the system allows, because only this is speaking
-        // (`MascotSpeechBubble`). That one tucks under the cat and needs no
-        // tail; this one sits beside it, so the tail is what says who is talking.
-        .overlay(alignment: .topTrailing) {
-            NavigationLink(value: NavRoute.assistant) {
-                HStack(alignment: .bottom, spacing: 0) {
-                    Text("點擊我一起學習")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .padding(.leading, Space.s3)
-                        .padding(.trailing, Space.s3 + SpeechCloud.tail)
-                        .padding(.vertical, Space.s1 + 2)
-                        .background(.tujiPaper2, in: SpeechCloud())
-                    MascotFigure(
-                        pose: self.dailyGoalReached ? .cheer : .wave,
-                        size: 96,
-                        grounding: .none
-                    )
-                    .id(self.dailyGoalReached)
-                    .transition(.opacity)
-                }
-                .contentShape(.rect)
+        .tourAnchor(.hero)
+    }
+
+    /// 標題列：你在學哪些主題，加上改主題和看統計。
+    ///
+    /// 右邊那個折線圖一度是 記憶曲線 的入口。那是一張「為什麼今天先複習」的
+    /// 解釋圖，不是你的數字 —— 而一個折線圖的圖示擺在首頁右上角，點下去誰都
+    /// 以為會看到自己的數字。所以圖示留在原位、改開 我 的那幾塊統計；曲線換成
+    /// 一個問號性質的圖示，搬到墨塊右下角（見 `reviewCurveButton`）。
+    private var heroHeading: some View {
+        HStack(spacing: 0) {
+            Text(self.headingText)
+                .font(.tujiH3)
+                .foregroundStyle(.tujiPaper)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+            NavigationLink(value: NavRoute.studyCategories) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.tujiIcon(15, weight: .semibold))
+                    .foregroundStyle(.tujiPaper.opacity(0.75))
+                    .frame(width: 32, height: 32)
+                    .contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("問問助手"))
-            .tourAnchor(.assistant)
-            .offset(x: -Space.s4, y: -44)
-        }
-        .tourAnchor(.hero)
-        .animation(
-            // B.7 allows one curve. A spring here was the last bounce left in
-            // the app.
-            self.reduceMotion ? nil : Motion.ease(Motion.d3),
-            value: self.dailyGoalReached
-        )
-    }
-
-    private var dailyGoalReached: Bool {
-        self.decisions.dailyGoalReached
-    }
-
-    /// Today's new-word goal progress. `todayNew` = new cards introduced today;
-    /// dailyGoal is the per-day new-word target. Surfaces the goal on the home
-    /// screen so there's a daily feedback loop. Signed-in only.
-    @ViewBuilder
-    private var dailyGoalProgress: some View {
-        let done = self.studyStats.stats?.todayNew ?? 0
-        let goal = max(1, self.settings.current.dailyGoal)
-        // The verdict comes from the module, not from a second copy of the rule.
-        // This line used to re-derive `done >= goal` here — and `TodayDecisions.subtitle` documents
-        // that 達成 "wins over everything below so this line can never
-        // contradict the 達成 badge on the hero card", while the badge was
-        // being drawn from the copy.
-        let reached = self.dailyGoalReached
-        let ratio = CompletionReadout.ratio(seen: done, total: goal)
-        VStack(alignment: .leading, spacing: Space.s1) {
-            HStack {
-                Text("今日目標")
-                    .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiPaper.opacity(0.6))
-                Spacer()
-                if reached {
-                    HStack(spacing: 3) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.tujiIcon(11, weight: .semibold))
-                        Text("達成")
-                            .font(.tujiIcon(12, weight: .semibold))
-                    }
-                    .foregroundStyle(.tujiCurrent)
-                } else {
-                    Text("\(done) / \(goal)")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiPaper.opacity(0.7))
-                }
+            .accessibilityLabel(Text("更換學習主題"))
+            Spacer(minLength: Space.s2)
+            NavigationLink(value: NavRoute.progressStats) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.tujiIcon(16, weight: .semibold))
+                    .foregroundStyle(.tujiPaper.opacity(0.85))
+                    .frame(width: 32, height: 32)
+                    .contentShape(.rect)
             }
-            // Always 瞳黃. The unreached state used to be `tujiAlert`, which
-            // said "you are failing" — not hitting today's goal at 10am is not
-            // an error, it is the thing in progress, and 瞳黃 is exactly the
-            // colour for that.
-            TujiProgressBar(progress: ratio, track: .tujiPaper.opacity(0.2), fill: .tujiCurrent)
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("學習統計"))
         }
     }
 
+    /// 「便利商店 等 6 個主題」。一個主題就只報它的名字，查不到名字就只報數量。
+    private var headingText: LocalizedStringKey {
+        switch self.decisions.heading {
+        // settings 還沒到。說「還沒選學習主題」會是一句很快就被打臉的話，
+        // 所以先報一個不宣稱任何事的名詞。
+        case .unknown:
+            return "學習主題"
+        case .noThemes:
+            return "還沒選學習主題"
+        case let .themes(firstId, count):
+            guard let name = self.categories.categories.first(where: { $0.id == firstId })?.nameZh else {
+                return LocalizedStringKey(tujiLocalized("\(count) 個學習主題"))
+            }
+            guard count > 1 else { return LocalizedStringKey(name) }
+            return LocalizedStringKey(tujiLocalized("\(name) 等 \(count) 個主題"))
+        }
+    }
+
+    /// 總字數。條在左、數字在右，一行。
+    ///
+    /// 積累色，不是瞳黃：這條說的是「你累積了多少」。整塊墨上現在只有按鈕是
+    /// 瞳黃，而瞳黃的意思就是「下一步在這裡」。深青在墨上只有 3.04:1，所以
+    /// 用淺的那一階 —— 墨面上一律用淺的。
     @ViewBuilder
     private var heroProgress: some View {
         let readout = self.decisions.completion
-        let learned = readout.seen
-        let total = readout.total
-        VStack(alignment: .leading, spacing: Space.s1) {
-            HStack {
-                Text("主題進度")
-                    .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiPaper.opacity(0.6))
-                Spacer()
-                Text("\(learned) / \(total)")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiPaper.opacity(0.7))
-            }
-            // Deep teal only reaches 3.04:1 against ink; the pale step reaches
-            // 13.58:1 and carries the same "accumulation" meaning. On ink
-            // surfaces it is always the pale one.
+        HStack(spacing: Space.s3) {
             TujiProgressBar(
                 progress: readout.ratio,
                 track: .tujiPaper.opacity(0.2),
                 fill: .tujiAccumulationSoft
             )
+            // 它自己帶著「進行中」這個 label，不藏起來的話這一行會被唸成兩個元素。
+            .accessibilityHidden(true)
+            Text("\(readout.seen) / \(readout.total) 字")
+                .font(.tujiBodySm(.strong))
+                .foregroundStyle(.tujiAccumulationSoft)
+                .fixedSize()
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("主題進度"))
+        .accessibilityValue(Text("\(readout.seen) / \(readout.total) 字"))
+    }
+
+    /// 一顆按鈕。右邊說待會要做什麼、幾個。
+    @ViewBuilder
+    private var studyButton: some View {
+        switch self.decisions.call {
+        case .pickThemes:
+            NavigationLink(value: NavRoute.studyCategories) {
+                StudyCallLabel(title: "選學習主題", trailing: nil)
+            }
+            .buttonStyle(StudyCallStyle())
+            .tourAnchor(.heroCTAs)
+        case .unknown:
+            // stats 還沒到，所以說不出數字。按鈕照樣可以按：launcher 自己會抓
+            // 佇列，抓到空的也自己有話說（「目前沒有可以練習的字」）。
+            NavigationLink(value: NavRoute.studyLanding(mode: .review)) {
+                StudyCallLabel(title: "背單字", trailing: nil)
+            }
+            .buttonStyle(StudyCallStyle())
+            .tourAnchor(.heroCTAs)
+        case let .study(mode, count):
+            NavigationLink(value: NavRoute.studyLanding(mode: mode)) {
+                StudyCallLabel(title: "背單字", trailing: Self.callCount(mode: mode, count: count))
+            }
+            .buttonStyle(StudyCallStyle())
+            .tourAnchor(.heroCTAs)
+        case .blocked:
+            StudyCallLabel(title: "背單字", trailing: nil)
+                .modifier(StudyCallDisabled())
+                .tourAnchor(.heroCTAs)
         }
     }
 
-    private var reviewDisabled: Bool {
-        self.decisions.reviewDisabled
-    }
-
-    private var newDisabled: Bool {
-        self.decisions.newDisabled
-    }
-
-    /// Caption shown under the hero CTAs explaining why 學新字 is greyed.
-    private var newBlockHint: LocalizedStringKey? {
-        switch self.decisions.newBlock {
-        case .allLearned: "這些主題的新字都學完了，去複習或多選幾個主題"
-        case .noCards: "這個主題目前還沒有可學的字"
-        case .reviewBacklog: "要複習的字有點多，先清一些再學新字"
-        case .noThemes, .none: nil
+    /// 「複習 12」／「新字 5」。模式併成一顆按鈕之後，這裡是唯一還看得到
+    /// 待會要做哪一種的地方。
+    private static func callCount(mode: StudyMode, count: Int) -> LocalizedStringKey {
+        switch mode {
+        case .review: LocalizedStringKey(tujiLocalized("複習 \(count)"))
+        case .new: LocalizedStringKey(tujiLocalized("新字 \(count)"))
         }
     }
 
-    /// The two hints that come from the review backlog (`StudyQuotas`) —
-    /// the ones that read as a rule, so the ones that offer the why.
-    private var hintExplainsReviewBacklog: Bool {
-        switch self.decisions.heroHint {
-        case .newBlocked: self.decisions.newBlock == .reviewBacklog
-        case .quotaAdjusted: true
-        case .nothingToReview, nil: false
+    /// 按鈕底下那一列：中間最多一行退路，右下角一顆記憶曲線。
+    ///
+    /// 這一列永遠在，即使沒有退路可給。好處是墨塊的高度不再隨當天的狀態上下
+    /// 跳，壞處是沒有退路的日子多出 44pt —— 但那 44pt 本來就在最壞的情況裡，
+    /// 底下 Moira 區離 tab bar 的距離是照「有退路」那天量的，所以把高度釘在
+    /// 最大值不會讓已經量過的那一版變矮。
+    private var heroFootRow: some View {
+        ZStack(alignment: .bottomTrailing) {
+            if let footer = self.decisions.footer {
+                self.heroFooter(footer)
+                    // 讓開右下角那顆圖示：這行字在最大字級下會長到撞上它。
+                    .padding(.horizontal, 40)
+            }
+            self.reviewCurveButton
         }
     }
 
-    private var newQuotaAdjustmentHint: LocalizedStringKey? {
-        guard let adj = self.decisions.quotaAdjustment else { return nil }
-        // tujiLocalized resolves the interpolated key against the uiLang; wrap
-        // the already-localized result verbatim (a String-keyed
-        // LocalizedStringKey never re-looks-up, which is why the old
-        // LocalizedStringKey(rawChinese) leaked Chinese into ja/en UIs).
-        return LocalizedStringKey(
-            tujiLocalized("因為還有 \(adj.due) 個字要複習，今天新字先調整為 \(adj.limit) 個。")
-        )
+    /// 記憶曲線。
+    ///
+    /// 它解釋的是「為什麼今天先複習」，而解釋該待在被解釋的東西旁邊 —— 按鈕
+    /// 上寫著「複習 26」，疑問就是在那裡冒出來的。
+    private var reviewCurveButton: some View {
+        Button { self.showingReviewCurve = true } label: {
+            Image(systemName: "exclamationmark.circle")
+                .font(.tujiIcon(16, weight: .semibold))
+                .foregroundStyle(.tujiPaper.opacity(0.75))
+                .frame(width: 44, height: 44)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        // 44 的打擊區把圖示往內推了 6pt。拉回去，跟標題列那兩顆 32 的圖示
+        // 對齊同一條線 —— 多出來的那 6pt 落在墨塊自己的留白裡，順便讓真正的
+        // 角落也點得到。
+        .padding(.trailing, -6)
+        .accessibilityLabel(Text("記憶曲線"))
     }
 
-    /// One explanatory line under the CTAs. A greyed 學新字 explains itself
-    /// (newBlockHint); otherwise a greyed 複習 gets its own line so neither
-    /// button is ever silently dead. Waits for stats so it never claims
-    /// "nothing due" before the first fetch answers.
-    /// The words for whichever hint `TodayDecisions` says is talking. Which one
-    /// that is — and that none of them talks before stats land — is the
-    /// module's answer; this is only the sentence.
-    private var heroHint: LocalizedStringKey? {
-        switch self.decisions.heroHint {
-        case .newBlocked: self.newBlockHint
-        case .quotaAdjusted: self.newQuotaAdjustmentHint
-        case .nothingToReview: "今天沒有要複習的字，先學點新的吧"
-        case nil: nil
+    /// 退路那一行。
+    @ViewBuilder
+    private func heroFooter(_ footer: TodayFooter) -> some View {
+        switch footer {
+        case .switchToNew:
+            self.footerLink("學新字", route: .studyLanding(mode: .new))
+        case .changeThemes:
+            self.footerLink("換幾個主題", route: .studyCategories)
         }
     }
+
+    /// 13pt 的字只有 18pt 高，所以打擊區靠上下的 padding 撐到 44pt。
+    private func footerLink(_ title: LocalizedStringKey, route: NavRoute) -> some View {
+        NavigationLink(value: route) {
+            Text(title)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiPaper.opacity(0.85))
+                .underline()
+                .padding(.horizontal, Space.s3)
+                .padding(.vertical, 13)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - 和 Moira 一起
+
+    /// 併進來的助手首頁：一隻會呼吸的貓，加她的四個入口。
+    ///
+    /// 貓在入口正上方，所以四格只印標題不印說明 —— 她本人就說明了這一區是誰的。
+    /// 說明還在 `AssistantHomeFeature.detail`，給 VoiceOver 唸。
+    private var moiraSection: some View {
+        VStack(spacing: Space.s3) {
+            // 分頁之間切換不會 disappear，所以得明講她現在在不在前面。
+            // 捲出畫面外不算 —— 那是幾秒的事，切到別的分頁是幾分鐘的事。
+            AnimatedMascot(paused: self.navigator.selected != .today)
+                .frame(height: 236)
+                // 她的 580 單位畫布底下有一截是空的（接觸陰影之後還剩約 24pt），
+                // 在助手首頁那是最後一個元素所以沒差，在這裡它把四格往下推。
+                .padding(.bottom, -24)
+
+            MoiraFeatureBand()
+        }
+        .tourAnchor(.assistant)
+    }
+
+    // MARK: - 主題格子
 
     /// One theme tile's height, scaled with the text size. Only the window's
     /// floor is computed from it, so an estimate is enough — a measurement
@@ -539,71 +502,37 @@ struct TodayView: View {
     /// first pass, which is what `themeStripHeight`'s floor stands in for.
     @State private var themeStripSpace: CGFloat?
 
-    // MARK: - Themes grid
-
+    /// 格子，沒有標頭。
+    ///
+    /// 標頭本來是「主題」加一行底線的「更換學習主題」。兩個都搬進墨塊了：標題
+    /// 說的是同一組主題，⚙ 做的是同一件事。底下那張「還沒選學習主題」的提示卡
+    /// 也一起刪了 —— 墨塊的 `.pickThemes` 整塊就是那張卡。
     @ViewBuilder
-    private var themesSection: some View {
-        if self.showThemePrompt {
-            self.themePrompt
-        } else {
-            let tiles = self.themeTiles
-            if !tiles.isEmpty {
-                VStack(alignment: .leading, spacing: Space.s3) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text("主題")
-                            .font(.tujiLabel)
-                            .tracking(0.5)
-                            .foregroundStyle(.tujiInk3)
-                        Spacer()
-                        // Named for what it does. The strip shows the themes
-                        // *you picked*, so the action beside it is changing
-                        // that pick — it used to be labelled "全部 →", which
-                        // promises the whole catalogue and delivers a settings
-                        // multi-select, and then "學習主題 →", which names the
-                        // destination but not the verb. Browsing every theme is
-                        // 主題's job, on 圖鑑.
-                        NavigationLink(value: NavRoute.studyCategories) {
-                            Text("更換學習主題")
-                                .font(.tujiLabel)
-                                .tracking(0.5)
-                                .foregroundStyle(.tujiInk)
-                                .underline()
+    private var themesGrid: some View {
+        let tiles = self.themeTiles
+        if !tiles.isEmpty {
+            ScrollView(.vertical) {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: Space.s2),
+                        GridItem(.flexible(), spacing: Space.s2)
+                    ],
+                    spacing: Space.s2
+                ) {
+                    ForEach(tiles, id: \.id) { c in
+                        NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
+                            CategoryTile(
+                                category: c,
+                                wordCount: self.words.byCategory(c.id).count,
+                                status: self.themeStatus(for: c.id)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, Space.s4)
-
-                    // Two across, in a window that scrolls on its own and
-                    // takes whatever the page has left — which is why the page
-                    // is measured. It was a horizontal strip, which hid every
-                    // theme past the third behind a sideways swipe; it is not
-                    // the page that grows either, because twenty themes would
-                    // then push everything below them off the bottom. The
-                    // section keeps its height and the tiles move inside it.
-                    ScrollView(.vertical) {
-                        LazyVGrid(
-                            columns: [
-                                GridItem(.flexible(), spacing: Space.s2),
-                                GridItem(.flexible(), spacing: Space.s2)
-                            ],
-                            spacing: Space.s2
-                        ) {
-                            ForEach(tiles, id: \.id) { c in
-                                NavigationLink(value: NavRoute.categoryDetail(id: c.id)) {
-                                    CategoryTile(
-                                        category: c,
-                                        wordCount: self.words.byCategory(c.id).count,
-                                        status: self.themeStatus(for: c.id)
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, Space.s4)
-                    }
-                    .frame(height: self.themeStripHeight)
                 }
+                .padding(.horizontal, Space.s4)
             }
+            .frame(height: self.themeStripHeight)
         }
     }
 
@@ -612,45 +541,6 @@ struct TodayView: View {
     /// way it does at the largest text sizes.
     private var themeStripHeight: CGFloat {
         max(self.themeStripSpace ?? 0, self.themeTileHeight * 2 + Space.s2)
-    }
-
-    /// Signed-in user has loaded settings but picked no study themes — nudge
-    /// them to choose so the grid + new-word flow have something to show.
-    private var showThemePrompt: Bool {
-        self.decisions.showThemePrompt
-    }
-
-    private var themePrompt: some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            Text("主題")
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiInk3)
-            VStack(alignment: .leading, spacing: Space.s3) {
-                Text("還沒選學習主題")
-                    .font(.tujiBodySm(.strong))
-                    .foregroundStyle(.tujiInk)
-                Text("選幾個你想學的主題，這裡會顯示它們，學新字也會從中出題。")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
-                NavigationLink(value: NavRoute.studyCategories) {
-                    Text("選擇主題")
-                        .font(.tujiBodySm(.strong))
-                        .foregroundStyle(.tujiInk)
-                        .padding(.vertical, Space.s3)
-                        .padding(.horizontal, Space.s4)
-                        .background(.tujiCurrent, in: .rect(cornerRadius: Radius.r0))
-                }
-                .buttonStyle(.plain)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Space.s4)
-            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-            .overlay(
-                RoundedRectangle(cornerRadius: Radius.r0)
-                    .stroke(.tujiRule, lineWidth: 1)
-            )
-        }
     }
 
     /// Exactly the selected themes (that have words).
@@ -679,79 +569,45 @@ struct TodayView: View {
 
 // MARK: - Subviews
 
-/// The two buttons on the ink block. Only one of them is primary at a time, and
-/// which one depends on what the user can actually do right now.
-///
-/// 複習 is disabled whenever nothing is due. Hard-coding it as the primary meant
-/// that on a day with no reviews the screen showed a *disabled* primary button
-/// beside an enabled secondary one — the only available action drawn as the
-/// lesser of the two.
-private enum HeroPillRole {
-    case primary
-    case secondary
-}
+/// 墨塊上那顆按鈕的內容：左邊一個動詞，右邊（有話說的時候）待會要做什麼。
+private struct StudyCallLabel: View {
+    let title: LocalizedStringKey
+    let trailing: LocalizedStringKey?
 
-/// A pill with a tail on its trailing edge, pointing up at whoever is beside
-/// it. One path rather than a pill with a triangle laid over it, so the two
-/// cannot show a seam.
-private struct SpeechCloud: Shape {
-    /// How far the tail reaches past the pill.
-    static let tail: CGFloat = 10
-
-    func path(in rect: CGRect) -> Path {
-        let body = CGRect(x: rect.minX, y: rect.minY, width: rect.width - Self.tail, height: rect.height)
-        var path = Path(roundedRect: body, cornerRadius: body.height / 2)
-        // Rooted well inside the pill's rounded end, so the base is hidden by
-        // the body at any height.
-        let root = body.maxX - body.height / 2
-        path.move(to: CGPoint(x: root, y: body.minY + body.height * 0.2))
-        path.addLine(to: CGPoint(x: rect.maxX, y: body.minY + body.height * 0.1))
-        path.addLine(to: CGPoint(x: root, y: body.minY + body.height * 0.7))
-        path.closeSubpath()
-        return path
+    var body: some View {
+        HStack(spacing: Space.s3) {
+            Text(self.title)
+                .font(.tujiH3)
+            Spacer(minLength: Space.s2)
+            if let trailing = self.trailing {
+                Text(trailing)
+                    .font(.tujiBodySm(.strong))
+                    .opacity(0.75)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, Space.s3)
+        .padding(.horizontal, Space.s3 + 4)
     }
 }
 
-private struct HeroPillStyle: ButtonStyle {
-    let role: HeroPillRole
-    @Environment(\.isEnabled) private var isEnabled
-
+/// 瞳黃底、墨字。按下去只換底色，什麼都不動 —— BBtn 的同一條規則。
+private struct StudyCallStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.tujiH3)
-            .foregroundStyle(self.foreground)
-            .padding(.vertical, Space.s3)
-            .padding(.horizontal, Space.s3)
-            .background(self.background(pressed: configuration.isPressed))
+            .foregroundStyle(.tujiInk)
+            .background(configuration.isPressed ? Color.tujiCurrentDeep : Color.tujiCurrent)
     }
+}
 
-    private var foreground: Color {
-        guard self.isEnabled else { return .tujiPaper.opacity(0.4) }
-        return .tujiInk
-    }
-
-    /// Enabled buttons get a *light* ground, disabled ones a translucent wash.
-    ///
-    /// The secondary used to be a 20%-paper fill on ink — a dark grey block on a
-    /// near-black block, which is what "switched off" looks like everywhere else
-    /// in the app. It sat two opacity steps from the genuinely disabled state and
-    /// read as the same thing, so 學新字 looked untappable on every day that had
-    /// reviews due, which is most days.
-    ///
-    /// Two grounds that are both clearly lit, then, with the hierarchy carried by
-    /// hue rather than by brightness: 瞳 means 現在 and marks the recommended
-    /// action, paper is the same "available but not selected" ground the 圖鑑
-    /// chips use. An outline was the other option and the system forbids it —
-    /// a resting element with a border is a bug (see Border.swift).
-    private func background(pressed: Bool) -> Color {
-        guard self.isEnabled else { return .tujiPaper.opacity(0.08) }
-        switch self.role {
-        // Press changes the ground and nothing moves, the same rule BBtn
-        // follows. `tujiPaper3` rather than `tujiPaper2` so the step is as
-        // visible as 瞳's — paper2 → paper3 differ by too little to feel.
-        case .primary: return pressed ? .tujiCurrentDeep : .tujiCurrent
-        case .secondary: return pressed ? .tujiPaper3 : .tujiPaper2
-        }
+/// 反灰。沿用原本 `HeroPillStyle` 的兩個值 —— 這是 app 既有的「關掉了」的樣子。
+private struct StudyCallDisabled: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .foregroundStyle(.tujiPaper.opacity(0.4))
+            .background(Color.tujiPaper.opacity(0.08))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityRemoveTraits(.isButton)
     }
 }
 
@@ -767,19 +623,5 @@ private struct HeroPillStyle: ButtonStyle {
             .environment(MasteryStore.shared)
             .environment(AuthService.shared)
             .environment(CheckInModel())
-    }
-}
-
-private extension SessionUser {
-    static var todayPreview: SessionUser {
-        SessionUser(id: UUID(), email: "preview@tuji.dev", username: "rex", avatar: nil)
-    }
-
-    init(id: UUID, email: String?, username: String?, avatar: String?) {
-        self.id = id
-        self.email = email
-        self.username = username
-        self.nickname = nil
-        self.avatar = avatar
     }
 }

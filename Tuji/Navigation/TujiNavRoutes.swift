@@ -9,7 +9,7 @@ extension View {
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
-                case .assistant, .creditStatement, .assistantStory, .topicChat, .topicChatHistory,
+                case .creditStatement, .assistantStory, .topicChat, .topicChatHistory,
                      .vocabulary, .grammar:
                     AssistantDestination(route: route)
                 case .settings: SettingsView()
@@ -20,6 +20,7 @@ extension View {
                 case let .authorProfile(handle, isSelf):
                     AtlasAuthorProfileView(handle: handle, isSelf: isSelf)
                 case .studyCategories: StudyCategoriesPickerView()
+                case .progressStats: ProgressStatsView()
                 case let .studyLanding(mode): StudyLauncherView(mode: mode)
                 case let .wordDetail(id): WordDestination(id: id)
                 case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
@@ -47,10 +48,12 @@ private struct WordDestination: View {
     }
 }
 
-/// 助手 and the screens it links to. Grouped in one arm so the table above
-/// stays within what one function can hold; the grouping is real — 點數明細 and
-/// 情境故事 are reached from 助手, and 主題對話 is Moira's too (though it is
-/// opened from a category page).
+/// Moira 的四個能力，和它們連到的畫面。Grouped in one arm so the table above
+/// stays within what one function can hold; the grouping is real — 它們全都從
+/// 今天 的「和 Moira 一起」進來，點數明細也是（主題對話另外還能從主題頁開）。
+///
+/// 這一區本來有自己的首頁（`AssistantHomeView`），`.assistant` 就是它的路由。
+/// 那一頁併進 今天 之後，路由和畫面一起刪了。
 private struct AssistantDestination: View {
     let route: NavRoute
 
@@ -62,7 +65,9 @@ private struct AssistantDestination: View {
         case .grammar: GrammarView()
         case let .topicChat(entry): TopicChatView(entry: entry)
         case .topicChatHistory: TopicChatHistoryView()
-        default: AssistantHomeView()
+        // 上面那個 arm 就是這個 switch 的門：只有列出來的六個路由進得來。
+        // 這裡寫 default 純粹是因為 switch 的對象是整個 NavRoute。
+        default: EmptyView()
         }
     }
 }

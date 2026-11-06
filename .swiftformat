@@ -14,7 +14,21 @@
 # 排除它，所以本機跑完「出得了版本嗎」那一步後，repo 根目錄直接跑
 # `swiftformat . --lint`（CI 用的那條指令）會噴 10 萬個第三方檔案的 error，
 # 看起來像 lint 壞了。CI 是乾淨 checkout 所以從沒中過。
---exclude .build,.swiftpm,DerivedData,build,build-release,Pods,Preview\ Content,Tuji/Resources
+#
+# 最後兩個是 sync-study-choice-data.mjs 的產物，檔頂都寫著「Do not edit」和
+# `// swiftformat:disable all`。那行指令管的是「結果不要套用」，不是「不要
+# 跑」—— 規則照跑，跑完才被丟掉。所以這兩個檔一直在付規則的錢，而那筆錢買
+# 到的東西永遠被丟掉。
+#
+# 會注意到是因為 CI 的 Lint 倒在
+# `error: wrap rule timed out in .../StudyChoiceData.swift`：SwiftFormat 給
+# 規則一個有時限的預算，而 0.61.1 沒有 --timeout 可以調。那次是 main 換上
+# macos-15-intel 之後、同一批 runner 明顯變慢的一趟（Build & Test 跑了 36
+# 分鐘，平常 26 分鐘）；在本機我量不出這個檔比別的檔貴多少，所以別把它當成
+# 「這個檔有病」—— 它只是那趟唯一踩到預算的那個。
+#
+# 總之從掃描範圍拿掉才是真的不跑它，而這本來就是那行 disable 想說的事。
+--exclude .build,.swiftpm,DerivedData,build,build-release,Pods,Preview\ Content,Tuji/Resources,Tuji/Core/Study/StudyChoiceData.swift,TujiTests/StudyChoiceContractCases.swift
 
 # ---------- 通用 ----------
 --indent 4
