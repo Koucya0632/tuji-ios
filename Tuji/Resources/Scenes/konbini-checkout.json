@@ -96,7 +96,7 @@
         "zh-Hans": "「温める」是加热。要的话说「お願いします」，不用就说「そのままで大丈夫です」。",
         "en": "温める means to heat up. Say お願いします for yes, or そのままで大丈夫です to take it as it is."
       },
-      "wordIds": []
+      "wordIds": ["microwave-station"]
     },
     {
       "id": "konbini-checkout.bag",
@@ -180,7 +180,7 @@
         "zh-Hans": "「袋」「レジ袋」都是塑料袋，通常要另外付钱。不用说「大丈夫です」，要的话说「お願いします」。",
         "en": "袋 and レジ袋 both mean a plastic bag, which usually costs extra. Say 大丈夫です for no, お願いします for yes."
       },
-      "wordIds": []
+      "wordIds": ["plastic-bag"]
     },
     {
       "id": "konbini-checkout.utensils",
@@ -264,7 +264,7 @@
         "zh-Hans": "「お箸」是筷子，「スプーン」是勺子。问「何膳」是问要几双，可以回「一膳で」。",
         "en": "お箸 are chopsticks and スプーン is a spoon. 何膳 asks how many pairs. You can answer 一膳で for one pair."
       },
-      "wordIds": []
+      "wordIds": ["disposable-chopsticks-dispenser", "plastic-cutlery-dispenser"]
     },
     {
       "id": "konbini-checkout.point-card",
@@ -348,7 +348,7 @@
         "zh-Hans": "「ポイントカード」是积分卡，有时是收银机自动播报。没有就说「持っていません」或「大丈夫です」。",
         "en": "ポイントカード is a points card. Sometimes the register announces it by itself. Say 持っていません or 大丈夫です if you have none."
       },
-      "wordIds": []
+      "wordIds": ["point-card"]
     },
     {
       "id": "konbini-checkout.payment",
@@ -441,7 +441,7 @@
         "zh-Hans": "「クレジット」是信用卡，「電子マネー」是交通卡这类的储值卡，「コード決済」是二维码支付。店员开口问的话，说「カードで」就好。",
         "en": "クレジット is credit card, 電子マネー is a stored-value card like a transit card, and コード決済 is QR code payment. If the clerk asks out loud, カードで is enough."
       },
-      "wordIds": []
+      "wordIds": ["cash-register", "self-checkout-machine"]
     },
     {
       "id": "konbini-checkout.age-check",

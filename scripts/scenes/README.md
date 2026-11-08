@@ -18,3 +18,7 @@ Needs Node 20 or later, plus `ffmpeg` and `ffprobe` on `PATH`. The key comes fro
 **`ambience-placeholder.mp3` is a synthetic placeholder, not a store recording.** `make-ambience-placeholder.sh` builds it from filtered noise and two faint beeps. Before release, replace it with a licensed recording via `--ambience <file>` (or by overwriting the file). The digest includes the ambience file's hash, so every ambience MP3 regenerates on the next run.
 
 `fixtures/fixture-konbini.json` is a two-question scene for testing the script. Point `--out` at a scratch directory when you run it so its MP3s stay out of git.
+
+## Word ids
+
+`node scripts/scenes/check-word-ids.mjs` checks every 問句's `wordIds` against the production 日文圖鑑 (`/api/words`, host from `Config/Release.xcconfig`). It prints each id with its topic and exits non-zero listing any id that does not exist. Run it after editing `wordIds`. Options: `--scenes <dir>`, `--base <url>`.

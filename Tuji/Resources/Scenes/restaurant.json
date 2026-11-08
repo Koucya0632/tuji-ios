@@ -264,7 +264,7 @@
         "zh-Hans": "店员在问可不可以点餐了。还没决定说「まだです」，决定了就指着菜单说「これをお願いします」。",
         "en": "The staff are asking if you are ready to order. Say まだです if not yet, or point at the menu and say これをお願いします."
       },
-      "wordIds": []
+      "wordIds": ["menu", "call-button"]
     },
     {
       "id": "restaurant.drink",
@@ -348,7 +348,7 @@
         "zh-Hans": "「お飲み物」是饮料。不用就说「大丈夫です」，要的话指着菜单说「これで」。",
         "en": "お飲み物 means drinks. Say 大丈夫です for no, or point at the menu and say これで."
       },
-      "wordIds": []
+      "wordIds": ["menu"]
     },
     {
       "id": "restaurant.split-bill",
@@ -432,7 +432,7 @@
         "zh-Hans": "「ご一緒」是一起，「別々」是分开。回「一緒で」或「別々で」。",
         "en": "ご一緒 means together and 別々 means separately. Answer 一緒で or 別々で."
       },
-      "wordIds": []
+      "wordIds": ["restaurant-bill", "receipt"]
     },
     {
       "id": "restaurant.order-machine",
@@ -525,7 +525,7 @@
         "zh-Hans": "有些店要先在食券机买券，再把券交给店员；有些店用桌上的平板点餐。选好之后按「購入」或「注文する」确认。",
         "en": "Some places sell meal tickets from a machine that you hand to the staff. Others take orders on a tablet at the table. Tap 購入 or 注文する to send it."
       },
-      "wordIds": []
+      "wordIds": ["ordering-tablet"]
     }
   ]
 }
