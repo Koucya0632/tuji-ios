@@ -17,9 +17,9 @@ import Testing
 @MainActor
 struct AccountScopedStoreTests {
     @Test
-    func theRosterIsExactlyTheTwentyAccountScopedStores() {
+    func theRosterIsExactlyTheTwentyOneAccountScopedStores() {
         let roster = AccountScopedStores.all
-        #expect(roster.count == 20)
+        #expect(roster.count == 21)
 
         // Named rather than counted: a swap that kept the count would pass a
         // count assertion, and each of these is on the list for its own reason
@@ -46,6 +46,7 @@ struct AccountScopedStoreTests {
         #expect(roster.contains { $0 is AssistantOfferCache<GrammarOffer> })
         #expect(roster.contains { $0 is AssistantHistoryCache<VocabularyRecord> })
         #expect(roster.contains { $0 is AssistantHistoryCache<GrammarRecord> })
+        #expect(roster.contains { $0 is SceneProgressStore })
     }
 
     @Test
