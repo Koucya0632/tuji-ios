@@ -1,0 +1,714 @@
+{
+  "schemaVersion": 2,
+  "id": "car-rental",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "租車取車",
+    "zh-Hans": "租车取车",
+    "en": "Picking up a rental car"
+  },
+  "summary": {
+    "zh-Hant": "取車時櫃台會問的七件事",
+    "zh-Hans": "取车时柜台会问的七件事",
+    "en": "Seven things the counter asks when you pick up a car"
+  },
+  "questions": [
+    {
+      "id": "car-rental.reservation",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問預約資料",
+        "zh-Hans": "听懂柜台问预约信息",
+        "en": "Understand when the counter asks about your booking"
+      },
+      "phrasings": [
+        {
+          "id": "car-rental.reservation.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご予約のお名前をお願いします。",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.reservation.p1.mp3"
+        },
+        {
+          "id": "car-rental.reservation.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご予約番号をお願いできますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "car-rental.reservation.p2.mp3"
+        },
+        {
+          "id": "car-rental.reservation.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご予約のお名前を頂戴できますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.reservation.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "預約的名字或號碼",
+            "zh-Hans": "预约的名字或号码",
+            "en": "The name or number on your booking"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請出示駕照",
+            "zh-Hans": "请出示驾照",
+            "en": "Your driving licence, please"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有幾個人要開車",
+            "zh-Hans": "有几个人要开车",
+            "en": "How many people will drive"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "予約の画面はこちらです",
+        "audio": "car-rental.reservation.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ご予約」是預約，「お名前」是名字，「番号」是號碼。報上名字，或給櫃台看手機上的預約畫面。",
+        "zh-Hans": "「ご予約」是预约，「お名前」是名字，「番号」是号码。报上名字，或给柜台看手机上的预约画面。",
+        "en": "ご予約 is your booking, お名前 your name, and 番号 the number. Give your name or show the booking on your phone."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "car-rental.licence",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台請你出示駕照",
+        "zh-Hans": "听懂柜台请你出示驾照",
+        "en": "Understand when the counter asks for your driving licence"
+      },
+      "reviewNote": "駕照資格有法律後果：能否在日本開車依發照國不同（國際駕照、特定國家地區的駕照＋日文譯本等）。回應與解說不列國家清單，需熟悉日本道路交通法的人審稿。",
+      "phrasings": [
+        {
+          "id": "car-rental.licence.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "免許証を拝見してもよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.licence.p1.mp3"
+        },
+        {
+          "id": "car-rental.licence.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "国際免許証とパスポートをお願いします。",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "car-rental.licence.p2.mp3"
+        },
+        {
+          "id": "car-rental.licence.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "免許証と翻訳文はお持ちですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.licence.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請出示駕照",
+            "zh-Hans": "请出示驾照",
+            "en": "Your driving licence, please"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請出示信用卡",
+            "zh-Hans": "请出示信用卡",
+            "en": "Your credit card, please"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請出示預約確認",
+            "zh-Hans": "请出示预约确认",
+            "en": "Your booking confirmation, please"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、こちらです",
+        "audio": "car-rental.licence.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「免許証」是駕照，「国際免許証」是國際駕照，「翻訳文」是日文譯本。要帶哪些文件才能在日本開車，依發照國家或地區不同，以官方公告和租車公司的說明為準。",
+        "zh-Hans": "「免許証」是驾照，「国際免許証」是国际驾照，「翻訳文」是日文译本。要带哪些文件才能在日本开车，依发证国家或地区不同，以官方公告和租车公司的说明为准。",
+        "en": "免許証 is a driving licence, 国際免許証 an international permit, and 翻訳文 a Japanese translation. Which documents you need to drive in Japan depends on where your licence was issued, so check the official notices and the rental company."
+      },
+      "wordIds": [
+        "drivers-license",
+        "international-driving-permit",
+        "passport"
+      ]
+    },
+    {
+      "id": "car-rental.coverage",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "櫃台問你要不要加補償方案。你只想加免責補償。在說明單上按對的方案",
+        "zh-Hans": "柜台问你要不要加补偿方案。你只想加免责补偿。在说明单上按对的方案",
+        "en": "The counter asks about coverage. You want the collision damage waiver only. Tap the right plan"
+      },
+      "phrasings": [
+        {
+          "id": "car-rental.coverage.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "補償はどうされますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "補償プランのご案内",
+            "detail": "ご希望のプランをお選びください",
+            "buttons": [
+              {
+                "choiceId": "none",
+                "ja": "加入しない"
+              },
+              {
+                "choiceId": "cdw",
+                "ja": "免責補償のみ"
+              },
+              {
+                "choiceId": "full",
+                "ja": "免責補償＋NOC補償"
+              }
+            ]
+          },
+          "audio": "car-rental.coverage.p1.mp3"
+        },
+        {
+          "id": "car-rental.coverage.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "免責補償にはご加入されますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "補償制度",
+            "detail": "料金は1日あたりです",
+            "buttons": [
+              {
+                "choiceId": "full",
+                "ja": "安心パック（免責補償＋NOC補償）"
+              },
+              {
+                "choiceId": "cdw",
+                "ja": "免責補償"
+              },
+              {
+                "choiceId": "none",
+                "ja": "補償なし"
+              }
+            ]
+          },
+          "audio": "car-rental.coverage.p2.mp3"
+        },
+        {
+          "id": "car-rental.coverage.p3",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "補償プランを選択してください",
+            "buttons": [
+              {
+                "choiceId": "cdw",
+                "ja": "免責補償に加入する"
+              },
+              {
+                "choiceId": "full",
+                "ja": "NOC補償も付ける"
+              },
+              {
+                "choiceId": "none",
+                "ja": "加入しない"
+              }
+            ]
+          },
+          "audio": null
+        }
+      ],
+      "choices": [
+        {
+          "id": "none",
+          "text": {
+            "zh-Hant": "不加補償",
+            "zh-Hans": "不加补偿",
+            "en": "No coverage"
+          },
+          "correct": false
+        },
+        {
+          "id": "cdw",
+          "text": {
+            "zh-Hant": "只加免責補償",
+            "zh-Hans": "只加免责补偿",
+            "en": "Collision damage waiver only"
+          },
+          "correct": true
+        },
+        {
+          "id": "full",
+          "text": {
+            "zh-Hant": "免責補償加營業損失補償（NOC）",
+            "zh-Hans": "免责补偿加营业损失补偿（NOC）",
+            "en": "Damage waiver plus loss-of-use cover (NOC)"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "これでお願いします",
+        "audio": "car-rental.coverage.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「免責補償」是出事時減免你自付金額的方案，「NOC」是車子修理期間的營業損失。方案名稱、內容和價格各家租車公司不同，以櫃台說明為準。看不懂可以指著方案說「これでお願いします」。",
+        "zh-Hans": "「免責補償」是出事时减免你自付金额的方案，「NOC」是车子维修期间的营业损失。方案名称、内容和价格各家租车公司不同，以柜台说明为准。看不懂可以指着方案说「これでお願いします」。",
+        "en": "免責補償 reduces what you pay yourself after an accident, and NOC covers the company's loss while the car is repaired. Names, terms and prices differ by company, so go by what the counter explains. You can point and say これでお願いします."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "car-rental.etc-card",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問要不要借 ETC 卡",
+        "zh-Hans": "听懂柜台问要不要借 ETC 卡",
+        "en": "Understand when the counter asks about an ETC card"
+      },
+      "phrasings": [
+        {
+          "id": "car-rental.etc-card.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ETCカードはお持ちですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.etc-card.p1.mp3"
+        },
+        {
+          "id": "car-rental.etc-card.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ETCカードのお貸し出しはご利用になりますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "car-rental.etc-card.p2.mp3"
+        },
+        {
+          "id": "car-rental.etc-card.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ETCカード、お付けしますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.etc-card.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要借 ETC 卡",
+            "zh-Hans": "要不要借 ETC 卡",
+            "en": "Do you need an ETC card"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要加導航",
+            "zh-Hans": "要不要加导航",
+            "en": "Do you want a navigation unit"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要兒童座椅",
+            "zh-Hans": "要不要儿童座椅",
+            "en": "Do you need a child seat"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "持っていません。お願いします／大丈夫です",
+        "audio": "car-rental.etc-card.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ETCカード」是在高速公路收費站自動扣過路費的卡。沒有自己的卡又要走高速，就說「持っていません。お願いします」；不用就說「大丈夫です」。",
+        "zh-Hans": "「ETCカード」是在高速公路收费站自动扣过路费的卡。没有自己的卡又要走高速，就说「持っていません。お願いします」；不用就说「大丈夫です」。",
+        "en": "An ETC card pays expressway tolls automatically at the gate. If you will use the expressway and have no card, say 持っていません。お願いします. Otherwise, 大丈夫です."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "car-rental.damage-check",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你和店員一起看過車，沒有新的傷。在確認單上按對的按鈕",
+        "zh-Hans": "你和店员一起看过车，没有新的划痕。在确认单上按对的按钮",
+        "en": "You checked the car with the clerk and found nothing new. Tap the right button"
+      },
+      "phrasings": [
+        {
+          "id": "car-rental.damage-check.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お車の傷を一緒に確認させてください。",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "車両確認書",
+            "detail": "× ＝ 出発前からある傷",
+            "buttons": [
+              {
+                "choiceId": "add",
+                "ja": "傷を追加"
+              },
+              {
+                "choiceId": "sign",
+                "ja": "確認してサイン"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "car-rental.damage-check.p1.mp3"
+        },
+        {
+          "id": "car-rental.damage-check.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ほかに気になる傷はございますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "お車の状態確認",
+            "detail": "×印の箇所をご確認ください",
+            "buttons": [
+              {
+                "choiceId": "sign",
+                "ja": "確認しました"
+              },
+              {
+                "choiceId": "add",
+                "ja": "傷を追加する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "やり直す"
+              }
+            ]
+          },
+          "audio": "car-rental.damage-check.p2.mp3"
+        },
+        {
+          "id": "car-rental.damage-check.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "よろしければ、こちらにサインをお願いします。",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "車両チェックシート",
+            "detail": "出発前の傷 ×",
+            "buttons": [
+              {
+                "choiceId": "back",
+                "ja": "前に戻る"
+              },
+              {
+                "choiceId": "add",
+                "ja": "ほかの傷を記入"
+              },
+              {
+                "choiceId": "sign",
+                "ja": "サインする"
+              }
+            ]
+          },
+          "audio": "car-rental.damage-check.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "sign",
+          "text": {
+            "zh-Hant": "確認並簽名",
+            "zh-Hans": "确认并签名",
+            "en": "Confirm and sign"
+          },
+          "correct": true
+        },
+        {
+          "id": "add",
+          "text": {
+            "zh-Hant": "加上新發現的傷",
+            "zh-Hans": "加上新发现的划痕",
+            "en": "Add a scratch you found"
+          },
+          "correct": false
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です",
+        "audio": "car-rental.damage-check.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「傷」是刮痕或凹痕。單子上標「×」的是原本就有的傷。發現沒標到的傷，先指給店員看；沒問題就說「大丈夫です」再簽名。",
+        "zh-Hans": "「傷」是划痕或凹痕。单子上标「×」的是原本就有的伤。发现没标到的划痕，先指给店员看；没问题就说「大丈夫です」再签名。",
+        "en": "傷 means a scratch or dent. Marks with × were already there. If you find one that isn't marked, point it out first. If all is fine, say 大丈夫です and sign."
+      },
+      "wordIds": [
+        "car"
+      ]
+    },
+    {
+      "id": "car-rental.full-tank",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂還車前要加滿油",
+        "zh-Hans": "听懂还车前要加满油",
+        "en": "Understand that you must refuel before returning the car"
+      },
+      "phrasings": [
+        {
+          "id": "car-rental.full-tank.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご返却の際は、ガソリンを満タンにしてお戻しください。",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.full-tank.p1.mp3"
+        },
+        {
+          "id": "car-rental.full-tank.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "満タン返しでお願いします。",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "car-rental.full-tank.p2.mp3"
+        },
+        {
+          "id": "car-rental.full-tank.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "返却前に近くのスタンドで給油をお願いします。",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.full-tank.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "還車前要加滿油",
+            "zh-Hans": "还车前要加满油",
+            "en": "Fill the tank before you return it"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "還車前要洗車",
+            "zh-Hans": "还车前要洗车",
+            "en": "Wash the car before you return it"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "油已經加滿了",
+            "zh-Hans": "油已经加满了",
+            "en": "The tank is already full"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "わかりました",
+        "audio": "car-rental.full-tank.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「満タン」是加滿，「ガソリン」是汽油，「スタンド」是加油站，「返却」是還車。聽懂就說「わかりました」。",
+        "zh-Hans": "「満タン」是加满，「ガソリン」是汽油，「スタンド」是加油站，「返却」是还车。听懂就说「わかりました」。",
+        "en": "満タン means a full tank, ガソリン is petrol, スタンド is a petrol station, and 返却 is returning the car. Say わかりました."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "car-rental.return-time",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台確認還車時間",
+        "zh-Hans": "听懂柜台确认还车时间",
+        "en": "Understand when the counter checks your return time"
+      },
+      "phrasings": [
+        {
+          "id": "car-rental.return-time.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご返却は三日の午後五時でよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.return-time.p1.mp3"
+        },
+        {
+          "id": "car-rental.return-time.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "返却時間はお間違いないですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "car-rental.return-time.p2.mp3"
+        },
+        {
+          "id": "car-rental.return-time.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お戻りは何時ごろのご予定ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "car-rental.return-time.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "確認還車時間",
+            "zh-Hans": "确认还车时间",
+            "en": "Confirming when you return the car"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要在哪家店還車",
+            "zh-Hans": "要在哪家店还车",
+            "en": "Which branch you return it to"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "什麼時候要出發",
+            "zh-Hans": "什么时候出发",
+            "en": "When you are setting off"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、大丈夫です",
+        "audio": "car-rental.return-time.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「返却」「お戻り」是還車。「三日」是三號，不是三天。時間對就說「はい、大丈夫です」。",
+        "zh-Hans": "「返却」「お戻り」是还车。「三日」是三号，不是三天。时间对就说「はい、大丈夫です」。",
+        "en": "返却 and お戻り mean returning the car. 三日 here is the 3rd of the month, not three days. If the time is right, say はい、大丈夫です."
+      },
+      "wordIds": []
+    }
+  ]
+}

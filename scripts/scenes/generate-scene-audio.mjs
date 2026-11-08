@@ -22,7 +22,7 @@ const LEAD_SEC = 0.4;
 const AMBIENCE_DB_BELOW_VOICE = 18;
 // Bump when the mix recipe changes so every ambience file regenerates.
 const MIX_VERSION = "mix-v1";
-const MIN_SEC = 0.4;
+const MIN_SEC = 0.3;
 const MAX_SEC = 8;
 
 const { values: args } = parseArgs({

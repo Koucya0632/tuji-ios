@@ -1,0 +1,535 @@
+{
+  "schemaVersion": 2,
+  "id": "post-office",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "郵局寄包裹",
+    "zh-Hans": "邮局寄包裹",
+    "en": "Post office parcel"
+  },
+  "summary": {
+    "zh-Hant": "寄國際包裹時窗口會問的六件事",
+    "zh-Hans": "寄国际包裹时窗口会问的六件事",
+    "en": "Six things the counter asks when you send a parcel abroad"
+  },
+  "questions": [
+    {
+      "id": "post-office.destination",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂窗口問要寄到哪裡",
+        "zh-Hans": "听懂窗口问要寄到哪里",
+        "en": "Understand when you are asked where the parcel is going"
+      },
+      "phrasings": [
+        {
+          "id": "post-office.destination.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "どちらまでお送りしますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.destination.p1.mp3"
+        },
+        {
+          "id": "post-office.destination.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お届け先はどちらですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "post-office.destination.p2.mp3"
+        },
+        {
+          "id": "post-office.destination.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "国内ですか、海外ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.destination.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要寄到哪裡",
+            "zh-Hans": "要寄到哪里",
+            "en": "Where it is going"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要用什麼方式寄",
+            "zh-Hans": "要用什么方式寄",
+            "en": "How you want to send it"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "裡面裝什麼",
+            "zh-Hans": "里面装什么",
+            "en": "What is inside"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "台湾です",
+        "audio": "post-office.destination.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お届け先」是收件的地方，「国内」是日本國內，「海外」是國外。說國名加「です」就好。",
+        "zh-Hans": "「お届け先」是收件的地方，「国内」是日本国内，「海外」是国外。说国名加「です」就好。",
+        "en": "お届け先 is where it is delivered. 国内 means within Japan and 海外 means abroad. Say the country with です."
+      },
+      "wordIds": [
+        "parcel",
+        "postal-counter"
+      ]
+    },
+    {
+      "id": "post-office.method",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂窗口問要用哪種方式寄",
+        "zh-Hans": "听懂窗口问要用哪种方式寄",
+        "en": "Understand when you are asked how to send it"
+      },
+      "phrasings": [
+        {
+          "id": "post-office.method.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "EMSと航空便、どちらになさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.method.p1.mp3"
+        },
+        {
+          "id": "post-office.method.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "発送方法はいかがなさいますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "post-office.method.p2.mp3"
+        },
+        {
+          "id": "post-office.method.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "航空便と船便がございますが、どうなさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.method.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "什麼時候要寄到",
+            "zh-Hans": "什么时候要寄到",
+            "en": "When it needs to arrive"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要用哪種方式寄",
+            "zh-Hans": "要用哪种方式寄",
+            "en": "How you want to send it"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要寄到哪裡",
+            "zh-Hans": "要寄到哪里",
+            "en": "Where it is going"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "EMSで／航空便で",
+        "audio": "post-office.method.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「EMS」最快也最貴，「航空便」是空運，「船便」是海運，便宜但慢。能選哪些方式依目的地與時期不同，以現場說明為準。",
+        "zh-Hans": "「EMS」最快也最贵，「航空便」是空运，「船便」是海运，便宜但慢。能选哪些方式依目的地与时期不同，以现场说明为准。",
+        "en": "EMS is fastest and costs the most, 航空便 is airmail, and 船便 is sea mail, cheap but slow. Which ones you can choose depends on the destination and the time, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "Available services (EMS, airmail, sea mail, SAL) vary by destination and change over time. Confirm the three named services are still offered for common destinations."
+    },
+    {
+      "id": "post-office.contents",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂窗口問包裹裡裝什麼",
+        "zh-Hans": "听懂窗口问包裹里装什么",
+        "en": "Understand when you are asked what is inside"
+      },
+      "phrasings": [
+        {
+          "id": "post-office.contents.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "中身は何ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.contents.p1.mp3"
+        },
+        {
+          "id": "post-office.contents.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "中身をお伺いしてもよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "post-office.contents.p2.mp3"
+        },
+        {
+          "id": "post-office.contents.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "内容品は何でしょうか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.contents.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "東西值多少錢",
+            "zh-Hans": "东西值多少钱",
+            "en": "How much it is worth"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有多重",
+            "zh-Hans": "有多重",
+            "en": "How heavy it is"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "裡面裝什麼",
+            "zh-Hans": "里面装什么",
+            "en": "What is inside"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "服とお菓子です",
+        "audio": "post-office.contents.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「中身」「内容品」是包裹裡的東西。寄國外要寫在單子上，簡單說品項就好，例如「服です」「お菓子です」。",
+        "zh-Hans": "「中身」「内容品」是包裹里的东西。寄国外要写在单子上，简单说品项就好，例如「服です」「お菓子です」。",
+        "en": "中身 and 内容品 mean the contents. For overseas mail they go on the form. Name the items simply, like 服です or お菓子です."
+      },
+      "wordIds": [
+        "parcel",
+        "cardboard-box"
+      ]
+    },
+    {
+      "id": "post-office.batteries",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂窗口問有沒有電池這類東西",
+        "zh-Hans": "听懂窗口问有没有电池这类东西",
+        "en": "Understand when you are asked about batteries and sprays"
+      },
+      "phrasings": [
+        {
+          "id": "post-office.batteries.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "電池やスプレー缶は入っていませんか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.batteries.p1.mp3"
+        },
+        {
+          "id": "post-office.batteries.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "リチウム電池などは入っていませんよね？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "post-office.batteries.p2.mp3"
+        },
+        {
+          "id": "post-office.batteries.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "危険物は入っていませんか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.batteries.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有電池或噴霧罐",
+            "zh-Hans": "有没有电池或喷雾罐",
+            "en": "Any batteries or spray cans"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有容易破的東西",
+            "zh-Hans": "有没有容易碎的东西",
+            "en": "Anything fragile"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有現金或貴重的東西",
+            "zh-Hans": "有没有现金或贵重的东西",
+            "en": "Any cash or valuables"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "入っていません",
+        "audio": "post-office.batteries.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「電池」是電池，「スプレー缶」是噴霧罐，「危険物」是危險物品。這是否定問句，回「はい」是「對，沒有」，很容易答反，所以直接說「入っていません」。有的話說「入っています」，能不能寄依目的地與規定不同，以現場說明為準。",
+        "zh-Hans": "「電池」是电池，「スプレー缶」是喷雾罐，「危険物」是危险物品。这是否定问句，回「はい」是「对，没有」，很容易答反，所以直接说「入っていません」。有的话说「入っています」，能不能寄依目的地与规定不同，以现场说明为准。",
+        "en": "電池 is battery, スプレー缶 is spray can and 危険物 means dangerous goods. This is a negative question, so はい means yes, there are none, which is easy to get backwards. Say 入っていません. If there are, say 入っています. Whether they can go depends on the destination and the rules, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "aa-battery"
+      ],
+      "reviewNote": "Prohibited items in international mail (lithium batteries, sprays, liquids) are safety and legal content; someone who knows Japan Post rules should check the phrasings and explanation."
+    },
+    {
+      "id": "post-office.label",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂窗口請你填寄件單",
+        "zh-Hans": "听懂窗口请你填寄件单",
+        "en": "Understand when you are asked to fill in the label"
+      },
+      "phrasings": [
+        {
+          "id": "post-office.label.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらのラベルにご記入をお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.label.p1.mp3"
+        },
+        {
+          "id": "post-office.label.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お届け先と中身を、こちらにお願いします",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "post-office.label.p2.mp3"
+        },
+        {
+          "id": "post-office.label.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "伝票のご記入をお願いできますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.label.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請把包裹放到秤上",
+            "zh-Hans": "请把包裹放到秤上",
+            "en": "Please put the parcel on the scale"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請填寫這張單",
+            "zh-Hans": "请填写这张单",
+            "en": "Please fill in this form"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請到旁邊的窗口",
+            "zh-Hans": "请到旁边的窗口",
+            "en": "Please go to the next counter"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "post-office.label.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ラベル」「伝票」是寄件單，要寫收件人、地址和內容物。填寫方式依郵局與目的地不同，以現場說明為準。",
+        "zh-Hans": "「ラベル」「伝票」是寄件单，要写收件人、地址和内容物。填写方式依邮局与目的地不同，以现场说明为准。",
+        "en": "ラベル and 伝票 are the shipping form. It asks for the recipient, the address and the contents. How it is done depends on the post office and the destination, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "shipping-label"
+      ],
+      "reviewNote": "Whether international labels must now be prepared online beforehand (国際郵便マイページ) is unconfirmed in the outline; check before release."
+    },
+    {
+      "id": "post-office.payment",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂窗口問要用什麼付款",
+        "zh-Hans": "听懂窗口问用什么付款",
+        "en": "Understand when you are asked how you will pay"
+      },
+      "phrasings": [
+        {
+          "id": "post-office.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払いは現金でよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.payment.p1.mp3"
+        },
+        {
+          "id": "post-office.payment.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払い方法はいかがなさいますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "post-office.payment.p2.mp3"
+        },
+        {
+          "id": "post-office.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払いは現金ですか、カードですか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "post-office.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要收据",
+            "en": "Do you need a receipt"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "運費是多少",
+            "zh-Hans": "运费是多少",
+            "en": "How much the postage is"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要用什麼付款",
+            "zh-Hans": "要用什么付款",
+            "en": "How you will pay"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "カードで／現金で",
+        "audio": "post-office.payment.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お支払い」是付款。刷卡說「カードで」，付現說「現金で」。能用的付款方式依郵局不同。",
+        "zh-Hans": "「お支払い」是付款。刷卡说「カードで」，付现说「現金で」。能用的付款方式依邮局不同。",
+        "en": "お支払い means payment. Say カードで for card or 現金で for cash. Which methods are accepted depends on the post office."
+      },
+      "wordIds": []
+    }
+  ]
+}

@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 2,
+  "id": "hotel-check-in",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "飯店入住",
+    "zh-Hans": "酒店入住",
+    "en": "Hotel check-in"
+  },
+  "summary": {
+    "zh-Hant": "入住時櫃台會問的六件事",
+    "zh-Hans": "入住时前台会问的六件事",
+    "en": "Six things the front desk asks at check-in"
+  },
+  "questions": [
+    {
+      "id": "hotel-check-in.name",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問預約的名字",
+        "zh-Hans": "听懂前台问预约的名字",
+        "en": "Understand when the front desk asks the name on the booking"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-in.name.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご予約のお名前をお伺いできますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.name.p1.mp3"
+        },
+        {
+          "id": "hotel-check-in.name.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お名前頂戴してもよろしいでしょうか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-in.name.p2.mp3"
+        },
+        {
+          "id": "hotel-check-in.name.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご予約者様のお名前をお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.name.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請問預約的名字",
+            "zh-Hans": "请问预约的名字",
+            "en": "What name is the booking under"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請問你的電話號碼",
+            "zh-Hans": "请问你的电话号码",
+            "en": "What is your phone number"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請給我看護照",
+            "zh-Hans": "请给我看护照",
+            "en": "May I see your passport"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ワンです",
+        "audio": "hotel-check-in.name.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お名前」是名字，「ご予約者様」是訂房的人。說訂房時用的名字加「です」，也可以直接給他看預約畫面。",
+        "zh-Hans": "「お名前」是名字，「ご予約者様」是订房的人。说订房时用的名字加「です」，也可以直接给他看预订页面。",
+        "en": "お名前 means your name and ご予約者様 is the person who booked. Say the booking name with です, or show the booking on your phone."
+      },
+      "wordIds": [
+        "hotel-receptionist"
+      ]
+    },
+    {
+      "id": "hotel-check-in.nights",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台在確認你住幾晚",
+        "zh-Hans": "听懂前台在确认你住几晚",
+        "en": "Understand the front desk confirming how many nights you stay"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-in.nights.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "本日から2泊でお間違いないでしょうか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.nights.p1.mp3"
+        },
+        {
+          "id": "hotel-check-in.nights.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "2泊のご予約ですね",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-in.nights.p2.mp3"
+        },
+        {
+          "id": "hotel-check-in.nights.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "シングルのお部屋で2泊、承っております",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.nights.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "住一晚，對嗎",
+            "zh-Hans": "住一晚，对吗",
+            "en": "One night, right"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "住兩晚，對嗎",
+            "zh-Hans": "住两晚，对吗",
+            "en": "Two nights, right"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "住三晚，對嗎",
+            "zh-Hans": "住三晚，对吗",
+            "en": "Three nights, right"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "hotel-check-in.nights.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「泊」是晚：1泊（いっぱく）、2泊（にはく）、3泊（さんぱく）。「お間違いない」是確認沒錯。房型也可能一起確認，「シングル」是單人房，「ツイン」是兩張床。對的話說「はい」。",
+        "zh-Hans": "「泊」是晚：1泊（いっぱく）、2泊（にはく）、3泊（さんぱく）。「お間違いない」是确认没错。房型也可能一起确认，「シングル」是单人房，「ツイン」是两张床。对的话说「はい」。",
+        "en": "泊 counts nights: 1泊 (ippaku), 2泊 (nihaku), 3泊 (sanpaku). お間違いない asks if it is correct. The room type may come up too: シングル is a single, ツイン has two beds. Say はい if it is right."
+      },
+      "wordIds": [
+        "bed"
+      ]
+    },
+    {
+      "id": "hotel-check-in.passport",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台要看護照",
+        "zh-Hans": "听懂前台要看护照",
+        "en": "Understand when the front desk asks for your passport"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-in.passport.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "パスポートを拝見してもよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.passport.p1.mp3"
+        },
+        {
+          "id": "hotel-check-in.passport.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートお願いできますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-in.passport.p2.mp3"
+        },
+        {
+          "id": "hotel-check-in.passport.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートを一度お預かりしてもよろしいでしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.passport.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請給我看護照",
+            "zh-Hans": "请给我看护照",
+            "en": "May I see your passport"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請給我看信用卡",
+            "zh-Hans": "请给我看信用卡",
+            "en": "May I see your credit card"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請填這張卡",
+            "zh-Hans": "请填这张卡",
+            "en": "Please fill in this card"
+          },
+          "correct": false
+        },
+        {
+          "id": "d",
+          "text": {
+            "zh-Hant": "請問預約的名字",
+            "zh-Hans": "请问预约的名字",
+            "en": "What name is the booking under"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、どうぞ",
+        "audio": "hotel-check-in.passport.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「拝見」是看，「お預かり」是先交給櫃台一下。日本的旅館通常會請外國旅客出示護照並影印，細節依規定與旅館不同，以現場說明為準。",
+        "zh-Hans": "「拝見」是看，「お預かり」是先交给前台一下。日本的酒店通常会请外国旅客出示护照并复印，细节依规定与酒店不同，以现场说明为准。",
+        "en": "拝見 means to look at, and お預かり means they hold it for a moment. Hotels in Japan usually ask foreign guests to show their passport and make a copy. Details depend on the rules and the hotel, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "passport"
+      ],
+      "reviewNote": "Passport inspection and copying for foreign guests (旅館業法 and local ordinances). Explanation stays neutral; a reviewer should confirm the wording before it can say more."
+    },
+    {
+      "id": "hotel-check-in.registration-card",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台請你填住宿登記卡",
+        "zh-Hans": "听懂前台请你填入住登记卡",
+        "en": "Understand when you are asked to fill in the registration card"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-in.registration-card.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらにご記入をお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.registration-card.p1.mp3"
+        },
+        {
+          "id": "hotel-check-in.registration-card.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お名前とご住所、こちらにお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-in.registration-card.p2.mp3"
+        },
+        {
+          "id": "hotel-check-in.registration-card.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "こちらの宿泊カードにご記入いただけますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.registration-card.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請在這裡等一下",
+            "zh-Hans": "请在这里等一下",
+            "en": "Please wait here"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請用這台機器付款",
+            "zh-Hans": "请用这台机器付款",
+            "en": "Please pay at this machine"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請填寫這張卡",
+            "zh-Hans": "请填写这张卡",
+            "en": "Please fill in this card"
+          },
+          "correct": true
+        },
+        {
+          "id": "d",
+          "text": {
+            "zh-Hant": "請給我看護照",
+            "zh-Hans": "请给我看护照",
+            "en": "May I see your passport"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "hotel-check-in.registration-card.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ご記入」是填寫，「宿泊カード」是住宿登記卡，通常要寫名字、地址、電話。填完交回櫃台。",
+        "zh-Hans": "「ご記入」是填写，「宿泊カード」是入住登记卡，通常要写名字、地址、电话。填完交回前台。",
+        "en": "ご記入 means to fill in, and 宿泊カード is the registration card. It usually asks for your name, address and phone number. Hand it back when you are done."
+      },
+      "wordIds": [
+        "ballpoint-pen"
+      ]
+    },
+    {
+      "id": "hotel-check-in.payment",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你想刷信用卡付住宿費。在付款機上按對的按鈕",
+        "zh-Hans": "你想刷信用卡付住宿费。在付款机上按对的按钮",
+        "en": "You want to pay for the room by credit card. Tap the right button on the machine"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-in.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払いはこちらの機械でお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "ご宿泊料金のお支払い",
+            "detail": "ワン 様　2泊　合計 ¥18,400",
+            "buttons": [
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "QRコード決済"
+              },
+              {
+                "choiceId": "cancel",
+                "ja": "取消"
+              }
+            ]
+          },
+          "audio": "hotel-check-in.payment.p1.mp3"
+        },
+        {
+          "id": "hotel-check-in.payment.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払いは先にお願いしております",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お支払い方法を選択してください",
+            "detail": "ご宿泊料金（2泊）¥18,400",
+            "buttons": [
+              {
+                "choiceId": "qr",
+                "ja": "QR決済"
+              },
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジット"
+              },
+              {
+                "choiceId": "cancel",
+                "ja": "やめる"
+              }
+            ]
+          },
+          "audio": "hotel-check-in.payment.p2.mp3"
+        },
+        {
+          "id": "hotel-check-in.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払いは現金とカード、どちらになさいますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "ご宿泊料金のお支払い",
+            "detail": "ワン 様　2泊　合計 ¥18,400",
+            "buttons": [
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "QRコード決済"
+              },
+              {
+                "choiceId": "cancel",
+                "ja": "取消"
+              }
+            ]
+          },
+          "audio": "hotel-check-in.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "cash",
+          "text": {
+            "zh-Hant": "現金",
+            "zh-Hans": "现金",
+            "en": "Cash"
+          },
+          "correct": false
+        },
+        {
+          "id": "credit",
+          "text": {
+            "zh-Hant": "信用卡",
+            "zh-Hans": "信用卡",
+            "en": "Credit card"
+          },
+          "correct": true
+        },
+        {
+          "id": "qr",
+          "text": {
+            "zh-Hant": "條碼支付",
+            "zh-Hans": "扫码支付",
+            "en": "QR code payment"
+          },
+          "correct": false
+        },
+        {
+          "id": "cancel",
+          "text": {
+            "zh-Hant": "取消",
+            "zh-Hans": "取消",
+            "en": "Cancel"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "カードで",
+        "audio": "hotel-check-in.payment.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「クレジット」是信用卡，「QR決済」是條碼支付。「先にお願いしております」是要先付款；有的旅館入住時先付，有的退房時再付。部分城市另收住宿稅。",
+        "zh-Hans": "「クレジット」是信用卡，「QR決済」是扫码支付。「先にお願いしております」是要先付款；有的酒店入住时先付，有的退房时再付。部分城市另收住宿税。",
+        "en": "クレジット is credit card and QR決済 is QR code payment. 先にお願いしております means they ask you to pay now. Some hotels charge at check-in, others at check-out. Some cities add an accommodation tax."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "hotel-check-in.breakfast",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問要不要加早餐",
+        "zh-Hans": "听懂前台问要不要加早餐",
+        "en": "Understand when the front desk asks about breakfast"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-in.breakfast.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "朝食はご利用になりますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.breakfast.p1.mp3"
+        },
+        {
+          "id": "hotel-check-in.breakfast.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "朝食はお付けしますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-in.breakfast.p2.mp3"
+        },
+        {
+          "id": "hotel-check-in.breakfast.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "朝食はいかがなさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-in.breakfast.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "早餐幾點開始",
+            "zh-Hans": "早餐几点开始",
+            "en": "What time breakfast starts"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要加早餐",
+            "zh-Hans": "要不要加早餐",
+            "en": "Do you want breakfast"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要加晚餐",
+            "zh-Hans": "要不要加晚餐",
+            "en": "Do you want dinner"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "hotel-check-in.breakfast.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「朝食」是早餐，「お付けします」是加上。要就說「お願いします」，不用說「大丈夫です」。早餐的地點和時間通常會接著說明。",
+        "zh-Hans": "「朝食」是早餐，「お付けします」是加上。要就说「お願いします」，不用说「大丈夫です」。早餐的地点和时间通常会接着说明。",
+        "en": "朝食 is breakfast and お付けします means to add it. Say お願いします for yes or 大丈夫です for no. Where and when breakfast is served usually comes next."
+      },
+      "wordIds": []
+    }
+  ]
+}

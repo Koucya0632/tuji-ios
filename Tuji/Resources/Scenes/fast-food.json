@@ -1,0 +1,684 @@
+{
+  "schemaVersion": 2,
+  "id": "fast-food",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "速食店",
+    "zh-Hans": "快餐店",
+    "en": "Fast food"
+  },
+  "summary": {
+    "zh-Hant": "點速食時會被問的七件事",
+    "zh-Hans": "点快餐时会被问的七件事",
+    "en": "Seven things you are asked when ordering fast food"
+  },
+  "questions": [
+    {
+      "id": "fast-food.eat-in",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問內用還是外帶",
+        "zh-Hans": "听懂店员问堂食还是外带",
+        "en": "Understand when you are asked about eating here or taking out"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.eat-in.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらでお召し上がりですか、お持ち帰りですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.eat-in.p1.mp3"
+        },
+        {
+          "id": "fast-food.eat-in.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "店内ご利用でよろしいですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fast-food.eat-in.p2.mp3"
+        },
+        {
+          "id": "fast-food.eat-in.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "テイクアウトでよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.eat-in.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "內用還是外帶",
+            "zh-Hans": "堂食还是外带",
+            "en": "Eating here or taking out"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要套餐還是單點",
+            "zh-Hans": "要套餐还是单点",
+            "en": "Meal or just the item"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要哪個尺寸",
+            "zh-Hans": "要哪个尺寸",
+            "en": "Which size"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "店内で／持ち帰りで",
+        "audio": "fast-food.eat-in.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「こちらで」「店内」是在店裡吃，「お持ち帰り」「テイクアウト」是外帶。回「店内で」或「持ち帰りで」。",
+        "zh-Hans": "「こちらで」「店内」是在店里吃，「お持ち帰り」「テイクアウト」是外带。回「店内で」或「持ち帰りで」。",
+        "en": "こちらで and 店内 mean eating here, お持ち帰り and テイクアウト mean taking it out. Answer 店内で or 持ち帰りで."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "fast-food.set-or-single",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要做成套餐",
+        "zh-Hans": "听懂店员问要不要做成套餐",
+        "en": "Understand when the staff ask if you want a meal set"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.set-or-single.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "セットになさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.set-or-single.p1.mp3"
+        },
+        {
+          "id": "fast-food.set-or-single.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "セットでよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fast-food.set-or-single.p2.mp3"
+        },
+        {
+          "id": "fast-food.set-or-single.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "プラス300円でセットにできますが、いかがですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.set-or-single.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要換大份",
+            "zh-Hans": "要不要换大份",
+            "en": "Do you want it large"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要套餐還是單點",
+            "zh-Hans": "要套餐还是单点",
+            "en": "Meal or just the item"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "內用還是外帶",
+            "zh-Hans": "堂食还是外带",
+            "en": "Eating here or taking out"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "セットで／単品で",
+        "audio": "fast-food.set-or-single.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「セット」是套餐，會附薯條和飲料；「単品」是只點那一樣。加多少錢依店家不同。",
+        "zh-Hans": "「セット」是套餐，会配薯条和饮料；「単品」是只点那一样。加多少钱依店家不同。",
+        "en": "セット is a meal with fries and a drink, and 単品 is the item on its own. The extra cost depends on the shop."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "fast-food.set-drink",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問套餐要配什麼飲料",
+        "zh-Hans": "听懂店员问套餐要配什么饮料",
+        "en": "Understand when the staff ask which drink comes with your meal"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.set-drink.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "セットのお飲み物はどれになさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.set-drink.p1.mp3"
+        },
+        {
+          "id": "fast-food.set-drink.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ドリンクはどうなさいますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fast-food.set-drink.p2.mp3"
+        },
+        {
+          "id": "fast-food.set-drink.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ドリンクはこちらからお選びください",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.set-drink.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要哪個尺寸",
+            "zh-Hans": "要哪个尺寸",
+            "en": "Which size"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "套餐要配薯條嗎",
+            "zh-Hans": "套餐要配薯条吗",
+            "en": "Fries with the meal"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "套餐要配什麼飲料",
+            "zh-Hans": "套餐要配什么饮料",
+            "en": "Which drink with the meal"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "コーラで／これで",
+        "audio": "fast-food.set-drink.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お飲み物」「ドリンク」都是飲料。說飲料名加「で」，或指著菜單說「これで」。",
+        "zh-Hans": "「お飲み物」「ドリンク」都是饮料。说饮料名加「で」，或指着菜单说「これで」。",
+        "en": "お飲み物 and ドリンク both mean drink. Say the drink name with で, or point at the menu and say これで."
+      },
+      "wordIds": [
+        "menu"
+      ]
+    },
+    {
+      "id": "fast-food.size",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問薯條和飲料的尺寸",
+        "zh-Hans": "听懂店员问薯条和饮料的尺寸",
+        "en": "Understand when the staff ask the size of your fries and drink"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.size.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ポテトとドリンクのサイズはいかがなさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.size.p1.mp3"
+        },
+        {
+          "id": "fast-food.size.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "セットはMでよろしいですか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fast-food.size.p2.mp3"
+        },
+        {
+          "id": "fast-food.size.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "Lサイズに変更もできますが、いかがですか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.size.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "薯條和飲料要多大",
+            "zh-Hans": "薯条和饮料要多大",
+            "en": "Size of the fries and drink"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要什麼飲料",
+            "zh-Hans": "要什么饮料",
+            "en": "Which drink"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要做成套餐",
+            "zh-Hans": "要不要做成套餐",
+            "en": "Do you want the meal"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "Mで",
+        "audio": "fast-food.size.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「サイズ」是大小，S、M、L 照字母唸。「Lサイズに変更」是問要不要加錢換大的，不用就說「Mのままで」。",
+        "zh-Hans": "「サイズ」是大小，S、M、L 照字母念。「Lサイズに変更」是问要不要加钱换大的，不用就说「Mのままで」。",
+        "en": "サイズ means size, and S, M and L are read as letters. Lサイズに変更 offers a paid upgrade to large. Say Mのままで to keep medium."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "fast-food.nugget-sauce",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "點了雞塊。聽懂店員問要哪種沾醬",
+        "zh-Hans": "点了鸡块。听懂店员问要哪种蘸酱",
+        "en": "You ordered nuggets. Understand when the staff ask which sauce"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.nugget-sauce.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ナゲットのソースはどちらになさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.nugget-sauce.p1.mp3"
+        },
+        {
+          "id": "fast-food.nugget-sauce.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ソース、バーベキューとマスタードどちらにしますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fast-food.nugget-sauce.p2.mp3"
+        },
+        {
+          "id": "fast-food.nugget-sauce.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ソースは何になさいますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.nugget-sauce.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "雞塊要幾塊",
+            "zh-Hans": "鸡块要几块",
+            "en": "How many nuggets"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "雞塊要配哪種醬",
+            "zh-Hans": "鸡块要配哪种酱",
+            "en": "Which sauce for the nuggets"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要什麼飲料",
+            "zh-Hans": "要什么饮料",
+            "en": "Which drink"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "バーベキューで／これで",
+        "audio": "fast-food.nugget-sauce.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ソース」是沾醬，點雞塊才會問。醬料種類依店家不同，聽不出來就指著菜單說「これで」。",
+        "zh-Hans": "「ソース」是蘸酱，点鸡块才会问。酱料种类依店家不同，听不出来就指着菜单说「これで」。",
+        "en": "ソース is the dipping sauce, asked only when you order nuggets. The choices vary by shop. If you cannot catch them, point at the menu and say これで."
+      },
+      "wordIds": [
+        "mustard"
+      ]
+    },
+    {
+      "id": "fast-food.wait-for-number",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員說會叫號，請在旁邊等",
+        "zh-Hans": "听懂店员说会叫号，请在旁边等",
+        "en": "Understand when the staff say they will call your number"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.wait-for-number.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "番号でお呼びしますので、横でお待ちください",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.wait-for-number.p1.mp3"
+        },
+        {
+          "id": "fast-food.wait-for-number.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お呼びしますので、横でお待ちください",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fast-food.wait-for-number.p2.mp3"
+        },
+        {
+          "id": "fast-food.wait-for-number.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "レシートの番号でお呼びしますので、少々お待ちください",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fast-food.wait-for-number.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "會叫號，請在旁邊等",
+            "zh-Hans": "会叫号，请在旁边等",
+            "en": "We will call your number, wait to the side"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "會幫你送到座位",
+            "zh-Hans": "会帮你送到座位",
+            "en": "We will bring it to your seat"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請先去找位子",
+            "zh-Hans": "请先去找座位",
+            "en": "Please find a seat first"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "fast-food.wait-for-number.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「番号でお呼びします」是會叫收據上的號碼，「横で」是在旁邊。收好收據，聽到號碼再去拿。",
+        "zh-Hans": "「番号でお呼びします」是会叫小票上的号码，「横で」是在旁边。收好小票，听到号码再去拿。",
+        "en": "番号でお呼びします means they will call the number on your receipt, and 横で means to the side. Keep the receipt and collect your food when you hear the number."
+      },
+      "wordIds": [
+        "receipt"
+      ]
+    },
+    {
+      "id": "fast-food.kiosk",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你只要漢堡，不要套餐。在點餐機上按對的按鈕",
+        "zh-Hans": "你只要汉堡，不要套餐。在点餐机上按对的按钮",
+        "en": "You want just the burger, not the meal. Tap the right button on the kiosk"
+      },
+      "phrasings": [
+        {
+          "id": "fast-food.kiosk.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "セットにしますか？",
+            "detail": "ハンバーガー　¥400",
+            "buttons": [
+              {
+                "choiceId": "set",
+                "ja": "セットにする +¥300"
+              },
+              {
+                "choiceId": "large-set",
+                "ja": "Lセットにする +¥400"
+              },
+              {
+                "choiceId": "single",
+                "ja": "単品のまま"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "fast-food.kiosk.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "セットにすると、ポテトとドリンクが付きます",
+            "detail": "ハンバーガー　¥400",
+            "buttons": [
+              {
+                "choiceId": "single",
+                "ja": "単品で注文"
+              },
+              {
+                "choiceId": "set",
+                "ja": "セットで注文"
+              },
+              {
+                "choiceId": "large-set",
+                "ja": "Lセットで注文"
+              },
+              {
+                "choiceId": "back",
+                "ja": "前の画面へ"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "fast-food.kiosk.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "あちらのタッチパネルでご注文ください",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "セットにしますか？",
+            "detail": "ハンバーガー　¥400",
+            "buttons": [
+              {
+                "choiceId": "set",
+                "ja": "セットにする +¥300"
+              },
+              {
+                "choiceId": "large-set",
+                "ja": "Lセットにする +¥400"
+              },
+              {
+                "choiceId": "single",
+                "ja": "単品のまま"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "fast-food.kiosk.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "set",
+          "text": {
+            "zh-Hant": "做成套餐",
+            "zh-Hans": "做成套餐",
+            "en": "Make it a meal"
+          },
+          "correct": false
+        },
+        {
+          "id": "large-set",
+          "text": {
+            "zh-Hant": "做成大份套餐",
+            "zh-Hans": "做成大份套餐",
+            "en": "Make it a large meal"
+          },
+          "correct": false
+        },
+        {
+          "id": "single",
+          "text": {
+            "zh-Hant": "只要漢堡",
+            "zh-Hans": "只要汉堡",
+            "en": "Just the burger"
+          },
+          "correct": true
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "単品のまま",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「単品」是只點那一樣，「セット」會加薯條和飲料。有的店請你先在門口的點餐機點，語言切換鈕通常在畫面角落。",
+        "zh-Hans": "「単品」是只点那一样，「セット」会加薯条和饮料。有的店请你先在门口的点餐机点，语言切换按钮通常在屏幕角落。",
+        "en": "単品 is the item on its own, and セット adds fries and a drink. Some shops ask you to order at a kiosk by the door. The language button is usually in a corner of the screen."
+      },
+      "wordIds": []
+    }
+  ]
+}

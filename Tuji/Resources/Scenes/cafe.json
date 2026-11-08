@@ -1,0 +1,526 @@
+{
+  "schemaVersion": 2,
+  "id": "cafe",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "咖啡廳",
+    "zh-Hans": "咖啡店",
+    "en": "Café"
+  },
+  "summary": {
+    "zh-Hant": "點一杯咖啡會被問的六件事",
+    "zh-Hans": "点一杯咖啡会被问的六件事",
+    "en": "Six things you are asked when ordering a coffee"
+  },
+  "questions": [
+    {
+      "id": "cafe.seat-first",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問位子找好了沒",
+        "zh-Hans": "听懂店员问座位找好了没",
+        "en": "Understand when the staff ask if you have a seat"
+      },
+      "phrasings": [
+        {
+          "id": "cafe.seat-first.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お席はお決まりですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.seat-first.p1.mp3"
+        },
+        {
+          "id": "cafe.seat-first.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "先にお席の確保をお願いします",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "cafe.seat-first.p2.mp3"
+        },
+        {
+          "id": "cafe.seat-first.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お席、お取りいただいてますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.seat-first.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "位子找好了嗎",
+            "zh-Hans": "座位找好了吗",
+            "en": "Do you have a seat"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "點好了嗎",
+            "zh-Hans": "点好了吗",
+            "en": "Are you ready to order"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "內用還是外帶",
+            "zh-Hans": "堂食还是外带",
+            "en": "Eating here or taking out"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "まだです／取ってあります",
+        "audio": "cafe.seat-first.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お席」是座位。人多的時候會請你先找好位子再點。這裡的「お決まり」問的是位子，不是點餐。還沒找就說「まだです」。",
+        "zh-Hans": "「お席」是座位。人多的时候会请你先找好座位再点。这里的「お決まり」问的是座位，不是点单。还没找就说「まだです」。",
+        "en": "お席 means a seat. When it is busy, cafés ask you to find a seat before ordering. Here お決まり is about the seat, not your order. Say まだです if you have not found one."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "cafe.eat-in",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問在店裡喝還是外帶",
+        "zh-Hans": "听懂店员问堂食还是外带",
+        "en": "Understand when you are asked about drinking here or taking it out"
+      },
+      "phrasings": [
+        {
+          "id": "cafe.eat-in.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "店内でご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.eat-in.p1.mp3"
+        },
+        {
+          "id": "cafe.eat-in.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お持ち帰りでよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "cafe.eat-in.p2.mp3"
+        },
+        {
+          "id": "cafe.eat-in.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "テイクアウトですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.eat-in.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "熱的還是冰的",
+            "zh-Hans": "热的还是冰的",
+            "en": "Hot or iced"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "內用還是外帶",
+            "zh-Hans": "堂食还是外带",
+            "en": "Here or to go"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "位子找好了嗎",
+            "zh-Hans": "座位找好了吗",
+            "en": "Do you have a seat"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "店内で／持ち帰りで",
+        "audio": "cafe.eat-in.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「店内」是在店裡喝，「お持ち帰り」「テイクアウト」是外帶。回「店内で」或「持ち帰りで」。",
+        "zh-Hans": "「店内」是在店里喝，「お持ち帰り」「テイクアウト」是外带。回「店内で」或「持ち帰りで」。",
+        "en": "店内 means in the café, while お持ち帰り and テイクアウト mean to go. Answer 店内で or 持ち帰りで."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "cafe.hot-or-iced",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要熱的還是冰的",
+        "zh-Hans": "听懂店员问要热的还是冰的",
+        "en": "Understand when the staff ask hot or iced"
+      },
+      "phrasings": [
+        {
+          "id": "cafe.hot-or-iced.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ホットとアイス、どちらになさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.hot-or-iced.p1.mp3"
+        },
+        {
+          "id": "cafe.hot-or-iced.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "温かいのと冷たいの、どちらがよろしいですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "cafe.hot-or-iced.p2.mp3"
+        },
+        {
+          "id": "cafe.hot-or-iced.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "アイスでよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.hot-or-iced.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "熱的還是冰的",
+            "zh-Hans": "热的还是冰的",
+            "en": "Hot or iced"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要哪個尺寸",
+            "zh-Hans": "要哪个杯型",
+            "en": "Which size"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "內用還是外帶",
+            "zh-Hans": "堂食还是外带",
+            "en": "Here or to go"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ホットで／アイスで",
+        "audio": "cafe.hot-or-iced.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ホット」「温かいの」是熱的，「アイス」「冷たいの」是冰的。回「ホットで」或「アイスで」。",
+        "zh-Hans": "「ホット」「温かいの」是热的，「アイス」「冷たいの」是冰的。回「ホットで」或「アイスで」。",
+        "en": "ホット and 温かいの mean hot, アイス and 冷たいの mean iced. Answer ホットで or アイスで."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "cafe.size",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要哪個尺寸",
+        "zh-Hans": "听懂店员问要哪个杯型",
+        "en": "Understand when the staff ask what size"
+      },
+      "phrasings": [
+        {
+          "id": "cafe.size.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "サイズはいかがなさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.size.p1.mp3"
+        },
+        {
+          "id": "cafe.size.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "サイズはMでよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "cafe.size.p2.mp3"
+        },
+        {
+          "id": "cafe.size.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "SとMがございますが、どちらになさいますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.size.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要加奶精或糖漿嗎",
+            "zh-Hans": "要加奶精或糖浆吗",
+            "en": "Milk or syrup"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "熱的還是冰的",
+            "zh-Hans": "热的还是冰的",
+            "en": "Hot or iced"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要哪個尺寸",
+            "zh-Hans": "要哪个杯型",
+            "en": "Which size"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "Mで",
+        "audio": "cafe.size.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「サイズ」是杯子大小。尺寸名稱各店不同，聽不懂就指著菜單上的杯子說「これで」。",
+        "zh-Hans": "「サイズ」是杯子大小。杯型名称各店不同，听不懂就指着菜单上的杯子说「これで」。",
+        "en": "サイズ is the cup size. Size names differ from café to café. If you are unsure, point at the cup on the menu and say これで."
+      },
+      "wordIds": [
+        "menu"
+      ]
+    },
+    {
+      "id": "cafe.milk-and-syrup",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要奶精、糖漿",
+        "zh-Hans": "听懂店员问要不要奶精、糖浆",
+        "en": "Understand when the staff offer milk and syrup"
+      },
+      "phrasings": [
+        {
+          "id": "cafe.milk-and-syrup.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ミルクとお砂糖はお使いになりますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.milk-and-syrup.p1.mp3"
+        },
+        {
+          "id": "cafe.milk-and-syrup.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ガムシロップとミルクはお付けしますか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "cafe.milk-and-syrup.p2.mp3"
+        },
+        {
+          "id": "cafe.milk-and-syrup.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "シロップはご利用ですか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.milk-and-syrup.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要吸管",
+            "zh-Hans": "要不要吸管",
+            "en": "Do you need a straw"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要奶精或糖",
+            "zh-Hans": "要不要奶精或糖",
+            "en": "Milk or sugar"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要杯蓋",
+            "zh-Hans": "要不要杯盖",
+            "en": "Do you want a lid"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／お願いします",
+        "audio": "cafe.milk-and-syrup.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ミルク」在這裡是小杯的奶精，「ガムシロップ」「シロップ」是液體糖漿，冰飲多半用它。不用說「大丈夫です」。",
+        "zh-Hans": "「ミルク」在这里是小杯的奶精，「ガムシロップ」「シロップ」是液体糖浆，冰饮多半用它。不用说「大丈夫です」。",
+        "en": "ミルク here is a small cup of creamer, and ガムシロップ or シロップ is liquid syrup, usually for iced drinks. Say 大丈夫です if you do not need them."
+      },
+      "wordIds": [
+        "sugar"
+      ]
+    },
+    {
+      "id": "cafe.pickup",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員叫你取飲料",
+        "zh-Hans": "听懂店员叫你取饮料",
+        "en": "Understand when the staff call you to pick up your drink"
+      },
+      "phrasings": [
+        {
+          "id": "cafe.pickup.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "アイスカフェラテでお待ちのお客様",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.pickup.p1.mp3"
+        },
+        {
+          "id": "cafe.pickup.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "12番でお待ちのお客様、お待たせしました",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "cafe.pickup.p2.mp3"
+        },
+        {
+          "id": "cafe.pickup.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "アイスカフェラテのお客様、お待たせいたしました",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "cafe.pickup.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請再等一下",
+            "zh-Hans": "请再等一下",
+            "en": "Please wait a little longer"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請回位子等，會幫你送過去",
+            "zh-Hans": "请回座位等，会帮你送过去",
+            "en": "Wait at your seat and we will bring it"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "你的飲料好了",
+            "zh-Hans": "你的饮料好了",
+            "en": "Your drink is ready"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "cafe.pickup.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「〜でお待ちのお客様」是在叫等某樣東西的客人，前面是飲料名或號碼。聽到自己的就舉手說「はい」去拿。有的店會給取餐呼叫器，響了再去拿。",
+        "zh-Hans": "「〜でお待ちのお客様」是在叫等某样东西的客人，前面是饮料名或号码。听到自己的就举手说「はい」去拿。有的店会给取餐呼叫器，响了再去拿。",
+        "en": "〜でお待ちのお客様 calls the customer waiting for something, with the drink name or a number in front. When you hear yours, raise your hand, say はい and collect it. Some cafés give you a buzzer instead."
+      },
+      "wordIds": []
+    }
+  ]
+}

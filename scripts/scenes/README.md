@@ -11,7 +11,7 @@ Options: `--scenes <dir>`, `--out <dir>`, `--ambience <file>`, `--limit N`, `--d
 
 Needs Node 20 or later, plus `ffmpeg` and `ffprobe` on `PATH`. The key comes from `GOOGLE_TTS_API_KEY`. When that is empty, the script reads the same variable from `tuji-web/.env.local` in a parent directory. Dry runs need no key.
 
-`audio/manifest.json` records a digest of text, voice, speaking rate and ambience source for each file. A rerun regenerates only files whose inputs changed or whose bytes no longer match. After generating, every file must decode and last 0.4 to 8 seconds, or the script exits non-zero with the list. Two scene entries that share an `audio` name with different inputs are an error before any API call.
+`audio/manifest.json` records a digest of text, voice, speaking rate and ambience source for each file. A rerun regenerates only files whose inputs changed or whose bytes no longer match. After generating, every file must decode and last 0.3 to 8 seconds (a bare 「はい」 is about 0.35 s), or the script exits non-zero with the list. Two scene entries that share an `audio` name with different inputs are an error before any API call.
 
 `speed: "fast"` is speaking rate 1.25. `ambience: true` mixes a store bed about 18 dB under the voice, with 0.4 s of bed before and after, as mono 80 kbps MP3.
 

@@ -1,0 +1,543 @@
+{
+  "schemaVersion": 2,
+  "id": "ryokan",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "溫泉旅館",
+    "zh-Hans": "温泉旅馆",
+    "en": "Ryokan"
+  },
+  "summary": {
+    "zh-Hant": "仲居帶你進房時會問的六件事",
+    "zh-Hans": "仲居带你进房时会问的六件事",
+    "en": "Six things the attendant asks when showing you to your room"
+  },
+  "questions": [
+    {
+      "id": "ryokan.dinner-time",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂仲居問晚餐要幾點",
+        "zh-Hans": "听懂仲居问晚餐要几点",
+        "en": "Understand when you are asked what time to have dinner"
+      },
+      "phrasings": [
+        {
+          "id": "ryokan.dinner-time.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご夕食は何時になさいますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.dinner-time.p1.mp3"
+        },
+        {
+          "id": "ryokan.dinner-time.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お夕食、6時と7時半、どちらがよろしいですか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ryokan.dinner-time.p2.mp3"
+        },
+        {
+          "id": "ryokan.dinner-time.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "夕食のお時間はいかがいたしましょうか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.dinner-time.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "晚餐要幾點吃",
+            "zh-Hans": "晚餐要几点吃",
+            "en": "What time for dinner"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "早餐要幾點吃",
+            "zh-Hans": "早餐要几点吃",
+            "en": "What time for breakfast"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "晚餐要在哪裡吃",
+            "zh-Hans": "晚餐要在哪里吃",
+            "en": "Where to have dinner"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "6時でお願いします",
+        "audio": "ryokan.dinner-time.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「夕食」「お夕食」是晚餐。有時會給兩個時段讓你選，說「〇時でお願いします」。能選的時段依旅館不同。",
+        "zh-Hans": "「夕食」「お夕食」是晚餐。有时会给两个时段让你选，说「〇時でお願いします」。能选的时段依旅馆不同。",
+        "en": "夕食 is dinner. You may be offered two time slots. Answer with the time and でお願いします. The slots differ from ryokan to ryokan."
+      },
+      "wordIds": [
+        "kaiseki-meal"
+      ]
+    },
+    {
+      "id": "ryokan.allergies",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂仲居問有沒有不能吃的東西",
+        "zh-Hans": "听懂仲居问有没有不能吃的东西",
+        "en": "Understand when you are asked about foods you cannot eat"
+      },
+      "phrasings": [
+        {
+          "id": "ryokan.allergies.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "苦手なものやアレルギーはございますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.allergies.p1.mp3"
+        },
+        {
+          "id": "ryokan.allergies.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "召し上がれないものはございませんか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ryokan.allergies.p2.mp3"
+        },
+        {
+          "id": "ryokan.allergies.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "食物アレルギーなどはございますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.allergies.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有特別想吃的東西",
+            "zh-Hans": "有没有特别想吃的东西",
+            "en": "Is there anything you would like to eat"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有不能吃或過敏的東西",
+            "zh-Hans": "有没有不能吃或过敏的东西",
+            "en": "Anything you cannot eat or are allergic to"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "晚餐要幾點吃",
+            "zh-Hans": "晚餐要几点吃",
+            "en": "What time for dinner"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ありません／エビが食べられません",
+        "audio": "ryokan.allergies.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「苦手なもの」是不喜歡或不能吃的東西，「アレルギー」是過敏。「召し上がれないものはございませんか」是否定問句，回「はい」可能被聽成「對，沒有」，所以直接說內容：沒有說「ありません」，有就說「〇〇が食べられません」。嚴重過敏請在訂房時就用文字告知，能不能對應依旅館不同，以現場說明為準。",
+        "zh-Hans": "「苦手なもの」是不喜欢或不能吃的东西，「アレルギー」是过敏。「召し上がれないものはございませんか」是否定问句，回「はい」可能被听成「对，没有」，所以直接说内容：没有说「ありません」，有就说「〇〇が食べられません」。严重过敏请在订房时就用文字告知，能不能应对依旅馆不同，以现场说明为准。",
+        "en": "苦手なもの means foods you dislike or cannot eat, and アレルギー is allergy. 召し上がれないものはございませんか is a negative question, so a bare はい can mean yes, there is nothing. Say what you mean: ありません for nothing, or name the food with が食べられません. For a serious allergy, tell the ryokan in writing when you book. What they can handle varies, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "Food allergy is a safety topic. The advice to tell the ryokan in writing at booking and the three-language wording need a domain reviewer."
+    },
+    {
+      "id": "ryokan.breakfast-time",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂仲居問早餐要幾點",
+        "zh-Hans": "听懂仲居问早餐要几点",
+        "en": "Understand when you are asked what time to have breakfast"
+      },
+      "phrasings": [
+        {
+          "id": "ryokan.breakfast-time.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご朝食は何時がよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.breakfast-time.p1.mp3"
+        },
+        {
+          "id": "ryokan.breakfast-time.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "朝食、7時から8時半の間で、何時になさいますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ryokan.breakfast-time.p2.mp3"
+        },
+        {
+          "id": "ryokan.breakfast-time.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "朝ごはんは何時にご用意しましょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.breakfast-time.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "晚餐要幾點吃",
+            "zh-Hans": "晚餐要几点吃",
+            "en": "What time for dinner"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "幾點要退房",
+            "zh-Hans": "几点要退房",
+            "en": "What time you will check out"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "早餐要幾點吃",
+            "zh-Hans": "早餐要几点吃",
+            "en": "What time for breakfast"
+          },
+          "correct": true
+        },
+        {
+          "id": "d",
+          "text": {
+            "zh-Hant": "早餐要在哪裡吃",
+            "zh-Hans": "早餐要在哪里吃",
+            "en": "Where to have breakfast"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "8時でお願いします",
+        "audio": "ryokan.breakfast-time.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「朝食」「朝ごはん」是早餐。說「〇時でお願いします」。早餐可能在房間吃，也可能在餐廳，地點會接著說明。",
+        "zh-Hans": "「朝食」「朝ごはん」是早餐。说「〇時でお願いします」。早餐可能在房间吃，也可能在餐厅，地点会接着说明。",
+        "en": "朝食 and 朝ごはん both mean breakfast. Answer with the time and でお願いします. Breakfast may be in your room or in a dining hall, which they will explain next."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "ryokan.yukata-size",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂仲居問浴衣尺寸合不合",
+        "zh-Hans": "听懂仲居问浴衣尺寸合不合适",
+        "en": "Understand when you are asked if the yukata fits"
+      },
+      "phrasings": [
+        {
+          "id": "ryokan.yukata-size.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "浴衣のサイズはこちらで大丈夫ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.yukata-size.p1.mp3"
+        },
+        {
+          "id": "ryokan.yukata-size.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "浴衣のサイズ、大丈夫そうですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ryokan.yukata-size.p2.mp3"
+        },
+        {
+          "id": "ryokan.yukata-size.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "浴衣は大きいサイズもございますが、いかがですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.yukata-size.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "浴衣的尺寸合不合",
+            "zh-Hans": "浴衣的尺寸合不合适",
+            "en": "Does the yukata fit"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要加一件外套",
+            "zh-Hans": "要不要加一件外套",
+            "en": "Do you want an extra jacket"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "浴衣可以穿去大浴場",
+            "zh-Hans": "浴衣可以穿去大浴场",
+            "en": "You can wear the yukata to the bath"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／大きいのをお願いします",
+        "audio": "ryokan.yukata-size.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「浴衣」是館內穿的棉質和服，「サイズ」是尺寸。合身說「大丈夫です」，太小說「大きいのをお願いします」。天冷時館內也會準備外套「羽織」。",
+        "zh-Hans": "「浴衣」是馆内穿的棉质和服，「サイズ」是尺寸。合身说「大丈夫です」，太小说「大きいのをお願いします」。天冷时馆内也会准备外套「羽織」。",
+        "en": "浴衣 is the cotton robe you wear around the ryokan, and サイズ is size. Say 大丈夫です if it fits, or 大きいのをお願いします for a bigger one. In cold months there is often a 羽織 jacket too."
+      },
+      "wordIds": [
+        "yukata",
+        "haori-jacket"
+      ]
+    },
+    {
+      "id": "ryokan.private-bath",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂仲居問要不要預約包場浴池",
+        "zh-Hans": "听懂仲居问要不要预约包场浴池",
+        "en": "Understand when you are offered the private bath"
+      },
+      "phrasings": [
+        {
+          "id": "ryokan.private-bath.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "貸切風呂はご利用になりますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.private-bath.p1.mp3"
+        },
+        {
+          "id": "ryokan.private-bath.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "貸切風呂、ご予約お取りしましょうか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ryokan.private-bath.p2.mp3"
+        },
+        {
+          "id": "ryokan.private-bath.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "貸切風呂のご予約はいかがなさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.private-bath.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "大浴場幾點可以泡",
+            "zh-Hans": "大浴场几点可以泡",
+            "en": "What time the main bath opens"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要預約包場浴池",
+            "zh-Hans": "要不要预约包场浴池",
+            "en": "Do you want to book the private bath"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "露天浴池在哪裡",
+            "zh-Hans": "露天浴池在哪里",
+            "en": "Where the outdoor bath is"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "ryokan.private-bath.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「貸切風呂」是可以包下來自己用的浴池，通常要預約時段，有的館要另外付費，也有館叫「家族風呂」。大浴場的時間和男女交換會另外說明。",
+        "zh-Hans": "「貸切風呂」是可以包下来自己用的浴池，通常要预约时段，有的馆要另外付费，也有馆叫「家族風呂」。大浴场的时间和男女交换会另外说明。",
+        "en": "貸切風呂 is a bath you book for yourselves, usually by time slot and sometimes for a fee. Some places call it 家族風呂. Opening hours for the main bath and the men's and women's switch are explained separately."
+      },
+      "wordIds": [
+        "private-bath",
+        "communal-bath"
+      ]
+    },
+    {
+      "id": "ryokan.futon",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂仲居問晚餐時可不可以進房鋪床",
+        "zh-Hans": "听懂仲居问晚餐时可不可以进房铺床",
+        "en": "Understand when the attendant asks to lay out your futon during dinner"
+      },
+      "phrasings": [
+        {
+          "id": "ryokan.futon.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お食事の間にお布団を敷いてもよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.futon.p1.mp3"
+        },
+        {
+          "id": "ryokan.futon.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お夕食中に、お布団敷かせていただきますね",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ryokan.futon.p2.mp3"
+        },
+        {
+          "id": "ryokan.futon.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お布団はお食事の間にご用意してよろしいでしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ryokan.futon.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "晚餐要在房間吃嗎",
+            "zh-Hans": "晚餐要在房间吃吗",
+            "en": "Will you have dinner in your room"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要多一床棉被",
+            "zh-Hans": "要不要多一床被子",
+            "en": "Do you want an extra futon"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "吃飯時可以進房鋪床嗎",
+            "zh-Hans": "吃饭时可以进房铺床吗",
+            "en": "May we lay out the futon while you eat"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "お願いします",
+        "audio": "ryokan.futon.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お布団を敷く」是鋪床。住和室時，仲居常在你吃晚餐時進房鋪好棉被。可以的話說「お願いします」。",
+        "zh-Hans": "「お布団を敷く」是铺床。住和室时，仲居常在你吃晚餐时进房铺好被子。可以的话说「お願いします」。",
+        "en": "お布団を敷く means to lay out the futon. In a Japanese-style room, the attendant often does it while you are at dinner. Say お願いします if that is fine."
+      },
+      "wordIds": [
+        "futon",
+        "japanese-style-room"
+      ]
+    }
+  ]
+}

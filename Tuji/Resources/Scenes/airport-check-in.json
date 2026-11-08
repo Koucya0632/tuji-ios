@@ -1,0 +1,606 @@
+{
+  "schemaVersion": 2,
+  "id": "airport-check-in",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "機場報到櫃台",
+    "zh-Hans": "机场值机柜台",
+    "en": "Airport check-in counter"
+  },
+  "summary": {
+    "zh-Hant": "報到時地勤會問的六件事",
+    "zh-Hans": "值机时地勤会问的六件事",
+    "en": "Six things the agent asks at check-in"
+  },
+  "questions": [
+    {
+      "id": "airport-check-in.passport",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂地勤請你出示護照",
+        "zh-Hans": "听懂地勤请你出示护照",
+        "en": "Understand when the agent asks for your passport"
+      },
+      "phrasings": [
+        {
+          "id": "airport-check-in.passport.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "パスポートをお願いします。",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.passport.p1.mp3"
+        },
+        {
+          "id": "airport-check-in.passport.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートを拝見してもよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "airport-check-in.passport.p2.mp3"
+        },
+        {
+          "id": "airport-check-in.passport.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートとご予約の控えをお願いします。",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.passport.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請出示護照",
+            "zh-Hans": "请出示护照",
+            "en": "Your passport, please"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請出示登機證",
+            "zh-Hans": "请出示登机牌",
+            "en": "Your boarding pass, please"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請把行李放上來",
+            "zh-Hans": "请把行李放上来",
+            "en": "Please put your bag up here"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、お願いします",
+        "audio": "airport-check-in.passport.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「パスポート」是護照，「拝見」是看一下。「ご予約の控え」是訂位確認，可以給地勤看手機畫面。",
+        "zh-Hans": "「パスポート」是护照，「拝見」是看一下。「ご予約の控え」是订票确认，可以给地勤看手机画面。",
+        "en": "パスポート is your passport and 拝見 means to take a look. ご予約の控え is your booking confirmation, and showing it on your phone is fine."
+      },
+      "wordIds": [
+        "passport",
+        "check-in-counter"
+      ]
+    },
+    {
+      "id": "airport-check-in.checked-bags",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂地勤問有沒有要託運的行李",
+        "zh-Hans": "听懂地勤问有没有要托运的行李",
+        "en": "Understand when the agent asks about bags to check in"
+      },
+      "phrasings": [
+        {
+          "id": "airport-check-in.checked-bags.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お預けになるお荷物はございますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.checked-bags.p1.mp3"
+        },
+        {
+          "id": "airport-check-in.checked-bags.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お預けのお荷物は何個ですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "airport-check-in.checked-bags.p2.mp3"
+        },
+        {
+          "id": "airport-check-in.checked-bags.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お荷物はお預けになりますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.checked-bags.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有要託運的行李",
+            "zh-Hans": "有没有要托运的行李",
+            "en": "Any bags to check in"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有要帶上飛機的行李",
+            "zh-Hans": "有没有要带上飞机的行李",
+            "en": "Any bags to take on board"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "行李要不要包起來",
+            "zh-Hans": "行李要不要包起来",
+            "en": "Shall we wrap your bag"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "一つです／ありません",
+        "audio": "airport-check-in.checked-bags.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「預ける」是託運，「お荷物」是行李。要託運就說件數，例如「一つです」；沒有就說「ありません」。",
+        "zh-Hans": "「預ける」是托运，「お荷物」是行李。要托运就说件数，比如「一つです」；没有就说「ありません」。",
+        "en": "預ける means to check a bag in, and お荷物 is luggage. Say how many, like 一つです, or ありません if you have none."
+      },
+      "wordIds": [
+        "suitcase",
+        "self-service-bag-drop"
+      ]
+    },
+    {
+      "id": "airport-check-in.dangerous-goods",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂地勤問託運行李裡有沒有行動電源或打火機",
+        "zh-Hans": "听懂地勤问托运行李里有没有充电宝或打火机",
+        "en": "Understand when the agent asks if your checked bag holds power banks or lighters"
+      },
+      "reviewNote": "航空危險物品：行動電源、鋰電池、打火機、噴霧罐的託運與攜帶規定由國土交通省與各航空公司公告，近年持續收緊。解說不列規則，只寫依規定不同；需航空業審稿，並決定要不要連到官方公告。",
+      "phrasings": [
+        {
+          "id": "airport-check-in.dangerous-goods.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お荷物の中に、モバイルバッテリーやライターは入っていませんか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.dangerous-goods.p1.mp3"
+        },
+        {
+          "id": "airport-check-in.dangerous-goods.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "リチウム電池やスプレー缶などは入っておりませんか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "airport-check-in.dangerous-goods.p2.mp3"
+        },
+        {
+          "id": "airport-check-in.dangerous-goods.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "預けるお荷物に、モバイルバッテリーは入っていませんか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.dangerous-goods.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "行李裡有沒有行動電源或打火機",
+            "zh-Hans": "行李里有没有充电宝或打火机",
+            "en": "Are there power banks or lighters in your bag"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "行李裡有沒有易碎品",
+            "zh-Hans": "行李里有没有易碎品",
+            "en": "Is there anything fragile in your bag"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "行李有沒有超重",
+            "zh-Hans": "行李有没有超重",
+            "en": "Is your bag over the weight limit"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "入っていません／入っています",
+        "audio": "airport-check-in.dangerous-goods.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「入っていませんか」是否定問句，回「はい」是「對，沒有放」，很容易答反。直接說「入っていません」（沒有）或「入っています」（有）。哪些東西能託運、能帶上飛機，依航空公司和規定不同，以現場說明和官方公告為準。有的話照地勤的指示處理。",
+        "zh-Hans": "「入っていませんか」是否定问句，回「はい」是「对，没有放」，很容易答反。直接说「入っていません」（没有）或「入っています」（有）。哪些东西能托运、能带上飞机，依航空公司和规定不同，以现场说明和官方公告为准。有的话照地勤的指示处理。",
+        "en": "入っていませんか is a negative question, so はい means \"right, there aren't any\". It is easy to get backwards. Say 入っていません (there aren't) or 入っています (there are). What may be checked or carried on depends on the airline and the rules, so follow the agent and the official notices."
+      },
+      "wordIds": [
+        "power-bank"
+      ]
+    },
+    {
+      "id": "airport-check-in.fragile",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂地勤問有沒有易碎品或貴重物品",
+        "zh-Hans": "听懂地勤问有没有易碎品或贵重物品",
+        "en": "Understand when the agent asks about fragile items or valuables"
+      },
+      "phrasings": [
+        {
+          "id": "airport-check-in.fragile.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "壊れ物や貴重品は入っていませんか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.fragile.p1.mp3"
+        },
+        {
+          "id": "airport-check-in.fragile.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "割れ物は入っていますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "airport-check-in.fragile.p2.mp3"
+        },
+        {
+          "id": "airport-check-in.fragile.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "中に壊れやすい物はございますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.fragile.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有易碎品或貴重物品",
+            "zh-Hans": "有没有易碎品或贵重物品",
+            "en": "Anything fragile or valuable"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有行動電源",
+            "zh-Hans": "有没有充电宝",
+            "en": "Any power banks"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "行李有沒有上鎖",
+            "zh-Hans": "行李有没有上锁",
+            "en": "Is your bag locked"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ありません／あります",
+        "audio": "airport-check-in.fragile.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「壊れ物」「割れ物」是易碎品，「貴重品」是錢、電子產品這類貴重物品。這句有時用否定問法「入っていませんか」，回「はい」是「對，沒有」；直接說「ありません」或「あります」比較清楚。",
+        "zh-Hans": "「壊れ物」「割れ物」是易碎品，「貴重品」是钱、电子产品这类贵重物品。这句有时用否定问法「入っていませんか」，回「はい」是「对，没有」；直接说「ありません」或「あります」比较清楚。",
+        "en": "壊れ物 and 割れ物 are fragile items, and 貴重品 are valuables such as money or electronics. When asked as 入っていませんか, はい means \"right, there aren't\", so ありません or あります is clearer."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "airport-check-in.seat",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂地勤問座位要靠窗還是靠走道",
+        "zh-Hans": "听懂地勤问座位要靠窗还是靠过道",
+        "en": "Understand when the agent asks window or aisle"
+      },
+      "phrasings": [
+        {
+          "id": "airport-check-in.seat.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お座席は窓側と通路側、どちらがよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.seat.p1.mp3"
+        },
+        {
+          "id": "airport-check-in.seat.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お席のご希望はございますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "airport-check-in.seat.p2.mp3"
+        },
+        {
+          "id": "airport-check-in.seat.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お座席のご希望、窓側と通路側どちらになさいますか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "airport-check-in.seat.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "靠窗還是靠走道",
+            "zh-Hans": "靠窗还是靠过道",
+            "en": "Window or aisle"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要坐緊急出口旁",
+            "zh-Hans": "要不要坐紧急出口旁",
+            "en": "Would you sit by the emergency exit"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "同行的人要不要坐一起",
+            "zh-Hans": "同行的人要不要坐一起",
+            "en": "Shall your group sit together"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "窓側で／どちらでも大丈夫です",
+        "audio": "airport-check-in.seat.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「窓側」是靠窗，「通路側」是靠走道。沒有偏好就說「どちらでも大丈夫です」。",
+        "zh-Hans": "「窓側」是靠窗，「通路側」是靠过道。没有偏好就说「どちらでも大丈夫です」。",
+        "en": "窓側 is the window side and 通路側 is the aisle side. If you don't mind, say どちらでも大丈夫です."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "airport-check-in.gate",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "地勤告訴你登機門和時間。在登機證上按出登機門",
+        "zh-Hans": "地勤告诉你登机口和时间。在登机牌上按出登机口",
+        "en": "The agent tells you the gate and time. Tap the gate on your boarding pass"
+      },
+      "phrasings": [
+        {
+          "id": "airport-check-in.gate.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "12番搭乗口から、10時5分にご搭乗開始です。",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "搭乗券",
+            "detail": "東京 → 台北　11月20日",
+            "buttons": [
+              {
+                "choiceId": "flight",
+                "ja": "便名 123便"
+              },
+              {
+                "choiceId": "gate",
+                "ja": "搭乗口 12"
+              },
+              {
+                "choiceId": "boarding",
+                "ja": "搭乗開始 10:05"
+              },
+              {
+                "choiceId": "seat",
+                "ja": "座席 23A"
+              }
+            ]
+          },
+          "audio": "airport-check-in.gate.p1.mp3"
+        },
+        {
+          "id": "airport-check-in.gate.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "搭乗口は12番、搭乗開始は10時5分です。",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "搭乗券 BOARDING PASS",
+            "detail": "TOKYO → TAIPEI　20NOV",
+            "buttons": [
+              {
+                "choiceId": "seat",
+                "ja": "座席 SEAT 23A"
+              },
+              {
+                "choiceId": "gate",
+                "ja": "搭乗口 GATE 12"
+              },
+              {
+                "choiceId": "boarding",
+                "ja": "搭乗開始 BOARDING 10:05"
+              },
+              {
+                "choiceId": "flight",
+                "ja": "便名 FLIGHT 123"
+              }
+            ]
+          },
+          "audio": "airport-check-in.gate.p2.mp3"
+        },
+        {
+          "id": "airport-check-in.gate.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "出発の20分前までに、12番搭乗口へお越しください。",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "搭乗券",
+            "detail": "出発 10:35",
+            "buttons": [
+              {
+                "choiceId": "boarding",
+                "ja": "搭乗開始時刻 10:05"
+              },
+              {
+                "choiceId": "seat",
+                "ja": "座席番号 23A"
+              },
+              {
+                "choiceId": "flight",
+                "ja": "123便"
+              },
+              {
+                "choiceId": "gate",
+                "ja": "搭乗ゲート 12"
+              }
+            ]
+          },
+          "audio": "airport-check-in.gate.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "gate",
+          "text": {
+            "zh-Hant": "登機門",
+            "zh-Hans": "登机口",
+            "en": "Gate"
+          },
+          "correct": true
+        },
+        {
+          "id": "boarding",
+          "text": {
+            "zh-Hant": "開始登機時間",
+            "zh-Hans": "开始登机时间",
+            "en": "Boarding time"
+          },
+          "correct": false
+        },
+        {
+          "id": "seat",
+          "text": {
+            "zh-Hant": "座位",
+            "zh-Hans": "座位",
+            "en": "Seat"
+          },
+          "correct": false
+        },
+        {
+          "id": "flight",
+          "text": {
+            "zh-Hant": "航班號碼",
+            "zh-Hans": "航班号",
+            "en": "Flight number"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "12番ですね、わかりました",
+        "audio": "airport-check-in.gate.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「搭乗口」「ゲート」是登機門，「搭乗開始」是開始登機的時間，不是起飛時間。「座席」是座位，「便名」是航班號碼。登機門偶爾會改，到機場內再看一次顯示板。",
+        "zh-Hans": "「搭乗口」「ゲート」是登机口，「搭乗開始」是开始登机的时间，不是起飞时间。「座席」是座位，「便名」是航班号。登机口偶尔会变，进去后再看一次显示屏。",
+        "en": "搭乗口 and ゲート mean the gate. 搭乗開始 is when boarding starts, not take-off. 座席 is your seat and 便名 is the flight number. Gates sometimes change, so check the screens again inside."
+      },
+      "wordIds": [
+        "boarding-pass",
+        "boarding-gate"
+      ]
+    }
+  ]
+}

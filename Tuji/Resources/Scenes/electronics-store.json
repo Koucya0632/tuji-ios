@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 2,
+  "id": "electronics-store",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "家電量販店",
+    "zh-Hans": "家电卖场",
+    "en": "Electronics store"
+  },
+  "summary": {
+    "zh-Hant": "家電量販店結帳會被問的六件事",
+    "zh-Hans": "家电卖场结账会被问的六件事",
+    "en": "Six things you are asked at an electronics store checkout"
+  },
+  "questions": [
+    {
+      "id": "electronics-store.point-card",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問有沒有集點卡",
+        "zh-Hans": "听懂店员问有没有积分卡",
+        "en": "Understand when the clerk asks for a points card"
+      },
+      "phrasings": [
+        {
+          "id": "electronics-store.point-card.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ポイントカードはお持ちですか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.point-card.p1.mp3"
+        },
+        {
+          "id": "electronics-store.point-card.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "当店のポイントカードはございますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "electronics-store.point-card.p2.mp3"
+        },
+        {
+          "id": "electronics-store.point-card.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ポイントカードのご提示はございますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.point-card.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有集點卡",
+            "zh-Hans": "有没有积分卡",
+            "en": "Do you have a points card"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要辦一張集點卡",
+            "zh-Hans": "要不要办一张积分卡",
+            "en": "Would you like to get a points card"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要辦免稅",
+            "zh-Hans": "要不要办免税",
+            "en": "Do you want tax-free"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "持っていません",
+        "audio": "electronics-store.point-card.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お持ちですか」「ございますか」是問你有沒有。沒有就說「持っていません」。如果問「お作りしましょうか」，是要幫你辦新卡，不用就說「大丈夫です」。",
+        "zh-Hans": "「お持ちですか」「ございますか」是问你有没有。没有就说「持っていません」。如果问「お作りしましょうか」，是要帮你办新卡，不用就说「大丈夫です」。",
+        "en": "お持ちですか and ございますか ask if you have one. Say 持っていません if not. If you hear お作りしましょうか, they are offering to make you a new card; say 大丈夫です to decline."
+      },
+      "wordIds": [
+        "point-card"
+      ]
+    },
+    {
+      "id": "electronics-store.tax-free",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要辦免稅",
+        "zh-Hans": "听懂店员问要不要办免税",
+        "en": "Understand when the clerk asks if you want tax-free"
+      },
+      "phrasings": [
+        {
+          "id": "electronics-store.tax-free.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "免税のお手続きはされますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.tax-free.p1.mp3"
+        },
+        {
+          "id": "electronics-store.tax-free.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートはお持ちですか？",
+          "voice": "Aoede",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "electronics-store.tax-free.p2.mp3"
+        },
+        {
+          "id": "electronics-store.tax-free.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "海外のお客様でしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.tax-free.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "是不是要在國外用",
+            "zh-Hans": "是不是要在国外用",
+            "en": "Will you use it abroad"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要辦免稅",
+            "zh-Hans": "要不要办免税",
+            "en": "Do you want tax-free"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有集點卡",
+            "zh-Hans": "有没有积分卡",
+            "en": "Do you have a points card"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします",
+        "audio": "electronics-store.tax-free.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「免税のお手続き」是辦免稅。問「パスポート」或「海外のお客様」，也是在確認你能不能辦。2026 年 11 月起改成先付含稅價，出境時經海關確認後再退稅。細節依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「免税のお手続き」是办免税。问「パスポート」或「海外のお客様」，也是在确认你能不能办。2026 年 11 月起改成先付含税价，出境时经海关确认后再退税。细节依店家／规定不同，以现场说明为准。",
+        "en": "免税のお手続き means the tax-free procedure. Being asked for your パスポート or whether you are a 海外のお客様 is the same check. From November 2026 you pay the price with tax and get the tax back after customs checks your goods as you leave Japan. Details differ by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "passport"
+      ],
+      "reviewNote": "2026-11 リファンド方式：家電量販店收銀台的免稅問法與流程描述要核對；「海外のお客様でしょうか」是否常用待確認。"
+    },
+    {
+      "id": "electronics-store.overseas-use",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員提醒這是日本國內專用",
+        "zh-Hans": "听懂店员提醒这是日本国内专用",
+        "en": "Understand the warning that an item is for use in Japan only"
+      },
+      "phrasings": [
+        {
+          "id": "electronics-store.overseas-use.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちら日本国内専用ですが、よろしいですか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.overseas-use.p1.mp3"
+        },
+        {
+          "id": "electronics-store.overseas-use.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "海外でお使いになりますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "electronics-store.overseas-use.p2.mp3"
+        },
+        {
+          "id": "electronics-store.overseas-use.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "海外ですと電圧が違いますが、大丈夫ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.overseas-use.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "這台只能在日本用，可以嗎",
+            "zh-Hans": "这台只能在日本用，可以吗",
+            "en": "It is for Japan only, is that OK"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "這台不能退換，可以嗎",
+            "zh-Hans": "这台不能退换，可以吗",
+            "en": "It cannot be returned, is that OK"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要加延長保固",
+            "zh-Hans": "要不要加延长保修",
+            "en": "Would you like an extended warranty"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／海外用はありますか？",
+        "audio": "electronics-store.overseas-use.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「国内専用」是只在日本用，「電圧」是電壓。日本家用電是 100V，插頭也可能不同。買前看清楚商品標示，不確定就問「海外用はありますか？」。能不能在國外用依商品不同，以現場說明為準。",
+        "zh-Hans": "「国内専用」是只在日本用，「電圧」是电压。日本家用电是 100V，插头也可能不同。买前看清楚商品标示，不确定就问「海外用はありますか？」。能不能在国外用依商品不同，以现场说明为准。",
+        "en": "国内専用 means for use in Japan only, and 電圧 is voltage. Japanese mains power is 100V and the plug may differ. Check the label before you buy, or ask 海外用はありますか？. Whether it works abroad depends on the product, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "power-outlet",
+        "charger",
+        "hair-dryer"
+      ],
+      "reviewNote": "電壓與插頭安全：解說只說日本 100V、看標示，不給用電建議，措辭要請懂電器的人確認；「海外ですと電圧が違いますが」標待確認。"
+    },
+    {
+      "id": "electronics-store.warranty",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要加延長保固",
+        "zh-Hans": "听懂店员问要不要加延长保修",
+        "en": "Understand when you are offered an extended warranty"
+      },
+      "phrasings": [
+        {
+          "id": "electronics-store.warranty.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "長期保証はお付けしますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.warranty.p1.mp3"
+        },
+        {
+          "id": "electronics-store.warranty.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "延長保証にご加入されますか？",
+          "voice": "Aoede",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "electronics-store.warranty.p2.mp3"
+        },
+        {
+          "id": "electronics-store.warranty.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "保証を5年に延長できますが、いかがなさいますか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.warranty.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要辦集點卡",
+            "zh-Hans": "要不要办积分卡",
+            "en": "Would you like a points card"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要幫你送到家",
+            "zh-Hans": "要不要帮你送到家",
+            "en": "Shall we deliver it to your home"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要加延長保固",
+            "zh-Hans": "要不要加延长保修",
+            "en": "Would you like an extended warranty"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です",
+        "audio": "electronics-store.warranty.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「保証」是保固，「長期」「延長」是延長保固，有的要另外付費。不用就說「大丈夫です」。保固在日本以外能不能用，依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「保証」是保修，「長期」「延長」是延长保修，有的要另外付钱。不用就说「大丈夫です」。保修在日本以外能不能用，依店家／规定不同，以现场说明为准。",
+        "en": "保証 is a warranty, and 長期 or 延長 means extended; some cost extra. Say 大丈夫です to decline. Whether it covers you outside Japan differs by store, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "延長保固是否付費、在日本以外是否適用，各店不同（大綱寫海外多半不適用），要核對後再決定解說寫到多細。"
+    },
+    {
+      "id": "electronics-store.payment",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你想刷信用卡。在付款畫面上按對的按鈕",
+        "zh-Hans": "你想刷信用卡。在付款画面上按对的按钮",
+        "en": "You want to pay by credit card. Tap the right button on the payment screen"
+      },
+      "phrasings": [
+        {
+          "id": "electronics-store.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払い方法をお選びください",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お支払い方法をお選びください",
+            "detail": "合計 ¥32,780（税込）",
+            "buttons": [
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "points",
+                "ja": "ポイント利用"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "QRコード決済"
+              }
+            ]
+          },
+          "audio": "electronics-store.payment.p1.mp3"
+        },
+        {
+          "id": "electronics-store.payment.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お支払い方法",
+            "detail": "お会計 ¥32,780",
+            "buttons": [
+              {
+                "choiceId": "qr",
+                "ja": "スマホ決済"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジット"
+              },
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "points",
+                "ja": "ポイント払い"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "electronics-store.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払いはどうなさいますか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "お支払い方法をお選びください",
+            "detail": "合計 ¥32,780（税込）",
+            "buttons": [
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "points",
+                "ja": "ポイント利用"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "QRコード決済"
+              }
+            ]
+          },
+          "audio": "electronics-store.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "cash",
+          "text": {
+            "zh-Hant": "現金",
+            "zh-Hans": "现金",
+            "en": "Cash"
+          },
+          "correct": false
+        },
+        {
+          "id": "points",
+          "text": {
+            "zh-Hant": "用點數折抵",
+            "zh-Hans": "用积分抵扣",
+            "en": "Pay with points"
+          },
+          "correct": false
+        },
+        {
+          "id": "credit",
+          "text": {
+            "zh-Hant": "信用卡",
+            "zh-Hans": "信用卡",
+            "en": "Credit card"
+          },
+          "correct": true
+        },
+        {
+          "id": "qr",
+          "text": {
+            "zh-Hant": "條碼支付",
+            "zh-Hans": "二维码支付",
+            "en": "QR code payment"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "カードで",
+        "audio": "electronics-store.payment.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「クレジット」是信用卡，「ポイント利用」「ポイント払い」是用點數折抵，「QRコード決済」「スマホ決済」是手機條碼支付。店員開口問的話，說「カードで」就好。",
+        "zh-Hans": "「クレジット」是信用卡，「ポイント利用」「ポイント払い」是用积分抵扣，「QRコード決済」「スマホ決済」是手机扫码支付。店员开口问的话，说「カードで」就好。",
+        "en": "クレジット is credit card, ポイント利用 or ポイント払い means paying with points, and QRコード決済 or スマホ決済 is paying with a QR code on your phone. If the clerk asks out loud, カードで is enough."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "electronics-store.box",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問外箱要不要帶走",
+        "zh-Hans": "听懂店员问外包装箱要不要带走",
+        "en": "Understand when you are asked what to do with the box"
+      },
+      "phrasings": [
+        {
+          "id": "electronics-store.box.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "箱はお持ち帰りになりますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.box.p1.mp3"
+        },
+        {
+          "id": "electronics-store.box.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "外箱、こちらで処分しましょうか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "electronics-store.box.p2.mp3"
+        },
+        {
+          "id": "electronics-store.box.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "箱から出してお渡ししましょうか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "electronics-store.box.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "外箱要不要帶走",
+            "zh-Hans": "外包装箱要不要带走",
+            "en": "Do you want to keep the box"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要幫你寄送",
+            "zh-Hans": "要不要帮你寄送",
+            "en": "Shall we ship it for you"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要包成禮物",
+            "zh-Hans": "要不要包成礼物",
+            "en": "Do you want it gift-wrapped"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "持って帰ります／処分をお願いします",
+        "audio": "electronics-store.box.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「箱」「外箱」是商品的外盒，「処分」是幫你丟掉。要帶走說「持って帰ります」，不要了說「処分をお願いします」。",
+        "zh-Hans": "「箱」「外箱」是商品的外包装箱，「処分」是帮你扔掉。要带走说「持って帰ります」，不要了说「処分をお願いします」。",
+        "en": "箱 or 外箱 is the product box, and 処分 means they throw it away for you. Say 持って帰ります to keep it, or 処分をお願いします to leave it."
+      },
+      "wordIds": [
+        "cardboard-box"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,731 @@
+{
+  "schemaVersion": 2,
+  "id": "conveyor-sushi",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "迴轉壽司",
+    "zh-Hans": "回转寿司",
+    "en": "Conveyor-belt sushi"
+  },
+  "summary": {
+    "zh-Hant": "從取號到結帳會遇到的六件事",
+    "zh-Hans": "从取号到结账会遇到的六件事",
+    "en": "Six things you meet from the ticket machine to the bill"
+  },
+  "questions": [
+    {
+      "id": "conveyor-sushi.reception",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "兩個人，坐哪裡都可以。人數按好了，再按哪一個",
+        "zh-Hans": "两个人，坐哪里都可以。人数按好了，再按哪一个",
+        "en": "Two of you, and any seat is fine. You have entered the number. Which button next"
+      },
+      "phrasings": [
+        {
+          "id": "conveyor-sushi.reception.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お席の種類を選んでください",
+            "detail": "2名様",
+            "buttons": [
+              {
+                "choiceId": "table",
+                "ja": "テーブル"
+              },
+              {
+                "choiceId": "counter",
+                "ja": "カウンター"
+              },
+              {
+                "choiceId": "either",
+                "ja": "どちらでも"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "conveyor-sushi.reception.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "ご希望のお席",
+            "detail": "人数：2名",
+            "buttons": [
+              {
+                "choiceId": "counter",
+                "ja": "カウンター席"
+              },
+              {
+                "choiceId": "either",
+                "ja": "指定なし（早い方）"
+              },
+              {
+                "choiceId": "table",
+                "ja": "テーブル席"
+              },
+              {
+                "choiceId": "back",
+                "ja": "人数を変更"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "conveyor-sushi.reception.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "受付機で発券をお願いします",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "お席の種類を選んでください",
+            "detail": "2名様",
+            "buttons": [
+              {
+                "choiceId": "table",
+                "ja": "テーブル"
+              },
+              {
+                "choiceId": "counter",
+                "ja": "カウンター"
+              },
+              {
+                "choiceId": "either",
+                "ja": "どちらでも"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "conveyor-sushi.reception.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "table",
+          "text": {
+            "zh-Hant": "桌位",
+            "zh-Hans": "卡座",
+            "en": "Table"
+          },
+          "correct": false
+        },
+        {
+          "id": "counter",
+          "text": {
+            "zh-Hant": "吧檯",
+            "zh-Hans": "吧台",
+            "en": "Counter"
+          },
+          "correct": false
+        },
+        {
+          "id": "either",
+          "text": {
+            "zh-Hant": "哪裡都可以",
+            "zh-Hans": "哪里都可以",
+            "en": "Either"
+          },
+          "correct": true
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "どちらでも",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「テーブル」是桌位，「カウンター」是吧檯，「どちらでも」「指定なし」是哪裡都可以，通常等得比較短。按完拿號碼紙等叫號。",
+        "zh-Hans": "「テーブル」是卡座，「カウンター」是吧台，「どちらでも」「指定なし」是哪里都可以，通常等得比较短。按完拿号码纸等叫号。",
+        "en": "テーブル is a table, カウンター is the counter, and どちらでも or 指定なし means either, which is usually the shorter wait. Take the numbered slip and wait to be called."
+      },
+      "wordIds": [
+        "counter-seat",
+        "restaurant-booth"
+      ]
+    },
+    {
+      "id": "conveyor-sushi.number-called",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂叫到你的號碼",
+        "zh-Hans": "听懂叫到你的号码",
+        "en": "Understand when your number is called"
+      },
+      "phrasings": [
+        {
+          "id": "conveyor-sushi.number-called.p1",
+          "role": "first",
+          "speaker": "register",
+          "text": "受付番号25番でお待ちのお客様、5番テーブルへどうぞ",
+          "voice": "Leda",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "conveyor-sushi.number-called.p1.mp3"
+        },
+        {
+          "id": "conveyor-sushi.number-called.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "25番のお客様、いらっしゃいますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "conveyor-sushi.number-called.p2.mp3"
+        },
+        {
+          "id": "conveyor-sushi.number-called.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "25番でお待ちのお客様、ご案内いたします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "conveyor-sushi.number-called.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "叫到 25 號，可以入座了",
+            "zh-Hans": "叫到 25 号，可以入座了",
+            "en": "Number 25, your table is ready"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "還要再等 25 分鐘",
+            "zh-Hans": "还要再等 25 分钟",
+            "en": "About 25 more minutes"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "25 號的餐點好了",
+            "zh-Hans": "25 号的餐点好了",
+            "en": "Order 25 is ready"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "conveyor-sushi.number-called.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「〜番でお待ちのお客様」是在叫號碼，對一下號碼紙。「番」是號碼，「分」才是分鐘。叫到就舉手說「はい」。",
+        "zh-Hans": "「〜番でお待ちのお客様」是在叫号码，对一下号码纸。「番」是号码，「分」才是分钟。叫到就举手说「はい」。",
+        "en": "〜番でお待ちのお客様 calls a number, so check your slip. 番 is a number and 分 would be minutes. Raise your hand and say はい when it is yours."
+      },
+      "wordIds": [
+        "queue-ticket"
+      ]
+    },
+    {
+      "id": "conveyor-sushi.self-serve-tea",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員說茶要自己泡",
+        "zh-Hans": "听懂店员说茶要自己泡",
+        "en": "Understand when the staff say the tea is self-serve"
+      },
+      "phrasings": [
+        {
+          "id": "conveyor-sushi.self-serve-tea.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お茶はセルフサービスになっております",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "conveyor-sushi.self-serve-tea.p1.mp3"
+        },
+        {
+          "id": "conveyor-sushi.self-serve-tea.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お茶はセルフでお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "conveyor-sushi.self-serve-tea.p2.mp3"
+        },
+        {
+          "id": "conveyor-sushi.self-serve-tea.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "粉茶とお湯はお席にございますので、ご自由にどうぞ",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "conveyor-sushi.self-serve-tea.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "茶要另外點",
+            "zh-Hans": "茶要另外点",
+            "en": "Tea is ordered separately"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "茶請自己泡",
+            "zh-Hans": "茶请自己泡",
+            "en": "Make your own tea"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "熱水很燙，請小心",
+            "zh-Hans": "热水很烫，请小心",
+            "en": "The water is hot, be careful"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "conveyor-sushi.self-serve-tea.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「セルフ」是自己來。桌上通常有粉茶和熱水出水口，杯子放好再按，小心燙。做法依店家不同。",
+        "zh-Hans": "「セルフ」是自己来。桌上通常有粉茶和热水出水口，杯子放好再按，小心烫。做法依店家不同。",
+        "en": "セルフ means self-service. There is usually powdered tea and a hot water tap at your seat. Put the cup under before you press, and mind the heat. Each shop does it a little differently."
+      },
+      "wordIds": [
+        "japanese-teacup"
+      ]
+    },
+    {
+      "id": "conveyor-sushi.no-wasabi",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你不吃芥末，要點鮪魚。在點餐平板上按對的按鈕",
+        "zh-Hans": "你不吃芥末，要点金枪鱼。在点餐平板上按对的按钮",
+        "en": "You do not eat wasabi and want tuna. Tap the right button on the tablet"
+      },
+      "phrasings": [
+        {
+          "id": "conveyor-sushi.no-wasabi.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "まぐろ　2貫",
+            "detail": "¥120",
+            "buttons": [
+              {
+                "choiceId": "with",
+                "ja": "わさび あり"
+              },
+              {
+                "choiceId": "without",
+                "ja": "わさび なし"
+              },
+              {
+                "choiceId": "order",
+                "ja": "注文する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "conveyor-sushi.no-wasabi.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "まぐろ",
+            "detail": "さび抜きをご希望の方は選んでください",
+            "buttons": [
+              {
+                "choiceId": "with",
+                "ja": "通常"
+              },
+              {
+                "choiceId": "without",
+                "ja": "さび抜き"
+              },
+              {
+                "choiceId": "back",
+                "ja": "閉じる"
+              },
+              {
+                "choiceId": "order",
+                "ja": "注文確定"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "conveyor-sushi.no-wasabi.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご注文はタッチパネルからどうぞ",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "まぐろ　2貫",
+            "detail": "¥120",
+            "buttons": [
+              {
+                "choiceId": "with",
+                "ja": "わさび あり"
+              },
+              {
+                "choiceId": "without",
+                "ja": "わさび なし"
+              },
+              {
+                "choiceId": "order",
+                "ja": "注文する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "conveyor-sushi.no-wasabi.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "with",
+          "text": {
+            "zh-Hant": "加芥末",
+            "zh-Hans": "加芥末",
+            "en": "With wasabi"
+          },
+          "correct": false
+        },
+        {
+          "id": "without",
+          "text": {
+            "zh-Hant": "不加芥末",
+            "zh-Hans": "不加芥末",
+            "en": "No wasabi"
+          },
+          "correct": true
+        },
+        {
+          "id": "order",
+          "text": {
+            "zh-Hant": "直接送出",
+            "zh-Hans": "直接下单",
+            "en": "Order now"
+          },
+          "correct": false
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "わさび なし",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「わさび なし」「さび抜き」都是不加芥末。壽司通常預設會夾芥末，要先改再按「注文する」送出。",
+        "zh-Hans": "「わさび なし」「さび抜き」都是不加芥末。寿司通常默认会夹芥末，要先改再按「注文する」下单。",
+        "en": "わさび なし and さび抜き both mean no wasabi. Sushi usually comes with it, so change this before you tap 注文する."
+      },
+      "wordIds": [
+        "wasabi",
+        "ordering-tablet"
+      ]
+    },
+    {
+      "id": "conveyor-sushi.order-arriving",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂播報說你點的送到了",
+        "zh-Hans": "听懂播报说你点的送到了",
+        "en": "Understand the announcement that your order is arriving"
+      },
+      "phrasings": [
+        {
+          "id": "conveyor-sushi.order-arriving.p1",
+          "role": "first",
+          "speaker": "register",
+          "text": "ご注文の商品が到着します",
+          "voice": "Leda",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "conveyor-sushi.order-arriving.p1.mp3"
+        },
+        {
+          "id": "conveyor-sushi.order-arriving.p2",
+          "role": "review",
+          "speaker": "register",
+          "text": "まもなく到着します。お皿をお取りください",
+          "voice": "Leda",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "conveyor-sushi.order-arriving.p2.mp3"
+        },
+        {
+          "id": "conveyor-sushi.order-arriving.p3",
+          "role": "review",
+          "speaker": "register",
+          "text": "ご注文の商品が届きました。お取りください",
+          "voice": "Leda",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "conveyor-sushi.order-arriving.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "你點的送到了，請拿",
+            "zh-Hans": "你点的送到了，请拿",
+            "en": "Your order is here, take it"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "你點的賣完了",
+            "zh-Hans": "你点的卖完了",
+            "en": "Your order is sold out"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請把空盤放回去",
+            "zh-Hans": "请把空盘放回去",
+            "en": "Please return your empty plates"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お皿を取る",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「到着」是送到，「お取りください」是請拿。你點的盤子會沿送餐軌道停在桌邊，拿下來就好；有的店拿完要按平板確認。做法依店家不同。",
+        "zh-Hans": "「到着」是送到，「お取りください」是请拿。你点的盘子会沿送餐轨道停在桌边，拿下来就好；有的店拿完要按平板确认。做法依店家不同。",
+        "en": "到着 means arriving and お取りください means please take it. Your plate stops beside your table on the delivery lane. Some shops ask you to confirm on the tablet after."
+      },
+      "wordIds": [
+        "plate"
+      ]
+    },
+    {
+      "id": "conveyor-sushi.checkout",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "吃完了，想結帳。平板跳出確認畫面，按對的按鈕",
+        "zh-Hans": "吃完了，想结账。平板跳出确认画面，按对的按钮",
+        "en": "You have finished and want to pay. Tap the right button on the tablet"
+      },
+      "phrasings": [
+        {
+          "id": "conveyor-sushi.checkout.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お会計に進みますか？",
+            "detail": "お会計後は追加のご注文ができません",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "more",
+                "ja": "追加注文"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "conveyor-sushi.checkout.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お会計",
+            "detail": "合計 10皿　¥1,500",
+            "buttons": [
+              {
+                "choiceId": "more",
+                "ja": "注文を続ける"
+              },
+              {
+                "choiceId": "yes",
+                "ja": "お会計する"
+              },
+              {
+                "choiceId": "no",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "conveyor-sushi.checkout.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お会計の際は、タッチパネルのボタンを押してください",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "お会計に進みますか？",
+            "detail": "お会計後は追加のご注文ができません",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "more",
+                "ja": "追加注文"
+              }
+            ]
+          },
+          "audio": "conveyor-sushi.checkout.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "yes",
+          "text": {
+            "zh-Hant": "去結帳",
+            "zh-Hans": "去结账",
+            "en": "Go to the bill"
+          },
+          "correct": true
+        },
+        {
+          "id": "no",
+          "text": {
+            "zh-Hant": "否，返回",
+            "zh-Hans": "否，返回",
+            "en": "No, go back"
+          },
+          "correct": false
+        },
+        {
+          "id": "more",
+          "text": {
+            "zh-Hant": "再點一些",
+            "zh-Hans": "再点一些",
+            "en": "Order more"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「お会計」是結帳，按下去之後通常不能再點。接下來有的店派店員來數盤子，有的要拿明細去自助結帳機，依店家不同。",
+        "zh-Hans": "「お会計」是结账，按下去之后通常不能再点。接下来有的店派店员来数盘子，有的要拿明细去自助结账机，依店家不同。",
+        "en": "お会計 means the bill, and after you tap it you usually cannot order more. Next, some shops send staff to count plates, and others have you pay at a self-checkout machine."
+      },
+      "wordIds": [
+        "restaurant-bill"
+      ]
+    }
+  ]
+}

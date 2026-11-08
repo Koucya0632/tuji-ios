@@ -1,0 +1,686 @@
+{
+  "schemaVersion": 2,
+  "id": "station-ticket-office",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "車站窗口買票",
+    "zh-Hans": "车站窗口买票",
+    "en": "Buying tickets at a station counter"
+  },
+  "summary": {
+    "zh-Hant": "在車站窗口買票時會被問的七件事",
+    "zh-Hans": "在车站窗口买票时会被问的七件事",
+    "en": "Seven things you are asked at a ticket counter"
+  },
+  "questions": [
+    {
+      "id": "station-ticket-office.destination",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂站務員問要去哪裡",
+        "zh-Hans": "听懂工作人员问去哪里",
+        "en": "Understand when the clerk asks where you are going"
+      },
+      "phrasings": [
+        {
+          "id": "station-ticket-office.destination.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "どちらまでご利用ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.destination.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.destination.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "行き先はどちらですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "station-ticket-office.destination.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.destination.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "どこまで行かれますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.destination.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要去哪裡",
+            "zh-Hans": "去哪里",
+            "en": "Where are you going"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "從哪一站上車",
+            "zh-Hans": "从哪一站上车",
+            "en": "Which station are you leaving from"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要買幾張",
+            "zh-Hans": "要买几张",
+            "en": "How many tickets"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "京都までお願いします",
+        "audio": "station-ticket-office.destination.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「どちらまで」是問到哪裡。說站名加「までお願いします」，或遞出寫好站名、日期和時間的紙。",
+        "zh-Hans": "「どちらまで」是问到哪里。说站名加「までお願いします」，或递上写好站名、日期和时间的纸条。",
+        "en": "どちらまで asks where to. Say the station name plus までお願いします, or hand over a note with the station, date and time."
+      },
+      "wordIds": [
+        "station"
+      ]
+    },
+    {
+      "id": "station-ticket-office.when",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂站務員問哪天、幾點搭車",
+        "zh-Hans": "听懂工作人员问哪天、几点上车",
+        "en": "Understand when the clerk asks what day and time you are travelling"
+      },
+      "phrasings": [
+        {
+          "id": "station-ticket-office.when.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご乗車はいつですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.when.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.when.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご乗車の日にちとお時間をお願いします。",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "station-ticket-office.when.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.when.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何日の何時ごろのご乗車ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.when.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "哪天、幾點搭車",
+            "zh-Hans": "哪天、几点上车",
+            "en": "What day and time are you travelling"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "想幾點到",
+            "zh-Hans": "想几点到",
+            "en": "What time do you want to arrive"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要買回程票",
+            "zh-Hans": "要不要买返程票",
+            "en": "Do you want a return ticket"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "今日の十時ごろです",
+        "audio": "station-ticket-office.when.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ご乗車」是搭車，問的是出發的日期和時間，不是到達時間。回答例如「今日の十時ごろです」「明日の朝です」。",
+        "zh-Hans": "「ご乗車」是上车，问的是出发的日期和时间，不是到达时间。回答比如「今日の十時ごろです」「明日の朝です」。",
+        "en": "ご乗車 means boarding, so this asks when you leave, not when you arrive. Answer like 今日の十時ごろです or 明日の朝です."
+      },
+      "wordIds": [
+        "departure-board"
+      ]
+    },
+    {
+      "id": "station-ticket-office.how-many",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂站務員問幾個人",
+        "zh-Hans": "听懂工作人员问几个人",
+        "en": "Understand when the clerk asks how many are travelling"
+      },
+      "phrasings": [
+        {
+          "id": "station-ticket-office.how-many.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "何名様ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.how-many.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.how-many.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "大人の方、何名様ですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "station-ticket-office.how-many.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.how-many.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご利用は何名様でしょうか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.how-many.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "幾個人",
+            "zh-Hans": "几个人",
+            "en": "How many people"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有小孩同行",
+            "zh-Hans": "有没有带小孩",
+            "en": "Are any children travelling"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要坐幾號車廂",
+            "zh-Hans": "要坐几号车厢",
+            "en": "Which car do you want"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大人二人です",
+        "audio": "station-ticket-office.how-many.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「何名様」是問幾位，「大人」是成人。有小孩的話說「大人二人、子ども一人です」。",
+        "zh-Hans": "「何名様」是问几位，「大人」是成人。带小孩的话说「大人二人、子ども一人です」。",
+        "en": "何名様 asks how many, and 大人 means adult. With a child, say 大人二人、子ども一人です."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "station-ticket-office.seat-type",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂站務員問要對號座還是自由座",
+        "zh-Hans": "听懂工作人员问要指定席还是自由席",
+        "en": "Understand when the clerk asks reserved or non-reserved"
+      },
+      "reviewNote": "のぞみ等列車在旺季全車指定席，期間每年由 JR 公告；解說只寫「有些列車在特定期間沒有自由席」，需鐵路方面審稿確認說法。",
+      "phrasings": [
+        {
+          "id": "station-ticket-office.seat-type.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "指定席と自由席、どちらになさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.seat-type.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.seat-type.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "指定席でよろしいですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "station-ticket-office.seat-type.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.seat-type.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お席は指定でお取りしますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.seat-type.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "對號座還是自由座",
+            "zh-Hans": "指定席还是自由席",
+            "en": "Reserved or non-reserved seat"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "靠窗還是靠走道",
+            "zh-Hans": "靠窗还是靠过道",
+            "en": "Window or aisle"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要坐商務車廂",
+            "zh-Hans": "要不要坐商务车厢",
+            "en": "Would you like first class"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "指定席で／自由席で",
+        "audio": "station-ticket-office.seat-type.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「指定席」是對號座，「自由席」是不對號、先到先坐。有些列車在特定期間沒有自由席，依列車和日期不同，以現場說明為準。",
+        "zh-Hans": "「指定席」是对号入座，「自由席」是不对号、先到先坐。有些列车在特定时期没有自由席，依列车和日期不同，以现场说明为准。",
+        "en": "指定席 is a reserved seat and 自由席 is first come, first served. Some trains have no non-reserved seats at certain times, so go by what the counter tells you."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "station-ticket-office.window-aisle",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂站務員問座位要靠窗還是靠走道",
+        "zh-Hans": "听懂工作人员问座位要靠窗还是靠过道",
+        "en": "Understand when the clerk asks window or aisle"
+      },
+      "phrasings": [
+        {
+          "id": "station-ticket-office.window-aisle.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "窓側と通路側、どちらがよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.window-aisle.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.window-aisle.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お席のご希望はございますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "station-ticket-office.window-aisle.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.window-aisle.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "窓側か通路側か、ご希望はありますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.window-aisle.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "靠窗還是靠走道",
+            "zh-Hans": "靠窗还是靠过道",
+            "en": "Window or aisle"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "對號座還是自由座",
+            "zh-Hans": "指定席还是自由席",
+            "en": "Reserved or non-reserved seat"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要坐前面還是後面的車廂",
+            "zh-Hans": "要坐前面还是后面的车厢",
+            "en": "A car near the front or the back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "窓側で／どこでも大丈夫です",
+        "audio": "station-ticket-office.window-aisle.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「窓側」是靠窗，「通路側」是靠走道。「お席のご希望」是問座位有沒有偏好。沒有就說「どこでも大丈夫です」。",
+        "zh-Hans": "「窓側」是靠窗，「通路側」是靠过道。「お席のご希望」是问座位有没有偏好。没有就说「どこでも大丈夫です」。",
+        "en": "窓側 is the window side and 通路側 is the aisle side. お席のご希望 asks if you have a seat preference. If not, say どこでも大丈夫です."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "station-ticket-office.ticket-check",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "站務員請你確認車票。在票面上按出你坐的車廂",
+        "zh-Hans": "工作人员请你确认车票。在票面上按出你坐的车厢",
+        "en": "The clerk asks you to check your ticket. Tap the car you will ride in"
+      },
+      "phrasings": [
+        {
+          "id": "station-ticket-office.ticket-check.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらでお間違いないですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "乗車券・新幹線特急券",
+            "detail": "11月20日　東京 → 京都",
+            "buttons": [
+              {
+                "choiceId": "train",
+                "ja": "のぞみ23号"
+              },
+              {
+                "choiceId": "departs",
+                "ja": "10:00発"
+              },
+              {
+                "choiceId": "car",
+                "ja": "7号車"
+              },
+              {
+                "choiceId": "seat",
+                "ja": "12番A席"
+              }
+            ]
+          },
+          "audio": "station-ticket-office.ticket-check.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.ticket-check.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご確認をお願いします。",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "新幹線特急券（指定席）",
+            "detail": "11月20日　東京 → 京都　普通車",
+            "buttons": [
+              {
+                "choiceId": "car",
+                "ja": "7号車"
+              },
+              {
+                "choiceId": "seat",
+                "ja": "12番A席"
+              },
+              {
+                "choiceId": "train",
+                "ja": "のぞみ23号"
+              },
+              {
+                "choiceId": "departs",
+                "ja": "10時00分発"
+              }
+            ]
+          },
+          "audio": "station-ticket-office.ticket-check.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.ticket-check.p3",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "乗車券・特急券",
+            "detail": "11月20日　東京 → 京都　指定席",
+            "buttons": [
+              {
+                "choiceId": "seat",
+                "ja": "12A"
+              },
+              {
+                "choiceId": "departs",
+                "ja": "東京 10:00"
+              },
+              {
+                "choiceId": "car",
+                "ja": "7号車"
+              },
+              {
+                "choiceId": "train",
+                "ja": "のぞみ 23"
+              }
+            ]
+          },
+          "audio": null
+        }
+      ],
+      "choices": [
+        {
+          "id": "car",
+          "text": {
+            "zh-Hant": "第 7 節車廂",
+            "zh-Hans": "第 7 节车厢",
+            "en": "Car 7"
+          },
+          "correct": true
+        },
+        {
+          "id": "seat",
+          "text": {
+            "zh-Hant": "12 排 A 座",
+            "zh-Hans": "12 排 A 座",
+            "en": "Row 12, seat A"
+          },
+          "correct": false
+        },
+        {
+          "id": "departs",
+          "text": {
+            "zh-Hant": "10:00 開車",
+            "zh-Hans": "10:00 发车",
+            "en": "Departs 10:00"
+          },
+          "correct": false
+        },
+        {
+          "id": "train",
+          "text": {
+            "zh-Hant": "車次名稱",
+            "zh-Hans": "车次名称",
+            "en": "Train name and number"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、大丈夫です",
+        "audio": "station-ticket-office.ticket-check.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「号車」是第幾節車廂，「番」「席」是座位，「発」是開車時間。月台地上會標車廂號碼，照「7号車」的位置排隊。確認沒問題就說「はい、大丈夫です」。",
+        "zh-Hans": "「号車」是第几节车厢，「番」「席」是座位，「発」是发车时间。站台地上会标车厢号码，照「7号車」的位置排队。确认没问题就说「はい、大丈夫です」。",
+        "en": "号車 is the car number, 番 and 席 are the seat, and 発 is the departure time. The platform floor shows car numbers, so line up at 7号車. If it is all correct, say はい、大丈夫です."
+      },
+      "wordIds": [
+        "train-ticket",
+        "high-speed-train"
+      ]
+    },
+    {
+      "id": "station-ticket-office.payment",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂站務員問用什麼付款",
+        "zh-Hans": "听懂工作人员问用什么付款",
+        "en": "Understand when the clerk asks how you will pay"
+      },
+      "phrasings": [
+        {
+          "id": "station-ticket-office.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払いは現金ですか、カードですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.payment.p1.mp3"
+        },
+        {
+          "id": "station-ticket-office.payment.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "カードでよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "station-ticket-office.payment.p2.mp3"
+        },
+        {
+          "id": "station-ticket-office.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払い方法はどうなさいますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "station-ticket-office.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "用現金還是刷卡",
+            "zh-Hans": "用现金还是刷卡",
+            "en": "Cash or card"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要发票",
+            "en": "Do you want a receipt"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "一次付清還是分期",
+            "zh-Hans": "一次付清还是分期",
+            "en": "One payment or instalments"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "カードで",
+        "audio": "station-ticket-office.payment.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「現金」是現金，「カード」是信用卡。回「カードで」或「現金で」就好。",
+        "zh-Hans": "「現金」是现金，「カード」是信用卡。回「カードで」或「現金で」就好。",
+        "en": "現金 is cash and カード is a credit card. Answer カードで or 現金で."
+      },
+      "wordIds": []
+    }
+  ]
+}

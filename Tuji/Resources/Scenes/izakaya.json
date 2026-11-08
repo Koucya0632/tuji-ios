@@ -1,0 +1,665 @@
+{
+  "schemaVersion": 2,
+  "id": "izakaya",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "居酒屋",
+    "zh-Hans": "居酒屋",
+    "en": "Izakaya"
+  },
+  "summary": {
+    "zh-Hant": "從進門到最後點餐會被問的七件事",
+    "zh-Hans": "从进门到最后点单会被问的七件事",
+    "en": "Seven things you are asked from the door to last orders"
+  },
+  "questions": [
+    {
+      "id": "izakaya.reservation",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問有沒有訂位",
+        "zh-Hans": "听懂店员问有没有订位",
+        "en": "Understand when the staff ask if you have a booking"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.reservation.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご予約はされていますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.reservation.p1.mp3"
+        },
+        {
+          "id": "izakaya.reservation.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご予約のお客様でしょうか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "izakaya.reservation.p2.mp3"
+        },
+        {
+          "id": "izakaya.reservation.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "本日ご予約はございますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.reservation.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請問幾位",
+            "zh-Hans": "请问几位",
+            "en": "How many people"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有訂位",
+            "zh-Hans": "有没有订位",
+            "en": "Do you have a booking"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要喝到飽",
+            "zh-Hans": "要不要无限畅饮",
+            "en": "Do you want all-you-can-drink"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "予約していません／予約しています",
+        "audio": "izakaya.reservation.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ご予約」是訂位。沒訂說「予約していません」，有訂就說「予約しています」，再報名字。",
+        "zh-Hans": "「ご予約」是订位。没订说「予約していません」，有订就说「予約しています」，再报名字。",
+        "en": "ご予約 means a booking. Say 予約していません if you have none, or 予約しています and then your name."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "izakaya.time-limit",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員說只能坐兩小時",
+        "zh-Hans": "听懂店员说只能坐两小时",
+        "en": "Understand when the staff say there is a two-hour limit"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.time-limit.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "2時間制となっておりますが、よろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.time-limit.p1.mp3"
+        },
+        {
+          "id": "izakaya.time-limit.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お席2時間でお願いしてます",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "izakaya.time-limit.p2.mp3"
+        },
+        {
+          "id": "izakaya.time-limit.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "20時までのご利用になりますが、大丈夫ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.time-limit.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要等兩小時左右",
+            "zh-Hans": "要等两小时左右",
+            "en": "The wait is about two hours"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "喝到飽是兩小時",
+            "zh-Hans": "无限畅饮是两小时",
+            "en": "All-you-can-drink lasts two hours"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "只能坐兩小時，可以嗎",
+            "zh-Hans": "只能坐两小时，可以吗",
+            "en": "Is a two-hour limit all right"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "はい、大丈夫です",
+        "audio": "izakaya.time-limit.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「2時間制」是限時兩小時，「〜までのご利用」是可以坐到幾點，不是要等多久。可以就說「はい、大丈夫です」。",
+        "zh-Hans": "「2時間制」是限时两小时，「〜までのご利用」是可以坐到几点，不是要等多久。可以就说「はい、大丈夫です」。",
+        "en": "2時間制 means a two-hour limit and 〜までのご利用 says what time you can stay until. Neither is about waiting. Say はい、大丈夫です if that is fine."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "izakaya.all-you-can-drink",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要喝到飽",
+        "zh-Hans": "听懂店员问要不要无限畅饮",
+        "en": "Understand when the staff ask about all-you-can-drink"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.all-you-can-drink.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "飲み放題はご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.all-you-can-drink.p1.mp3"
+        },
+        {
+          "id": "izakaya.all-you-can-drink.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "飲み放題お付けできますが、いかがなさいますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "izakaya.all-you-can-drink.p2.mp3"
+        },
+        {
+          "id": "izakaya.all-you-can-drink.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "飲み放題、どうされますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.all-you-can-drink.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要喝到飽",
+            "zh-Hans": "要不要无限畅饮",
+            "en": "Do you want all-you-can-drink"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "先點飲料好嗎",
+            "zh-Hans": "先点饮料好吗",
+            "en": "Shall we start with drinks"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要點套餐",
+            "zh-Hans": "要不要点套餐",
+            "en": "Do you want a set course"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "なしで／お願いします",
+        "audio": "izakaya.all-you-can-drink.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「飲み放題」是喝到飽，通常有時間限制。價錢和規定依店家不同，有的店要同桌的人一起加。不要就說「なしで」。",
+        "zh-Hans": "「飲み放題」是无限畅饮，通常有时间限制。价钱和规定依店家不同，有的店要同桌的人一起加。不要就说「なしで」。",
+        "en": "飲み放題 is all-you-can-drink, usually with a time limit. Price and rules vary, and some places need the whole table to join. Say なしで for no."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "izakaya.first-drinks",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員請你先點飲料",
+        "zh-Hans": "听懂店员请你先点饮料",
+        "en": "Understand when the staff ask for your drinks first"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.first-drinks.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "先にお飲み物からお伺いしてもよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.first-drinks.p1.mp3"
+        },
+        {
+          "id": "izakaya.first-drinks.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "とりあえず、お飲み物どうされますか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "izakaya.first-drinks.p2.mp3"
+        },
+        {
+          "id": "izakaya.first-drinks.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "まずドリンクからお願いします",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.first-drinks.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "點好了嗎",
+            "zh-Hans": "点好了吗",
+            "en": "Are you ready to order"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "先點飲料",
+            "zh-Hans": "先点饮料",
+            "en": "Drinks first"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要喝到飽",
+            "zh-Hans": "要不要无限畅饮",
+            "en": "Do you want all-you-can-drink"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "生ビールで／ウーロン茶で",
+        "audio": "izakaya.first-drinks.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "居酒屋多半先點飲料，菜等一下再點。「とりあえず」「まず」是先。不喝酒可以說「ウーロン茶で」。",
+        "zh-Hans": "居酒屋多半先点饮料，菜等一下再点。「とりあえず」「まず」是先。不喝酒可以说「ウーロン茶で」。",
+        "en": "At an izakaya you usually order drinks first and food after. とりあえず and まず mean first of all. If you do not drink alcohol, ウーロン茶で works."
+      },
+      "wordIds": [
+        "draft-beer",
+        "highball",
+        "lemon-sour"
+      ]
+    },
+    {
+      "id": "izakaya.otoshi",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員送上的是お通し",
+        "zh-Hans": "听懂店员送上的是お通し",
+        "en": "Understand when the staff bring your otoshi"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.otoshi.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちら、お通しです",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.otoshi.p1.mp3"
+        },
+        {
+          "id": "izakaya.otoshi.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お通しになります",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "izakaya.otoshi.p2.mp3"
+        },
+        {
+          "id": "izakaya.otoshi.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お通し代として、お一人様300円いただいております",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.otoshi.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "這是招待的，不用錢",
+            "zh-Hans": "这是送的，不要钱",
+            "en": "This is on the house"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "這是你點的菜",
+            "zh-Hans": "这是你点的菜",
+            "en": "Here is the dish you ordered"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "這是會算錢的開胃小菜",
+            "zh-Hans": "这是要收钱的开胃小菜",
+            "en": "A starter that goes on the bill"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "ありがとうございます",
+        "audio": "izakaya.otoshi.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お通し」是入座後店家自己送上的小菜，多半會算進帳單，不是招待。金額依店家不同。點頭或說「ありがとうございます」就好。",
+        "zh-Hans": "「お通し」是入座后店家自己送上的小菜，多半会算进账单，不是赠送。金额依店家不同。点头或说「ありがとうございます」就好。",
+        "en": "お通し is a small dish served when you sit down. It usually goes on the bill and is not free. The price depends on the place. A nod or ありがとうございます is enough."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "izakaya.alcohol-check",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你已滿 20 歲、今天不開車，用平板點了啤酒。按對的按鈕",
+        "zh-Hans": "你已满 20 岁、今天不开车，用平板点了啤酒。按对的按钮",
+        "en": "You are 20 or older, not driving, and ordered a beer on the tablet. Tap the right button"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.alcohol-check.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "年齢確認",
+            "detail": "20歳以上で、お車を運転されない方ですか？",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "izakaya.alcohol-check.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "20歳以上の方ですか？",
+            "detail": "お車を運転される方にはお酒をご提供できません",
+            "buttons": [
+              {
+                "choiceId": "back",
+                "ja": "キャンセル"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "izakaya.alcohol-check.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お酒のご注文はタブレットからお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "年齢確認",
+            "detail": "20歳以上で、お車を運転されない方ですか？",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "izakaya.alcohol-check.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "yes",
+          "text": {
+            "zh-Hant": "是，確認點酒",
+            "zh-Hans": "是，确认点酒",
+            "en": "Yes, order it"
+          },
+          "correct": true
+        },
+        {
+          "id": "no",
+          "text": {
+            "zh-Hant": "否",
+            "zh-Hans": "否",
+            "en": "No"
+          },
+          "correct": false
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "取消",
+            "zh-Hans": "取消",
+            "en": "Cancel"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "在日本要滿 20 歲才能喝酒，開車的人不能喝酒。用平板點酒時會跳出確認畫面，兩樣都符合才按「はい」。",
+        "zh-Hans": "在日本要满 20 岁才能喝酒，开车的人不能喝酒。用平板点酒时会跳出确认画面，两样都符合才按「はい」。",
+        "en": "In Japan you must be 20 to drink, and drivers may not drink at all. When you order alcohol on the tablet, a check appears. Tap はい only if both are true for you."
+      },
+      "wordIds": [
+        "ordering-tablet",
+        "draft-beer"
+      ],
+      "reviewNote": "法定飲酒年齡與酒駕的說明措辭要請審稿確認；平板畫面上的文字是自繪示意"
+    },
+    {
+      "id": "izakaya.last-order",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員說要最後點餐了",
+        "zh-Hans": "听懂店员说要最后点单了",
+        "en": "Understand when the staff call last orders"
+      },
+      "phrasings": [
+        {
+          "id": "izakaya.last-order.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ラストオーダーのお時間ですが、ご注文はよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.last-order.p1.mp3"
+        },
+        {
+          "id": "izakaya.last-order.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "そろそろラストオーダーになります",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "izakaya.last-order.p2.mp3"
+        },
+        {
+          "id": "izakaya.last-order.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お飲み物、最後のご注文いかがですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "izakaya.last-order.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "最後點餐，還要點嗎",
+            "zh-Hans": "最后点单，还要点吗",
+            "en": "Last orders, anything else"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "時間到了，請結帳",
+            "zh-Hans": "时间到了，请买单",
+            "en": "Time is up, please pay"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "點的菜都到齊了嗎",
+            "zh-Hans": "点的菜都上齐了吗",
+            "en": "Has everything arrived"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／これをお願いします",
+        "audio": "izakaya.last-order.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ラストオーダー」是最後點餐，之後就不能再點，但還不用馬上走。不點說「大丈夫です」，要點就指著菜單說「これをお願いします」。",
+        "zh-Hans": "「ラストオーダー」是最后点单，之后就不能再点，但还不用马上走。不点说「大丈夫です」，要点就指着菜单说「これをお願いします」。",
+        "en": "ラストオーダー means last orders. After it you cannot order more, but you do not have to leave yet. Say 大丈夫です for no, or point at the menu and say これをお願いします."
+      },
+      "wordIds": []
+    }
+  ]
+}

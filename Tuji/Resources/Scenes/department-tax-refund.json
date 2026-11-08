@@ -1,0 +1,694 @@
+{
+  "schemaVersion": 2,
+  "id": "department-tax-refund",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "百貨公司退稅",
+    "zh-Hans": "百货公司退税",
+    "en": "Department store tax refund"
+  },
+  "summary": {
+    "zh-Hant": "退稅櫃台會被問的七件事",
+    "zh-Hans": "退税柜台会被问的七件事",
+    "en": "Seven things the tax refund counter asks you"
+  },
+  "questions": [
+    {
+      "id": "department-tax-refund.queue-ticket",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台請你先取號",
+        "zh-Hans": "听懂柜台请你先取号",
+        "en": "Understand when the counter asks you to take a number"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.queue-ticket.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "番号札をお取りになって、お待ちください",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.queue-ticket.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.queue-ticket.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "こちらで番号札をお取りください",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "department-tax-refund.queue-ticket.p2.mp3"
+        },
+        {
+          "id": "department-tax-refund.queue-ticket.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "番号でお呼びしますので、少々お待ちください",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.queue-ticket.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請排到隊伍後面",
+            "zh-Hans": "请排到队伍后面",
+            "en": "Join the back of the line"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "先取號碼牌，等叫號",
+            "zh-Hans": "先取号码牌，等叫号",
+            "en": "Take a number and wait to be called"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "先去收銀台結帳",
+            "zh-Hans": "先去收银台结账",
+            "en": "Pay at the register first"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "わかりました",
+        "audio": "department-tax-refund.queue-ticket.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「番号札」是號碼牌，「お呼びします」是會叫你的號碼。取了號碼牌，叫到再過去。",
+        "zh-Hans": "「番号札」是号码牌，「お呼びします」是会叫你的号。取了号码牌，叫到再过去。",
+        "en": "番号札 is a number ticket, and お呼びします means they will call your number. Take one and go up when it is called."
+      },
+      "wordIds": [
+        "queue-ticket",
+        "queue-ticket-dispenser"
+      ],
+      "reviewNote": "新制下各百貨免稅櫃台是否仍用取號叫號，要核對（本句本身不涉及法規）。"
+    },
+    {
+      "id": "department-tax-refund.passport",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台請你出示護照",
+        "zh-Hans": "听懂柜台请你出示护照",
+        "en": "Understand when the counter asks for your passport"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.passport.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "パスポートをお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.passport.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.passport.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートを拝見します",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "department-tax-refund.passport.p2.mp3"
+        },
+        {
+          "id": "department-tax-refund.passport.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートのご提示をお願いいたします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.passport.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請給我看護照",
+            "zh-Hans": "请出示护照",
+            "en": "May I see your passport"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請給我看登機證",
+            "zh-Hans": "请出示登机牌",
+            "en": "May I see your boarding pass"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請給我看收據",
+            "zh-Hans": "请出示小票",
+            "en": "May I see your receipts"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、どうぞ",
+        "audio": "department-tax-refund.passport.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「拝見します」「ご提示」都是請你拿給他看。遞出護照說「はい、どうぞ」。要哪些證件依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「拝見します」「ご提示」都是请你拿给他看。递出护照说「はい、どうぞ」。要哪些证件依店家／规定不同，以现场说明为准。",
+        "en": "拝見します and ご提示 both ask you to show it. Hand over your passport and say はい、どうぞ. The documents needed differ by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "passport"
+      ],
+      "reviewNote": "新制下辦退稅要出示的證件（護照正本、入境章或其他）要請熟新免稅制的人核對。"
+    },
+    {
+      "id": "department-tax-refund.receipts",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台要看你的收據",
+        "zh-Hans": "听懂柜台要看你的小票",
+        "en": "Understand when the counter asks for your receipts"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.receipts.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "本日のレシートとお品物をお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.receipts.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.receipts.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "レシートはすべてお持ちですか？",
+          "voice": "Aoede",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "department-tax-refund.receipts.p2.mp3"
+        },
+        {
+          "id": "department-tax-refund.receipts.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お買い上げのレシートを拝見できますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.receipts.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要小票",
+            "en": "Do you need a receipt"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請給我看護照",
+            "zh-Hans": "请出示护照",
+            "en": "May I see your passport"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請拿出今天的收據",
+            "zh-Hans": "请拿出今天的小票",
+            "en": "Please show today's receipts"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "はい、これです",
+        "audio": "department-tax-refund.receipts.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「レシート」是收據，「お品物」是買的商品，有時也要一起看。把今天的收據都拿出來說「はい、これです」。要看哪些東西依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「レシート」是小票，「お品物」是买的商品，有时也要一起看。把今天的小票都拿出来说「はい、これです」。要看哪些东西依店家／规定不同，以现场说明为准。",
+        "en": "レシート is a receipt, and お品物 means the items you bought, which they may also check. Hand over today's receipts and say はい、これです. What they check differs by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "receipt"
+      ],
+      "reviewNote": "新制下是否仍要看商品、收據條件（當日、合算）要核對。"
+    },
+    {
+      "id": "department-tax-refund.departure-date",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問你什麼時候離開日本",
+        "zh-Hans": "听懂柜台问你什么时候离开日本",
+        "en": "Understand when you are asked when you leave Japan"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.departure-date.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご出国はいつのご予定ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.departure-date.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.departure-date.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "日本を出られるのはいつですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "department-tax-refund.departure-date.p2.mp3"
+        },
+        {
+          "id": "department-tax-refund.departure-date.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "出国予定日を教えていただけますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.departure-date.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "你什麼時候入境的",
+            "zh-Hans": "你什么时候入境的",
+            "en": "When did you arrive in Japan"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "什麼時候離開日本",
+            "zh-Hans": "什么时候离开日本",
+            "en": "When are you leaving Japan"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "你住在哪裡",
+            "zh-Hans": "你住在哪里",
+            "en": "Where are you staying"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "十五日です",
+        "audio": "department-tax-refund.departure-date.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「出国」是離開日本，「入国」是入境，兩個很像，要聽清楚。回日期就好，例如「十五日です」。會不會問依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「出国」是离开日本，「入国」是入境，两个很像，要听清楚。回日期就好，比如「十五日です」。会不会问依店家／规定不同，以现场说明为准。",
+        "en": "出国 means leaving Japan and 入国 means arriving, and they sound alike. Just give the date, like 十五日です. Whether this is asked differs by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "大綱標待確認：新制下櫃台是否仍問出境日、三個問法是否自然，都要核對。"
+    },
+    {
+      "id": "department-tax-refund.refund-method",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你想把稅退到信用卡。在櫃台的畫面上按對的按鈕",
+        "zh-Hans": "你想把税退到信用卡。在柜台的屏幕上按对的按钮",
+        "en": "You want the refund on your credit card. Tap the right button on the counter screen"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.refund-method.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらの画面でお選びください",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "ご返金方法を選択してください",
+            "detail": "返金予定額 ¥3,000",
+            "buttons": [
+              {
+                "choiceId": "other",
+                "ja": "その他"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "staff",
+                "ja": "係員呼出"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "department-tax-refund.refund-method.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.refund-method.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "返金方法の選択",
+            "detail": "お手続き 1件",
+            "buttons": [
+              {
+                "choiceId": "credit",
+                "ja": "カードで返金"
+              },
+              {
+                "choiceId": "other",
+                "ja": "その他の方法"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "staff",
+                "ja": "スタッフを呼ぶ"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "department-tax-refund.refund-method.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご返金はクレジットカードでよろしいですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "ご返金方法を選択してください",
+            "detail": "返金予定額 ¥3,000",
+            "buttons": [
+              {
+                "choiceId": "other",
+                "ja": "その他"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "staff",
+                "ja": "係員呼出"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "department-tax-refund.refund-method.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "other",
+          "text": {
+            "zh-Hant": "其他方式",
+            "zh-Hans": "其他方式",
+            "en": "Another method"
+          },
+          "correct": false
+        },
+        {
+          "id": "credit",
+          "text": {
+            "zh-Hant": "退到信用卡",
+            "zh-Hans": "退到信用卡",
+            "en": "Refund to a credit card"
+          },
+          "correct": true
+        },
+        {
+          "id": "staff",
+          "text": {
+            "zh-Hant": "叫工作人員",
+            "zh-Hans": "叫工作人员",
+            "en": "Call staff"
+          },
+          "correct": false
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "クレジットカード",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「ご返金」是退款，「返金方法」是退款方式。選「クレジットカード」後，可能會要你插卡或感應登錄。退款方式依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「ご返金」是退款，「返金方法」是退款方式。选「クレジットカード」后，可能会要你插卡或感应登记。退款方式依店家／规定不同，以现场说明为准。",
+        "en": "ご返金 means refund, and 返金方法 is how you get it. After you choose クレジットカード, you may be asked to insert or tap your card. Refund methods differ by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "畫面是自繪示意；新制下實際可選的退款方式、卡片登錄步驟、店員口頭問法（待確認）都要核對。"
+    },
+    {
+      "id": "department-tax-refund.fee",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台說退款會扣手續費",
+        "zh-Hans": "听懂柜台说退款会扣手续费",
+        "en": "Understand when you are told a fee comes off the refund"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.fee.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "返金手数料がかかりますが、よろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.fee.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.fee.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "手数料を差し引いてのご返金になります",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "department-tax-refund.fee.p2.mp3"
+        },
+        {
+          "id": "department-tax-refund.fee.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "手数料はご返金額から引かせていただきます",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.fee.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "退款會扣手續費",
+            "zh-Hans": "退款会扣手续费",
+            "en": "A fee comes off the refund"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "退款要等幾天才會入帳",
+            "zh-Hans": "退款要等几天才会到账",
+            "en": "The refund takes a few days to arrive"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要另外付運費",
+            "zh-Hans": "要另外付运费",
+            "en": "There is a shipping fee"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です",
+        "audio": "department-tax-refund.fee.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「手数料」是手續費，「差し引いて」「引かせていただきます」是從退款裡扣掉。可以就說「大丈夫です」。有沒有手續費、扣多少，依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「手数料」是手续费，「差し引いて」「引かせていただきます」是从退款里扣掉。可以就说「大丈夫です」。有没有手续费、扣多少，依店家／规定不同，以现场说明为准。",
+        "en": "手数料 is a fee, and 差し引いて or 引かせていただきます mean it comes off the refund. Say 大丈夫です if that is fine. Whether there is a fee and how much differs by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "大綱標待確認：新制下是否收手續費、三個問法是否自然，各百貨不同，要核對；若不問就刪此句。"
+    },
+    {
+      "id": "department-tax-refund.customs",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台提醒出境時要到海關確認",
+        "zh-Hans": "听懂柜台提醒出境时要到海关确认",
+        "en": "Understand the reminder to see customs when you leave"
+      },
+      "phrasings": [
+        {
+          "id": "department-tax-refund.customs.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご出国の際、空港の税関で確認を受けてください",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.customs.p1.mp3"
+        },
+        {
+          "id": "department-tax-refund.customs.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "出国時に税関でパスポートをお見せください",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "department-tax-refund.customs.p2.mp3"
+        },
+        {
+          "id": "department-tax-refund.customs.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "税関の確認後にご返金となります",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "department-tax-refund.customs.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "入境時要向海關申報",
+            "zh-Hans": "入境时要向海关申报",
+            "en": "Declare it at customs when you arrive"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "回國後要把收據寄回來",
+            "zh-Hans": "回国后要把小票寄回来",
+            "en": "Mail the receipts back once you are home"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "出境時要到海關確認",
+            "zh-Hans": "出境时要到海关确认",
+            "en": "Have it checked at customs when you leave"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "わかりました",
+        "audio": "department-tax-refund.customs.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「税関」是海關，「出国の際」是出境的時候。新制要等海關確認後才退款，出境時記得去辦。要準備什麼、在哪裡辦，依店家／規定不同，以現場說明為準。",
+        "zh-Hans": "「税関」是海关，「出国の際」是出境的时候。新制要等海关确认后才退款，出境时记得去办。要准备什么、在哪里办，依店家／规定不同，以现场说明为准。",
+        "en": "税関 is customs, and 出国の際 means when you leave Japan. Under the new system the refund comes after customs checks, so do it on your way out. What to bring and where to go differ by store and by the rules, so follow what the staff tell you."
+      },
+      "wordIds": [
+        "customs-counter"
+      ],
+      "reviewNote": "出境時海關確認的流程（地點、出示什麼、是否要帶商品）新制剛上路，「出国時に税関でパスポートをお見せください」標待確認，要核對官方說明。"
+    }
+  ]
+}

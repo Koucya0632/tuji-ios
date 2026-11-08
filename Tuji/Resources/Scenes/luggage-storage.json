@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 2,
+  "id": "luggage-storage",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "寄放行李",
+    "zh-Hans": "寄存行李",
+    "en": "Leaving your luggage"
+  },
+  "summary": {
+    "zh-Hant": "在櫃台寄放行李時會問的五件事",
+    "zh-Hans": "在前台寄存行李时会问的五件事",
+    "en": "Five things the desk asks when you leave your bags"
+  },
+  "questions": [
+    {
+      "id": "luggage-storage.checked-out",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問你退房了沒",
+        "zh-Hans": "听懂前台问你退房了没",
+        "en": "Understand when you are asked if you have checked out"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-storage.checked-out.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "チェックアウトはお済みですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.checked-out.p1.mp3"
+        },
+        {
+          "id": "luggage-storage.checked-out.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "チェックアウト、もうされましたか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-storage.checked-out.p2.mp3"
+        },
+        {
+          "id": "luggage-storage.checked-out.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "チェックアウトのお手続きはお済みでしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.checked-out.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "幾點要退房",
+            "zh-Hans": "几点要退房",
+            "en": "What time you will check out"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "已經退房了嗎",
+            "zh-Hans": "已经退房了吗",
+            "en": "Have you checked out"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有預約",
+            "zh-Hans": "有没有预约",
+            "en": "Do you have a booking"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、済みました",
+        "audio": "luggage-storage.checked-out.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お済み」是已經辦好了。退房了說「はい、済みました」，還沒的話說「まだです」，櫃台會先幫你辦退房。",
+        "zh-Hans": "「お済み」是已经办好了。退房了说「はい、済みました」，还没的话说「まだです」，前台会先帮你办退房。",
+        "en": "お済み means already done. Say はい、済みました if you have checked out, or まだです if not, and they will check you out first."
+      },
+      "wordIds": [
+        "hotel-receptionist"
+      ]
+    },
+    {
+      "id": "luggage-storage.count",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問行李有幾件",
+        "zh-Hans": "听懂前台问行李有几件",
+        "en": "Understand when you are asked how many bags"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-storage.count.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お荷物は何個ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.count.p1.mp3"
+        },
+        {
+          "id": "luggage-storage.count.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お荷物はおいくつですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-storage.count.p2.mp3"
+        },
+        {
+          "id": "luggage-storage.count.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "こちら全部で3点でよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.count.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "行李有幾件",
+            "zh-Hans": "行李有几件",
+            "en": "How many bags"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "行李有多重",
+            "zh-Hans": "行李有多重",
+            "en": "How heavy the bags are"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "行李要放到幾點",
+            "zh-Hans": "行李要放到几点",
+            "en": "Until what time to keep them"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "2つです",
+        "audio": "luggage-storage.count.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「何個」「おいくつ」都是問幾件，「3点」是三件。說「2つです」「3つです」，或用手指比。",
+        "zh-Hans": "「何個」「おいくつ」都是问几件，「3点」是三件。说「2つです」「3つです」，或用手指比。",
+        "en": "何個 and おいくつ both ask how many, and 3点 means three items. Say 2つです or 3つです, or show it with your fingers."
+      },
+      "wordIds": [
+        "suitcase"
+      ]
+    },
+    {
+      "id": "luggage-storage.valuables",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問有沒有貴重品或易碎物",
+        "zh-Hans": "听懂前台问有没有贵重品或易碎物",
+        "en": "Understand when you are asked about valuables or fragile items"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-storage.valuables.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "貴重品や割れ物は入っていませんか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.valuables.p1.mp3"
+        },
+        {
+          "id": "luggage-storage.valuables.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "貴重品や壊れ物、入っていませんか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-storage.valuables.p2.mp3"
+        },
+        {
+          "id": "luggage-storage.valuables.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "現金やパソコン、割れ物などは入っていませんか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.valuables.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有電池或噴霧罐",
+            "zh-Hans": "有没有电池或喷雾罐",
+            "en": "Any batteries or spray cans"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "行李有沒有上鎖",
+            "zh-Hans": "行李有没有上锁",
+            "en": "Is your bag locked"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有貴重品或易碎物",
+            "zh-Hans": "有没有贵重品或易碎物",
+            "en": "Any valuables or fragile items"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "入っていません",
+        "audio": "luggage-storage.valuables.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「貴重品」是現金、電腦這類貴重的東西，「割れ物」「壊れ物」是易碎物。這是否定問句，回「はい」是「對，沒有」，很容易答反，直接說「入っていません」。貴重品通常建議自己帶著，規定依店家不同，以現場說明為準。",
+        "zh-Hans": "「貴重品」是现金、电脑这类贵重的东西，「割れ物」「壊れ物」是易碎物。这是否定问句，回「はい」是「对，没有」，很容易答反，直接说「入っていません」。贵重品通常建议自己带着，规定依店家不同，以现场说明为准。",
+        "en": "貴重品 means valuables like cash or a laptop, and 割れ物 or 壊れ物 means fragile items. This is a negative question, so はい means yes, there are none, which is easy to get backwards. Say 入っていません. Keeping valuables with you is usually best, and rules vary by place, so follow what the staff tell you."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "luggage-storage.return-time",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問幾點回來拿",
+        "zh-Hans": "听懂前台问几点回来拿",
+        "en": "Understand when you are asked what time you will be back"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-storage.return-time.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "何時頃お戻りになりますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.return-time.p1.mp3"
+        },
+        {
+          "id": "luggage-storage.return-time.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お引き取りは何時頃のご予定ですか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-storage.return-time.p2.mp3"
+        },
+        {
+          "id": "luggage-storage.return-time.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何時までお預かりしましょうか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.return-time.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要寄放幾天",
+            "zh-Hans": "要寄存几天",
+            "en": "How many days to keep them"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "幾點回來拿",
+            "zh-Hans": "几点回来拿",
+            "en": "What time you will pick them up"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "幾點要退房",
+            "zh-Hans": "几点要退房",
+            "en": "What time you will check out"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "5時ごろです",
+        "audio": "luggage-storage.return-time.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お戻り」是回來，「お引き取り」是來領。說大概的時間加「ごろです」。寄放後會拿到一張牌子，回來時出示給櫃台。",
+        "zh-Hans": "「お戻り」是回来，「お引き取り」是来领。说大概的时间加「ごろです」。寄存后会拿到一张牌子，回来时出示给前台。",
+        "en": "お戻り means coming back and お引き取り means picking up. Give a rough time with ごろです. You get a tag when you leave the bags; show it when you come back."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "luggage-storage.name",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問名字",
+        "zh-Hans": "听懂前台问名字",
+        "en": "Understand when you are asked your name"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-storage.name.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お名前をお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.name.p1.mp3"
+        },
+        {
+          "id": "luggage-storage.name.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お名前、伺ってもよろしいですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-storage.name.p2.mp3"
+        },
+        {
+          "id": "luggage-storage.name.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お預かりのお名前を頂戴できますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-storage.name.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請問你的名字",
+            "zh-Hans": "请问你的名字",
+            "en": "What is your name"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請問你的房號",
+            "zh-Hans": "请问你的房间号",
+            "en": "What is your room number"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請問你的電話號碼",
+            "zh-Hans": "请问你的电话号码",
+            "en": "What is your phone number"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ワンです",
+        "audio": "luggage-storage.name.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お名前」是名字，「頂戴」「伺う」都是客氣地問。說名字加「です」，櫃台會寫在行李牌上。",
+        "zh-Hans": "「お名前」是名字，「頂戴」「伺う」都是客气地问。说名字加「です」，前台会写在行李牌上。",
+        "en": "お名前 is your name; 頂戴 and 伺う are polite ways of asking. Say your name with です and they will write it on the tag."
+      },
+      "wordIds": []
+    }
+  ]
+}

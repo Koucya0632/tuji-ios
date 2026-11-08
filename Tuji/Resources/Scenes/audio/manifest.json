@@ -1,6 +1,3116 @@
 {
   "schemaVersion": 1,
   "files": {
+    "airport-check-in.checked-bags.p1.mp3": {
+      "digest": "96431867527831538bafbaccc48dee179d697f6d9ba72232001c7c90b52a3139",
+      "sha256": "c1e1a2794f6c5e262204ac143e0440b375f3a0dc94b24fba21c2728465884e22",
+      "text": "お預けになるお荷物はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11232,
+      "durationSec": 2.808
+    },
+    "airport-check-in.checked-bags.p2.mp3": {
+      "digest": "f0d8ddf36e6324697f8ca5dc1ebccd7e063c5bc9a09aba225d79f07c6cf6f97f",
+      "sha256": "579a1b1283dbe62ad5e7cdc66a86db67afdea6357043883ca25a335d9561245d",
+      "text": "お預けのお荷物は何個ですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "airport-check-in.checked-bags.p3.mp3": {
+      "digest": "39717209f75602e3439021ec8485810d0e76c7d93f47603c21ecce980d21e7c9",
+      "sha256": "0b48d4fe11b8dd9913f432a9904a9155c9759b0b47a3257f73bba1219046f34d",
+      "text": "お荷物はお預けになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11424,
+      "durationSec": 2.856
+    },
+    "airport-check-in.checked-bags.response.mp3": {
+      "digest": "f1205d0412838d4cfd3079fe99c60c2e84e16b681a2ecba1c94321ac425066b6",
+      "sha256": "65c09643af0b790d94f05f98306e29396ad81dc2a53c074064228c4d629c521f",
+      "text": "一つです／ありません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "airport-check-in.dangerous-goods.p1.mp3": {
+      "digest": "184a03ee32fd5211bfe99f4d464f43cbac8c040ff397da181cacd05d936f5ff1",
+      "sha256": "3a1519cc8b0f609dd1803b37c01a94239735f7df47a47b1ee31c048367d6d452",
+      "text": "お荷物の中に、モバイルバッテリーやライターは入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 19776,
+      "durationSec": 4.944
+    },
+    "airport-check-in.dangerous-goods.p2.mp3": {
+      "digest": "14d9db6f5f9b83a3af61e500c52a70d9e0ab73e3def05b4ef860f2a23c87b961",
+      "sha256": "d5cd72c43d036143ba6d78b4e490c93a9dbcf1a7c055bce1174a87c272e2b175",
+      "text": "リチウム電池やスプレー缶などは入っておりませんか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 36284,
+      "durationSec": 3.536
+    },
+    "airport-check-in.dangerous-goods.p3.mp3": {
+      "digest": "59eb72796ea907b125f091b687b3518e0dce886824b7d310bf7093b82691251b",
+      "sha256": "ee7ae28759c1056081e8e5be4435b29206fadb8a11c2d389beb30ff68a978ff0",
+      "text": "預けるお荷物に、モバイルバッテリーは入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16896,
+      "durationSec": 4.224
+    },
+    "airport-check-in.dangerous-goods.response.mp3": {
+      "digest": "03d2a932bf7035736036738cf02619c157e507a73106f7a364c55aa9528a8143",
+      "sha256": "0c6f372895b09119a222ef391e1442309a3410a994508e0663e5a7876c540cf2",
+      "text": "入っていません／入っています",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11424,
+      "durationSec": 2.856
+    },
+    "airport-check-in.fragile.p1.mp3": {
+      "digest": "1c6c2e18f268473888834248c3bc9223d969194dc3e72ea44ca2f02a8b63fbde",
+      "sha256": "d0e81919fb2ad614c842cc4c3810be62249268c542c3267566b1b38f1abeb19d",
+      "text": "壊れ物や貴重品は入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12672,
+      "durationSec": 3.168
+    },
+    "airport-check-in.fragile.p2.mp3": {
+      "digest": "7b1ddd106dc50c27cfb8cbfc0ddda344800519c0c1fc85be73ad803de94ea6a6",
+      "sha256": "c17ae533658f26822d4e63a202a8de2870c55d13cb6c7031c574806a4f52a4e7",
+      "text": "割れ物は入っていますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "airport-check-in.fragile.p3.mp3": {
+      "digest": "1acb8fb5039068aa5c1fa58e20c90cb7ad2e27d9168976dea63536a76c891564",
+      "sha256": "2749828546fe7b08b92e34bcd42aacdece0d95eb198a849091bf4e9ff6488240",
+      "text": "中に壊れやすい物はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10944,
+      "durationSec": 2.736
+    },
+    "airport-check-in.fragile.response.mp3": {
+      "digest": "673ad1586f43cd973007660fadd7f357a7a4b4f347d5cf17ca3e2a9fe9c0b20a",
+      "sha256": "5c019cb0566690e35a2ed5105cd37dac26f9c9660eba1824b16d8630695eda76",
+      "text": "ありません／あります",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "airport-check-in.gate.p1.mp3": {
+      "digest": "50abe04e0257c683ae888f461d7d7c75b43ce369b6225061ea8bd9f4840c44ec",
+      "sha256": "3bb84c73d76d0ac20e1bd3ea1389398595d5f36534e500a5ac9e4bc417c9733c",
+      "text": "12番搭乗口から、10時5分にご搭乗開始です。",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 18912,
+      "durationSec": 4.728
+    },
+    "airport-check-in.gate.p2.mp3": {
+      "digest": "b48befa51356a0379cb97e84e63458652883c68c0264dc53fbaa3b3ca911c2c6",
+      "sha256": "c6f0e9093d339ada85d14a8a0e16aaf4ae64d27326c05792e11d59d245675a74",
+      "text": "搭乗口は12番、搭乗開始は10時5分です。",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 44204,
+      "durationSec": 4.328
+    },
+    "airport-check-in.gate.p3.mp3": {
+      "digest": "ca3027e5f4e2571ba0a54cbc9e44e5626938c4aa1175bd7c5b19741657a31026",
+      "sha256": "5739b57f860007ee3ba2d28db466881ff5401763d679dc67118d586b76ee6795",
+      "text": "出発の20分前までに、12番搭乗口へお越しください。",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 18912,
+      "durationSec": 4.728
+    },
+    "airport-check-in.gate.response.mp3": {
+      "digest": "6233849e07d2d3453032d924497d41c21510d163b40485297b7ac90291af3da4",
+      "sha256": "2e5169b40fdfbfff2811e14b57a0e74230ffb5ed2a49f2236a9b01407569687b",
+      "text": "12番ですね、わかりました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11712,
+      "durationSec": 2.928
+    },
+    "airport-check-in.passport.p1.mp3": {
+      "digest": "14c399f4d9068035bb9080430da55d692034aaa0c7732bfe92256d10dda1563f",
+      "sha256": "c5277da358f417723adef19f79e04d899e132145819d4f12228d4778c512a2f8",
+      "text": "パスポートをお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "airport-check-in.passport.p2.mp3": {
+      "digest": "245e1ad467c48cacbbdf31c6f6388bf35ffc695c9a5d2559a2c0a397509593d7",
+      "sha256": "fdfa492027d667af6958c66d3973c713a9e948a3e71f5c891cd61793889daaed",
+      "text": "パスポートを拝見してもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "airport-check-in.passport.p3.mp3": {
+      "digest": "0c394bc6543a8cb5b3e5058ed25f8be64290d3968b1f53120457544546ae335b",
+      "sha256": "974f93dc0813e3ea09db993e15b33c5ef0a46c059db8b9be718c8276877d5745",
+      "text": "パスポートとご予約の控えをお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16224,
+      "durationSec": 4.056
+    },
+    "airport-check-in.passport.response.mp3": {
+      "digest": "a3bb72a6905a89ce61ebd776d9aad45af0760580efcbe1bc11e7727d98d8f35e",
+      "sha256": "1f9588b2ab8b3b31dc34822a8f1f1a0ea7a887a6cffa1fb0319c467725e0fb0f",
+      "text": "はい、お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "airport-check-in.seat.p1.mp3": {
+      "digest": "a909b96cfc330580f04f0f23a96127acf24293cc6a8bbf357cc0db431e66ed1a",
+      "sha256": "1f8a7831839c513984aae986885da8b85559479e715b2f53f713755c81cb70c8",
+      "text": "お座席は窓側と通路側、どちらがよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 18336,
+      "durationSec": 4.584
+    },
+    "airport-check-in.seat.p2.mp3": {
+      "digest": "9006ddb95f253068d7be5ebf1ca9d81346e69e4b3fac1fa84f9821fd39365e89",
+      "sha256": "96c3ba770e358feee90aa76b2029e79ac13b17167b1c82be9365db65cff2e86d",
+      "text": "お席のご希望はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "airport-check-in.seat.p3.mp3": {
+      "digest": "8b51221c5cf63273432c14ea3b28d9ba719270463ca4f3e41541c9e9305ccb76",
+      "sha256": "20686006344bdc5869ddf8075f722a37c6060d1f9e9c230c7329591d158f54df",
+      "text": "お座席のご希望、窓側と通路側どちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 20064,
+      "durationSec": 5.016
+    },
+    "airport-check-in.seat.response.mp3": {
+      "digest": "b621b17c9fc0098830b766e53876ebc4bfcc7772e1b84e8d4c37ceb05508eb75",
+      "sha256": "55bbe08ec1421837ef1bb6955cddc0bb192bb5cde39d12d7763d91fb747bfbf0",
+      "text": "窓側で／どちらでも大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11712,
+      "durationSec": 2.928
+    },
+    "cafe.eat-in.p1.mp3": {
+      "digest": "94632d9c025288e8e4d018c8eeead4b85d304c6ebf5be2de1b15d673c033e230",
+      "sha256": "6b1fa88216b82d5ca13b5b45857348f3688fb5f767a390afc40cc7940e33f304",
+      "text": "店内でご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "cafe.eat-in.p2.mp3": {
+      "digest": "e3b8824179a1baa97c53d0ab5ee954e8354c59034d9e5f8faff770d454ab9252",
+      "sha256": "bfab6bc1fd3731b27f21266f456634c030fd08aa978ce8ef2bd5bf984c457435",
+      "text": "お持ち帰りでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "cafe.eat-in.p3.mp3": {
+      "digest": "6c30741212d69747cc5ef7c82624022c2eed17f5a589076da9b21557a7a0b3ef",
+      "sha256": "ab76f5c52a0c02343310c3a1242c247ddf66531566980a11b4aa7677f83b9a4b",
+      "text": "テイクアウトですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "cafe.eat-in.response.mp3": {
+      "digest": "d0fc69f790c428aef0aaaec782432589eadbd5e7c759071246bade2f71b1b31d",
+      "sha256": "846dc270e1bcd71366dc503581f59d1ef0b7db5c9bfeca0fd7e43055c15f49a0",
+      "text": "店内で／持ち帰りで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10464,
+      "durationSec": 2.616
+    },
+    "cafe.hot-or-iced.p1.mp3": {
+      "digest": "8ff4da6bdc4766dd1439da776140fd0abda0b6f9dc63de1ec88854ae469e15fb",
+      "sha256": "d7e7ec51f062e45cd1758546d857c3c662fe9a7806e49523fe39f641d47fe115",
+      "text": "ホットとアイス、どちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12192,
+      "durationSec": 3.048
+    },
+    "cafe.hot-or-iced.p2.mp3": {
+      "digest": "5be2a64fdceeeeef2091230239eb2cb93e6e88c2e1828eb03a1ce776b367ad76",
+      "sha256": "dae0b3b87b6638031290ac78e05abb607ba1b00a9c1ed5a00acab711712fa034",
+      "text": "温かいのと冷たいの、どちらがよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 39644,
+      "durationSec": 3.872
+    },
+    "cafe.hot-or-iced.p3.mp3": {
+      "digest": "109d4183f8ca2a80071ef4d2e243c0ff1d7bc5d1c7eb711a87bd0b21a20461c3",
+      "sha256": "da3bba310752649febc5da345093ae49b426cfdf2e5aaff2b38772cef8c328d5",
+      "text": "アイスでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7776,
+      "durationSec": 1.944
+    },
+    "cafe.hot-or-iced.response.mp3": {
+      "digest": "0341331e970330754b1e6c1e8e8773e39dcbdc1b64b0a29f0fd174e1d38dca75",
+      "sha256": "700eb63f211ecd4868a5bddb2308b3006425ed011f114033484e3ae5c4c8dd45",
+      "text": "ホットで／アイスで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10944,
+      "durationSec": 2.736
+    },
+    "cafe.milk-and-syrup.p1.mp3": {
+      "digest": "ca17b9c8ca8e119733e5adac11586c36f8bb1d7546cf4b0d76f77630cc50aaaa",
+      "sha256": "56faae5a3462ecb3736702fbd46f9932c99548f0caddbcf15a86538f776b7396",
+      "text": "ミルクとお砂糖はお使いになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13344,
+      "durationSec": 3.336
+    },
+    "cafe.milk-and-syrup.p2.mp3": {
+      "digest": "eb8ee27f081833a32580fdfed663d7af79e965e4d6267b9fadc9e594c5002e1b",
+      "sha256": "f15bf82b57980b5a3d4a688705fd7b08d0fe790999f20e3bbbaeb2662439838b",
+      "text": "ガムシロップとミルクはお付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 30524,
+      "durationSec": 2.96
+    },
+    "cafe.milk-and-syrup.p3.mp3": {
+      "digest": "b87a957b69e93321c40bd08aff7a37fe858aec960062f166e734ae49d1d2b16b",
+      "sha256": "105a492f01ca4f8b931eec7649e4af41c115ae7c091c9a1107e0e9ad1496e30c",
+      "text": "シロップはご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "cafe.milk-and-syrup.response.mp3": {
+      "digest": "db3bf92a6587dada2530046e72fd26e0907a002aaa7bebd0e40b0af0fe9f7c5b",
+      "sha256": "cc654dbc38a481c9a156bed01f9e1da7ac2ddb66761ab7386bdfd1c9302c3a07",
+      "text": "大丈夫です／お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "cafe.pickup.p1.mp3": {
+      "digest": "82b2672780104f089279c164f4a3b97fb7466b4c73a899fa8f026edea81f10c5",
+      "sha256": "05a5cfc125073ecaeb06ba113b1a929caea7b9f76902380a9fb1a7bec075724d",
+      "text": "アイスカフェラテでお待ちのお客様",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "cafe.pickup.p2.mp3": {
+      "digest": "29dfdbfd60efb53313068583fa740f1b00be9a65b635f4b0fa68f8b3ccb3a2de",
+      "sha256": "244063d3ea639816b5ff29daea0e9e3770450c0c3f3484d9e6130f0e4ade6a07",
+      "text": "12番でお待ちのお客様、お待たせしました",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 37484,
+      "durationSec": 3.656
+    },
+    "cafe.pickup.p3.mp3": {
+      "digest": "93899ab7522711790ff382650d31fb7832b1c05ca217c368c1dbcc287492f65f",
+      "sha256": "62f522a2885471662284ab4e96adce4259329c5d141de596f237903571a1e992",
+      "text": "アイスカフェラテのお客様、お待たせいたしました",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "cafe.pickup.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "b757ba77add3ee72187756d0eee9c931d1bc23548c82b4191024da59e4897eda",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "cafe.seat-first.p1.mp3": {
+      "digest": "afa5aecfadceb30e5edd531f9c74f8d42d5f7ca89a98695b06ebd1bb2874cf17",
+      "sha256": "2aff8a9f8fd0a92373000713dfee0430e3006af6071ebf48132fceba8ff53f17",
+      "text": "お席はお決まりですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "cafe.seat-first.p2.mp3": {
+      "digest": "d48b27a331d057ec8b92197e090858ba60377e2b05764b8e645069127bff22a2",
+      "sha256": "3e8586bb9b1c701676fad82a53539d66ccc987151f5eda3bd55c7b782a907a5f",
+      "text": "先にお席の確保をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "cafe.seat-first.p3.mp3": {
+      "digest": "d43a0884624b52b7770faa4008a27cc5af0f3949191ecde21d2de139f5d2b3f4",
+      "sha256": "040a421a3d4e1999f5cbf407a589b9f84c81346cd18ff77a67679981da2a4862",
+      "text": "お席、お取りいただいてますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "cafe.seat-first.response.mp3": {
+      "digest": "6ceb10631b9f27e4c34e79cd40b88f3bfb8ca51b4b44d970fd7f1cd8798604f3",
+      "sha256": "23ab0d1e34f67901302382b346a73f358881e7aadb27ab5e4b0a93479198dd41",
+      "text": "まだです／取ってあります",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "cafe.size.p1.mp3": {
+      "digest": "34359b29e22f1c5353ea01b8fff41ffb2864d270b15f86ff8ae8c4cbda6096d5",
+      "sha256": "8d0026ccb7afd31592c28caefda50e6142689bd3b1790b92c721b779189a511b",
+      "text": "サイズはいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "cafe.size.p2.mp3": {
+      "digest": "c75bea393511b3e06dc744aaf195e522a4978a34538147685ace1f803703a18f",
+      "sha256": "48efe7299f5933fc6a7a2a031e069e31a5481433e0b331336d6441306dc3dc25",
+      "text": "サイズはMでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "cafe.size.p3.mp3": {
+      "digest": "a0a9e172a22cda91862976b86579cde710f759f9096f888579f781fd312a89ee",
+      "sha256": "b895aac5eacf15ef8ecb2f6f9cb6af0d838d8b7e941e1958ea4cfa7a0097d4fc",
+      "text": "SとMがございますが、どちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14112,
+      "durationSec": 3.528
+    },
+    "cafe.size.response.mp3": {
+      "digest": "cfa8a995d2b3e1cd37542b5f25b2a38c12620310672585ed823c89679b11026d",
+      "sha256": "bae11faadad9f3c51309bc7c5a87c90c4c6c5cd8384433c7fe589a17a3f5677f",
+      "text": "Mで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "car-rental.coverage.p1.mp3": {
+      "digest": "c6da97b1005124a3665fff0b4eb582c84004f66a0a907f37a56c162c45b08f38",
+      "sha256": "23b20cee8d69ffc0e2aff449fde1daee55e8ea31fec626eaac20439b61a92c1e",
+      "text": "補償はどうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9792,
+      "durationSec": 2.448
+    },
+    "car-rental.coverage.p2.mp3": {
+      "digest": "ec108bae8d629f3f0edb6342d2939cff60345d7171dfc6b2e1e4f79ef7384b40",
+      "sha256": "cf90456b8c3007401dc59510aca307c7106b33042da8b5971e73250f0cd60d03",
+      "text": "免責補償にはご加入されますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33884,
+      "durationSec": 3.296
+    },
+    "car-rental.coverage.response.mp3": {
+      "digest": "6caca9085f89879a486b2541b902db9ad628d2c2733b407ea86044489a09ae77",
+      "sha256": "fcc856ca9b739eac454ebc35c41ea0b286331e43e4397beac2a3b2a1380aa3c1",
+      "text": "これでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "car-rental.damage-check.p1.mp3": {
+      "digest": "2d9b0f4e5f9e65c0083e7edda1e1348012c5f204af3e9d56c85e675c53c69832",
+      "sha256": "326b3f0ef7a8cf23cd10467650983cbf934fadbfdb64d46aa103d171b3db207e",
+      "text": "お車の傷を一緒に確認させてください。",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15456,
+      "durationSec": 3.864
+    },
+    "car-rental.damage-check.p2.mp3": {
+      "digest": "2a2929d54f3eac7e7c2f6f85f7ef32ad4f952bb78d5f5cfb9c9d001e2b777bc4",
+      "sha256": "d670f26465be26573c38b0a19b70ea0da8337edb3cc65ef114e7f453b7b23e36",
+      "text": "ほかに気になる傷はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "car-rental.damage-check.p3.mp3": {
+      "digest": "6eda860cfa952a8a36f16eab934957d753946ab2c7cac53affa10ccf09c8ac81",
+      "sha256": "bc3ae170de83987b3c7acb9ef9a397f66eae6dd6e2443a891b672589aac89742",
+      "text": "よろしければ、こちらにサインをお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "car-rental.damage-check.response.mp3": {
+      "digest": "51a9f0982548b8ece98b34a32f5b8a508122b1400d61cf9e3dabd5a40199c9bb",
+      "sha256": "c9971091bb9a1d33ecc6a348aa82394def2cb4c98f12b89fcc4577a4821b367e",
+      "text": "大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4992,
+      "durationSec": 1.248
+    },
+    "car-rental.etc-card.p1.mp3": {
+      "digest": "3fa500324900f5d835a1226fecce9d8df44c42594bd5edc9b2a373a1a77d8746",
+      "sha256": "c3801581c9e6ec89fb6df85ade2951a037c8a4a41a1e3ecacbaf1402bc348ad2",
+      "text": "ETCカードはお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "car-rental.etc-card.p2.mp3": {
+      "digest": "35a73341b4e253493bd264c269e21e8c50c81a574ad2c45b489122fce9852722",
+      "sha256": "8aff29df10a4f5a12ba3e0f1396713548a7397c1b03ba5b8f363cafc8ee9486d",
+      "text": "ETCカードのお貸し出しはご利用になりますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 39164,
+      "durationSec": 3.824
+    },
+    "car-rental.etc-card.p3.mp3": {
+      "digest": "204f750a146a8e497c1eb0a6f3aab2c796cdf3969bd9a8e8ec642d9114518281",
+      "sha256": "61db5fc335a6598cfad7ea0cf9340e73dab9b1f3aab72a2c12dcd63f70b8d1f7",
+      "text": "ETCカード、お付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10656,
+      "durationSec": 2.664
+    },
+    "car-rental.etc-card.response.mp3": {
+      "digest": "adc5bf06f02d14bea1c7708e3bc21aa6451f88ab0ba31606cd548d4f12375f44",
+      "sha256": "16e107b16a555c4747abfafea60843aee27ef9d895361b3e735bd70ec7258ff7",
+      "text": "持っていません。お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16512,
+      "durationSec": 4.128
+    },
+    "car-rental.full-tank.p1.mp3": {
+      "digest": "a9d05b27d895bcf4641fb907e60bc416290b631672f697a0259a4c533dad5bec",
+      "sha256": "4f8e9467b95053b0a1f182766af65519ed938d69ae6bdf8cd3d9299ed21aeaf9",
+      "text": "ご返却の際は、ガソリンを満タンにしてお戻しください。",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 18336,
+      "durationSec": 4.584
+    },
+    "car-rental.full-tank.p2.mp3": {
+      "digest": "7b352eda5d69d7a2e27e28dd5d2432041e895598da5e42b4b5df04449d2d09d1",
+      "sha256": "80c633844b20b2f91a2c52c5218250a8254e58e123853835d2084af1be591326",
+      "text": "満タン返しでお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "car-rental.full-tank.p3.mp3": {
+      "digest": "7ca7b8820f59078dc432edac0af06c37bca994e262d3b100bf8d5b44ab57948b",
+      "sha256": "9341ed3fbdeedc51c7839cc18459406aa351880f9972779be82b6ad12c4493c2",
+      "text": "返却前に近くのスタンドで給油をお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15072,
+      "durationSec": 3.768
+    },
+    "car-rental.full-tank.response.mp3": {
+      "digest": "cac11fbc491603d7e805c57ba6de844fc5191db7122745d00a0767adbb44e1b5",
+      "sha256": "d37aee8998183947ffb9698ad3e35a7cb664545248f0aaf0a9a843c027983c35",
+      "text": "わかりました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "car-rental.licence.p1.mp3": {
+      "digest": "d8cd110c7066a59b026009ced5540df58773529fd17ad4ba49bf621b2f80e3b7",
+      "sha256": "5e99ce3bcc8ef90f24da5669dd4f28e24a48d1c2d81e5285b3886fafece6dddc",
+      "text": "免許証を拝見してもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12672,
+      "durationSec": 3.168
+    },
+    "car-rental.licence.p2.mp3": {
+      "digest": "e1683242d79113878e5039c85cbb903fa8050b464a856014dfa94ad980783f72",
+      "sha256": "ebb2b4cecab9544906ed13572770f4ac8ef7a80a77a564c3504b8d48442a9a6b",
+      "text": "国際免許証とパスポートをお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 35084,
+      "durationSec": 3.416
+    },
+    "car-rental.licence.p3.mp3": {
+      "digest": "7cd9eef2b65df8eaec4444de960e2abd2fb92cf2a86830ed8feea2e3324ea624",
+      "sha256": "f55c2aedfe21d884e4cf231948179bdf6f6f6dedec09badb3e1aabe899037453",
+      "text": "免許証と翻訳文はお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "car-rental.licence.response.mp3": {
+      "digest": "e7de035fc074e13892cfc8c759f0dc25dcb14daba90fe048102b7ecd96de96d7",
+      "sha256": "3921519332f33c91947b1ef4ddadff86d4db5b05bb6c9dd068492ff64ef10054",
+      "text": "はい、こちらです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "car-rental.reservation.p1.mp3": {
+      "digest": "ab217c33b38de7c9c51894a6db956f217a2d8d006d3b2602dae9aeac5bc41c57",
+      "sha256": "86d0bfa0f134ada3c1fb05187e29c75754b58be1a8176afef705af61b06d42bf",
+      "text": "ご予約のお名前をお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "car-rental.reservation.p2.mp3": {
+      "digest": "ee66a102ef484c2ad0485b41a7432eb8bb20b2fed3a3fde4f1fc64a4374f2e91",
+      "sha256": "e915031f87687cdbb023e7251b9e4616aab6ad8db063c761d842c176a673c2eb",
+      "text": "ご予約番号をお願いできますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "car-rental.reservation.p3.mp3": {
+      "digest": "4fa23bb0ca04fa5f5a487a1a0e20894193fb631b675650e355dfb1906e104a3e",
+      "sha256": "9beb3e90ae10edacf5cfe0ec40d27d6c9ef11797f027c695dd9378499bcf0d89",
+      "text": "ご予約のお名前を頂戴できますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "car-rental.reservation.response.mp3": {
+      "digest": "32e1dd564f954c32db1bc4102c60fd51f119ca3b6d179df50f10f7cd08573688",
+      "sha256": "1cfeb5ccf9e255dcec9b7060e1d3edb6e38cd7e63feef5f16d9bc7b0a39e3db3",
+      "text": "予約の画面はこちらです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "car-rental.return-time.p1.mp3": {
+      "digest": "880ba8ab57e47ddb4d3b2bd968a366264f06c21e967292cff9baa71cf1ab2fe4",
+      "sha256": "a440df7dd802f63899608d3bc73b1063005b3ae88d9f43cc48357b770d98a01c",
+      "text": "ご返却は三日の午後五時でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16224,
+      "durationSec": 4.056
+    },
+    "car-rental.return-time.p2.mp3": {
+      "digest": "719af3fdeb383513039be864aab7c39a91e8e6ad1aa1501ea3ba43e6a4ac6159",
+      "sha256": "173a615a7fe20b88bb25292c96ffdf76023449ae3c3522e0c15a20f5b35b691d",
+      "text": "返却時間はお間違いないですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 30524,
+      "durationSec": 2.96
+    },
+    "car-rental.return-time.p3.mp3": {
+      "digest": "476707261075b40e8083cbf8306092021ba565648a6b1d2f1be28cadd21b66ee",
+      "sha256": "728b8d49c3a35293ee97be9310462730d953ceb7ba934817d1eff77d5efcec7d",
+      "text": "お戻りは何時ごろのご予定ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11424,
+      "durationSec": 2.856
+    },
+    "car-rental.return-time.response.mp3": {
+      "digest": "c5fb18219996147a0f5dbf2fcd1b42a8d5640b6a58d0d8a758a2b79caac9b280",
+      "sha256": "188593bc78f37f00a2150720b5f14dcdc17069699f61b3c5556d8e519730808a",
+      "text": "はい、大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "clothing-store.bag.p1.mp3": {
+      "digest": "029bcf7587ac52ac312973d8bd17b1ff4c6e6e18c7fb3f3a46e17ff2d8bd44ee",
+      "sha256": "1226a29b5050b02d6fe1f981d324508d85ad4e104e6e5fae02a93f9545706543",
+      "text": "ショップ袋はご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "clothing-store.bag.p2.mp3": {
+      "digest": "9295b1fd9cedec0ef02238cd80eec4c0f7ec33fbb1ebb723a79d4d57fb37d76a",
+      "sha256": "abd4f14ae0463b77b7ef6db5838b1a3f8ed228691ce4079f4bf6ce8a87015c5e",
+      "text": "袋、お付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24284,
+      "durationSec": 2.336
+    },
+    "clothing-store.bag.p3.mp3": {
+      "digest": "ee2bbec8a285f9e0b6f233d651a4739acba719a7c3020313e6e905919b4c39f7",
+      "sha256": "874e90906dba00dd02836459dadfaad63601cc2555f8cfd4a564278fa9af4b6d",
+      "text": "袋は有料ですが、いかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "clothing-store.bag.response.mp3": {
+      "digest": "db3bf92a6587dada2530046e72fd26e0907a002aaa7bebd0e40b0af0fe9f7c5b",
+      "sha256": "cc654dbc38a481c9a156bed01f9e1da7ac2ddb66761ab7386bdfd1c9302c3a07",
+      "text": "大丈夫です／お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "clothing-store.fit.p1.mp3": {
+      "digest": "ec0a2b0456b83c211795f871a1d842a6550a84624024c3da9133e8757b08fc80",
+      "sha256": "7c3becbe0eaf6def6a5f0635683d9e16d6104f97202b24b6960f38e0bf3e4059",
+      "text": "サイズはいかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8064,
+      "durationSec": 2.016
+    },
+    "clothing-store.fit.p2.mp3": {
+      "digest": "32a4a33554ad8a92d8203a8a2965909593b1e424806330d48c9d455a5be2da02",
+      "sha256": "dee3b77593cfed957f2907197b949d2a26a518f827399710c634e18c65049012",
+      "text": "お客様、いかがでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23804,
+      "durationSec": 2.288
+    },
+    "clothing-store.fit.p3.mp3": {
+      "digest": "6529b81a4b05d92ac5effbe458c78040d5557943bf951748fd864497f90f9f49",
+      "sha256": "6227c1974fef5cd479f560abb851bf856afd54b2fbefa517cb2d331a4ddaa3b8",
+      "text": "サイズ感、大丈夫そうですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "clothing-store.fit.response.mp3": {
+      "digest": "8f2497fa0f3c286af67bdb8c9166b43e5e79af74503afd43ba3fedb695c635d3",
+      "sha256": "a06168ac876dbfb417723245d7e37d095eac4787df94f3094e41eec358da1078",
+      "text": "ちょうどいいです／ちょっと小さいです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "clothing-store.gift.p1.mp3": {
+      "digest": "a985413a12bdce5960fc2b0a0ee0e85f122a7ae25312b6997f5d05a01f88f51a",
+      "sha256": "cd9189353414aea20daa6543305ab24295dd563dea170bb86f9ed490006be4c1",
+      "text": "ご自宅用でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "clothing-store.gift.p2.mp3": {
+      "digest": "6a6a59c0264ed0cafbdd16692a4e321eba40329e4c61dcadde4ec5655f1375aa",
+      "sha256": "e642807f02eaad897f2b83cb7e6a219bee66a4528966c42506018183095598c1",
+      "text": "プレゼント用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "clothing-store.gift.p3.mp3": {
+      "digest": "8c602728ddb8aa4eb09e2a7e184af8be7bbd549bf007f4724cea17ab1d9277a9",
+      "sha256": "85133337a9a7c800efe2f1a39f5a2ce70c82f17e873d8bc6eacdc5d17a410f23",
+      "text": "ご贈答用でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "clothing-store.gift.response.mp3": {
+      "digest": "138659c8f604f7d794c74f802552259a9b12a1450b8c01c05124a974a09b816f",
+      "sha256": "b1bdf4ea94ebaabc7d2a2aefb7d150570d0d480fc85d5f856c5fa5171c1f0495",
+      "text": "自宅用で／プレゼントで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "clothing-store.item-count.p1.mp3": {
+      "digest": "5d3067288b18f10698d14248942abd9ff7d6f5fdc0b6eb76a9306396d75f7766",
+      "sha256": "062984ceb6dbbedde3c2892a51a2d41e34dff133c05e94571c87c4ef8a59ce20",
+      "text": "何点お持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "clothing-store.item-count.p2.mp3": {
+      "digest": "cc83cf2773cb8f1e94694eec6ef365bd16f5e21d3ff84de5be81fa8b7a64f975",
+      "sha256": "d25baef80eef3a33614a9805998ed679254c4d0c0a7ab89afce3aaccecc3242d",
+      "text": "お品物、何点でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "clothing-store.item-count.p3.mp3": {
+      "digest": "f0ea5b90d2bb34040cb8a0529b162b1ea1e06c67af984624c8616a53fb1738eb",
+      "sha256": "911a3015368f0e435af75fbd3aa1ecade6b8bb969a2770edf0c8237da06183e4",
+      "text": "何点ご試着されますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "clothing-store.item-count.response.mp3": {
+      "digest": "29f092defbb7cb0bc17163824e176ea289ed1d953d72bb5ac2b36ddfeba71858",
+      "sha256": "0867b92d61696c5f82385029ab9525798e35bc3e2a57613a171a668772843eb7",
+      "text": "三点です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "clothing-store.looking.p1.mp3": {
+      "digest": "cbd5ca94166a92464b70d2ffac39274b016b020c7ebbfffdfa698b5288cf389c",
+      "sha256": "f55baacf27b647cbd645f039699f01e5fc6adddc062643cc833cf28d5c924836",
+      "text": "何かお探しですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "clothing-store.looking.p2.mp3": {
+      "digest": "7e6f70160050c19d683d85162d1bffbadd00c3ae6c72a78e4f036d38e6831d01",
+      "sha256": "7087d46bbf596578fae410921d1d21f27d8fc2813fb93120995fa82d75de0205",
+      "text": "何かお探しでしたら、お声がけください",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 35084,
+      "durationSec": 3.416
+    },
+    "clothing-store.looking.p3.mp3": {
+      "digest": "4af03446cedd87a3d591f2684914d68395e2a97aa2b30b08f8c3c7cf8cd0e3aa",
+      "sha256": "f7403b00207bcc427b925f93cd773577b417b9ac65d0b6b8851a92921607bc5d",
+      "text": "お探しのものはございますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "clothing-store.looking.response.mp3": {
+      "digest": "11e58c6111e7ff120923a01f4d863a6df682adba533a9754ce8db3f873b7e8bf",
+      "sha256": "2d99ba83ada269ab855de1a6536c2a767b618740cd77a3d9e4d5412406bf5850",
+      "text": "見ているだけです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "clothing-store.lump-sum.p1.mp3": {
+      "digest": "b2b8922fae0d48aa75f8933f6a015426765cb0d3dd6c5d80604ee8c081a1c041",
+      "sha256": "f6e0b1c9126192c1f193b2da1939ececd0eee504d422069e11559fbb8ef6560d",
+      "text": "お支払い回数は一括でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "clothing-store.lump-sum.p2.mp3": {
+      "digest": "75113ae7353753adc462737e8421c7a411c56bdae3c5a7c53343de72c237c007",
+      "sha256": "1e8f6fd9fdd29bd669bb0453c1e7d3f5dede8d6d8e8fa9f2e0c0945e6890307d",
+      "text": "一括払いでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 27164,
+      "durationSec": 2.624
+    },
+    "clothing-store.lump-sum.p3.mp3": {
+      "digest": "964d7228cdb3aad241c9a4a3431e93a08398cc4e5ca0d8fe01a23acca05e573d",
+      "sha256": "890c2d23678a75f6824f3b7f7f98548c93a63a79e766bda6c571be3421860c23",
+      "text": "お支払いは一回でよろしいでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13056,
+      "durationSec": 3.264
+    },
+    "clothing-store.lump-sum.response.mp3": {
+      "digest": "165af3aba72645ca0d84ded8a153b30df123a27131f9587699e64daa94110c99",
+      "sha256": "b0e550f932534ec13775cc1d8ae3d8de112bf1aa0f86f82a85b2b8c88dc32e79",
+      "text": "はい、一括で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "clothing-store.shoes.p1.mp3": {
+      "digest": "8ebd3bf90b9f73e5d37a9fea21c111c29c1fa74b0dcd73dfd3d4cc2cf13bc95d",
+      "sha256": "f5d5b0e929edffd9fcd3e1672c996f6e92b5a75c34171ad9c5c1726519a263ab",
+      "text": "靴を脱いでお上がりください",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8064,
+      "durationSec": 2.016
+    },
+    "clothing-store.shoes.p2.mp3": {
+      "digest": "d09c4f6254fdb3ecda40e90a2e05cdf85efb980b7e4d9a4825f6ff88d4a14503",
+      "sha256": "9cdbf890b0b14a2d3ce38f5ec2b8155d42d95dc9dcd84f97bc43c8252ac56cf0",
+      "text": "靴はこちらでお脱ぎください",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23084,
+      "durationSec": 2.216
+    },
+    "clothing-store.shoes.p3.mp3": {
+      "digest": "ad9a2f2071ceb432da3c516e203b4c45b05e1ff3a0df76f39c694b0ebb0d7b03",
+      "sha256": "8bf9f165175ae20f2f2b3aaa8c20854e373a14f82fa56d65702e19273feacc97",
+      "text": "お履き物はそのままこちらに",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10752,
+      "durationSec": 2.688
+    },
+    "clothing-store.shoes.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "b757ba77add3ee72187756d0eee9c931d1bc23548c82b4191024da59e4897eda",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "conveyor-sushi.checkout.p3.mp3": {
+      "digest": "5292aec5cd4b9044038349b3ddcc2cde14f8e9194149ad62807c01d4e6c6b76e",
+      "sha256": "d5731f20ccf88875af87b9fb6d9e9a59cd477ebd72138dd2e0bc4ccc29baf401",
+      "text": "お会計の際は、タッチパネルのボタンを押してください",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 43724,
+      "durationSec": 4.28
+    },
+    "conveyor-sushi.no-wasabi.p3.mp3": {
+      "digest": "452e862adf8d625220e219a7006834fe5e327d14d8009fba05294e510a065c85",
+      "sha256": "6e96ce53c8487c9631bcd55189fcafad9d95c494e5e42f9ce90cc811e650e337",
+      "text": "ご注文はタッチパネルからどうぞ",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 32204,
+      "durationSec": 3.128
+    },
+    "conveyor-sushi.number-called.p1.mp3": {
+      "digest": "0306d985fe558333d62c892f090aeef66405ae496061dd0bddcaa1f350a17b36",
+      "sha256": "48f288e96c30563e99cf3fa64e2e7ef4d72139ac8faf87b057caab6deedfef3f",
+      "text": "受付番号25番でお待ちのお客様、5番テーブルへどうぞ",
+      "voice": "ja-JP-Chirp3-HD-Leda",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 20064,
+      "durationSec": 5.016
+    },
+    "conveyor-sushi.number-called.p2.mp3": {
+      "digest": "fc9a1e6694baa1619f745e707155564d689ae933b0dd919960c2f89e4ae0e463",
+      "sha256": "1c33813a7d6221994a476a74bd5eaf08594545be0c45a64586503c13cf418376",
+      "text": "25番のお客様、いらっしゃいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "conveyor-sushi.number-called.p3.mp3": {
+      "digest": "bfe6160835825714e960d3668fc75d6966e034bf2ccb6e584485bf5b45ad11b3",
+      "sha256": "00dade833bf0ef6e9ad79d72a149c5c3aa0027a6b627e0d5b0bc4b8ea4e0b004",
+      "text": "25番でお待ちのお客様、ご案内いたします",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16992,
+      "durationSec": 4.248
+    },
+    "conveyor-sushi.number-called.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "d611ff5575ce05d7c248858c2b7bb475796f8bcdf7d9b4dc4c31a80941c3792e",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 1536,
+      "durationSec": 0.384
+    },
+    "conveyor-sushi.order-arriving.p1.mp3": {
+      "digest": "101a5274ac5a2b1b904a890d1a4ce4a4ca9ef892e0e71c6552390bb94456c7b6",
+      "sha256": "dce8314db97b150a288ab45098b4205685663dee0e495a70fe2702fef242b0f9",
+      "text": "ご注文の商品が到着します",
+      "voice": "ja-JP-Chirp3-HD-Leda",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "conveyor-sushi.order-arriving.p2.mp3": {
+      "digest": "90dd42c8b8c2224a403cf714abbc9ea8a0a5e587c8d11520d3b319df58be08b7",
+      "sha256": "7d1a848e99c5b9dbc45e9a1a84154d9dbded57923566c1a042f74ad2f375c193",
+      "text": "まもなく到着します。お皿をお取りください",
+      "voice": "ja-JP-Chirp3-HD-Leda",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 40364,
+      "durationSec": 3.944
+    },
+    "conveyor-sushi.order-arriving.p3.mp3": {
+      "digest": "2c796e15797dd67add795ac51ba0704a30524b57066a93637b4f801de3a7ac2e",
+      "sha256": "3b45fe66d8d50195492ba91ee7d6c5df22681cca9540766a0ef85147c76c3432",
+      "text": "ご注文の商品が届きました。お取りください",
+      "voice": "ja-JP-Chirp3-HD-Leda",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14784,
+      "durationSec": 3.696
+    },
+    "conveyor-sushi.reception.p3.mp3": {
+      "digest": "bd2c81631b330606b681bddcfc5ec7a569a3014cef50fa01833f212ac2ef6496",
+      "sha256": "2e600ef28701a10c676aee0602f7a85c35720903f8e9444aebfa1ca097335ae7",
+      "text": "受付機で発券をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31244,
+      "durationSec": 3.032
+    },
+    "conveyor-sushi.self-serve-tea.p1.mp3": {
+      "digest": "19e8e91c4b4a51eced9f4129feaa78cb05af72ff517a49be6b020ad364f3a6f1",
+      "sha256": "b74ea3e4a8f7b48984b709c5bdb1d34dc89cafa53f0c589592043810813ac511",
+      "text": "お茶はセルフサービスになっております",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "conveyor-sushi.self-serve-tea.p2.mp3": {
+      "digest": "86a0fc19c120de1b4213aafff36f81af37cbc7f5bc084b9cb7b8a24ae46e2ae7",
+      "sha256": "6e60a9eba1a8d628d49f6a2f712430a475dc1d75750303560c66c3b0830f802e",
+      "text": "お茶はセルフでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28844,
+      "durationSec": 2.792
+    },
+    "conveyor-sushi.self-serve-tea.p3.mp3": {
+      "digest": "7810d4e66546bb115f1d5041416ce1dc8fceb20e7d7f339f6afb8b75a28cd51c",
+      "sha256": "fcbdf45382582db5a0a981b4c8c96c8db28e784f1105c4631a4b8d1176f562e8",
+      "text": "粉茶とお湯はお席にございますので、ご自由にどうぞ",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16032,
+      "durationSec": 4.008
+    },
+    "conveyor-sushi.self-serve-tea.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "d611ff5575ce05d7c248858c2b7bb475796f8bcdf7d9b4dc4c31a80941c3792e",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 1536,
+      "durationSec": 0.384
+    },
+    "department-tax-refund.customs.p1.mp3": {
+      "digest": "05c50815516c61b29fd486a4c4b51531366b19ce4c323145d60336c09817af29",
+      "sha256": "44e7d7ea9d0e68594e354384470cedccb4b96dbabfaf3081dcc72946d62f13a1",
+      "text": "ご出国の際、空港の税関で確認を受けてください",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 17184,
+      "durationSec": 4.296
+    },
+    "department-tax-refund.customs.p2.mp3": {
+      "digest": "b93ee4f12d3b5f1565f2b3d05c0a80a6e54a1c56b6bdc3f3d0f61ea4758c7001",
+      "sha256": "9804acca1ccead13b144fe65e12995b32465dd66188b80d0bb980553466ded54",
+      "text": "出国時に税関でパスポートをお見せください",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 39164,
+      "durationSec": 3.824
+    },
+    "department-tax-refund.customs.p3.mp3": {
+      "digest": "66cef6da2a20c5195e9159e14b2e54ae5553566105903e2ff24be8aa48d1aaea",
+      "sha256": "5f1c81f9429d1017f2c43d8ed031d2e129ddfa519c07e10c6971003f78cc6a43",
+      "text": "税関の確認後にご返金となります",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14496,
+      "durationSec": 3.624
+    },
+    "department-tax-refund.customs.response.mp3": {
+      "digest": "cac11fbc491603d7e805c57ba6de844fc5191db7122745d00a0767adbb44e1b5",
+      "sha256": "d37aee8998183947ffb9698ad3e35a7cb664545248f0aaf0a9a843c027983c35",
+      "text": "わかりました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "department-tax-refund.departure-date.p1.mp3": {
+      "digest": "a58eed21a2e7d2b6ae507a6c7446b74042837d1327efe0ebd9a98445d35c391c",
+      "sha256": "b7191af31b192d3cbdad9390de69a12d8a0f6c57c9958c8fc62860a8a12238a1",
+      "text": "ご出国はいつのご予定ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "department-tax-refund.departure-date.p2.mp3": {
+      "digest": "a3e1ea99444503f42f5a393ce55c530e1efc0dbe0cc0f03589c6a0ef932631f2",
+      "sha256": "ec00284ba4287f37f94984b964bad4d896af43056a831afa23f165080c195710",
+      "text": "日本を出られるのはいつですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 26684,
+      "durationSec": 2.576
+    },
+    "department-tax-refund.departure-date.p3.mp3": {
+      "digest": "199489c15d4558cf8b5d62a4169f07b27315581e31c7301a722b13c4caab3d1c",
+      "sha256": "a2bf802b23013a49d2a5ade0f6cf725ca886f7676e317032ad829dd1dc4e2bb8",
+      "text": "出国予定日を教えていただけますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12672,
+      "durationSec": 3.168
+    },
+    "department-tax-refund.departure-date.response.mp3": {
+      "digest": "9e93ee22cb715d84d00a8f9c14bac8f2b0c306e004bf064c4d720276eed7beb1",
+      "sha256": "ced878a23bc8caebf1b4a5fed5f8afd0c88f00a7082ff55c9fcf536f62a4fcd2",
+      "text": "十五日です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6336,
+      "durationSec": 1.584
+    },
+    "department-tax-refund.fee.p1.mp3": {
+      "digest": "cb5e6d08eefd0e84350a22b86772e9a4cb2bb1a08f82c7585c77906dcdd875c4",
+      "sha256": "fe304fd031a1f47c9fe9b053e27e51d23c97fdc56e5a6f4ee110c30bacecefc3",
+      "text": "返金手数料がかかりますが、よろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "department-tax-refund.fee.p2.mp3": {
+      "digest": "ca953c9317db33a2c27597b0a466a7dc73c60bcc1d0331dd27db6b5dd97a4f1a",
+      "sha256": "61f8da1c222c64a53ac7c6b832502690e87e7edf41bf143ba3f5f2f21cde137a",
+      "text": "手数料を差し引いてのご返金になります",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "department-tax-refund.fee.p3.mp3": {
+      "digest": "4ea89882d1ff277b0577506315372d202bcd015cfcc0c33d9ebd7556753cb08a",
+      "sha256": "d2c013710155a4761c7c8837c5063c09571c49f9592f26e9bb9c43a67ce44d84",
+      "text": "手数料はご返金額から引かせていただきます",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14976,
+      "durationSec": 3.744
+    },
+    "department-tax-refund.fee.response.mp3": {
+      "digest": "51a9f0982548b8ece98b34a32f5b8a508122b1400d61cf9e3dabd5a40199c9bb",
+      "sha256": "ade8b4bf0d95d90fed203ea45516c046948a7caf03c52a86aa5d1e0e8505a1fc",
+      "text": "大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "department-tax-refund.passport.p1.mp3": {
+      "digest": "2b9d2e745d86154f559f5a8378d77a831023f35768c7a61ad14b78c5fd9f5d20",
+      "sha256": "461733208645544a6443b082fd49b5c6742b87103334e6aba4a7274333b93fe6",
+      "text": "パスポートをお願いします",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8064,
+      "durationSec": 2.016
+    },
+    "department-tax-refund.passport.p2.mp3": {
+      "digest": "8eacd6e811952bf85f3192513eccfe65790a862a4d5ca0a5f6afbe2c2e178586",
+      "sha256": "c34821ecdc803c271d6c56bd924d1743ab7df3c6f32e6bf691f0749c34ba0d48",
+      "text": "パスポートを拝見します",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 27164,
+      "durationSec": 2.624
+    },
+    "department-tax-refund.passport.p3.mp3": {
+      "digest": "2aeb29e8eff891254f65923705ee934cdec2e4e0f607b3437fad928de97e918e",
+      "sha256": "0de1c2537decf97b11def3298ccc51b5769c6e45d369058c0936d35b22553a39",
+      "text": "パスポートのご提示をお願いいたします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13056,
+      "durationSec": 3.264
+    },
+    "department-tax-refund.passport.response.mp3": {
+      "digest": "9145988e876176acdb740b00a0fe41be40c4462b61f6aa19cd3603488696a72a",
+      "sha256": "5d955de05ddaccaf4e9abd960c43ba2d87f7c142b629f2f2a736d0991fbe056f",
+      "text": "はい、どうぞ",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "department-tax-refund.queue-ticket.p1.mp3": {
+      "digest": "07b0c2332de5642a3644f1f4fc489d3c12d0e88653851ba9f7b02e2e6124ffde",
+      "sha256": "271271f4d5fcdfb80170df265306f7d1e76c68aac2bc0d89bf81676f4e68e6cf",
+      "text": "番号札をお取りになって、お待ちください",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13344,
+      "durationSec": 3.336
+    },
+    "department-tax-refund.queue-ticket.p2.mp3": {
+      "digest": "29fc6052edf394e25a20cbae9573ea004df9b163b69581db24a9dbb298ed3a63",
+      "sha256": "a400db861c6c217639459788c24b6353f8cd662c49c5fb5b8cc4ee079b2fccbe",
+      "text": "こちらで番号札をお取りください",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 32204,
+      "durationSec": 3.128
+    },
+    "department-tax-refund.queue-ticket.p3.mp3": {
+      "digest": "7a5ee52d294598297f56de8f7501d871deffbb57478c0c2bb3e8a1fe0b49f619",
+      "sha256": "5c65e54e879f7468a1e3cd3b4049818cf0bc386b75da2d31e131628001ec378a",
+      "text": "番号でお呼びしますので、少々お待ちください",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14112,
+      "durationSec": 3.528
+    },
+    "department-tax-refund.queue-ticket.response.mp3": {
+      "digest": "cac11fbc491603d7e805c57ba6de844fc5191db7122745d00a0767adbb44e1b5",
+      "sha256": "d37aee8998183947ffb9698ad3e35a7cb664545248f0aaf0a9a843c027983c35",
+      "text": "わかりました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "department-tax-refund.receipts.p1.mp3": {
+      "digest": "e3dd543d280e7c7bb79e2eadd8625bdc6b745fb2492c74dc3405c4040d4bd8b4",
+      "sha256": "f7d8206b098675a4f8a3ac001ee4f258efba8f33cc3583de81dc12ac00b797ed",
+      "text": "本日のレシートとお品物をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11232,
+      "durationSec": 2.808
+    },
+    "department-tax-refund.receipts.p2.mp3": {
+      "digest": "0f3f4ef144f9513008ca84816a98fc37e0227370cd297200a4921caa8eeb785b",
+      "sha256": "689b2fe43ac91fc20a84d871c9cf583e03473ec2321739bd837cd619a6153ff2",
+      "text": "レシートはすべてお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 32204,
+      "durationSec": 3.128
+    },
+    "department-tax-refund.receipts.p3.mp3": {
+      "digest": "1c9b98f4f22847e591aa7e10d46e93fd566e6e8d575a1e7575952207c4840b20",
+      "sha256": "12dcdd4ec59307ec73be879033d0d97453801708ce1ff2935cd1fb9e96034661",
+      "text": "お買い上げのレシートを拝見できますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11232,
+      "durationSec": 2.808
+    },
+    "department-tax-refund.receipts.response.mp3": {
+      "digest": "8cdce52155c01aeba4962597f8ebbea6fe34e810aa2c1c3d36e7738d5340028d",
+      "sha256": "826800306a276be97dc536848348d005b3b9f9c3d29e33b36c29638360367e78",
+      "text": "はい、これです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "department-tax-refund.refund-method.p1.mp3": {
+      "digest": "66f334eb02cf5f53f3728d8ef97dfadbe59798bf557b75575712099877036a58",
+      "sha256": "b5d7d9b76276def692593113cfa14e6d373fb63b9ef8966058e005ab9027f60d",
+      "text": "こちらの画面でお選びください",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "department-tax-refund.refund-method.p3.mp3": {
+      "digest": "cf515bd8c8122cd01d726f43d6af5112dc30c35b66988a3599f0be605e624e30",
+      "sha256": "ce2ba39a0055b2a71dccbde263fe93a242885574229fe67bd6e645b50d49371d",
+      "text": "ご返金はクレジットカードでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "drugstore-checkout.bag.p1.mp3": {
+      "digest": "8070dd17e3c415f4c9d41ae229d518654f0b72c5b9aee59c1a13462d83b9460d",
+      "sha256": "6928fa9ea3abaee1426b891ff2e4f1bbe2537b7332f797b17b83595df5e63500",
+      "text": "袋はご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "drugstore-checkout.bag.p2.mp3": {
+      "digest": "2fc279660dec051ea1fd4ffce09d3838dec4cbfdbea48dd200be797ebcbc4906",
+      "sha256": "c864eeb5099154fc5785fe98e485e1d89a8209d577f86ee0bd98ece151bb5884",
+      "text": "レジ袋お付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25484,
+      "durationSec": 2.456
+    },
+    "drugstore-checkout.bag.p3.mp3": {
+      "digest": "287d2442d43515f3cc860d86b3539cfd2853e1a38122c57f5202b12fddd799b9",
+      "sha256": "c95c9c0b6a2e78f3425cd37a7f7a8b08d7ba36171c923d6642bf598c508a2c2a",
+      "text": "袋はいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8736,
+      "durationSec": 2.184
+    },
+    "drugstore-checkout.bag.response.mp3": {
+      "digest": "db3bf92a6587dada2530046e72fd26e0907a002aaa7bebd0e40b0af0fe9f7c5b",
+      "sha256": "cc654dbc38a481c9a156bed01f9e1da7ac2ddb66761ab7386bdfd1c9302c3a07",
+      "text": "大丈夫です／お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "drugstore-checkout.medicine-user.p1.mp3": {
+      "digest": "f25ab9e6e0ae1d40ce30d506f13c299c99663fc0eae4326bd4460ff568a00372",
+      "sha256": "6aee7cdce27b523c54073f36110403f45029bc0eb5d12194474797402bc313b3",
+      "text": "こちらのお薬、お使いになるのはご本人様ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16704,
+      "durationSec": 4.176
+    },
+    "drugstore-checkout.medicine-user.p2.mp3": {
+      "digest": "cacb5d37240c7072ef73f4b82dd989d497cb53649153943fb5b18407e415542b",
+      "sha256": "357aae3c9b820c7606c69ac44d49432a9468b5a7529142944014ef2ef1e78ad1",
+      "text": "ご使用になる方はどなたですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "drugstore-checkout.medicine-user.p3.mp3": {
+      "digest": "54cc2f3149812c1446420d8316268b9ced9fadee5b43dd4988167aaea2e011a1",
+      "sha256": "74b5fb397465d3175296a2b3ca70e4207d9266b4ca1ff12dc333887c19102e34",
+      "text": "お客様ご自身でお使いですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "drugstore-checkout.medicine-user.response.mp3": {
+      "digest": "b8b5dd05de58d93fa54098a63b5c1c7b0af316588426696cb66c7d6994734ffe",
+      "sha256": "8e2fe55c0299c3e91e4da045e3a91b287b18d920bbdf5533162118680c65620c",
+      "text": "私です／家族が使います",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9984,
+      "durationSec": 2.496
+    },
+    "drugstore-checkout.payment.p1.mp3": {
+      "digest": "341b2dfde3deb68d362ecad6abf33e7ca6f5824fbe9f475dbb78e513e2ce593b",
+      "sha256": "90627e12b56a095db9f8f18ef4a33587388e59d6ecfd4d92a68edadef58d5f02",
+      "text": "お支払いは画面でお選びください",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "drugstore-checkout.payment.p3.mp3": {
+      "digest": "191f1b505486901e559a9b3f2b548f10b219216b8127e7cd8c39b02dc2cee00e",
+      "sha256": "dc2e5c654fe3046d594c7321f7a247320dc208364fc8b9f2d88246392ed40233",
+      "text": "お支払い方法はいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 36284,
+      "durationSec": 3.536
+    },
+    "drugstore-checkout.payment.response.mp3": {
+      "digest": "aa98a12c789031b23424e4479e3c2a7dd7c40c23b99261df8ee60335472d4db9",
+      "sha256": "02610159b47c7bf076880a4534e0d5fede51cea997712ee4e4a0f02ec53706d9",
+      "text": "ICカードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "drugstore-checkout.point-card.p1.mp3": {
+      "digest": "dfdf3f290d055eea480aebe087e79308811c3dac05f19a989a3926f0fd1075ff",
+      "sha256": "e22308dc0c8744c289bc75d1005711ab268681f050b59feec7cead8144a9ea14",
+      "text": "ポイントカードはお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "drugstore-checkout.point-card.p2.mp3": {
+      "digest": "552e5a45259d5d4886750b051e2796dc5c52d72f1955a362c5d6eb605a87ae2a",
+      "sha256": "3ce85164fec073588ef72a3072bc97c00c13ad3d7f17881cab3238bd4977985c",
+      "text": "アプリのご提示はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 27164,
+      "durationSec": 2.624
+    },
+    "drugstore-checkout.point-card.p3.mp3": {
+      "digest": "cbb7db252b9a7c5c139474dceb411227581d8b884eccebd1183c0253145b49dc",
+      "sha256": "45bdc2adb099b0ac35400518921fb12866b18831c01852e8925b1468e993b28e",
+      "text": "会員証はお持ちでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "drugstore-checkout.point-card.response.mp3": {
+      "digest": "6406875eabbef7d2ae9f6ed4f521fdb9c4661b1b7af72905559e0c527a86e9ac",
+      "sha256": "879bae04c9b9378bd5eb2ab83e48247002d8ddbf30fadba1ae176e7ba9a2452c",
+      "text": "持っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "drugstore-checkout.small-bags.p1.mp3": {
+      "digest": "fc71bf77d1677383d4d5495faa365898307845cbf07e3099e939b7e0d0df61c7",
+      "sha256": "8ad443fd0785cb9debd6b7837c33243e0a7b5365151b9918e00542418dc39d16",
+      "text": "小分けの袋はご入用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "drugstore-checkout.small-bags.p2.mp3": {
+      "digest": "82f140b53e39c01940a33742eb0f6070b1a7d04db84270ad5d6ced7d857d3c75",
+      "sha256": "ec0a94eb5bb5585cb60e3337780a7e5e0eea682083490f5bdf36e169baa01f00",
+      "text": "お配り用の袋、お付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28844,
+      "durationSec": 2.792
+    },
+    "drugstore-checkout.small-bags.p3.mp3": {
+      "digest": "da7fd1fc04a898b93c44fb4f2ed1a2a9ada7caa29c9de2d9a7f32990e5834a7a",
+      "sha256": "fa6aaaa0914d7eb9aa1d2ff6bb24f3bb6c555545f0c5314f20740424f8cfc612",
+      "text": "袋、お分けしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "drugstore-checkout.small-bags.response.mp3": {
+      "digest": "9118affabfb521b1f7e5295175c6872cacc29d867a03012aa0ccd90d415c7a62",
+      "sha256": "53dbe1e1cd7fe46a966c9180d68c158d34e0e667197c40bc974ca8238c3b9ae7",
+      "text": "三枚お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12096,
+      "durationSec": 3.024
+    },
+    "drugstore-checkout.tax-free.p1.mp3": {
+      "digest": "e552822aa2f6a9f15bf62f7417414e0b9c0c52692c45c5a72cdd6966db8bcd3e",
+      "sha256": "426ee5edfa8c2da382d0ea6333d301545b7c86c358dcd8f8dc5b2523c8e2747a",
+      "text": "免税のご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8736,
+      "durationSec": 2.184
+    },
+    "drugstore-checkout.tax-free.p2.mp3": {
+      "digest": "8061ccb496b469b87b81514fd5a91aaaf78a5839e48e5624724be61a47bf4dcf",
+      "sha256": "113f0ec8bb4c4175a639f84f0af260aac3e92e2751ef48f8dc9ad81a02161761",
+      "text": "パスポートはお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25484,
+      "durationSec": 2.456
+    },
+    "drugstore-checkout.tax-free.p3.mp3": {
+      "digest": "8600c32ebaefef3fd19f603e58e4b1118ad684b4d796bb1140412b6f57a29d3e",
+      "sha256": "a90d59811d370b204da80666dbf0a153807283baf298fa72f11f6a26afed64ee",
+      "text": "免税のお手続きはされますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9792,
+      "durationSec": 2.448
+    },
+    "drugstore-checkout.tax-free.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "e475c3bd63a4bc9641d81bf77bd43f649904ee27ec796877610d5e56de1e111f",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9984,
+      "durationSec": 2.496
+    },
+    "electronics-store.box.p1.mp3": {
+      "digest": "e01b49216ed4a17d3c91985746d1e8cbdb6a90496ff52787bc7d58b6afd4f820",
+      "sha256": "f681d8120bb3bc403b4697fb77061a263c57c064baf8f59bb743963f225c3224",
+      "text": "箱はお持ち帰りになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10464,
+      "durationSec": 2.616
+    },
+    "electronics-store.box.p2.mp3": {
+      "digest": "efca1e38428cef3f5a08a74c26a48094edb512ccbff250609ce59cbe47707037",
+      "sha256": "8c6d5259c5e41ce58f311535be32bc3e48fe86eb314d50671d773495c0436b37",
+      "text": "外箱、こちらで処分しましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33404,
+      "durationSec": 3.248
+    },
+    "electronics-store.box.p3.mp3": {
+      "digest": "30eeb4edae6c865a78690011340d1a35c9813a91bf9872320ec241856324b946",
+      "sha256": "b6a2a53cb480a2859bebc93533f7a8e94a76a69ce4ed3986be513327bb218697",
+      "text": "箱から出してお渡ししましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "electronics-store.box.response.mp3": {
+      "digest": "c2f56366d38900816c860e5c964202ed4940684e640747dfdf8562971efeaf15",
+      "sha256": "b010132ed7f9cb7ee9018b7cfaaebc7f0f3db96d4ce5194927814e0501c49e0d",
+      "text": "持って帰ります／処分をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "electronics-store.overseas-use.p1.mp3": {
+      "digest": "e03da06d4df609126bfc92927bf3bdf9e0c75632866a5c6cd4d4982748ce27c0",
+      "sha256": "77d4c0b8422af8ce5217ba9b25ea670625e93a4d57c622c7e1ce76e8138fb1e7",
+      "text": "こちら日本国内専用ですが、よろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16992,
+      "durationSec": 4.248
+    },
+    "electronics-store.overseas-use.p2.mp3": {
+      "digest": "42ceb263d5e19636a270dd7c0f7b8ef2b710bd8198fbe6c368af9619c0651f92",
+      "sha256": "509e78e30bd2c3f9f8f7703e6ad89d3c9a28a2b576456d04d521a4d5b6d8d57a",
+      "text": "海外でお使いになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 22124,
+      "durationSec": 2.12
+    },
+    "electronics-store.overseas-use.p3.mp3": {
+      "digest": "bdec78c843ed9fcfadb8ca3dfe8da9e07a30af6f1ebe424a8c66a4217d54649f",
+      "sha256": "0bbe0bb9cb8942e03e5c1cd9c043a1fd3082107d8555bd75d8eef95e8257a0dd",
+      "text": "海外ですと電圧が違いますが、大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13824,
+      "durationSec": 3.456
+    },
+    "electronics-store.overseas-use.response.mp3": {
+      "digest": "f4c3ec53fc39f5f3a0d8a8699baa77765be6b222ea65f12741713c901528a98e",
+      "sha256": "72137d346c6750fe6b5b2337a69e82aa402ca455139451b9a3c8106bb00f56ab",
+      "text": "大丈夫です／海外用はありますか？",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12576,
+      "durationSec": 3.144
+    },
+    "electronics-store.payment.p1.mp3": {
+      "digest": "1c86a1e26d3f996b202535079c0010030e0c49c8b797657980bf7870e259886d",
+      "sha256": "a200cd394b526646aeaf97dc13494cdbd85afcfef719d93197421233fcb44f1a",
+      "text": "お支払い方法をお選びください",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12192,
+      "durationSec": 3.048
+    },
+    "electronics-store.payment.p3.mp3": {
+      "digest": "8a539b1cd11e034c5733b2581e376b35aa84d530bf41187c5338835167c9a270",
+      "sha256": "70dc121bf20303be653a6d5e6a929ae3e0a8ff3b29b375870447b9dfda84b758",
+      "text": "お支払いはどうなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 27164,
+      "durationSec": 2.624
+    },
+    "electronics-store.payment.response.mp3": {
+      "digest": "83308898b91df803ff4256e39dc6949d491404c1a56d9ed788ba31eeb9d994a3",
+      "sha256": "be7eb05dc55550973b01ea10d9012fe9ff6993d5a78f6e7fe98d236a45669c5d",
+      "text": "カードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "electronics-store.point-card.p1.mp3": {
+      "digest": "5566f8ed9b34799108c278922569aecf18d0e41d29ff313da1cef3923d00ef41",
+      "sha256": "ad7c42c271a755a426933ddcc0955fc45be3828771d98b22e46b36138aad65fd",
+      "text": "ポイントカードはお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "electronics-store.point-card.p2.mp3": {
+      "digest": "8a19768430e7b4a52786c834e3a2b5bfe8707ed2aa93df244ae4e67a9901a821",
+      "sha256": "d7ddd84ccc0cecfaf93cfcf84a5851c873f4368b502f594da88c6599397ad372",
+      "text": "当店のポイントカードはございますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 27164,
+      "durationSec": 2.624
+    },
+    "electronics-store.point-card.p3.mp3": {
+      "digest": "357834273fbd4156cd0c60f3c724a46103a837c14246c19e5b33bef1f0c0e11f",
+      "sha256": "377f2f79aa49adde2dc8886bcd4dca5123a2221548079a320b7f16ed3d9d23bb",
+      "text": "ポイントカードのご提示はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "electronics-store.point-card.response.mp3": {
+      "digest": "6406875eabbef7d2ae9f6ed4f521fdb9c4661b1b7af72905559e0c527a86e9ac",
+      "sha256": "83d0757322c5ccfffe75a827c5d67b48d13a6cc7cb43d00df314811f8c89e926",
+      "text": "持っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "electronics-store.tax-free.p1.mp3": {
+      "digest": "17d3bbc9a332c99aaee6b1b5ffed940a75b246dd99511da394436cc2cc00270c",
+      "sha256": "8be84c8ea990ec062a30ce2086676d0052ea8afef4d74b02e50f150889dbc341",
+      "text": "免税のお手続きはされますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "electronics-store.tax-free.p2.mp3": {
+      "digest": "ace151d835dc130d1975a3497997dd0c1effe5989423cbb04eac1dabbb3e3c4b",
+      "sha256": "3c7075c475e0f5bb61755129140c8417a9f4f88e73af1d43c1d90ed202352aad",
+      "text": "パスポートはお持ちですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25964,
+      "durationSec": 2.504
+    },
+    "electronics-store.tax-free.p3.mp3": {
+      "digest": "1bc09b91484303f584bcbc2feb0948f8267c9b1702c7cf9cda1c42a6ae0a73fd",
+      "sha256": "f39c77ae16fce384a786b7d8638e690bd99c4f05ae1c6b1df304fcedbe235681",
+      "text": "海外のお客様でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "electronics-store.tax-free.response.mp3": {
+      "digest": "e5d0c36dc1632bccfbf1004d285809808b9dcae23b3ee6ff99fa1b8858dd50ce",
+      "sha256": "a958f060a077d9914d18f5ac334f17978c56e11f73b16869c7bee178be40d6f8",
+      "text": "お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "electronics-store.warranty.p1.mp3": {
+      "digest": "32fdd6f5710d11201ecbb4d3c2732eb5d50f066ae57ac93090a35edf5bd4feb3",
+      "sha256": "696351838afccc04e2d3f46cf6a7d110d7b4f3e8052962f9c6b54c2a131911b3",
+      "text": "長期保証はお付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "electronics-store.warranty.p2.mp3": {
+      "digest": "a5c25af1b8d1d9de93e834aeed2b050496677e63e7c7e4d12b35a7ea1547b3b4",
+      "sha256": "730d4d79765283ddd5d30e082af04e9ce063f2849133a3df781ed54f34f268ed",
+      "text": "延長保証にご加入されますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28364,
+      "durationSec": 2.744
+    },
+    "electronics-store.warranty.p3.mp3": {
+      "digest": "13dcb13332d860eb7ca9241ce2357ac1f517f0a4b491839d18917c7e8d5e32c9",
+      "sha256": "beb97dcaf9b5d2779d17e0cfde6776a1ff9f039cfdf435ca0389a17ac495eb59",
+      "text": "保証を5年に延長できますが、いかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14496,
+      "durationSec": 3.624
+    },
+    "electronics-store.warranty.response.mp3": {
+      "digest": "51a9f0982548b8ece98b34a32f5b8a508122b1400d61cf9e3dabd5a40199c9bb",
+      "sha256": "c3a2b5275183bf336e13ac1aad08172e3eda2378cfe883f2985c1487f501a337",
+      "text": "大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "fast-food.eat-in.p1.mp3": {
+      "digest": "8fe4c2609599fc617951d434b3d26a3854ebedafb7f27257df6c2b73c60da17c",
+      "sha256": "ef0a52d0ca375794612c0b7ae047d3f8c2537a63ea237947d7476978b8e1b954",
+      "text": "こちらでお召し上がりですか、お持ち帰りですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15744,
+      "durationSec": 3.936
+    },
+    "fast-food.eat-in.p2.mp3": {
+      "digest": "872ad1d17f66df4be4e9ab47ff3a8f3b558621408546636a095dac0f74d407b4",
+      "sha256": "133415582f24ad2f032b27a4c346123a2d4aec152ee00853e1bd2218311f15dd",
+      "text": "店内ご利用でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31244,
+      "durationSec": 3.032
+    },
+    "fast-food.eat-in.p3.mp3": {
+      "digest": "b63c75432ff920533e392fb8aaed993e81dacaaffa48c0acafa46d52f5909365",
+      "sha256": "0e8fa5c3274381711a548a831abbf1c508126c30f0c2021dcd0e8efc14be48a3",
+      "text": "テイクアウトでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "fast-food.eat-in.response.mp3": {
+      "digest": "d0fc69f790c428aef0aaaec782432589eadbd5e7c759071246bade2f71b1b31d",
+      "sha256": "846dc270e1bcd71366dc503581f59d1ef0b7db5c9bfeca0fd7e43055c15f49a0",
+      "text": "店内で／持ち帰りで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10464,
+      "durationSec": 2.616
+    },
+    "fast-food.kiosk.p3.mp3": {
+      "digest": "845ae022a86e4aa7aa99afdf4aa384612f0174c96d967360571d5a6ca5ee721b",
+      "sha256": "1cf257dd6f98517caa843817e125462c335ad085374c968b4dee5affceecbc09",
+      "text": "あちらのタッチパネルでご注文ください",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "fast-food.nugget-sauce.p1.mp3": {
+      "digest": "df578f8793411bdbeae4a700350bbc700e16e57b5d989f8ff6487e2a801a1748",
+      "sha256": "72af5447a3630856edbc0c4e24cf075618db65b330b287f71db3ba4f268d166a",
+      "text": "ナゲットのソースはどちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13344,
+      "durationSec": 3.336
+    },
+    "fast-food.nugget-sauce.p2.mp3": {
+      "digest": "d15163cdd763282b52a09f7f7a99a32d61bc9b1e470ebfcd22943b327dbd20af",
+      "sha256": "92bb2f23af05819c4302086297c8b6bffd83b87c11cad0a1312d0c246b9e8092",
+      "text": "ソース、バーベキューとマスタードどちらにしますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 39644,
+      "durationSec": 3.872
+    },
+    "fast-food.nugget-sauce.p3.mp3": {
+      "digest": "3e6aef2518519c147a98d7a575249965852b20be5de286475298a2e5f607ce79",
+      "sha256": "c57398961a23c4490e7318733b98936701037e34aa3ae532eaf48c2ebf914b4b",
+      "text": "ソースは何になさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "fast-food.nugget-sauce.response.mp3": {
+      "digest": "250cf796395cb97f6d20633aa11f7fa22091e6ed8ea1a274d4fae5628ddf01f7",
+      "sha256": "c197b3f0cc60c9e9305d628cef097dd1c9b15a08d9257df4d23b5b24b0cf6225",
+      "text": "バーベキューで／これで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12384,
+      "durationSec": 3.096
+    },
+    "fast-food.set-drink.p1.mp3": {
+      "digest": "64bd802ff74f7884d6f4f04d6f45581d8a6357f2b61a0c8e31d7f71e0bc35f9a",
+      "sha256": "42f99e535af9f6abd7ed6d629b8c13d603e1a297dd687482d84c4e17fad69e23",
+      "text": "セットのお飲み物はどれになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13536,
+      "durationSec": 3.384
+    },
+    "fast-food.set-drink.p2.mp3": {
+      "digest": "abb85a4ca7e7cc4b34f732e861f7c8ad619ac9ce08f5c463a79d4d69cf69ea15",
+      "sha256": "b61566fdb5647ba39154daed8af3b99f96459f86c95fef0f23ca561d88389fa7",
+      "text": "ドリンクはどうなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "fast-food.set-drink.p3.mp3": {
+      "digest": "dd2f9d97afd47de743ff236151f2a13eb26cd99023c4f7aa2214c8225585ab4f",
+      "sha256": "f648e828a47a540770f34e619f3cc7ffb0ce9bbaf4e3df469e2ff720e32c2de4",
+      "text": "ドリンクはこちらからお選びください",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10752,
+      "durationSec": 2.688
+    },
+    "fast-food.set-drink.response.mp3": {
+      "digest": "480260c3e19635187b504071b7e1a4502003197e3d0f6c2a323b030b33a6112e",
+      "sha256": "175c2e17bfc77869a0498876776fe15d5b9df7b4aa8cd6c39a34c71dbde84825",
+      "text": "コーラで／これで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13824,
+      "durationSec": 3.456
+    },
+    "fast-food.set-or-single.p1.mp3": {
+      "digest": "e4d90a33070188800af446b9a803c524e9a1c0e87723a76bfeed938d953e4c03",
+      "sha256": "a6d46a078abe5f00ee9eeb6e3779c70a7e18e10d959bd783c29da273ac846e28",
+      "text": "セットになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "fast-food.set-or-single.p2.mp3": {
+      "digest": "dcb68b1b68ea71fbe32c6096f4feaf8e361e95308ffffe8787a926b8866c5fce",
+      "sha256": "74785a45fa0b33677bf27b59eb98b5e2e9f2fbecae6dfe92e9ad5efc2f28bc18",
+      "text": "セットでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25484,
+      "durationSec": 2.456
+    },
+    "fast-food.set-or-single.p3.mp3": {
+      "digest": "a27563a25c2590869df713989fbf516a8e5f453a40de8a4590f5706b474810a3",
+      "sha256": "f91e19d525d20078db3ed8be2645e08a7530e21697e7bffb454105b51363f27e",
+      "text": "プラス300円でセットにできますが、いかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15072,
+      "durationSec": 3.768
+    },
+    "fast-food.set-or-single.response.mp3": {
+      "digest": "3b364a64a6cc13954793765287bdeb15fd7256e6b75b2a0d16b17c3e8fd6eb97",
+      "sha256": "e913ed1cad772937f0d6afc027f894700fe01dcae8463d2dfa9638c3364e8a38",
+      "text": "セットで／単品で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14304,
+      "durationSec": 3.576
+    },
+    "fast-food.size.p1.mp3": {
+      "digest": "700b82f9672251b81b41953abacdf914d501dbe63a28bee093f859aa95621ab9",
+      "sha256": "514dbbff32a644eabe4e85dee87e93feba88e874fd3453708ed6c72f17cea4b2",
+      "text": "ポテトとドリンクのサイズはいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14112,
+      "durationSec": 3.528
+    },
+    "fast-food.size.p2.mp3": {
+      "digest": "63d6a96bbd2c5fd343856faf626fa5773b20ac0ef1ddcab11cb144114630228b",
+      "sha256": "0851b19a6f8109fd2f8f739d3cef0efa128e24319b84035c3adaf2985c8b6cc0",
+      "text": "セットはMでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23804,
+      "durationSec": 2.288
+    },
+    "fast-food.size.p3.mp3": {
+      "digest": "668937dd09f147245f24ee72251d46912fbbc688c22224d7025a21b4e7ebca61",
+      "sha256": "76c4f21952eb99fc6f6887b61e3958fb74571b134d6b8b028bc8ea4a3ad1b96c",
+      "text": "Lサイズに変更もできますが、いかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15264,
+      "durationSec": 3.816
+    },
+    "fast-food.size.response.mp3": {
+      "digest": "cfa8a995d2b3e1cd37542b5f25b2a38c12620310672585ed823c89679b11026d",
+      "sha256": "3021d8cf3b42e2ef7a7469323293680d0e141c2760bf764649dcb522e48a6a79",
+      "text": "Mで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "fast-food.wait-for-number.p1.mp3": {
+      "digest": "ae8084e12db80b7ae917dbb1605da070583843c9833c79438ac4fdf95a07e395",
+      "sha256": "5ac9be49018faa6173f93180e37e6f7f8eb5a8e1b6b77ce45be1eac95cb03b0a",
+      "text": "番号でお呼びしますので、横でお待ちください",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15552,
+      "durationSec": 3.888
+    },
+    "fast-food.wait-for-number.p2.mp3": {
+      "digest": "b16f0f7c27c6456e55f844d48b6b771fd1926d07a21e08517754ac473e566c9e",
+      "sha256": "9d68c2c2d1deedc21bc1cf297670062070a85d20414ab32d803af44d041b3117",
+      "text": "お呼びしますので、横でお待ちください",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31244,
+      "durationSec": 3.032
+    },
+    "fast-food.wait-for-number.p3.mp3": {
+      "digest": "f6e9028ce8d7d8d956374eaaeaf0b55210a4302d72ed58ada912be763c3b7baf",
+      "sha256": "f4c598b4dccb07234d9cb2ebee36e5dbf32e2d3f149a63d0699bd1a7c81d60b6",
+      "text": "レシートの番号でお呼びしますので、少々お待ちください",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 19104,
+      "durationSec": 4.776
+    },
+    "fast-food.wait-for-number.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "d611ff5575ce05d7c248858c2b7bb475796f8bcdf7d9b4dc4c31a80941c3792e",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 1536,
+      "durationSec": 0.384
+    },
+    "hair-salon.bangs.p1.mp3": {
+      "digest": "6846322a86e2b4b3228d71c9518033c6368cbc8a2b980ad344c5abe8bbc24888",
+      "sha256": "54b270881d68521b91e41f8f271002bdc2dd987b09314c2d48a1c13f81063483",
+      "text": "前髪はどうしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "hair-salon.bangs.p2.mp3": {
+      "digest": "5a2410d93384c888f82a8816846fede8b9d72621687e233b2e93ab7c3b6a2688",
+      "sha256": "15731002f8aad41f82980fddb5013b0d6273dfd0d65e204c246d237876b04482",
+      "text": "前髪も切りますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23084,
+      "durationSec": 2.216
+    },
+    "hair-salon.bangs.p3.mp3": {
+      "digest": "50e59d192653f34050d9df8f4b018a71527bdda8d863668834d29143f58c57f2",
+      "sha256": "ab2824f19f1663d61a28fb941b5d362fbfa725037e019e74120b7c08492f8363",
+      "text": "前髪の長さはどのくらいにしますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11424,
+      "durationSec": 2.856
+    },
+    "hair-salon.bangs.response.mp3": {
+      "digest": "983573cbe6ea7ceb3cb76f9067242bed0677065cc0a435e66aa190786908518d",
+      "sha256": "bf6ac149bc6baffa7acef284c9be80f6683d6dfd1034081f1f519699b3b2d419",
+      "text": "そのままで／眉くらいで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "hair-salon.finish.p1.mp3": {
+      "digest": "93b6fecd584f5c911fcd87887ddd90f3fc56f1ce07729f550b269a6c8be89911",
+      "sha256": "0911973e8a0dc3c9ce8dbb4cceac1b7d3699c2ee17e9aa8ec9c18ef83400ac9b",
+      "text": "後ろ、こんな感じでいかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10464,
+      "durationSec": 2.616
+    },
+    "hair-salon.finish.p2.mp3": {
+      "digest": "eb901b2acdee4d2b2791d796044b0e086e185e6b5179966b22d6b5ad1ff4079d",
+      "sha256": "6dab288226fd28b81e6a78a5b2ae1a47960f8f443171e7b950bf5539d1cf046c",
+      "text": "長さ、大丈夫そうですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "hair-salon.finish.p3.mp3": {
+      "digest": "0cae384144667bc93dbc850a3f7a0dfaad6ccf0b2a24b081c2cd15edd2285a57",
+      "sha256": "619f8f7396cbba2d3e6682fe8d28a7ddd67dcde5633bad4ddd82bb0d2421e22f",
+      "text": "気になるところはございますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "hair-salon.finish.response.mp3": {
+      "digest": "13aa0c9e18488c6e039833dbe357e8497da3fa7777f3f7585bad2b1d344831a2",
+      "sha256": "a57a96f32d53c65a2546aa4f1fd9b7cead91a2628fe240f0481d600c32ac5257",
+      "text": "大丈夫です／もう少し短くしてください",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14016,
+      "durationSec": 3.504
+    },
+    "hair-salon.length.p1.mp3": {
+      "digest": "9724fd7e20e9d1dff79eddfea20e10866392657253155878e0582d6c7be09248",
+      "sha256": "05dd93c43ff2e55689a6fe09e748d806e20de1ac71d693d9d65b6896b47b5403",
+      "text": "長さはどのくらい切りますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "hair-salon.length.p2.mp3": {
+      "digest": "ea6f2816e2480a7736050c0f0748bc8ab1cc071eecada822159e74a220a59c5e",
+      "sha256": "2a98627faf1a628d7f166fa8204f4f942db8689939f9dcfe1e42fe25490fd943",
+      "text": "どれくらい短くしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 27164,
+      "durationSec": 2.624
+    },
+    "hair-salon.length.p3.mp3": {
+      "digest": "4d5a1d017d1889586c847bd8a9c30ec90f3f7a7d6deb200bcf532d68f520d521",
+      "sha256": "5ea44f6e84d5a8b30f4377b0f32749498f6ebec7b5b51c906a559c3d503b0396",
+      "text": "長さは揃えるくらいでいいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "hair-salon.length.response.mp3": {
+      "digest": "4a0b3a1e179959ecc025f35c42b5031606a17b4d971c1b6dcd0b5753c7ce0910",
+      "sha256": "f5da3eec113633ff1feb518333954e9143d2129a6c84479ab8e93d3ce7b05ff2",
+      "text": "3センチくらいでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "hair-salon.menu.p1.mp3": {
+      "digest": "ea5c404cd5e110a1931a8072e6820eb755a9410b198042ef5bd4627f03d702be",
+      "sha256": "f66c1a36be94bc5e8d8f8cb0da25ca2002d4db1cbc789da1d0294ff982c83acb",
+      "text": "本日はどうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "hair-salon.menu.p2.mp3": {
+      "digest": "72ec7ea490f0d1a5ae0436450dd68118d94d22593b60f661dc1901e867a88a13",
+      "sha256": "d3784fee11c90603415c9ea8fb2c6f14badd658352204fad7719aa3f83570bd1",
+      "text": "今日はどんな感じにしますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25964,
+      "durationSec": 2.504
+    },
+    "hair-salon.menu.p3.mp3": {
+      "digest": "145d5a97c7f22630d75b54876f28467370d37413b13fe0f6ef49790de9ee6d2d",
+      "sha256": "367aac7241815aa6a45f186ebb3ed77334e705f96e9aaffa38a6006d32885333",
+      "text": "本日はカットのみでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "hair-salon.menu.response.mp3": {
+      "digest": "7b0044bc645dbab8057c4e950036eeb63fd0324f5c44acc0fad3c2163c3d6dd2",
+      "sha256": "a63545c2b3100f8c47c1d283bcca68c5478af2f77eb29d01f00e7be1d006c0fe",
+      "text": "カットだけでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "hair-salon.name.p1.mp3": {
+      "digest": "e13fab7084607a8d3f6573903567fbcd8e63c3138451ae3dcdf35c53e7e9ea2e",
+      "sha256": "ddb22b70acf2036d9b76652bf5bd0040f2b9e64dcecdde81d4c597c6f59e1c2f",
+      "text": "ご予約のお名前をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "hair-salon.name.p2.mp3": {
+      "digest": "13d41b2c0150b323b84cffc656eb16c1143c0a5e0a0641d10278f29208151862",
+      "sha256": "cf042911431ba51e472251286f57c6d52c4bd1e53be0086bf1af818ee7a391a4",
+      "text": "お名前お伺いしてもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33884,
+      "durationSec": 3.296
+    },
+    "hair-salon.name.p3.mp3": {
+      "digest": "84c7ad5762f694f5bf66ca3e1feb20baa8bacfa595fcf5377996f1703378d873",
+      "sha256": "0599806d3d231d6dd1fc0d4c983eadbcea7e7a4374a1ea64894e30f82accbd7b",
+      "text": "ご予約のお名前を伺ってもよろしいでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "hair-salon.name.response.mp3": {
+      "digest": "cb193b2945ac83502da0eda7664dddc4610bcf5fdf920418999d3a82e509c64e",
+      "sha256": "96165a6051fcb98f6822da406547140365ece121c9a82ca398edfa40e5335935",
+      "text": "ワンです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4896,
+      "durationSec": 1.224
+    },
+    "hair-salon.thinning.p1.mp3": {
+      "digest": "318596c5194f990a1ad47ef42b9cc832d3b24f71cb11df4efb8c44fe725b88c2",
+      "sha256": "d7d04dfeb4aec25ce22dade2a2e325733eeed936cad3e20c751b0b67144659f3",
+      "text": "量はすきますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "hair-salon.thinning.p2.mp3": {
+      "digest": "efc8320e112e66c1b1a36ebe745d0598c96017fa71b0c2741f55c895f7380adc",
+      "sha256": "58a54fd06e09fb94b519d45cdd5bbd2e11445c900edea194064b4504b4370ffe",
+      "text": "毛量、少し軽くしますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 26684,
+      "durationSec": 2.576
+    },
+    "hair-salon.thinning.p3.mp3": {
+      "digest": "057a71ddd3a3f0af96e2c4579c0b546e9d64fb6d187c3bb2d6959768d4d3fe99",
+      "sha256": "b44904323ce314e408410fa6011ce5093c400351a915fecc704e7a5fe180a895",
+      "text": "量は減らしても大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "hair-salon.thinning.response.mp3": {
+      "digest": "969473ba9312eac3ef6efafb05fd7d74a25b95368273f3628bdd5b3169ecd5dd",
+      "sha256": "5be7fe2096b5ba24050957b140748b2dbc6db9d6d63257e40db0fb4bca93b781",
+      "text": "少しお願いします／そのままで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14496,
+      "durationSec": 3.624
+    },
+    "hair-salon.water-temperature.p1.mp3": {
+      "digest": "181600aba09a6bbe2d4570400a9bd51bfd20099f474586c728e3b003579be30b",
+      "sha256": "7ac041853f206012a009535e2d0d9bb2cf5d8be88586f4582b9694f9209c6dd2",
+      "text": "お湯加減いかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "hair-salon.water-temperature.p2.mp3": {
+      "digest": "63b08c2d63d7a940aca2c6ce3c25249b5ee5d13038e14a48075b4c7d6c8aa630",
+      "sha256": "e4c9950bd4883e674ee68a6bccae9ea77cedb632cdb01368c084a54dd1f71d2a",
+      "text": "熱くないですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 19244,
+      "durationSec": 1.832
+    },
+    "hair-salon.water-temperature.p3.mp3": {
+      "digest": "d9a8eee62f4791bac21025a7a93cd63b1318cdbb6329f6c8b94a5d7e4e951e46",
+      "sha256": "1f75b1bb3a4fd722d68833c9d469d25a3bd82ff5d42e2dbc5a34d6c7281def59",
+      "text": "お湯の温度は大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "hair-salon.water-temperature.response.mp3": {
+      "digest": "51a9f0982548b8ece98b34a32f5b8a508122b1400d61cf9e3dabd5a40199c9bb",
+      "sha256": "c3a2b5275183bf336e13ac1aad08172e3eda2378cfe883f2985c1487f501a337",
+      "text": "大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "hotel-check-in.breakfast.p1.mp3": {
+      "digest": "1645d375a2e0c380a7ce9d1d1754027625179e5b36129b26166d5a99fbec58ac",
+      "sha256": "39ff5d2998954fd8ef4427356fe7db132ffd62cb57f5808c4cbd9c11bc3b07b7",
+      "text": "朝食はご利用になりますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "hotel-check-in.breakfast.p2.mp3": {
+      "digest": "9ab8d180b7dd27199d2c31f1f5d2dbb73b76133f7941316cfe62578c4cc6e44e",
+      "sha256": "79a7b97deedfd3206c2e24730371ba911e3d0177d448c08b7246e73a88ab6688",
+      "text": "朝食はお付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "hotel-check-in.breakfast.p3.mp3": {
+      "digest": "80b59e1c000ecb0cd245acfc659f60c7033971b8811dd8d1fd4477b8d7d27ed9",
+      "sha256": "99f3c797466c2804ef5a5b0aad7882611cb518d6ddf9ddb1bda11621401384c6",
+      "text": "朝食はいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "hotel-check-in.breakfast.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "60af01e1ddd113a6a8d6aee03d57315a30140802af7244b9f03c522f18927928",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "hotel-check-in.name.p1.mp3": {
+      "digest": "8cf4a5c2db797d350f38fd3567f85f76d4d955f2511849a33f168e327fe97507",
+      "sha256": "2b16c9ef52c7d568889e9ff7c2be1424a7e2e1a2894b226510afe566ba99fc46",
+      "text": "ご予約のお名前をお伺いできますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "hotel-check-in.name.p2.mp3": {
+      "digest": "51cc5f5c3c57f466451c7f320fbd6acb414decd383531d2d43cba90d03fce616",
+      "sha256": "22f09a36aac1270708a3df0fc29f07db8953d92d72690500d619a0ebfaccde55",
+      "text": "お名前頂戴してもよろしいでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "hotel-check-in.name.p3.mp3": {
+      "digest": "f2b1028af48f13a0d4ded4096da4e16f53356609c1a38eff511f57ee85d60c2c",
+      "sha256": "c10c64280900cfda3f90e9dbf7ee6df31f53281e439178b414d2f210d02812f1",
+      "text": "ご予約者様のお名前をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9984,
+      "durationSec": 2.496
+    },
+    "hotel-check-in.name.response.mp3": {
+      "digest": "cb193b2945ac83502da0eda7664dddc4610bcf5fdf920418999d3a82e509c64e",
+      "sha256": "3731064c57208674e13b352c4b5217e23e8ed848774237c1385b2ea9f41c8c36",
+      "text": "ワンです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4512,
+      "durationSec": 1.128
+    },
+    "hotel-check-in.nights.p1.mp3": {
+      "digest": "68a03c7205b0fc96bf06d7902ed4f3f6310be37c0ecb632c3d0a1a3d27d51333",
+      "sha256": "f6ca53f36d1070d85587902766498158fad4eb89030fe5ec50ac70ac81506e05",
+      "text": "本日から2泊でお間違いないでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12384,
+      "durationSec": 3.096
+    },
+    "hotel-check-in.nights.p2.mp3": {
+      "digest": "16dd1339c1c9935407c8e9716434060e9f4372ddf23965c729b427066f6e4261",
+      "sha256": "a282a01d2a535b6c0a62c952c29fa8d21d657f5285e792d176e139902d3c6e49",
+      "text": "2泊のご予約ですね",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23084,
+      "durationSec": 2.216
+    },
+    "hotel-check-in.nights.p3.mp3": {
+      "digest": "5d10d6617e4f8cd97c437193b1674b4dd371e637258a79f08970f183f71c5108",
+      "sha256": "1f2ad01d437fe8be71ba8b069ccb383f9d88a8c1539341653dc062f4a8c8be9b",
+      "text": "シングルのお部屋で2泊、承っております",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14976,
+      "durationSec": 3.744
+    },
+    "hotel-check-in.nights.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "7d6fa55ed4ab4b8fdc82ffc2504ceb45a293221fb02585fbf6d398435e2fc9c0",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4224,
+      "durationSec": 1.056
+    },
+    "hotel-check-in.passport.p1.mp3": {
+      "digest": "59d9be18b90899d1930bc848733b014d2cd6712b8bcb4d9673bfd5e049e07a7c",
+      "sha256": "75c803807d101d9cb81444b0575aac9b8c0e1f841edd4b93aa701f77cc2d6c1d",
+      "text": "パスポートを拝見してもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12384,
+      "durationSec": 3.096
+    },
+    "hotel-check-in.passport.p2.mp3": {
+      "digest": "4acf512eb1a70d60215c4bda5f7016d18b9f0cafbbd9f3d989b5655af4bc8810",
+      "sha256": "2a2d788a4f963634f6b2edd865147460deb1fc6bd0e308bcb332a6a181e88b6b",
+      "text": "パスポートお願いできますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 26684,
+      "durationSec": 2.576
+    },
+    "hotel-check-in.passport.p3.mp3": {
+      "digest": "c3105dd99df371a6cf4a209d41b445f2fa640c1004e7f409ec420717d20ac4a1",
+      "sha256": "6a9f6c43a227dfd87490e463c9e4648352817c7d833bb6f1dc10a7249439b0b7",
+      "text": "パスポートを一度お預かりしてもよろしいでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13632,
+      "durationSec": 3.408
+    },
+    "hotel-check-in.passport.response.mp3": {
+      "digest": "9145988e876176acdb740b00a0fe41be40c4462b61f6aa19cd3603488696a72a",
+      "sha256": "0b7fd64c414bf7b0e382e238f65b86272250c4acff030feecb4e19428782f3e2",
+      "text": "はい、どうぞ",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "hotel-check-in.payment.p1.mp3": {
+      "digest": "585d75bcbbae9216010939df09711d2d216ba9ac9375b637a3301abcf9400da1",
+      "sha256": "b26131bed3301c330ccfe78c0f078074f39ae90fa629a51dbdd07d35b6130cbf",
+      "text": "お支払いはこちらの機械でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "hotel-check-in.payment.p2.mp3": {
+      "digest": "28ad127f9c20b055dae29e2790636a193cc0d50115d13ee592172cb6952af1e0",
+      "sha256": "f9f21ef9373b1beeb79d63160ea26fa029da6a8183b7f345969777529276cb41",
+      "text": "お支払いは先にお願いしております",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "hotel-check-in.payment.p3.mp3": {
+      "digest": "3f3d1b34eab6f9071314df428b04e0f5f82f8a2ee4ca53667697f03e83cb6e74",
+      "sha256": "8430f79da40ac39960e6cc2eb264cb1b3dcde86b4b097e91c5510a511a48d3a5",
+      "text": "お支払いは現金とカード、どちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 38444,
+      "durationSec": 3.752
+    },
+    "hotel-check-in.payment.response.mp3": {
+      "digest": "83308898b91df803ff4256e39dc6949d491404c1a56d9ed788ba31eeb9d994a3",
+      "sha256": "14a56d5edf0d7594197442ef3d381fb17e0bac533087652eb2733ac70cb8c4be",
+      "text": "カードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "hotel-check-in.registration-card.p1.mp3": {
+      "digest": "874fb622f429e101445216d9677ead0ad67cf745841a2ab90e459b949a6cc602",
+      "sha256": "5900eb5c292a7a112c7337d7399cc4a9584207b0847aac765533f2c6f1fca38a",
+      "text": "こちらにご記入をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "hotel-check-in.registration-card.p2.mp3": {
+      "digest": "cd8a8f57ba9b115c48a4cfa4e6cdb5124228ce926319c3e4d87727e87793b9ce",
+      "sha256": "da343657e2de802e3bd7ae1ba6c522f93ec65ea48bae3cd5f31c1b0c03f966a8",
+      "text": "お名前とご住所、こちらにお願いします",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 36284,
+      "durationSec": 3.536
+    },
+    "hotel-check-in.registration-card.p3.mp3": {
+      "digest": "b7a6f8d890ada896d61b9d68e321b509a25d3c5c6d5f5a5069a461534bbc9450",
+      "sha256": "71d1eeaa3208f30c94188ca99f4f0922ff99510ae5fc0d3a01586a6935d03bef",
+      "text": "こちらの宿泊カードにご記入いただけますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "hotel-check-in.registration-card.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "d611ff5575ce05d7c248858c2b7bb475796f8bcdf7d9b4dc4c31a80941c3792e",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 1536,
+      "durationSec": 0.384
+    },
+    "hotel-check-out.fridge.p1.mp3": {
+      "digest": "5b212be4b1d704c1da674862e311f14b80ce28c10a8e98e4a7c667d6c3848f7f",
+      "sha256": "2c8cfbf689de14bebc10bde3176519fc92d8918a0a15490b34d5b2eb0da5b8f4",
+      "text": "冷蔵庫のご利用はございましたか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "hotel-check-out.fridge.p2.mp3": {
+      "digest": "7f996c02d093019ad128ba9160d0e66789e09ffd7a1bdd6d04d134cba5150b52",
+      "sha256": "524d5e71a58f64d494d5e41c9afea5f8200a75dcb50edeb765d86e796ad3ff75",
+      "text": "冷蔵庫の中のもの、ご利用ありましたか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "hotel-check-out.fridge.p3.mp3": {
+      "digest": "9e89f31f80ac37591e3644f72d69c73433e7398b767294a2464637284677755d",
+      "sha256": "01da497ab518c1277109f3d279039a44e018c26aa0b04aefea099e436b6910b7",
+      "text": "ミニバーはご利用になりましたか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "hotel-check-out.fridge.response.mp3": {
+      "digest": "fb910f7eb9a0250bde6f618a3e15acb2a79351529fb284402bfefe2e0c305ed5",
+      "sha256": "53e64b6024645f5056fb50d8bda8cfb576489c5df199a24867fdea6063b1231e",
+      "text": "使っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "hotel-check-out.luggage.p1.mp3": {
+      "digest": "98e895f2b3bb22ac938faf0f29e32546b260db8d609867e6c5f69cb3b6c79e7c",
+      "sha256": "da9a1c774f9b2908935a81e8c91bff982fa040479a6dbf429f38c86098557128",
+      "text": "お荷物はお預かりしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10944,
+      "durationSec": 2.736
+    },
+    "hotel-check-out.luggage.p2.mp3": {
+      "digest": "5bd7409f368aa8cec3d710cbd08a0682719ccc4377d1a4e3f2d9e8d29900d088",
+      "sha256": "c7100c5117698d0ff268855abf5118e485fd191e8d2bae0a1c61d4e724ffcaf5",
+      "text": "お荷物、お預かりもできますが",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "hotel-check-out.luggage.p3.mp3": {
+      "digest": "9866514f4fb1fa0343828ca54492d4773c6ba38df4c444aa726cdf98c1fc686c",
+      "sha256": "575a2806d45556bf21dbfe5b3bad9d69ae1764304a7ac6cdeab1f061a13a4d6e",
+      "text": "お出かけの間、お荷物をお預かりしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15072,
+      "durationSec": 3.768
+    },
+    "hotel-check-out.luggage.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "20af0748a30508b5bcdb774b3418b2e564fa2a33a9306e310d16e09e18479410",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "hotel-check-out.receipt-name.p1.mp3": {
+      "digest": "825f8177066495075ae8d82d89bcf6758b6ecac69f8192e0234662aa351a45c1",
+      "sha256": "d887c80a7e48da640c8a80821148fabd97425f1a43e8d14fc928e0f242d68edf",
+      "text": "領収書の宛名はいかがいたしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13824,
+      "durationSec": 3.456
+    },
+    "hotel-check-out.receipt-name.p2.mp3": {
+      "digest": "44ef01c974feaec8f6666167b2fa145bb0ce068fab26142871e46d27ef4ce3bd",
+      "sha256": "59e523d7d7466d64eb23bd2f555d527af63dcb7ce92e7a31c491e0da78546ed9",
+      "text": "宛名はどうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 20204,
+      "durationSec": 1.928
+    },
+    "hotel-check-out.receipt-name.p3.mp3": {
+      "digest": "9fb6913c136cd6643c432b9c534fe44a4e30a91852df6ae6f55d380a7b2ac726",
+      "sha256": "664b94ea1dfacef90727a48e990e8351b6d847aa67991b0b84608a0f6aabcb66",
+      "text": "お宛名、上様でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "hotel-check-out.receipt-name.response.mp3": {
+      "digest": "6f64352477f5c637e9a51d3bc147d97e44b3ec7f13a2650ab7d0685a55d15ddd",
+      "sha256": "84452849742a7277d5bff5856dbe1aebb9613c92d62acb008f6c3205143fc0ff",
+      "text": "上様で大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "hotel-check-out.receipt.p1.mp3": {
+      "digest": "e78fd10d605edbdf4a2e6210e97561ca372d62848033fa209689b2e0623cdf52",
+      "sha256": "80cbe8c609f55206c1461a4c1a3d1cd36ededbd51e66e15aaa6601d582cee929",
+      "text": "領収書はご入用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "hotel-check-out.receipt.p2.mp3": {
+      "digest": "69350840c35f0b116e17b46068b7e74a486f013011a0d755260930e654b3e9f3",
+      "sha256": "660618ceb88b6417c8ba5f34c52f6f602381d3ad641e2afdd8b6e0e1a8821cf3",
+      "text": "領収書、お出ししますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31244,
+      "durationSec": 3.032
+    },
+    "hotel-check-out.receipt.p3.mp3": {
+      "digest": "0b33e43b2ab02f77eb1d761eb88ca83dc8a607068518721bf91e67baa3b15afb",
+      "sha256": "e11f78863e7710586448f306062840a008bb09ee4d1db64e65b1d8d98cd89d28",
+      "text": "領収書はご必要でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "hotel-check-out.receipt.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "54b8455c9ea6cd15355b1e22e1cde5ea98893293fd9e2dc8fe3c47c3ed81a04b",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "hotel-check-out.room-number.p1.mp3": {
+      "digest": "359cbeb36f24e3369d1d3f0593318b3e296eb07fab02013668980e9a07e9b31c",
+      "sha256": "fc595d26858dc170f14b0e75279b28b94d86cba3fc963a6f6cbf46e498e95114",
+      "text": "お部屋番号をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "hotel-check-out.room-number.p2.mp3": {
+      "digest": "0a30849890fa77515222eb02f02fde8565a6fef286451bc5961b5dd742dc33bc",
+      "sha256": "2b5788150e1b56024e670069bc0392a03065f02f5f61ae554d53cf795b0cb8cb",
+      "text": "何号室でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 21404,
+      "durationSec": 2.048
+    },
+    "hotel-check-out.room-number.p3.mp3": {
+      "digest": "353d66e4553268bbafc0c8956bf6274e91a4e7e6a7807e3dbdb46fa945346a2c",
+      "sha256": "6c1c3549a856bcdc7e6b9c41fc73ab191279ea187bd890c821a4d0a16578515a",
+      "text": "お部屋番号、伺ってもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10944,
+      "durationSec": 2.736
+    },
+    "hotel-check-out.room-number.response.mp3": {
+      "digest": "2bacc8caeb00ef39cf6b9d3966d27270fcfd15b9da2c8b80f232f0274788450a",
+      "sha256": "d57e1c15b505c0696fb9a12b687846efeecb6436d5e0c2a35436281b9a339c86",
+      "text": "805です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6336,
+      "durationSec": 1.584
+    },
+    "izakaya.alcohol-check.p3.mp3": {
+      "digest": "37ef114561cd46c956c2828598a9f9f974c918e69ff8fcf58329a9d3ac11b81a",
+      "sha256": "05fbaedc87db323915b38391b6ac0245fd70bf56403f231eaeac051f1b45762c",
+      "text": "お酒のご注文はタブレットからお願いします",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 37484,
+      "durationSec": 3.656
+    },
+    "izakaya.all-you-can-drink.p1.mp3": {
+      "digest": "20ba250acafa55efd8839d448d77c7f1bdaaf36e8a34a34206aa2b05c4eaa37f",
+      "sha256": "c21300f52b20939e88878421c2cb72b4b05114fdae15fdd2a94f13723cadd012",
+      "text": "飲み放題はご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8736,
+      "durationSec": 2.184
+    },
+    "izakaya.all-you-can-drink.p2.mp3": {
+      "digest": "ef7cb95f63bc87384c416df337d14039e95b93e761c1f44279c64e963af174c8",
+      "sha256": "0b4e0a8ccef0b450baa30304e892557ff02f56106d41985848bc384207857d61",
+      "text": "飲み放題お付けできますが、いかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 35804,
+      "durationSec": 3.488
+    },
+    "izakaya.all-you-can-drink.p3.mp3": {
+      "digest": "630d9f40be0fb664a9f27024adc9d7ed07b455f012607a5e6a6c8f7e8f56701c",
+      "sha256": "b9bcf9fdf08a0bad31bcf335a732a7052aee3bcdea12e9d29341b5d3c4682415",
+      "text": "飲み放題、どうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "izakaya.all-you-can-drink.response.mp3": {
+      "digest": "413a696f2888be0126b659e33a69325255e18aa711ab3f125f4fccdb1c8d5b57",
+      "sha256": "00f02ea1b8e90679885397d783b0828580e9cdd8bb31bc735021af492138cdf6",
+      "text": "なしで／お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "izakaya.first-drinks.p1.mp3": {
+      "digest": "1cd0532469ba08e0ab8e72a82765097a5ab9dc3677c3242c170daba9647602d7",
+      "sha256": "2cf79d7b220f4142cc1b18400df5734d367aca76a5be71af0cd4134025c41006",
+      "text": "先にお飲み物からお伺いしてもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15072,
+      "durationSec": 3.768
+    },
+    "izakaya.first-drinks.p2.mp3": {
+      "digest": "bad5bbda81e5e9ffa23301087a4a740ec64716e23e12c63615624662416a8154",
+      "sha256": "d43565a6e747c292c3bf348134417f86280b3ed5e823a993307ba32682e29604",
+      "text": "とりあえず、お飲み物どうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "izakaya.first-drinks.p3.mp3": {
+      "digest": "6bd78cf5a6f652bc8f09fcd4c94e78aec77c92290e6c160d13d5f03347af8cf3",
+      "sha256": "f6f5a5005be86f0235441a8fea59ca4cd86507fc190591276ea51b4be7cc6f09",
+      "text": "まずドリンクからお願いします",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "izakaya.first-drinks.response.mp3": {
+      "digest": "41cb17f4a92a7d86384821748ae114638153da22b8a67ee567f612de05eb6ae6",
+      "sha256": "ffb900c78b81b6350ff0d1f2c0acb15f00d075dccb4899c609aac838dec8add6",
+      "text": "生ビールで／ウーロン茶で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9984,
+      "durationSec": 2.496
+    },
+    "izakaya.last-order.p1.mp3": {
+      "digest": "30692744cabba83d8cec2cad5e1332fdb5c8b46c3aa7d5f05b913ed12a3de896",
+      "sha256": "f9c1ba9e02bf6abebcd0df8784da634d8ffb872e42279d83304824c9f21b4c22",
+      "text": "ラストオーダーのお時間ですが、ご注文はよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 17184,
+      "durationSec": 4.296
+    },
+    "izakaya.last-order.p2.mp3": {
+      "digest": "6248533847bd466503521bcc0b7458e91adc8f31625560538992a3f9fa377a23",
+      "sha256": "f76adcc5ee566785259d953188e1670feeefce502b48051a3a91b1712ee1eb92",
+      "text": "そろそろラストオーダーになります",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25964,
+      "durationSec": 2.504
+    },
+    "izakaya.last-order.p3.mp3": {
+      "digest": "0dee0cb55a8423aef6c06203b10ecd51e1315339d195e985ce7399bb6a4225e6",
+      "sha256": "fe5d12940a3aec9a1b65d0b677294289408ab7ece1735623ede25a0fe1b4e4a5",
+      "text": "お飲み物、最後のご注文いかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13056,
+      "durationSec": 3.264
+    },
+    "izakaya.last-order.response.mp3": {
+      "digest": "737ea1d670b5de1c2e805457eb6d7f607634ae09cfa0adba310b5a0ab403034a",
+      "sha256": "9b1d5a406a776b176e517185e430b2f85289fe2c283d58b23213c32257c4d615",
+      "text": "大丈夫です／これをお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12192,
+      "durationSec": 3.048
+    },
+    "izakaya.otoshi.p1.mp3": {
+      "digest": "27990ed13596542fa102d35877819bd0b2b86f0011c7e663b754349c7bb03464",
+      "sha256": "7dbee8c06f02c627b93ddf58e3e2afee803435963c90fb14cf366abfdc7ca8e5",
+      "text": "こちら、お通しです",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7776,
+      "durationSec": 1.944
+    },
+    "izakaya.otoshi.p2.mp3": {
+      "digest": "c2590abefffedfc7b9d263cb7019c9cdd04defc145cec2cc883b654637112292",
+      "sha256": "f900be7269b80006e267568d71cfaac83c5573f8669b9f83371b5ef20489d72e",
+      "text": "お通しになります",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 22604,
+      "durationSec": 2.168
+    },
+    "izakaya.otoshi.p3.mp3": {
+      "digest": "c3d93b3cffd6ebd163f231cda888bd2ecc62c2080008949a8dd4fbcb8560f498",
+      "sha256": "a366585f26e5313853a9cfe370c3f3cfded62197e3f8966ec885b09167a1544c",
+      "text": "お通し代として、お一人様300円いただいております",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16896,
+      "durationSec": 4.224
+    },
+    "izakaya.otoshi.response.mp3": {
+      "digest": "269d6dbcee346ddc2da24ffc886e35f908f48ffcc4f562467dd1d9d48ad1c58c",
+      "sha256": "88cc35b327b4a41f5e698435d2f5de1ab114195b9912c4efb36dfc9d541e17f1",
+      "text": "ありがとうございます",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "izakaya.reservation.p1.mp3": {
+      "digest": "df37777f5d18a9717d9376d8181a6023afedd1ea478ded61ae97bc7b5cba14d0",
+      "sha256": "82590724a7700d2ea8458093911bc536e823c676686df6581f68db4ba2631a69",
+      "text": "ご予約はされていますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "izakaya.reservation.p2.mp3": {
+      "digest": "d36f242e4bd0dc916fcf476b16be3da41ab446f2217c712fc52714a126a76574",
+      "sha256": "8742d5cda3e5bc84b7c98d1ebfdf8743dfc7f4f338bda2563a4e02f2fbd161e5",
+      "text": "ご予約のお客様でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23804,
+      "durationSec": 2.288
+    },
+    "izakaya.reservation.p3.mp3": {
+      "digest": "0c609effb31c4e6a85843ecb5a58c2e516b6b8835008a85f9f35e0b636cd207d",
+      "sha256": "bcf4a46e9e8a400c2656bc19407da36c61d0ec949e3ace199e6309ec1ca246f3",
+      "text": "本日ご予約はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "izakaya.reservation.response.mp3": {
+      "digest": "0e26b2bb8bcad7c45a5e6d775af1197c61b1d09a76b4219c9c589f726ab71606",
+      "sha256": "38bf8c874461c8464e0c8605af334d9a4662a7a7d990d8a55031c39e0b1816b7",
+      "text": "予約していません／予約しています",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12096,
+      "durationSec": 3.024
+    },
+    "izakaya.time-limit.p1.mp3": {
+      "digest": "bfc8f011204891468f938109f9e79e92514cb0aa6a315464a03383f494d26a0b",
+      "sha256": "3d64642b1448e53a1d4b51f5b22aac0bb376514862d51694f2e2fb2e7a2c55e0",
+      "text": "2時間制となっておりますが、よろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14016,
+      "durationSec": 3.504
+    },
+    "izakaya.time-limit.p2.mp3": {
+      "digest": "dd3346541d983b418f44db9abd9f928fa762bb69201277f25d1d9b667c54028e",
+      "sha256": "f2e50dc75b1733e0a13a70b388d2ba08f1f717b50d0278372f433622b88019c9",
+      "text": "お席2時間でお願いしてます",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28844,
+      "durationSec": 2.792
+    },
+    "izakaya.time-limit.p3.mp3": {
+      "digest": "e7cb4d9d7ee823e08b15f695ca2eeff60825d4da0da82085301cbb5b0486743f",
+      "sha256": "f2f958910a9012eff194c1da476d8f5ddd128417f506e261d850343ac05b830c",
+      "text": "20時までのご利用になりますが、大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14304,
+      "durationSec": 3.576
+    },
+    "izakaya.time-limit.response.mp3": {
+      "digest": "c5fb18219996147a0f5dbf2fcd1b42a8d5640b6a58d0d8a758a2b79caac9b280",
+      "sha256": "7bad5a94185e7e1ed7266a3ccdb234fb2340d6a3800d83223b9330f5384f3bb0",
+      "text": "はい、大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
     "konbini-checkout.age-check.p2.mp3": {
       "digest": "7381e7081b7eb48c804fc79f1ff16218332ac4a1b72d6ad1b43c54d2fa79b2ee",
       "sha256": "d60b75e17966c4837b7f14d2c86ad10ed0065dd967388e4481d747209a53ea50",
@@ -210,6 +3320,896 @@
       "ambience": null,
       "bytes": 9984,
       "durationSec": 2.496
+    },
+    "luggage-delivery.airport.p1.mp3": {
+      "digest": "a9bec7697f521700803b4846a20b8494d50c3dc215fb67bccc604fe42a016027",
+      "sha256": "92d5238bfc8d89065f77d0a9cdc956331b980a3eac6e6cce3e10016f8c0cfc9a",
+      "text": "どちらの空港をご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "luggage-delivery.airport.p2.mp3": {
+      "digest": "268b98be8898323156fd5c1064165ca2fe05f4f5989d663e36cd92e6f612bf2e",
+      "sha256": "4c89a00590096c8102ad073b96a13438d1c72f268294e1f014ac7ca5aea7363f",
+      "text": "ご出発の空港はどちらですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "luggage-delivery.airport.p3.mp3": {
+      "digest": "641bfcfa3f612e0fcbdf4e3ce5fde69a1f8a97df0d39e3a1b8744152724ea621",
+      "sha256": "6330ba4c54a41b48734d4c2f83395efc95d00cb35650901604b6ca67e24cc31b",
+      "text": "成田と羽田、どちらでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11232,
+      "durationSec": 2.808
+    },
+    "luggage-delivery.airport.response.mp3": {
+      "digest": "8c6568e45d48316e0c64140d3c07af454cce6bbf35239deedfa59dbe639e5c8b",
+      "sha256": "e6dd039f677d8c75cba90dd824f09f777f5aba8537766a48c002a6ede2f58cc2",
+      "text": "成田です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4416,
+      "durationSec": 1.104
+    },
+    "luggage-delivery.contents.p1.mp3": {
+      "digest": "0c72787fda5354106b8793f5c731a3c0794999f4c287666f38a5696639c3128e",
+      "sha256": "583189887e49aaa6eb68057e983dd5f455228e145759888819ed0ef43a9b250a",
+      "text": "貴重品や割れ物は入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12384,
+      "durationSec": 3.096
+    },
+    "luggage-delivery.contents.p2.mp3": {
+      "digest": "d7791826d0495e68998ab6dfc6b46905c4001e9d4da542aa7a4c1c11cd3a9960",
+      "sha256": "c888f61346c06127d4f85cf36cfa03597675fbf4faded90d8fbc1a58688f0897",
+      "text": "壊れ物や貴重品、入っていませんよね？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "luggage-delivery.contents.p3.mp3": {
+      "digest": "633ff4e401bb1db48546856135ab86bc8921e3ceb124ed539c63ac493519dc00",
+      "sha256": "30ca7bfecebc576057b40a2ccb9b3652e9d7861f62c18d7dd61d89cd9657c812",
+      "text": "パソコンや現金、割れ物などは入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16704,
+      "durationSec": 4.176
+    },
+    "luggage-delivery.contents.response.mp3": {
+      "digest": "0239e56147afcb75a900e390edae35213fffda56a2e25c9e87d6f14327f11408",
+      "sha256": "18cf8aa32a2bf97b4057af6035e39fe6f564d446a0e2a8e7eb81641c99984415",
+      "text": "入っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "luggage-delivery.count.p1.mp3": {
+      "digest": "f86af83c9eebe1f6461a8235e1fd99a60650c471f65ddce2563cd6af71f71528",
+      "sha256": "d681ed438a2a8269075ad48b3f62d95a1e468ef096fdfddfcf3443ba8810db47",
+      "text": "お荷物は何個お送りしますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10752,
+      "durationSec": 2.688
+    },
+    "luggage-delivery.count.p2.mp3": {
+      "digest": "0863c28fb8981fd7f81dbfc467628a7a324c7fcfcbf08fad9d0e7c886a581741",
+      "sha256": "232c62c87786f801cffa781f85941af87d765fb2803a99f9504621f8b7334fac",
+      "text": "何個口ですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 19244,
+      "durationSec": 1.832
+    },
+    "luggage-delivery.count.p3.mp3": {
+      "digest": "99d4dca7bf086c631d246332885a666fdd4cefcc519cbe125a19aca4be3d08dc",
+      "sha256": "e6accc3e695477deaee7b96bf99756461f841ec3e0f828d917fb771650ca8381",
+      "text": "お送りするのは全部で何点ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14976,
+      "durationSec": 3.744
+    },
+    "luggage-delivery.count.response.mp3": {
+      "digest": "1d143f5c90cf637f1a6a35b8b1a60acb6cf428753575755dd9f585846c0aed24",
+      "sha256": "80fcd6f1a5e511187d3b59686014f6db279059efbb81afe8ceb1cd7fad10d054",
+      "text": "2つです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4896,
+      "durationSec": 1.224
+    },
+    "luggage-delivery.date.p1.mp3": {
+      "digest": "7b61a97b942d47798f9774d4e0d47f59e9371ce9925b186327e60e6371a9ba02",
+      "sha256": "77153ed6f6a9116dcd2a18e4fd0c309a32acf682d7d1d3ce060480c5f45c2ef7",
+      "text": "ご出発は何日ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10656,
+      "durationSec": 2.664
+    },
+    "luggage-delivery.date.p2.mp3": {
+      "digest": "999ebe2d6a8a8c53e1e6bcf838e61c6249136256d66ceafb766ac5b54d00c015",
+      "sha256": "3db42053867253419a185d0fb40caa782647668dfe8eb757056403f5bdbeac50",
+      "text": "ご搭乗日はいつでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 22124,
+      "durationSec": 2.12
+    },
+    "luggage-delivery.date.p3.mp3": {
+      "digest": "318e4dc1b6a37809aaebcedde0742016f9fcfe70e2aa995abd34f3a3578af94b",
+      "sha256": "6ea9ffe44cb5572311b3305a448ce6a5857e47cb86fa1d3295216692a3bb3e62",
+      "text": "何日の便にお乗りになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10752,
+      "durationSec": 2.688
+    },
+    "luggage-delivery.date.response.mp3": {
+      "digest": "edaabbbfddc5ace966e68a955fee1837a3df92a013270dee09740d9cf6d0a2cc",
+      "sha256": "244e9d1fc3d8c8e44718ebe95dcb3d46137dc3faba3e8ff9fef147576afcf8fa",
+      "text": "15日です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "luggage-delivery.flight.p1.mp3": {
+      "digest": "0e10c34a8cfe1d4c2d8d027fc8915db0850818b210c11117f35b6a98fa091eda",
+      "sha256": "50b4482679ee4c6ac3f7df7da2f2ddb33fe31f843a2b607b1c2c84e4434f2e9b",
+      "text": "お便名はお分かりですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "luggage-delivery.flight.p2.mp3": {
+      "digest": "2d4685c6b4e407eb874f15e55db95b33fc6b72291c409d57f2a3225c3a045dba",
+      "sha256": "10abf9780077741cfa25fe1b2a7250b0a88f35b0ab5a2669c7526654f1095b5c",
+      "text": "ご搭乗の便名をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 30524,
+      "durationSec": 2.96
+    },
+    "luggage-delivery.flight.p3.mp3": {
+      "digest": "9d24ee2e2b71daad096bdb71f031d640937be701492467d68a33e5f9df815cbc",
+      "sha256": "a7dd991dd2a126610294a6b44edc565f8013384585c5de7a17db4c30d5a20cbc",
+      "text": "航空会社とお便名をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "luggage-delivery.flight.response.mp3": {
+      "digest": "68c7feb033df71ed162e3381e5cb34139d1baadebb0d1e04528aad481163dedb",
+      "sha256": "7aef2c9a4af3977bbb898612d2ac17b4f076aee96ae9ce996ca5f706da92c422",
+      "text": "これです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4512,
+      "durationSec": 1.128
+    },
+    "luggage-delivery.form.p1.mp3": {
+      "digest": "04c906257a9996d73dc254a41561afb2c3cd0528c95e5d59c29d3818ded61c9e",
+      "sha256": "68d11460c5c109f38550ffd97f3c93c419a6b1ffe0b23c4a713f5bd4a5fccdbb",
+      "text": "こちらの伝票にご記入をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13152,
+      "durationSec": 3.288
+    },
+    "luggage-delivery.form.p2.mp3": {
+      "digest": "035987f1624e1686bb60bd1c4bd4a40f4093ce255fd6dab4bebacd28e794e26c",
+      "sha256": "bdb2b3f3701ab6bd78fe15e867db639f50664facf60a923911a8418d9befc867",
+      "text": "送り状にお名前とお電話番号をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 39644,
+      "durationSec": 3.872
+    },
+    "luggage-delivery.form.p3.mp3": {
+      "digest": "0f327e31d485dadd857096c3ec596735c100b02f972cbd5516bed9c009e9ebe3",
+      "sha256": "0ed7b67f9c13bfef9acfe4b6ec15615b552a576d87ded4760b3bc28a833d029f",
+      "text": "こちらの送り状にご記入いただけますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12384,
+      "durationSec": 3.096
+    },
+    "luggage-delivery.form.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "3e54684df6860e629dc463ff0c44b3f00ac6db3d0b02b068ec7c284bc6f4db0a",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 1344,
+      "durationSec": 0.336
+    },
+    "luggage-storage.checked-out.p1.mp3": {
+      "digest": "2e5f5f99b39f3faaf2067e500b37851f5ba384bea324e216caa119e1c80b987d",
+      "sha256": "fcd477523e1098613cc0b947831a32a7c753262bfd28cb5c3cb33b68b3f3b6b5",
+      "text": "チェックアウトはお済みですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "luggage-storage.checked-out.p2.mp3": {
+      "digest": "812b75767d4603f1f967d38731278213739aafd37907b5488e57a21feecc8e99",
+      "sha256": "4517dd182f6a145bf8a14f5e44aa27d2bed50f2c253ff07a3c7def9877da54a2",
+      "text": "チェックアウト、もうされましたか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28844,
+      "durationSec": 2.792
+    },
+    "luggage-storage.checked-out.p3.mp3": {
+      "digest": "49aa65c96a94a799db615a4abcdb8a8c1ff96fe6b0e7fccaa7742153356beb82",
+      "sha256": "1d0c1803aaaa0beeaea3b153f8069d4e996e73b37ea7bc94da0c7ea558a2f337",
+      "text": "チェックアウトのお手続きはお済みでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11424,
+      "durationSec": 2.856
+    },
+    "luggage-storage.checked-out.response.mp3": {
+      "digest": "88815f4c5adca5681e5f9b586f1f2226158ba7f02e8c224f8a38425e7447a40c",
+      "sha256": "9fee2b4c5727927981232f430a487c9589ec20bbe528eece0f2aa4fc19d7084d",
+      "text": "はい、済みました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "luggage-storage.count.p1.mp3": {
+      "digest": "6fe40299f47a97c17966f9e919c2ce6c2a2944233996480e41a502d9b16dcbb3",
+      "sha256": "823c01027d8f6239f2fd9258a6a8c81bdc036eb62bcd3f505bfb527772f24542",
+      "text": "お荷物は何個ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8736,
+      "durationSec": 2.184
+    },
+    "luggage-storage.count.p2.mp3": {
+      "digest": "dce46449871ba3444fba2601ac84784e45f362acac69441d39463332c317766d",
+      "sha256": "792d9491bcfe58cce860fd65a47e8059480a7e1dc80943b1f83d0727370de4f9",
+      "text": "お荷物はおいくつですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 29324,
+      "durationSec": 2.84
+    },
+    "luggage-storage.count.p3.mp3": {
+      "digest": "fae2e5fe10a7d9a2c66b22e898f13fdec38350dfd322872415fc893bda26df76",
+      "sha256": "36a41c02d8af93f0ed059cd005b86a4acd28d484f3a9c748ab372278b59641c6",
+      "text": "こちら全部で3点でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13344,
+      "durationSec": 3.336
+    },
+    "luggage-storage.count.response.mp3": {
+      "digest": "1d143f5c90cf637f1a6a35b8b1a60acb6cf428753575755dd9f585846c0aed24",
+      "sha256": "10d2ab46c20886ec8177a64c91d503de49040c0c0a28784f4203850f94c17f07",
+      "text": "2つです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4992,
+      "durationSec": 1.248
+    },
+    "luggage-storage.name.p1.mp3": {
+      "digest": "68cf71d8142989438dfb1f1c860c97ea19c2d6d78c16b59634abe683c03eafdc",
+      "sha256": "b7d1026f579db7bccb66f27205066eced1d33b66d47e566711ab086a476e2d97",
+      "text": "お名前をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "luggage-storage.name.p2.mp3": {
+      "digest": "cd792e31b581afbb4a0f21ccd35db69408cf2c3cdb0ea5b0bbdec2a22ae331a4",
+      "sha256": "89e6c77d10e433c9c56fdc5e52478878532840f4c9666eb2085bd6ec0f08cdfc",
+      "text": "お名前、伺ってもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "luggage-storage.name.p3.mp3": {
+      "digest": "fceada93c74808344a188b2ec2127a23849c1a8900af50017c84d9095878da25",
+      "sha256": "0b95b7576c344332dbb3b559535f4533618ff1c3fb492b97a7367ab05e789b4e",
+      "text": "お預かりのお名前を頂戴できますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "luggage-storage.name.response.mp3": {
+      "digest": "cb193b2945ac83502da0eda7664dddc4610bcf5fdf920418999d3a82e509c64e",
+      "sha256": "6b810568637a2fe522b681adfd5ac1d4fbe200ae721c059541e2e5839651cf02",
+      "text": "ワンです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "luggage-storage.return-time.p1.mp3": {
+      "digest": "51a46af9d9f9c648e1b52a22bb034a72f32513bc7b843199c4907f72851e37dc",
+      "sha256": "d9fd73493d5451050d376ffde26348a0800a014848f422c8bca47adf6dc77fdb",
+      "text": "何時頃お戻りになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "luggage-storage.return-time.p2.mp3": {
+      "digest": "f2568198df8758336210940295ca2e89a3cabcf340b1d096b7f11c2cdcb0bbd7",
+      "sha256": "dd9d02a9ea1e46b8357674fc1963cd6b847b944499b56c3c3376e7c09022eefc",
+      "text": "お引き取りは何時頃のご予定ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33884,
+      "durationSec": 3.296
+    },
+    "luggage-storage.return-time.p3.mp3": {
+      "digest": "c77795439f2f3e75abec414e728b3bde01ade52c3e33f81a8ad821a3292b203c",
+      "sha256": "5f8a8a70e787d66e8c679c7b56394154b3d990e053aa7f696506c954dfb4d954",
+      "text": "何時までお預かりしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "luggage-storage.return-time.response.mp3": {
+      "digest": "726ddd625dee7377771f25e86dc868733022fabb5b3cb8bc6b5b3fb2fb47944f",
+      "sha256": "430a33a78ede0e8803a10161e331a12559739e6ec3d9319a8beea2b94f5efa7e",
+      "text": "5時ごろです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "luggage-storage.valuables.p1.mp3": {
+      "digest": "0c72787fda5354106b8793f5c731a3c0794999f4c287666f38a5696639c3128e",
+      "sha256": "7ca6f01a0141faf408958b38fc5c43922512eb8c92daa3874f2714a7d95d5eb3",
+      "text": "貴重品や割れ物は入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13056,
+      "durationSec": 3.264
+    },
+    "luggage-storage.valuables.p2.mp3": {
+      "digest": "fe88701541c4c3612a7424aeac729178440771077dd48ccc8133ca9fb35e966d",
+      "sha256": "3f0d36f0c3b96cd88f375e3a764e941fce05943888c2624a8537ce1524bea498",
+      "text": "貴重品や壊れ物、入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 37484,
+      "durationSec": 3.656
+    },
+    "luggage-storage.valuables.p3.mp3": {
+      "digest": "1117389f635e9f52ca0ea8356fb9c7f1201800dd3a1c4353ae7847adee9e4f81",
+      "sha256": "4cc05f7182bca51dac2864131ca058f3e245afb34db2173eca6d2b23b92fe71c",
+      "text": "現金やパソコン、割れ物などは入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 17664,
+      "durationSec": 4.416
+    },
+    "luggage-storage.valuables.response.mp3": {
+      "digest": "0239e56147afcb75a900e390edae35213fffda56a2e25c9e87d6f14327f11408",
+      "sha256": "18cf8aa32a2bf97b4057af6035e39fe6f564d446a0e2a8e7eb81641c99984415",
+      "text": "入っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "post-office.batteries.p1.mp3": {
+      "digest": "aa2a861a51ec356a8c4c49e985eefbf675ca3523fea4a813ca9403de76379548",
+      "sha256": "697601d5dd29c9a2ea739fa23ca8f80216951fbfb298faed08049d29db40fa85",
+      "text": "電池やスプレー缶は入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12192,
+      "durationSec": 3.048
+    },
+    "post-office.batteries.p2.mp3": {
+      "digest": "2c49c8a5ea39091020063c2b8d6c81340bf1b954100e21419f6d84ab1da5807d",
+      "sha256": "d0956673cd448a0189fc7b9880d77300973d7bc921ab48c9ac50df02a5e3f318",
+      "text": "リチウム電池などは入っていませんよね？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 35804,
+      "durationSec": 3.488
+    },
+    "post-office.batteries.p3.mp3": {
+      "digest": "f3a61d4d5e360b988a74ff496e8ff05f64cbf2cfaf666760140fab7da53dd73a",
+      "sha256": "0751b07c9cca6d86c7ad8df0b8307ac5934e9e9924e6b26201ee54d1512ff81f",
+      "text": "危険物は入っていませんか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "post-office.batteries.response.mp3": {
+      "digest": "0239e56147afcb75a900e390edae35213fffda56a2e25c9e87d6f14327f11408",
+      "sha256": "5090e9c2ed0e21300975438f7314de80bfbfd22b06dcc42fa4d7a35e64fbcafc",
+      "text": "入っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6432,
+      "durationSec": 1.608
+    },
+    "post-office.contents.p1.mp3": {
+      "digest": "8e19e650fefc8260143f41d49569179eca858a68e839f11e660911f26775202c",
+      "sha256": "65bc525c85fe9cd0a9cedd9af92a5a92c2dcff6f6d09fbdd5fb2ff2cfdff9e55",
+      "text": "中身は何ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "post-office.contents.p2.mp3": {
+      "digest": "d7996e95e6efcbd032a431ddb1434f4f78ebf7b8d8d8b5ead3e26037267536b8",
+      "sha256": "bfb8b4b7b134da7833d023b78a085ed2ba34a56afe4d872289d8293d2276164b",
+      "text": "中身をお伺いしてもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33404,
+      "durationSec": 3.248
+    },
+    "post-office.contents.p3.mp3": {
+      "digest": "674987f70f82202658561bb91d22487097c3926d5901d4d646f8e1a6871449b5",
+      "sha256": "6922d1f6d402f9c56d8b30caa1829023ae7c4bb2e3a6930dfcae0a421418c711",
+      "text": "内容品は何でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10752,
+      "durationSec": 2.688
+    },
+    "post-office.contents.response.mp3": {
+      "digest": "c09eaee141455a31981bc6b0a1232be872bde16dfc1c7d7e08e7b80f0f33da8f",
+      "sha256": "b81e1ca9d4afee79586423947e07464aede097ba13d8e0c6f107893ac0785c44",
+      "text": "服とお菓子です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "post-office.destination.p1.mp3": {
+      "digest": "183c6e458ff675745de16c17b22ba6d90f632dd99e3a4962908277b5afd1316e",
+      "sha256": "5fd65e17deeae122d12a1f410d3d25abba463bd8cf622dcbf801b92afe693efd",
+      "text": "どちらまでお送りしますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "post-office.destination.p2.mp3": {
+      "digest": "9ad46cc3509e5f31d0f77724071e1d93853e4ccd1d83cac7993de954f85d34ba",
+      "sha256": "b1c0a4e15f7fe2972ba7982ba5e5d5609f7abe63129427c1f86e6e9531101a82",
+      "text": "お届け先はどちらですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 26684,
+      "durationSec": 2.576
+    },
+    "post-office.destination.p3.mp3": {
+      "digest": "3b3985808ac485f86ea518ecbdc7beb05028edfa014e16670fe446a9c41ee9f4",
+      "sha256": "abe8b0981d32746a955884ebb53db33f4e06a0c9299546bb6136b9fd4e9f8c20",
+      "text": "国内ですか、海外ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "post-office.destination.response.mp3": {
+      "digest": "1802a7db9a86b99088c2c9681e6865d108a06d3149f482ff139d362cccc71c4f",
+      "sha256": "1712551d28da77844a41a1bf0d4462b605d1a911c823af27580329cbe3bf9890",
+      "text": "台湾です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "post-office.label.p1.mp3": {
+      "digest": "0b83c3b18ad4130b53b1a9f55f490cb8cadae99eff340e3ec03da4319d18354d",
+      "sha256": "c2a47ed6891abcbd56bb446d632a765ec884686b1229d561844b650323f559ed",
+      "text": "こちらのラベルにご記入をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11712,
+      "durationSec": 2.928
+    },
+    "post-office.label.p2.mp3": {
+      "digest": "ff0ae98fbb533782210f9924bf66a4ce2acf6a229aff4f80b262948864fefac3",
+      "sha256": "c2d6ed89b77099f85870138964cae43fe7e2d5f88cd3f44986638cadfab57c42",
+      "text": "お届け先と中身を、こちらにお願いします",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 36764,
+      "durationSec": 3.584
+    },
+    "post-office.label.p3.mp3": {
+      "digest": "062d00bb34af05c644955132b89951b8a294279dea634825a227013a4f47a814",
+      "sha256": "54ba875e98abad775dacf6d74dc83a456870b88f7432690579814ce524da6398",
+      "text": "伝票のご記入をお願いできますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9984,
+      "durationSec": 2.496
+    },
+    "post-office.label.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "7d6fa55ed4ab4b8fdc82ffc2504ceb45a293221fb02585fbf6d398435e2fc9c0",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4224,
+      "durationSec": 1.056
+    },
+    "post-office.method.p1.mp3": {
+      "digest": "9d00e8baeac742a5cb99cac65e24d5176b57bf3bcc525e23567180e9053b9926",
+      "sha256": "48204cbe6460a83b8e3637b54f2907b64f1998740f82232d48c07d6be9e7d7ae",
+      "text": "EMSと航空便、どちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16032,
+      "durationSec": 4.008
+    },
+    "post-office.method.p2.mp3": {
+      "digest": "6772d50a9f86be45fa43502b92b707a9d9e4b486d3e9f1ffc2fda7749fe54138",
+      "sha256": "000a5e201aefa74e369586756437587b0d98fe76e33cdb070263ffae8de755ef",
+      "text": "発送方法はいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28844,
+      "durationSec": 2.792
+    },
+    "post-office.method.p3.mp3": {
+      "digest": "fda08ca1337dab7a6b94f40a44ad15f5a3e678c0c3db47c98eee4e8027a1d37a",
+      "sha256": "771301131ba8d6f9e170dcd25af4b813892e7e69b4eed22ca419ec1133793330",
+      "text": "航空便と船便がございますが、どうなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13632,
+      "durationSec": 3.408
+    },
+    "post-office.method.response.mp3": {
+      "digest": "6f4278e48190350ca1bb8b13267eff163b86a89a8ebb5c7c09f512d69a272824",
+      "sha256": "6ed7c54062cbb729b14d0230d24dde6a288ffeeb52b054236f5d4eeffc3b302f",
+      "text": "EMSで／航空便で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "post-office.payment.p1.mp3": {
+      "digest": "12d839b30edca74b161a71bdde3e2bc109134fc22301d2d3048130e025c6caa9",
+      "sha256": "cfa6dc3aad411491a71f9eee648bc80f35a5d2b1c2e72d6a3d4477d63190d999",
+      "text": "お支払いは現金でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13056,
+      "durationSec": 3.264
+    },
+    "post-office.payment.p2.mp3": {
+      "digest": "191f1b505486901e559a9b3f2b548f10b219216b8127e7cd8c39b02dc2cee00e",
+      "sha256": "ec8fb27905617d988684b32488c544e20f7a7f0f49cf14e879dc5f9066b89090",
+      "text": "お支払い方法はいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "post-office.payment.p3.mp3": {
+      "digest": "bee00106ca6e2bcf44d46d0cb0da6cd4f35e60db5700fbc6753c79b0547dc873",
+      "sha256": "ba833dc878c29d0761d044ac713a1bfcddb52b0143350a21275efde9c28ea410",
+      "text": "お支払いは現金ですか、カードですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13152,
+      "durationSec": 3.288
+    },
+    "post-office.payment.response.mp3": {
+      "digest": "f03711d0e69547dfa3f6966a4959df764736ffe6882f2894bb48f5b62c935e9d",
+      "sha256": "466990649d1a075b0dcb3329723dbe81a85ec05bb121329c471fe05f838987ea",
+      "text": "カードで／現金で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9792,
+      "durationSec": 2.448
+    },
+    "ramen-shop.counter-seat.p1.mp3": {
+      "digest": "c17a3f312932fe770c3c09431d2cf8549b01533bfeba81eeabb64bad69ef1471",
+      "sha256": "231d6840f5bc3f619640c6e4bc998d759c9f73eb2a8f5b1a7807e3808831d714",
+      "text": "食券お預かりします。カウンター席でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 21024,
+      "durationSec": 5.256
+    },
+    "ramen-shop.counter-seat.p2.mp3": {
+      "digest": "81a6fd2f37052153e1ae45860217ceb52a2a9177ce5acb0c4a3e1e9a084e6397",
+      "sha256": "e896546fa73209e17f8866b464c1b8cf098155aee0da8847571e44b7b7313c4b",
+      "text": "カウンターでもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23084,
+      "durationSec": 2.216
+    },
+    "ramen-shop.counter-seat.p3.mp3": {
+      "digest": "e2c67cfcc1ae0367dc42c01d08b2dd507b103a80621987db3349be4e7c94ca8a",
+      "sha256": "f0bbf502ea9a4c4f2ad62e1e19e2afc924560d781a94928816731e3a5f0d6ea8",
+      "text": "お席、カウンターになりますが大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14496,
+      "durationSec": 3.624
+    },
+    "ramen-shop.counter-seat.response.mp3": {
+      "digest": "c5fb18219996147a0f5dbf2fcd1b42a8d5640b6a58d0d8a758a2b79caac9b280",
+      "sha256": "27d1d8e1749b48eb52cfea1ff5823bd91729595cd37fb16c095fd7a5f3a9a7df",
+      "text": "はい、大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "ramen-shop.noodle-firmness.p1.mp3": {
+      "digest": "5384ac1022155d5a6179ed38956e5f95c967fc658b0c3b204a04a465da03ed0a",
+      "sha256": "714c4626da04c2a5f87ceae8bf38744fc6615f98e22b3a1d585ce9d095dfbe37",
+      "text": "麺の硬さはどうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "ramen-shop.noodle-firmness.p2.mp3": {
+      "digest": "f31da189ffc5643c6e4ad6a9dbcf34c9778cc099fc7c84d966b24d460de46cdc",
+      "sha256": "faa191112350feabf6aaf7884afc87f9d7a152d4f629a2311568d3725ad4dd49",
+      "text": "麺の硬さ、お好みありますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28364,
+      "durationSec": 2.744
+    },
+    "ramen-shop.noodle-firmness.p3.mp3": {
+      "digest": "f1844b016ac1cd38157a61c127a8ebaa298005f82df20ea0e10a121392ef8381",
+      "sha256": "d5884b2b1f893927f9f63d320e0b88cb3585b99202a9445b80eb5d66464ea06a",
+      "text": "麺は普通でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "ramen-shop.noodle-firmness.response.mp3": {
+      "digest": "4e4f5598690bac3b9e2ed45c2002eb23d8fb6fd5b6d1c87d725a4ebc219257c5",
+      "sha256": "ca6552b6bd0bc7bac6ff68608ab1bedb28044756df7212025b3f4896871af71c",
+      "text": "普通で／硬めで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8832,
+      "durationSec": 2.208
+    },
+    "ramen-shop.paper-apron.p1.mp3": {
+      "digest": "84100e0bc8dd7fe08d3247ab394fdfb44ccbc079ea060c31f0226464b324e4b5",
+      "sha256": "1d9dd7dba7d1541fda64ea82aff5d750960adf16988f96b3cc745d4a9354c1a5",
+      "text": "紙エプロンお使いになりますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "ramen-shop.paper-apron.p2.mp3": {
+      "digest": "6100cce7cf66cc289e0dfc46dcd6f00790497cf5e96f644867e37cf917844af1",
+      "sha256": "16d4c9bfc06b11578401c044c16be246276a7b9f7de72f727c1f29c8d06b6515",
+      "text": "エプロンご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24284,
+      "durationSec": 2.336
+    },
+    "ramen-shop.paper-apron.p3.mp3": {
+      "digest": "2c141f50fb0c86b7eb9a04da38d24edf5fdb93857b395e8b9027b06aec16c4ee",
+      "sha256": "0a4f0b4ae05e0d59010e9552f8634d2b7148c9c3dd16ecfce6541635c1fb7a7c",
+      "text": "エプロン、よろしければお使いください",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10464,
+      "durationSec": 2.616
+    },
+    "ramen-shop.paper-apron.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "de2be4dea94395193fb562fba180766cc4ed3df63a69ad601362e3bf28343562",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "ramen-shop.rice.p1.mp3": {
+      "digest": "a5ccac8dd544eb98c119881ffcbb8a55c404d4b78d724aae9f4e4a8183638ce1",
+      "sha256": "038e3732465855aa980123ac583e25c5d554f00f265ec724d27eb802b2921f4e",
+      "text": "ライスは無料ですが、お付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12096,
+      "durationSec": 3.024
+    },
+    "ramen-shop.rice.p2.mp3": {
+      "digest": "f48cf655e1e34b96367946145e17e2461bc7dd5662f6e63e7a82a622dd953842",
+      "sha256": "66bb842e9d29f377c87636c918ccb276850bae0480647c457cf00f94014fbf6a",
+      "text": "ライスいかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 22604,
+      "durationSec": 2.168
+    },
+    "ramen-shop.rice.p3.mp3": {
+      "digest": "84dbdfccaa468946c0cd76aeb1cda331ea6bea1589aefcd23368b204eabe9ad2",
+      "sha256": "11defae56b684cf3a81a2dd19de07f6705197f75cea2b513e9b14e300b8a1eab",
+      "text": "ご飯はお付けしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "ramen-shop.rice.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "de2be4dea94395193fb562fba180766cc4ed3df63a69ad601362e3bf28343562",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "ramen-shop.taste-and-oil.p1.mp3": {
+      "digest": "958f12cd2fce41b884c6a5ad48d5d3c8ca22e2356dbc9235b505ee0249f6adb5",
+      "sha256": "5d6df74aa6beec4f209e8c576803ebbd2cfdf9b73f98a1ed55c52edb8b00d67c",
+      "text": "味の濃さと油の量はどうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11424,
+      "durationSec": 2.856
+    },
+    "ramen-shop.taste-and-oil.p2.mp3": {
+      "digest": "8d9b08f3d4c9d0320bb176764e5247e24a9c993237e8f42e32f9c134eff11625",
+      "sha256": "c36a5f429720dc54fda4d55a1e744f015cba89c1c3b72d7dfbd2edf1efd01080",
+      "text": "味と油、お好みありますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28844,
+      "durationSec": 2.792
+    },
+    "ramen-shop.taste-and-oil.p3.mp3": {
+      "digest": "f1ffeb0ef8f233bb92c44198e4745bc249392ad4d17ea77a447d1bc32b7a71f6",
+      "sha256": "1bcfdbabb32c5f484fbf11e4c6ab494bd7ff481485000e49302f2195e08403ac",
+      "text": "味の濃さ、油の量は普通でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14304,
+      "durationSec": 3.576
+    },
+    "ramen-shop.taste-and-oil.response.mp3": {
+      "digest": "9392c6d34add91ee7dd245d6c0c7b3a317b7b11ea056aeb0055ec998c18b3237",
+      "sha256": "859e446868a85ecf8a6b29118472d584ed33c0c9aeed9eea9132614ceb804727",
+      "text": "全部普通で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "ramen-shop.ticket-machine.p3.mp3": {
+      "digest": "f1e950ffbf5faafb326c8ae1c1f86fb8b771c016248dcc91907e3855ae30a1e8",
+      "sha256": "899ed835a18f53e26cba7c74da477b85eca6e805e65efda7bd9c356051f8efad",
+      "text": "食券制になっております。先に券売機でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 45884,
+      "durationSec": 4.496
     },
     "restaurant.drink.p1.mp3": {
       "digest": "ef3dd541860741241c3972a466464c06e401e9bf66827d7578eb0652555d6503",
@@ -430,6 +4430,786 @@
       "ambience": null,
       "bytes": 9312,
       "durationSec": 2.328
+    },
+    "ryokan.allergies.p1.mp3": {
+      "digest": "70f5db73a9a34c2aad29ca0b10b9309b6c2890224daf5e52cc7b8cdcf61b868b",
+      "sha256": "e78dba67f29394bbc4b9f63c9811f47226726640f5890e7da1e821db83eaeede",
+      "text": "苦手なものやアレルギーはございますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14304,
+      "durationSec": 3.576
+    },
+    "ryokan.allergies.p2.mp3": {
+      "digest": "da36c44b1e7a62fac99517b13d3dac1536f8d1fc0a085a1c996557aa83c63afd",
+      "sha256": "1d847faab098b277d0e987d425e9820529eaaa678f2b5dba8dfb37b34251f135",
+      "text": "召し上がれないものはございませんか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 26684,
+      "durationSec": 2.576
+    },
+    "ryokan.allergies.p3.mp3": {
+      "digest": "9cdc625b26e86450e6c29a0e821b3b8a16f5b51fdf938c5d24d1bc4a9317f7b4",
+      "sha256": "206c961a33d37ec210ae486d2977f33fa6cd86162ce077ede03c02d22d5fddf4",
+      "text": "食物アレルギーなどはございますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "ryokan.allergies.response.mp3": {
+      "digest": "c360aa77f9ddc5edc27e8a40922be17e49ce764c9901177af23979985ed9eeb3",
+      "sha256": "26757960091e2a15ef966a16404c78ab5f7e908559f0155ff50241a0b9079fc0",
+      "text": "ありません／エビが食べられません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11712,
+      "durationSec": 2.928
+    },
+    "ryokan.breakfast-time.p1.mp3": {
+      "digest": "e8bf10f251ae465a1f6d392e985eb58cbb8477459976eb56c899bb62c30c1075",
+      "sha256": "3d7351a025d41dbd8762f474bc071e1075a7e16008ccdf97b021afd103d7d37c",
+      "text": "ご朝食は何時がよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9792,
+      "durationSec": 2.448
+    },
+    "ryokan.breakfast-time.p2.mp3": {
+      "digest": "7dd07b64f9633aae68a4ed8183576fcce6afdc21bb7d68fcdfe9d6f8e944f118",
+      "sha256": "03721d0e92d90ef243e2c4a6d62d9bce635681ccd6f7692d118bc613fc846b73",
+      "text": "朝食、7時から8時半の間で、何時になさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 49964,
+      "durationSec": 4.904
+    },
+    "ryokan.breakfast-time.p3.mp3": {
+      "digest": "4c912dfbe9d49832361656d444e917ef5797d3abf3917780d4db267b056b57ce",
+      "sha256": "407791fec5d8f5dc4a54d46f4d159308f173dfba7554050a146a261827422be7",
+      "text": "朝ごはんは何時にご用意しましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9984,
+      "durationSec": 2.496
+    },
+    "ryokan.breakfast-time.response.mp3": {
+      "digest": "8843ae891531604d0039e460f4cf24416a07ef7ce613e3e70e6f59f772db5725",
+      "sha256": "ff23755bb6b501b86a81b9850cc7c79c50e6974310ce8a99fa83bea77b1c77af",
+      "text": "8時でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "ryokan.dinner-time.p1.mp3": {
+      "digest": "9be768fd82413209d65138e2524bae5c466a2b1494b5c53cb51f39900d90fdfd",
+      "sha256": "7814c54552565787ffe6bc31b6048ca7072e6fc9aec80eed846502b4f2266336",
+      "text": "ご夕食は何時になさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12672,
+      "durationSec": 3.168
+    },
+    "ryokan.dinner-time.p2.mp3": {
+      "digest": "d0771f0c637c03860f082e292477f4a314336a2b5b2166467d06d2dadcf8c82a",
+      "sha256": "aa2431c46dff9a602aacb44370e889844bda434306fb4080671ede86d25b3bd5",
+      "text": "お夕食、6時と7時半、どちらがよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 44204,
+      "durationSec": 4.328
+    },
+    "ryokan.dinner-time.p3.mp3": {
+      "digest": "f3d8c39185cc2db2839c3c4598ca3a098da336a4c23c3b24e28569d62646bf13",
+      "sha256": "6a4647f5e2e27d48b974dc47d80124b12580d5ae77b8d4bc65709d5cc200e1e5",
+      "text": "夕食のお時間はいかがいたしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13152,
+      "durationSec": 3.288
+    },
+    "ryokan.dinner-time.response.mp3": {
+      "digest": "5134d2b4246233c8227b8b544ed6484f384c654819d23646fdf1c2f0b5240ea6",
+      "sha256": "5fc132a3e11e31a1ec407e5dd03aa082fd45f5504c2a426f9f0fc251f3392c27",
+      "text": "6時でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "ryokan.futon.p1.mp3": {
+      "digest": "11573d410ded142c1d3dce59fe8b006dca6d122ee75d0dd06093e46a6402d11d",
+      "sha256": "d4201b4156503432568c7d1abd42455dd9c71d7066742027f43d69b958cdb676",
+      "text": "お食事の間にお布団を敷いてもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14016,
+      "durationSec": 3.504
+    },
+    "ryokan.futon.p2.mp3": {
+      "digest": "18d1b1f603f652fff64f76995df47e6334c534a96b7fd4309447282a00cd52e6",
+      "sha256": "4f8082283a8da4ae0e2150ed2d9afee496f91290e57b801e9c276f441a8e8e4d",
+      "text": "お夕食中に、お布団敷かせていただきますね",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 37964,
+      "durationSec": 3.704
+    },
+    "ryokan.futon.p3.mp3": {
+      "digest": "70cec2d7cb817b8a0cee00bd2b8f5922a37734fe7dfa0284bc10d76412d204a1",
+      "sha256": "c4cee3f592e2a3966f9eb1eceb091dd9fb0b3cd9fc49424fcba18a82f953bb7f",
+      "text": "お布団はお食事の間にご用意してよろしいでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 16992,
+      "durationSec": 4.248
+    },
+    "ryokan.futon.response.mp3": {
+      "digest": "e5d0c36dc1632bccfbf1004d285809808b9dcae23b3ee6ff99fa1b8858dd50ce",
+      "sha256": "9c0568e0f35f6a1fda95bb9032314b3bdd237b2a623a05b79119120601ba0f0d",
+      "text": "お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "ryokan.private-bath.p1.mp3": {
+      "digest": "079660dca2ff6ee2445afc6dd5a6b47f3e047df7e726eab4ede740a13543b0a5",
+      "sha256": "f0e8d9e4630e41a39d54993373fb41ba81bd828493fdce2655c152030717496c",
+      "text": "貸切風呂はご利用になりますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "ryokan.private-bath.p2.mp3": {
+      "digest": "b7913eddc18d4df1ef1c51446aa25a86b07b440832f1c21b50b125b2814de88e",
+      "sha256": "988c80c434ce025ed1ace136b856fb63aae64244838dd1bfaae098edd0da1a8d",
+      "text": "貸切風呂、ご予約お取りしましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33884,
+      "durationSec": 3.296
+    },
+    "ryokan.private-bath.p3.mp3": {
+      "digest": "6b63f9ca57b79395e138dac3d1f49ac694388f2c4beca3de7a9715d9159d4dcc",
+      "sha256": "ba9e9822d4158e2fc6adc02feabfe6a6e2064f0afae1816874a529cf3b979273",
+      "text": "貸切風呂のご予約はいかがなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "ryokan.private-bath.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "de2be4dea94395193fb562fba180766cc4ed3df63a69ad601362e3bf28343562",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "ryokan.yukata-size.p1.mp3": {
+      "digest": "c73cad302a4e52cd3998b5487c854b2503c1aba5bbc6d3f06884e902ecfb1133",
+      "sha256": "357154bf18279632e503d01ab6e870dc4fb00f3f3876131513861b57af4be304",
+      "text": "浴衣のサイズはこちらで大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11904,
+      "durationSec": 2.976
+    },
+    "ryokan.yukata-size.p2.mp3": {
+      "digest": "7c32afde2caaa5f58dbf0aba05e0aaa77a4b11d86bcb4d9fb8da6c3921d52a6c",
+      "sha256": "f150f5048941753be91296e93517abe3b9d840dc176e65d94ab1448fa480c697",
+      "text": "浴衣のサイズ、大丈夫そうですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 33404,
+      "durationSec": 3.248
+    },
+    "ryokan.yukata-size.p3.mp3": {
+      "digest": "a3c9817e3005e9c19e0e52ed53b0aff3e13d442e8a4e3e4dafe910a02b0c4c0b",
+      "sha256": "6978a81bb3d4619d83e236190b57c72917ab53ff8a1d9561a6bfedb0bdf83765",
+      "text": "浴衣は大きいサイズもございますが、いかがですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13824,
+      "durationSec": 3.456
+    },
+    "ryokan.yukata-size.response.mp3": {
+      "digest": "cbec735f3e43acd96fb7e6c489741d10f2245753f61e0a003e7287e97566b23b",
+      "sha256": "253849820ebc9f6cb1b5b767704ad215b92395523f5e68108a74987c36fcfd6b",
+      "text": "大丈夫です／大きいのをお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13344,
+      "durationSec": 3.336
+    },
+    "station-ticket-office.destination.p1.mp3": {
+      "digest": "b194fe1d74700b0266121969bded6706db8f04a1d677990625b8f1475fed8968",
+      "sha256": "545f1feae3f99bc427ad072b6b171fa17b99ee58819bcb40049e2e7d92b26601",
+      "text": "どちらまでご利用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "station-ticket-office.destination.p2.mp3": {
+      "digest": "01b1712142cdccc8688fd00664fefdf8bcd1eb98c324ef4bf5adfdc78570f192",
+      "sha256": "09887fdb6d6b83ea2c3beece056eac67b689843120921709233a3675178a3d8f",
+      "text": "行き先はどちらですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25964,
+      "durationSec": 2.504
+    },
+    "station-ticket-office.destination.p3.mp3": {
+      "digest": "ecd9fd4b5f1f6d1dcc1efc11572f7b57ccdbcb270b88d9a79eff17b77a0d014f",
+      "sha256": "231ba809ce9049ba7d5fe0d92b4efb2fd761b8592ef3dc3286dbf14efa0ead15",
+      "text": "どこまで行かれますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "station-ticket-office.destination.response.mp3": {
+      "digest": "b3315aba4f923d5e46618f8fdb2245c935d5b6c1beb3b4deaa4a0a7ce7cd69ac",
+      "sha256": "1e4eda1709f153587d059896ab703c0e7c8366a611412a142362dd2a0a31e2a8",
+      "text": "京都までお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "station-ticket-office.how-many.p1.mp3": {
+      "digest": "f8eb89202274e11a4de4fd02f63e39c676b24cc0f81b2fee6709f28f616672fa",
+      "sha256": "6e5c7b0f6ded8b3f2e415ce4382285639bb475cec2a48b2941a2eeabc1942ad7",
+      "text": "何名様ですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "station-ticket-office.how-many.p2.mp3": {
+      "digest": "81727b4d8c57913401dd3fbc0faa02bb909904be79d3e637ff7e76ce358fbc5d",
+      "sha256": "d2ec1f6eec4b3655fe0fb4559ece4f0e7d04efca7a0e98d05faadcb26519b615",
+      "text": "大人の方、何名様ですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24764,
+      "durationSec": 2.384
+    },
+    "station-ticket-office.how-many.p3.mp3": {
+      "digest": "ef7cf4b301fd756432ef5002c4af427ef3872184abfd498bb0c009a2a340dcd5",
+      "sha256": "42c9e202a9588b8d9de2aba743c0eb26c6d6fbfc9ea75f7f5bc21697552f6706",
+      "text": "ご利用は何名様でしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "station-ticket-office.how-many.response.mp3": {
+      "digest": "19a8640efbae8e7ce1c9ea1643a325bc08f824859d0b60d55220e208abd7b592",
+      "sha256": "75f6f2e3edd4a9b303aae60ab991ef28636dfd8ad6a470d543897a5aab5fe602",
+      "text": "大人二人です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "station-ticket-office.payment.p1.mp3": {
+      "digest": "4542123d329ee646edc09e5c4f21466a77eb6f8f3a0408bee64ffcd9e3253834",
+      "sha256": "54b54d58dfed3212f6f7ee8f79ea095dea149492c6f320ead60127c4d22bf154",
+      "text": "お支払いは現金ですか、カードですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13152,
+      "durationSec": 3.288
+    },
+    "station-ticket-office.payment.p2.mp3": {
+      "digest": "9ff5a1636fb535402bc535c403e6b24453c95a467675b677f024e96d960060cb",
+      "sha256": "2ada4504eea1cba3bf6532cc5be810e586e7c4de532093c276d3d64fc791c7a4",
+      "text": "カードでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 24284,
+      "durationSec": 2.336
+    },
+    "station-ticket-office.payment.p3.mp3": {
+      "digest": "4b8649722e8a3d9b6421393a348b2cbf7fbcb063aaaadf4481990efceca609ae",
+      "sha256": "73ab5acd512a92aaf069784c53f2ca2ff979540a2f93b39ea5561a2ad630ad03",
+      "text": "お支払い方法はどうなさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10464,
+      "durationSec": 2.616
+    },
+    "station-ticket-office.payment.response.mp3": {
+      "digest": "83308898b91df803ff4256e39dc6949d491404c1a56d9ed788ba31eeb9d994a3",
+      "sha256": "b8066771b9228529987acc6c4f684e5ed61c842839f9ba1575b0efa979b702b5",
+      "text": "カードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "station-ticket-office.seat-type.p1.mp3": {
+      "digest": "6931a1d43ea58a31be117c34a3da0d6412b36aa88f7c74c39ab2faf4ddff62e1",
+      "sha256": "bc52c5767b030d81e9dafa0e169ee4ee329d68f8ced1c66a1de3737aaeed42d7",
+      "text": "指定席と自由席、どちらになさいますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 15456,
+      "durationSec": 3.864
+    },
+    "station-ticket-office.seat-type.p2.mp3": {
+      "digest": "f21240e3af88461b378b9201cf4811ca4e56262774b11afe4a7190badb993601",
+      "sha256": "98aeb2689a20d72be6c984c4d4de92742471f360bd7e51d4fc60682c7859c381",
+      "text": "指定席でよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25964,
+      "durationSec": 2.504
+    },
+    "station-ticket-office.seat-type.p3.mp3": {
+      "digest": "9484662eedc8cdfbc0e56cb4fa6c4d46fbda2e876887e2c86251131ec3a81c10",
+      "sha256": "387a65e4b1021c475af19d9d2eac5c5323c5e224320bb7091bb9fe2745405150",
+      "text": "お席は指定でお取りしますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "station-ticket-office.seat-type.response.mp3": {
+      "digest": "a9d3777c4187bf39734ece14527bab410a8f931530e8c99d41ec447924497038",
+      "sha256": "6c0c01ab6f9c7436e0735d3b26d16bfdd15dbb674f526b5ca3016404d02a50b0",
+      "text": "指定席で／自由席で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11616,
+      "durationSec": 2.904
+    },
+    "station-ticket-office.ticket-check.p1.mp3": {
+      "digest": "2410d8d081fbbe504291b3e1b12effff4043c6859f7d252975e7eb41c5337481",
+      "sha256": "ee62ae4a77f23c6d86d28604577a6206ba2dafb743acf512637a5bccacc86777",
+      "text": "こちらでお間違いないですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "station-ticket-office.ticket-check.p2.mp3": {
+      "digest": "76d2b182634cda44b636e12e47a5ca8631d9e77622aaee116724668cdc08ab8c",
+      "sha256": "4ff5889e5eef35a8b78682d587953f0117825120b81e20d37afd92d3a13221cf",
+      "text": "ご確認をお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 22124,
+      "durationSec": 2.12
+    },
+    "station-ticket-office.ticket-check.response.mp3": {
+      "digest": "c5fb18219996147a0f5dbf2fcd1b42a8d5640b6a58d0d8a758a2b79caac9b280",
+      "sha256": "188593bc78f37f00a2150720b5f14dcdc17069699f61b3c5556d8e519730808a",
+      "text": "はい、大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "station-ticket-office.when.p1.mp3": {
+      "digest": "2df26bd6beee1b3bcfb258b32feaf2beb887df12b0c41788735ee984944a3e4a",
+      "sha256": "30505b13f72e83d0d06ea7c1ac866bc75f8fdbb863afc9c1900197f429e71e5e",
+      "text": "ご乗車はいつですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "station-ticket-office.when.p2.mp3": {
+      "digest": "d70efc36aeda0c6a85c22f0cb758456aebe436158fe0f37997c6228b97bf7f0b",
+      "sha256": "79dbfc373e569765ca5a1ce554e4c15ff6f39ecd07750e8c9e44c1491202e300",
+      "text": "ご乗車の日にちとお時間をお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 36284,
+      "durationSec": 3.536
+    },
+    "station-ticket-office.when.p3.mp3": {
+      "digest": "9f7fbcbef42f2f7d33877167d03eef8dc434cf93e945a1b228cd7923f8e08390",
+      "sha256": "b82ff71307599058102aa7f7e3bdde5737261d88e53b82f675b15c90041ed12f",
+      "text": "何日の何時ごろのご乗車ですか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13056,
+      "durationSec": 3.264
+    },
+    "station-ticket-office.when.response.mp3": {
+      "digest": "c9f1b6902e7e5677c250accab87402ecc90f46e14bbda37a6fa14752d2f764c4",
+      "sha256": "ae80cfd5ae6dcdbf340d27f2a38e850104daaf3a98322bfd39a358dc4f8d37f2",
+      "text": "今日の十時ごろです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "station-ticket-office.window-aisle.p1.mp3": {
+      "digest": "791aa0b82e68eb45d7eadd81564ac38f9685ae4545efcb382b059a08f4d2fc76",
+      "sha256": "8efce3079441cb3d25102c74d47257c7b4364f12c1fb2b26e60416118987722e",
+      "text": "窓側と通路側、どちらがよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13152,
+      "durationSec": 3.288
+    },
+    "station-ticket-office.window-aisle.p2.mp3": {
+      "digest": "9006ddb95f253068d7be5ebf1ca9d81346e69e4b3fac1fa84f9821fd39365e89",
+      "sha256": "e42df91eca177de78ffcd9b0b8b132cfda45f2ac9b5d07966727d1475d492150",
+      "text": "お席のご希望はございますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28364,
+      "durationSec": 2.744
+    },
+    "station-ticket-office.window-aisle.p3.mp3": {
+      "digest": "c6aa7187030c5a32bc9dbb418a42fd10f48ca6c94a18d18b9bd01fb169bedebb",
+      "sha256": "bab06826039d342c2fff58e01d19d08484991f8b1694c02de502701a3076ead9",
+      "text": "窓側か通路側か、ご希望はありますか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14496,
+      "durationSec": 3.624
+    },
+    "station-ticket-office.window-aisle.response.mp3": {
+      "digest": "a14d9479bb83f24b68222701353fd2526ed7301b361e1b144301f5355103553c",
+      "sha256": "4d0f4b4fc43a93c9a75ee71463987a290959cd7260e85c39fa157356e8a1a494",
+      "text": "窓側で／どこでも大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10752,
+      "durationSec": 2.688
+    },
+    "taxi.destination.p1.mp3": {
+      "digest": "d1fd4a56843777f381b7e3dc3ff6ca322ef6aa844e18217ee6f2b538562b50a9",
+      "sha256": "21e9943c43e86f4ca15abcd66ed4710ee7286e51660f78eb348e401ea233631a",
+      "text": "どちらまでですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "taxi.destination.p2.mp3": {
+      "digest": "839ebcc12d0c76254ffb3c3abd2041f22f514e881606eaaeb3f702b9ee5c4e83",
+      "sha256": "aa6ba2c248ef3f2d1c052d8eaebb5bb4ff5e0eceb97334b291cd0c200a80534d",
+      "text": "どちらまで行かれますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 28364,
+      "durationSec": 2.744
+    },
+    "taxi.destination.p3.mp3": {
+      "digest": "2d5d03f9d32baf2e66533bdc0c47414bf61f3d0cdd440fd0cb97ecd6100e1874",
+      "sha256": "b95fe7aafa0c5330c59f5a6c3e253b91eec5b6694fa3657a53dca13f2a602ecb",
+      "text": "行き先はどちらでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "taxi.destination.response.mp3": {
+      "digest": "0b5f3d8ce40baf6b4f7e3ae2fc99b4ad5aca8dda98be2ec7fb40111f44af4ca4",
+      "sha256": "f81dd6f35dd61d780ec60d0310f8ed88a470f6c3efec42a9d253d745f9a6a7f8",
+      "text": "ここまでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "taxi.highway.p1.mp3": {
+      "digest": "e38bb7d66977ce6af55b1a9c4c8ab7f7de6e4944f8d4eaeb5c87039bd25de156",
+      "sha256": "cd340af9cd5925829cf321a759371e2cb4ef98c8fba86b89f21c238179014b6c",
+      "text": "高速を使ってもよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "taxi.highway.p2.mp3": {
+      "digest": "475873c00387910da1c6e50684729b901b40e40d83e2091ae5937757d53c2870",
+      "sha256": "6adfb4d9b67ca008d947ebb1830e1dcd4d6094da47f852db29dabbbb190fe74b",
+      "text": "高速乗りますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 25964,
+      "durationSec": 2.504
+    },
+    "taxi.highway.p3.mp3": {
+      "digest": "aa94398ebe127ae9c8aa628e17b1777d735d93973afb7274d1fdcee2b4fef8fb",
+      "sha256": "cae79e66ee8d0d1ab6a2832ba0b0c3e08a7081b2217ac60d2064d63dc7fbe437",
+      "text": "高速道路を使うと早いですが、どうされますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 14016,
+      "durationSec": 3.504
+    },
+    "taxi.highway.response.mp3": {
+      "digest": "1eb6bb83c2a827db1bef38bf9440e8a6c7c812261868d7c9a7f200f8482c786f",
+      "sha256": "f5382fa3cdb793e6b09d3b141115e7c0927e17d65a30b9312d5761151adec850",
+      "text": "お願いします／下の道でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "taxi.luggage.p1.mp3": {
+      "digest": "8695e245f0cf4301ef87fdcdb9120c319016bfb84c26a89c8fc9378a899b6cb6",
+      "sha256": "91a711353f51aab9a6feddd4544f7a822fba7a9b3f7cfc74346a1cd59f01ae07",
+      "text": "お荷物はトランクにお入れしますか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12384,
+      "durationSec": 3.096
+    },
+    "taxi.luggage.p2.mp3": {
+      "digest": "e7fa0bb0fce0fd68ed31de6881c353a960fac58b7e252aa4ff0fb931051230e7",
+      "sha256": "79a61b8dfac7797ba5a2d6a5b421ed65063c582a03fd5da5e8384e8f7b8f7de7",
+      "text": "トランク開けますね、お荷物入れましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 31724,
+      "durationSec": 3.08
+    },
+    "taxi.luggage.p3.mp3": {
+      "digest": "ce0c258174c143b26f8e281e5eac5f79ed24b7c58b1099b48fab13bba11f70bc",
+      "sha256": "972214c8b163f7cb624163ecd382b36e0a8de34787afcb39154ee5c58e98a6f5",
+      "text": "スーツケースは後ろに積みましょうか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "taxi.luggage.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "54b8455c9ea6cd15355b1e22e1cde5ea98893293fd9e2dc8fe3c47c3ed81a04b",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10272,
+      "durationSec": 2.568
+    },
+    "taxi.payment.p1.mp3": {
+      "digest": "82c4bc0017e41773d9dd36ebfeaeeace5e10d8bd49d39331d48d7001ef87d854",
+      "sha256": "beb2b627b00c838b46ee5d097fe681813594719a5c143948fb0c4001c00f2960",
+      "text": "お支払いは後ろの画面でお願いします。",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 12864,
+      "durationSec": 3.216
+    },
+    "taxi.payment.p2.mp3": {
+      "digest": "af3810c24ac4fb10aaa329b9a928f8cdcb6a93a832612da4d14e512953e141f1",
+      "sha256": "4255f14c8c21db896f09ba2096852f19974dbb5032cf52f837ece5e6631bc11f",
+      "text": "お支払いは現金ですか、カードですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 34604,
+      "durationSec": 3.368
+    },
+    "taxi.payment.response.mp3": {
+      "digest": "83308898b91df803ff4256e39dc6949d491404c1a56d9ed788ba31eeb9d994a3",
+      "sha256": "b8066771b9228529987acc6c4f684e5ed61c842839f9ba1575b0efa979b702b5",
+      "text": "カードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "taxi.receipt.p1.mp3": {
+      "digest": "a9df241a266369715c0cc6ddb42e080af7d6f80509e6f4eaaefb8c14e7ff1d2b",
+      "sha256": "5c1a54b578a88809da44ede9de416547dd305fd3bacc37177be7e0b7f808114f",
+      "text": "領収書はご入用ですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "taxi.receipt.p2.mp3": {
+      "digest": "8fbb8dc04fc1c8e7ddda67cad1bf8770c4e97094f53b2c2ee361ca9084b5f956",
+      "sha256": "fb86f28074ab0a524303791d4dd31f8ebac31e0032155c615f2c9f5224d33804",
+      "text": "レシートお出ししますか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 20924,
+      "durationSec": 2
+    },
+    "taxi.receipt.p3.mp3": {
+      "digest": "83962731eeebbfe78944429ab8c74f09e0aa41278f1e49da4f29ef58cacaedcc",
+      "sha256": "5b830d77e500d14a8f538cb806aeb8d97f516db1da0b077887ad8a2464902ebd",
+      "text": "領収書、要りますか？",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "taxi.receipt.response.mp3": {
+      "digest": "813f6afdec9d1c0b7d4d1d20c71c9558f48b96061f0dc167835f29b4e428896c",
+      "sha256": "60af01e1ddd113a6a8d6aee03d57315a30140802af7244b9f03c522f18927928",
+      "text": "お願いします／大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "taxi.seatbelt.p1.mp3": {
+      "digest": "e8fcb4f1d5471c84a1b07c788d0d70e44c067fdc51983ca362d7bae01c95973d",
+      "sha256": "9da636c7961e10e2515dfa713ad0457d92a00e9051237847664d2387648c178b",
+      "text": "シートベルトをお締めください。",
+      "voice": "ja-JP-Chirp3-HD-Leda",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8064,
+      "durationSec": 2.016
+    },
+    "taxi.seatbelt.p2.mp3": {
+      "digest": "ca0884c7eb0063fcc2b00ee20ce3db348ed8ceeab82cac787132887608497d3b",
+      "sha256": "e07d4beb4ddb0a24a728a693882e627b43f57b8ae1a7c845431cb157a62606bb",
+      "text": "ベルトお願いしますね。",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 19244,
+      "durationSec": 1.832
+    },
+    "taxi.seatbelt.p3.mp3": {
+      "digest": "36bd9ec0012767754b34ce52c04cd4b7f7b7080d6e36482b2e515936fc286236",
+      "sha256": "227e9aaaf980c4d68a0e36dde5dd2746a2e0680bf7ebc069053955036fa77d09",
+      "text": "後ろの席もシートベルトの着用をお願いいたします。",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 19392,
+      "durationSec": 4.848
+    },
+    "taxi.seatbelt.response.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "7d6fa55ed4ab4b8fdc82ffc2504ceb45a293221fb02585fbf6d398435e2fc9c0",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4224,
+      "durationSec": 1.056
+    },
+    "taxi.stop-here.p1.mp3": {
+      "digest": "41e6e9013ed6d21051b75328851c0d3019b4297e737f75aefeca08a4c51d984b",
+      "sha256": "b010af7c2d7bcc93b9614f79f2a5dcfd499554f96b53b7be2454e4a5909712ee",
+      "text": "このあたりでよろしいですか？",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9312,
+      "durationSec": 2.328
+    },
+    "taxi.stop-here.p2.mp3": {
+      "digest": "e8cf35c1ff385e33755bd063a76d64fa5580bc0f5836fa96a4b6922ce4f05a50",
+      "sha256": "4b92f3678f85430d4ed9b264fa8c3178e9ed80ccc163419fda2ceddba8db8218",
+      "text": "こちらで大丈夫ですか？",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 23804,
+      "durationSec": 2.288
+    },
+    "taxi.stop-here.p3.mp3": {
+      "digest": "b0c562274375acae7df7aa5ed6f2ba689b458d7173987e69aca12e744a14427a",
+      "sha256": "6434b713feb1425662ce35317d2f5d00264fa2ddbdf6586e702c0de8554d2272",
+      "text": "ここで停めてもよろしいでしょうか？",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "taxi.stop-here.response.mp3": {
+      "digest": "104e16059f356579b6ff24061fcc32c8b9f3741921e7633e0b89171a8f817fb0",
+      "sha256": "d1f7af82e94cf9488d89cee3943ac6b9779ea8e5e74cac25019a256f8396a94c",
+      "text": "ここで大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
     }
   }
 }

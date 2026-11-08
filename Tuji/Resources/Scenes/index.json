@@ -1,3 +1,26 @@
 {
-  "scenes": ["konbini-checkout", "restaurant"]
+  "scenes": [
+    "konbini-checkout",
+    "restaurant",
+    "hotel-check-in",
+    "ryokan",
+    "ramen-shop",
+    "taxi",
+    "fast-food",
+    "cafe",
+    "izakaya",
+    "conveyor-sushi",
+    "hotel-check-out",
+    "luggage-storage",
+    "luggage-delivery",
+    "drugstore-checkout",
+    "clothing-store",
+    "electronics-store",
+    "department-tax-refund",
+    "station-ticket-office",
+    "airport-check-in",
+    "car-rental",
+    "post-office",
+    "hair-salon"
+  ]
 }
