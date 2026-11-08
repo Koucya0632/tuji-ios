@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-konbini",
+  "revision": 1,
+  "access": "free",
+  "title": { "zh-Hant": "便利商店結帳（測試）", "zh-Hans": "便利店结账（测试）", "en": "Convenience store checkout (fixture)" },
+  "summary": { "zh-Hant": "腳本測試用。", "zh-Hans": "脚本测试用。", "en": "For testing the audio script." },
+  "questions": [
+    {
+      "id": "fixture-konbini.heat",
+      "kind": "listening",
+      "goal": { "zh-Hant": "聽懂店員問要不要加熱", "zh-Hans": "听懂店员问要不要加热", "en": "Understand when the clerk asks if you want it heated" },
+      "phrasings": [
+        {
+          "id": "fixture-konbini.heat.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "温めますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fixture-konbini.heat.p1.mp3"
+        },
+        {
+          "id": "fixture-konbini.heat.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "こちら温めますか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "fixture-konbini.heat.p2.mp3"
+        },
+        {
+          "id": "fixture-konbini.heat.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "温めはどうされますか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "fixture-konbini.heat.p3.mp3"
+        }
+      ],
+      "choices": [
+        { "id": "a", "text": { "zh-Hant": "要不要幫你加熱", "zh-Hans": "要不要帮你加热", "en": "Do you want it heated" }, "correct": true },
+        { "id": "b", "text": { "zh-Hant": "要不要袋子", "zh-Hans": "要不要袋子", "en": "Do you need a bag" }, "correct": false },
+        { "id": "c", "text": { "zh-Hant": "有沒有集點卡", "zh-Hans": "有没有积分卡", "en": "Do you have a point card" }, "correct": false }
+      ],
+      "response": {
+        "ja": "お願いします",
+        "audio": "fixture-konbini.heat.response.mp3",
+        "voice": "Charon"
+      },
+      "explanation": { "zh-Hant": "温める是加熱。", "zh-Hans": "温める是加热。", "en": "温める means to heat up." },
+      "wordIds": []
+    },
+    {
+      "id": "fixture-konbini.payment",
+      "kind": "screen",
+      "goal": { "zh-Hant": "知道要在畫面上選付款方式", "zh-Hans": "知道要在屏幕上选付款方式", "en": "Know to pick a payment method on the screen" },
+      "phrasings": [
+        {
+          "id": "fixture-konbini.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払いは画面でお願いします",
+          "voice": "Leda",
+          "speed": "normal",
+          "ambience": false,
+          "screen": "payment-select",
+          "audio": "fixture-konbini.payment.p1.mp3"
+        },
+        {
+          "id": "fixture-konbini.payment.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": "payment-select",
+          "audio": null
+        },
+        {
+          "id": "fixture-konbini.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払い方法はどうなさいますか？",
+          "voice": "Orus",
+          "speed": "fast",
+          "ambience": true,
+          "screen": "payment-select",
+          "audio": "fixture-konbini.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        { "id": "a", "text": { "zh-Hant": "在畫面上選付款方式", "zh-Hans": "在屏幕上选付款方式", "en": "Choose the payment method on the screen" }, "correct": true },
+        { "id": "b", "text": { "zh-Hant": "把現金交給店員", "zh-Hans": "把现金交给店员", "en": "Hand cash to the clerk" }, "correct": false },
+        { "id": "c", "text": { "zh-Hant": "出示集點卡", "zh-Hans": "出示积分卡", "en": "Show a point card" }, "correct": false }
+      ],
+      "response": {
+        "ja": "カードで",
+        "audio": "fixture-konbini.payment.response.mp3",
+        "voice": "Charon"
+      },
+      "explanation": { "zh-Hant": "畫面依店家不同。", "zh-Hans": "屏幕依店家不同。", "en": "Screens differ by store." },
+      "wordIds": []
+    }
+  ]
+}
