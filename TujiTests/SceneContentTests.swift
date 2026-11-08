@@ -17,10 +17,26 @@ struct SceneContentTests {
     @Test
     func everyListedSceneDecodesFromTheAppBundle() throws {
         let catalog = try self.catalog()
-        #expect(catalog.scenes.map(\.id) == SceneCatalog.bundledIDs)
+        let ids = try SceneCatalog.ids(bundle: .main)
+        #expect(!ids.isEmpty)
+        #expect(catalog.scenes.map(\.id) == ids)
         #expect(catalog.scenes.allSatisfy { $0.schemaVersion == 2 })
         #expect(catalog.scenes.allSatisfy { $0.questions.count == 6 })
-        #expect(SceneCatalog.bundled.scenes.count == SceneCatalog.bundledIDs.count)
+        #expect(SceneCatalog.bundled.scenes.count == ids.count)
+    }
+
+    /// A scene file left out of `index.json` would ship and never show.
+    @Test
+    func everySceneFileIsListedInTheIndex() throws {
+        let scenesDir = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Tuji/Resources/Scenes", isDirectory: true)
+        let files = try FileManager.default.contentsOfDirectory(atPath: scenesDir.path)
+            .filter { $0.hasSuffix(".json") && $0 != "index.json" }
+        let listed = try SceneCatalog.ids(bundle: .main).map { $0.rawValue + ".json" }
+        #expect(Set(files) == Set(listed))
+        #expect(Set(listed).count == listed.count, "an id is listed twice")
     }
 
     @Test

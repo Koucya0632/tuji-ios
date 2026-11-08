@@ -28,7 +28,10 @@ const { values: args } = parseArgs({
 const scenesDir = path.resolve(args.scenes);
 const base = args.base ?? releaseBaseURL();
 
-const files = fs.readdirSync(scenesDir).filter((f) => f.endsWith(".json")).sort();
+const files = fs
+  .readdirSync(scenesDir)
+  .filter((f) => f.endsWith(".json") && f !== "index.json")
+  .sort();
 if (!files.length) fail([`no scene JSON files in ${scenesDir}`]);
 
 const url = `${base}/api/words?lang=zh-Hant&learning=zh-ja`;

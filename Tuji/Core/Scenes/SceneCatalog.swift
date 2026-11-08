@@ -1,9 +1,10 @@
 // The 場面 bundled with the app. Everything 「進店前看一眼」 needs ships inside
 // the binary, so it opens and plays in airplane mode.
 //
-// The ids are listed rather than discovered: the list is the display order, and
-// Xcode's synchronized folders copy resources flat into the bundle, where a
-// scene file is one JSON among any others.
+// The ids are listed in `Scenes/index.json` rather than discovered: the list is
+// the display order, and Xcode's synchronized folders copy resources flat into
+// the bundle, where a scene file is one JSON among any others. Adding a scene
+// is a JSON file plus a line in the index, with no Swift.
 
 import Foundation
 import OSLog
@@ -11,16 +12,22 @@ import OSLog
 nonisolated struct SceneCatalog {
     let scenes: [PracticeScene]
 
-    static let bundledIDs: [SceneID] = [
-        SceneID(rawValue: "konbini-checkout"),
-        SceneID(rawValue: "restaurant")
-    ]
+    private struct Index: Decodable {
+        let scenes: [SceneID]
+    }
 
     /// What the screens read. A scene that fails to decode is left out and
     /// logged; `SceneContentTests` decodes them strictly so that never ships.
     static let bundled: SceneCatalog = {
         let log = Logger(subsystem: "app.tuji.ios", category: "scenes")
-        let scenes = Self.bundledIDs.compactMap { id -> PracticeScene? in
+        let ids: [SceneID]
+        do {
+            ids = try Self.ids(bundle: .main)
+        } catch {
+            log.error("scene index failed to load: \(error, privacy: .public)")
+            return SceneCatalog(scenes: [])
+        }
+        let scenes = ids.compactMap { id -> PracticeScene? in
             do {
                 return try Self.decode(id, bundle: .main)
             } catch {
@@ -32,7 +39,12 @@ nonisolated struct SceneCatalog {
     }()
 
     static func load(bundle: Bundle) throws -> SceneCatalog {
-        try SceneCatalog(scenes: self.bundledIDs.map { try self.decode($0, bundle: bundle) })
+        try SceneCatalog(scenes: self.ids(bundle: bundle).map { try self.decode($0, bundle: bundle) })
+    }
+
+    /// The bundled scenes in display order.
+    static func ids(bundle: Bundle) throws -> [SceneID] {
+        try JSONDecoder().decode(Index.self, from: self.data("index.json", bundle: bundle)).scenes
     }
 
     func scene(_ id: SceneID) -> PracticeScene? {
@@ -40,10 +52,14 @@ nonisolated struct SceneCatalog {
     }
 
     static func decode(_ id: SceneID, bundle: Bundle) throws -> PracticeScene {
-        guard let url = self.resource(id.rawValue + ".json", subdirectories: ["Scenes"], bundle: bundle) else {
-            throw CocoaError(.fileNoSuchFile, userInfo: [NSFilePathErrorKey: id.rawValue + ".json"])
+        try JSONDecoder().decode(PracticeScene.self, from: self.data(id.rawValue + ".json", bundle: bundle))
+    }
+
+    private static func data(_ file: String, bundle: Bundle) throws -> Data {
+        guard let url = self.resource(file, subdirectories: ["Scenes"], bundle: bundle) else {
+            throw CocoaError(.fileNoSuchFile, userInfo: [NSFilePathErrorKey: file])
         }
-        return try JSONDecoder().decode(PracticeScene.self, from: Data(contentsOf: url))
+        return try Data(contentsOf: url)
     }
 
     /// A bundled clip, or nil when the audio step has not produced it yet. The

@@ -52,7 +52,7 @@ const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
 
 function loadJobs() {
   const files = fs.existsSync(scenesDir)
-    ? fs.readdirSync(scenesDir).filter((f) => f.endsWith(".json")).sort()
+    ? fs.readdirSync(scenesDir).filter((f) => f.endsWith(".json") && f !== "index.json").sort()
     : [];
   if (!files.length) fail([`no scene JSON files in ${scenesDir}`]);
 
