@@ -2,34 +2,89 @@
   "groups": [
     {
       "id": "konbini-cafe",
-      "title": { "zh-Hant": "便利商店與咖啡", "zh-Hans": "便利店与咖啡", "en": "Convenience stores and cafés" },
-      "scenes": ["konbini-checkout", "cafe", "fast-food"]
+      "title": {
+        "zh-Hant": "便利商店與咖啡",
+        "zh-Hans": "便利店与咖啡",
+        "en": "Convenience stores and cafés"
+      },
+      "scenes": [
+        "konbini-checkout",
+        "cafe",
+        "fast-food"
+      ]
     },
     {
       "id": "restaurants",
-      "title": { "zh-Hant": "餐廳", "zh-Hans": "餐厅", "en": "Restaurants" },
-      "scenes": ["restaurant", "ramen-shop", "izakaya", "conveyor-sushi"]
-    },
-    {
-      "id": "hotels",
-      "title": { "zh-Hant": "飯店與溫泉", "zh-Hans": "酒店与温泉", "en": "Hotels and ryokan" },
-      "scenes": ["hotel-check-in", "ryokan", "hotel-check-out", "luggage-storage", "luggage-delivery"]
+      "title": {
+        "zh-Hant": "餐廳",
+        "zh-Hans": "餐厅",
+        "en": "Restaurants"
+      },
+      "scenes": [
+        "restaurant",
+        "ramen-shop",
+        "izakaya",
+        "conveyor-sushi"
+      ]
     },
     {
       "id": "airport",
-      "title": { "zh-Hant": "機場與進城", "zh-Hans": "机场与进城", "en": "Airport and getting into town" },
-      "scenes": ["airport-check-in", "car-rental"]
+      "title": {
+        "zh-Hant": "機場與進城",
+        "zh-Hans": "机场与进城",
+        "en": "Airport and getting into town"
+      },
+      "scenes": [
+        "airport-check-in",
+        "car-rental"
+      ]
     },
     {
       "id": "getting-around",
-      "title": { "zh-Hant": "車站與市區交通", "zh-Hans": "车站与市内交通", "en": "Stations and getting around" },
-      "scenes": ["station-ticket-office", "taxi"]
+      "title": {
+        "zh-Hant": "車站與市區交通",
+        "zh-Hans": "车站与市内交通",
+        "en": "Stations and getting around"
+      },
+      "scenes": [
+        "station-ticket-office",
+        "taxi"
+      ]
+    },
+    {
+      "id": "hotels",
+      "title": {
+        "zh-Hant": "飯店與溫泉",
+        "zh-Hans": "酒店与温泉",
+        "en": "Hotels and ryokan"
+      },
+      "scenes": [
+        "hotel-check-in",
+        "ryokan",
+        "hotel-check-out",
+        "luggage-storage",
+        "luggage-delivery"
+      ]
     },
     {
       "id": "shopping",
-      "title": { "zh-Hant": "購物與生活", "zh-Hans": "购物与生活", "en": "Shopping and errands" },
-      "scenes": ["drugstore-checkout", "clothing-store", "electronics-store", "department-tax-refund", "post-office", "hair-salon"]
+      "title": {
+        "zh-Hant": "購物與生活",
+        "zh-Hans": "购物与生活",
+        "en": "Shopping and errands"
+      },
+      "scenes": [
+        "drugstore-checkout",
+        "clothing-store",
+        "electronics-store",
+        "department-tax-refund",
+        "post-office",
+        "hair-salon"
+      ]
     }
   ],
-  "released": ["konbini-checkout", "restaurant"]
+  "released": [
+    "konbini-checkout",
+    "restaurant"
+  ]
 }

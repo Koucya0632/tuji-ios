@@ -120,12 +120,13 @@ struct SceneSegments: View {
 
     let segments: [Segment]
     var onInk = false
+    var height: CGFloat = 4
     var spacing: CGFloat = 3
 
     var body: some View {
         HStack(spacing: self.spacing) {
             ForEach(Array(self.segments.enumerated()), id: \.offset) { _, segment in
-                Rectangle().fill(self.color(segment)).frame(height: 4)
+                Rectangle().fill(self.color(segment)).frame(height: self.height)
             }
         }
         .accessibilityHidden(true)
@@ -141,9 +142,11 @@ struct SceneSegments: View {
         }
     }
 
-    init(practised: [Bool], onInk: Bool = false) {
+    init(practised: [Bool], onInk: Bool = false, height: CGFloat = 4, spacing: CGFloat = 3) {
         self.segments = practised.map { $0 ? .done : .todo }
         self.onInk = onInk
+        self.height = height
+        self.spacing = spacing
     }
 
     init(segments: [Segment], spacing: CGFloat = 3) {

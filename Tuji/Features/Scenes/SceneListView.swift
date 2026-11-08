@@ -8,6 +8,7 @@ struct SceneListView: View {
     var catalog: SceneCatalog = .bundled
 
     @Environment(SettingsStore.self) private var settings
+    @State private var jumpedTo: String?
     private let store = SceneProgressStore.shared
 
     private var grouped: Bool {
@@ -29,7 +30,8 @@ struct SceneListView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, Space.s4)
-                    .padding(.top, Space.s2)
+                    .padding(.top, 12)
+                    .id(Self.top)
                     if self.grouped {
                         self.chips(proxy)
                         ForEach(self.catalog.groups) { group in
@@ -39,13 +41,13 @@ struct SceneListView: View {
                                 .foregroundStyle(.tujiInk2)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, Space.s4)
-                                .padding(.top, Space.s4)
+                                .padding(.top, 28)
                                 .padding(.bottom, Space.s2)
                                 .id(group.id)
-                            self.rows(group.scenes)
+                            self.rows(group.scenes, compact: true)
                         }
                     } else {
-                        self.rows(self.catalog.scenes).padding(.top, Space.s4)
+                        self.rows(self.catalog.scenes, compact: false).padding(.top, Space.s4)
                     }
                     Label("不用網路也能看、能播。", systemImage: "airplane")
                         .font(.tujiLabel)
@@ -68,40 +70,105 @@ struct SceneListView: View {
         self.settings.current.uiLanguage
     }
 
+    private static let top = "top"
+
+    /// Jumps to a group; 全部 goes back to the top. The tag last tapped is
+    /// filled, 全部 until one is.
     private func chips(_ proxy: ScrollViewProxy) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Space.s2) {
+                self.chip(Text("全部"), selected: self.jumpedTo == nil) {
+                    self.jumpedTo = nil
+                    withAnimation { proxy.scrollTo(Self.top, anchor: .top) }
+                }
                 ForEach(self.catalog.groups) { group in
-                    Button {
-                        withAnimation { proxy.scrollTo(group.id, anchor: .top) }
-                    } label: {
-                        Text(verbatim: group.title.resolved(self.language))
-                            .font(.tujiLabel)
-                            .foregroundStyle(.tujiInk2)
-                            .padding(.horizontal, Space.s3)
-                            .frame(height: 36)
-                            .overlay(Capsule().stroke(.tujiRule, lineWidth: 1))
-                            .contentShape(.capsule)
-                    }
-                    .buttonStyle(.plain)
+                    self
+                        .chip(
+                            Text(verbatim: group.title.resolved(self.language)),
+                            selected: self.jumpedTo == group.id
+                        ) {
+                            self.jumpedTo = group.id
+                            withAnimation { proxy.scrollTo(group.id, anchor: .top) }
+                        }
                 }
             }
             .padding(.horizontal, Space.s4)
         }
-        .padding(.top, Space.s4)
+        .padding(.top, 20)
     }
 
-    private func rows(_ scenes: [PracticeScene]) -> some View {
+    private func chip(_ title: Text, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            title
+                .font(.tujiLabel)
+                .foregroundStyle(selected ? .tujiPaper : .tujiInk2)
+                .padding(.horizontal, Space.s3)
+                .frame(height: 36)
+                .background(selected ? Color.tujiInk : Color.clear, in: .capsule)
+                .overlay(Capsule().strokeBorder(selected ? Color.clear : Color.tujiRule, lineWidth: 1))
+                .contentShape(.capsule)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func rows(_ scenes: [PracticeScene], compact: Bool) -> some View {
         VStack(spacing: 0) {
             Rectangle().fill(.tujiRule).frame(height: 1)
             ForEach(scenes) { scene in
                 NavigationLink(value: NavRoute.sceneDetail(id: scene.id)) {
-                    self.row(scene)
+                    if compact { self.compactRow(scene) } else { self.row(scene) }
                 }
                 .buttonStyle(.plain)
                 Rectangle().fill(.tujiRule).frame(height: 1)
             }
         }
+    }
+
+    /// A grouped list's row: the title, then progress, or the question count
+    /// for a scene not started; a lock in place of the chevron when this
+    /// account cannot practise it.
+    private func compactRow(_ scene: PracticeScene) -> some View {
+        let today = LocalDay(Date(), calendar: .current)
+        let status = ScenePractice.status(scene, book: self.store.book, today: today)
+        let locked = !scene.canPractise(LiveEffectiveEntitlement.shared.tier)
+        return HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: status == .notStarted ? 2 : 4) {
+                Text(verbatim: scene.title.resolved(self.language))
+                    .font(.tujiBody(.strong))
+                    .foregroundStyle(.tujiInk)
+                if status == .notStarted {
+                    Text("\(scene.questions.count) 句")
+                        .font(.scene(13, bold: false))
+                        .foregroundStyle(.tujiInk3)
+                } else {
+                    HStack(spacing: 10) {
+                        SceneSegments(practised: scene.practised(in: self.store.book), height: 3, spacing: 2)
+                            .frame(width: 64)
+                        SceneStatusText(scene: scene, status: status, cursor: self.store.book.cursors[scene.id])
+                            .font(.scene(13, bold: false))
+                            .foregroundStyle(.tujiInk2)
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+            if locked {
+                HStack(spacing: 4) {
+                    Image(systemName: "lock").font(.tujiIcon(12, weight: .bold))
+                    Text("永久會員").font(.scene(12))
+                }
+                .foregroundStyle(.tujiInk3)
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.tujiIcon(14, weight: .bold))
+                    .foregroundStyle(.tujiInk3)
+            }
+        }
+        .padding(.vertical, Space.s2)
+        .padding(.leading, Space.s4)
+        .padding(.trailing, Space.s3)
+        .frame(minHeight: 56)
+        .contentShape(.rect)
     }
 
     private func row(_ scene: PracticeScene) -> some View {
@@ -137,7 +204,9 @@ struct SceneListView: View {
                     .padding(.vertical, 2)
                     .background(.tujiPaper2)
             }
-            TujiRowAccessory()
+            Image(systemName: "chevron.right")
+                .font(.tujiIcon(14, weight: .bold))
+                .foregroundStyle(.tujiInk3)
         }
         .padding(.vertical, 18)
         .padding(.leading, Space.s4)
