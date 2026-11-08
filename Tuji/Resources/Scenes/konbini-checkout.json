@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "konbini-checkout",
   "revision": 1,
   "access": "free",
@@ -367,7 +367,16 @@
           "voice": "Aoede",
           "speed": "normal",
           "ambience": false,
-          "screen": "payment-select",
+          "screen": {
+            "heading": "お支払い方法を選択してください",
+            "detail": "合計 ¥1,280",
+            "buttons": [
+              { "choiceId": "cash", "ja": "現金" },
+              { "choiceId": "credit", "ja": "クレジット" },
+              { "choiceId": "emoney", "ja": "電子マネー" },
+              { "choiceId": "qr", "ja": "コード決済" }
+            ]
+          },
           "audio": "konbini-checkout.payment.p1.mp3"
         },
         {
@@ -378,7 +387,16 @@
           "voice": null,
           "speed": "normal",
           "ambience": false,
-          "screen": "payment-select-alt",
+          "screen": {
+            "heading": "お支払い方法",
+            "detail": "合計 ¥1,280",
+            "buttons": [
+              { "choiceId": "qr", "ja": "QR・バーコード" },
+              { "choiceId": "emoney", "ja": "交通系IC・電子マネー" },
+              { "choiceId": "credit", "ja": "クレジットカード" },
+              { "choiceId": "cash", "ja": "現金" }
+            ]
+          },
           "audio": null
         },
         {
@@ -389,7 +407,16 @@
           "voice": "Puck",
           "speed": "fast",
           "ambience": true,
-          "screen": "payment-select",
+          "screen": {
+            "heading": "お支払い方法を選択してください",
+            "detail": "合計 ¥1,280",
+            "buttons": [
+              { "choiceId": "cash", "ja": "現金" },
+              { "choiceId": "credit", "ja": "クレジット" },
+              { "choiceId": "emoney", "ja": "電子マネー" },
+              { "choiceId": "qr", "ja": "コード決済" }
+            ]
+          },
           "audio": "konbini-checkout.payment.p3.mp3"
         }
       ],
@@ -460,7 +487,15 @@
           "voice": null,
           "speed": "normal",
           "ambience": false,
-          "screen": "age-confirm",
+          "screen": {
+            "heading": "20歳以上ですか？",
+            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
+            "buttons": [
+              { "choiceId": "yes", "ja": "はい" },
+              { "choiceId": "no", "ja": "いいえ" },
+              { "choiceId": "back", "ja": "戻る" }
+            ]
+          },
           "audio": null
         },
         {
@@ -471,7 +506,15 @@
           "voice": "Kore",
           "speed": "normal",
           "ambience": false,
-          "screen": "age-confirm",
+          "screen": {
+            "heading": "20歳以上ですか？",
+            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
+            "buttons": [
+              { "choiceId": "yes", "ja": "はい" },
+              { "choiceId": "no", "ja": "いいえ" },
+              { "choiceId": "back", "ja": "戻る" }
+            ]
+          },
           "audio": "konbini-checkout.age-check.p2.mp3"
         },
         {
@@ -482,7 +525,15 @@
           "voice": "Charon",
           "speed": "fast",
           "ambience": true,
-          "screen": "age-confirm",
+          "screen": {
+            "heading": "20歳以上ですか？",
+            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
+            "buttons": [
+              { "choiceId": "yes", "ja": "はい" },
+              { "choiceId": "no", "ja": "いいえ" },
+              { "choiceId": "back", "ja": "戻る" }
+            ]
+          },
           "audio": "konbini-checkout.age-check.p3.mp3"
         }
       ],

@@ -97,7 +97,7 @@ struct ScenePracticeView: View {
                     }
                     if let screen = step.phrasing.screen {
                         ScreenMockView(
-                            kind: screen,
+                            screen: screen,
                             tried: tried,
                             correctId: revealed ? question.correctChoice?.id : nil,
                             onTap: { session.answer($0) }

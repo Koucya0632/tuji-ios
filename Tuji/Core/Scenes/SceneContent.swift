@@ -121,7 +121,7 @@ nonisolated struct Phrasing: Identifiable, Hashable, Decodable {
     let ambience: Bool
     /// Nil only for a screen shown with nothing said over it.
     let spoken: SpokenLine?
-    let screen: ScreenMockKind?
+    let screen: ScreenMock?
 
     /// Review prefers these: the version furthest from the clear first practice.
     var isHardest: Bool {
@@ -139,7 +139,7 @@ nonisolated struct Phrasing: Identifiable, Hashable, Decodable {
         self.speaker = try c.decode(Speaker.self, forKey: .speaker)
         self.speed = try c.decode(Speed.self, forKey: .speed)
         self.ambience = try c.decode(Bool.self, forKey: .ambience)
-        self.screen = try c.decodeIfPresent(ScreenMockKind.self, forKey: .screen)
+        self.screen = try c.decodeIfPresent(ScreenMock.self, forKey: .screen)
         let text = try c.decodeIfPresent(String.self, forKey: .text)
         let voice = try c.decodeIfPresent(String.self, forKey: .voice)
         let audio = try c.decodeIfPresent(String.self, forKey: .audio)
@@ -160,7 +160,7 @@ nonisolated struct Phrasing: Identifiable, Hashable, Decodable {
 
 nonisolated struct SceneChoice: Identifiable, Hashable, Decodable {
     /// Unique within its question. On a screen question it also names the
-    /// button `ScreenMockKind` draws for it.
+    /// button its `ScreenMock` draws for it.
     let id: String
     let text: LocalizedText
     let correct: Bool

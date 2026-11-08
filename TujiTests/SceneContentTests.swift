@@ -18,7 +18,7 @@ struct SceneContentTests {
     func everyListedSceneDecodesFromTheAppBundle() throws {
         let catalog = try self.catalog()
         #expect(catalog.scenes.map(\.id) == SceneCatalog.bundledIDs)
-        #expect(catalog.scenes.allSatisfy { $0.schemaVersion == 1 })
+        #expect(catalog.scenes.allSatisfy { $0.schemaVersion == 2 })
         #expect(catalog.scenes.allSatisfy { $0.questions.count == 6 })
         #expect(SceneCatalog.bundled.scenes.count == SceneCatalog.bundledIDs.count)
     }
@@ -59,11 +59,12 @@ struct SceneContentTests {
         #expect(throws: DecodingError.self) { try JSONDecoder().decode(Phrasing.self, from: json) }
     }
 
+    /// A schema 1 draft named its screen; schema 2 writes it out.
     @Test
-    func anUnknownScreenDoesNotDecode() {
+    func aScreenGivenByNameDoesNotDecode() {
         let json = Data("""
         {"id":"x.q.p1","role":"first","speaker":"screen","text":null,"voice":null,
-         "speed":"normal","ambience":false,"screen":"vending-machine","audio":null}
+         "speed":"normal","ambience":false,"screen":"payment-select","audio":null}
         """.utf8)
         #expect(throws: DecodingError.self) { try JSONDecoder().decode(Phrasing.self, from: json) }
     }
@@ -97,7 +98,12 @@ struct SceneContentTests {
             let choiceIds = Set(question.choices.map(\.id))
             for phrasing in question.phrasings {
                 let screen = try #require(phrasing.screen)
-                #expect(Set(screen.buttons.map(\.choiceId)) == choiceIds, "\(phrasing.id.rawValue)")
+                let buttonIds = screen.buttons.map(\.choiceId)
+                #expect(buttonIds.count == choiceIds.count, "\(phrasing.id.rawValue): one button per choice")
+                #expect(Set(buttonIds) == choiceIds, "\(phrasing.id.rawValue)")
+                #expect(!screen.heading.isEmpty, "\(phrasing.id.rawValue)")
+                #expect(screen.detail?.isEmpty != true, "\(phrasing.id.rawValue)")
+                #expect(screen.buttons.allSatisfy { !$0.ja.isEmpty }, "\(phrasing.id.rawValue)")
             }
         }
     }
@@ -160,17 +166,29 @@ struct SceneContentTests {
         }
     }
 
-    /// Only official 圖鑑 ids: `scripts/scenes/check-word-ids.mjs` checks they
-    /// exist. A screen kind is never a word: `ticket-machine` is both.
+    /// The audio script names each clip after what it voices.
+    @Test
+    func clipsAreNamedAfterTheirPhrasingOrQuestion() throws {
+        for (_, question) in try self.allQuestions() {
+            for phrasing in question.phrasings {
+                if let audio = phrasing.spoken?.audio {
+                    #expect(audio == phrasing.id.rawValue + ".mp3", "\(phrasing.id.rawValue): \(audio)")
+                }
+            }
+            if let audio = question.response.clip?.audio {
+                #expect(audio == question.id.rawValue + ".response.mp3", "\(question.id.rawValue): \(audio)")
+            }
+        }
+    }
+
+    /// Only official 圖鑑 ids: `scripts/scenes/check-word-ids.mjs` checks they exist.
     @Test
     func wordIdsAreOfficialKebabCaseIdsListedOnce() throws {
-        let screenKinds = Set(ScreenMockKind.allCases.map(\.rawValue))
         let kebab = /[a-z0-9]+(-[a-z0-9]+)*/
         for (_, question) in try self.allQuestions() {
             #expect(Set(question.wordIds).count == question.wordIds.count, "\(question.id.rawValue)")
             for id in question.wordIds {
                 #expect(id.wholeMatch(of: kebab) != nil, "\(question.id.rawValue): \(id)")
-                #expect(!screenKinds.contains(id), "\(question.id.rawValue): \(id) is a screen kind")
             }
         }
     }

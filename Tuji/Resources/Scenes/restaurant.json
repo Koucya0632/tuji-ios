@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "restaurant",
   "revision": 1,
   "access": "free",
@@ -451,7 +451,16 @@
           "voice": "Aoede",
           "speed": "normal",
           "ambience": false,
-          "screen": "ticket-machine",
+          "screen": {
+            "heading": "食券",
+            "detail": "ラーメン　¥900",
+            "buttons": [
+              { "choiceId": "confirm", "ja": "購入" },
+              { "choiceId": "cancel", "ja": "取消" },
+              { "choiceId": "call", "ja": "呼出" },
+              { "choiceId": "back", "ja": "戻る" }
+            ]
+          },
           "audio": "restaurant.order-machine.p1.mp3"
         },
         {
@@ -462,7 +471,16 @@
           "voice": null,
           "speed": "normal",
           "ambience": false,
-          "screen": "order-tablet",
+          "screen": {
+            "heading": "ご注文内容の確認",
+            "detail": "ラーメン ×1　¥900",
+            "buttons": [
+              { "choiceId": "confirm", "ja": "注文する" },
+              { "choiceId": "cancel", "ja": "取り消す" },
+              { "choiceId": "call", "ja": "店員呼出" },
+              { "choiceId": "back", "ja": "戻る" }
+            ]
+          },
           "audio": null
         },
         {
@@ -473,7 +491,16 @@
           "voice": "Charon",
           "speed": "fast",
           "ambience": true,
-          "screen": "order-tablet",
+          "screen": {
+            "heading": "ご注文内容の確認",
+            "detail": "ラーメン ×1　¥900",
+            "buttons": [
+              { "choiceId": "confirm", "ja": "注文する" },
+              { "choiceId": "cancel", "ja": "取り消す" },
+              { "choiceId": "call", "ja": "店員呼出" },
+              { "choiceId": "back", "ja": "戻る" }
+            ]
+          },
           "audio": "restaurant.order-machine.p3.mp3"
         }
       ],

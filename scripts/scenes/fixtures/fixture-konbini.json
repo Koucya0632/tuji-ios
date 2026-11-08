@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "fixture-konbini",
   "revision": 1,
   "access": "free",
@@ -71,7 +71,16 @@
           "voice": "Leda",
           "speed": "normal",
           "ambience": false,
-          "screen": "payment-select",
+          "screen": {
+            "heading": "お支払い方法を選択してください",
+            "detail": "合計 ¥1,280",
+            "buttons": [
+              { "choiceId": "cash", "ja": "現金" },
+              { "choiceId": "credit", "ja": "クレジット" },
+              { "choiceId": "emoney", "ja": "電子マネー" },
+              { "choiceId": "qr", "ja": "コード決済" }
+            ]
+          },
           "audio": "fixture-konbini.payment.p1.mp3"
         },
         {
@@ -82,7 +91,16 @@
           "voice": null,
           "speed": "normal",
           "ambience": false,
-          "screen": "payment-select",
+          "screen": {
+            "heading": "お支払い方法を選択してください",
+            "detail": "合計 ¥1,280",
+            "buttons": [
+              { "choiceId": "cash", "ja": "現金" },
+              { "choiceId": "credit", "ja": "クレジット" },
+              { "choiceId": "emoney", "ja": "電子マネー" },
+              { "choiceId": "qr", "ja": "コード決済" }
+            ]
+          },
           "audio": null
         },
         {
@@ -93,7 +111,16 @@
           "voice": "Orus",
           "speed": "fast",
           "ambience": true,
-          "screen": "payment-select",
+          "screen": {
+            "heading": "お支払い方法を選択してください",
+            "detail": "合計 ¥1,280",
+            "buttons": [
+              { "choiceId": "cash", "ja": "現金" },
+              { "choiceId": "credit", "ja": "クレジット" },
+              { "choiceId": "emoney", "ja": "電子マネー" },
+              { "choiceId": "qr", "ja": "コード決済" }
+            ]
+          },
           "audio": "fixture-konbini.payment.p3.mp3"
         }
       ],

@@ -4,7 +4,7 @@
 import SwiftUI
 
 struct ScreenMockView: View {
-    let kind: ScreenMockKind
+    let screen: ScreenMock
     /// Buttons already tried and wrong.
     var tried: Set<String> = []
     /// Set once answered, to mark the right button.
@@ -16,16 +16,16 @@ struct ScreenMockView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             VStack(alignment: .leading, spacing: Space.s3) {
-                Text(verbatim: self.kind.heading)
+                Text(verbatim: self.screen.heading)
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(.tujiInk)
-                if let detail = self.detail {
+                if let detail = self.screen.detail {
                     Text(verbatim: detail)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.tujiInk2)
                 }
                 LazyVGrid(columns: self.columns, spacing: Space.s2) {
-                    ForEach(self.kind.buttons, id: \.choiceId) { button in
+                    ForEach(self.screen.buttons, id: \.choiceId) { button in
                         self.machineButton(button)
                     }
                 }
@@ -41,16 +41,7 @@ struct ScreenMockView: View {
         }
     }
 
-    private var detail: String? {
-        switch self.kind {
-        case .paymentSelect, .paymentSelectAlt: "合計 ¥1,280"
-        case .ageConfirm: "お酒・たばこは20歳以上の方のみご購入いただけます"
-        case .ticketMachine: "ラーメン　¥900"
-        case .orderTablet: "ラーメン ×1　¥900"
-        }
-    }
-
-    private func machineButton(_ button: ScreenMockKind.Button) -> some View {
+    private func machineButton(_ button: ScreenMock.Button) -> some View {
         let isCorrect = self.correctId == button.choiceId
         let isTried = self.tried.contains(button.choiceId)
         return Button {

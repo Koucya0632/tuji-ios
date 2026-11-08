@@ -47,7 +47,7 @@ private nonisolated enum Fixture {
 
     static let scene: PracticeScene = {
         let json = """
-        {"schemaVersion":1,"id":"s","revision":1,"access":"free",
+        {"schemaVersion":2,"id":"s","revision":1,"access":"free",
          "title":{"zh-Hant":"t","zh-Hans":"t","en":"t"},
          "summary":{"zh-Hant":"s","zh-Hans":"s","en":"s"},
          "questions":[\(["s.q0", "s.q1", "s.q2"].map(question).joined(separator: ","))]}
