@@ -1,5 +1,5 @@
 // 場面練習 — every 場面. Up to six it is one plain list; past that it groups
-// by where on the trip they happen, with chips that jump to a group.
+// by where on the trip they happen, with tags that filter to one group.
 
 import SwiftUI
 
@@ -8,7 +8,8 @@ struct SceneListView: View {
     var catalog: SceneCatalog = .bundled
 
     @Environment(SettingsStore.self) private var settings
-    @State private var jumpedTo: String?
+    /// The group the tags filter to; nil is 全部.
+    @State private var filter: String?
     private let store = SceneProgressStore.shared
 
     private var grouped: Bool {
@@ -18,44 +19,40 @@ struct SceneListView: View {
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back)
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: Space.s1) {
-                        Text("場面練習")
-                            .font(.tujiH2)
-                            .foregroundStyle(.tujiInk)
-                        Text("結帳、點餐時，店員會問你的話。")
-                            .font(.tujiBodySm)
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.s1) {
+                    Text("場面練習")
+                        .font(.tujiH2)
+                        .foregroundStyle(.tujiInk)
+                    Text("結帳、點餐時，店員會問你的話。")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, Space.s4)
+                .padding(.top, 12)
+                if self.grouped {
+                    self.chips
+                    ForEach(self.catalog.groups.filter { self.filter == nil || $0.id == self.filter }) { group in
+                        Text(verbatim: group.title.resolved(self.language))
+                            .font(.tujiLabel)
+                            .tracking(1)
                             .foregroundStyle(.tujiInk2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, Space.s4)
+                            .padding(.top, 28)
+                            .padding(.bottom, Space.s2)
+                        self.rows(group.scenes, compact: true)
                     }
+                } else {
+                    self.rows(self.catalog.scenes, compact: false).padding(.top, Space.s4)
+                }
+                Label("不用網路也能看、能播。", systemImage: "airplane")
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, Space.s4)
-                    .padding(.top, 12)
-                    .id(Self.top)
-                    if self.grouped {
-                        self.chips(proxy)
-                        ForEach(self.catalog.groups) { group in
-                            Text(verbatim: group.title.resolved(self.language))
-                                .font(.tujiLabel)
-                                .tracking(1)
-                                .foregroundStyle(.tujiInk2)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, Space.s4)
-                                .padding(.top, 28)
-                                .padding(.bottom, Space.s2)
-                                .id(group.id)
-                            self.rows(group.scenes, compact: true)
-                        }
-                    } else {
-                        self.rows(self.catalog.scenes, compact: false).padding(.top, Space.s4)
-                    }
-                    Label("不用網路也能看、能播。", systemImage: "airplane")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, Space.s4)
-                        .padding(.vertical, Space.s4)
-                }
+                    .padding(.vertical, Space.s4)
             }
         }
         .background(.tujiPaper)
@@ -70,29 +67,26 @@ struct SceneListView: View {
         self.settings.current.uiLanguage
     }
 
-    private static let top = "top"
-
-    /// Jumps to a group; 全部 goes back to the top. The tag last tapped is
-    /// filled, 全部 until one is.
-    private func chips(_ proxy: ScrollViewProxy) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Space.s2) {
-                self.chip(Text("全部"), selected: self.jumpedTo == nil) {
-                    self.jumpedTo = nil
-                    withAnimation { proxy.scrollTo(Self.top, anchor: .top) }
-                }
-                ForEach(self.catalog.groups) { group in
-                    self
-                        .chip(
+    /// 全部 and one tag per group. The selected tag is filled.
+    private var chips: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Space.s2) {
+                    self.chip(Text("全部"), selected: self.filter == nil) { self.filter = nil }
+                        .id("all")
+                    ForEach(self.catalog.groups) { group in
+                        self.chip(
                             Text(verbatim: group.title.resolved(self.language)),
-                            selected: self.jumpedTo == group.id
-                        ) {
-                            self.jumpedTo = group.id
-                            withAnimation { proxy.scrollTo(group.id, anchor: .top) }
-                        }
+                            selected: self.filter == group.id
+                        ) { self.filter = group.id }
+                            .id(group.id)
+                    }
                 }
+                .padding(.horizontal, Space.s4)
             }
-            .padding(.horizontal, Space.s4)
+            .onChange(of: self.filter) { _, selected in
+                withAnimation { proxy.scrollTo(selected ?? "all", anchor: .center) }
+            }
         }
         .padding(.top, 20)
     }
