@@ -8,17 +8,17 @@
 
 import Foundation
 
-nonisolated enum ScreenMockKind: String, Decodable, CaseIterable, Sendable {
+nonisolated enum ScreenMockKind: String, Decodable, CaseIterable {
     case paymentSelect = "payment-select"
     case paymentSelectAlt = "payment-select-alt"
     case ageConfirm = "age-confirm"
     case ticketMachine = "ticket-machine"
     case orderTablet = "order-tablet"
 
-    struct Button: Hashable, Sendable {
+    struct Button: Hashable {
         /// The `SceneChoice.id` this button answers.
         let choiceId: String
-        let label: String
+        let ja: String
     }
 
     /// What the screen says across its top, in Japanese as the machine would.
@@ -37,42 +37,42 @@ nonisolated enum ScreenMockKind: String, Decodable, CaseIterable, Sendable {
         switch self {
         case .paymentSelect:
             [
-                .init(choiceId: "cash", label: "現金"),
-                .init(choiceId: "credit", label: "クレジット"),
-                .init(choiceId: "emoney", label: "電子マネー"),
-                .init(choiceId: "qr", label: "コード決済")
+                .init(choiceId: "cash", ja: "現金"),
+                .init(choiceId: "credit", ja: "クレジット"),
+                .init(choiceId: "emoney", ja: "電子マネー"),
+                .init(choiceId: "qr", ja: "コード決済")
             ]
         case .paymentSelectAlt:
             [
-                .init(choiceId: "qr", label: "QR・バーコード"),
-                .init(choiceId: "emoney", label: "交通系IC・電子マネー"),
-                .init(choiceId: "credit", label: "クレジットカード"),
-                .init(choiceId: "cash", label: "現金")
+                .init(choiceId: "qr", ja: "QR・バーコード"),
+                .init(choiceId: "emoney", ja: "交通系IC・電子マネー"),
+                .init(choiceId: "credit", ja: "クレジットカード"),
+                .init(choiceId: "cash", ja: "現金")
             ]
         case .ageConfirm:
             [
-                .init(choiceId: "yes", label: "はい"),
-                .init(choiceId: "no", label: "いいえ"),
-                .init(choiceId: "back", label: "戻る")
+                .init(choiceId: "yes", ja: "はい"),
+                .init(choiceId: "no", ja: "いいえ"),
+                .init(choiceId: "back", ja: "戻る")
             ]
         case .ticketMachine:
             [
-                .init(choiceId: "confirm", label: "購入"),
-                .init(choiceId: "cancel", label: "取消"),
-                .init(choiceId: "call", label: "呼出"),
-                .init(choiceId: "back", label: "戻る")
+                .init(choiceId: "confirm", ja: "購入"),
+                .init(choiceId: "cancel", ja: "取消"),
+                .init(choiceId: "call", ja: "呼出"),
+                .init(choiceId: "back", ja: "戻る")
             ]
         case .orderTablet:
             [
-                .init(choiceId: "confirm", label: "注文する"),
-                .init(choiceId: "cancel", label: "取り消す"),
-                .init(choiceId: "call", label: "店員呼出"),
-                .init(choiceId: "back", label: "戻る")
+                .init(choiceId: "confirm", ja: "注文する"),
+                .init(choiceId: "cancel", ja: "取り消す"),
+                .init(choiceId: "call", ja: "店員呼出"),
+                .init(choiceId: "back", ja: "戻る")
             ]
         }
     }
 
     func label(for choiceId: String) -> String? {
-        self.buttons.first { $0.choiceId == choiceId }?.label
+        self.buttons.first { $0.choiceId == choiceId }?.ja
     }
 }

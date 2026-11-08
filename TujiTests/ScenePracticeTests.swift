@@ -5,15 +5,16 @@ import Testing
 @testable import Tuji
 
 private nonisolated enum Fixture {
-    /// Taipei, so "the next local day" is checked against a real offset.
+    /// UTC+8, so "the next local day" is checked against a real offset.
     static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Asia/Taipei")!
+        calendar.timeZone = TimeZone(secondsFromGMT: 8 * 3600) ?? .current
         return calendar
     }()
 
     static func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
-        self.calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
+        self.calendar
+            .date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute)) ?? .distantPast
     }
 
     static func phrasing(_ id: String, role: String, speed: String = "normal", ambience: Bool = false) -> String {
@@ -51,11 +52,18 @@ private nonisolated enum Fixture {
          "summary":{"zh-Hant":"s","zh-Hans":"s","en":"s"},
          "questions":[\(["s.q0", "s.q1", "s.q2"].map(question).joined(separator: ","))]}
         """
-        return try! JSONDecoder().decode(PracticeScene.self, from: Data(json.utf8))
+        do {
+            return try JSONDecoder().decode(PracticeScene.self, from: Data(json.utf8))
+        } catch {
+            preconditionFailure("fixture scene does not decode: \(error)")
+        }
     }()
 
     static func temporaryDirectory() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("scene-tests-\(UUID().uuidString)", isDirectory: true)
+        FileManager.default.temporaryDirectory.appendingPathComponent(
+            "scene-tests-\(UUID().uuidString)",
+            isDirectory: true
+        )
     }
 }
 
@@ -70,14 +78,18 @@ struct ScenePhrasingSelectionTests {
 
     @Test
     func aReviewTakesTheFastAmbiencePhrasingFirst() {
-        let progress = QuestionProgress(stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)), usedPhrasingIds: [PhrasingID(rawValue: "s.q0.p1")])
+        let progress = QuestionProgress(
+            stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)),
+            usedPhrasingIds: [PhrasingID(rawValue: "s.q0.p1")]
+        )
         let picked = ScenePractice.phrasing(for: self.question, progress: progress, mode: .review)
         #expect(picked?.id.rawValue == "s.q0.p3")
     }
 
     @Test
     func aReviewNeverRepeatsAPhrasingThisAccountHasHeard() {
-        let used: Set<PhrasingID> = ["s.q0.p1", "s.q0.p3"].map(PhrasingID.init(rawValue:)).reduce(into: []) { $0.insert($1) }
+        let used: Set<PhrasingID> = ["s.q0.p1", "s.q0.p3"].map(PhrasingID.init(rawValue:))
+            .reduce(into: []) { $0.insert($1) }
         let progress = QuestionProgress(stage: .reviewed, usedPhrasingIds: used)
         #expect(ScenePractice.phrasing(for: self.question, progress: progress, mode: .review)?.id.rawValue == "s.q0.p2")
     }
@@ -85,7 +97,8 @@ struct ScenePhrasingSelectionTests {
     @Test
     func rehearsingBeforeTheReviewIsDueDoesNotSpendAReviewPhrasing() {
         let progress = QuestionProgress(stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)))
-        #expect(ScenePractice.phrasing(for: self.question, progress: progress, mode: .rehearsal)?.id.rawValue == "s.q0.p1")
+        #expect(ScenePractice.phrasing(for: self.question, progress: progress, mode: .rehearsal)?.id
+            .rawValue == "s.q0.p1")
     }
 }
 
@@ -109,8 +122,16 @@ struct SceneSchedulingTests {
 
     @Test
     func theNextDayRollsOverMonthAndYearEnds() {
-        #expect(LocalDay(year: 2026, month: 1, day: 31).adding(days: 1, calendar: self.calendar) == LocalDay(year: 2026, month: 2, day: 1))
-        #expect(LocalDay(year: 2026, month: 12, day: 31).adding(days: 1, calendar: self.calendar) == LocalDay(year: 2027, month: 1, day: 1))
+        #expect(LocalDay(year: 2026, month: 1, day: 31).adding(days: 1, calendar: self.calendar) == LocalDay(
+            year: 2026,
+            month: 2,
+            day: 1
+        ))
+        #expect(LocalDay(year: 2026, month: 12, day: 31).adding(days: 1, calendar: self.calendar) == LocalDay(
+            year: 2027,
+            month: 1,
+            day: 1
+        ))
     }
 
     @Test
@@ -121,11 +142,19 @@ struct SceneSchedulingTests {
 
     @Test
     func aReviewMovesTheQuestionToReviewed() throws {
-        let progress = QuestionProgress(stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)), usedPhrasingIds: [PhrasingID(rawValue: "s.q0.p1")])
+        let progress = QuestionProgress(
+            stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)),
+            usedPhrasingIds: [PhrasingID(rawValue: "s.q0.p1")]
+        )
         let phrasing = try #require(Fixture.scene.questions[0].phrasing(PhrasingID(rawValue: "s.q0.p3")))
         let step = PracticeStep(questionIndex: 0, mode: .review, phrasing: phrasing)
 
-        let after = ScenePractice.completing(progress, step: step, today: LocalDay(year: 2026, month: 11, day: 9), calendar: self.calendar)
+        let after = ScenePractice.completing(
+            progress,
+            step: step,
+            today: LocalDay(year: 2026, month: 11, day: 9),
+            calendar: self.calendar
+        )
 
         #expect(after.stage == .reviewed)
         #expect(after.usedPhrasingIds.count == 2)
@@ -135,7 +164,11 @@ struct SceneSchedulingTests {
     func thePlanHoldsOnlyWhatIsOwedAndStartsAtTheCursor() {
         let today = LocalDay(year: 2026, month: 11, day: 9)
         var book = SceneProgressBook()
-        book.questions[SceneQuestionID(rawValue: "s.q0")] = QuestionProgress(stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 10)))
+        book.questions[SceneQuestionID(rawValue: "s.q0")] = QuestionProgress(stage: .awaitingReview(due: LocalDay(
+            year: 2026,
+            month: 11,
+            day: 10
+        )))
         book.cursors[SceneID(rawValue: "s")] = 2
 
         let plan = ScenePractice.plan(Fixture.scene, book: book, today: today)
@@ -188,7 +221,10 @@ struct SceneProgressStoreTests {
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = SceneProgressStore(directory: directory)
         store.use(account: self.alice)
-        let progress = QuestionProgress(stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)), usedPhrasingIds: [PhrasingID(rawValue: "s.q0.p1")])
+        let progress = QuestionProgress(
+            stage: .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)),
+            usedPhrasingIds: [PhrasingID(rawValue: "s.q0.p1")]
+        )
         store.update {
             $0.questions[SceneQuestionID(rawValue: "s.q0")] = progress
             $0.cursors[SceneID(rawValue: "s")] = 1
@@ -249,7 +285,12 @@ struct ScenePracticeSessionTests {
     func aWrongAnswerKeepsTheQuestionOpenUntilTheRightOne() {
         let (store, directory) = self.store()
         defer { try? FileManager.default.removeItem(at: directory) }
-        let session = ScenePracticeSession(scene: Fixture.scene, store: store, now: self.evening, calendar: Fixture.calendar)
+        let session = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: self.evening,
+            calendar: Fixture.calendar
+        )
 
         session.answer("b")
         #expect(session.phase == .practising(step: 0, .answeredWrong(tried: ["b"])))
@@ -259,20 +300,34 @@ struct ScenePracticeSessionTests {
 
         session.answer("a")
         #expect(session.phase == .practising(step: 0, .revealed(firstTry: false)))
-        #expect(store.book.progress(SceneQuestionID(rawValue: "s.q0")).stage == .awaitingReview(due: LocalDay(year: 2026, month: 11, day: 9)))
+        #expect(store.book.progress(SceneQuestionID(rawValue: "s.q0")).stage == .awaitingReview(due: LocalDay(
+            year: 2026,
+            month: 11,
+            day: 9
+        )))
     }
 
     @Test
     func quittingMidSceneResumesAtTheSameQuestion() {
         let (store, directory) = self.store()
         defer { try? FileManager.default.removeItem(at: directory) }
-        let first = ScenePracticeSession(scene: Fixture.scene, store: store, now: self.evening, calendar: Fixture.calendar)
+        let first = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: self.evening,
+            calendar: Fixture.calendar
+        )
         first.answer("a")
         first.next()
         first.answer("b")
         #expect(first.currentStep?.questionIndex == 1)
 
-        let resumed = ScenePracticeSession(scene: Fixture.scene, store: store, now: self.evening, calendar: Fixture.calendar)
+        let resumed = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: self.evening,
+            calendar: Fixture.calendar
+        )
 
         #expect(resumed.currentStep?.questionIndex == 1)
         #expect(resumed.steps.map(\.questionIndex) == [1, 2])
@@ -282,11 +337,21 @@ struct ScenePracticeSessionTests {
     func resumingTheNextDayFinishesTheRestBeforeReviewing() {
         let (store, directory) = self.store()
         defer { try? FileManager.default.removeItem(at: directory) }
-        let first = ScenePracticeSession(scene: Fixture.scene, store: store, now: self.evening, calendar: Fixture.calendar)
+        let first = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: self.evening,
+            calendar: Fixture.calendar
+        )
         first.answer("a")
         first.next()
 
-        let nextDay = ScenePracticeSession(scene: Fixture.scene, store: store, now: { Fixture.date(2026, 11, 9, 9) }, calendar: Fixture.calendar)
+        let nextDay = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: { Fixture.date(2026, 11, 9, 9) },
+            calendar: Fixture.calendar
+        )
 
         #expect(nextDay.steps.map(\.questionIndex) == [1, 2, 0])
         #expect(nextDay.steps.map(\.mode) == [.first, .first, .review])
@@ -297,7 +362,12 @@ struct ScenePracticeSessionTests {
     func finishingTheSceneClearsTheCursorAndSchedulesTomorrow() {
         let (store, directory) = self.store()
         defer { try? FileManager.default.removeItem(at: directory) }
-        let session = ScenePracticeSession(scene: Fixture.scene, store: store, now: self.evening, calendar: Fixture.calendar)
+        let session = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: self.evening,
+            calendar: Fixture.calendar
+        )
         for _ in Fixture.scene.questions {
             session.answer("a")
             session.next()

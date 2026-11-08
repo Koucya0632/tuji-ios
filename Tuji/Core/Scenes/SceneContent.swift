@@ -10,24 +10,21 @@
 
 import Foundation
 
-nonisolated struct SceneID: RawRepresentable, Hashable, Codable, CodingKeyRepresentable, Sendable {
+nonisolated struct SceneID: RawRepresentable, Hashable, Codable, CodingKeyRepresentable {
     let rawValue: String
-    init(rawValue: String) { self.rawValue = rawValue }
 }
 
-nonisolated struct SceneQuestionID: RawRepresentable, Hashable, Codable, CodingKeyRepresentable, Sendable {
+nonisolated struct SceneQuestionID: RawRepresentable, Hashable, Codable, CodingKeyRepresentable {
     let rawValue: String
-    init(rawValue: String) { self.rawValue = rawValue }
 }
 
-nonisolated struct PhrasingID: RawRepresentable, Hashable, Codable, CodingKeyRepresentable, Sendable {
+nonisolated struct PhrasingID: RawRepresentable, Hashable, Codable, CodingKeyRepresentable {
     let rawValue: String
-    init(rawValue: String) { self.rawValue = rawValue }
 }
 
 /// Copy written for the three content languages. A Japanese interface reads the
 /// English: nobody using Tuji in Japanese is learning to understand a Japanese clerk.
-nonisolated struct LocalizedText: Hashable, Decodable, Sendable {
+nonisolated struct LocalizedText: Hashable, Decodable {
     let zhHant: String
     let zhHans: String
     let en: String
@@ -46,15 +43,17 @@ nonisolated struct LocalizedText: Hashable, Decodable, Sendable {
         }
     }
 
-    var all: [String] { [self.zhHant, self.zhHans, self.en] }
+    var all: [String] {
+        [self.zhHant, self.zhHans, self.en]
+    }
 }
 
-nonisolated enum SceneAccess: String, Decodable, Sendable {
+nonisolated enum SceneAccess: String, Decodable {
     case free
     case lifetime
 }
 
-nonisolated struct PracticeScene: Identifiable, Hashable, Decodable, Sendable {
+nonisolated struct PracticeScene: Identifiable, Hashable, Decodable {
     let schemaVersion: Int
     let id: SceneID
     let revision: Int
@@ -64,8 +63,8 @@ nonisolated struct PracticeScene: Identifiable, Hashable, Decodable, Sendable {
     let questions: [SceneQuestion]
 }
 
-nonisolated struct SceneQuestion: Identifiable, Hashable, Decodable, Sendable {
-    enum Kind: String, Decodable, Sendable {
+nonisolated struct SceneQuestion: Identifiable, Hashable, Decodable {
+    enum Kind: String, Decodable {
         /// Play a phrasing, pick what it means.
         case listening
         /// Look at a register or ordering screen, tap the button to press.
@@ -92,25 +91,25 @@ nonisolated struct SceneQuestion: Identifiable, Hashable, Decodable, Sendable {
 }
 
 /// One recorded line: what is said, by which TTS voice, in which bundled file.
-nonisolated struct SpokenLine: Hashable, Sendable {
+nonisolated struct SpokenLine: Hashable {
     let text: String
     let voice: String
     let audio: String
 }
 
-nonisolated struct Phrasing: Identifiable, Hashable, Decodable, Sendable {
-    enum Role: String, Decodable, Sendable {
+nonisolated struct Phrasing: Identifiable, Hashable, Decodable {
+    enum Role: String, Decodable {
         case first
         case review
     }
 
-    enum Speaker: String, Decodable, Sendable {
+    enum Speaker: String, Decodable {
         case clerk
         case register
         case screen
     }
 
-    enum Speed: String, Decodable, Sendable {
+    enum Speed: String, Decodable {
         case normal
         case fast
     }
@@ -159,7 +158,7 @@ nonisolated struct Phrasing: Identifiable, Hashable, Decodable, Sendable {
     }
 }
 
-nonisolated struct SceneChoice: Identifiable, Hashable, Decodable, Sendable {
+nonisolated struct SceneChoice: Identifiable, Hashable, Decodable {
     /// Unique within its question. On a screen question it also names the
     /// button `ScreenMockKind` draws for it.
     let id: String
@@ -167,13 +166,13 @@ nonisolated struct SceneChoice: Identifiable, Hashable, Decodable, Sendable {
     let correct: Bool
 }
 
-nonisolated struct SceneResponse: Hashable, Decodable, Sendable {
+nonisolated struct SceneResponse: Hashable, Decodable {
     /// What to say, or the label of the button to press.
     let ja: String
     /// Nil when the answer is a button press with nothing to say.
     let clip: Clip?
 
-    struct Clip: Hashable, Sendable {
+    struct Clip: Hashable {
         let audio: String
         let voice: String
     }

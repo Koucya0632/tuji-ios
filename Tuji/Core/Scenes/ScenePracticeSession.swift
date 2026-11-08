@@ -51,7 +51,11 @@ final class ScenePracticeSession {
         self.calendar = calendar
         let today = LocalDay(now(), calendar: calendar)
         self.steps = ScenePractice.plan(scene, book: store.book, today: today)
-        self.phase = .finished(Summary(practised: 0, firstTry: 0, status: ScenePractice.status(scene, book: store.book, today: today)))
+        self.phase = .finished(Summary(
+            practised: 0,
+            firstTry: 0,
+            status: ScenePractice.status(scene, book: store.book, today: today)
+        ))
         if !self.steps.isEmpty { self.show(0) }
     }
 

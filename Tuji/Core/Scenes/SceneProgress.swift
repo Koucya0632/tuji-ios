@@ -11,7 +11,7 @@ import Foundation
 
 /// A calendar day on this device. Stored as `yyyy-MM-dd`, so a review due
 /// "tomorrow" stays tomorrow when the phone changes time zone on landing.
-nonisolated struct LocalDay: Hashable, Comparable, Codable, Sendable, CustomStringConvertible {
+nonisolated struct LocalDay: Hashable, Comparable, Codable, CustomStringConvertible {
     let year: Int
     let month: Int
     let day: Int
@@ -28,7 +28,8 @@ nonisolated struct LocalDay: Hashable, Comparable, Codable, Sendable, CustomStri
     }
 
     func adding(days: Int, calendar: Calendar) -> LocalDay {
-        let start = calendar.date(from: DateComponents(year: self.year, month: self.month, day: self.day)) ?? .distantPast
+        let start = calendar
+            .date(from: DateComponents(year: self.year, month: self.month, day: self.day)) ?? .distantPast
         return LocalDay(calendar.date(byAdding: .day, value: days, to: start) ?? start, calendar: calendar)
     }
 
@@ -55,20 +56,20 @@ nonisolated struct LocalDay: Hashable, Comparable, Codable, Sendable, CustomStri
     }
 }
 
-nonisolated enum QuestionStage: Hashable, Codable, Sendable {
+nonisolated enum QuestionStage: Hashable, Codable {
     case new
     case awaitingReview(due: LocalDay)
     case reviewed
 }
 
-nonisolated struct QuestionProgress: Hashable, Codable, Sendable {
+nonisolated struct QuestionProgress: Hashable, Codable {
     var stage: QuestionStage = .new
     /// Every phrasing this account has practised, so a review never repeats one.
     var usedPhrasingIds: Set<PhrasingID> = []
 }
 
 /// One account's whole 場面練習 record: the file `SceneProgressStore` keeps.
-nonisolated struct SceneProgressBook: Hashable, Codable, Sendable {
+nonisolated struct SceneProgressBook: Hashable, Codable {
     var questions: [SceneQuestionID: QuestionProgress] = [:]
     /// Index into the scene's questions of the one to open next. Set as a
     /// question is shown, so quitting mid-scene comes back to that question.
@@ -79,7 +80,7 @@ nonisolated struct SceneProgressBook: Hashable, Codable, Sendable {
     }
 }
 
-nonisolated enum PracticeMode: Hashable, Sendable {
+nonisolated enum PracticeMode: Hashable {
     /// Never practised. The clear phrasing, with slow playback and a transcript.
     case first
     /// Due today. A phrasing this account has not heard.
@@ -88,14 +89,14 @@ nonisolated enum PracticeMode: Hashable, Sendable {
     case rehearsal
 }
 
-nonisolated struct PracticeStep: Hashable, Sendable {
+nonisolated struct PracticeStep: Hashable {
     let questionIndex: Int
     let mode: PracticeMode
     let phrasing: Phrasing
 }
 
 /// What the scene list and the scene page say about a scene.
-nonisolated enum SceneStatus: Hashable, Sendable {
+nonisolated enum SceneStatus: Hashable {
     case notStarted
     case inProgress(practised: Int, total: Int)
     case reviewDue(count: Int)
@@ -155,7 +156,9 @@ nonisolated enum ScenePractice {
         step: PracticeStep,
         today: LocalDay,
         calendar: Calendar
-    ) -> QuestionProgress {
+    )
+        -> QuestionProgress
+    {
         var next = progress
         next.usedPhrasingIds.insert(step.phrasing.id)
         switch step.mode {
@@ -168,12 +171,12 @@ nonisolated enum ScenePractice {
 
     static func status(_ scene: PracticeScene, book: SceneProgressBook, today: LocalDay) -> SceneStatus {
         let stages = scene.questions.map { book.progress($0.id).stage }
-        let fresh = stages.filter { $0 == .new }.count
+        let fresh = stages.count(where: { $0 == .new })
         let dues = stages.compactMap { stage -> LocalDay? in
             if case let .awaitingReview(due) = stage { return due }
             return nil
         }
-        let dueNow = dues.filter { $0 <= today }.count
+        let dueNow = dues.count(where: { $0 <= today })
         if fresh == stages.count { return .notStarted }
         if dueNow > 0 { return .reviewDue(count: dueNow) }
         if fresh > 0 { return .inProgress(practised: stages.count - fresh, total: stages.count) }

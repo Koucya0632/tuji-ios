@@ -57,4 +57,9 @@ enum NavRoute: Hashable {
     case studyLanding(mode: StudyMode)
     case wordDetail(id: String)
     case categoryDetail(id: String)
+    /// 場面練習 — every 場面, then one 場面's 進店前看一眼 page, then its practice.
+    /// Reached only from 我's 除錯工具 until the entry is designed.
+    case sceneList
+    case sceneDetail(id: SceneID)
+    case scenePractice(id: SceneID)
 }

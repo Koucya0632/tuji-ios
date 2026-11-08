@@ -131,7 +131,7 @@ struct SceneContentTests {
     @Test
     func registerAnnouncementsUseOneVoice() throws {
         let voices = try self.allQuestions()
-            .flatMap { $0.1.phrasings }
+            .flatMap(\.1.phrasings)
             .filter { $0.speaker == .register }
             .compactMap { $0.spoken?.voice }
         #expect(Set(voices).count <= 1)
@@ -153,7 +153,7 @@ struct SceneContentTests {
         guard !present.isEmpty else { return }
         for (_, question) in try self.allQuestions() {
             let referenced = question.phrasings.compactMap { $0.spoken?.audio }
-                + [question.response.clip?.audio].compactMap { $0 }
+                + [question.response.clip?.audio].compactMap(\.self)
             for file in referenced {
                 #expect(present.contains(file), "missing clip \(file)")
             }

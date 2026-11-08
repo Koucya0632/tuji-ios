@@ -357,6 +357,21 @@ private struct DebugSmokeSection: View {
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                 }
+                // 場面練習 has no entry of its own until one is designed.
+                NavigationLink(value: NavRoute.sceneList) {
+                    HStack {
+                        Text(verbatim: "場面練習")
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk2)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.tujiIcon(11, weight: .semibold))
+                            .foregroundStyle(.tujiInk3)
+                    }
+                    .frame(minHeight: 44)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
                 BBtn(
                     title: self.buttonTitle,
                     fullWidth: true,

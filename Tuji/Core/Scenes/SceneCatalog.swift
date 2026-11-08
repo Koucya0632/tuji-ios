@@ -8,7 +8,7 @@
 import Foundation
 import OSLog
 
-nonisolated struct SceneCatalog: Sendable {
+nonisolated struct SceneCatalog {
     let scenes: [PracticeScene]
 
     static let bundledIDs: [SceneID] = [
