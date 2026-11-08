@@ -3,16 +3,7 @@
 import SwiftUI
 
 extension SceneStatus {
-    var label: LocalizedStringKey {
-        switch self {
-        case .notStarted: "還沒練習"
-        case let .inProgress(practised, total): "練過 \(practised)／\(total) 句"
-        case let .reviewDue(count): "今天複習 \(count) 句"
-        case .reviewLater: "明天複習"
-        case .complete: "複習完了"
-        }
-    }
-
+    /// The scene page's call to action.
     var startTitle: LocalizedStringKey {
         switch self {
         case .notStarted: "開始練習"
@@ -21,27 +12,48 @@ extension SceneStatus {
         case .reviewLater, .complete: "再練一次"
         }
     }
-
-    /// Something to practise today: the card's status line is set in ink.
-    var isOwedToday: Bool {
-        switch self {
-        case .reviewDue, .inProgress: true
-        case .notStarted, .reviewLater, .complete: false
-        }
-    }
 }
 
 extension Phrasing.Speaker {
     var label: LocalizedStringKey {
         switch self {
         case .clerk: "店員"
-        case .register: "收銀機播報"
-        case .screen: "畫面"
+        case .register: "收銀機"
+        case .screen: "螢幕"
+        }
+    }
+
+    /// The practice screen's question over the choices.
+    var asking: LocalizedStringKey {
+        switch self {
+        case .clerk: "店員在問什麼？"
+        case .register: "收銀機在問什麼？"
+        case .screen: "畫面上要按哪一個？"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .clerk: "person.fill"
+        case .register: "printer.fill"
+        case .screen: "rectangle.portrait"
         }
     }
 }
 
 extension SceneQuestion {
+    /// Who asks it as 進店前看一眼 shows it: whoever speaks the look line, or
+    /// the screen when nothing is said.
+    var lookSpeaker: Phrasing.Speaker {
+        (self.phrasings.filter { $0.role == .first } + self.phrasings.filter { $0.role == .review })
+            .first { $0.spoken != nil }?.speaker ?? .screen
+    }
+
+    /// What the question means, in the user's language.
+    var meaning: LocalizedText? {
+        self.kind == .listening ? self.correctChoice?.text : self.goal
+    }
+
     /// The line 進店前看一眼 shows and plays: the first practice's, or for a
     /// screen with nothing said over it, the first phrasing that does speak.
     var lookLine: SpokenLine? {
@@ -81,6 +93,7 @@ enum SceneAudio {
 struct ScenePlayButton: View {
     let label: LocalizedStringKey
     var systemImage = "speaker.wave.2.fill"
+    var fill: Color? = .tujiPaper2
     let action: () -> Void
 
     var body: some View {
@@ -89,9 +102,80 @@ struct ScenePlayButton: View {
                 .font(.tujiIcon(17, weight: .semibold))
                 .foregroundStyle(.tujiInk)
                 .frame(width: 44, height: 44)
-                .background(.tujiPaper2, in: .rect(cornerRadius: Radius.r0))
+                .background(self.fill ?? .clear)
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text(self.label))
+    }
+}
+
+/// One segment per question: practised, the one on screen, still to come.
+struct SceneSegments: View {
+    enum Segment {
+        case done
+        case current
+        case todo
+    }
+
+    let segments: [Segment]
+    var onInk = false
+    var spacing: CGFloat = 3
+
+    var body: some View {
+        HStack(spacing: self.spacing) {
+            ForEach(Array(self.segments.enumerated()), id: \.offset) { _, segment in
+                Rectangle().fill(self.color(segment)).frame(height: 4)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func color(_ segment: Segment) -> Color {
+        switch (segment, self.onInk) {
+        case (.done, false): .tujiAccumulation
+        case (.done, true): .tujiAccumulationSoft
+        case (.current, _): .tujiCurrent
+        case (.todo, false): .tujiPaper3
+        case (.todo, true): .tujiPaper.opacity(0.2)
+        }
+    }
+
+    init(practised: [Bool], onInk: Bool = false) {
+        self.segments = practised.map { $0 ? .done : .todo }
+        self.onInk = onInk
+    }
+
+    init(segments: [Segment], spacing: CGFloat = 3) {
+        self.segments = segments
+        self.spacing = spacing
+    }
+}
+
+/// 店員／收銀機／螢幕 over a line.
+struct SceneSpeakerTag: View {
+    let speaker: Phrasing.Speaker
+
+    var body: some View {
+        Text(self.speaker.label)
+            .font(.tujiLabel)
+            .foregroundStyle(.tujiInk2)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(.tujiPaper2)
+    }
+}
+
+extension PracticeScene {
+    func practised(in book: SceneProgressBook) -> [Bool] {
+        self.questions.map { book.progress($0.id).stage != .new }
+    }
+}
+
+extension Font {
+    /// The 場面 screens' sizes the type scale has no step for (20, 19, 15),
+    /// in the app's faces.
+    static func scene(_ size: CGFloat, bold: Bool = true) -> Font {
+        TujiTypeface.font(latin: bold ? "PlusJakartaSans-Bold" : "PlusJakartaSans-Regular", size: size)
     }
 }

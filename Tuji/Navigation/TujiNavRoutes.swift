@@ -26,7 +26,7 @@ extension View {
                 case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
                 case .atlasSearch: AtlasSearchView()
                 case let .categoryDetail(id): CategoryView(id: id)
-                case .sceneList, .sceneDetail, .scenePractice:
+                case .sceneList, .sceneDetail, .scenePractice, .sceneWord:
                     SceneDestination(route: route, user: user)
                 }
             }
@@ -74,7 +74,7 @@ private struct AssistantDestination: View {
     }
 }
 
-/// 場面練習's three screens. Grouped for the same reason as `AssistantDestination`.
+/// 場面練習's three screens, and a word page opened from one. Grouped for the same reason as `AssistantDestination`.
 private struct SceneDestination: View {
     let route: NavRoute
     let user: SessionUser?
@@ -84,6 +84,7 @@ private struct SceneDestination: View {
         case .sceneList: SceneListView(user: self.user)
         case let .sceneDetail(id): SceneDetailView(sceneId: id, user: self.user)
         case let .scenePractice(id): ScenePracticeView(sceneId: id, user: self.user)
+        case let .sceneWord(id, scene): WordDetailView(id: id, fromScene: scene)
         default: EmptyView()
         }
     }

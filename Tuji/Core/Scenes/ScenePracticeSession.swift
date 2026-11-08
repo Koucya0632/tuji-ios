@@ -23,9 +23,18 @@ final class ScenePracticeSession {
         case finished(Summary)
     }
 
+    struct QuestionResult: Equatable, Identifiable {
+        let question: SceneQuestion
+        let wrongTries: Int
+
+        var id: SceneQuestionID {
+            self.question.id
+        }
+    }
+
     struct Summary: Equatable {
-        let practised: Int
-        let firstTry: Int
+        /// The questions of this pass in the order they were asked.
+        let results: [QuestionResult]
         /// The scene's standing after this pass, for the 明天複習 line.
         let status: SceneStatus
     }
@@ -37,7 +46,7 @@ final class ScenePracticeSession {
     @ObservationIgnored private let store: SceneProgressStore
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private let calendar: Calendar
-    @ObservationIgnored private var firstTryCount = 0
+    @ObservationIgnored private var wrongTries: [Int: Int] = [:]
 
     init(
         scene: PracticeScene,
@@ -52,8 +61,7 @@ final class ScenePracticeSession {
         let today = LocalDay(now(), calendar: calendar)
         self.steps = ScenePractice.plan(scene, book: store.book, today: today)
         self.phase = .finished(Summary(
-            practised: 0,
-            firstTry: 0,
+            results: [],
             status: ScenePractice.status(scene, book: store.book, today: today)
         ))
         if !self.steps.isEmpty { self.show(0) }
@@ -86,11 +94,11 @@ final class ScenePracticeSession {
         case .revealed: return
         }
         guard choice.correct else {
+            self.wrongTries[index, default: 0] += 1
             self.phase = .practising(step: index, .answeredWrong(tried: tried.union([choiceId])))
             return
         }
         let firstTry = tried.isEmpty
-        if firstTry { self.firstTryCount += 1 }
         self.phase = .practising(step: index, .revealed(firstTry: firstTry))
         self.record(self.steps[index], question: question, nextStep: index + 1)
     }
@@ -103,8 +111,12 @@ final class ScenePracticeSession {
             self.store.update { $0.cursors[self.scene.id] = nil }
             let today = LocalDay(self.now(), calendar: self.calendar)
             self.phase = .finished(Summary(
-                practised: self.steps.count,
-                firstTry: self.firstTryCount,
+                results: self.steps.indices.map { index in
+                    QuestionResult(
+                        question: self.scene.questions[self.steps[index].questionIndex],
+                        wrongTries: self.wrongTries[index] ?? 0
+                    )
+                },
                 status: ScenePractice.status(self.scene, book: self.store.book, today: today)
             ))
         }
@@ -127,6 +139,7 @@ final class ScenePracticeSession {
                 calendar: self.calendar
             )
             book.cursors[self.scene.id] = following
+            book.lastSceneId = self.scene.id
         }
     }
 }

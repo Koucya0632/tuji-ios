@@ -74,6 +74,8 @@ nonisolated struct SceneProgressBook: Hashable, Codable {
     /// Index into the scene's questions of the one to open next. Set as a
     /// question is shown, so quitting mid-scene comes back to that question.
     var cursors: [SceneID: Int] = [:]
+    /// The scene last answered in, for 今天's card once every scene is done.
+    var lastSceneId: SceneID?
 
     func progress(_ id: SceneQuestionID) -> QuestionProgress {
         self.questions[id] ?? QuestionProgress()

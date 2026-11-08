@@ -65,6 +65,16 @@ final class TabNavigator {
         }
     }
 
+    /// Back to the selected tab's first screen, as 場面練習's 完成 does.
+    func popToRoot() {
+        switch self.selected {
+        case .today: self.todayPath = NavigationPath()
+        case .cards: self.cardsPath = NavigationPath()
+        case .community: self.communityPath = NavigationPath()
+        case .me: self.mePath = NavigationPath()
+        }
+    }
+
     func depth(of tab: MainTab) -> Int {
         switch tab {
         case .today: self.todayPath.count

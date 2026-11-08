@@ -189,9 +189,16 @@ if (!files.length) problem(dir, "no scene JSON files");
 
 const indexFile = path.join(dir, "index.json");
 if (fs.existsSync(indexFile)) {
-  const listed = readJSON(indexFile)?.scenes;
-  if (!Array.isArray(listed) || !listed.every(isString)) problem("index.json", "scenes must be an array of scene ids");
-  else {
+  const index = readJSON(indexFile);
+  const groups = index?.groups;
+  const groupsOk = Array.isArray(groups) && groups.every((g) => isString(g?.id) && Array.isArray(g?.scenes) && g.scenes.every(isString));
+  if (!groupsOk) problem("index.json", "groups must be an array of { id, title, scenes: [scene id] }");
+  for (const g of groupsOk ? groups : []) checkLocalized(`index.json ${g.id}`, "title", g.title);
+  const listed = groupsOk ? groups.flatMap((g) => g.scenes) : null;
+  const released = index?.released;
+  if (!Array.isArray(released) || !released.every(isString)) problem("index.json", "released must be an array of scene ids");
+  else for (const id of released) if (listed && !listed.includes(id)) problem("index.json", `released ${id} is not in any group`);
+  if (listed) {
     if (new Set(listed).size !== listed.length) problem("index.json", "an id is listed twice");
     for (const id of listed) if (!files.includes(`${id}.json`)) problem("index.json", `${id} is listed but ${id}.json is missing`);
     for (const f of files) if (!listed.includes(path.basename(f, ".json"))) problem("index.json", `${f} is not listed`);

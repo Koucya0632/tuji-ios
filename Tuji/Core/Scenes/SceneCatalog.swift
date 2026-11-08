@@ -1,50 +1,104 @@
 // The 場面 bundled with the app. Everything 「進店前看一眼」 needs ships inside
 // the binary, so it opens and plays in airplane mode.
 //
-// The ids are listed in `Scenes/index.json` rather than discovered: the list is
-// the display order, and Xcode's synchronized folders copy resources flat into
-// the bundle, where a scene file is one JSON among any others. Adding a scene
-// is a JSON file plus a line in the index, with no Swift.
+// The ids are listed in `Scenes/index.json` rather than discovered: the groups
+// there are the display order, and Xcode's synchronized folders copy resources
+// flat into the bundle, where a scene file is one JSON among any others. Adding
+// a scene is a JSON file plus a line in the index, with no Swift.
+//
+// `released` names the scenes a Release build shows. The rest are drafts that
+// still wait for native review, so only Debug builds list them.
 
 import Foundation
 import OSLog
 
-nonisolated struct SceneCatalog {
+nonisolated struct SceneGroup: Identifiable {
+    let id: String
+    let title: LocalizedText
     let scenes: [PracticeScene]
+}
 
-    private struct Index: Decodable {
-        let scenes: [SceneID]
+nonisolated struct SceneCatalog {
+    let groups: [SceneGroup]
+
+    /// Every scene in display order.
+    var scenes: [PracticeScene] {
+        self.groups.flatMap(\.scenes)
     }
+
+    init(groups: [SceneGroup]) {
+        self.groups = groups.filter { !$0.scenes.isEmpty }
+    }
+
+    /// One unnamed group, for tests and previews.
+    init(scenes: [PracticeScene]) {
+        self.init(groups: [SceneGroup(id: "all", title: LocalizedText(zhHant: "", zhHans: "", en: ""), scenes: scenes)])
+    }
+
+    struct Index: Decodable {
+        struct Group: Decodable {
+            let id: String
+            let title: LocalizedText
+            let scenes: [SceneID]
+        }
+
+        let groups: [Group]
+        let released: [SceneID]
+
+        var ids: [SceneID] {
+            self.groups.flatMap(\.scenes)
+        }
+    }
+
+    #if DEBUG
+    static let showsDrafts = true
+    #else
+    static let showsDrafts = false
+    #endif
 
     /// What the screens read. A scene that fails to decode is left out and
     /// logged; `SceneContentTests` decodes them strictly so that never ships.
     static let bundled: SceneCatalog = {
         let log = Logger(subsystem: "app.tuji.ios", category: "scenes")
-        let ids: [SceneID]
+        let index: Index
         do {
-            ids = try Self.ids(bundle: .main)
+            index = try Self.index(bundle: .main)
         } catch {
             log.error("scene index failed to load: \(error, privacy: .public)")
-            return SceneCatalog(scenes: [])
+            return SceneCatalog(groups: [])
         }
-        let scenes = ids.compactMap { id -> PracticeScene? in
-            do {
-                return try Self.decode(id, bundle: .main)
-            } catch {
-                log.error("scene \(id.rawValue, privacy: .public) failed to load: \(error, privacy: .public)")
-                return nil
-            }
-        }
-        return SceneCatalog(scenes: scenes)
+        let shown = Set(Self.showsDrafts ? index.ids : index.released)
+        return SceneCatalog(groups: index.groups.map { group in
+            SceneGroup(id: group.id, title: group.title, scenes: group.scenes.filter(shown.contains).compactMap { id in
+                do {
+                    return try Self.decode(id, bundle: .main)
+                } catch {
+                    log.error("scene \(id.rawValue, privacy: .public) failed to load: \(error, privacy: .public)")
+                    return nil
+                }
+            })
+        })
     }()
 
+    /// Every scene in the index, drafts included, decoded strictly.
     static func load(bundle: Bundle) throws -> SceneCatalog {
-        try SceneCatalog(scenes: self.ids(bundle: bundle).map { try self.decode($0, bundle: bundle) })
+        let index = try self.index(bundle: bundle)
+        return try SceneCatalog(groups: index.groups.map { group in
+            try SceneGroup(
+                id: group.id,
+                title: group.title,
+                scenes: group.scenes.map { try self.decode($0, bundle: bundle) }
+            )
+        })
+    }
+
+    static func index(bundle: Bundle) throws -> Index {
+        try JSONDecoder().decode(Index.self, from: self.data("index.json", bundle: bundle))
     }
 
     /// The bundled scenes in display order.
     static func ids(bundle: Bundle) throws -> [SceneID] {
-        try JSONDecoder().decode(Index.self, from: self.data("index.json", bundle: bundle)).scenes
+        try self.index(bundle: bundle).ids
     }
 
     func scene(_ id: SceneID) -> PracticeScene? {

@@ -58,8 +58,11 @@ enum NavRoute: Hashable {
     case wordDetail(id: String)
     case categoryDetail(id: String)
     /// 場面練習 — every 場面, then one 場面's 進店前看一眼 page, then its practice.
-    /// Reached only from 我's 除錯工具 until the entry is designed.
+    /// Reached from 今天's 場面 card, and from topic and word pages.
     case sceneList
     case sceneDetail(id: SceneID)
     case scenePractice(id: SceneID)
+    /// A word page opened from a scene, which leaves that scene out of its
+    /// 場面 section.
+    case sceneWord(id: String, from: SceneID)
 }

@@ -357,7 +357,7 @@ private struct DebugSmokeSection: View {
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                 }
-                // 場面練習 has no entry of its own until one is designed.
+                // 今天 shows 場面練習 to zh-ja learners only; this reaches it from any account.
                 NavigationLink(value: NavRoute.sceneList) {
                     HStack {
                         Text(verbatim: "場面練習")

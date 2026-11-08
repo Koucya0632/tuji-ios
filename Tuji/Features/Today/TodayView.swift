@@ -479,17 +479,33 @@ struct TodayView: View {
     /// 說明還在 `AssistantHomeFeature.detail`，給 VoiceOver 唸。
     private var moiraSection: some View {
         VStack(spacing: Space.s3) {
-            // 分頁之間切換不會 disappear，所以得明講她現在在不在前面。
-            // 捲出畫面外不算 —— 那是幾秒的事，切到別的分頁是幾分鐘的事。
-            AnimatedMascot(paused: self.navigator.selected != .today)
-                .frame(height: 236)
-                // 她的 580 單位畫布底下有一截是空的（接觸陰影之後還剩約 24pt），
-                // 在助手首頁那是最後一個元素所以沒差，在這裡它把四格往下推。
-                .padding(.bottom, -24)
+            // 學日文的人，貓往右讓出左邊給場面卡（場面練習方案 §3）。貓和四格的
+            // 位置不動，只是貓旁多一張卡。
+            if self.settings.current.learningDirection.hasScenes {
+                HStack(alignment: .top, spacing: Space.s2) {
+                    SceneTodayCard()
+                    self.mascot
+                        .frame(width: 170, height: 214)
+                }
+                .padding(.leading, Space.s3)
+                .padding(.trailing, 6)
+                .padding(.bottom, -22)
+            } else {
+                self.mascot
+                    .frame(height: 236)
+                    // 她的 580 單位畫布底下有一截是空的（接觸陰影之後還剩約 24pt），
+                    // 在助手首頁那是最後一個元素所以沒差，在這裡它把四格往下推。
+                    .padding(.bottom, -24)
+            }
 
             MoiraFeatureBand()
         }
         .tourAnchor(.assistant)
+    }
+
+    /// 分頁之間切換不會 disappear，所以得明講她現在在不在前面。
+    private var mascot: some View {
+        AnimatedMascot(paused: self.navigator.selected != .today)
     }
 }
 

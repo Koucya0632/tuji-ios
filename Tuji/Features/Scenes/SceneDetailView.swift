@@ -11,13 +11,35 @@ struct SceneDetailView: View {
 
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
+    @Environment(\.presentPaywall) private var presentPaywall
     private let store = SceneProgressStore.shared
 
     var body: some View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back)
             if let scene = self.catalog.scene(self.sceneId) {
-                self.content(scene)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        self.header(scene)
+                        VStack(alignment: .leading, spacing: Space.s1) {
+                            Text("進店前看一眼")
+                                .font(.tujiH3)
+                                .foregroundStyle(.tujiInk)
+                            Text("不用網路也能看、能播。")
+                                .font(.tujiLabel)
+                                .foregroundStyle(.tujiInk2)
+                        }
+                        .padding(.horizontal, Space.s4)
+                        .padding(.top, 32)
+                        .padding(.bottom, 12)
+                        Rectangle().fill(.tujiRule).frame(height: 1)
+                        ForEach(Array(scene.questions.enumerated()), id: \.element.id) { index, question in
+                            self.lookRow(question, number: index + 1, scene: scene)
+                            Rectangle().fill(.tujiRule).frame(height: 1)
+                        }
+                    }
+                    .padding(.bottom, Space.s5)
+                }
             } else {
                 Spacer()
             }
@@ -35,92 +57,145 @@ struct SceneDetailView: View {
         self.settings.current.uiLanguage
     }
 
-    private func content(_ scene: PracticeScene) -> some View {
-        let status = ScenePractice.status(scene, book: self.store.book, today: LocalDay(Date(), calendar: .current))
-        return ScrollView {
-            TujiScreenTitle(localized: scene.title.resolved(self.language))
-            VStack(alignment: .leading, spacing: Space.s4) {
-                Text(verbatim: scene.summary.resolved(self.language))
-                    .font(.tujiBody)
-                    .foregroundStyle(.tujiInk2)
-                if self.user != nil {
-                    VStack(alignment: .leading, spacing: Space.s2) {
-                        NavigationLink(value: NavRoute.scenePractice(id: scene.id)) {
-                            Text(status.startTitle)
-                                .font(.tujiBody(.strong))
-                                .foregroundStyle(.tujiInk)
-                                .frame(maxWidth: .infinity, minHeight: 52)
-                                .background(.tujiBrandPrimary)
-                        }
-                        .buttonStyle(.plain)
-                        Text(status.label)
-                            .font(.tujiLabel)
-                            .foregroundStyle(.tujiInk3)
-                    }
-                }
-                Text("進店前看一眼")
+    // MARK: - Header
+
+    private func header(_ scene: PracticeScene) -> some View {
+        let today = LocalDay(Date(), calendar: .current)
+        let status = ScenePractice.status(scene, book: self.store.book, today: today)
+        let practised = scene.practised(in: self.store.book)
+        let canPractise = scene.canPractise(LiveEffectiveEntitlement.shared.tier)
+        return VStack(alignment: .leading, spacing: Space.s3) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("場面練習")
                     .font(.tujiLabel)
-                    .tracking(2)
-                    .foregroundStyle(.tujiInk3)
-                    .padding(.top, Space.s2)
-                VStack(spacing: 0) {
-                    ForEach(scene.questions) { question in
-                        self.lookRow(question)
-                        Rectangle().fill(.tujiRule).frame(height: 1)
-                    }
+                    .tracking(1)
+                    .foregroundStyle(.tujiPaper.opacity(0.7))
+                Text(verbatim: scene.title.resolved(self.language))
+                    .font(.tujiH2)
+                    .foregroundStyle(.tujiPaper)
+                Text(verbatim: scene.summary.resolved(self.language))
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiPaper.opacity(0.85))
+                    .padding(.top, 2)
+            }
+            if status != .notStarted {
+                HStack(spacing: Space.s3) {
+                    SceneSegments(practised: practised, onInk: true)
+                    Text(verbatim: "\(practised.count(where: \.self)) / \(practised.count)")
+                        .font(.tujiBodySm(.strong))
+                        .foregroundStyle(.tujiAccumulationSoft)
                 }
             }
-            .padding(.horizontal, Space.s4)
-            .padding(.bottom, Space.s6)
+            if self.user != nil {
+                if canPractise {
+                    NavigationLink(value: NavRoute.scenePractice(id: scene.id)) {
+                        self.callLabel(status.startTitle, trailing: self.callTrailing(scene, status: status))
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Button { self.presentPaywall() } label: {
+                        self.callLabel("看永久會員方案", trailing: nil)
+                    }
+                    .buttonStyle(.plain)
+                    Text("練習這個場面需要永久會員。看一眼不用。")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiPaper.opacity(0.7))
+                }
+            }
+        }
+        .padding(Space.s4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiInk)
+        .padding(.top, Space.s2)
+    }
+
+    private func callTrailing(_ scene: PracticeScene, status: SceneStatus) -> LocalizedStringKey? {
+        switch status {
+        case let .inProgress(practised, _):
+            "第 \((self.store.book.cursors[scene.id] ?? practised) + 1) 句"
+        case let .reviewDue(count):
+            "\(count) 句"
+        case .notStarted:
+            "約 \(scene.minutes) 分鐘"
+        case .reviewLater, .complete:
+            nil
         }
     }
 
-    private func lookRow(_ question: SceneQuestion) -> some View {
-        let line = question.lookLine
-        let meaning = question.kind == .listening ? question.correctChoice?.text : question.goal
-        let entry = HStack(alignment: .top, spacing: Space.s3) {
-            VStack(alignment: .leading, spacing: Space.s1) {
-                if let line {
-                    Text(verbatim: line.text)
-                        .font(.tujiH3)
-                        .foregroundStyle(.tujiInk)
-                }
-                if question.kind == .screen, let screen = question.firstPhrasing?.screen {
-                    Label {
-                        Text(verbatim: screen.heading)
-                    } icon: {
-                        Image(systemName: "rectangle.portrait.on.rectangle.portrait")
+    private func callLabel(_ title: LocalizedStringKey, trailing: LocalizedStringKey?) -> some View {
+        HStack {
+            Text(title).font(.tujiH3)
+            Spacer(minLength: Space.s2)
+            if let trailing {
+                Text(trailing).font(.tujiBodySm(.strong)).opacity(0.75)
+            }
+        }
+        .foregroundStyle(.tujiInk)
+        .padding(.vertical, Space.s3)
+        .padding(.horizontal, 20)
+        .background(.tujiCurrent)
+        .contentShape(.rect)
+    }
+
+    // MARK: - 進店前看一眼
+
+    private func lookRow(_ question: SceneQuestion, number: Int, scene: PracticeScene) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(verbatim: "\(number)")
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk3)
+                .frame(width: 16, alignment: .leading)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: Space.s2) {
+                    SceneSpeakerTag(speaker: question.lookSpeaker)
+                    if let meaning = question.meaning {
+                        Text(verbatim: meaning.resolved(self.language))
+                            .font(.tujiBodySm(.strong))
+                            .foregroundStyle(.tujiInk2)
                     }
-                    .font(.tujiBodySm)
-                    .foregroundStyle(.tujiInk2)
                 }
-                if let meaning {
-                    Text(verbatim: meaning.resolved(self.language))
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
+                if let line = question.lookLine {
+                    HStack(spacing: Space.s2) {
+                        Text(verbatim: line.text)
+                            .font(.tujiH3)
+                            .foregroundStyle(.tujiInk)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        ScenePlayButton(label: "播放") { SceneAudio.play(line) }
+                    }
+                } else if let screen = question.firstPhrasing?.screen {
+                    ScreenMockThumbnail(screen: screen, correctId: question.correctChoice?.id)
+                        .padding(.vertical, 6)
                 }
                 HStack(spacing: Space.s2) {
                     Text("回應")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
+                        .frame(width: 28, alignment: .leading)
                     Text(verbatim: question.response.ja)
-                        .font(.tujiBody(.strong))
+                        .font(.scene(15))
                         .foregroundStyle(.tujiInk)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if question.response.clip != nil {
+                        ScenePlayButton(label: "播放回應", fill: nil) { SceneAudio.play(question.response) }
+                    }
                 }
-                .padding(.top, Space.s1)
-            }
-            Spacer(minLength: 0)
-            if let line {
-                ScenePlayButton(label: "播放") { SceneAudio.play(line) }
+                .frame(minHeight: 44)
+                .padding(.top, 6)
+                if question.kind == .screen {
+                    Text("畫面依店家不同。")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.tujiInk3)
+                }
+                let words = question.relatedWords(in: self.words, direction: self.settings.current.learningDirection)
+                if !words.isEmpty {
+                    SceneWordList(words: words, opening: .push(from: scene.id))
+                        .padding(.top, Space.s2)
+                }
             }
         }
-        return VStack(alignment: .leading, spacing: Space.s3) {
-            entry
-            let words = question.relatedWords(in: self.words, direction: self.settings.current.learningDirection)
-            if !words.isEmpty {
-                SceneWordList(words: words, opening: .push)
-            }
-        }
-        .padding(.vertical, Space.s3)
+        .padding(.vertical, 18)
+        .padding(.leading, Space.s4)
+        .padding(.trailing, 12)
     }
 }

@@ -11,34 +11,34 @@ struct ScreenMockView: View {
     var correctId: String?
     var onTap: ((String) -> Void)?
 
-    private let columns = [GridItem(.flexible(), spacing: Space.s2), GridItem(.flexible(), spacing: Space.s2)]
+    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Space.s2) {
-            VStack(alignment: .leading, spacing: Space.s3) {
-                Text(verbatim: self.screen.heading)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(.tujiInk)
+        VStack(alignment: .leading, spacing: 0) {
+            Text(verbatim: self.screen.heading)
+                .font(.tujiBodySm(.strong))
+                .foregroundStyle(.tujiMachineFace)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(.tujiMachineBar)
+            VStack(alignment: .leading, spacing: 10) {
                 if let detail = self.screen.detail {
                     Text(verbatim: detail)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.tujiInk2)
+                        .font(.tujiBody(.strong))
+                        .foregroundStyle(.tujiMachineBezel)
                 }
-                LazyVGrid(columns: self.columns, spacing: Space.s2) {
+                LazyVGrid(columns: self.columns, spacing: 10) {
                     ForEach(self.screen.buttons, id: \.choiceId) { button in
                         self.machineButton(button)
                     }
                 }
             }
-            .padding(Space.s3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiPaper)
-            .padding(10)
-            .background(.tujiInk)
-            Text("畫面依店家不同")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
+            .padding(14)
         }
+        .background(.tujiMachineFace)
+        .padding(12)
+        .background(.tujiMachineBezel)
     }
 
     private func machineButton(_ button: ScreenMock.Button) -> some View {
@@ -48,19 +48,69 @@ struct ScreenMockView: View {
             self.onTap?(button.choiceId)
         } label: {
             Text(verbatim: button.ja)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(isTried ? .tujiInk3 : .tujiInk)
-                .strikethrough(isTried)
+                .font(.tujiBody(.strong))
+                .foregroundStyle(isCorrect ? .tujiPaper : .tujiMachineBezel)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, minHeight: 56)
+                .frame(maxWidth: .infinity, minHeight: 64)
                 .padding(.horizontal, Space.s1)
-                .background(isCorrect ? .tujiBrandPrimary : .tujiAccumulationSoft)
-                .overlay(
-                    Rectangle().stroke(isCorrect ? .tujiInk : .tujiAccumulation, lineWidth: Border.bw2)
-                )
+                .background(isCorrect ? .tujiInk : .tujiMachineFace)
+                .overlay(Rectangle().strokeBorder(.tujiMachineEdge, lineWidth: 1))
+                .overlay(Rectangle().strokeBorder(
+                    isTried ? .tujiAlert : isCorrect ? .tujiAccumulation : .clear,
+                    lineWidth: 3
+                ))
         }
         .buttonStyle(.plain)
-        .disabled(self.onTap == nil || isTried || self.correctId != nil)
+        .allowsHitTesting(self.onTap != nil && !isTried && self.correctId == nil)
         .accessibilityLabel(Text(verbatim: button.ja))
+        .accessibilityValue(isTried ? Text("答錯") : isCorrect ? Text("正確") : Text(verbatim: ""))
+    }
+}
+
+/// The same screen at a glance, for 進店前看一眼: the heading and the buttons,
+/// the right one outlined.
+struct ScreenMockThumbnail: View {
+    let screen: ScreenMock
+    let correctId: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(verbatim: self.screen.heading)
+                .font(.scene(11))
+                .foregroundStyle(.tujiMachineFace)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, Space.s2)
+                .padding(.vertical, Space.s1)
+                .background(.tujiMachineBar)
+            VStack(alignment: .leading, spacing: Space.s2) {
+                if let detail = self.screen.detail {
+                    Text(verbatim: detail)
+                        .font(.scene(13))
+                        .foregroundStyle(.tujiMachineBezel)
+                }
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
+                    ForEach(self.screen.buttons, id: \.choiceId) { button in
+                        let isCorrect = button.choiceId == self.correctId
+                        Text(verbatim: button.ja)
+                            .font(.scene(12))
+                            .foregroundStyle(isCorrect ? .tujiInk : .tujiMachineBar)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 5)
+                            .overlay(Rectangle().strokeBorder(
+                                isCorrect ? .tujiInk : .tujiMachineEdge,
+                                lineWidth: isCorrect ? 2 : 1
+                            ))
+                    }
+                }
+            }
+            .padding(Space.s2)
+        }
+        .background(.tujiMachineFace)
+        .padding(6)
+        .background(.tujiMachineBezel)
+        .frame(width: 220, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }

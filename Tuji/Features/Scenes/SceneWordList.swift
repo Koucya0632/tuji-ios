@@ -20,7 +20,7 @@ extension SceneQuestion {
 
 struct SceneWordList: View {
     enum Opening {
-        case push
+        case push(from: SceneID)
         case present((CardWord) -> Void)
     }
 
@@ -31,11 +31,12 @@ struct SceneWordList: View {
         VStack(alignment: .leading, spacing: Space.s1) {
             Text("相關詞條")
                 .font(.tujiLabel)
+                .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
             ForEach(self.words) { item in
                 switch self.opening {
-                case .push:
-                    NavigationLink(value: NavRoute.wordDetail(id: item.word.id)) { self.row(item) }
+                case let .push(scene):
+                    NavigationLink(value: NavRoute.sceneWord(id: item.word.id, from: scene)) { self.row(item) }
                         .buttonStyle(.plain)
                 case let .present(open):
                     Button { open(item.word) } label: { self.row(item) }
@@ -56,12 +57,12 @@ struct SceneWordList: View {
                     Color.tujiPaper2
                 }
             }
-            .frame(width: 40, height: 40)
+            .frame(width: 44, height: 44)
             .clipped()
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: Space.s1) {
                     Text(verbatim: word.word)
-                        .font(.tujiBody(.strong))
+                        .font(.scene(15))
                         .foregroundStyle(.tujiInk)
                     if item.isLocked {
                         Image(systemName: "lock.fill")
@@ -71,13 +72,14 @@ struct SceneWordList: View {
                     }
                 }
                 Text(verbatim: [reading, word.chinese].compactMap(\.self).joined(separator: " · "))
-                    .font(.tujiBodySm)
+                    .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
+                    .lineLimit(1)
             }
             Spacer(minLength: Space.s2)
             TujiRowAccessory()
         }
-        .frame(minHeight: 48)
+        .frame(minHeight: 56)
         .contentShape(.rect)
     }
 }

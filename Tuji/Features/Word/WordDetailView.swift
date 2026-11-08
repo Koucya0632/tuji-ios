@@ -16,14 +16,17 @@ import SwiftUI
 /// churn the StudyFocus counter or re-evaluate the inset per word.
 struct WordDetailView: View {
     let id: String
+    /// The scene this page was opened from, left out of its 場面 section.
+    var fromScene: SceneID?
 
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(WordsStore.self) private var wordsStore
 
     @State private var currentId: String?
 
-    init(id: String) {
+    init(id: String, fromScene: SceneID? = nil) {
         self.id = id
+        self.fromScene = fromScene
         _currentId = State(initialValue: id)
     }
 
@@ -38,7 +41,7 @@ struct WordDetailView: View {
     var body: some View {
         TabView(selection: self.$currentId) {
             ForEach(self.ids, id: \.self) { wid in
-                WordDetailPage(id: wid)
+                WordDetailPage(id: wid, fromScene: self.fromScene)
                     .tag(wid as String?)
             }
         }
@@ -71,6 +74,7 @@ struct WordDetailView: View {
 /// (and their tab state) live in the reusable WordDetailSections.
 struct WordDetailPage: View {
     let id: String
+    var fromScene: SceneID?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(MasteryStore.self) private var mastery
@@ -127,6 +131,7 @@ struct WordDetailPage: View {
                 .padding(.horizontal, Space.s4)
             }
             WordDetailSections(word: w).padding(.horizontal, Space.s4)
+            WordSceneSection(wordId: w.id, excluding: self.fromScene).padding(.horizontal, Space.s4)
         }
         .padding(.bottom, Space.s6)
         .frame(width: width, alignment: .leading)

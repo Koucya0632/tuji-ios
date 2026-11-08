@@ -368,16 +368,19 @@ struct ScenePracticeSessionTests {
             now: self.evening,
             calendar: Fixture.calendar
         )
-        for _ in Fixture.scene.questions {
+        for (index, _) in Fixture.scene.questions.enumerated() {
+            if index == 1 { session.answer("b") }
             session.answer("a")
             session.next()
         }
 
         #expect(session.phase == .finished(.init(
-            practised: 3,
-            firstTry: 3,
+            results: Fixture.scene.questions.enumerated().map { index, question in
+                .init(question: question, wrongTries: index == 1 ? 1 : 0)
+            },
             status: .reviewLater(due: LocalDay(year: 2026, month: 11, day: 9))
         )))
         #expect(store.book.cursors[SceneID(rawValue: "s")] == nil)
+        #expect(store.book.lastSceneId == SceneID(rawValue: "s"))
     }
 }
