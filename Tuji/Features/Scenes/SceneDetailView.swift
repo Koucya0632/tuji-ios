@@ -10,6 +10,7 @@ struct SceneDetailView: View {
     var catalog: SceneCatalog = .bundled
 
     @Environment(SettingsStore.self) private var settings
+    @Environment(WordsStore.self) private var words
     private let store = SceneProgressStore.shared
 
     var body: some View {
@@ -77,7 +78,7 @@ struct SceneDetailView: View {
     private func lookRow(_ question: SceneQuestion) -> some View {
         let line = question.lookLine
         let meaning = question.kind == .listening ? question.correctChoice?.text : question.goal
-        return HStack(alignment: .top, spacing: Space.s3) {
+        let entry = HStack(alignment: .top, spacing: Space.s3) {
             VStack(alignment: .leading, spacing: Space.s1) {
                 if let line {
                     Text(verbatim: line.text)
@@ -111,6 +112,13 @@ struct SceneDetailView: View {
             Spacer(minLength: 0)
             if let line {
                 ScenePlayButton(label: "播放") { SceneAudio.play(line) }
+            }
+        }
+        return VStack(alignment: .leading, spacing: Space.s3) {
+            entry
+            let words = question.relatedWords(in: self.words, direction: self.settings.current.learningDirection)
+            if !words.isEmpty {
+                SceneWordList(words: words, opening: .push)
             }
         }
         .padding(.vertical, Space.s3)

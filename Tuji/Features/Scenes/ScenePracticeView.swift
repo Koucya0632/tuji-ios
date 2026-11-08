@@ -10,7 +10,9 @@ struct ScenePracticeView: View {
 
     @State private var session: ScenePracticeSession?
     @State private var showsTranscript = false
+    @State private var openWord: CardWord?
     @Environment(SettingsStore.self) private var settings
+    @Environment(WordsStore.self) private var words
     @Environment(\.presentPaywall) private var presentPaywall
     @Environment(\.dismiss) private var dismiss
 
@@ -51,6 +53,15 @@ struct ScenePracticeView: View {
             }
         }
         .onDisappear { SpeechService.shared.stop() }
+        .tujiSheet(
+            isPresented: Binding(get: { self.openWord != nil }, set: { if !$0 { self.openWord = nil } }),
+            title: "單字詳情",
+            height: 520
+        ) {
+            if let word = self.openWord {
+                WordDetailSheet(word: word, wordId: word.id, gloss: word.chinese, audioUrls: word.audioUrls)
+            }
+        }
     }
 
     private var language: UILanguage {
@@ -219,6 +230,10 @@ struct ScenePracticeView: View {
             Text(verbatim: question.explanation.resolved(self.language))
                 .font(.tujiBodySm)
                 .foregroundStyle(.tujiInk2)
+            let words = question.relatedWords(in: self.words, direction: self.settings.current.learningDirection)
+            if !words.isEmpty {
+                SceneWordList(words: words, opening: .present { self.openWord = $0 })
+            }
         }
         .padding(Space.s3)
         .frame(maxWidth: .infinity, alignment: .leading)

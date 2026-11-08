@@ -28872,6 +28872,54 @@
           }
         }
       }
+    },
+    "相關詞條" : {
+      "comment" : "Label above the 圖鑑 words a scene question mentions.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Related words"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "関連する単語"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相关词条"
+          }
+        }
+      }
+    },
+    "學習這個主題需要永久會員" : {
+      "comment" : "Accessibility label for the lock beside a word whose topic needs Lifetime Membership to study.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Studying this topic needs Lifetime Membership"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このテーマの学習には永久会員が必要です"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学习这个主题需要永久会员"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
