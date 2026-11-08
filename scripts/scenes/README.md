@@ -22,3 +22,22 @@ Needs Node 20 or later, plus `ffmpeg` and `ffprobe` on `PATH`. The key comes fro
 ## Word ids
 
 `node scripts/scenes/check-word-ids.mjs` checks every 問句's `wordIds` against the production 日文圖鑑 (`/api/words`, host from `Config/Release.xcconfig`). It prints each id with its topic and exits non-zero listing any id that does not exist. Run it after editing `wordIds`. Options: `--scenes <dir>`, `--base <url>`.
+
+## Checking a scene
+
+`node scripts/scenes/validate-scenes.mjs` checks every scene JSON against the same rules as `TujiTests/SceneContentTests.swift`, in about a second and without Xcode. It prints one line per problem and exits 1, or prints `ok N scenes, M questions`. Use `--dir <path>` for a folder of drafts and `--words <tsv>` (one word id per line in the first tab-separated column) to check `wordIds` against a word list. The Swift tests stay the authority. When one changes, change the matching check in the script.
+
+A new scene is `<id>.json` in `Tuji/Resources/Scenes/` plus its id in `index.json`, which sets the order the app lists scenes in. A screen 問法 writes its screen out in full. Each button's `choiceId` is one of the question's choice ids, one button per choice:
+
+```json
+"screen": {
+  "heading": "お支払い方法を選択してください",
+  "detail": "合計 ¥1,280",
+  "buttons": [
+    { "choiceId": "cash", "ja": "現金" },
+    { "choiceId": "credit", "ja": "クレジット" }
+  ]
+}
+```
+
+`detail` is optional.
