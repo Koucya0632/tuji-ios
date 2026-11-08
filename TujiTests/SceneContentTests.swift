@@ -160,6 +160,21 @@ struct SceneContentTests {
         }
     }
 
+    /// Only official 圖鑑 ids: `scripts/scenes/check-word-ids.mjs` checks they
+    /// exist. A screen kind is never a word: `ticket-machine` is both.
+    @Test
+    func wordIdsAreOfficialKebabCaseIdsListedOnce() throws {
+        let screenKinds = Set(ScreenMockKind.allCases.map(\.rawValue))
+        let kebab = /[a-z0-9]+(-[a-z0-9]+)*/
+        for (_, question) in try self.allQuestions() {
+            #expect(Set(question.wordIds).count == question.wordIds.count, "\(question.id.rawValue)")
+            for id in question.wordIds {
+                #expect(id.wholeMatch(of: kebab) != nil, "\(question.id.rawValue): \(id)")
+                #expect(!screenKinds.contains(id), "\(question.id.rawValue): \(id) is a screen kind")
+            }
+        }
+    }
+
     @Test
     func aJapaneseInterfaceReadsTheEnglishCopy() {
         let text = LocalizedText(zhHant: "加熱", zhHans: "加热", en: "Heat")
