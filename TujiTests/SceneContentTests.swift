@@ -21,7 +21,7 @@ struct SceneContentTests {
         #expect(!ids.isEmpty)
         #expect(catalog.scenes.map(\.id) == ids)
         #expect(catalog.scenes.allSatisfy { $0.schemaVersion == 2 })
-        #expect(catalog.scenes.allSatisfy { $0.questions.count == 6 })
+        #expect(catalog.scenes.allSatisfy { (5...7).contains($0.questions.count) })
         #expect(SceneCatalog.bundled.scenes.count == ids.count)
     }
 

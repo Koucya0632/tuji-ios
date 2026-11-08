@@ -23,7 +23,7 @@ const { values: args } = parseArgs({
 const dir = path.resolve(args.dir);
 
 const SCHEMA_VERSION = 2;
-const QUESTIONS_PER_SCENE = 6;
+const QUESTIONS_PER_SCENE = { min: 5, max: 7 };
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const BLANK = /^[\t\p{Zs}]*$/u;
 
@@ -165,8 +165,8 @@ function checkScene(file, scene, ids) {
   checkLocalized(where, "title", scene.title);
   checkLocalized(where, "summary", scene.summary);
   if (!Array.isArray(scene.questions)) return problem(where, "questions must be an array");
-  if (scene.questions.length !== QUESTIONS_PER_SCENE) {
-    problem(where, `needs ${QUESTIONS_PER_SCENE} questions, has ${scene.questions.length}`);
+  if (scene.questions.length < QUESTIONS_PER_SCENE.min || scene.questions.length > QUESTIONS_PER_SCENE.max) {
+    problem(where, `needs ${QUESTIONS_PER_SCENE.min}-${QUESTIONS_PER_SCENE.max} questions, has ${scene.questions.length}`);
   }
   for (const q of scene.questions) checkQuestion(scene, q, ids);
 }
