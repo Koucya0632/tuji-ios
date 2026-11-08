@@ -1,0 +1,531 @@
+{
+  "schemaVersion": 1,
+  "id": "konbini-checkout",
+  "revision": 1,
+  "access": "free",
+  "title": {
+    "zh-Hant": "便利商店結帳",
+    "zh-Hans": "便利店结账",
+    "en": "Convenience store checkout"
+  },
+  "summary": {
+    "zh-Hant": "結帳時店員會問的六件事",
+    "zh-Hans": "结账时店员会问的六件事",
+    "en": "Six things the clerk asks at checkout"
+  },
+  "questions": [
+    {
+      "id": "konbini-checkout.heat",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要加熱",
+        "zh-Hans": "听懂店员问要不要加热",
+        "en": "Understand when the clerk offers to heat your food"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.heat.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "温めますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.heat.p1.mp3"
+        },
+        {
+          "id": "konbini-checkout.heat.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "こちら温めますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "konbini-checkout.heat.p2.mp3"
+        },
+        {
+          "id": "konbini-checkout.heat.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "温めはどうされますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.heat.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要幫你加熱",
+            "zh-Hans": "要不要帮你加热",
+            "en": "Do you want it heated"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要附筷子或湯匙",
+            "zh-Hans": "要不要附筷子或勺子",
+            "en": "Do you need chopsticks or a spoon"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／そのままで大丈夫です",
+        "audio": "konbini-checkout.heat.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「温める」是加熱。要的話說「お願いします」，不用就說「そのままで大丈夫です」。",
+        "zh-Hans": "「温める」是加热。要的话说「お願いします」，不用就说「そのままで大丈夫です」。",
+        "en": "温める means to heat up. Say お願いします for yes, or そのままで大丈夫です to take it as it is."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "konbini-checkout.bag",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要袋子",
+        "zh-Hans": "听懂店员问要不要袋子",
+        "en": "Understand when the clerk asks if you need a bag"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.bag.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "袋はご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.bag.p1.mp3"
+        },
+        {
+          "id": "konbini-checkout.bag.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "レジ袋お付けしますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "konbini-checkout.bag.p2.mp3"
+        },
+        {
+          "id": "konbini-checkout.bag.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "袋はいかがなさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.bag.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要幫你加熱",
+            "zh-Hans": "要不要帮你加热",
+            "en": "Do you want it heated"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有集點卡",
+            "zh-Hans": "有没有积分卡",
+            "en": "Do you have a points card"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／お願いします",
+        "audio": "konbini-checkout.bag.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「袋」「レジ袋」都是塑膠袋，通常要另外付費。不用說「大丈夫です」，要的話說「お願いします」。",
+        "zh-Hans": "「袋」「レジ袋」都是塑料袋，通常要另外付钱。不用说「大丈夫です」，要的话说「お願いします」。",
+        "en": "袋 and レジ袋 both mean a plastic bag, which usually costs extra. Say 大丈夫です for no, お願いします for yes."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "konbini-checkout.utensils",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要筷子或湯匙",
+        "zh-Hans": "听懂店员问要不要筷子或勺子",
+        "en": "Understand when the clerk offers chopsticks or a spoon"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.utensils.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お箸はお付けしますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.utensils.p1.mp3"
+        },
+        {
+          "id": "konbini-checkout.utensils.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "スプーンお付けしますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.utensils.p2.mp3"
+        },
+        {
+          "id": "konbini-checkout.utensils.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お箸は何膳お付けしますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "konbini-checkout.utensils.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要附筷子或湯匙",
+            "zh-Hans": "要不要附筷子或勺子",
+            "en": "Do you need chopsticks or a spoon"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要小票",
+            "en": "Do you want a receipt"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "konbini-checkout.utensils.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お箸」是筷子，「スプーン」是湯匙。問「何膳」是問要幾雙，可以回「一膳で」。",
+        "zh-Hans": "「お箸」是筷子，「スプーン」是勺子。问「何膳」是问要几双，可以回「一膳で」。",
+        "en": "お箸 are chopsticks and スプーン is a spoon. 何膳 asks how many pairs. You can answer 一膳で for one pair."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "konbini-checkout.point-card",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂結帳時問有沒有集點卡",
+        "zh-Hans": "听懂结账时问有没有积分卡",
+        "en": "Understand when you are asked for a points card"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.point-card.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ポイントカードはお持ちですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.point-card.p1.mp3"
+        },
+        {
+          "id": "konbini-checkout.point-card.p2",
+          "role": "review",
+          "speaker": "register",
+          "text": "ポイントカードをお持ちの方は、画面をタッチしてください。",
+          "voice": "Leda",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "konbini-checkout.point-card.p2.mp3"
+        },
+        {
+          "id": "konbini-checkout.point-card.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ポイントカードお持ちですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "konbini-checkout.point-card.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有集點卡",
+            "zh-Hans": "有没有积分卡",
+            "en": "Do you have a points card"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要小票",
+            "en": "Do you want a receipt"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "持っていません／大丈夫です",
+        "audio": "konbini-checkout.point-card.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ポイントカード」是集點卡，有時是收銀機自動播報。沒有就說「持っていません」或「大丈夫です」。",
+        "zh-Hans": "「ポイントカード」是积分卡，有时是收银机自动播报。没有就说「持っていません」或「大丈夫です」。",
+        "en": "ポイントカード is a points card. Sometimes the register announces it by itself. Say 持っていません or 大丈夫です if you have none."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "konbini-checkout.payment",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你想刷信用卡。在付款畫面上按對的按鈕",
+        "zh-Hans": "你想刷信用卡。在付款画面上按对的按钮",
+        "en": "You want to pay by credit card. Tap the right button on the payment screen"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払いは画面でお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": "payment-select",
+          "audio": "konbini-checkout.payment.p1.mp3"
+        },
+        {
+          "id": "konbini-checkout.payment.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": "payment-select-alt",
+          "audio": null
+        },
+        {
+          "id": "konbini-checkout.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払い方法はどうなさいますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": "payment-select",
+          "audio": "konbini-checkout.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "cash",
+          "text": {
+            "zh-Hant": "現金",
+            "zh-Hans": "现金",
+            "en": "Cash"
+          },
+          "correct": false
+        },
+        {
+          "id": "credit",
+          "text": {
+            "zh-Hant": "信用卡",
+            "zh-Hans": "信用卡",
+            "en": "Credit card"
+          },
+          "correct": true
+        },
+        {
+          "id": "emoney",
+          "text": {
+            "zh-Hant": "電子錢包（交通卡等）",
+            "zh-Hans": "电子钱包（交通卡等）",
+            "en": "E-money, such as a transit card"
+          },
+          "correct": false
+        },
+        {
+          "id": "qr",
+          "text": {
+            "zh-Hant": "條碼支付",
+            "zh-Hans": "二维码支付",
+            "en": "QR code payment"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "カードで",
+        "audio": "konbini-checkout.payment.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「クレジット」是信用卡，「電子マネー」是交通卡這類的儲值卡，「コード決済」是條碼支付。店員開口問的話，說「カードで」就好。",
+        "zh-Hans": "「クレジット」是信用卡，「電子マネー」是交通卡这类的储值卡，「コード決済」是二维码支付。店员开口问的话，说「カードで」就好。",
+        "en": "クレジット is credit card, 電子マネー is a stored-value card like a transit card, and コード決済 is QR code payment. If the clerk asks out loud, カードで is enough."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "konbini-checkout.age-check",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "買酒時螢幕問你是否已滿 20 歲。按對的按鈕",
+        "zh-Hans": "买酒时屏幕问你是否已满 20 岁。按对的按钮",
+        "en": "Buying alcohol, the screen asks if you are 20 or older. Tap the right button"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.age-check.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": "age-confirm",
+          "audio": null
+        },
+        {
+          "id": "konbini-checkout.age-check.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "画面のタッチをお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": "age-confirm",
+          "audio": "konbini-checkout.age-check.p2.mp3"
+        },
+        {
+          "id": "konbini-checkout.age-check.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "年齢確認のため、画面のタッチをお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": "age-confirm",
+          "audio": "konbini-checkout.age-check.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "yes",
+          "text": {
+            "zh-Hant": "是，已滿 20 歲",
+            "zh-Hans": "是，已满 20 岁",
+            "en": "Yes, I am 20 or older"
+          },
+          "correct": true
+        },
+        {
+          "id": "no",
+          "text": {
+            "zh-Hant": "否",
+            "zh-Hans": "否",
+            "en": "No"
+          },
+          "correct": false
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "在日本買酒、買菸要滿 20 歲。收銀台的螢幕會要你自己按「はい」確認。",
+        "zh-Hans": "在日本买酒、买烟要满 20 岁。收银台的屏幕会让你自己按「はい」确认。",
+        "en": "In Japan you must be 20 to buy alcohol or tobacco. The register screen asks you to confirm by tapping はい."
+      },
+      "wordIds": []
+    }
+  ]
+}
