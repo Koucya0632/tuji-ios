@@ -602,5 +602,302 @@
         "boarding-gate"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "搭機回台北",
+          "zh-Hans": "搭机回台北",
+          "en": "Flying home to Taipei"
+        },
+        "intent": {
+          "zh-Hant": "你要搭飛機回台北。有一件行李箱要託運，裡面沒有行動電源、打火機，也沒有易碎品。想坐靠窗。",
+          "zh-Hans": "你要坐飞机回台北。有一个行李箱要托运，里面没有充电宝、打火机，也没有易碎品。想坐靠窗。",
+          "en": "You're flying home to Taipei. You have one suitcase to check, with no power bank, lighter or anything fragile in it. You'd like a window seat."
+        },
+        "enter": {
+          "zh-Hant": "走到報到櫃台",
+          "zh-Hans": "走到值机柜台",
+          "en": "Walk up to the check-in counter"
+        },
+        "questions": [
+          "airport-check-in.passport",
+          "airport-check-in.checked-bags",
+          "airport-check-in.dangerous-goods",
+          "airport-check-in.fragile",
+          "airport-check-in.seat",
+          "airport-check-in.gate"
+        ]
+      }
+    ],
+    "steps": {
+      "airport-check-in.passport": {
+        "background": "scene-bg-airport-check-in",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい、お願いします",
+            "meaning": {
+              "zh-Hant": "好，麻煩了（遞出護照）",
+              "zh-Hans": "好，麻烦了（递出护照）",
+              "en": "Sure, here you go (handing over your passport)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "地勤接過護照，在電腦上找到你的訂位。",
+              "zh-Hans": "地勤接过护照，在电脑上找到你的订位。",
+              "en": "The agent takes your passport and finds your booking."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "持っていません",
+            "meaning": {
+              "zh-Hant": "沒有帶",
+              "zh-Hans": "没有带",
+              "en": "I don't have it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤停下手邊的事，等你找出護照。你的護照其實在包包裡。",
+              "zh-Hans": "地勤停下手上的事，等你找出护照。你的护照其实在包里。",
+              "en": "The agent stops and waits for you to find it. Your passport is in your bag."
+            }
+          },
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到選座位，地勤在等你的護照。",
+              "zh-Hans": "还没到选座位，地勤在等你的护照。",
+              "en": "Seats come later. The agent is waiting for your passport."
+            }
+          }
+        ]
+      },
+      "airport-check-in.checked-bags": {
+        "background": "scene-bg-airport-check-in",
+        "replies": [
+          {
+            "id": "one",
+            "ja": "一つです",
+            "meaning": {
+              "zh-Hant": "一件",
+              "zh-Hans": "一件",
+              "en": "One"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "地勤請你把行李箱放上輸送帶。",
+              "zh-Hans": "地勤请你把行李箱放上传送带。",
+              "en": "The agent asks you to put your suitcase on the belt."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "ありません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "None"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤直接開始印登機證，你的行李箱還在腳邊。",
+              "zh-Hans": "地勤直接开始打登机牌，你的行李箱还在脚边。",
+              "en": "The agent starts printing your boarding pass. Your suitcase is still at your feet."
+            }
+          },
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤還在等你說有幾件行李要託運。",
+              "zh-Hans": "地勤还在等你说有几件行李要托运。",
+              "en": "The agent is still waiting to hear how many bags you're checking."
+            }
+          }
+        ]
+      },
+      "airport-check-in.dangerous-goods": {
+        "background": "scene-bg-airport-check-in",
+        "replies": [
+          {
+            "id": "no",
+            "ja": "入っていません",
+            "meaning": {
+              "zh-Hant": "沒有放",
+              "zh-Hans": "没有放",
+              "en": "There aren't any"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "地勤點點頭，行李箱沿著輸送帶送走了。",
+              "zh-Hans": "地勤点点头，行李箱顺着传送带送走了。",
+              "en": "The agent nods, and your suitcase moves off along the belt."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "入っています",
+            "meaning": {
+              "zh-Hant": "有放",
+              "zh-Hans": "有放",
+              "en": "There are"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤請你打開行李箱一起看。你其實沒有放這些東西。",
+              "zh-Hans": "地勤请你打开行李箱一起看。你其实没有放这些东西。",
+              "en": "The agent asks you to open the suitcase together. You didn't pack any of those."
+            }
+          },
+          {
+            "id": "one",
+            "ja": "一つです",
+            "meaning": {
+              "zh-Hant": "一件",
+              "zh-Hans": "一件",
+              "en": "One"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "件數剛才說過了，地勤在問行李裡有沒有行動電源或打火機。",
+              "zh-Hans": "件数刚才说过了，地勤在问行李里有没有充电宝或打火机。",
+              "en": "You've already given the count. The agent is asking about power banks and lighters."
+            }
+          }
+        ]
+      },
+      "airport-check-in.fragile": {
+        "background": "scene-bg-airport-check-in",
+        "card": {
+          "title": "手荷物引換証",
+          "lines": [
+            "行先　台北",
+            "個数　1"
+          ]
+        },
+        "replies": [
+          {
+            "id": "no",
+            "ja": "ありません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "None"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "地勤把行李提領單貼在你的登機證後面。",
+              "zh-Hans": "地勤把行李牌存根贴在你的登机牌背面。",
+              "en": "The agent sticks the baggage claim tag on the back of your boarding pass."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "あります",
+            "meaning": {
+              "zh-Hant": "有",
+              "zh-Hans": "有",
+              "en": "There are"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤在你的行李箱貼上易碎標籤，問你是什麼東西。你其實沒有易碎品。",
+              "zh-Hans": "地勤在你的行李箱贴上易碎标签，问你是什么东西。你其实没有易碎品。",
+              "en": "The agent puts a fragile sticker on your suitcase and asks what's inside. Nothing in it is fragile."
+            }
+          },
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤還在等你說有沒有易碎品或貴重物品。",
+              "zh-Hans": "地勤还在等你说有没有易碎品或贵重物品。",
+              "en": "The agent is still waiting to hear about fragile or valuable items."
+            }
+          }
+        ]
+      },
+      "airport-check-in.seat": {
+        "background": "scene-bg-airport-check-in",
+        "replies": [
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "地勤選了一個靠窗的座位。",
+              "zh-Hans": "地勤选了一个靠窗的座位。",
+              "en": "The agent picks a window seat for you."
+            }
+          },
+          {
+            "id": "aisle",
+            "ja": "通路側で",
+            "meaning": {
+              "zh-Hant": "靠走道",
+              "zh-Hans": "靠过道",
+              "en": "Aisle, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤幫你選了靠走道的座位。你想坐靠窗。",
+              "zh-Hans": "地勤给你选了靠过道的座位。你想坐靠窗。",
+              "en": "The agent gives you an aisle seat. You wanted the window."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "ありません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "None"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "地勤還在等你選靠窗還是靠走道。",
+              "zh-Hans": "地勤还在等你选靠窗还是靠过道。",
+              "en": "The agent is still waiting to hear window or aisle."
+            }
+          }
+        ]
+      },
+      "airport-check-in.gate": {
+        "background": "scene-bg-airport-check-in",
+        "note": {
+          "zh-Hant": "地勤把登機證放在櫃台上，一邊說登機門和時間。",
+          "zh-Hans": "地勤把登机牌放在柜台上，一边说登机口和时间。",
+          "en": "The agent puts your boarding pass on the counter and tells you the gate and time."
+        }
+      }
+    }
+  }
 }

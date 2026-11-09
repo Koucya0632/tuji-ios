@@ -605,5 +605,303 @@
         "transit-ic-card"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "伴手禮和藥",
+          "zh-Hans": "伴手礼和药",
+          "en": "Gifts and medicine"
+        },
+        "intent": {
+          "zh-Hant": "你買了要送朋友的伴手禮和自己要吃的藥。沒有集點卡，也不想辦。要辦免稅，護照帶著。自己帶了購物袋，但要三個小袋分給朋友。想用交通卡付款。",
+          "zh-Hans": "你买了要送朋友的伴手礼和自己要吃的药。没有积分卡，也不想办。要办免税，护照带着。自己带了购物袋，但要三个小袋分给朋友。想用交通卡付款。",
+          "en": "You're buying gifts for friends and some medicine for yourself. You have no points card and don't want one. You want tax-free and have your passport. You brought your own bag but want three small bags for the gifts. You'd like to pay with your transit card."
+        },
+        "enter": {
+          "zh-Hant": "把籃子放上收銀台",
+          "zh-Hans": "把篮子放上收银台",
+          "en": "Put your basket on the counter"
+        },
+        "questions": [
+          "drugstore-checkout.point-card",
+          "drugstore-checkout.tax-free",
+          "drugstore-checkout.medicine-user",
+          "drugstore-checkout.bag",
+          "drugstore-checkout.small-bags",
+          "drugstore-checkout.payment"
+        ]
+      }
+    ],
+    "steps": {
+      "drugstore-checkout.point-card": {
+        "background": "scene-bg-drugstore-checkout",
+        "replies": [
+          {
+            "id": "none",
+            "ja": "持っていません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "I don't have one"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，開始刷商品。",
+              "zh-Hans": "店员点点头，开始扫商品。",
+              "en": "The clerk nods and starts scanning."
+            }
+          },
+          {
+            "id": "make",
+            "ja": "作ってください",
+            "meaning": {
+              "zh-Hant": "請幫我辦一張",
+              "zh-Hans": "请帮我办一张",
+              "en": "Please make me one"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員拿出申請表請你填。你不想辦新卡。",
+              "zh-Hans": "店员拿出申请表请你填。你不想办新卡。",
+              "en": "The clerk hands you a sign-up form. You didn't want a new card."
+            }
+          },
+          {
+            "id": "me",
+            "ja": "私です",
+            "meaning": {
+              "zh-Hant": "我（要用）",
+              "zh-Hans": "我（要用）",
+              "en": "Me"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說有沒有集點卡。",
+              "zh-Hans": "店员还在等你说有没有积分卡。",
+              "en": "The clerk is still waiting to hear about a points card."
+            }
+          }
+        ]
+      },
+      "drugstore-checkout.tax-free": {
+        "background": "scene-bg-drugstore-checkout",
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要辦）",
+              "zh-Hans": "麻烦了（要办）",
+              "en": "Yes, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你拿出護照，店員開始辦免稅。",
+              "zh-Hans": "你拿出护照，店员开始办免税。",
+              "en": "You show your passport, and the clerk starts the tax-free process."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員直接照一般結帳，沒有辦免稅。你原本想辦。",
+              "zh-Hans": "店员直接按普通方式结账，没有办免税。你原本想办。",
+              "en": "The clerk rings it up normally, without tax-free. You wanted it."
+            }
+          },
+          {
+            "id": "me",
+            "ja": "私です",
+            "meaning": {
+              "zh-Hant": "我（要用）",
+              "zh-Hans": "我（要用）",
+              "en": "Me"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說要不要辦免稅。",
+              "zh-Hans": "店员还在等你说要不要办免税。",
+              "en": "The clerk is still waiting to hear if you want tax-free."
+            }
+          }
+        ]
+      },
+      "drugstore-checkout.medicine-user": {
+        "background": "scene-bg-drugstore-checkout",
+        "replies": [
+          {
+            "id": "me",
+            "ja": "私です",
+            "meaning": {
+              "zh-Hant": "我（要用）",
+              "zh-Hans": "我（要用）",
+              "en": "Me"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，繼續結帳。",
+              "zh-Hans": "店员点点头，继续结账。",
+              "en": "The clerk nods and carries on."
+            }
+          },
+          {
+            "id": "family",
+            "ja": "家族が使います",
+            "meaning": {
+              "zh-Hant": "家人要用",
+              "zh-Hans": "家人要用",
+              "en": "My family will use it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員接著問用藥的人的情況。藥其實是你自己要用。",
+              "zh-Hans": "店员接着问用药的人的情况。药其实是你自己要用。",
+              "en": "The clerk asks about the person who'll take it. It's for you."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了",
+              "zh-Hans": "麻烦了",
+              "en": "Yes, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說藥是誰要用。",
+              "zh-Hans": "店员还在等你说药是谁要用。",
+              "en": "The clerk is still waiting to hear who it's for."
+            }
+          }
+        ]
+      },
+      "drugstore-checkout.bag": {
+        "background": "scene-bg-drugstore-checkout",
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把商品推給你，你裝進自己的袋子。",
+              "zh-Hans": "店员把商品推给你，你装进自己的袋子。",
+              "en": "The clerk slides the items over, and you pack them in your own bag."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要袋子）",
+              "zh-Hans": "麻烦了（要袋子）",
+              "en": "Yes, please (a bag)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員裝進一個塑膠袋，多收了袋子錢。你自己有帶袋子。",
+              "zh-Hans": "店员装进一个塑料袋，多收了袋子钱。你自己带了袋子。",
+              "en": "The clerk bags it all and charges for the bag. You brought your own."
+            }
+          },
+          {
+            "id": "me",
+            "ja": "私です",
+            "meaning": {
+              "zh-Hant": "我（要用）",
+              "zh-Hans": "我（要用）",
+              "en": "Me"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "用藥的事剛才說過了，店員在問要不要袋子。",
+              "zh-Hans": "用药的事刚才说过了，店员在问要不要袋子。",
+              "en": "You've already answered that. The clerk is asking about a bag."
+            }
+          }
+        ]
+      },
+      "drugstore-checkout.small-bags": {
+        "background": "scene-bg-drugstore-checkout",
+        "card": {
+          "title": "お買上げ明細",
+          "lines": [
+            "免税",
+            "小分け袋　3枚",
+            "合計　¥4,620"
+          ]
+        },
+        "replies": [
+          {
+            "id": "three",
+            "ja": "三枚お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩給我三個",
+              "zh-Hans": "麻烦给我三个",
+              "en": "Three, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把三個小袋放在商品旁邊。",
+              "zh-Hans": "店员把三个小袋放在商品旁边。",
+              "en": "The clerk puts three small bags next to your items."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員沒有給小袋。你想分給三個朋友。",
+              "zh-Hans": "店员没有给小袋。你想分给三个朋友。",
+              "en": "The clerk gives you none. You wanted to split the gifts for three friends."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "持っていません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "I don't have one"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說要不要小袋。",
+              "zh-Hans": "店员还在等你说要不要小袋。",
+              "en": "The clerk is still waiting to hear about small bags."
+            }
+          }
+        ]
+      },
+      "drugstore-checkout.payment": {
+        "background": "scene-bg-drugstore-checkout",
+        "note": {
+          "zh-Hant": "收銀台前的螢幕跳出付款方式。你想用交通卡付款。",
+          "zh-Hans": "收银台前的屏幕弹出付款方式。你想用交通卡付款。",
+          "en": "The screen at the register shows payment options. You want to pay with your transit card."
+        }
+      }
+    }
+  }
 }

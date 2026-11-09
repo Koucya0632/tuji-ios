@@ -619,5 +619,407 @@
         "hand-mirror"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "剪短一點",
+          "zh-Hans": "剪短一点",
+          "en": "A little shorter"
+        },
+        "intent": {
+          "zh-Hant": "你用ワン這個名字預約了剪髮，只剪不染。想剪 3 公分左右，瀏海不動，稍微打薄。",
+          "zh-Hans": "你用ワン这个名字预约了剪发，只剪不染。想剪 3 厘米左右，刘海不动，稍微打薄。",
+          "en": "You booked a haircut under the name ワン, cut only. You want about 3 cm off, the fringe left alone, and a little thinning."
+        },
+        "enter": {
+          "zh-Hant": "推開髮廊的門",
+          "zh-Hans": "推开发廊的门",
+          "en": "Push open the salon door"
+        },
+        "questions": [
+          "hair-salon.name",
+          "hair-salon.menu",
+          "hair-salon.length",
+          "hair-salon.bangs",
+          "hair-salon.thinning",
+          "hair-salon.water-temperature",
+          "hair-salon.finish"
+        ]
+      }
+    ],
+    "steps": {
+      "hair-salon.name": {
+        "background": "scene-bg-hair-salon",
+        "replies": [
+          {
+            "id": "wang",
+            "ja": "ワンです",
+            "meaning": {
+              "zh-Hant": "我姓王",
+              "zh-Hans": "我姓王",
+              "en": "It's Wang"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在預約表上找到你的名字，帶你到座位。",
+              "zh-Hans": "店员在预约表上找到你的名字，带你到座位。",
+              "en": "The clerk finds your name and shows you to a chair."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "予約していません",
+            "meaning": {
+              "zh-Hant": "沒有預約",
+              "zh-Hans": "没有预约",
+              "en": "I don't have a booking"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員翻著預約表，看還有沒有空位。你其實有預約。",
+              "zh-Hans": "店员翻着预约表，看还有没有空位。你其实有预约。",
+              "en": "The clerk checks for a free slot. You did book."
+            }
+          },
+          {
+            "id": "cut",
+            "ja": "カットだけでお願いします",
+            "meaning": {
+              "zh-Hant": "只要剪髮",
+              "zh-Hans": "只要剪发",
+              "en": "Just a cut, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說預約的名字。",
+              "zh-Hans": "店员还在等你说预约的名字。",
+              "en": "The clerk is still waiting for the name on the booking."
+            }
+          }
+        ]
+      },
+      "hair-salon.menu": {
+        "background": "scene-bg-hair-salon",
+        "replies": [
+          {
+            "id": "cut",
+            "ja": "カットだけでお願いします",
+            "meaning": {
+              "zh-Hant": "只要剪髮",
+              "zh-Hans": "只要剪发",
+              "en": "Just a cut, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "設計師拿出剪刀和梳子。",
+              "zh-Hans": "发型师拿出剪刀和梳子。",
+              "en": "The stylist takes out scissors and a comb."
+            }
+          },
+          {
+            "id": "colour",
+            "ja": "カットとカラーでお願いします",
+            "meaning": {
+              "zh-Hant": "剪髮加染髮",
+              "zh-Hans": "剪发加染发",
+              "en": "A cut and colour, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師拿出染髮色卡。你只想剪髮。",
+              "zh-Hans": "发型师拿出染发色卡。你只想剪发。",
+              "en": "The stylist brings out a colour chart. You only wanted a cut."
+            }
+          },
+          {
+            "id": "as-is",
+            "ja": "そのままで",
+            "meaning": {
+              "zh-Hant": "維持原樣",
+              "zh-Hans": "保持原样",
+              "en": "Leave it as is"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師還在等你說今天要做什麼。",
+              "zh-Hans": "发型师还在等你说今天要做什么。",
+              "en": "The stylist is still waiting to hear what you'd like today."
+            }
+          }
+        ]
+      },
+      "hair-salon.length": {
+        "background": "scene-bg-hair-salon",
+        "replies": [
+          {
+            "id": "3cm",
+            "ja": "3センチくらいでお願いします",
+            "meaning": {
+              "zh-Hant": "剪 3 公分左右",
+              "zh-Hans": "剪 3 厘米左右",
+              "en": "About 3 cm, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "設計師用手指比了 3 公分給你看。",
+              "zh-Hans": "发型师用手指比了 3 厘米给你看。",
+              "en": "The stylist shows you 3 cm between their fingers."
+            }
+          },
+          {
+            "id": "10cm",
+            "ja": "10センチくらいでお願いします",
+            "meaning": {
+              "zh-Hant": "剪 10 公分左右",
+              "zh-Hans": "剪 10 厘米左右",
+              "en": "About 10 cm, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師比到你的肩膀上方。你只想剪 3 公分。",
+              "zh-Hans": "发型师比到你的肩膀上方。你只想剪 3 厘米。",
+              "en": "The stylist marks a spot above your shoulders. You only wanted 3 cm off."
+            }
+          },
+          {
+            "id": "brows",
+            "ja": "眉くらいで",
+            "meaning": {
+              "zh-Hant": "到眉毛",
+              "zh-Hans": "到眉毛",
+              "en": "To my eyebrows"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師還在等你說後面要剪多少。",
+              "zh-Hans": "发型师还在等你说后面要剪多少。",
+              "en": "The stylist is still waiting to hear how much to take off overall."
+            }
+          }
+        ]
+      },
+      "hair-salon.bangs": {
+        "background": "scene-bg-hair-salon",
+        "replies": [
+          {
+            "id": "as-is",
+            "ja": "そのままで",
+            "meaning": {
+              "zh-Hant": "不動",
+              "zh-Hans": "不动",
+              "en": "Leave them"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "設計師沒有動你的瀏海。",
+              "zh-Hans": "发型师没有动你的刘海。",
+              "en": "The stylist leaves your fringe alone."
+            }
+          },
+          {
+            "id": "brows",
+            "ja": "眉くらいで",
+            "meaning": {
+              "zh-Hant": "到眉毛",
+              "zh-Hans": "到眉毛",
+              "en": "To my eyebrows"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師把瀏海剪到眉毛。你想留原本的長度。",
+              "zh-Hans": "发型师把刘海剪到眉毛。你想留原来的长度。",
+              "en": "The stylist cuts your fringe to your eyebrows. You wanted it left as it was."
+            }
+          },
+          {
+            "id": "3cm",
+            "ja": "3センチくらいでお願いします",
+            "meaning": {
+              "zh-Hant": "剪 3 公分左右",
+              "zh-Hans": "剪 3 厘米左右",
+              "en": "About 3 cm, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "長度剛才說過了，設計師在問瀏海。",
+              "zh-Hans": "长度刚才说过了，发型师在问刘海。",
+              "en": "You've already given the length. The stylist is asking about the fringe."
+            }
+          }
+        ]
+      },
+      "hair-salon.thinning": {
+        "background": "scene-bg-hair-salon",
+        "replies": [
+          {
+            "id": "a-little",
+            "ja": "少しお願いします",
+            "meaning": {
+              "zh-Hant": "稍微打薄",
+              "zh-Hans": "稍微打薄",
+              "en": "A little, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "設計師拿出打薄剪，稍微打薄。",
+              "zh-Hans": "发型师拿出打薄剪，稍微打薄。",
+              "en": "The stylist picks up the thinning shears and takes a little out."
+            }
+          },
+          {
+            "id": "as-is",
+            "ja": "そのままで",
+            "meaning": {
+              "zh-Hant": "不用",
+              "zh-Hans": "不用",
+              "en": "Leave it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師沒有打薄。你想讓頭髮輕一點。",
+              "zh-Hans": "发型师没有打薄。你想让头发轻一点。",
+              "en": "The stylist doesn't thin it. You wanted it lighter."
+            }
+          },
+          {
+            "id": "brows",
+            "ja": "眉くらいで",
+            "meaning": {
+              "zh-Hant": "到眉毛",
+              "zh-Hans": "到眉毛",
+              "en": "To my eyebrows"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "瀏海剛才說過了，設計師在問要不要打薄。",
+              "zh-Hans": "刘海刚才说过了，发型师在问要不要打薄。",
+              "en": "The fringe is settled. The stylist is asking about thinning."
+            }
+          }
+        ]
+      },
+      "hair-salon.water-temperature": {
+        "background": "scene-bg-hair-salon",
+        "note": {
+          "zh-Hant": "洗頭的時候，水溫剛好。",
+          "zh-Hans": "洗头的时候，水温正好。",
+          "en": "While your hair is washed, the water feels just right."
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "沒問題",
+              "zh-Hans": "没问题",
+              "en": "It's fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "助理繼續幫你洗頭。",
+              "zh-Hans": "助理继续帮你洗头。",
+              "en": "The assistant carries on washing."
+            }
+          },
+          {
+            "id": "hot",
+            "ja": "ちょっと熱いです",
+            "meaning": {
+              "zh-Hant": "有點燙",
+              "zh-Hans": "有点烫",
+              "en": "It's a bit hot"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "助理把水調涼了一點。水溫其實剛好。",
+              "zh-Hans": "助理把水调凉了一点。水温其实正好。",
+              "en": "The assistant cools the water. It was fine."
+            }
+          },
+          {
+            "id": "a-little",
+            "ja": "少しお願いします",
+            "meaning": {
+              "zh-Hant": "稍微（打薄）",
+              "zh-Hans": "稍微（打薄）",
+              "en": "A little, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "打薄剛才說過了，助理在問水溫。",
+              "zh-Hans": "打薄刚才说过了，助理在问水温。",
+              "en": "You've already answered that. The assistant is asking about the water."
+            }
+          }
+        ]
+      },
+      "hair-salon.finish": {
+        "background": "scene-bg-hair-salon",
+        "card": {
+          "title": "本日のメニュー",
+          "lines": [
+            "カット",
+            "毛先　約3cm",
+            "前髪　そのまま",
+            "すき　少し"
+          ]
+        },
+        "note": {
+          "zh-Hant": "設計師拿鏡子給你看後面。長度剛好。",
+          "zh-Hans": "发型师拿镜子给你看后面。长度正好。",
+          "en": "The stylist holds up a mirror behind you. The length is right."
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "可以",
+              "zh-Hans": "可以",
+              "en": "That's fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "設計師放下鏡子，幫你吹乾整理。",
+              "zh-Hans": "发型师放下镜子，帮你吹干整理。",
+              "en": "The stylist puts the mirror down and blow-dries your hair."
+            }
+          },
+          {
+            "id": "shorter",
+            "ja": "もう少し短くしてください",
+            "meaning": {
+              "zh-Hant": "再剪短一點",
+              "zh-Hans": "再剪短一点",
+              "en": "A bit shorter, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "設計師又剪短了一些。你原本覺得剛好。",
+              "zh-Hans": "发型师又剪短了一些。你原本觉得正好。",
+              "en": "The stylist cuts a bit more. You were happy with it."
+            }
+          },
+          {
+            "id": "cut",
+            "ja": "カットだけでお願いします",
+            "meaning": {
+              "zh-Hant": "只要剪髮",
+              "zh-Hans": "只要剪发",
+              "en": "Just a cut, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "剪都剪完了，設計師在問後面的長度可不可以。",
+              "zh-Hans": "剪都剪完了，发型师在问后面的长度可不可以。",
+              "en": "The cut is done. The stylist is asking if the back looks right."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

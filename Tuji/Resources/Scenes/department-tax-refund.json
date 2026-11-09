@@ -690,5 +690,352 @@
       ],
       "reviewNote": "出境時海關確認的流程（地點、出示什麼、是否要帶商品）新制剛上路，「出国時に税関でパスポートをお見せください」標待確認，要核對官方說明。"
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "辦退稅",
+          "zh-Hans": "办退税",
+          "en": "Claiming a tax refund"
+        },
+        "intent": {
+          "zh-Hant": "你今天在百貨公司買了東西，要到櫃台辦退稅。護照和今天的收據都帶著。15 號出境，想把稅退到信用卡。",
+          "zh-Hans": "你今天在商场买了东西，要到柜台办退税。护照和今天的小票都带着。15 号出境，想把税退到信用卡。",
+          "en": "You've been shopping at the department store today and want a tax refund. You have your passport and today's receipts. You leave Japan on the 15th and want the refund on your credit card."
+        },
+        "enter": {
+          "zh-Hant": "走到退稅櫃台",
+          "zh-Hans": "走到退税柜台",
+          "en": "Go to the tax refund counter"
+        },
+        "questions": [
+          "department-tax-refund.queue-ticket",
+          "department-tax-refund.passport",
+          "department-tax-refund.receipts",
+          "department-tax-refund.departure-date",
+          "department-tax-refund.refund-method",
+          "department-tax-refund.fee",
+          "department-tax-refund.customs"
+        ]
+      }
+    ],
+    "steps": {
+      "department-tax-refund.queue-ticket": {
+        "background": "scene-bg-department-tax-refund",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "わかりました",
+            "meaning": {
+              "zh-Hant": "知道了",
+              "zh-Hans": "知道了",
+              "en": "Understood"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你取了號碼牌，在旁邊等叫號。",
+              "zh-Hans": "你取了号码牌，在旁边等叫号。",
+              "en": "You take a number and wait to be called."
+            }
+          },
+          {
+            "id": "hurry",
+            "ja": "急いでいます",
+            "meaning": {
+              "zh-Hant": "我在趕時間",
+              "zh-Hans": "我在赶时间",
+              "en": "I'm in a hurry"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還是請你先取號碼牌。你其實不趕時間。",
+              "zh-Hans": "店员还是请你先取号码牌。你其实不赶时间。",
+              "en": "The clerk still asks you to take a number. You aren't in a rush."
+            }
+          },
+          {
+            "id": "15th",
+            "ja": "十五日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在指著號碼牌機。",
+              "zh-Hans": "店员还在指着取号机。",
+              "en": "The clerk is still pointing at the ticket machine."
+            }
+          }
+        ]
+      },
+      "department-tax-refund.passport": {
+        "background": "scene-bg-department-tax-refund",
+        "card": {
+          "title": "番号札",
+          "lines": [
+            "受付番号　A-028"
+          ]
+        },
+        "replies": [
+          {
+            "id": "here",
+            "ja": "はい、どうぞ",
+            "meaning": {
+              "zh-Hant": "好，給你",
+              "zh-Hans": "好，给你",
+              "en": "Here you are"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員接過護照，開始輸入資料。",
+              "zh-Hans": "店员接过护照，开始输入信息。",
+              "en": "The clerk takes your passport and starts entering details."
+            }
+          },
+          {
+            "id": "hotel",
+            "ja": "ホテルにあります",
+            "meaning": {
+              "zh-Hant": "放在飯店",
+              "zh-Hans": "放在酒店",
+              "en": "It's at the hotel"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員停下來，等你拿出護照。你的護照其實在包包裡。",
+              "zh-Hans": "店员停下来，等你拿出护照。你的护照其实在包里。",
+              "en": "The clerk stops and waits for it. Your passport is in your bag."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "クレジットカード",
+            "meaning": {
+              "zh-Hant": "信用卡",
+              "zh-Hans": "信用卡",
+              "en": "Credit card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你的護照。",
+              "zh-Hans": "店员还在等你的护照。",
+              "en": "The clerk is still waiting for your passport."
+            }
+          }
+        ]
+      },
+      "department-tax-refund.receipts": {
+        "background": "scene-bg-department-tax-refund",
+        "replies": [
+          {
+            "id": "here",
+            "ja": "はい、これです",
+            "meaning": {
+              "zh-Hant": "好，就是這些",
+              "zh-Hans": "好，就是这些",
+              "en": "Yes, here they are"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把收據一張一張對過。",
+              "zh-Hans": "店员把小票一张一张对过。",
+              "en": "The clerk checks the receipts one by one."
+            }
+          },
+          {
+            "id": "lost",
+            "ja": "捨てました",
+            "meaning": {
+              "zh-Hant": "丟掉了",
+              "zh-Hans": "扔掉了",
+              "en": "I threw them away"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員停下手續，等你拿出收據。你的收據其實都在錢包裡。",
+              "zh-Hans": "店员停下手续，等你拿出小票。你的小票其实都在钱包里。",
+              "en": "The clerk stops and waits for them. Your receipts are in your wallet."
+            }
+          },
+          {
+            "id": "15th",
+            "ja": "十五日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你拿出收據。",
+              "zh-Hans": "店员还在等你拿出小票。",
+              "en": "The clerk is still waiting for your receipts."
+            }
+          }
+        ]
+      },
+      "department-tax-refund.departure-date": {
+        "background": "scene-bg-department-tax-refund",
+        "replies": [
+          {
+            "id": "15th",
+            "ja": "十五日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在電腦上輸入 15 號。",
+              "zh-Hans": "店员在电脑上输入 15 号。",
+              "en": "The clerk types in the 15th."
+            }
+          },
+          {
+            "id": "5th",
+            "ja": "五日です",
+            "meaning": {
+              "zh-Hant": "5 號",
+              "zh-Hans": "5 号",
+              "en": "The 5th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員輸入了 5 號。你是 15 號出境。",
+              "zh-Hans": "店员输入了 5 号。你是 15 号出境。",
+              "en": "The clerk types in the 5th. You leave on the 15th."
+            }
+          },
+          {
+            "id": "here",
+            "ja": "はい、これです",
+            "meaning": {
+              "zh-Hant": "好，就是這些",
+              "zh-Hans": "好，就是这些",
+              "en": "Yes, here they are"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "收據剛才看過了，店員在問哪天出境。",
+              "zh-Hans": "小票刚才看过了，店员在问哪天出境。",
+              "en": "The receipts are done. The clerk is asking when you leave."
+            }
+          }
+        ]
+      },
+      "department-tax-refund.refund-method": {
+        "background": "scene-bg-department-tax-refund",
+        "note": {
+          "zh-Hant": "櫃台的畫面跳出退款方式。你想退到信用卡。",
+          "zh-Hans": "柜台的屏幕弹出退款方式。你想退到信用卡。",
+          "en": "The counter screen shows refund options. You want it on your credit card."
+        }
+      },
+      "department-tax-refund.fee": {
+        "background": "scene-bg-department-tax-refund",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "可以",
+              "zh-Hans": "可以",
+              "en": "That's fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，繼續辦。",
+              "zh-Hans": "店员点点头，继续办。",
+              "en": "The clerk nods and carries on."
+            }
+          },
+          {
+            "id": "stop",
+            "ja": "じゃあ、やめておきます",
+            "meaning": {
+              "zh-Hant": "那就不辦了",
+              "zh-Hans": "那就不办了",
+              "en": "Then I'll skip it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員停下手續，把護照和收據還給你。你其實想辦退稅。",
+              "zh-Hans": "店员停下手续，把护照和小票还给你。你其实想办退税。",
+              "en": "The clerk stops and hands back your passport and receipts. You wanted the refund."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "クレジットカード",
+            "meaning": {
+              "zh-Hant": "信用卡",
+              "zh-Hans": "信用卡",
+              "en": "Credit card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "退款方式剛才選好了，店員在問手續費可不可以。",
+              "zh-Hans": "退款方式刚才选好了，店员在问手续费可不可以。",
+              "en": "The refund method is set. The clerk is asking about the fee."
+            }
+          }
+        ]
+      },
+      "department-tax-refund.customs": {
+        "background": "scene-bg-department-tax-refund",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "わかりました",
+            "meaning": {
+              "zh-Hant": "知道了",
+              "zh-Hans": "知道了",
+              "en": "Understood"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把護照和文件還給你。",
+              "zh-Hans": "店员把护照和文件还给你。",
+              "en": "The clerk hands back your passport and papers."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No need"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員以為你聽錯了，又說一次出境時要到海關。",
+              "zh-Hans": "店员以为你听错了，又说一次出境时要到海关。",
+              "en": "The clerk thinks you misheard and repeats that you need to see customs when you leave."
+            }
+          },
+          {
+            "id": "15th",
+            "ja": "十五日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "日期剛才說過了，店員在等你回應海關的事。",
+              "zh-Hans": "日期刚才说过了，店员在等你回应海关的事。",
+              "en": "You've already given the date. The clerk is waiting for you to acknowledge the customs step."
+            }
+          }
+        ]
+      }
+    }
+  }
 }
