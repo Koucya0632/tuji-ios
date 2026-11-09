@@ -352,7 +352,7 @@ extension ScenePracticeView {
                 )
                 .padding(.top, Space.s3)
             }
-            Text("畫面依店家不同。")
+            Text("畫面依店家不同")
                 .font(.scene(13, bold: false))
                 .foregroundStyle(.tujiInk3)
                 .padding(.horizontal, Space.s2)

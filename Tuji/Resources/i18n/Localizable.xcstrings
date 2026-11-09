@@ -29089,30 +29089,6 @@
         }
       }
     },
-    "畫面依店家不同。" : {
-      "comment" : "場面練習: Under a drawn register screen.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Real screens vary by shop."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "実際の画面は店によって違います。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "屏幕因店家而异。"
-          }
-        }
-      }
-    },
     "%@練完了" : {
       "comment" : "場面練習: Finished screen title; the argument is the scene's title.",
       "extractionState" : "manual",

@@ -183,7 +183,7 @@ struct SceneDetailView: View {
                 .frame(minHeight: 44)
                 .padding(.top, 6)
                 if question.kind == .screen {
-                    Text("畫面依店家不同。")
+                    Text("畫面依店家不同")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                 }
