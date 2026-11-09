@@ -143,3 +143,24 @@ final class ScenePracticeSession {
         }
     }
 }
+
+extension SceneQuestion {
+    /// The choices in the order one phrasing shows them. Content lists the
+    /// correct one first more often than not, so the order is mixed by the
+    /// phrasing id: stable while that phrasing is on screen, different from
+    /// one 問法 to the next. FNV-1a then a splitmix64 finish, because `Hasher`
+    /// is seeded per launch and FNV alone barely mixes the last byte, which is
+    /// all that tells choices `a`, `b` and `c` apart.
+    nonisolated func choices(for phrasing: PhrasingID) -> [SceneChoice] {
+        func rank(_ choice: SceneChoice) -> UInt64 {
+            var z = (phrasing.rawValue + "|" + choice.id).utf8.reduce(14_695_981_039_346_656_037) { hash, byte in
+                (hash ^ UInt64(byte)) &* 1_099_511_628_211
+            }
+            z &+= 0x9E3779B97F4A7C15
+            z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+            z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+            return z ^ (z >> 31)
+        }
+        return self.choices.sorted { rank($0) < rank($1) }
+    }
+}

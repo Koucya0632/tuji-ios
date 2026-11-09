@@ -209,6 +209,29 @@ struct SceneContentTests {
         }
     }
 
+    /// The content lists the right answer first more than half the time; on
+    /// screen it must not land in one slot that often.
+    @Test
+    func theRightAnswerIsSpreadAcrossThePositionsAListeningQuestionShows() throws {
+        var positions: [Int: Int] = [:]
+        var shown = 0
+        for (_, question) in try self.allQuestions() where question.kind == .listening {
+            for phrasing in question.phrasings {
+                let order = question.choices(for: phrasing.id)
+                #expect(order == question.choices(for: phrasing.id), "\(phrasing.id.rawValue): stable")
+                #expect(Set(order.map(\.id)) == Set(question.choices.map(\.id)), "\(phrasing.id.rawValue)")
+                let position = order.firstIndex { $0.correct }
+                #expect(position != nil, "\(phrasing.id.rawValue)")
+                positions[position ?? -1, default: 0] += 1
+                shown += 1
+            }
+        }
+        for slot in 0..<3 {
+            let share = Double(positions[slot] ?? 0) / Double(shown)
+            #expect((0.2...0.45).contains(share), "slot \(slot): \(positions[slot] ?? 0) of \(shown)")
+        }
+    }
+
     @Test
     func aJapaneseInterfaceReadsTheEnglishCopy() {
         let text = LocalizedText(zhHant: "加熱", zhHans: "加热", en: "Heat")

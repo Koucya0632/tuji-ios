@@ -131,7 +131,7 @@ struct ScenePracticeView: View {
                             .foregroundStyle(.tujiInk)
                             .padding(.horizontal, Space.s2)
                             .padding(.top, 20)
-                        self.choices(question, tried: tried, revealed: revealed, session: session)
+                        self.choices(question, step: step, tried: tried, revealed: revealed, session: session)
                             .padding(.top, Space.s3)
                     case .screen:
                         self.screenQuestion(question, step: step, tried: tried, revealed: revealed, session: session)
@@ -245,6 +245,7 @@ struct ScenePracticeView: View {
 
     private func choices(
         _ question: SceneQuestion,
+        step: PracticeStep,
         tried: Set<String>,
         revealed: Bool,
         session: ScenePracticeSession
@@ -252,10 +253,11 @@ struct ScenePracticeView: View {
         -> some View
     {
         let letters = ["A", "B", "C", "D"]
-        let shown = revealed ? question.choices.filter(\.correct) : question.choices
+        let ordered = question.choices(for: step.phrasing.id)
+        let shown = revealed ? ordered.filter(\.correct) : ordered
         return VStack(spacing: Space.s2) {
             ForEach(shown) { choice in
-                let letter = letters[question.choices.firstIndex(of: choice) ?? 0]
+                let letter = letters[ordered.firstIndex(of: choice) ?? 0]
                 let isTried = tried.contains(choice.id)
                 Button { session.answer(choice.id) } label: {
                     HStack(spacing: Space.s3) {
