@@ -154,13 +154,15 @@ struct SceneLinksTests {
 
 struct SceneIndexTests {
     @Test
-    func releasedScenesAreGroupedAndFree() throws {
+    func releasedScenesAreGroupedAndTheFreeOnesAreOut() throws {
         let index = try SceneCatalog.index(bundle: .main)
         let catalog = try SceneCatalog.load(bundle: .main)
         #expect(!index.released.isEmpty)
         for id in index.released {
             #expect(index.ids.contains(id), "\(id.rawValue)")
-            #expect(catalog.scene(id)?.access == .free, "\(id.rawValue)")
+        }
+        for id in index.ids where catalog.scene(id)?.access == .free {
+            #expect(index.released.contains(id), "\(id.rawValue)")
         }
         #expect(Set(index.groups.map(\.id)).count == index.groups.count)
     }
