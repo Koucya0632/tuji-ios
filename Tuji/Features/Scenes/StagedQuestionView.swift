@@ -213,23 +213,29 @@ struct StagedQuestionView: View {
             if let chosen, tried.contains("reply:" + chosen.id) {
                 self.result(chosen.result, fits: false)
             }
-            Text("你要怎麼回？")
+            Text(self.stage.replies?.contains { !$0.isSpoken } == true ? "你要怎麼做？" : "你要怎麼回？")
                 .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
             ForEach(self.stage.replies(for: self.step.phrasing.id)) { reply in
                 let missed = tried.contains("reply:" + reply.id)
                 Button {
                     self.chosen = reply
-                    SceneAudio.say(reply)
+                    if reply.isSpoken { SceneAudio.say(reply) }
                     self.session.reply(reply)
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: reply.ja)
-                            .font(.tujiH3)
-                            .foregroundStyle(missed ? .tujiInk3 : .tujiInk)
-                        Text(verbatim: reply.meaning.resolved(self.language))
-                            .font(.scene(13, bold: false))
-                            .foregroundStyle(.tujiInk2)
+                        if reply.isSpoken {
+                            Text(verbatim: reply.ja)
+                                .font(.tujiH3)
+                                .foregroundStyle(missed ? .tujiInk3 : .tujiInk)
+                            Text(verbatim: reply.meaning.resolved(self.language))
+                                .font(.scene(13, bold: false))
+                                .foregroundStyle(.tujiInk2)
+                        } else {
+                            Text(verbatim: reply.meaning.resolved(self.language))
+                                .font(.tujiH3)
+                                .foregroundStyle(missed ? .tujiInk3 : .tujiInk)
+                        }
                     }
                     .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                     .padding(.horizontal, Space.s3)

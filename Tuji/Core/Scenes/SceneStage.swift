@@ -76,6 +76,13 @@ nonisolated struct StageReply: Hashable, Decodable, Identifiable {
     let result: LocalizedText
     /// Props that appear as the result.
     let show: [String]?
+    /// False for something done rather than said (taking the plate off the
+    /// belt): it is shown by its meaning and not read aloud.
+    let says: Bool?
+
+    var isSpoken: Bool {
+        self.says ?? true
+    }
 }
 
 nonisolated struct StageMachine: Hashable, Decodable {

@@ -727,5 +727,221 @@
         "restaurant-bill"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "兩個人吃壽司",
+          "zh-Hans": "两个人吃寿司",
+          "en": "Sushi for two"
+        },
+        "intent": {
+          "zh-Hant": "你和朋友兩個人，坐哪裡都可以。你不吃芥末，想點鮪魚，吃完用平板結帳。",
+          "zh-Hans": "你和朋友两个人，坐哪里都可以。你不吃芥末，想点金枪鱼，吃完用平板结账。",
+          "en": "There are two of you and any seat is fine. You don't eat wasabi, you want tuna, and you'll pay through the tablet when you're done."
+        },
+        "enter": {
+          "zh-Hant": "走到受付機",
+          "zh-Hans": "走到取号机",
+          "en": "Go to the reception machine"
+        },
+        "questions": [
+          "conveyor-sushi.reception",
+          "conveyor-sushi.number-called",
+          "conveyor-sushi.self-serve-tea",
+          "conveyor-sushi.no-wasabi",
+          "conveyor-sushi.order-arriving",
+          "conveyor-sushi.checkout"
+        ]
+      }
+    ],
+    "steps": {
+      "conveyor-sushi.reception": {
+        "background": "scene-bg-conveyor-sushi",
+        "note": {
+          "zh-Hant": "門口的受付機已經按好 2 名。坐哪裡都可以。",
+          "zh-Hans": "门口的取号机已经按好 2 位。坐哪里都可以。",
+          "en": "You've already entered 2 people on the machine by the door. Any seat is fine."
+        }
+      },
+      "conveyor-sushi.number-called": {
+        "background": "scene-bg-conveyor-sushi",
+        "card": {
+          "title": "受付番号",
+          "lines": [
+            "25番",
+            "2名様",
+            "どちらでも"
+          ]
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "在這裡（舉手）",
+              "zh-Hans": "在这里（举手）",
+              "en": "Here (raising your hand)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員帶你們到 5 號桌。",
+              "zh-Hans": "店员带你们到 5 号桌。",
+              "en": "The clerk takes you to table 5."
+            }
+          },
+          {
+            "id": "counter",
+            "ja": "カウンターがいいです",
+            "meaning": {
+              "zh-Hant": "想坐吧檯",
+              "zh-Hans": "想坐吧台",
+              "en": "We'd like the counter"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員請你們再等吧檯的空位。你們原本坐哪裡都可以。",
+              "zh-Hans": "店员请你们再等吧台的空位。你们原本坐哪里都可以。",
+              "en": "The clerk asks you to wait for counter seats. Any seat was fine with you."
+            }
+          },
+          {
+            "id": "no-wasabi",
+            "ja": "さび抜きで",
+            "meaning": {
+              "zh-Hant": "不要芥末",
+              "zh-Hans": "不要芥末",
+              "en": "No wasabi"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒入座，店員在叫 25 號。",
+              "zh-Hans": "还没入座，店员在叫 25 号。",
+              "en": "You're not seated yet. The clerk is calling number 25."
+            }
+          }
+        ]
+      },
+      "conveyor-sushi.self-serve-tea": {
+        "background": "scene-bg-conveyor-sushi",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好",
+              "zh-Hans": "好",
+              "en": "OK"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你把杯子放在桌邊的出水口下，泡了一杯粉茶。",
+              "zh-Hans": "你把杯子放在桌边的出水口下，泡了一杯粉茶。",
+              "en": "You put a cup under the hot-water tap at the table and make some powdered tea."
+            }
+          },
+          {
+            "id": "bring",
+            "ja": "お茶お願いします",
+            "meaning": {
+              "zh-Hant": "請給我茶",
+              "zh-Hans": "请给我茶",
+              "en": "Some tea, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員指了指桌上的粉茶和熱水，還是要你自己泡。",
+              "zh-Hans": "店员指了指桌上的粉茶和热水，还是要你自己泡。",
+              "en": "The clerk points to the tea powder and hot water. You still make it yourself."
+            }
+          },
+          {
+            "id": "either",
+            "ja": "どちらでも",
+            "meaning": {
+              "zh-Hant": "哪裡都可以",
+              "zh-Hans": "哪里都可以",
+              "en": "Either is fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "已經入座了，店員在說茶要自己泡。",
+              "zh-Hans": "已经入座了，店员在说茶要自己泡。",
+              "en": "You're already seated. The clerk is explaining the self-serve tea."
+            }
+          }
+        ]
+      },
+      "conveyor-sushi.no-wasabi": {
+        "background": "scene-bg-conveyor-sushi",
+        "note": {
+          "zh-Hant": "你用桌邊的平板點鮪魚。你不吃芥末。",
+          "zh-Hans": "你用桌边的平板点金枪鱼。你不吃芥末。",
+          "en": "You order tuna on the tablet by the table. You don't eat wasabi."
+        }
+      },
+      "conveyor-sushi.order-arriving": {
+        "background": "scene-bg-conveyor-sushi",
+        "replies": [
+          {
+            "id": "take",
+            "ja": "お皿を取る",
+            "meaning": {
+              "zh-Hant": "拿下盤子",
+              "zh-Hans": "拿下盘子",
+              "en": "Take the plate"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你把鮪魚從軌道上拿下來，送餐台退了回去。",
+              "zh-Hans": "你把金枪鱼从轨道上拿下来，送餐台退了回去。",
+              "en": "You lift the tuna off the track and the tray slides back."
+            },
+            "says": false
+          },
+          {
+            "id": "leave",
+            "ja": "そのまま待つ",
+            "meaning": {
+              "zh-Hant": "先不拿，等著",
+              "zh-Hans": "先不拿，等着",
+              "en": "Leave it and wait"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "盤子一直停在桌邊，你點的鮪魚還沒吃到。",
+              "zh-Hans": "盘子一直停在桌边，你点的金枪鱼还没吃到。",
+              "en": "The plate just sits by the table, and your tuna goes uneaten."
+            },
+            "says": false
+          },
+          {
+            "id": "no-wasabi",
+            "ja": "さび抜きで",
+            "meaning": {
+              "zh-Hant": "不要芥末",
+              "zh-Hans": "不要芥末",
+              "en": "No wasabi"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "已經點好了，播報在說你點的送到了，請拿。",
+              "zh-Hans": "已经点好了，播报在说你点的送到了，请拿。",
+              "en": "You've already ordered. The announcement says your order is here to take."
+            }
+          }
+        ]
+      },
+      "conveyor-sushi.checkout": {
+        "background": "scene-bg-conveyor-sushi",
+        "note": {
+          "zh-Hant": "吃完了，你在平板上按了結帳。",
+          "zh-Hans": "吃完了，你在平板上按了结账。",
+          "en": "You've finished, and you tap checkout on the tablet."
+        }
+      }
+    }
+  }
 }

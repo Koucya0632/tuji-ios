@@ -528,5 +528,346 @@
         "shipping-label"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "行李寄到成田",
+          "zh-Hans": "行李寄到成田",
+          "en": "Bags to Narita"
+        },
+        "intent": {
+          "zh-Hant": "你是ワン，想從飯店把兩件行李寄到成田機場，15 日搭機。行李裡沒有貴重品或易碎物，航班在手機的電子機票上。",
+          "zh-Hans": "你是ワン，想从酒店把两件行李寄到成田机场，15 日坐飞机。行李里没有贵重物品或易碎品，航班在手机的电子机票上。",
+          "en": "You're ワン (Wang) and want to send two bags from the hotel to Narita Airport for your flight on the 15th. Nothing valuable or fragile is inside, and your flight is on the e-ticket on your phone."
+        },
+        "enter": {
+          "zh-Hant": "走到櫃台",
+          "zh-Hans": "走到前台",
+          "en": "Walk up to the desk"
+        },
+        "questions": [
+          "luggage-delivery.count",
+          "luggage-delivery.contents",
+          "luggage-delivery.airport",
+          "luggage-delivery.date",
+          "luggage-delivery.flight",
+          "luggage-delivery.form"
+        ]
+      }
+    ],
+    "steps": {
+      "luggage-delivery.count": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "two",
+            "ja": "2つです",
+            "meaning": {
+              "zh-Hant": "兩件",
+              "zh-Hans": "两件",
+              "en": "Two"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台拿出兩張寄件單。",
+              "zh-Hans": "前台拿出两张寄件单。",
+              "en": "The clerk takes out two shipping forms."
+            }
+          },
+          {
+            "id": "one",
+            "ja": "1つです",
+            "meaning": {
+              "zh-Hant": "一件",
+              "zh-Hans": "一件",
+              "en": "One"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台只拿出一張寄件單。你有兩件要寄。",
+              "zh-Hans": "前台只拿出一张寄件单。你有两件要寄。",
+              "en": "The clerk takes out just one form. You have two bags to send."
+            }
+          },
+          {
+            "id": "narita",
+            "ja": "成田です",
+            "meaning": {
+              "zh-Hant": "成田",
+              "zh-Hans": "成田",
+              "en": "Narita"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說要寄幾件。",
+              "zh-Hans": "前台还在等你说要寄几件。",
+              "en": "The clerk is still waiting to hear how many bags."
+            }
+          }
+        ]
+      },
+      "luggage-delivery.contents": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "none",
+            "ja": "入っていません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "No, there aren't"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台點點頭，接著往下問。",
+              "zh-Hans": "前台点点头，接着往下问。",
+              "en": "The clerk nods and moves on."
+            }
+          },
+          {
+            "id": "laptop",
+            "ja": "パソコンが入っています",
+            "meaning": {
+              "zh-Hant": "裡面有電腦",
+              "zh-Hans": "里面有电脑",
+              "en": "There's a laptop in there"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台停下來，說要先確認一下。你的行李裡其實沒有電腦。",
+              "zh-Hans": "前台停下来，说要先确认一下。你的行李里其实没有电脑。",
+              "en": "The clerk stops to check first. There's no laptop in your bags."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "2つです",
+            "meaning": {
+              "zh-Hant": "兩件",
+              "zh-Hans": "两件",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "件數剛才說過了，櫃台在問裡面有沒有貴重品或易碎物。",
+              "zh-Hans": "件数刚才说过了，前台在问里面有没有贵重物品或易碎品。",
+              "en": "You've already said how many. The clerk is asking about valuables and fragile items."
+            }
+          }
+        ]
+      },
+      "luggage-delivery.airport": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "narita",
+            "ja": "成田です",
+            "meaning": {
+              "zh-Hant": "成田",
+              "zh-Hans": "成田",
+              "en": "Narita"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在單子上寫了成田空港。",
+              "zh-Hans": "前台在单子上写了成田空港。",
+              "en": "The clerk writes Narita Airport on the form."
+            }
+          },
+          {
+            "id": "haneda",
+            "ja": "羽田です",
+            "meaning": {
+              "zh-Hant": "羽田",
+              "zh-Hans": "羽田",
+              "en": "Haneda"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台寫了羽田空港。你的飛機是從成田出發。",
+              "zh-Hans": "前台写了羽田空港。你的飞机是从成田出发。",
+              "en": "The clerk writes Haneda. Your flight leaves from Narita."
+            }
+          },
+          {
+            "id": "15th",
+            "ja": "15日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說哪個機場。",
+              "zh-Hans": "前台还在等你说哪个机场。",
+              "en": "The clerk is still waiting to hear which airport."
+            }
+          }
+        ]
+      },
+      "luggage-delivery.date": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "15th",
+            "ja": "15日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在單子上寫了 15 日。",
+              "zh-Hans": "前台在单子上写了 15 日。",
+              "en": "The clerk writes the 15th on the form."
+            }
+          },
+          {
+            "id": "16th",
+            "ja": "16日です",
+            "meaning": {
+              "zh-Hant": "16 號",
+              "zh-Hans": "16 号",
+              "en": "The 16th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台寫了 16 日。你是 15 日的飛機。",
+              "zh-Hans": "前台写了 16 日。你是 15 日的飞机。",
+              "en": "The clerk writes the 16th. Your flight is on the 15th."
+            }
+          },
+          {
+            "id": "narita",
+            "ja": "成田です",
+            "meaning": {
+              "zh-Hant": "成田",
+              "zh-Hans": "成田",
+              "en": "Narita"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "機場剛才說過了，櫃台在問哪天出發。",
+              "zh-Hans": "机场刚才说过了，前台在问哪天出发。",
+              "en": "You've already said the airport. The clerk is asking which day you fly."
+            }
+          }
+        ]
+      },
+      "luggage-delivery.flight": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "this",
+            "ja": "これです",
+            "meaning": {
+              "zh-Hant": "這個（給他看電子機票）",
+              "zh-Hans": "这个（给他看电子机票）",
+              "en": "This one (showing your e-ticket)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台看了手機，抄下 BR197。",
+              "zh-Hans": "前台看了手机，抄下 BR197。",
+              "en": "The clerk looks at your phone and copies down BR197."
+            }
+          },
+          {
+            "id": "wang",
+            "ja": "ワンです",
+            "meaning": {
+              "zh-Hant": "我姓王",
+              "zh-Hans": "我姓王",
+              "en": "It's Wang"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台以為你在報名字，又問一次航班編號。",
+              "zh-Hans": "前台以为你在报名字，又问一次航班号。",
+              "en": "The clerk takes it as your name and asks again for the flight number."
+            }
+          },
+          {
+            "id": "15th",
+            "ja": "15日です",
+            "meaning": {
+              "zh-Hant": "15 號",
+              "zh-Hans": "15 号",
+              "en": "The 15th"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "日期剛才說過了，櫃台在問航班編號。",
+              "zh-Hans": "日期刚才说过了，前台在问航班号。",
+              "en": "You've already given the date. The clerk is asking for the flight number."
+            }
+          }
+        ]
+      },
+      "luggage-delivery.form": {
+        "background": "scene-bg-hotel-check-in",
+        "card": {
+          "title": "お届け先",
+          "lines": [
+            "成田空港",
+            "ご搭乗日　15日",
+            "便名　BR197",
+            "2個口"
+          ]
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好",
+              "zh-Hans": "好",
+              "en": "Sure"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你寫好名字、電話和航班交回，櫃台把存根遞給你。",
+              "zh-Hans": "你写好名字、电话和航班交回，前台把存根递给你。",
+              "en": "You fill in your name, phone and flight, hand it back, and get the stub."
+            }
+          },
+          {
+            "id": "write",
+            "ja": "書いてもらえますか",
+            "meaning": {
+              "zh-Hant": "可以幫我寫嗎",
+              "zh-Hans": "可以帮我写吗",
+              "en": "Could you write it for me?"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台把筆遞給你，請你自己填。",
+              "zh-Hans": "前台把笔递给你，请你自己填。",
+              "en": "The clerk hands you a pen and asks you to fill it in yourself."
+            }
+          },
+          {
+            "id": "narita",
+            "ja": "成田です",
+            "meaning": {
+              "zh-Hant": "成田",
+              "zh-Hans": "成田",
+              "en": "Narita"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "機場剛才說過了，櫃台在等你填寄件單。",
+              "zh-Hans": "机场刚才说过了，前台在等你填寄件单。",
+              "en": "You've already said the airport. The clerk is waiting for you to fill in the form."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

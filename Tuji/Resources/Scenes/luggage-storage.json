@@ -438,5 +438,294 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "寄放到傍晚",
+          "zh-Hans": "寄存到傍晚",
+          "en": "Bags until this evening"
+        },
+        "intent": {
+          "zh-Hant": "你是ワン，剛退好房，想把兩件行李寄放在櫃台，傍晚 5 點左右回來拿。護照和電腦帶在身上，行李裡沒有貴重品或易碎物。",
+          "zh-Hans": "你是ワン，刚退好房，想把两件行李寄存在前台，傍晚 5 点左右回来拿。护照和电脑带在身上，行李里没有贵重物品或易碎品。",
+          "en": "You're ワン (Wang) and have just checked out. You want to leave two bags at the desk and pick them up around 5. Your passport and laptop are with you, and the bags hold nothing valuable or fragile."
+        },
+        "enter": {
+          "zh-Hant": "走回櫃台",
+          "zh-Hans": "走回前台",
+          "en": "Go back to the desk"
+        },
+        "questions": [
+          "luggage-storage.checked-out",
+          "luggage-storage.count",
+          "luggage-storage.valuables",
+          "luggage-storage.return-time",
+          "luggage-storage.name"
+        ]
+      }
+    ],
+    "steps": {
+      "luggage-storage.checked-out": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "done",
+            "ja": "はい、済みました",
+            "meaning": {
+              "zh-Hant": "退好了",
+              "zh-Hans": "退好了",
+              "en": "Yes, I have"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台點點頭，看了看你的行李。",
+              "zh-Hans": "前台点点头，看了看你的行李。",
+              "en": "The clerk nods and looks at your bags."
+            }
+          },
+          {
+            "id": "not-yet",
+            "ja": "まだです",
+            "meaning": {
+              "zh-Hant": "還沒",
+              "zh-Hans": "还没",
+              "en": "Not yet"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台開始幫你辦退房，問你房號。你其實已經退好房了。",
+              "zh-Hans": "前台开始帮你办退房，问你房号。你其实已经退好房了。",
+              "en": "The clerk starts checking you out and asks your room number. You already checked out."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "2つです",
+            "meaning": {
+              "zh-Hant": "兩件",
+              "zh-Hans": "两件",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說退房了沒。",
+              "zh-Hans": "前台还在等你说退房了没。",
+              "en": "The clerk is still waiting to hear if you've checked out."
+            }
+          }
+        ]
+      },
+      "luggage-storage.count": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "two",
+            "ja": "2つです",
+            "meaning": {
+              "zh-Hant": "兩件",
+              "zh-Hans": "两件",
+              "en": "Two"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在兩件行李上各掛一張牌子。",
+              "zh-Hans": "前台在两件行李上各挂一张牌子。",
+              "en": "The clerk hangs a tag on each of your two bags."
+            }
+          },
+          {
+            "id": "three",
+            "ja": "3つです",
+            "meaning": {
+              "zh-Hant": "三件",
+              "zh-Hans": "三件",
+              "en": "Three"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台四處找第三件行李。你只有兩件。",
+              "zh-Hans": "前台四处找第三件行李。你只有两件。",
+              "en": "The clerk looks around for a third bag. You only have two."
+            }
+          },
+          {
+            "id": "five",
+            "ja": "5時ごろです",
+            "meaning": {
+              "zh-Hant": "5 點左右",
+              "zh-Hans": "5 点左右",
+              "en": "Around 5"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說有幾件。",
+              "zh-Hans": "前台还在等你说有几件。",
+              "en": "The clerk is still waiting to hear how many bags."
+            }
+          }
+        ]
+      },
+      "luggage-storage.valuables": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "none",
+            "ja": "入っていません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "No, there aren't"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台點點頭，把行李推到後面。",
+              "zh-Hans": "前台点点头，把行李推到后面。",
+              "en": "The clerk nods and wheels the bags into the back."
+            }
+          },
+          {
+            "id": "laptop",
+            "ja": "パソコンが入っています",
+            "meaning": {
+              "zh-Hant": "裡面有電腦",
+              "zh-Hans": "里面有电脑",
+              "en": "There's a laptop in there"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台請你先把電腦拿出來。你的電腦其實在背包裡。",
+              "zh-Hans": "前台请你先把电脑拿出来。你的电脑其实在背包里。",
+              "en": "The clerk asks you to take the laptop out. It's actually in your backpack."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "2つです",
+            "meaning": {
+              "zh-Hant": "兩件",
+              "zh-Hans": "两件",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "件數剛才說過了，櫃台在問裡面有沒有貴重品或易碎物。",
+              "zh-Hans": "件数刚才说过了，前台在问里面有没有贵重物品或易碎品。",
+              "en": "You've already said how many. The clerk is asking about valuables and fragile items."
+            }
+          }
+        ]
+      },
+      "luggage-storage.return-time": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "five",
+            "ja": "5時ごろです",
+            "meaning": {
+              "zh-Hant": "5 點左右",
+              "zh-Hans": "5 点左右",
+              "en": "Around 5"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在牌子上寫了 17:00。",
+              "zh-Hans": "前台在牌子上写了 17:00。",
+              "en": "The clerk writes 17:00 on the tag."
+            }
+          },
+          {
+            "id": "nine",
+            "ja": "夜の9時ごろです",
+            "meaning": {
+              "zh-Hant": "晚上 9 點左右",
+              "zh-Hans": "晚上 9 点左右",
+              "en": "Around 9 tonight"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台在牌子上寫了 21:00。你原本 5 點左右就要回來。",
+              "zh-Hans": "前台在牌子上写了 21:00。你本来 5 点左右就要回来。",
+              "en": "The clerk writes 21:00 on the tag. You meant to be back around 5."
+            }
+          },
+          {
+            "id": "wang",
+            "ja": "ワンです",
+            "meaning": {
+              "zh-Hant": "我姓王",
+              "zh-Hans": "我姓王",
+              "en": "It's Wang"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說幾點回來拿。",
+              "zh-Hans": "前台还在等你说几点回来拿。",
+              "en": "The clerk is still waiting to hear when you'll be back."
+            }
+          }
+        ]
+      },
+      "luggage-storage.name": {
+        "background": "scene-bg-hotel-check-in",
+        "card": {
+          "title": "お荷物お預り票",
+          "lines": [
+            "No. 32",
+            "お荷物　2個",
+            "お引き取り　17:00頃"
+          ]
+        },
+        "replies": [
+          {
+            "id": "wang",
+            "ja": "ワンです",
+            "meaning": {
+              "zh-Hant": "我姓王",
+              "zh-Hans": "我姓王",
+              "en": "It's Wang"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在牌子上寫上「ワン様」，把存根遞給你。",
+              "zh-Hans": "前台在牌子上写上「ワン様」，把存根递给你。",
+              "en": "The clerk writes ワン様 on the tag and hands you the stub."
+            }
+          },
+          {
+            "id": "room",
+            "ja": "805です",
+            "meaning": {
+              "zh-Hant": "805（房號）",
+              "zh-Hans": "805（房号）",
+              "en": "805 (your room number)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台說已經退房了，還是要名字，又問一次。",
+              "zh-Hans": "前台说已经退房了，还是要名字，又问一次。",
+              "en": "The clerk says you've checked out, so they need a name, and asks again."
+            }
+          },
+          {
+            "id": "five",
+            "ja": "5時ごろです",
+            "meaning": {
+              "zh-Hant": "5 點左右",
+              "zh-Hans": "5 点左右",
+              "en": "Around 5"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "回來的時間剛才說過了，櫃台在問名字。",
+              "zh-Hans": "回来的时间刚才说过了，前台在问名字。",
+              "en": "You've already given the time. The clerk is asking your name."
+            }
+          }
+        ]
+      }
+    }
+  }
 }
