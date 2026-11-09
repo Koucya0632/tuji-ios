@@ -12,6 +12,8 @@ struct ScenePracticeView: View {
     @State private var showsTranscript = false
     @State private var plays = 0
     @State private var openWord: CardWord?
+    /// A staged scene waits for the traveller to walk in before anything plays.
+    @State private var entered = false
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
     @Environment(\.dismiss) private var dismiss
@@ -23,8 +25,20 @@ struct ScenePracticeView: View {
                 switch session.phase {
                 case let .practising(index, phase):
                     if let step = session.currentStep, let question = session.currentQuestion {
-                        self.topBar(session, index: index, revealed: phase.isRevealed)
-                        self.practising(session, step: step, question: question, phase: phase)
+                        if let stage = session.scene.stage, let stageStep = session.scene.stageStep(question.id) {
+                            self.staged(
+                                session,
+                                stage: stage,
+                                stageStep: stageStep,
+                                step: step,
+                                question: question,
+                                index: index,
+                                phase: phase
+                            )
+                        } else {
+                            self.topBar(session, index: index, revealed: phase.isRevealed)
+                            self.practising(session, step: step, question: question, phase: phase)
+                        }
                     }
                 case let .finished(summary):
                     SceneDoneView(scene: session.scene, summary: summary)
@@ -44,7 +58,7 @@ struct ScenePracticeView: View {
         .task(id: self.session?.currentStep) {
             self.showsTranscript = false
             self.plays = 0
-            if let line = self.session?.currentStep?.phrasing.spoken {
+            if self.session?.scene.stage == nil, let line = self.session?.currentStep?.phrasing.spoken {
                 self.play(line)
             }
         }
@@ -72,6 +86,87 @@ struct ScenePracticeView: View {
     private func play(_ line: SpokenLine, rate: Float = 1) {
         self.plays += 1
         SceneAudio.play(line, rate: rate)
+    }
+
+    // MARK: - Staged
+
+    private func staged(
+        _ session: ScenePracticeSession,
+        stage: SceneStage,
+        stageStep: StageStep,
+        step: PracticeStep,
+        question: SceneQuestion,
+        index: Int,
+        phase: ScenePracticeSession.QuestionPhase
+    )
+        -> some View
+    {
+        VStack(spacing: 0) {
+            self.topBar(session, index: index, revealed: phase.isRevealed)
+                .background(.tujiPaper)
+            ScrollView {
+                StagedQuestionView(
+                    session: session,
+                    step: step,
+                    question: question,
+                    stage: stageStep,
+                    phase: phase,
+                    entered: self.entered,
+                    openWord: { self.openWord = $0 }
+                )
+                .id(step)
+                .frame(minHeight: 560, alignment: .bottom)
+            }
+            .defaultScrollAnchor(.bottom)
+            .opacity(self.entered ? 1 : 0)
+            .overlay {
+                if !self.entered {
+                    self.enterCard(stage)
+                }
+            }
+        }
+        .background {
+            Image(stageStep.background)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Before anything plays: what the traveller is here to do, and the step in.
+    private func enterCard(_ stage: SceneStage) -> some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Spacer()
+            VStack(alignment: .leading, spacing: Space.s3) {
+                Text("這一次")
+                    .font(.tujiLabel)
+                    .tracking(1)
+                    .foregroundStyle(.tujiInk2)
+                Text(verbatim: stage.intent.resolved(self.language))
+                    .font(.tujiH3)
+                    .foregroundStyle(.tujiInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button { self.entered = true } label: {
+                    HStack {
+                        Text(verbatim: stage.enter.resolved(self.language)).font(.tujiH3)
+                        Spacer()
+                        Image(systemName: "arrow.right").font(.tujiIcon(18, weight: .bold))
+                    }
+                    .foregroundStyle(.tujiInk)
+                    .padding(.vertical, Space.s3)
+                    .padding(.horizontal, 20)
+                    .background(.tujiCurrent)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(Space.s3)
+            .background(.tujiPaper)
+        }
+        .padding(Space.s3)
     }
 
     // MARK: - Top bar
