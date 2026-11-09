@@ -110,7 +110,22 @@ struct FeatureTourFlowTests {
     @Test
     func finishingLandsWhereTheClosingCardPoints() {
         #expect(FeatureTourFlow.tabAfterFinishing == .today)
-        #expect(FeatureTourFlow.routeAfterFinishing == .studyLanding(mode: .new))
+        #expect(FeatureTourFlow.forDirection(hasScenes: false).routeAfterFinishing == .studyLanding(mode: .new))
+    }
+
+    /// A Japanese learner's tour opens on the scene card and its closing card
+    /// starts the free 便利商店結帳; the word steps are still in it.
+    @Test
+    func aJapaneseLearnerTriesAFreeSceneFirst() throws {
+        let flow = FeatureTourFlow.forDirection(hasScenes: true)
+        #expect(flow.steps.first?.target == .scene)
+        #expect(flow.steps.contains { $0.target == .heroCTAs })
+        #expect(flow.steps.last?.target == nil)
+        #expect(flow.steps.map(\.id) == Array(flow.steps.indices))
+        #expect(flow.steps.allSatisfy { $0.tab == .today })
+        #expect(flow.routeAfterFinishing == .scenePractice(id: FeatureTourFlow.trialScene, route: nil))
+        let trial = try #require(SceneCatalog.bundled.scene(FeatureTourFlow.trialScene))
+        #expect(trial.access == .free)
     }
 
     /// The shipped script stays on 今天 — each other tab introduces itself

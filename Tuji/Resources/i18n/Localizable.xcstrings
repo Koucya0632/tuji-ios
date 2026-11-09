@@ -30322,6 +30322,102 @@
           }
         }
       }
+    },
+    "出發前，先練聽懂店員" : {
+      "comment" : "Feature tour, Japanese learners: the step on the 場面練習 card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Before you go, learn to follow the staff"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出発前に、店員の言葉を聞き取る練習"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出发前，先练听懂店员"
+          }
+        }
+      }
+    },
+    "聽店員會說的話，選一句回應。便利商店和餐廳免費。" : {
+      "comment" : "Feature tour, Japanese learners: the step on the 場面練習 card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hear what staff say and pick a reply. The convenience store and restaurant are free."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "店員がよく言う言葉を聞いて、返事を選びます。コンビニとレストランは無料です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "听店员会说的话，选一句回应。便利店和餐厅免费。"
+          }
+        }
+      }
+    },
+    "先試一個場面" : {
+      "comment" : "Feature tour, Japanese learners: the closing card that starts the free convenience-store scene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try a scene first"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まず場面を一つ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先试一个场景"
+          }
+        }
+      }
+    },
+    "便利商店結帳，大約 3 分鐘。" : {
+      "comment" : "Feature tour, Japanese learners: the closing card that starts the free convenience-store scene.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convenience store checkout, about 3 minutes."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンビニのレジ、3分ほど。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "便利店结账，大约 3 分钟。"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

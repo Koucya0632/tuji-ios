@@ -484,6 +484,7 @@ struct TodayView: View {
             if self.settings.current.learningDirection.hasScenes {
                 HStack(alignment: .top, spacing: Space.s2) {
                     SceneTodayCard()
+                        .tourAnchor(.scene)
                     self.mascot
                         .frame(width: 170, height: 214)
                 }

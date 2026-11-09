@@ -18,6 +18,8 @@ nonisolated enum TourTarget: Hashable {
     case assistant
     /// The 拍照 action in the tab bar.
     case capture
+    /// The 場面練習 card beside the cat, for a Japanese learner.
+    case scene
 }
 
 /// Merges every marked target's bounds into one dictionary read at the
@@ -38,8 +40,10 @@ struct TourAnchorKey: PreferenceKey {
 }
 
 extension View {
+    /// Merges rather than sets: a target inside another (the scene card
+    /// inside the Moira section) would otherwise be overwritten by the outer one.
     func tourAnchor(_ target: TourTarget) -> some View {
-        anchorPreference(key: TourAnchorKey.self, value: .bounds) { [target: $0] }
+        transformAnchorPreference(key: TourAnchorKey.self, value: .bounds) { $0[target] = $1 }
     }
 }
 
@@ -60,6 +64,8 @@ struct TourStep: Identifiable {
     let pose: MascotPose
     let title: LocalizedStringKey
     let text: LocalizedStringKey
+    /// The closing card's button.
+    var action: LocalizedStringKey = "開始學習"
 
     /// Only what a new user would not find alone, all on 今天.
     ///
@@ -119,6 +125,50 @@ struct TourStep: Identifiable {
     }
 }
 
+extension TourStep {
+    /// A Japanese learner's tour. 場面練習 is what a new user should try first,
+    /// so it opens on the scene card and closes in the free 便利商店結帳; the
+    /// word steps stay, after it.
+    static var sceneSteps: [TourStep] {
+        let words = Self.steps
+        return [
+            TourStep(
+                id: 0,
+                tab: .today,
+                target: .scene,
+                fallback: .assistant,
+                shape: .rounded(Radius.r0),
+                pose: .wave,
+                title: "出發前，先練聽懂店員",
+                text: "聽店員會說的話，選一句回應。便利商店和餐廳免費。"
+            ),
+            TourStep(
+                id: 1, tab: .today, target: words[0].target, fallback: words[0].fallback,
+                shape: words[0].shape, pose: .face, title: words[0].title, text: words[0].text
+            ),
+            TourStep(
+                id: 2, tab: .today, target: words[1].target, fallback: words[1].fallback,
+                shape: words[1].shape, pose: words[1].pose, title: words[1].title, text: words[1].text
+            ),
+            TourStep(
+                id: 3, tab: .today, target: words[2].target, fallback: words[2].fallback,
+                shape: words[2].shape, pose: words[2].pose, title: words[2].title, text: words[2].text
+            ),
+            TourStep(
+                id: 4,
+                tab: .today,
+                target: nil,
+                fallback: nil,
+                shape: .rounded(Radius.r0),
+                pose: .cheer,
+                title: "先試一個場面",
+                text: "便利商店結帳，大約 3 分鐘。",
+                action: "開始練習"
+            )
+        ]
+    }
+}
+
 // MARK: - The flow
 
 /// What advancing the tour means, once. The shell turns each of these into
@@ -145,10 +195,25 @@ enum TourAdvance: Equatable {
 /// tree and cannot be anywhere else. The index machine can.
 struct FeatureTourFlow {
     let steps: [TourStep]
+    /// What the closing card's button opens.
+    let routeAfterFinishing: NavRoute
 
-    init(steps: [TourStep] = TourStep.steps) {
+    init(steps: [TourStep] = TourStep.steps, routeAfterFinishing: NavRoute = .studyLanding(mode: .new)) {
         self.steps = steps
+        self.routeAfterFinishing = routeAfterFinishing
     }
+
+    /// The tour for a learning direction. One with 場面練習 tries a scene first.
+    static func forDirection(hasScenes: Bool) -> FeatureTourFlow {
+        guard hasScenes else { return FeatureTourFlow() }
+        return FeatureTourFlow(
+            steps: TourStep.sceneSteps,
+            routeAfterFinishing: .scenePractice(id: trialScene, route: nil)
+        )
+    }
+
+    /// The scene the tour opens: free, and the one every trip starts with.
+    static let trialScene = SceneID(rawValue: "konbini-checkout")
 
     /// May the tour open at all?
     ///
@@ -177,10 +242,7 @@ struct FeatureTourFlow {
     }
 
     /// Where the shell lands when the tour ends by finishing rather than by
-    /// being skipped. The closing card's 開始學習 opens 學新字, which lives on
-    /// 今天 — so finishing goes there and skipping stays put.
+    /// being skipped. The closing card's button opens 學新字 or a scene, both
+    /// from 今天 — so finishing goes there and skipping stays put.
     static let tabAfterFinishing: MainTab = .today
-
-    /// What 開始學習 on the closing card opens.
-    static let routeAfterFinishing: NavRoute = .studyLanding(mode: .new)
 }
