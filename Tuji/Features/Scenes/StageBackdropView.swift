@@ -112,6 +112,9 @@ struct StageBackdropView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
             .clipped()
+            // Clipping hides the photo's overflow but still hit-tests it, and
+            // the part above the stage covers the top bar's close button.
+            .allowsHitTesting(false)
         }
     }
 

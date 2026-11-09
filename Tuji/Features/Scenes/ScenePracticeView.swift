@@ -11,7 +11,6 @@ struct ScenePracticeView: View {
 
     @State private var session: ScenePracticeSession?
     @State private var showsTranscript = false
-    @State private var plays = 0
     @State private var openWord: CardWord?
     /// A staged scene waits for the traveller to walk in before anything plays.
     @State private var entered = false
@@ -58,7 +57,6 @@ struct ScenePracticeView: View {
         }
         .task(id: self.session?.currentStep) {
             self.showsTranscript = false
-            self.plays = 0
             if self.session?.scene.stage == nil, let line = self.session?.currentStep?.phrasing.spoken {
                 self.play(line)
             }
@@ -85,7 +83,6 @@ struct ScenePracticeView: View {
     }
 
     private func play(_ line: SpokenLine, rate: Float = 1) {
-        self.plays += 1
         SceneAudio.play(line, rate: rate)
     }
 
@@ -208,7 +205,7 @@ struct ScenePracticeView: View {
         }
     }
 
-    /// Before the answer: the replay button, how often it was heard, and for
+    /// Before the answer: the replay button, and for
     /// first practice slow playback and the transcript. A review has none of
     /// those helps, and says what is new about this phrasing instead.
     private func listenPanel(_ line: SpokenLine, step: PracticeStep) -> some View {
@@ -246,8 +243,6 @@ struct ScenePracticeView: View {
                         .multilineTextAlignment(.center)
                 } else if review {
                     Text("再聽一次").font(.tujiLabel).foregroundStyle(.tujiInk)
-                } else {
-                    Text("聽過 \(self.plays) 次").font(.scene(13, bold: false)).foregroundStyle(.tujiInk2)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 190)
@@ -367,10 +362,7 @@ extension ScenePracticeView {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(Text("重播店員的話"))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(step.phrasing.speaker.label).font(.tujiLabel).foregroundStyle(.tujiInk2)
-                            Text("聽過 \(self.plays) 次").font(.scene(13, bold: false)).foregroundStyle(.tujiInk3)
-                        }
+                        Text(step.phrasing.speaker.label).font(.tujiLabel).foregroundStyle(.tujiInk2)
                         Spacer(minLength: 0)
                         if step.mode != .review, !revealed {
                             self.pill("顯示日文", pressed: self.showsTranscript) {

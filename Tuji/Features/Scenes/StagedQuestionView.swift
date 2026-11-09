@@ -23,7 +23,6 @@ struct StagedQuestionView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
     @State private var line: SpokenLine?
-    @State private var plays = 0
     @State private var subtitles = false
     @State private var chosen: StageReply?
     @State private var machine: SceneMachine?
@@ -120,7 +119,6 @@ struct StagedQuestionView: View {
 
     private func play(_ line: SpokenLine, rate: Float = 1) {
         self.line = line
-        self.plays += 1
         SceneAudio.play(line, rate: rate)
     }
 
@@ -171,7 +169,6 @@ struct StagedQuestionView: View {
                     Text("複習").font(.tujiLabel)
                 }
                 Spacer()
-                Text("聽過 \(self.plays) 次").font(.scene(13, bold: false))
             }
             .foregroundStyle(.tujiInk2)
             if let shown, self.subtitles || self.revealed {

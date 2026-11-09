@@ -29377,30 +29377,6 @@
         }
       }
     },
-    "聽過 %lld 次" : {
-      "comment" : "場面練習: How many times the line was played.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heard %lld times"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 回聞いた"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "听过 %lld 次"
-          }
-        }
-      }
-    },
     "答錯" : {
       "comment" : "場面練習: Accessibility value of a choice already tried.",
       "extractionState" : "manual",

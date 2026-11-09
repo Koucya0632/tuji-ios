@@ -37,22 +37,6 @@ struct SceneDoneView: View {
                     }
                     .padding(.top, Space.s3)
                     self.results.padding(.top, Space.s3)
-                    if let next = self.nextLine {
-                        HStack(spacing: 12) {
-                            Image(systemName: "calendar")
-                                .font(.tujiIcon(20, weight: .semibold))
-                                .foregroundStyle(.tujiInk)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(next.title).font(.tujiBody(.strong)).foregroundStyle(.tujiInk)
-                                Text(next.detail).font(.scene(13, bold: false)).foregroundStyle(.tujiInk2)
-                            }
-                            Spacer(minLength: 0)
-                        }
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, Space.s3)
-                        .background(.tujiPaper2)
-                        .padding(.top, Space.s3)
-                    }
                     if LiveEffectiveEntitlement.shared.tier == .free {
                         self.memberOffer.padding(.top, 12)
                     }
@@ -123,19 +107,6 @@ struct SceneDoneView: View {
                 .frame(minHeight: 36)
                 Rectangle().fill(.tujiRule).frame(height: 1)
             }
-        }
-    }
-
-    private var nextLine: (title: LocalizedStringKey, detail: LocalizedStringKey)? {
-        switch self.summary.status {
-        case let .reviewLater(due):
-            ("明天複習", "\(due.month)月\(due.day)日 · 每句換一個沒聽過的問法")
-        case .reviewDue, .inProgress:
-            ("還有沒練完的問句", "下次從那裡繼續")
-        case .complete:
-            ("這個場面都複習過了", "出發前可以再看一眼")
-        case .notStarted:
-            nil
         }
     }
 
