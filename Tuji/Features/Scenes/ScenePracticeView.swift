@@ -15,6 +15,7 @@ struct ScenePracticeView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(WordsStore.self) private var words
     @Environment(\.dismiss) private var dismiss
+    @Environment(StudyFocus.self) private var studyFocus
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,7 +48,12 @@ struct ScenePracticeView: View {
                 self.play(line)
             }
         }
-        .onDisappear { SpeechService.shared.stop() }
+        // Full screen like a study session: the tab bar goes while practising.
+        .onAppear { self.studyFocus.enter() }
+        .onDisappear {
+            self.studyFocus.exit()
+            SpeechService.shared.stop()
+        }
         .tujiSheet(
             isPresented: Binding(get: { self.openWord != nil }, set: { if !$0 { self.openWord = nil } }),
             title: "單字詳情",
@@ -171,9 +177,9 @@ struct ScenePracticeView: View {
             .foregroundStyle(.tujiInk2)
             if review {
                 HStack(spacing: 6) {
-                    self.tag("沒聽過的問法")
-                    if step.phrasing.speed == .fast { self.tag("語速快") }
-                    if step.phrasing.ambience { self.tag("店內環境音") }
+                    self.reviewLabel("沒聽過的問法")
+                    if step.phrasing.speed == .fast { self.reviewLabel("語速快") }
+                    if step.phrasing.ambience { self.reviewLabel("店內環境音") }
                 }
                 .padding(.top, 10)
             }
@@ -212,7 +218,7 @@ struct ScenePracticeView: View {
         .background(.tujiPaper2)
     }
 
-    private func tag(_ title: LocalizedStringKey) -> some View {
+    private func reviewLabel(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.tujiLabel)
             .foregroundStyle(.tujiInk2)
