@@ -482,6 +482,11 @@ domain modeling. Names for the good seams. Keep terms sharp; add lazily as they 
   *changes*, never balances, so each row's 「餘 N 點」 is derived by walking back from what
   is held now. Held points count toward it (a reservation has spent nothing), and a
   reserve or a release — which changes no total — is not a row.
+- **試用點數 (trial points, `CreditWallet.trialAvailable`)** — the one grant of 罐頭點數 a free
+  account gets, once, that never expires. It makes a free account a 罐頭點數 account, so every
+  paid AI feature opens to it, but check-in and point packs stay 永久會員 benefits; when the trial
+  points are spent the way on is 永久會員. 今天's AI entries carry a 「試用 N 點」 tag while any are left.
+  _Avoid_：免費額度、月贈（月贈只給永久會員）。
 - **實際倍率 (realised markup)** — whether a paid AI feature's price is right: for one
   feature under one price list, the points it took (valued at the cheapest rate a point is
   sold at) divided by what the model cost — counting every run the model made, including

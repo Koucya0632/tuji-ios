@@ -155,7 +155,7 @@ enum APIError: LocalizedError {
         case "already_member":
             tujiLocalized("這張卡片已經在合集裡了。")
         case "insufficient_credits":
-            tujiLocalized("罐頭點數不足，請簽到取得贈點或加購。")
+            tujiLocalized("罐頭點數不足，這次沒有扣點。")
         case "capacity_full":
             tujiLocalized("自製圖鑑容量已滿，請先整理卡片。")
         case "quote_expired":

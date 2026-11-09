@@ -32,6 +32,13 @@ final class CheckInModel {
         self.now = now
     }
 
+    /// 試用點數 still unspent, for the tag on 今天's AI entries; nil once spent or for a member.
+    var trialPoints: Int? {
+        guard self.catalog?.trialEnabled == true, let wallet = self.wallet else { return nil }
+        guard !wallet.benefits.hasLifetime, let left = wallet.trialAvailable, left > 0 else { return nil }
+        return left
+    }
+
     func reward(fallbackStudiedToday: Bool) -> CheckInDecision.Reward {
         CheckInDecision.reward(catalog: self.catalog, wallet: self.wallet, fallbackStudiedToday: fallbackStudiedToday)
     }
@@ -49,7 +56,8 @@ final class CheckInModel {
             let catalog = try await self.repository.loadCatalog()
             self.catalog = catalog
             // A legacy account has no wallet; asking would only collect a 403.
-            if catalog.billingMode == "credits", catalog.checkInEnabled {
+            // Every credit account has one, including a free account on 試用點數.
+            if catalog.billingMode == "credits" {
                 try await self.apply(self.repository.loadWallet())
             } else {
                 self.wallet = nil

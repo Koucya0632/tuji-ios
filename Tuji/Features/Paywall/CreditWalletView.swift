@@ -39,26 +39,11 @@ struct CreditWalletView: View {
                     Text("退款點數正在核對，新增 AI 工作暫停。").font(.tujiLabel)
                 }
             }
-            HStack {
-                Button(LocalizedStringKey(self.wallet?.benefits.checkedInToday == true ? "今天已簽到" : "每日簽到")) {
-                    Task { await self.claim(.creditCheckIn) }
-                }
-                .disabled(self.busy || self.catalog?.checkInEnabled != true || self.wallet?.benefits
-                    .hasLifetime != true || self.wallet?.benefits
-                    .checkedInToday == true || self.wallet?.benefits.studiedToday == false ||
-                    (self.wallet?.benefits.checkInGrantedThisMonth ?? 0) >= 300)
-            }.font(.tujiLabel)
-            Text("每月免費贈送 1,000 點").font(.tujiBody)
-            Text(String(
-                format: tujiLocalized("免費額度剩餘 %d 點 · 簽到點 %d 點"),
-                self.wallet?.monthlyAvailable ?? 0,
-                self.wallet?.checkInAvailable ?? 0
-            ))
-            .font(.tujiLabel).foregroundStyle(.tujiInk3)
-            Text("每月自動補滿，不累積。簽到點與購買點數不過期。")
-                .font(.tujiLabel).foregroundStyle(.tujiInk3)
-            Text("每天學習一題後可簽到 10 點，每月最多 300 點。")
-                .font(.tujiLabel).foregroundStyle(.tujiInk3)
+            if self.wallet?.benefits.hasLifetime == false {
+                self.trialSection
+            } else {
+                self.memberSection
+            }
             ForEach(self.store.creditProducts, id: \.id) { product in
                 Button {
                     Task {
@@ -93,6 +78,47 @@ struct CreditWalletView: View {
             #endif
         }
         .task { await self.reload() }
+    }
+
+    /// A free account: what is left of its 試用點數, and what 永久會員 would bring.
+    /// No check-in and no allowance lines — neither applies to it.
+    @ViewBuilder
+    private var trialSection: some View {
+        Text(String(format: tujiLocalized("試用點數剩餘 %d 點"), self.wallet?.trialAvailable ?? 0))
+            .font(.tujiBody)
+        Text("試用點數不會過期，用完就沒有了。")
+            .font(.tujiLabel).foregroundStyle(.tujiInk3)
+        if let gift = self.catalog?.policy?.firstPurchaseGift, gift > 0,
+           let monthly = self.catalog?.policy?.monthlyGift
+        {
+            Text(String(format: tujiLocalized("成為永久會員：首購送 %d 點，之後每月送 %d 點。"), gift, monthly))
+                .font(.tujiLabel).foregroundStyle(.tujiInk3)
+        }
+    }
+
+    @ViewBuilder
+    private var memberSection: some View {
+        HStack {
+            Button(LocalizedStringKey(self.wallet?.benefits.checkedInToday == true ? "今天已簽到" : "每日簽到")) {
+                Task { await self.claim(.creditCheckIn) }
+            }
+            .disabled(self.busy || self.catalog?.checkInEnabled != true || self.wallet?.benefits
+                .hasLifetime != true || self.wallet?.benefits
+                .checkedInToday == true || self.wallet?.benefits.studiedToday == false ||
+                (self.wallet?.benefits.checkInGrantedThisMonth ?? 0) >= 300)
+        }.font(.tujiLabel)
+        Text(String(format: tujiLocalized("每月免費贈送 %d 點"), self.catalog?.policy?.monthlyGift ?? 1000))
+            .font(.tujiBody)
+        Text(String(
+            format: tujiLocalized("免費額度剩餘 %d 點 · 簽到點 %d 點"),
+            self.wallet?.monthlyAvailable ?? 0,
+            self.wallet?.checkInAvailable ?? 0
+        ))
+        .font(.tujiLabel).foregroundStyle(.tujiInk3)
+        Text("每月自動補滿，不累積。簽到點與購買點數不過期。")
+            .font(.tujiLabel).foregroundStyle(.tujiInk3)
+        Text("每天學習一題後可簽到 10 點，每月最多 300 點。")
+            .font(.tujiLabel).foregroundStyle(.tujiInk3)
     }
 
     private func apply(_ value: CreditWallet) {

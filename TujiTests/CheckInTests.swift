@@ -20,7 +20,8 @@ private func makeCatalog(
     billingMode: String = "credits",
     checkInEnabled: Bool = true,
     daily: Int? = 10,
-    cap: Int? = 300
+    cap: Int? = 300,
+    trialEnabled: Bool? = nil
 )
     -> CreditCatalog
 {
@@ -28,10 +29,11 @@ private func makeCatalog(
         .map {
             #","policy":{"recognition":100,"precision":200,"precisionUpgrade":100,"checkInDaily":\#($0),"checkInMonthlyCap":\#(cap ?? 300)}"#
         } ?? ""
+    let trial = trialEnabled.map { #","trialEnabled":\#($0)"# } ?? ""
     let json = #"""
     {"billingMode":"\#(billingMode)","environment":"sandbox","purchaseEnabled":true,
      "proNewPurchaseEnabled":false,"operationsEnabled":true,"monthlyEnabled":true,
-     "checkInEnabled":\#(checkInEnabled),"packs":[]\#(policy)}
+     "checkInEnabled":\#(checkInEnabled),"packs":[]\#(policy)\#(trial)}
     """#
     return decodeFixture(json)
 }
@@ -41,13 +43,15 @@ private func makeWallet(
     granted: Int = 0,
     hasLifetime: Bool = true,
     studiedToday: Bool? = true,
-    version: String = "1"
+    version: String = "1",
+    trialAvailable: Int? = nil
 )
     -> CreditWallet
 {
     let studied = studiedToday.map { #","studiedToday":\#($0)"# } ?? ""
+    let trial = trialAvailable.map { #""trialAvailable":\#($0),"# } ?? ""
     let json = #"""
-    {"available":1000,"reserved":0,"paidAvailable":0,"giftAvailable":1000,
+    {\#(trial)"available":1000,"reserved":0,"paidAvailable":0,"giftAvailable":1000,
      "walletVersion":"\#(version)","environment":"sandbox","reconciliationRequired":false,
      "benefits":{"monthlyClaimed":true,"checkedInToday":\#(checkedInToday),
        "checkInGrantedThisMonth":\#(granted),"hasLifetime":\#(hasLifetime)\#(studied)}}
@@ -95,6 +99,12 @@ struct CheckInRewardTests {
     func locked() {
         #expect(self.reward(makeCatalog(billingMode: "legacy", checkInEnabled: false), nil) == .locked(daily: 10))
         #expect(self.reward(makeCatalog(), makeWallet(hasLifetime: false)) == .locked(daily: 10))
+    }
+
+    @Test("a free account on trial points is offered the upgrade, though check-in is off for it")
+    func trialAccountLocked() {
+        let catalog = makeCatalog(checkInEnabled: false, trialEnabled: true)
+        #expect(self.reward(catalog, makeWallet(hasLifetime: false, trialAvailable: 150)) == .locked(daily: 10))
     }
 
     @Test("eligible but nothing studied today asks for one answer")
@@ -243,6 +253,23 @@ struct CheckInModelTests {
         await model.loadReward()
         #expect(repo.walletReads == 0)
         #expect(model.reward(fallbackStudiedToday: true) == .locked(daily: 10))
+    }
+
+    @Test("a free account on trial points reads its wallet and tags the AI entries until they are spent")
+    func trialPoints() async {
+        let repo = FakeCheckInRepository()
+        repo.catalog = makeCatalog(checkInEnabled: false, trialEnabled: true)
+        repo.wallet = makeWallet(hasLifetime: false, trialAvailable: 50)
+        let model = CheckInModel(repository: repo)
+        await model.loadReward()
+        #expect(repo.walletReads == 1)
+        #expect(model.trialPoints == 50)
+        repo.wallet = makeWallet(hasLifetime: false, version: "2", trialAvailable: 0)
+        await model.loadReward()
+        #expect(model.trialPoints == nil)
+        repo.wallet = makeWallet(version: "3", trialAvailable: 50)
+        await model.loadReward()
+        #expect(model.trialPoints == nil, "a member's leftover trial points are not advertised")
     }
 
     @Test("a claim swaps in the returned wallet and clears the dot")

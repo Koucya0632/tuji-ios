@@ -94,6 +94,10 @@ enum AssistantHomeFeature: String, CaseIterable, Identifiable {
 /// 自己一個型別而不是埋在 `TodayView` 裡，是因為四格並排是全 app 最會被大字級
 /// 和日文撐爆的版面之一，而快照測試需要抓得到它。
 struct MoiraFeatureBand: View {
+    /// 試用點數 left on a free account (`CheckInModel.trialPoints`). The tag is the only
+    /// place a free account learns it can try these: no popup, no extra card on 今天.
+    var trialPoints: Int?
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(AssistantHomeFeature.allCases.enumerated()), id: \.element.id) { index, feature in
@@ -126,6 +130,19 @@ struct MoiraFeatureBand: View {
         .background(.tujiPaper2)
         .overlay(alignment: .top) { Rectangle().fill(.tujiRule).frame(height: Border.bw1) }
         .overlay(alignment: .bottom) { Rectangle().fill(.tujiRule).frame(height: Border.bw1) }
+        .overlay(alignment: .topTrailing) {
+            if let trialPoints {
+                Text(String(format: tujiLocalized("試用 %d 點"), trialPoints))
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiInk)
+                    .padding(.horizontal, Space.s2)
+                    .padding(.vertical, 2)
+                    .background(.tujiPaper, in: .capsule)
+                    .overlay(Capsule().stroke(.tujiRule, lineWidth: Border.bw1))
+                    .offset(x: -Space.s3, y: -10)
+                    .accessibilityIdentifier("moira-trial-points")
+            }
+        }
         .accessibilityIdentifier("moira-feature-band")
     }
 }
