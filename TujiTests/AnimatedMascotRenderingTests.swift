@@ -38,22 +38,19 @@ final class AnimatedMascotRenderingTests: XCTestCase {
 
     /// 一個測試、一輪迴圈，而不是兩個各自開視窗的測試。
     ///
-    /// **這個 class 在 main 上就會掛**：同樣的 `malloc: pointer being freed
-    /// was not allocated`、同樣的物件位址，而且一次跑掛兩次。不是這次合併弄壞
-    /// 的，也不是橫帶的問題 —— 回 origin/main 跑同一個 class 重現得到。
-    ///
-    /// 它只在同一個 process 裡混用字級（`.large` 和 `.accessibilityExtraLarge`）
-    /// 時發生：任一種單獨跑都會過。嫌疑在 `TujiFont` 那個以
-    /// (face, size, category) 為鍵的字型快取 —— 換字級會讓它長出新的 entry。
-    /// 併成一輪只是讓它少掛一次，沒有治好，所以那是另一張票。
-    func testBandAcrossWidthsLanguagesAndTypeSizes() async throws {
+    /// 這個 class 以前會掛在 `malloc: pointer being freed was not allocated`。
+    /// 不是字型快取：崩潰堆疊是 app 自己的畫面（物見、我）在測試中途被拆掉，
+    /// 它們的 model 走 MainActor 隔離 deinit 的 iOS 18 相容層
+    /// （`swift_task_deinitOnExecutorMainActorBackDeploy`）時出事。測試宿主現在
+    /// 不顯示 app 的畫面（`TujiApp.isHostingUnitTests`），就不會走到那裡。
+    func testBandAcrossWidthsLanguagesAndTypeSizes() throws {
         for (language, width, height, largeType) in [
             ("zh-Hant", 375.0, 667.0, false), ("zh-Hant", 402.0, 874.0, false),
             ("zh-Hans", 375.0, 667.0, false), ("ja", 375.0, 667.0, false),
             ("en", 375.0, 667.0, false),
             ("zh-Hant", 375.0, 667.0, true)
         ] {
-            try await self.bandSnapshot(
+            try self.bandSnapshot(
                 language: language,
                 size: CGSize(width: width, height: height),
                 largeType: largeType
@@ -61,7 +58,7 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         }
     }
 
-    private func bandSnapshot(language: String, size: CGSize, largeType: Bool) async throws {
+    private func bandSnapshot(language: String, size: CGSize, largeType: Bool) throws {
         let content = NavigationStack {
             VStack {
                 MoiraFeatureBand()
@@ -95,7 +92,7 @@ final class AnimatedMascotRenderingTests: XCTestCase {
         format.preferredRange = .standard
         var screenshot: UIImage?
         for _ in 0..<4 {
-            try await Task.sleep(for: .milliseconds(150))
+            RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.15))
             window.layoutIfNeeded()
             let image = UIGraphicsImageRenderer(size: size, format: format).image { _ in
                 window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
