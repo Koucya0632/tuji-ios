@@ -6,6 +6,8 @@ import SwiftUI
 
 struct MachineView: View {
     let machine: SceneMachine
+    /// The scene's own title bar text, when it has one.
+    var brandOverride: String?
     let send: (MachineAction) -> Void
 
     @AccessibilityFocusState private var titleFocused: Bool
@@ -80,11 +82,13 @@ struct MachineView: View {
     }
 
     private var brand: String {
-        switch self.machine {
+        if let brandOverride { return brandOverride }
+        return switch self.machine {
         case .payment: "お会計"
         case .ageConfirm: "年齢確認"
         case .foodTicket: "食券販売機"
         case .orderTablet: "テーブル 08"
+        case .kiosk: "セルフオーダー"
         }
     }
 

@@ -16,6 +16,15 @@ nonisolated enum MachineKind: String, Hashable, Decodable {
     case ageConfirm = "age-confirm"
     case foodTicket = "food-ticket"
     case orderTablet = "order-tablet"
+    case kiosk
+}
+
+/// One line on a machine's menu: a dish on the 食券機, an upgrade on a
+/// self-order kiosk. `id` is what a scene's `expect` names.
+nonisolated struct MachineMenuItem: Hashable, Decodable {
+    let id: String
+    let name: String
+    let price: Int
 }
 
 nonisolated enum PaymentMethod: String, Hashable, Decodable {
@@ -33,6 +42,8 @@ nonisolated enum MachineAction: Hashable {
     case take
     case answerAge(AgeAnswer)
     case pickDish(Int)
+    case pickOption(Int)
+    case confirmOrder
     case payDishInCash
     case issueTicket
     case pickCategory(TabletCategory)
@@ -59,7 +70,10 @@ nonisolated enum TabletCategory: String, Hashable, CaseIterable {
 nonisolated enum MachineOutcome: Hashable {
     case paid(PaymentMethod, change: Int)
     case age(AgeAnswer)
-    case ticket(dish: String, change: Int)
+    /// `item` is the menu item's id.
+    case ticket(item: String, change: Int)
+    /// `option` is the kiosk menu item's id.
+    case kioskOrder(option: String, total: Int)
     case ordered(item: String, count: Int, total: Int)
 }
 
@@ -111,13 +125,16 @@ nonisolated enum SceneMachine: Hashable {
     case ageConfirm(AgeConfirm)
     case foodTicket(FoodTicket)
     case orderTablet(OrderTablet)
+    case kiosk(Kiosk)
 
-    init(kind: MachineKind, total: Int?, item: String?) {
+    init(kind: MachineKind, total: Int?, item: String?, menu: [MachineMenuItem]? = nil) {
         switch kind {
         case .payment: self = .payment(Payment(total: total ?? 598, item: item ?? "弁当"))
         case .ageConfirm: self = .ageConfirm(AgeConfirm())
-        case .foodTicket: self = .foodTicket(FoodTicket())
+        case .foodTicket: self = .foodTicket(FoodTicket(menu: menu ?? FoodTicket.defaultMenu))
         case .orderTablet: self = .orderTablet(OrderTablet())
+        case .kiosk:
+            self = .kiosk(Kiosk(item: item ?? "ハンバーガー", price: total ?? 400, options: menu ?? Kiosk.defaultOptions))
         }
     }
 
@@ -127,6 +144,7 @@ nonisolated enum SceneMachine: Hashable {
         case let .ageConfirm(machine): machine.screen
         case let .foodTicket(machine): machine.screen
         case let .orderTablet(machine): machine.screen
+        case let .kiosk(machine): machine.screen
         }
     }
 
@@ -136,6 +154,7 @@ nonisolated enum SceneMachine: Hashable {
         case let .ageConfirm(machine): machine.outcome
         case let .foodTicket(machine): machine.outcome
         case let .orderTablet(machine): machine.outcome
+        case let .kiosk(machine): machine.outcome
         }
     }
 
@@ -153,6 +172,9 @@ nonisolated enum SceneMachine: Hashable {
         case var .orderTablet(machine):
             machine.send(action)
             self = .orderTablet(machine)
+        case var .kiosk(machine):
+            machine.send(action)
+            self = .kiosk(machine)
         }
     }
 }
@@ -284,10 +306,14 @@ nonisolated struct AgeConfirm: Hashable {
     }
 }
 
-/// The 食券機 at a ramen shop's door: pick a dish, confirm, feed ¥1,000 notes,
-/// take the ticket and change.
+/// The 食券機 at a ramen shop's door: pick an item, confirm, feed ¥1,000
+/// notes, take the ticket and change. The menu comes from the scene.
 nonisolated struct FoodTicket: Hashable {
-    static let dishes: [(name: String, price: Int)] = [("醤油ラーメン", 900), ("味噌ラーメン", 980), ("餃子", 380)]
+    static let defaultMenu = [
+        MachineMenuItem(id: "shoyu", name: "醤油ラーメン", price: 900),
+        MachineMenuItem(id: "miso", name: "味噌ラーメン", price: 980),
+        MachineMenuItem(id: "gyoza", name: "餃子", price: 380)
+    ]
 
     enum Step: Hashable {
         case choose
@@ -297,26 +323,31 @@ nonisolated struct FoodTicket: Hashable {
         case done(Int)
     }
 
+    let menu: [MachineMenuItem]
     private(set) var step: Step = .choose
     private(set) var inserted = 0
 
+    init(menu: [MachineMenuItem]) {
+        self.menu = menu.isEmpty ? Self.defaultMenu : menu
+    }
+
     var outcome: MachineOutcome? {
         guard case let .done(index) = self.step else { return nil }
-        let dish = Self.dishes[index]
-        return .ticket(dish: dish.name, change: self.inserted - dish.price)
+        let item = self.menu[index]
+        return .ticket(item: item.id, change: self.inserted - item.price)
     }
 
     mutating func send(_ action: MachineAction) {
         switch (self.step, action) {
-        case let (.choose, .pickDish(index)) where Self.dishes.indices.contains(index):
+        case let (.choose, .pickDish(index)) where self.menu.indices.contains(index):
             self.step = .confirm(index)
         case (.confirm, .back):
             self.step = .choose
         case let (.confirm(index), .payDishInCash):
             self.step = .cash(index)
-        case let (.cash(index), .insert(amount)) where amount > 0 && self.inserted < Self.dishes[index].price:
+        case let (.cash(index), .insert(amount)) where amount > 0 && self.inserted < self.menu[index].price:
             self.inserted += amount
-        case let (.cash(index), .issueTicket) where self.inserted >= Self.dishes[index].price:
+        case let (.cash(index), .issueTicket) where self.inserted >= self.menu[index].price:
             self.step = .issued(index)
         case let (.issued(index), .take):
             self.step = .done(index)
@@ -330,52 +361,122 @@ nonisolated struct FoodTicket: Hashable {
         case .choose:
             return MachineScreen(
                 headline: "食券をお選びください",
-                info: "ラーメン・サイドメニュー",
-                buttons: Self.dishes.enumerated().map { index, dish in
-                    MachineControl(
-                        action: .pickDish(index),
-                        role: .onScreen("\(dish.name)　\(yen(dish.price))")
-                    )
+                info: "メニュー",
+                buttons: self.menu.enumerated().map { index, item in
+                    MachineControl(action: .pickDish(index), role: .onScreen("\(item.name)　\(yen(item.price))"))
                 }
             )
         case let .confirm(index):
-            let dish = Self.dishes[index]
+            let item = self.menu[index]
             return MachineScreen(
                 headline: "ご購入内容の確認",
-                info: "\(dish.name) × 1　\(yen(dish.price))",
+                info: "\(item.name) × 1　\(yen(item.price))",
                 buttons: [
                     MachineControl(action: .payDishInCash, role: .onScreen("現金で支払う"), isPrimary: true),
                     MachineControl(action: .back, role: .onScreen("戻る"))
                 ]
             )
         case let .cash(index):
-            let price = Self.dishes[index].price
+            let price = self.menu[index].price
             let enough = self.inserted >= price
             return MachineScreen(
                 headline: "現金を入れてください",
                 info: "合計 \(yen(price))　お預り \(yen(self.inserted))"
-                    +
-                    (enough ? "\nおつり \(yen(self.inserted - price))" :
-                        "\n不足 \(yen(price - self.inserted))"),
-                buttons: enough ? [MachineControl(
-                    action: .issueTicket,
-                    role: .onScreen("発券する"),
-                    isPrimary: true
-                )] : [],
+                    + (enough ? "\nおつり \(yen(self.inserted - price))" : "\n不足 \(yen(price - self.inserted))"),
+                buttons: enough ? [MachineControl(action: .issueTicket, role: .onScreen("発券する"), isPrimary: true)] : [],
                 hardware: enough ? [] : [MachineControl(
                     action: .insert(yen: 1000),
                     role: .hardware(.coinSlot(yen: 1000))
                 )]
             )
         case let .issued(index):
-            let dish = Self.dishes[index]
+            let item = self.menu[index]
             return MachineScreen(
                 headline: "食券とおつりをお取りください",
-                paper: "食券　No. 023\n\(dish.name)　\(yen(dish.price))\nおつり　\(yen(self.inserted - dish.price))",
+                paper: "食券　No. 023\n\(item.name)　\(yen(item.price))\nおつり　\(yen(self.inserted - item.price))",
                 hardware: [MachineControl(action: .take, role: .hardware(.ticketTray))]
             )
         case let .done(index):
-            return MachineScreen(headline: "食券を店員にお渡しください", info: "\(Self.dishes[index].name) × 1")
+            return MachineScreen(headline: "食券を店員にお渡しください", info: "\(self.menu[index].name) × 1")
+        }
+    }
+}
+
+/// A self-order kiosk at a fast-food counter: it offers to make the item a
+/// set, shows the price difference, takes the order and gives a number.
+nonisolated struct Kiosk: Hashable {
+    static let defaultOptions = [
+        MachineMenuItem(id: "set", name: "セットにする", price: 300),
+        MachineMenuItem(id: "single", name: "単品のまま", price: 0)
+    ]
+
+    enum Step: Hashable {
+        case offer
+        case confirm(Int)
+        case placed(Int)
+    }
+
+    let item: String
+    let price: Int
+    let options: [MachineMenuItem]
+    private(set) var step: Step = .offer
+
+    init(item: String, price: Int, options: [MachineMenuItem]) {
+        self.item = item
+        self.price = price
+        self.options = options.isEmpty ? Self.defaultOptions : options
+    }
+
+    private func total(_ index: Int) -> Int {
+        self.price + self.options[index].price
+    }
+
+    var outcome: MachineOutcome? {
+        guard case let .placed(index) = self.step else { return nil }
+        return .kioskOrder(option: self.options[index].id, total: self.total(index))
+    }
+
+    mutating func send(_ action: MachineAction) {
+        switch (self.step, action) {
+        case let (.offer, .pickOption(index)) where self.options.indices.contains(index):
+            self.step = .confirm(index)
+        case (.confirm, .back):
+            self.step = .offer
+        case let (.confirm(index), .confirmOrder):
+            self.step = .placed(index)
+        default:
+            break
+        }
+    }
+
+    var screen: MachineScreen {
+        switch self.step {
+        case .offer:
+            return MachineScreen(
+                headline: "セットにしますか？",
+                info: "\(self.item)　\(yen(self.price))",
+                buttons: self.options.enumerated().map { index, option in
+                    let label = option.price > 0 ? "\(option.name)　+\(yen(option.price))" : option.name
+                    return MachineControl(action: .pickOption(index), role: .onScreen(label))
+                }
+            )
+        case let .confirm(index):
+            let option = self.options[index]
+            let line = option.price > 0 ? "\(self.item)（\(option.name)）" : self.item
+            return MachineScreen(
+                headline: "ご注文内容の確認",
+                info: "\(line)\n合計 \(yen(self.total(index)))",
+                buttons: [
+                    MachineControl(action: .confirmOrder, role: .onScreen("注文する"), isPrimary: true),
+                    MachineControl(action: .back, role: .onScreen("戻る"))
+                ]
+            )
+        case let .placed(index):
+            return MachineScreen(
+                headline: "ご注文ありがとうございます",
+                info: "番号をお呼びするまでお待ちください",
+                paper: "受付番号　021\n合計　\(yen(self.total(index)))"
+            )
         }
     }
 }
