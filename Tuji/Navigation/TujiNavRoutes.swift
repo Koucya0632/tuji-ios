@@ -83,7 +83,7 @@ private struct SceneDestination: View {
         switch self.route {
         case .sceneList: SceneListView(user: self.user)
         case let .sceneDetail(id): SceneDetailView(sceneId: id, user: self.user)
-        case let .scenePractice(id): ScenePracticeView(sceneId: id, user: self.user)
+        case let .scenePractice(id, route): ScenePracticeView(sceneId: id, routeId: route, user: self.user)
         case let .sceneWord(id, scene): WordDetailView(id: id, fromScene: scene)
         default: EmptyView()
         }

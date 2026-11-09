@@ -151,10 +151,14 @@ struct StagedQuestionView: View {
                             if let again = self.session.askAgain() { self.play(again) }
                         }
                         if let shown {
-                            self.pill("慢速", systemImage: "tortoise") { self.play(shown, rate: 0.8) }
+                            self.pill("慢速", systemImage: "tortoise") {
+                                self.session.noteHint()
+                                self.play(shown, rate: 0.8)
+                            }
                         }
                         self.pill("字幕", systemImage: "captions.bubble", pressed: self.subtitles) {
                             self.subtitles.toggle()
+                            if self.subtitles { self.session.noteHint() }
                         }
                     }
                 }

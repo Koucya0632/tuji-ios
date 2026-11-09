@@ -88,10 +88,24 @@ struct SceneDetailView: View {
             }
             if self.user != nil {
                 if canPractise {
-                    NavigationLink(value: NavRoute.scenePractice(id: scene.id)) {
+                    NavigationLink(value: NavRoute.scenePractice(id: scene.id, route: nil)) {
                         self.callLabel(status.startTitle, trailing: self.callTrailing(scene, status: status))
                     }
                     .buttonStyle(.plain)
+                    ForEach(scene.stage?.routes.filter(\.isOptional) ?? []) { route in
+                        NavigationLink(value: NavRoute.scenePractice(id: scene.id, route: route.id)) {
+                            HStack(spacing: Space.s2) {
+                                Text("另一趟：\(route.title.resolved(self.language))")
+                                    .font(.tujiBodySm(.strong))
+                                Spacer(minLength: Space.s2)
+                                Image(systemName: "chevron.right").font(.tujiIcon(13, weight: .bold))
+                            }
+                            .foregroundStyle(.tujiPaper)
+                            .frame(minHeight: 44)
+                            .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 } else {
                     Button { self.presentPaywall() } label: {
                         self.callLabel("看永久會員方案", trailing: nil)
@@ -111,8 +125,8 @@ struct SceneDetailView: View {
 
     private func callTrailing(_ scene: PracticeScene, status: SceneStatus) -> LocalizedStringKey? {
         switch status {
-        case let .inProgress(practised, _):
-            "第 \((self.store.book.cursors[scene.id] ?? practised) + 1) 句"
+        case .inProgress:
+            "第 \(scene.resumeNumber(in: self.store.book)) 句"
         case let .reviewDue(count):
             "\(count) 句"
         case .notStarted:

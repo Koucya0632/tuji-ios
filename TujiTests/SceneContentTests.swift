@@ -240,7 +240,28 @@ struct SceneContentTests {
         for scene in try self.catalog().scenes {
             guard let stage = scene.stage else { continue }
             #expect(Set(stage.steps.keys) == Set(scene.questions.map(\.id.rawValue)), "\(scene.id.rawValue)")
-            #expect(stage.intent.all.allSatisfy { !$0.isEmpty } && stage.enter.all.allSatisfy { !$0.isEmpty })
+        }
+    }
+
+    /// Every 問句 is met on some trip, a trip names only this scene's 問句 once
+    /// each, and the trip first practice takes comes first.
+    @Test
+    func everyStagedQuestionIsOnATripAndTheFirstTripIsTheDefault() throws {
+        for scene in try self.catalog().scenes {
+            guard let stage = scene.stage else { continue }
+            let ids = Set(scene.questions.map(\.id))
+            #expect(!stage.routes.isEmpty, "\(scene.id.rawValue)")
+            #expect(stage.routes.first?.isOptional == false, "\(scene.id.rawValue): first trip must be the default")
+            #expect(Set(stage.routes.map(\.id)).count == stage.routes.count, "\(scene.id.rawValue)")
+            #expect(Set(stage.routes.flatMap(\.questions)) == ids, "\(scene.id.rawValue): a 問句 no trip meets")
+            for route in stage.routes {
+                #expect(Set(route.questions).count == route.questions.count, "\(route.id) repeats a 問句")
+                #expect(route.questions.allSatisfy(ids.contains), "\(route.id)")
+                #expect(
+                    (route.title.all + route.intent.all + route.enter.all).allSatisfy { !$0.isEmpty },
+                    "\(route.id)"
+                )
+            }
         }
     }
 

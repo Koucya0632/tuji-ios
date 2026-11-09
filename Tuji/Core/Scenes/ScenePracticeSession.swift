@@ -26,6 +26,12 @@ final class ScenePracticeSession {
     struct QuestionResult: Equatable, Identifiable {
         let question: SceneQuestion
         let wrongTries: Int
+        var usedHint = false
+
+        /// Worth another look on the summary: missed, or got with help.
+        var needsAnotherLook: Bool {
+            self.wrongTries > 0 || self.usedHint
+        }
 
         var id: SceneQuestionID {
             self.question.id
@@ -33,13 +39,16 @@ final class ScenePracticeSession {
     }
 
     struct Summary: Equatable {
-        /// The questions of this pass in the order they were asked.
+        /// The questions of this pass: those missed or helped first, then the
+        /// rest, each group in the order they were asked.
         let results: [QuestionResult]
         /// The scene's standing after this pass, for the 明天複習 line.
         let status: SceneStatus
     }
 
     let scene: PracticeScene
+    /// The trip this pass takes, on a staged scene.
+    let route: StageRoute?
     let steps: [PracticeStep]
     private(set) var phase: Phase
 
@@ -47,10 +56,12 @@ final class ScenePracticeSession {
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var wrongTries: [Int: Int] = [:]
+    @ObservationIgnored private var hinted: Set<Int> = []
 
     init(
         scene: PracticeScene,
         store: SceneProgressStore,
+        route: StageRoute? = nil,
         now: @escaping () -> Date = Date.init,
         calendar: Calendar = .current
     ) {
@@ -59,7 +70,8 @@ final class ScenePracticeSession {
         self.now = now
         self.calendar = calendar
         let today = LocalDay(now(), calendar: calendar)
-        self.steps = ScenePractice.plan(scene, book: store.book, today: today)
+        self.route = route ?? ScenePractice.suggestedRoute(scene, book: store.book, today: today)
+        self.steps = ScenePractice.plan(scene, book: store.book, today: today, route: self.route)
         self.phase = .finished(Summary(
             results: [],
             status: ScenePractice.status(scene, book: store.book, today: today)
@@ -99,6 +111,14 @@ final class ScenePracticeSession {
         self.settle(tried: "machine:\(outcome)", correct: fits)
     }
 
+    /// Slow playback, the subtitle, or 「請再說一次」 on the 問句 on screen.
+    func noteHint() {
+        guard case let .practising(index, phase) = self.phase, phase != .revealed(firstTry: true),
+              phase != .revealed(firstTry: false)
+        else { return }
+        self.hinted.insert(index)
+    }
+
     /// 「請再說一次」: another phrasing of the 問句 on screen, said the way
     /// staff would repeat it. It is marked heard, so tomorrow's review picks
     /// one not yet played. Nil when every other phrasing has been heard.
@@ -108,6 +128,7 @@ final class ScenePracticeSession {
         guard let phrasing = question.phrasings.first(where: { $0.spoken != nil && !heard.contains($0.id) }),
               let line = phrasing.spoken
         else { return nil }
+        self.noteHint()
         self.store.update { book in
             book.questions[question.id, default: QuestionProgress()].usedPhrasingIds.insert(phrasing.id)
         }
@@ -141,12 +162,16 @@ final class ScenePracticeSession {
             self.store.update { $0.cursors[self.scene.id] = nil }
             let today = LocalDay(self.now(), calendar: self.calendar)
             self.phase = .finished(Summary(
-                results: self.steps.indices.map { index in
-                    QuestionResult(
-                        question: self.scene.questions[self.steps[index].questionIndex],
-                        wrongTries: self.wrongTries[index] ?? 0
-                    )
-                },
+                results: {
+                    let all = self.steps.indices.map { index in
+                        QuestionResult(
+                            question: self.scene.questions[self.steps[index].questionIndex],
+                            wrongTries: self.wrongTries[index] ?? 0,
+                            usedHint: self.hinted.contains(index)
+                        )
+                    }
+                    return all.filter(\.needsAnotherLook) + all.filter { !$0.needsAnotherLook }
+                }(),
                 status: ScenePractice.status(self.scene, book: self.store.book, today: today)
             ))
         }

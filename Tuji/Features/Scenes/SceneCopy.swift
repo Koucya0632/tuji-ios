@@ -177,7 +177,7 @@ struct SceneSpeakerTag: View {
 
 extension PracticeScene {
     func practised(in book: SceneProgressBook) -> [Bool] {
-        self.questions.map { book.progress($0.id).stage != .new }
+        self.counted(in: book).map { book.progress($0.id).stage != .new }
     }
 }
 

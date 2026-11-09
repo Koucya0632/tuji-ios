@@ -9,12 +9,39 @@
 import Foundation
 
 nonisolated struct SceneStage: Hashable, Decodable {
+    /// The trips through this place. The first that is not optional is the
+    /// one first practice takes.
+    let routes: [StageRoute]
+    /// Keyed by question id.
+    let steps: [String: StageStep]
+
+    var defaultRoute: StageRoute? {
+        self.routes.first { !$0.isOptional } ?? self.routes.first
+    }
+
+    func route(_ id: String?) -> StageRoute? {
+        id.flatMap { id in self.routes.first { $0.id == id } }
+    }
+}
+
+/// One trip: why the traveller is here, and the 問句 they meet, in order. A
+/// meal-ticket shop skips table ordering; buying beer adds the age check.
+/// 問句 on a route not taken stay unpractised and are not counted as done.
+nonisolated struct StageRoute: Hashable, Decodable, Identifiable {
+    let id: String
+    /// How the scene page names this trip.
+    let title: LocalizedText
     /// What the traveller is here to do, said before anything plays.
     let intent: LocalizedText
     /// The button that walks in and starts the first line.
     let enter: LocalizedText
-    /// Keyed by question id.
-    let steps: [String: StageStep]
+    let questions: [SceneQuestionID]
+    /// Practised only when chosen from the scene page.
+    let optional: Bool?
+
+    var isOptional: Bool {
+        self.optional ?? false
+    }
 }
 
 nonisolated struct StageStep: Hashable, Decodable {

@@ -5,6 +5,7 @@ import SwiftUI
 
 struct ScenePracticeView: View {
     let sceneId: SceneID
+    var routeId: String?
     let user: SessionUser?
     var catalog: SceneCatalog = .bundled
 
@@ -25,10 +26,10 @@ struct ScenePracticeView: View {
                 switch session.phase {
                 case let .practising(index, phase):
                     if let step = session.currentStep, let question = session.currentQuestion {
-                        if let stage = session.scene.stage, let stageStep = session.scene.stageStep(question.id) {
+                        if let route = session.route, let stageStep = session.scene.stageStep(question.id) {
                             self.staged(
                                 session,
-                                stage: stage,
+                                route: route,
                                 stageStep: stageStep,
                                 step: step,
                                 question: question,
@@ -53,7 +54,7 @@ struct ScenePracticeView: View {
         .task {
             guard self.session == nil, let user, let scene = self.catalog.scene(self.sceneId) else { return }
             SceneProgressStore.shared.use(account: user.id)
-            self.session = ScenePracticeSession(scene: scene, store: .shared)
+            self.session = ScenePracticeSession(scene: scene, store: .shared, route: scene.stage?.route(self.routeId))
         }
         .task(id: self.session?.currentStep) {
             self.showsTranscript = false
@@ -92,7 +93,7 @@ struct ScenePracticeView: View {
 
     private func staged(
         _ session: ScenePracticeSession,
-        stage: SceneStage,
+        route: StageRoute,
         stageStep: StageStep,
         step: PracticeStep,
         question: SceneQuestion,
@@ -121,7 +122,7 @@ struct ScenePracticeView: View {
             .opacity(self.entered ? 1 : 0)
             .overlay {
                 if !self.entered {
-                    self.enterCard(stage)
+                    self.enterCard(route)
                 }
             }
         }
@@ -137,7 +138,7 @@ struct ScenePracticeView: View {
     }
 
     /// Before anything plays: what the traveller is here to do, and the step in.
-    private func enterCard(_ stage: SceneStage) -> some View {
+    private func enterCard(_ stage: StageRoute) -> some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Spacer()
             VStack(alignment: .leading, spacing: Space.s3) {
@@ -302,8 +303,14 @@ struct ScenePracticeView: View {
             .frame(maxWidth: .infinity, minHeight: 190)
             if !review {
                 HStack(spacing: Space.s2) {
-                    self.pill("慢速", pressed: false) { self.play(line, rate: 0.8) }
-                    self.pill("顯示日文", pressed: self.showsTranscript) { self.showsTranscript.toggle() }
+                    self.pill("慢速", pressed: false) {
+                        self.session?.noteHint()
+                        self.play(line, rate: 0.8)
+                    }
+                    self.pill("顯示日文", pressed: self.showsTranscript) {
+                        self.showsTranscript.toggle()
+                        if self.showsTranscript { self.session?.noteHint() }
+                    }
                 }
                 .frame(maxWidth: .infinity)
             }
