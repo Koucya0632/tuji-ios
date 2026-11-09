@@ -364,16 +364,16 @@
       "id": "post-office.label",
       "kind": "listening",
       "goal": {
-        "zh-Hant": "聽懂窗口請你填寄件單",
-        "zh-Hans": "听懂窗口请你填寄件单",
-        "en": "Understand when you are asked to fill in the label"
+        "zh-Hant": "聽懂窗口請你在平板上做寄件單",
+        "zh-Hans": "听懂窗口请你在平板上做寄件单",
+        "en": "Understand when you are asked to make the label on the tablet"
       },
       "phrasings": [
         {
           "id": "post-office.label.p1",
           "role": "first",
           "speaker": "staff",
-          "text": "こちらのラベルにご記入をお願いします",
+          "text": "こちらのタブレットで、ラベルの作成をお願いします",
           "voice": "Aoede",
           "speed": "normal",
           "ambience": false,
@@ -384,7 +384,7 @@
           "id": "post-office.label.p2",
           "role": "review",
           "speaker": "staff",
-          "text": "お届け先と中身を、こちらにお願いします",
+          "text": "お届け先と中身を、こちらの画面に入力してください",
           "voice": "Puck",
           "speed": "fast",
           "ambience": true,
@@ -395,7 +395,7 @@
           "id": "post-office.label.p3",
           "role": "review",
           "speaker": "staff",
-          "text": "伝票のご記入をお願いできますか？",
+          "text": "送り状は、そちらのタブレットでお作りいただけますか？",
           "voice": "Kore",
           "speed": "normal",
           "ambience": false,
@@ -416,9 +416,9 @@
         {
           "id": "b",
           "text": {
-            "zh-Hant": "請填寫這張單",
-            "zh-Hans": "请填写这张单",
-            "en": "Please fill in this form"
+            "zh-Hant": "請在平板上做寄件單",
+            "zh-Hans": "请在平板上做寄件单",
+            "en": "Please make the label on the tablet"
           },
           "correct": true
         },
@@ -438,14 +438,14 @@
         "voice": "Orus"
       },
       "explanation": {
-        "zh-Hant": "「ラベル」「伝票」是寄件單，要寫收件人、地址和內容物。填寫方式依郵局與目的地不同，以現場說明為準。",
-        "zh-Hans": "「ラベル」「伝票」是寄件单，要写收件人、地址和内容物。填写方式依邮局与目的地不同，以现场说明为准。",
-        "en": "ラベル and 伝票 are the shipping form. It asks for the recipient, the address and the contents. How it is done depends on the post office and the destination, so follow what the staff tell you."
+        "zh-Hant": "「ラベル」「送り状」是寄件單，「タブレット」是平板，「作成」「入力」是製作、輸入。寄物品到國外，寄件單要在窗口的平板或「国際郵便マイページ」網站上輸入收件人、地址和內容物，手寫的不收。操作方式依郵局不同，以現場說明為準。",
+        "zh-Hans": "「ラベル」「送り状」是寄件单，「タブレット」是平板，「作成」「入力」是制作、输入。寄物品到国外，寄件单要在窗口的平板或「国際郵便マイページ」网站上输入收件人、地址和内容物，手写的不收。操作方式依邮局不同，以现场说明为准。",
+        "en": "ラベル and 送り状 are the shipping label, タブレット is a tablet, and 作成 and 入力 mean making and entering. To send goods abroad, you enter the recipient, address and contents on the counter tablet or the 国際郵便マイページ website; handwritten labels are not accepted. How it works varies by post office, so follow what the staff tell you."
       },
       "wordIds": [
         "shipping-label"
       ],
-      "reviewNote": "Whether international labels must now be prepared online beforehand (国際郵便マイページ) is unconfirmed in the outline; check before release."
+      "reviewNote": "Checked 2026-11 against Japan Post: since 2024-03-01, goods sent abroad need an electronic label made on 国際郵便マイページ or the counter tablet; handwritten labels are not accepted."
     },
     {
       "id": "post-office.payment",
@@ -575,9 +575,9 @@
             },
             "fits": true,
             "result": {
-              "zh-Hant": "職員拿出寄國外的單子。",
-              "zh-Hans": "工作人员拿出寄国外的单子。",
-              "en": "The staff member takes out an international form."
+              "zh-Hant": "職員點點頭，記下寄往台灣。",
+              "zh-Hans": "工作人员点点头，记下寄往台湾。",
+              "en": "The staff member nods and notes it's going to Taiwan."
             }
           },
           {
@@ -590,9 +590,9 @@
             },
             "fits": false,
             "result": {
-              "zh-Hant": "職員拿出國內用的單子。你要寄回台灣。",
-              "zh-Hans": "工作人员拿出国内用的单子。你要寄回台湾。",
-              "en": "The staff member takes out a domestic form. You're sending it to Taiwan."
+              "zh-Hant": "職員開始算國內的運費。你要寄回台灣。",
+              "zh-Hans": "工作人员开始算国内的运费。你要寄回台湾。",
+              "en": "The staff member starts working out the domestic rate. You're sending it to Taiwan."
             }
           },
           {
@@ -625,9 +625,9 @@
             },
             "fits": true,
             "result": {
-              "zh-Hant": "職員拿出 EMS 的單子。",
-              "zh-Hans": "工作人员拿出 EMS 的单子。",
-              "en": "The staff member takes out an EMS form."
+              "zh-Hant": "職員點點頭，記下 EMS。",
+              "zh-Hans": "工作人员点点头，记下 EMS。",
+              "en": "The staff member nods and notes EMS."
             }
           },
           {
@@ -640,9 +640,9 @@
             },
             "fits": false,
             "result": {
-              "zh-Hant": "職員拿出海運的單子。你想用 EMS。",
-              "zh-Hans": "工作人员拿出海运的单子。你想用 EMS。",
-              "en": "The staff member takes out a sea mail form. You wanted EMS."
+              "zh-Hant": "職員開始算海運的運費。你想用 EMS。",
+              "zh-Hans": "工作人员开始算海运的运费。你想用 EMS。",
+              "en": "The staff member starts working out the sea mail rate. You wanted EMS."
             }
           },
           {
@@ -675,9 +675,9 @@
             },
             "fits": true,
             "result": {
-              "zh-Hant": "職員點點頭，指著單子上寫內容物的地方。",
-              "zh-Hans": "工作人员点点头，指着单子上写内容物的地方。",
-              "en": "The staff member nods and points to the contents box on the form."
+              "zh-Hant": "職員點點頭，說待會兒做寄件單時要輸入。",
+              "zh-Hans": "工作人员点点头，说待会儿做寄件单时要输入。",
+              "en": "The staff member nods and says to enter that when you make the label."
             }
           },
           {
@@ -690,9 +690,9 @@
             },
             "fits": false,
             "result": {
-              "zh-Hant": "職員請你在單子上只寫衣服。箱子裡還有零食。",
-              "zh-Hans": "工作人员请你在单子上只写衣服。箱子里还有零食。",
-              "en": "The staff member tells you to write just clothes. The box has snacks too."
+              "zh-Hant": "職員說那寄件單上就只寫衣服。箱子裡還有零食。",
+              "zh-Hans": "工作人员说那寄件单上就只写衣服。箱子里还有零食。",
+              "en": "The staff member says to list only clothes on the label, then. The box has snacks too."
             }
           },
           {
@@ -775,9 +775,9 @@
             },
             "fits": true,
             "result": {
-              "zh-Hant": "你接過寄件單，寫上收件人和地址。",
-              "zh-Hans": "你接过寄件单，写上收件人和地址。",
-              "en": "You take the form and fill in the name and address."
+              "zh-Hant": "你在平板上輸入收件人、地址和內容物，印出寄件單。",
+              "zh-Hans": "你在平板上输入收件人、地址和内容物，打印出寄件单。",
+              "en": "You enter the recipient, address and contents on the tablet and print the label."
             }
           },
           {
@@ -790,9 +790,9 @@
             },
             "fits": false,
             "result": {
-              "zh-Hant": "職員把筆遞給你，請你自己填。",
-              "zh-Hans": "工作人员把笔递给你，请你自己填。",
-              "en": "The staff member hands you a pen and asks you to fill it in yourself."
+              "zh-Hant": "職員指著平板，請你自己輸入。",
+              "zh-Hans": "工作人员指着平板，请你自己输入。",
+              "en": "The staff member points at the tablet and asks you to enter it yourself."
             }
           },
           {
@@ -805,9 +805,9 @@
             },
             "fits": false,
             "result": {
-              "zh-Hant": "寄送方式剛才說過了，職員在等你填單子。",
-              "zh-Hans": "寄送方式刚才说过了，工作人员在等你填单子。",
-              "en": "You've already chosen. The staff member is waiting for you to fill in the form."
+              "zh-Hant": "寄送方式剛才說過了，職員在等你在平板上做寄件單。",
+              "zh-Hans": "寄送方式刚才说过了，工作人员在等你在平板上做寄件单。",
+              "en": "You've already chosen. The staff member is waiting for you to make the label on the tablet."
             }
           }
         ]
