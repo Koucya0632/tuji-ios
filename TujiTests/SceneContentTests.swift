@@ -236,6 +236,17 @@ struct SceneContentTests {
     // MARK: - Stage
 
     @Test
+    func everySpokenReplyHasItsClip() throws {
+        for scene in try self.catalog().scenes {
+            for step in scene.stage?.steps.values.map(\.self) ?? [] {
+                for reply in step.replies ?? [] where reply.isSpoken {
+                    #expect(SceneCatalog.audioURL(reply.clip) != nil, "\(reply.ja) has no \(reply.clip)")
+                }
+            }
+        }
+    }
+
+    @Test
     func aStagedSceneStagesEveryQuestionAndNothingElse() throws {
         for scene in try self.catalog().scenes {
             guard let stage = scene.stage else { continue }

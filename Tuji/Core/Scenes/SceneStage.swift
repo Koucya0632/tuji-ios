@@ -6,6 +6,7 @@
 // It lives in the scene's own JSON beside the questions it stages, keyed by
 // question id, so progress keeps keying on the same ids.
 
+import CryptoKit
 import Foundation
 
 nonisolated struct SceneStage: Hashable, Decodable {
@@ -82,6 +83,13 @@ nonisolated struct StageReply: Hashable, Decodable, Identifiable {
 
     var isSpoken: Bool {
         self.says ?? true
+    }
+
+    /// Its clip's file name, named by the Japanese so every scene that uses
+    /// the same reply shares one (`generate-scene-audio.mjs` names it alike).
+    var clip: String {
+        let digest = SHA256.hash(data: Data(self.ja.utf8)).map { String(format: "%02x", $0) }.joined()
+        return "reply-\(digest.prefix(12)).mp3"
     }
 }
 

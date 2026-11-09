@@ -49,6 +49,9 @@ function fail(lines) {
 }
 
 const sha256 = (data) => crypto.createHash("sha256").update(data).digest("hex");
+// The voice every 回應 uses, so the traveller sounds the same throughout.
+const TRAVELLER_VOICE = "Orus";
+const replyClip = (ja) => `reply-${sha256(ja).slice(0, 12)}.mp3`;
 
 function loadJobs() {
   const files = fs.existsSync(scenesDir)
@@ -107,6 +110,20 @@ function loadJobs() {
           audio: r.audio,
           text: r.ja,
           voice: r.voice,
+          speed: "normal",
+          ambience: false,
+        });
+      }
+    }
+    // Staged replies the traveller says. Named by their text so a reply used
+    // in several scenes shares one clip; the app derives the same name.
+    for (const [qid, step] of Object.entries(scene.stage?.steps ?? {})) {
+      for (const reply of step.replies ?? []) {
+        if (reply.says === false) continue;
+        add(`${file}:${qid}.${reply.id}`, {
+          audio: replyClip(reply.ja),
+          text: reply.ja,
+          voice: TRAVELLER_VOICE,
           speed: "normal",
           ambience: false,
         });

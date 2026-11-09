@@ -81,10 +81,14 @@ enum SceneAudio {
         )
     }
 
-    /// A reply the traveller says on a staged 問句. Replies have no clip yet,
-    /// so the device reads them.
+    /// A reply the traveller says on a staged 問句, from its bundled clip when
+    /// there is one and read by the device otherwise.
     static func say(_ reply: StageReply) {
-        SpeechService.shared.play(bundledFile: nil, fallbackText: reply.ja, voice: .japanese)
+        SpeechService.shared.play(
+            bundledFile: SceneCatalog.audioURL(reply.clip),
+            fallbackText: reply.ja,
+            voice: .japanese
+        )
     }
 
     static func play(_ response: SceneResponse) {
