@@ -56,6 +56,10 @@ struct StageBackdrop {
         "scene-bg-taxi": counter(0.5, 0.78),
         "scene-bg-fast-food": counter(0.72, 0.75),
         "scene-bg-ryokan": counter(0.52, 0.67),
+        "scene-bg-cafe": counter(0.5, 0.68),
+        "scene-bg-izakaya": counter(0.49, 0.68),
+        "scene-bg-conveyor-sushi": counter(0.48, 0.72),
+        "scene-bg-station-ticket-office": counter(0.49, 0.63),
         "story-restaurant-entrance": StageBackdrop(
             focus: UnitPoint(x: 0.5, y: 0.45),
             spots: [UnitPoint(x: 0.83, y: 0.41)],
