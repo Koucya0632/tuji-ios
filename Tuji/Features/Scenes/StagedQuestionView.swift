@@ -14,8 +14,10 @@ struct StagedQuestionView: View {
     let question: SceneQuestion
     let stage: StageStep
     let phase: ScenePracticeSession.QuestionPhase
+    let route: StageRoute
     /// False until the traveller walks in; nothing plays before that.
     let entered: Bool
+    let onEnter: () -> Void
     let openWord: (CardWord) -> Void
 
     @Environment(SettingsStore.self) private var settings
@@ -25,6 +27,8 @@ struct StagedQuestionView: View {
     @State private var subtitles = false
     @State private var chosen: StageReply?
     @State private var machine: SceneMachine?
+    /// The panel's natural height; it scrolls only past what the photo can spare.
+    @State private var lowerHeight: CGFloat = 0
 
     private var language: UILanguage {
         self.settings.current.uiLanguage
@@ -35,21 +39,30 @@ struct StagedQuestionView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if let note = self.stage.note {
-                Text(verbatim: note.resolved(self.language))
-                    .font(.tujiBodySm(.strong))
-                    .foregroundStyle(.tujiPaper)
-                    .padding(.horizontal, Space.s3)
-                    .padding(.vertical, Space.s2)
-                    .background(.tujiInk.opacity(0.78))
-                    .padding(.horizontal, Space.s3)
-                    .padding(.top, Space.s2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        GeometryReader { geo in
+            VStack(spacing: 0) {
+                ZStack(alignment: .topLeading) {
+                    StageBackdropView(background: self.stage.background, props: self.shownProps)
+                    if self.entered, let note = self.stage.note {
+                        Text(verbatim: note.resolved(self.language))
+                            .font(.tujiBodySm(.strong))
+                            .foregroundStyle(.tujiPaper)
+                            .padding(.horizontal, Space.s3)
+                            .padding(.vertical, Space.s2)
+                            .background(.tujiInk.opacity(0.78))
+                            .padding(Space.s3)
+                    }
+                }
+                .frame(minHeight: 150, maxHeight: .infinity)
+                ScrollView {
+                    self.lower
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { self.lowerHeight = $0 }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .defaultScrollAnchor(.bottom)
+                .frame(height: min(self.lowerHeight, max(200, geo.size.height - 150)))
+                .background(.tujiPaper)
             }
-            Spacer(minLength: Space.s3)
-            self.props
-            self.panel
         }
         .task(id: self.entered) {
             if self.machine == nil, let kind = self.stage.machine {
@@ -61,29 +74,54 @@ struct StagedQuestionView: View {
         }
     }
 
+    @ViewBuilder
+    private var lower: some View {
+        if self.entered {
+            self.panel
+        } else {
+            self.enterCard
+        }
+    }
+
+    /// Before anything plays: what the traveller is here to do, and the step in.
+    private var enterCard: some View {
+        VStack(alignment: .leading, spacing: Space.s3) {
+            Text("這一次")
+                .font(.tujiLabel)
+                .tracking(1)
+                .foregroundStyle(.tujiInk2)
+            Text(verbatim: self.route.intent.resolved(self.language))
+                .font(.tujiH3)
+                .foregroundStyle(.tujiInk)
+                .fixedSize(horizontal: false, vertical: true)
+            Button(action: self.onEnter) {
+                HStack {
+                    Text(verbatim: self.route.enter.resolved(self.language)).font(.tujiH3)
+                    Spacer()
+                    Image(systemName: "arrow.right").font(.tujiIcon(18, weight: .bold))
+                }
+                .foregroundStyle(.tujiInk)
+                .padding(.vertical, Space.s3)
+                .padding(.horizontal, 20)
+                .background(.tujiCurrent)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(Space.s3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var shownProps: [String] {
+        let props = self.stage.props ?? []
+        let extra = self.chosen?.show ?? []
+        return props + extra.filter { !props.contains($0) }
+    }
+
     private func play(_ line: SpokenLine, rate: Float = 1) {
         self.line = line
         self.plays += 1
         SceneAudio.play(line, rate: rate)
-    }
-
-    // MARK: - Counter
-
-    private var props: some View {
-        let shown = (self.stage.props ?? []) + (self.revealed || self.chosen != nil ? self.chosen?.show ?? [] : [])
-        return HStack(alignment: .bottom, spacing: Space.s2) {
-            ForEach(shown, id: \.self) { name in
-                Image(name)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 120, maxHeight: 96)
-                    .shadow(color: .tujiInk.opacity(0.25), radius: 6, y: 3)
-                    .accessibilityLabel(Text(StageProp.label(name)))
-            }
-        }
-        .padding(.horizontal, Space.s4)
-        .padding(.bottom, Space.s2)
-        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Panel

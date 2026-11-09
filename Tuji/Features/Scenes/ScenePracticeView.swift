@@ -105,69 +105,19 @@ struct ScenePracticeView: View {
         VStack(spacing: 0) {
             self.topBar(session, index: index, revealed: phase.isRevealed)
                 .background(.tujiPaper)
-            ScrollView {
-                StagedQuestionView(
-                    session: session,
-                    step: step,
-                    question: question,
-                    stage: stageStep,
-                    phase: phase,
-                    entered: self.entered,
-                    openWord: { self.openWord = $0 }
-                )
-                .id(step)
-                .frame(minHeight: 560, alignment: .bottom)
-            }
-            .defaultScrollAnchor(.bottom)
-            .opacity(self.entered ? 1 : 0)
-            .overlay {
-                if !self.entered {
-                    self.enterCard(route)
-                }
-            }
+            StagedQuestionView(
+                session: session,
+                step: step,
+                question: question,
+                stage: stageStep,
+                phase: phase,
+                route: route,
+                entered: self.entered,
+                onEnter: { self.entered = true },
+                openWord: { self.openWord = $0 }
+            )
+            .id(step)
         }
-        .background {
-            Image(stageStep.background)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
-        }
-    }
-
-    /// Before anything plays: what the traveller is here to do, and the step in.
-    private func enterCard(_ stage: StageRoute) -> some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            Spacer()
-            VStack(alignment: .leading, spacing: Space.s3) {
-                Text("這一次")
-                    .font(.tujiLabel)
-                    .tracking(1)
-                    .foregroundStyle(.tujiInk2)
-                Text(verbatim: stage.intent.resolved(self.language))
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button { self.entered = true } label: {
-                    HStack {
-                        Text(verbatim: stage.enter.resolved(self.language)).font(.tujiH3)
-                        Spacer()
-                        Image(systemName: "arrow.right").font(.tujiIcon(18, weight: .bold))
-                    }
-                    .foregroundStyle(.tujiInk)
-                    .padding(.vertical, Space.s3)
-                    .padding(.horizontal, 20)
-                    .background(.tujiCurrent)
-                    .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(Space.s3)
-            .background(.tujiPaper)
-        }
-        .padding(Space.s3)
     }
 
     // MARK: - Top bar
