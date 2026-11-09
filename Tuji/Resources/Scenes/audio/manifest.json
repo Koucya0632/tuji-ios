@@ -3882,34 +3882,34 @@
       "durationSec": 1.536
     },
     "post-office.label.p1.mp3": {
-      "digest": "0b83c3b18ad4130b53b1a9f55f490cb8cadae99eff340e3ec03da4319d18354d",
-      "sha256": "c2a47ed6891abcbd56bb446d632a765ec884686b1229d561844b650323f559ed",
-      "text": "こちらのラベルにご記入をお願いします",
+      "digest": "e77ac7706fe92fce1cad8b23e4f10efbb11ce316c8544edd3e2cf852c5869b54",
+      "sha256": "aa1ea0c062b871ad31ae24280d9b2d64540c3d80e96eb2e3e7aaac679854b61b",
+      "text": "こちらのタブレットで、ラベルの作成をお願いします",
       "voice": "ja-JP-Chirp3-HD-Aoede",
       "rate": 1,
       "ambience": null,
-      "bytes": 11712,
-      "durationSec": 2.928
+      "bytes": 17472,
+      "durationSec": 4.368
     },
     "post-office.label.p2.mp3": {
-      "digest": "ff0ae98fbb533782210f9924bf66a4ce2acf6a229aff4f80b262948864fefac3",
-      "sha256": "c2d6ed89b77099f85870138964cae43fe7e2d5f88cd3f44986638cadfab57c42",
-      "text": "お届け先と中身を、こちらにお願いします",
+      "digest": "d8ce057173d553a54f4117808bc4ed01c706d2359e669239b652d0516158bc09",
+      "sha256": "5293cd62671dbfd46993d7615a5dd27585e9efdaae8f9ca0d809c2e23b68b8bb",
+      "text": "お届け先と中身を、こちらの画面に入力してください",
       "voice": "ja-JP-Chirp3-HD-Puck",
       "rate": 1.25,
       "ambience": "ambience-placeholder.mp3",
-      "bytes": 36764,
-      "durationSec": 3.584
+      "bytes": 42524,
+      "durationSec": 4.16
     },
     "post-office.label.p3.mp3": {
-      "digest": "062d00bb34af05c644955132b89951b8a294279dea634825a227013a4f47a814",
-      "sha256": "54ba875e98abad775dacf6d74dc83a456870b88f7432690579814ce524da6398",
-      "text": "伝票のご記入をお願いできますか？",
+      "digest": "673aa0ca201d2d068cf67adaf13d715ea487b02afbaac68c36c519d83a6f55a5",
+      "sha256": "7e2b03fcd769d1576be9aa6cb4e763dcb0f007c3e5556290f4ef311a3e444204",
+      "text": "送り状は、そちらのタブレットでお作りいただけますか？",
       "voice": "ja-JP-Chirp3-HD-Kore",
       "rate": 1,
       "ambience": null,
-      "bytes": 9984,
-      "durationSec": 2.496
+      "bytes": 13824,
+      "durationSec": 3.456
     },
     "post-office.label.response.mp3": {
       "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
