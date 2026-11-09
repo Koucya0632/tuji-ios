@@ -498,7 +498,7 @@ struct TodayView: View {
                     .padding(.bottom, -24)
             }
 
-            MoiraFeatureBand()
+            MoiraFeatureBand(trialPoints: self.checkIn.trialPoints)
         }
         .tourAnchor(.assistant)
     }

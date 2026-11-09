@@ -40,9 +40,10 @@ enum CheckInDecision {
         let daily = catalog.policy?.checkInDaily ?? self.defaultDaily
         let cap = catalog.policy?.checkInMonthlyCap ?? self.defaultMonthlyCap
         guard catalog.billingMode == "credits" else { return .locked(daily: daily) }
+        // A free account on 試用點數 is on points too, but check-in stays a 永久會員 benefit.
+        if wallet?.benefits.hasLifetime == false { return .locked(daily: daily) }
         guard catalog.checkInEnabled, let wallet else { return .hidden }
         let benefits = wallet.benefits
-        guard benefits.hasLifetime else { return .locked(daily: daily) }
         if benefits.checkedInToday { return .claimed }
         let left = cap - benefits.checkInGrantedThisMonth
         guard left > 0 else { return .capped(cap: cap) }

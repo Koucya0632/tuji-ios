@@ -33,6 +33,10 @@ struct CreditStatement: Equatable {
         case askedAssistant
         case recognition
         case monthlyGift
+        /// 試用點數: a free account's one grant.
+        case trial
+        /// 首購禮: what a lifetime bought after the trial switch brought.
+        case firstPurchaseGift
         case checkIn
         case purchase
         case gift
@@ -48,6 +52,8 @@ struct CreditStatement: Equatable {
                     : reference.hasPrefix("ai:") ? .recognition : .other
             case "grant":
                 self = reference.hasPrefix("benefit:monthly") ? .monthlyGift
+                    : reference == "benefit:trial" ? .trial
+                    : reference.hasPrefix("benefit:first_purchase:") ? .firstPurchaseGift
                     : reference.hasPrefix("benefit:check_in") ? .checkIn
                     : reference.hasPrefix("apple:") || reference.hasPrefix("play:") ? .purchase : .gift
             case "expire": self = .expired

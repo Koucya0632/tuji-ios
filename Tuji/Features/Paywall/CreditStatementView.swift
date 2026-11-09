@@ -249,6 +249,8 @@ struct CreditStatementView: View {
         case .askedAssistant: tujiLocalized("問 AI")
         case .recognition: tujiLocalized("拍照識別")
         case .monthlyGift: tujiLocalized("每月贈點")
+        case .trial: tujiLocalized("試用點數")
+        case .firstPurchaseGift: tujiLocalized("首購禮")
         case .checkIn: tujiLocalized("打卡點數")
         case .purchase: tujiLocalized("購買點數")
         case .gift: tujiLocalized("贈點")

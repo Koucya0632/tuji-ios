@@ -15334,28 +15334,6 @@
         }
       }
     },
-    "每月免費贈送 1,000 點" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1,000 free points every month"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "毎月1,000ポイントを無料プレゼント"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每月免费赠送 1,000 点"
-          }
-        }
-      }
-    },
     "每月最多 %lld 點，下個月再來" : {
       "localizations" : {
         "en" : {
@@ -30189,6 +30167,182 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "工作人员在问什么？"
+          }
+        }
+      }
+    },
+    "試用 %d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try %d pts"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お試し %dポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试用 %d 点"
+          }
+        }
+      }
+    },
+    "試用點數剩餘 %d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trial points left: %d"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お試しポイント残り %d"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试用点数剩余 %d 点"
+          }
+        }
+      }
+    },
+    "試用點數不會過期，用完就沒有了。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trial points don't expire. Once they're used, they're gone."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お試しポイントに期限はありません。使い切ったら終わりです。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试用点数不会过期，用完就没有了。"
+          }
+        }
+      }
+    },
+    "成為永久會員：首購送 %d 點，之後每月送 %d 點。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lifetime members get %d points when they buy, then %d every month."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久会員になると、購入時に%dポイント、その後は毎月%dポイント。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "成为永久会员：首购送 %d 点，之后每月送 %d 点。"
+          }
+        }
+      }
+    },
+    "每月免費贈送 %d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d free points every month"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎月%dポイントを無料プレゼント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月免费赠送 %d 点"
+          }
+        }
+      }
+    },
+    "首購送 %d 點，之後每月送 %d 點" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d points with your purchase, then %d every month"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購入時に%dポイント、その後は毎月%dポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首购送 %d 点，之后每月送 %d 点"
+          }
+        }
+      }
+    },
+    "試用點數" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trial points"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お試しポイント"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试用点数"
+          }
+        }
+      }
+    },
+    "首購禮" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First-purchase gift"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "初回購入特典"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首购礼"
           }
         }
       }

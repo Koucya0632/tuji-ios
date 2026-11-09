@@ -17,6 +17,8 @@ struct CreditWallet: Decodable, Equatable {
     let giftAvailable: Int
     var monthlyAvailable: Int? = nil
     var checkInAvailable: Int? = nil
+    /// Unspent 試用點數 (part of `giftAvailable`). nil from a server before the trial release.
+    var trialAvailable: Int? = nil
     let walletVersion: String
     let environment: String
     let reconciliationRequired: Bool
@@ -45,6 +47,12 @@ struct CreditCatalog: Decodable {
         let precisionUpgrade: Int?
         var checkInDaily: Int? = nil
         var checkInMonthlyCap: Int? = nil
+        /// The allowance in force this month; 1,000 before the trial switch, 500 after it.
+        var monthlyGift: Int? = nil
+        /// 0 before the trial switch.
+        var trialGrant: Int? = nil
+        /// 首購禮: what a lifetime bought now brings. 0 before the trial switch.
+        var firstPurchaseGift: Int? = nil
     }
 
     let billingMode: String
@@ -54,6 +62,8 @@ struct CreditCatalog: Decodable {
     let operationsEnabled: Bool
     let monthlyEnabled: Bool
     let checkInEnabled: Bool
+    /// Free accounts are on points with 試用點數 only (no check-in, no packs). nil from older servers.
+    var trialEnabled: Bool? = nil
     let packs: [Pack]
     var policy: Policy? = nil
 

@@ -89,6 +89,8 @@ struct CreditStatementTests {
             ["commit", "something-new"]: .other,
             ["grant", "benefit:monthly:2026-10"]: .monthlyGift,
             ["grant", "benefit:check_in:2026-10-12"]: .checkIn,
+            ["grant", "benefit:trial"]: .trial,
+            ["grant", "benefit:first_purchase:2000001"]: .firstPurchaseGift,
             ["grant", "apple:2000001"]: .purchase,
             ["grant", "play:GPA.1234-5678-9012-34567"]: .purchase,
             ["grant", "admin:goodwill"]: .gift,

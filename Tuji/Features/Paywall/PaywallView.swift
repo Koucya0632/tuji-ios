@@ -167,6 +167,14 @@ struct PaywallView: View {
             ForEach(rows, id: \.key) { row in
                 self.benefitRow(icon: row.icon, text: LocalizedStringKey(row.key))
             }
+            if card == .lifetime, self.store.catalog?.billingMode == "credits",
+               let policy = self.store.catalog?.policy, let gift = policy.firstPurchaseGift, gift > 0,
+               let monthly = policy.monthlyGift
+            {
+                self.benefitRow(icon: "gift", text: LocalizedStringKey(String(
+                    format: tujiLocalized("首購送 %d 點，之後每月送 %d 點"), gift, monthly
+                )))
+            }
         }
     }
 
