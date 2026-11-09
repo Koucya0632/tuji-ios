@@ -527,9 +527,9 @@
         "voice": "Orus"
       },
       "explanation": {
-        "zh-Hant": "「クレジット」是信用卡，「QR決済」是條碼支付。「先にお願いしております」是要先付款；有的旅館入住時先付，有的退房時再付。部分城市另收住宿稅。",
-        "zh-Hans": "「クレジット」是信用卡，「QR決済」是扫码支付。「先にお願いしております」是要先付款；有的酒店入住时先付，有的退房时再付。部分城市另收住宿税。",
-        "en": "クレジット is credit card and QR決済 is QR code payment. 先にお願いしております means they ask you to pay now. Some hotels charge at check-in, others at check-out. Some cities add an accommodation tax."
+        "zh-Hant": "在付款機上選擇信用卡或現金，「クレジット」就是信用卡。選信用卡後，依提示插卡或感應；選現金後，投入足額金額，再取回找零和收據。「先にお願いしております」是要先付款；有的旅館入住時先付，有的退房時再付。部分城市另收住宿稅。",
+        "zh-Hans": "在付款机上选择信用卡或现金，「クレジット」就是信用卡。选信用卡后，按提示插卡或感应；选现金后，投入足额金额，再取回找零和收据。「先にお願いしております」是要先付款；有的酒店入住时先付，有的退房时再付。部分城市另收住宿税。",
+        "en": "Choose credit card (クレジット) or cash on the machine. With a card, insert or tap it when the screen asks. With cash, put in enough, then take your change and receipt. 先にお願いしております means they ask you to pay first; some hotels charge at check-in, others at check-out. Some cities add an accommodation tax."
       },
       "wordIds": []
     },
@@ -617,5 +617,309 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "入住兩晚",
+          "zh-Hans": "入住两晚",
+          "en": "Two nights"
+        },
+        "intent": {
+          "zh-Hant": "你用「ワン」(王) 的名字訂了今晚起兩晚，帶著護照。想刷信用卡付款，也想加早餐。",
+          "zh-Hans": "你用「ワン」(王) 的名字订了今晚起两晚，带着护照。想刷信用卡付款，也想加早餐。",
+          "en": "You booked two nights from tonight under the name ワン (Wang), and have your passport. You want to pay by credit card and add breakfast."
+        },
+        "enter": {
+          "zh-Hant": "走到櫃台",
+          "zh-Hans": "走到前台",
+          "en": "Walk up to the front desk"
+        },
+        "questions": [
+          "hotel-check-in.name",
+          "hotel-check-in.nights",
+          "hotel-check-in.passport",
+          "hotel-check-in.registration-card",
+          "hotel-check-in.payment",
+          "hotel-check-in.breakfast"
+        ]
+      }
+    ],
+    "steps": {
+      "hotel-check-in.name": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "wang",
+            "ja": "ワンです",
+            "meaning": {
+              "zh-Hant": "我姓王",
+              "zh-Hans": "我姓王",
+              "en": "It's Wang"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在電腦上找到你的預約。",
+              "zh-Hans": "前台在电脑上找到你的预订。",
+              "en": "The clerk finds your booking on the computer."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "予約していません",
+            "meaning": {
+              "zh-Hant": "我沒有預約",
+              "zh-Hans": "我没有预订",
+              "en": "I don't have a booking"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台說今晚客滿，請你去別家問。你其實有訂房。",
+              "zh-Hans": "前台说今晚客满，请你去别家问。你其实订了房。",
+              "en": "The clerk says they're full tonight. You did have a booking."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "2泊です",
+            "meaning": {
+              "zh-Hant": "住兩晚",
+              "zh-Hans": "住两晚",
+              "en": "Two nights"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台點頭，還在等你說預約的名字。",
+              "zh-Hans": "前台点头，还在等你说预订的名字。",
+              "en": "The clerk nods, still waiting for the booking name."
+            }
+          }
+        ]
+      },
+      "hotel-check-in.nights": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "對",
+              "zh-Hans": "对",
+              "en": "Yes"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台確認兩晚，開始辦手續。",
+              "zh-Hans": "前台确认两晚，开始办手续。",
+              "en": "The clerk confirms two nights and carries on."
+            }
+          },
+          {
+            "id": "one",
+            "ja": "いいえ、1泊です",
+            "meaning": {
+              "zh-Hant": "不，一晚",
+              "zh-Hans": "不，一晚",
+              "en": "No, one night"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台把預約改成一晚。你原本要住兩晚。",
+              "zh-Hans": "前台把预订改成一晚。你本来要住两晚。",
+              "en": "The clerk changes the booking to one night. You meant to stay two."
+            }
+          },
+          {
+            "id": "wang",
+            "ja": "ワンです",
+            "meaning": {
+              "zh-Hant": "我姓王",
+              "zh-Hans": "我姓王",
+              "en": "It's Wang"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "名字剛才說過了，櫃台在確認住幾晚。",
+              "zh-Hans": "名字刚才说过了，前台在确认住几晚。",
+              "en": "You already gave your name. The clerk is checking the nights."
+            }
+          }
+        ]
+      },
+      "hotel-check-in.passport": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "here",
+            "ja": "はい、どうぞ",
+            "meaning": {
+              "zh-Hant": "好，請（遞上護照）",
+              "zh-Hans": "好，给您（递上护照）",
+              "en": "Sure, here you go (handing it over)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台影印護照後還給你。",
+              "zh-Hans": "前台复印护照后还给你。",
+              "en": "The clerk copies your passport and hands it back."
+            }
+          },
+          {
+            "id": "later",
+            "ja": "あとでいいですか",
+            "meaning": {
+              "zh-Hant": "等一下可以嗎",
+              "zh-Hans": "等一下可以吗",
+              "en": "Can it wait?"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台說要先看護照才能入住，手續停了下來。",
+              "zh-Hans": "前台说要先看护照才能入住，手续停了下来。",
+              "en": "The clerk needs it before check-in can go on, so everything stops."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到付款，櫃台在等你的護照。",
+              "zh-Hans": "还没到付款，前台在等你的护照。",
+              "en": "It's not time to pay. The clerk is waiting for your passport."
+            }
+          }
+        ]
+      },
+      "hotel-check-in.registration-card": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好",
+              "zh-Hans": "好",
+              "en": "Sure"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台遞來一支筆，你填好名字和地址交回。",
+              "zh-Hans": "前台递来一支笔，你填好名字和地址交回去。",
+              "en": "The clerk hands you a pen. You fill in your name and address and hand it back."
+            }
+          },
+          {
+            "id": "later",
+            "ja": "あとでいいですか",
+            "meaning": {
+              "zh-Hant": "等一下再填可以嗎",
+              "zh-Hans": "等一下再填可以吗",
+              "en": "Can I do it later?"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台說填好才能拿房卡，你還是得站在這裡填。",
+              "zh-Hans": "前台说填好才能拿房卡，你还是得站在这里填。",
+              "en": "The clerk says no card until it's filled in, so you fill it in here anyway."
+            }
+          },
+          {
+            "id": "breakfast",
+            "ja": "朝食お願いします",
+            "meaning": {
+              "zh-Hant": "我要早餐",
+              "zh-Hans": "我要早餐",
+              "en": "Breakfast, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "早餐等一下才問，櫃台在等你填這張卡。",
+              "zh-Hans": "早餐等一下才问，前台在等你填这张卡。",
+              "en": "Breakfast comes later. The clerk is waiting for you to fill in the card."
+            }
+          }
+        ]
+      },
+      "hotel-check-in.payment": {
+        "background": "scene-bg-hotel-check-in",
+        "note": {
+          "zh-Hant": "櫃台旁邊有一台付款機。你想刷信用卡。",
+          "zh-Hans": "前台旁边有一台付款机。你想刷信用卡。",
+          "en": "There's a payment machine by the desk. You want to pay by credit card."
+        },
+        "machine": {
+          "kind": "payment",
+          "total": 18400,
+          "item": "宿泊料 2泊",
+          "expect": "card"
+        }
+      },
+      "hotel-check-in.breakfast": {
+        "background": "scene-bg-hotel-check-in",
+        "card": {
+          "title": "ルームキー",
+          "lines": [
+            "ワン 様　2泊",
+            "客室 508",
+            "朝食　07:00–09:30"
+          ]
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要早餐）",
+              "zh-Hans": "麻烦了（要早餐）",
+              "en": "Yes, please (breakfast)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台把早餐時間寫在房卡套上。",
+              "zh-Hans": "前台把早餐时间写在房卡套上。",
+              "en": "The clerk writes the breakfast hours on your key card sleeve."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台沒有加早餐。你原本想在飯店吃早餐。",
+              "zh-Hans": "前台没有加早餐。你本来想在酒店吃早餐。",
+              "en": "The clerk adds no breakfast. You wanted to eat at the hotel."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "已經付好款了，櫃台在問要不要加早餐。",
+              "zh-Hans": "已经付好款了，前台在问要不要加早餐。",
+              "en": "You've already paid. The clerk is asking about breakfast."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

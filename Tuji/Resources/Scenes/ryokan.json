@@ -539,5 +539,355 @@
         "japanese-style-room"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "住一晚含兩餐",
+          "zh-Hans": "住一晚含两餐",
+          "en": "One night with meals"
+        },
+        "intent": {
+          "zh-Hant": "你和家人住一晚，含晚餐和早餐。晚餐想 6 點、早餐想 8 點吃，沒有不能吃的東西。",
+          "zh-Hans": "你和家人住一晚，含晚饭和早饭。晚饭想 6 点、早饭想 8 点吃，没有不能吃的东西。",
+          "en": "You're staying one night with your family, dinner and breakfast included. You'd like dinner at 6 and breakfast at 8, and you can eat anything."
+        },
+        "enter": {
+          "zh-Hant": "跟著仲居走進房間",
+          "zh-Hans": "跟着仲居走进房间",
+          "en": "Follow the attendant to your room"
+        },
+        "questions": [
+          "ryokan.dinner-time",
+          "ryokan.allergies",
+          "ryokan.breakfast-time",
+          "ryokan.yukata-size",
+          "ryokan.private-bath",
+          "ryokan.futon"
+        ]
+      }
+    ],
+    "steps": {
+      "ryokan.dinner-time": {
+        "background": "scene-bg-ryokan",
+        "replies": [
+          {
+            "id": "six",
+            "ja": "6時でお願いします",
+            "meaning": {
+              "zh-Hant": "6 點，麻煩了",
+              "zh-Hans": "6 点，麻烦了",
+              "en": "Six, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "仲居記下晚餐 6 點，在一樓用餐處。",
+              "zh-Hans": "仲居记下晚饭 6 点，在一楼用餐处。",
+              "en": "The attendant notes dinner at 6, in the dining room on the ground floor."
+            }
+          },
+          {
+            "id": "seven-thirty",
+            "ja": "7時半でお願いします",
+            "meaning": {
+              "zh-Hant": "7 點半，麻煩了",
+              "zh-Hans": "7 点半，麻烦了",
+              "en": "Seven thirty, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "晚餐排在 7 點半。你原本想 6 點吃。",
+              "zh-Hans": "晚饭排在 7 点半。你本来想 6 点吃。",
+              "en": "Dinner is set for 7:30. You wanted 6."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "ありません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "None"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "仲居還在等你說晚餐要幾點。",
+              "zh-Hans": "仲居还在等你说晚饭要几点。",
+              "en": "The attendant is still waiting to hear what time for dinner."
+            }
+          }
+        ]
+      },
+      "ryokan.allergies": {
+        "background": "scene-bg-ryokan",
+        "replies": [
+          {
+            "id": "none",
+            "ja": "ありません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "None"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "仲居記下沒有不能吃的東西。",
+              "zh-Hans": "仲居记下没有不能吃的东西。",
+              "en": "The attendant notes there's nothing you can't eat."
+            }
+          },
+          {
+            "id": "shrimp",
+            "ja": "エビが食べられません",
+            "meaning": {
+              "zh-Hant": "我不能吃蝦",
+              "zh-Hans": "我不能吃虾",
+              "en": "I can't eat shrimp"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "仲居把晚餐的蝦換成別的菜。你其實什麼都能吃。",
+              "zh-Hans": "仲居把晚饭的虾换成别的菜。你其实什么都能吃。",
+              "en": "The attendant swaps the shrimp at dinner for another dish. You can actually eat anything."
+            }
+          },
+          {
+            "id": "six",
+            "ja": "6時でお願いします",
+            "meaning": {
+              "zh-Hant": "6 點，麻煩了",
+              "zh-Hans": "6 点，麻烦了",
+              "en": "Six, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "晚餐時間已經說好了，仲居在問有沒有不能吃的東西。",
+              "zh-Hans": "晚饭时间已经说好了，仲居在问有没有不能吃的东西。",
+              "en": "Dinner time is settled. The attendant is asking about food you can't eat."
+            }
+          }
+        ]
+      },
+      "ryokan.breakfast-time": {
+        "background": "scene-bg-ryokan",
+        "card": {
+          "title": "お食事のご案内",
+          "lines": [
+            "夕食　18:00",
+            "朝食　08:00",
+            "お食事処　1階"
+          ]
+        },
+        "replies": [
+          {
+            "id": "eight",
+            "ja": "8時でお願いします",
+            "meaning": {
+              "zh-Hant": "8 點，麻煩了",
+              "zh-Hans": "8 点，麻烦了",
+              "en": "Eight, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "仲居記下早餐 8 點，遞來用餐時間的卡片。",
+              "zh-Hans": "仲居记下早饭 8 点，递来用餐时间的卡片。",
+              "en": "The attendant notes breakfast at 8 and hands you a card with meal times."
+            }
+          },
+          {
+            "id": "seven",
+            "ja": "7時でお願いします",
+            "meaning": {
+              "zh-Hant": "7 點，麻煩了",
+              "zh-Hans": "7 点，麻烦了",
+              "en": "Seven, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "早餐排在 7 點。你原本想 8 點吃。",
+              "zh-Hans": "早饭排在 7 点。你本来想 8 点吃。",
+              "en": "Breakfast is set for 7. You wanted 8."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "ありません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "None"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "仲居還在等你說早餐要幾點。",
+              "zh-Hans": "仲居还在等你说早饭要几点。",
+              "en": "The attendant is still waiting to hear what time for breakfast."
+            }
+          }
+        ]
+      },
+      "ryokan.yukata-size": {
+        "background": "scene-bg-ryokan",
+        "note": {
+          "zh-Hant": "你個子高，浴衣穿起來有點短。",
+          "zh-Hans": "你个子高，浴衣穿起来有点短。",
+          "en": "You're tall, and the yukata is a little short."
+        },
+        "replies": [
+          {
+            "id": "larger",
+            "ja": "大きいのをお願いします",
+            "meaning": {
+              "zh-Hant": "請給我大一點的",
+              "zh-Hans": "请给我大一点的",
+              "en": "A bigger one, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "仲居拿來一件大一號的浴衣。",
+              "zh-Hans": "仲居拿来一件大一号的浴衣。",
+              "en": "The attendant brings a larger yukata."
+            }
+          },
+          {
+            "id": "fine",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "可以",
+              "zh-Hans": "可以",
+              "en": "It's fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "仲居留下原本的浴衣，你穿起來短到小腿。",
+              "zh-Hans": "仲居留下原来的浴衣，你穿起来短到小腿。",
+              "en": "The attendant leaves the same yukata. It only reaches your shins."
+            }
+          },
+          {
+            "id": "eight",
+            "ja": "8時でお願いします",
+            "meaning": {
+              "zh-Hant": "8 點，麻煩了",
+              "zh-Hans": "8 点，麻烦了",
+              "en": "Eight, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "早餐時間已經說好了，仲居在問浴衣尺寸。",
+              "zh-Hans": "早饭时间已经说好了，仲居在问浴衣尺寸。",
+              "en": "Breakfast time is settled. The attendant is asking about the yukata size."
+            }
+          }
+        ]
+      },
+      "ryokan.private-bath": {
+        "background": "scene-bg-ryokan",
+        "note": {
+          "zh-Hant": "你們想一家人一起泡湯。",
+          "zh-Hans": "你们想一家人一起泡温泉。",
+          "en": "Your family wants to bathe together."
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要預約）",
+              "zh-Hans": "麻烦了（要预约）",
+              "en": "Yes, please (book it)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "仲居幫你們排了一個包場浴池的時段。",
+              "zh-Hans": "仲居帮你们排了一个包场浴池的时段。",
+              "en": "The attendant books you a time slot for the private bath."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "仲居沒有預約。你們原本想一家人一起泡。",
+              "zh-Hans": "仲居没有预约。你们本来想一家人一起泡。",
+              "en": "The attendant books nothing. Your family wanted to bathe together."
+            }
+          },
+          {
+            "id": "larger",
+            "ja": "大きいのをお願いします",
+            "meaning": {
+              "zh-Hant": "請給我大一點的",
+              "zh-Hans": "请给我大一点的",
+              "en": "A bigger one, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "浴衣已經換好了，仲居在問要不要預約包場浴池。",
+              "zh-Hans": "浴衣已经换好了，仲居在问要不要预约包场浴池。",
+              "en": "The yukata is sorted. The attendant is asking about the private bath."
+            }
+          }
+        ]
+      },
+      "ryokan.futon": {
+        "background": "scene-bg-ryokan",
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了",
+              "zh-Hans": "麻烦了",
+              "en": "Yes, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你們吃完晚餐回房，棉被已經鋪好了。",
+              "zh-Hans": "你们吃完晚饭回房，被子已经铺好了。",
+              "en": "When you get back from dinner, the futons are laid out."
+            }
+          },
+          {
+            "id": "self",
+            "ja": "自分で敷きます",
+            "meaning": {
+              "zh-Hant": "我們自己鋪",
+              "zh-Hans": "我们自己铺",
+              "en": "We'll lay them out ourselves"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "吃完回房，棉被還疊在櫃子裡，要自己鋪。",
+              "zh-Hans": "吃完回房，被子还叠在柜子里，要自己铺。",
+              "en": "After dinner the futons are still folded in the cupboard, and you lay them out yourselves."
+            }
+          },
+          {
+            "id": "six",
+            "ja": "6時でお願いします",
+            "meaning": {
+              "zh-Hant": "6 點，麻煩了",
+              "zh-Hans": "6 点，麻烦了",
+              "en": "Six, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "晚餐時間已經說好了，仲居在問吃飯時可不可以進房鋪床。",
+              "zh-Hans": "晚饭时间已经说好了，仲居在问吃饭时可不可以进房铺床。",
+              "en": "Dinner time is settled. The attendant is asking to lay out the futons during dinner."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

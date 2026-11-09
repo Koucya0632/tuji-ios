@@ -607,5 +607,343 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "拉麵加大",
+          "zh-Hans": "拉面加大",
+          "en": "A large bowl of ramen"
+        },
+        "intent": {
+          "zh-Hant": "你一個人來吃拉麵，帶著現金，想把麵加大。麵要偏硬，口味和油量都一般。",
+          "zh-Hans": "你一个人来吃拉面，带着现金，想把面加大。面要偏硬，口味和油量都一般。",
+          "en": "You're eating ramen alone, with cash, and want a large serving of noodles. You like them firm, with regular flavour and oil."
+        },
+        "enter": {
+          "zh-Hant": "推開店門",
+          "zh-Hans": "推开店门",
+          "en": "Push open the door"
+        },
+        "questions": [
+          "ramen-shop.ticket-machine",
+          "ramen-shop.counter-seat",
+          "ramen-shop.noodle-firmness",
+          "ramen-shop.taste-and-oil",
+          "ramen-shop.rice",
+          "ramen-shop.paper-apron"
+        ]
+      }
+    ],
+    "steps": {
+      "ramen-shop.ticket-machine": {
+        "background": "scene-bg-ramen-shop",
+        "note": {
+          "zh-Hant": "拉麵 ¥900 已經按好了。你想把麵加大。",
+          "zh-Hans": "拉面 ¥900 已经按好了。你想把面加大。",
+          "en": "You've already pressed ramen for ¥900. You want a large serving of noodles."
+        },
+        "machine": {
+          "kind": "food-ticket",
+          "menu": [
+            {
+              "id": "oomori",
+              "name": "大盛",
+              "price": 100
+            },
+            {
+              "id": "kaedama",
+              "name": "替玉",
+              "price": 150
+            },
+            {
+              "id": "ajitama",
+              "name": "味玉",
+              "price": 150
+            },
+            {
+              "id": "rice",
+              "name": "ライス",
+              "price": 150
+            }
+          ],
+          "expect": "oomori"
+        }
+      },
+      "ramen-shop.counter-seat": {
+        "background": "scene-bg-ramen-shop",
+        "note": {
+          "zh-Hant": "店裡只剩吧檯有空位。",
+          "zh-Hans": "店里只剩吧台有空位。",
+          "en": "Only counter seats are free."
+        },
+        "card": {
+          "title": "食券",
+          "lines": [
+            "ラーメン　¥900",
+            "大盛　+¥100"
+          ]
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい、大丈夫です",
+            "meaning": {
+              "zh-Hant": "好，可以",
+              "zh-Hans": "好，可以",
+              "en": "Yes, that's fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員收下食券，帶你坐到吧檯。",
+              "zh-Hans": "店员收下餐券，带你坐到吧台。",
+              "en": "The clerk takes your tickets and seats you at the counter."
+            }
+          },
+          {
+            "id": "table",
+            "ja": "テーブル席がいいです",
+            "meaning": {
+              "zh-Hant": "想坐桌子的位子",
+              "zh-Hans": "想坐桌子的位子",
+              "en": "I'd like a table"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員請你到門口排隊等桌位。吧檯其實馬上就能坐。",
+              "zh-Hans": "店员请你到门口排队等桌位。吧台其实马上就能坐。",
+              "en": "The clerk asks you to wait by the door for a table. The counter was free right now."
+            }
+          },
+          {
+            "id": "firm",
+            "ja": "硬めで",
+            "meaning": {
+              "zh-Hant": "麵偏硬",
+              "zh-Hans": "面偏硬",
+              "en": "Firm noodles"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒問到麵，店員在問坐吧檯可不可以。",
+              "zh-Hans": "还没问到面，店员在问坐吧台可不可以。",
+              "en": "Noodles come later. The clerk is asking if the counter is OK."
+            }
+          }
+        ]
+      },
+      "ramen-shop.noodle-firmness": {
+        "background": "scene-bg-ramen-shop",
+        "replies": [
+          {
+            "id": "firm",
+            "ja": "硬めで",
+            "meaning": {
+              "zh-Hant": "偏硬",
+              "zh-Hans": "偏硬",
+              "en": "Firm, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在你的食券上寫了「硬め」。",
+              "zh-Hans": "店员在你的餐券上写了「硬め」。",
+              "en": "The clerk writes 硬め on your ticket."
+            }
+          },
+          {
+            "id": "soft",
+            "ja": "柔らかめで",
+            "meaning": {
+              "zh-Hant": "偏軟",
+              "zh-Hans": "偏软",
+              "en": "Soft, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "端上來的麵偏軟。你原本想吃硬一點的。",
+              "zh-Hans": "端上来的面偏软。你本来想吃硬一点的。",
+              "en": "The noodles come out soft. You wanted them firm."
+            }
+          },
+          {
+            "id": "large",
+            "ja": "大盛で",
+            "meaning": {
+              "zh-Hant": "大碗",
+              "zh-Hans": "大碗",
+              "en": "Large, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "大盛已經在食券上了，店員在問麵要多硬。",
+              "zh-Hans": "大盛已经在餐券上了，店员在问面要多硬。",
+              "en": "Large is already on your ticket. The clerk is asking how firm."
+            }
+          }
+        ]
+      },
+      "ramen-shop.taste-and-oil": {
+        "background": "scene-bg-ramen-shop",
+        "replies": [
+          {
+            "id": "regular",
+            "ja": "全部普通で",
+            "meaning": {
+              "zh-Hant": "全部一般",
+              "zh-Hans": "全部一般",
+              "en": "Regular for everything"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點頭，在食券上寫了「普通」。",
+              "zh-Hans": "店员点头，在餐券上写了「普通」。",
+              "en": "The clerk nods and writes 普通 on your ticket."
+            }
+          },
+          {
+            "id": "rich",
+            "ja": "濃いめ、油多めで",
+            "meaning": {
+              "zh-Hant": "口味重一點，油多一點",
+              "zh-Hans": "口味重一点，油多一点",
+              "en": "Stronger, with more oil"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "端上來的湯又鹹又油。你原本想要一般的。",
+              "zh-Hans": "端上来的汤又咸又油。你本来想要一般的。",
+              "en": "The soup comes out salty and oily. You wanted it regular."
+            }
+          },
+          {
+            "id": "firm",
+            "ja": "硬めで",
+            "meaning": {
+              "zh-Hant": "麵偏硬",
+              "zh-Hans": "面偏硬",
+              "en": "Firm noodles"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "麵的硬度已經說過了，店員在問口味和油量。",
+              "zh-Hans": "面的硬度已经说过了，店员在问口味和油量。",
+              "en": "You already said how firm. The clerk is asking about flavour and oil."
+            }
+          }
+        ]
+      },
+      "ramen-shop.rice": {
+        "background": "scene-bg-ramen-shop",
+        "note": {
+          "zh-Hant": "麵已經加大，你吃不下白飯。",
+          "zh-Hans": "面已经加大，你吃不下白饭。",
+          "en": "With a large serving of noodles, you can't fit in rice."
+        },
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，沒有放白飯。",
+              "zh-Hans": "店员点点头，没有放白饭。",
+              "en": "The clerk nods and brings no rice."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要白飯）",
+              "zh-Hans": "麻烦了（要白饭）",
+              "en": "Yes, please (rice)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員端來一碗白飯。麵已經加大，你吃不完。",
+              "zh-Hans": "店员端来一碗白饭。面已经加大，你吃不完。",
+              "en": "The clerk brings a bowl of rice. With the large noodles, you can't finish it."
+            }
+          },
+          {
+            "id": "regular",
+            "ja": "全部普通で",
+            "meaning": {
+              "zh-Hant": "全部一般",
+              "zh-Hans": "全部一般",
+              "en": "Regular for everything"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "口味已經說過了，店員在問要不要白飯。",
+              "zh-Hans": "口味已经说过了，店员在问要不要白饭。",
+              "en": "You already gave your flavour. The clerk is asking about rice."
+            }
+          }
+        ]
+      },
+      "ramen-shop.paper-apron": {
+        "background": "scene-bg-ramen-shop",
+        "note": {
+          "zh-Hant": "你穿著白襯衫。",
+          "zh-Hans": "你穿着白衬衫。",
+          "en": "You're wearing a white shirt."
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要圍裙）",
+              "zh-Hans": "麻烦了（要围裙）",
+              "en": "Yes, please (an apron)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員遞來一件紙圍裙。",
+              "zh-Hans": "店员递来一件纸围裙。",
+              "en": "The clerk hands you a paper apron."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "吃到一半，湯汁濺到白襯衫上。",
+              "zh-Hans": "吃到一半，汤汁溅到白衬衫上。",
+              "en": "Halfway through, soup splashes onto your white shirt."
+            }
+          },
+          {
+            "id": "no-rice",
+            "ja": "ライスは大丈夫です",
+            "meaning": {
+              "zh-Hant": "白飯不用了",
+              "zh-Hans": "白饭不用了",
+              "en": "No rice, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "白飯剛才已經說過了，店員在問要不要紙圍裙。",
+              "zh-Hans": "白饭刚才已经说过了，店员在问要不要纸围裙。",
+              "en": "You already turned down rice. The clerk is asking about an apron."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

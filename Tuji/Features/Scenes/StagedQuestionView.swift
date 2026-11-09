@@ -42,7 +42,7 @@ struct StagedQuestionView: View {
         GeometryReader { geo in
             VStack(spacing: 0) {
                 ZStack(alignment: .topLeading) {
-                    StageBackdropView(background: self.stage.background, props: self.shownProps)
+                    StageBackdropView(background: self.stage.background, props: self.shownProps, card: self.stage.card)
                     if self.entered, let note = self.stage.note {
                         Text(verbatim: note.resolved(self.language))
                             .font(.tujiBodySm(.strong))
@@ -251,7 +251,7 @@ struct StagedQuestionView: View {
     private var screen: some View {
         let tried: Set<String> = if case let .answeredWrong(tried) = self.phase { tried } else { [] }
         if let spec = self.stage.machine, let machine = self.machine {
-            MachineView(machine: machine) { action in
+            MachineView(machine: machine, brandOverride: spec.brand) { action in
                 guard var next = self.machine else { return }
                 next.send(action)
                 self.machine = next

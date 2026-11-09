@@ -17,9 +17,22 @@ struct StageBackdrop {
     let spots: [UnitPoint]
     /// A prop's width as a fraction of the photo's width.
     let propWidth: CGFloat
+    /// Where a paper slip (`StageCard`) sits.
+    var cardSpot = UnitPoint(x: 0.5, y: 0.72)
 
     static func named(_ name: String) -> StageBackdrop {
         self.table[name] ?? StageBackdrop(focus: .center, spots: [UnitPoint(x: 0.5, y: 0.8)], propWidth: 0.25)
+    }
+
+    /// Wave 2 photos: the focus is the counter or machine the scene happens
+    /// at, and the card sits where the materials table puts it.
+    private static func counter(_ x: CGFloat, _ y: CGFloat) -> StageBackdrop {
+        StageBackdrop(
+            focus: UnitPoint(x: x, y: y - 0.06),
+            spots: [UnitPoint(x: x, y: y)],
+            propWidth: 0.24,
+            cardSpot: UnitPoint(x: x, y: y)
+        )
     }
 
     private static let table: [String: StageBackdrop] = [
@@ -38,6 +51,11 @@ struct StageBackdrop {
             spots: [UnitPoint(x: 0.86, y: 0.392)],
             propWidth: 0.075
         ),
+        "scene-bg-ramen-shop": counter(0.68, 0.74),
+        "scene-bg-hotel-check-in": counter(0.53, 0.58),
+        "scene-bg-taxi": counter(0.5, 0.78),
+        "scene-bg-fast-food": counter(0.72, 0.75),
+        "scene-bg-ryokan": counter(0.52, 0.67),
         "story-restaurant-entrance": StageBackdrop(
             focus: UnitPoint(x: 0.5, y: 0.45),
             spots: [UnitPoint(x: 0.83, y: 0.41)],
@@ -49,6 +67,7 @@ struct StageBackdrop {
 struct StageBackdropView: View {
     let background: String
     let props: [String]
+    var card: StageCard?
 
     var body: some View {
         GeometryReader { geo in
@@ -72,6 +91,11 @@ struct StageBackdropView: View {
                         .shadow(color: .tujiInk.opacity(0.25), radius: 4, y: 2)
                         .position(spot)
                         .accessibilityLabel(Text(StageProp.label(name)))
+                }
+                if let card = self.card {
+                    StageCardView(card: card)
+                        .frame(width: min(210, geo.size.width * 0.55))
+                        .position(layout.point(StageBackdrop.named(self.background).cardSpot))
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
@@ -101,9 +125,40 @@ struct StageBackdropView: View {
             self.spots = backdrop.spots
         }
 
+        func point(_ unit: UnitPoint) -> CGPoint {
+            CGPoint(x: self.origin.x + unit.x * self.drawn.width, y: self.origin.y + unit.y * self.drawn.height)
+        }
+
         func spot(_ index: Int) -> CGPoint {
             let unit = self.spots.isEmpty ? UnitPoint(x: 0.5, y: 0.8) : self.spots[min(index, self.spots.count - 1)]
             return CGPoint(x: self.origin.x + unit.x * self.drawn.width, y: self.origin.y + unit.y * self.drawn.height)
         }
+    }
+}
+
+/// A paper slip on the counter. The Japanese is the paper's own.
+struct StageCardView: View {
+    let card: StageCard
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: self.card.title)
+                .font(.tujiLabel)
+                .foregroundStyle(.tujiInk2)
+            ForEach(self.card.lines, id: \.self) { line in
+                Text(verbatim: line)
+                    .font(.tujiBodySm(.strong))
+                    .monospacedDigit()
+                    .foregroundStyle(.tujiInk)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tujiPaper)
+        .overlay(Rectangle().strokeBorder(.tujiRule, lineWidth: 1))
+        .shadow(color: .tujiInk.opacity(0.25), radius: 5, y: 2)
+        .environment(\.locale, Locale(identifier: "ja"))
+        .accessibilityElement(children: .combine)
     }
 }

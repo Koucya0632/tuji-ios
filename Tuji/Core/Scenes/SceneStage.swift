@@ -54,6 +54,14 @@ nonisolated struct StageStep: Hashable, Decodable {
     let note: LocalizedText?
     let replies: [StageReply]?
     let machine: StageMachine?
+    /// A paper slip on the counter: a ticket, a key sleeve, a receipt. Its
+    /// Japanese is the paper's own and is shown as written.
+    let card: StageCard?
+}
+
+nonisolated struct StageCard: Hashable, Decodable {
+    let title: String
+    let lines: [String]
 }
 
 /// A short thing to say back. `fits` says whether it fits this trip: a reply
@@ -74,12 +82,16 @@ nonisolated struct StageMachine: Hashable, Decodable {
     let kind: MachineKind
     let total: Int?
     let item: String?
+    /// The 食券機's items or the kiosk's upgrades.
+    let menu: [MachineMenuItem]?
+    /// What the screen's title bar says, when not the machine's usual one.
+    let brand: String?
     /// What finishing it should look like: a payment method's raw value, or
     /// `yes` for the age check. Absent, any finish counts.
     let expect: String?
 
     func makeMachine() -> SceneMachine {
-        SceneMachine(kind: self.kind, total: self.total, item: self.item)
+        SceneMachine(kind: self.kind, total: self.total, item: self.item, menu: self.menu)
     }
 
     /// Whether this finish is the one the trip wanted.
@@ -88,7 +100,9 @@ nonisolated struct StageMachine: Hashable, Decodable {
         switch outcome {
         case let .paid(method, _): return method.rawValue == expect
         case let .age(answer): return answer == .yes && expect == "yes"
-        case .ticket, .ordered: return true
+        case let .ticket(item, _): return item == expect
+        case let .kioskOrder(option, _): return option == expect
+        case .ordered: return true
         }
     }
 }

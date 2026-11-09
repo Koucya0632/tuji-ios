@@ -83,7 +83,7 @@ struct SceneMachineTests {
         machine.send(.issueTicket)
         #expect(machine.screen.paper?.contains("醤油ラーメン　¥900") == true)
         machine.send(.take)
-        #expect(machine.outcome == .ticket(dish: "醤油ラーメン", change: 100))
+        #expect(machine.outcome == .ticket(item: "shoyu", change: 100))
     }
 
     @Test
@@ -110,5 +110,40 @@ struct SceneMachineTests {
         machine.send(.fewer)
         #expect(machine.screen.headline == "メニュー")
         #expect(machine.outcome == nil)
+    }
+
+    @Test
+    func theKioskShowsThePriceDifferenceAndANumber() {
+        var machine = SceneMachine(kind: .kiosk, total: 400, item: "ハンバーガー", menu: [
+            MachineMenuItem(id: "set", name: "セットにする", price: 300),
+            MachineMenuItem(id: "single", name: "単品のまま", price: 0)
+        ])
+        machine.send(.pickOption(0))
+        #expect(machine.screen.info == "ハンバーガー（セットにする）\n合計 ¥700")
+        machine.send(.back)
+        machine.send(.pickOption(1))
+        #expect(machine.screen.info == "ハンバーガー\n合計 ¥400")
+        machine.send(.confirmOrder)
+        machine.send(.confirmOrder)
+        #expect(machine.outcome == .kioskOrder(option: "single", total: 400))
+        #expect(machine.screen.paper?.contains("受付番号　021") == true)
+    }
+
+    @Test
+    func aTicketMachineSellsTheScenesOwnMenu() {
+        var machine = SceneMachine(kind: .foodTicket, total: nil, item: nil, menu: [
+            MachineMenuItem(id: "oomori", name: "大盛", price: 100),
+            MachineMenuItem(id: "kaedama", name: "替玉", price: 150)
+        ])
+        #expect(machine.screen.buttons.map(\.role) == [.onScreen("大盛　¥100"), .onScreen("替玉　¥150")])
+        machine.send(.pickDish(0))
+        machine.send(.payDishInCash)
+        machine.send(.insert(yen: 1000))
+        machine.send(.issueTicket)
+        machine.send(.take)
+        #expect(machine.outcome == .ticket(item: "oomori", change: 900))
+        let spec = StageMachine(kind: .foodTicket, total: nil, item: nil, menu: nil, brand: nil, expect: "oomori")
+        #expect(spec.fits(.ticket(item: "oomori", change: 900)))
+        #expect(!spec.fits(.ticket(item: "kaedama", change: 850)))
     }
 }
