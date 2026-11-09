@@ -589,9 +589,9 @@
         "voice": "Orus"
       },
       "explanation": {
-        "zh-Hant": "後座的螢幕可以自己選付款方式。「クレジットカード」是信用卡，「交通系IC」是交通卡，「QR」是條碼支付。司機開口問的話，說「カードで」就好。",
-        "zh-Hans": "后座的屏幕可以自己选付款方式。「クレジットカード」是信用卡，「交通系IC」是交通卡，「QR」是二维码支付。司机开口问的话，说「カードで」就好。",
-        "en": "You can choose how to pay on the back-seat screen. クレジットカード is credit card, 交通系IC is a transit card, and QR is QR code payment. If the driver asks out loud, カードで is enough."
+        "zh-Hant": "後座的螢幕可以自己選付款方式。「クレジットカード」「カード」是信用卡，選了之後依提示感應或插卡；「現金」是付現，把錢交給司機。司機開口問的話，說「カードで」就好。",
+        "zh-Hans": "后座的屏幕可以自己选付款方式。「クレジットカード」「カード」是信用卡，选了之后按提示感应或插卡；「現金」是付现金，把钱交给司机。司机开口问的话，说「カードで」就好。",
+        "en": "You can choose how to pay on the back-seat screen. クレジットカード or カード is credit card; tap or insert it when the screen asks. 現金 is cash, which you hand to the driver. If the driver asks, just say カードで."
       },
       "wordIds": [
         "transit-ic-card"
@@ -683,5 +683,365 @@
         "receipt"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "搭計程車",
+          "zh-Hans": "打车",
+          "en": "Taking a taxi"
+        },
+        "intent": {
+          "zh-Hant": "你帶著一個大行李箱，想放後車廂。要去的地址存在手機上；不想走高速，想刷卡，要收據。",
+          "zh-Hans": "你带着一个大行李箱，想放后备箱。要去的地址存在手机上；不想走高速，想刷卡，要收据。",
+          "en": "You have a big suitcase for the trunk, and the address is saved on your phone. You don't want the expressway, and you'll pay by card and want a receipt."
+        },
+        "enter": {
+          "zh-Hant": "攔下一台計程車",
+          "zh-Hans": "拦下一辆出租车",
+          "en": "Flag down a taxi"
+        },
+        "questions": [
+          "taxi.luggage",
+          "taxi.destination",
+          "taxi.seatbelt",
+          "taxi.highway",
+          "taxi.stop-here",
+          "taxi.payment",
+          "taxi.receipt"
+        ]
+      }
+    ],
+    "steps": {
+      "taxi.luggage": {
+        "background": "scene-bg-taxi",
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（放後車廂）",
+              "zh-Hans": "麻烦了（放后备箱）",
+              "en": "Yes, please (in the trunk)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "司機打開後車廂，把行李箱放進去。",
+              "zh-Hans": "司机打开后备箱，把行李箱放进去。",
+              "en": "The driver opens the trunk and puts your suitcase in."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機關上後車廂。你抱著大行李箱擠進後座。",
+              "zh-Hans": "司机关上后备箱。你抱着大行李箱挤进后座。",
+              "en": "The driver shuts the trunk. You squeeze into the back seat with your suitcase."
+            }
+          },
+          {
+            "id": "here",
+            "ja": "ここまでお願いします",
+            "meaning": {
+              "zh-Hant": "到這裡麻煩了（給他看手機）",
+              "zh-Hans": "到这里麻烦了（给他看手机）",
+              "en": "Here, please (showing your phone)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機點頭，還在問行李要不要放後車廂。",
+              "zh-Hans": "司机点头，还在问行李要不要放后备箱。",
+              "en": "The driver nods, still asking about the trunk."
+            }
+          }
+        ]
+      },
+      "taxi.destination": {
+        "background": "scene-bg-taxi",
+        "replies": [
+          {
+            "id": "here",
+            "ja": "ここまでお願いします",
+            "meaning": {
+              "zh-Hant": "到這裡麻煩了（給他看手機上的地址）",
+              "zh-Hans": "到这里麻烦了（给他看手机上的地址）",
+              "en": "Here, please (showing the address on your phone)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "司機看了地址，輸入導航。",
+              "zh-Hans": "司机看了地址，输进导航。",
+              "en": "The driver reads the address and puts it into the navigation."
+            }
+          },
+          {
+            "id": "station",
+            "ja": "駅までお願いします",
+            "meaning": {
+              "zh-Hant": "到車站",
+              "zh-Hans": "到车站",
+              "en": "To the station, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機往車站開。你要去的是手機上的地址。",
+              "zh-Hans": "司机往车站开。你要去的是手机上的地址。",
+              "en": "The driver heads for the station. You wanted the address on your phone."
+            }
+          },
+          {
+            "id": "local",
+            "ja": "下の道でお願いします",
+            "meaning": {
+              "zh-Hant": "走一般道路",
+              "zh-Hans": "走普通道路",
+              "en": "Local roads, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機還不知道要去哪裡，又問一次。",
+              "zh-Hans": "司机还不知道要去哪里，又问一次。",
+              "en": "The driver still doesn't know where to go and asks again."
+            }
+          }
+        ]
+      },
+      "taxi.seatbelt": {
+        "background": "scene-bg-taxi",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好",
+              "zh-Hans": "好",
+              "en": "OK"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你繫上安全帶，車子開動。",
+              "zh-Hans": "你系上安全带，车子开动。",
+              "en": "You buckle up and the car pulls away."
+            }
+          },
+          {
+            "id": "fine",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "I'm fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機沒有開車，等你繫好安全帶。",
+              "zh-Hans": "司机没有开车，等你系好安全带。",
+              "en": "The driver waits for you to buckle up before moving."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到付款，司機在提醒你繫安全帶。",
+              "zh-Hans": "还没到付款，司机在提醒你系安全带。",
+              "en": "It's not time to pay. The driver is reminding you about the seatbelt."
+            }
+          }
+        ]
+      },
+      "taxi.highway": {
+        "background": "scene-bg-taxi",
+        "replies": [
+          {
+            "id": "local",
+            "ja": "下の道でお願いします",
+            "meaning": {
+              "zh-Hant": "走一般道路",
+              "zh-Hans": "走普通道路",
+              "en": "Local roads, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "司機走一般道路，沒有過路費。",
+              "zh-Hans": "司机走普通道路，没有过路费。",
+              "en": "The driver takes local roads, with no toll."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（走高速）",
+              "zh-Hans": "麻烦了（走高速）",
+              "en": "Yes, please (the expressway)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機開上高速，車資多了 ¥700。你原本不想走高速。",
+              "zh-Hans": "司机开上高速，车费多了 ¥700。你本来不想走高速。",
+              "en": "The driver takes the expressway and the fare goes up ¥700. You didn't want the expressway."
+            }
+          },
+          {
+            "id": "stop",
+            "ja": "ここで大丈夫です",
+            "meaning": {
+              "zh-Hant": "停這裡就好",
+              "zh-Hans": "停这里就好",
+              "en": "Here is fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到，司機在問要不要走高速。",
+              "zh-Hans": "还没到，司机在问要不要走高速。",
+              "en": "You're not there yet. The driver is asking about the expressway."
+            }
+          }
+        ]
+      },
+      "taxi.stop-here": {
+        "background": "scene-bg-taxi",
+        "note": {
+          "zh-Hant": "手機上的地址就在右手邊。",
+          "zh-Hans": "手机上的地址就在右手边。",
+          "en": "The address on your phone is right there on the right."
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "ここで大丈夫です",
+            "meaning": {
+              "zh-Hant": "停這裡就好",
+              "zh-Hans": "停这里就好",
+              "en": "Here is fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "司機在路邊停車，按下計費結束。",
+              "zh-Hans": "司机在路边停车，按下计费结束。",
+              "en": "The driver pulls over and stops the meter."
+            }
+          },
+          {
+            "id": "further",
+            "ja": "もう少し先でお願いします",
+            "meaning": {
+              "zh-Hant": "再往前一點",
+              "zh-Hans": "再往前一点",
+              "en": "A bit further, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機又往前開了一段，你得拖著行李走回來。",
+              "zh-Hans": "司机又往前开了一段，你得拖着行李走回来。",
+              "en": "The driver goes on a bit, and you drag your suitcase back."
+            }
+          },
+          {
+            "id": "receipt",
+            "ja": "領収書お願いします",
+            "meaning": {
+              "zh-Hant": "我要收據",
+              "zh-Hans": "我要收据",
+              "en": "A receipt, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒結帳，司機在問停這裡可不可以。",
+              "zh-Hans": "还没结账，司机在问停这里可不可以。",
+              "en": "You haven't paid yet. The driver is asking if here is OK."
+            }
+          }
+        ]
+      },
+      "taxi.payment": {
+        "background": "scene-bg-taxi",
+        "note": {
+          "zh-Hant": "後座前方的螢幕亮了。你想刷信用卡。",
+          "zh-Hans": "后座前面的屏幕亮了。你想刷信用卡。",
+          "en": "The screen in front of the back seat lights up. You want to pay by credit card."
+        },
+        "machine": {
+          "kind": "payment",
+          "total": 2340,
+          "item": "運賃",
+          "brand": "後部座席 お支払い",
+          "expect": "card"
+        }
+      },
+      "taxi.receipt": {
+        "background": "scene-bg-taxi",
+        "card": {
+          "title": "領収書",
+          "lines": [
+            "運賃　¥2,340",
+            "クレジット"
+          ]
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要收據）",
+              "zh-Hans": "麻烦了（要收据）",
+              "en": "Yes, please (a receipt)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "司機把收據遞給你。",
+              "zh-Hans": "司机把收据递给你。",
+              "en": "The driver hands you the receipt."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "司機沒有給收據。你原本要留收據。",
+              "zh-Hans": "司机没有给收据。你本来要留收据。",
+              "en": "The driver gives you no receipt. You wanted one."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "已經刷卡付好了，司機在問要不要收據。",
+              "zh-Hans": "已经刷卡付好了，司机在问要不要收据。",
+              "en": "You've already paid by card. The driver is asking about a receipt."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

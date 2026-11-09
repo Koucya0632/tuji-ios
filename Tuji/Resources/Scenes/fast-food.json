@@ -680,5 +680,386 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "漢堡和朋友的套餐",
+          "zh-Hans": "汉堡和朋友的套餐",
+          "en": "A burger and a friend's set"
+        },
+        "intent": {
+          "zh-Hant": "你和朋友在店裡吃。你只要一個漢堡，在點餐機點；朋友要套餐配可樂（M）和雞塊配烤肉醬，你到櫃台幫他點。",
+          "zh-Hans": "你和朋友在店里吃。你只要一个汉堡，在点餐机点；朋友要套餐配可乐（M）和鸡块配烧烤酱，你到柜台帮他点。",
+          "en": "You and a friend are eating in. You only want a burger, ordered at the kiosk. Your friend wants a set with a medium cola and nuggets with barbecue sauce, which you order at the counter."
+        },
+        "enter": {
+          "zh-Hant": "走進店裡",
+          "zh-Hans": "走进店里",
+          "en": "Walk in"
+        },
+        "questions": [
+          "fast-food.kiosk",
+          "fast-food.eat-in",
+          "fast-food.set-or-single",
+          "fast-food.set-drink",
+          "fast-food.size",
+          "fast-food.nugget-sauce",
+          "fast-food.wait-for-number"
+        ]
+      }
+    ],
+    "steps": {
+      "fast-food.kiosk": {
+        "background": "scene-bg-fast-food",
+        "note": {
+          "zh-Hant": "門口有一台點餐機。你先點自己的漢堡，只要單點。",
+          "zh-Hans": "门口有一台点餐机。你先点自己的汉堡，只要单点。",
+          "en": "There's a kiosk by the door. You order your own burger first, on its own."
+        },
+        "machine": {
+          "kind": "kiosk",
+          "item": "ハンバーガー",
+          "total": 400,
+          "menu": [
+            {
+              "id": "set",
+              "name": "セットにする",
+              "price": 300
+            },
+            {
+              "id": "large-set",
+              "name": "Lセットにする",
+              "price": 400
+            },
+            {
+              "id": "single",
+              "name": "単品のまま",
+              "price": 0
+            }
+          ],
+          "expect": "single"
+        }
+      },
+      "fast-food.eat-in": {
+        "background": "scene-bg-fast-food",
+        "note": {
+          "zh-Hant": "接著到櫃台幫朋友點。",
+          "zh-Hans": "接着到柜台帮朋友点。",
+          "en": "Next, you order for your friend at the counter."
+        },
+        "replies": [
+          {
+            "id": "in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "Eating in"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把餐點放上托盤。",
+              "zh-Hans": "店员把餐放上托盘。",
+              "en": "The clerk sets out a tray."
+            }
+          },
+          {
+            "id": "out",
+            "ja": "持ち帰りで",
+            "meaning": {
+              "zh-Hant": "外帶",
+              "zh-Hans": "打包",
+              "en": "To go"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員把朋友的餐裝進紙袋。你們想在店裡吃。",
+              "zh-Hans": "店员把朋友的餐装进纸袋。你们想在店里吃。",
+              "en": "The clerk bags your friend's order. You wanted to eat in."
+            }
+          },
+          {
+            "id": "set",
+            "ja": "セットで",
+            "meaning": {
+              "zh-Hant": "要套餐",
+              "zh-Hans": "要套餐",
+              "en": "As a set"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說內用還是外帶。",
+              "zh-Hans": "店员还在等你说堂食还是打包。",
+              "en": "The clerk is still waiting to hear eat in or to go."
+            }
+          }
+        ]
+      },
+      "fast-food.set-or-single": {
+        "background": "scene-bg-fast-food",
+        "replies": [
+          {
+            "id": "set",
+            "ja": "セットで",
+            "meaning": {
+              "zh-Hant": "要套餐",
+              "zh-Hans": "要套餐",
+              "en": "As a set"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把朋友的餐改成套餐，加了薯條和飲料。",
+              "zh-Hans": "店员把朋友的餐改成套餐，加了薯条和饮料。",
+              "en": "The clerk makes your friend's order a set, with fries and a drink."
+            }
+          },
+          {
+            "id": "single",
+            "ja": "単品で",
+            "meaning": {
+              "zh-Hant": "只要單點",
+              "zh-Hans": "只要单点",
+              "en": "On its own"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員只點了主餐，沒有薯條和飲料。朋友要的是套餐。",
+              "zh-Hans": "店员只点了主食，没有薯条和饮料。朋友要的是套餐。",
+              "en": "The clerk rings up the main item only, no fries or drink. Your friend wanted a set."
+            }
+          },
+          {
+            "id": "cola",
+            "ja": "コーラで",
+            "meaning": {
+              "zh-Hant": "可樂",
+              "zh-Hans": "可乐",
+              "en": "Cola"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說要不要做成套餐。",
+              "zh-Hans": "店员还在等你说要不要做成套餐。",
+              "en": "The clerk is still waiting to hear set or not."
+            }
+          }
+        ]
+      },
+      "fast-food.set-drink": {
+        "background": "scene-bg-fast-food",
+        "replies": [
+          {
+            "id": "cola",
+            "ja": "コーラで",
+            "meaning": {
+              "zh-Hant": "可樂",
+              "zh-Hans": "可乐",
+              "en": "Cola"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下套餐配可樂。",
+              "zh-Hans": "店员记下套餐配可乐。",
+              "en": "The clerk notes cola with the set."
+            }
+          },
+          {
+            "id": "coffee",
+            "ja": "コーヒーで",
+            "meaning": {
+              "zh-Hant": "咖啡",
+              "zh-Hans": "咖啡",
+              "en": "Coffee"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員記下咖啡。朋友要的是可樂。",
+              "zh-Hans": "店员记下咖啡。朋友要的是可乐。",
+              "en": "The clerk notes coffee. Your friend wanted cola."
+            }
+          },
+          {
+            "id": "m",
+            "ja": "Mで",
+            "meaning": {
+              "zh-Hant": "M 尺寸",
+              "zh-Hans": "M 号",
+              "en": "Medium"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你選飲料。",
+              "zh-Hans": "店员还在等你选饮料。",
+              "en": "The clerk is still waiting for the drink."
+            }
+          }
+        ]
+      },
+      "fast-food.size": {
+        "background": "scene-bg-fast-food",
+        "replies": [
+          {
+            "id": "m",
+            "ja": "Mで",
+            "meaning": {
+              "zh-Hant": "M 尺寸",
+              "zh-Hans": "M 号",
+              "en": "Medium"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下薯條和飲料都是 M。",
+              "zh-Hans": "店员记下薯条和饮料都是 M 号。",
+              "en": "The clerk notes medium fries and drink."
+            }
+          },
+          {
+            "id": "l",
+            "ja": "Lで",
+            "meaning": {
+              "zh-Hant": "L 尺寸",
+              "zh-Hans": "L 号",
+              "en": "Large"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "套餐換成 L，多付了錢。朋友說 M 就好。",
+              "zh-Hans": "套餐换成 L 号，多付了钱。朋友说 M 号就好。",
+              "en": "The set goes up to large and costs more. Your friend wanted medium."
+            }
+          },
+          {
+            "id": "bbq",
+            "ja": "バーベキューで",
+            "meaning": {
+              "zh-Hant": "烤肉醬",
+              "zh-Hans": "烧烤酱",
+              "en": "Barbecue"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說尺寸。",
+              "zh-Hans": "店员还在等你说大小。",
+              "en": "The clerk is still waiting for the size."
+            }
+          }
+        ]
+      },
+      "fast-food.nugget-sauce": {
+        "background": "scene-bg-fast-food",
+        "replies": [
+          {
+            "id": "bbq",
+            "ja": "バーベキューで",
+            "meaning": {
+              "zh-Hant": "烤肉醬",
+              "zh-Hans": "烧烤酱",
+              "en": "Barbecue"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在托盤上放了一盒烤肉醬。",
+              "zh-Hans": "店员在托盘上放了一盒烧烤酱。",
+              "en": "The clerk puts a pot of barbecue sauce on the tray."
+            }
+          },
+          {
+            "id": "mustard",
+            "ja": "マスタードで",
+            "meaning": {
+              "zh-Hant": "芥末醬",
+              "zh-Hans": "黄芥末酱",
+              "en": "Mustard"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員給了芥末醬。朋友要的是烤肉醬。",
+              "zh-Hans": "店员给了黄芥末酱。朋友要的是烧烤酱。",
+              "en": "The clerk gives you mustard. Your friend wanted barbecue."
+            }
+          },
+          {
+            "id": "in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "Eating in"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "內用剛才說過了，店員在問雞塊要哪種醬。",
+              "zh-Hans": "堂食刚才说过了，店员在问鸡块要哪种酱。",
+              "en": "You already said eat in. The clerk is asking which sauce."
+            }
+          }
+        ]
+      },
+      "fast-food.wait-for-number": {
+        "background": "scene-bg-fast-food",
+        "note": {
+          "zh-Hant": "你手上拿著點餐機印出的單子。",
+          "zh-Hans": "你手上拿着点餐机打印的单子。",
+          "en": "You're holding the slip from the kiosk."
+        },
+        "card": {
+          "title": "ご注文内容",
+          "lines": [
+            "ハンバーガー　¥400",
+            "受付番号　021"
+          ]
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好",
+              "zh-Hans": "好",
+              "en": "OK"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你拿著單子站到旁邊，聽到 021 就去拿。",
+              "zh-Hans": "你拿着单子站到旁边，听到 021 就去拿。",
+              "en": "You stand to the side with your slip and go up when 021 is called."
+            }
+          },
+          {
+            "id": "seat",
+            "ja": "席で待ちます",
+            "meaning": {
+              "zh-Hant": "我回座位等",
+              "zh-Hans": "我回座位等",
+              "en": "I'll wait at my seat"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "你回到座位，沒聽到叫號，漢堡在櫃台放涼了。",
+              "zh-Hans": "你回到座位，没听到叫号，汉堡在柜台放凉了。",
+              "en": "Back at your seat, you miss the call and your burger goes cold at the counter."
+            }
+          },
+          {
+            "id": "single",
+            "ja": "単品で",
+            "meaning": {
+              "zh-Hant": "只要單點",
+              "zh-Hans": "只要单点",
+              "en": "On its own"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "已經點好了，店員請你在旁邊等叫號。",
+              "zh-Hans": "已经点好了，店员请你在旁边等叫号。",
+              "en": "You've already ordered. The clerk wants you to wait to the side for your number."
+            }
+          }
+        ]
+      }
+    }
+  }
 }
