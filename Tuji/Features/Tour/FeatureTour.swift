@@ -208,7 +208,7 @@ struct FeatureTourFlow {
         guard hasScenes else { return FeatureTourFlow() }
         return FeatureTourFlow(
             steps: TourStep.sceneSteps,
-            routeAfterFinishing: .scenePractice(id: Self.trialScene, route: nil)
+            routeAfterFinishing: .scenePractice(id: trialScene, route: nil)
         )
     }
 
