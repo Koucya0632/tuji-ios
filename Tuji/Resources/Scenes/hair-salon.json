@@ -1,0 +1,623 @@
+{
+  "schemaVersion": 2,
+  "id": "hair-salon",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "髮廊",
+    "zh-Hans": "美发店",
+    "en": "Hair salon"
+  },
+  "summary": {
+    "zh-Hant": "剪頭髮時設計師會問的七件事",
+    "zh-Hans": "剪头发时发型师会问的七件事",
+    "en": "Seven things the stylist asks during a haircut"
+  },
+  "questions": [
+    {
+      "id": "hair-salon.name",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問預約的名字",
+        "zh-Hans": "听懂店员问预约的名字",
+        "en": "Understand when you are asked the name on the booking"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.name.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご予約のお名前をお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.name.p1.mp3"
+        },
+        {
+          "id": "hair-salon.name.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お名前お伺いしてもよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.name.p2.mp3"
+        },
+        {
+          "id": "hair-salon.name.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご予約のお名前を伺ってもよろしいでしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.name.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請問預約的名字",
+            "zh-Hans": "请问预约的名字",
+            "en": "What name is the booking under"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "今天想怎麼弄",
+            "zh-Hans": "今天想怎么弄",
+            "en": "What would you like today"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有指定設計師",
+            "zh-Hans": "有没有指定发型师",
+            "en": "Do you have a stylist in mind"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ワンです",
+        "audio": "hair-salon.name.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ご予約のお名前」是預約時用的名字。說名字加「です」，也可以給他看預約畫面。",
+        "zh-Hans": "「ご予約のお名前」是预约时用的名字。说名字加「です」，也可以给他看预约页面。",
+        "en": "ご予約のお名前 is the name on your booking. Say it with です, or show the booking on your phone."
+      },
+      "wordIds": [
+        "hair-salon"
+      ]
+    },
+    {
+      "id": "hair-salon.menu",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂設計師問今天要做什麼",
+        "zh-Hans": "听懂发型师问今天要做什么",
+        "en": "Understand when the stylist asks what you want today"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.menu.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "本日はどうされますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.menu.p1.mp3"
+        },
+        {
+          "id": "hair-salon.menu.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "今日はどんな感じにしますか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.menu.p2.mp3"
+        },
+        {
+          "id": "hair-salon.menu.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "本日はカットのみでよろしいですか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.menu.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要洗頭",
+            "zh-Hans": "要不要洗头",
+            "en": "Do you want a shampoo"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "今天想怎麼弄",
+            "zh-Hans": "今天想怎么弄",
+            "en": "What would you like today"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要剪多短",
+            "zh-Hans": "要剪多短",
+            "en": "How short to cut"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "カットだけでお願いします",
+        "audio": "hair-salon.menu.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「カット」是剪髮，「のみ」是只有。只剪就說「カットだけでお願いします」。想要的髮型最好給他看照片，說「こんな感じで」。",
+        "zh-Hans": "「カット」是剪发，「のみ」是只有。只剪就说「カットだけでお願いします」。想要的发型最好给他看照片，说「こんな感じで」。",
+        "en": "カット is a haircut and のみ means only. Say カットだけでお願いします for just a cut. For the style, showing a photo and saying こんな感じで works best."
+      },
+      "wordIds": [
+        "haircut",
+        "mobile-phone"
+      ]
+    },
+    {
+      "id": "hair-salon.length",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂設計師問要剪掉多少",
+        "zh-Hans": "听懂发型师问要剪掉多少",
+        "en": "Understand when the stylist asks how much to cut"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.length.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "長さはどのくらい切りますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.length.p1.mp3"
+        },
+        {
+          "id": "hair-salon.length.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "どれくらい短くしましょうか？",
+          "voice": "Aoede",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.length.p2.mp3"
+        },
+        {
+          "id": "hair-salon.length.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "長さは揃えるくらいでいいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.length.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要剪掉多少長度",
+            "zh-Hans": "要剪掉多少长度",
+            "en": "How much length to cut"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "瀏海要怎麼剪",
+            "zh-Hans": "刘海要怎么剪",
+            "en": "What to do with your fringe"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要打薄",
+            "zh-Hans": "要不要打薄",
+            "en": "Do you want it thinned"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "3センチくらいでお願いします",
+        "audio": "hair-salon.length.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「長さ」是長度，「揃える」是只修齊、長度不太變。說「3センチくらいで」或「揃えるだけで」。剪錯不好救，最好配照片或用手比位置。",
+        "zh-Hans": "「長さ」是长度，「揃える」是只修齐、长度不太变。说「3センチくらいで」或「揃えるだけで」。剪错不好补救，最好配照片或用手比位置。",
+        "en": "長さ is length, and 揃える means just tidying the ends without losing much length. Say 3センチくらいで or 揃えるだけで. A wrong cut is hard to undo, so a photo or pointing helps."
+      },
+      "wordIds": [
+        "haircut"
+      ],
+      "reviewNote": "Hair terms (揃える) and the cm phrasing should be checked by a hairdresser."
+    },
+    {
+      "id": "hair-salon.bangs",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂設計師問瀏海要怎麼弄",
+        "zh-Hans": "听懂发型师问刘海要怎么弄",
+        "en": "Understand when the stylist asks about your fringe"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.bangs.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "前髪はどうしますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.bangs.p1.mp3"
+        },
+        {
+          "id": "hair-salon.bangs.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "前髪も切りますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.bangs.p2.mp3"
+        },
+        {
+          "id": "hair-salon.bangs.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "前髪の長さはどのくらいにしますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.bangs.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "後面要剪多短",
+            "zh-Hans": "后面要剪多短",
+            "en": "How short at the back"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要打薄",
+            "zh-Hans": "要不要打薄",
+            "en": "Do you want it thinned"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "瀏海要怎麼弄",
+            "zh-Hans": "刘海要怎么弄",
+            "en": "What to do with your fringe"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "そのままで／眉くらいで",
+        "audio": "hair-salon.bangs.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「前髪」是瀏海。不剪說「そのままで」，要剪到眉毛說「眉くらいで」。",
+        "zh-Hans": "「前髪」是刘海。不剪说「そのままで」，要剪到眉毛说「眉くらいで」。",
+        "en": "前髪 is your fringe. Say そのままで to leave it, or 眉くらいで to cut it to your eyebrows."
+      },
+      "wordIds": [
+        "bangs"
+      ]
+    },
+    {
+      "id": "hair-salon.thinning",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂設計師問要不要打薄",
+        "zh-Hans": "听懂发型师问要不要打薄",
+        "en": "Understand when the stylist asks about thinning your hair"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.thinning.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "量はすきますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.thinning.p1.mp3"
+        },
+        {
+          "id": "hair-salon.thinning.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "毛量、少し軽くしますか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.thinning.p2.mp3"
+        },
+        {
+          "id": "hair-salon.thinning.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "量は減らしても大丈夫ですか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.thinning.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要剪短一點",
+            "zh-Hans": "要不要剪短一点",
+            "en": "Do you want it shorter"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要打薄",
+            "zh-Hans": "要不要打薄",
+            "en": "Do you want it thinned"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要抹造型品",
+            "zh-Hans": "要不要抹造型产品",
+            "en": "Do you want styling product"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "少しお願いします／そのままで",
+        "audio": "hair-salon.thinning.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「量」「毛量」是頭髮的量，「すく」「軽くする」「減らす」都是打薄。要就說「少しお願いします」，不要說「そのままで」。",
+        "zh-Hans": "「量」「毛量」是头发的量，「すく」「軽くする」「減らす」都是打薄。要就说「少しお願いします」，不要说「そのままで」。",
+        "en": "量 and 毛量 mean how much hair, and すく, 軽くする and 減らす all mean thinning it out. Say 少しお願いします for a little, or そのままで to leave it."
+      },
+      "wordIds": [
+        "thinning-scissors"
+      ],
+      "reviewNote": "Hair terms (すく, 毛量を軽くする) should be checked by a hairdresser."
+    },
+    {
+      "id": "hair-salon.water-temperature",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "洗頭時聽懂設計師問水溫可以嗎",
+        "zh-Hans": "洗头时听懂发型师问水温可以吗",
+        "en": "Understand when you are asked about the water temperature during the shampoo"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.water-temperature.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お湯加減いかがですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.water-temperature.p1.mp3"
+        },
+        {
+          "id": "hair-salon.water-temperature.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "熱くないですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.water-temperature.p2.mp3"
+        },
+        {
+          "id": "hair-salon.water-temperature.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お湯の温度は大丈夫ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.water-temperature.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "水溫可以嗎",
+            "zh-Hans": "水温可以吗",
+            "en": "Is the water temperature OK"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有哪裡癢",
+            "zh-Hans": "有没有哪里痒",
+            "en": "Is anywhere itchy"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要按摩",
+            "zh-Hans": "要不要按摩",
+            "en": "Would you like a massage"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です",
+        "audio": "hair-salon.water-temperature.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お湯加減」是水溫，「熱くないですか」是問會不會太燙。沒問題說「大丈夫です」，太燙說「ちょっと熱いです」。洗頭時也常問「かゆいところはございませんか」，是問有沒有哪裡癢。",
+        "zh-Hans": "「お湯加減」是水温，「熱くないですか」是问会不会太烫。没问题说「大丈夫です」，太烫说「ちょっと熱いです」。洗头时也常问「かゆいところはございませんか」，是问有没有哪里痒。",
+        "en": "お湯加減 is the water temperature, and 熱くないですか asks if it is too hot. Say 大丈夫です if it is fine, or ちょっと熱いです if too hot. They also often ask かゆいところはございませんか, which means is anywhere itchy."
+      },
+      "wordIds": [
+        "shampoo-basin"
+      ]
+    },
+    {
+      "id": "hair-salon.finish",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂設計師問剪成這樣可以嗎",
+        "zh-Hans": "听懂发型师问剪成这样可以吗",
+        "en": "Understand when the stylist checks the finished cut"
+      },
+      "phrasings": [
+        {
+          "id": "hair-salon.finish.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "後ろ、こんな感じでいかがですか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.finish.p1.mp3"
+        },
+        {
+          "id": "hair-salon.finish.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "長さ、大丈夫そうですか？",
+          "voice": "Aoede",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hair-salon.finish.p2.mp3"
+        },
+        {
+          "id": "hair-salon.finish.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "気になるところはございますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hair-salon.finish.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要抹造型品",
+            "zh-Hans": "要不要抹造型产品",
+            "en": "Do you want styling product"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要預約下次",
+            "zh-Hans": "要不要预约下次",
+            "en": "Do you want to book next time"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "剪成這樣可以嗎",
+            "zh-Hans": "剪成这样可以吗",
+            "en": "Is it OK like this"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／もう少し短くしてください",
+        "audio": "hair-salon.finish.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "設計師會拿鏡子給你看後面，確認長度。可以就說「大丈夫です」，想再短一點說「もう少し短くしてください」。",
+        "zh-Hans": "发型师会拿镜子给你看后面，确认长度。可以就说「大丈夫です」，想再短一点说「もう少し短くしてください」。",
+        "en": "The stylist shows you the back with a mirror to check. Say 大丈夫です if you are happy, or もう少し短くしてください for a bit shorter."
+      },
+      "wordIds": [
+        "hand-mirror"
+      ]
+    }
+  ]
+}

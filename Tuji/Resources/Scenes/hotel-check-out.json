@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 2,
+  "id": "hotel-check-out",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "飯店退房",
+    "zh-Hans": "酒店退房",
+    "en": "Hotel check-out"
+  },
+  "summary": {
+    "zh-Hant": "退房時櫃台會問的五件事",
+    "zh-Hans": "退房时前台会问的五件事",
+    "en": "Five things the front desk asks at check-out"
+  },
+  "questions": [
+    {
+      "id": "hotel-check-out.room-number",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問房號",
+        "zh-Hans": "听懂前台问房间号",
+        "en": "Understand when the front desk asks your room number"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-out.room-number.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お部屋番号をお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.room-number.p1.mp3"
+        },
+        {
+          "id": "hotel-check-out.room-number.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何号室でしょうか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-out.room-number.p2.mp3"
+        },
+        {
+          "id": "hotel-check-out.room-number.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お部屋番号、伺ってもよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.room-number.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請問房號",
+            "zh-Hans": "请问房间号",
+            "en": "What is your room number"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請問名字",
+            "zh-Hans": "请问名字",
+            "en": "What is your name"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請交還鑰匙",
+            "zh-Hans": "请交还钥匙",
+            "en": "Please return the key"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "805です",
+        "audio": "hotel-check-out.room-number.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お部屋番号」「何号室」都是問房號。說號碼加「です」，例如「805です」，或直接把鑰匙交給櫃台。",
+        "zh-Hans": "「お部屋番号」「何号室」都是问房间号。说号码加「です」，例如「805です」，或直接把钥匙交给前台。",
+        "en": "お部屋番号 and 何号室 both ask your room number. Say the number with です, like 805です, or just hand over the key."
+      },
+      "wordIds": [
+        "room-key"
+      ]
+    },
+    {
+      "id": "hotel-check-out.fridge",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問有沒有拿冰箱裡的東西",
+        "zh-Hans": "听懂前台问有没有拿冰箱里的东西",
+        "en": "Understand when you are asked about the minibar"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-out.fridge.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "冷蔵庫のご利用はございましたか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.fridge.p1.mp3"
+        },
+        {
+          "id": "hotel-check-out.fridge.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "冷蔵庫の中のもの、ご利用ありましたか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-out.fridge.p2.mp3"
+        },
+        {
+          "id": "hotel-check-out.fridge.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ミニバーはご利用になりましたか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.fridge.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有東西忘在房間",
+            "zh-Hans": "有没有东西忘在房间",
+            "en": "Did you leave anything in the room"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "早餐吃過了嗎",
+            "zh-Hans": "早餐吃过了吗",
+            "en": "Did you have breakfast"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有拿冰箱裡的東西",
+            "zh-Hans": "有没有拿冰箱里的东西",
+            "en": "Did you take anything from the fridge"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "使っていません",
+        "audio": "hotel-check-out.fridge.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「冷蔵庫」是冰箱，「ミニバー」是房間裡要付費的飲料。沒拿就說「使っていません」，拿了就說拿了什麼。",
+        "zh-Hans": "「冷蔵庫」是冰箱，「ミニバー」是房间里要付费的饮料。没拿就说「使っていません」，拿了就说拿了什么。",
+        "en": "冷蔵庫 is the fridge and ミニバー is the paid drinks in your room. Say 使っていません if you took nothing, or say what you took."
+      },
+      "wordIds": [
+        "fridge"
+      ]
+    },
+    {
+      "id": "hotel-check-out.receipt",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問要不要收據",
+        "zh-Hans": "听懂前台问要不要收据",
+        "en": "Understand when you are asked if you need a receipt"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-out.receipt.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "領収書はご入用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.receipt.p1.mp3"
+        },
+        {
+          "id": "hotel-check-out.receipt.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "領収書、お出ししますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-out.receipt.p2.mp3"
+        },
+        {
+          "id": "hotel-check-out.receipt.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "領収書はご必要でしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.receipt.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要收据",
+            "en": "Do you need a receipt"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有拿冰箱裡的東西",
+            "zh-Hans": "有没有拿冰箱里的东西",
+            "en": "Did you take anything from the fridge"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要寄放行李",
+            "zh-Hans": "要不要寄存行李",
+            "en": "Shall we keep your bags"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "hotel-check-out.receipt.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「領収書」是正式收據，跟收銀機印的「レシート」不同，要報帳通常拿領収書。「ご入用」「ご必要」都是需不需要。",
+        "zh-Hans": "「領収書」是正式收据，可以拿来报销，和收银机打出来的「レシート」小票不同。「ご入用」「ご必要」都是需不需要。",
+        "en": "領収書 is a formal receipt, the kind you use for expense claims, unlike a register レシート. ご入用 and ご必要 both ask if you need it."
+      },
+      "wordIds": [
+        "receipt"
+      ]
+    },
+    {
+      "id": "hotel-check-out.receipt-name",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問收據抬頭要寫什麼",
+        "zh-Hans": "听懂前台问收据抬头写什么",
+        "en": "Understand when you are asked whose name goes on the receipt"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-out.receipt-name.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "領収書の宛名はいかがいたしましょうか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.receipt-name.p1.mp3"
+        },
+        {
+          "id": "hotel-check-out.receipt-name.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "宛名はどうされますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-out.receipt-name.p2.mp3"
+        },
+        {
+          "id": "hotel-check-out.receipt-name.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お宛名、上様でよろしいですか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.receipt-name.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "收據要開幾張",
+            "zh-Hans": "收据要开几张",
+            "en": "How many receipts"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "收據抬頭要寫誰",
+            "zh-Hans": "收据抬头写谁",
+            "en": "Whose name goes on the receipt"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要收據",
+            "zh-Hans": "要不要收据",
+            "en": "Do you need a receipt"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "上様で大丈夫です",
+        "audio": "hotel-check-out.receipt-name.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「宛名」是收據上的抬頭。不需要寫名字就說「上様で大丈夫です」，「上様」是不寫名字時的通用抬頭。要寫公司名的話，把名稱寫給櫃台看最清楚。",
+        "zh-Hans": "「宛名」是收据上的抬头。不需要写名字就说「上様で大丈夫です」，「上様」是不写名字时的通用抬头。要写公司名的话，把名称写给前台看最清楚。",
+        "en": "宛名 is the name written on the receipt. If you do not need one, say 上様で大丈夫です; 上様 is the standard blank addressee. For a company name, writing it down for the staff is clearest."
+      },
+      "wordIds": [
+        "receipt"
+      ]
+    },
+    {
+      "id": "hotel-check-out.luggage",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問要不要寄放行李",
+        "zh-Hans": "听懂前台问要不要寄存行李",
+        "en": "Understand when you are offered luggage storage"
+      },
+      "phrasings": [
+        {
+          "id": "hotel-check-out.luggage.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お荷物はお預かりしましょうか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.luggage.p1.mp3"
+        },
+        {
+          "id": "hotel-check-out.luggage.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お荷物、お預かりもできますが",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "hotel-check-out.luggage.p2.mp3"
+        },
+        {
+          "id": "hotel-check-out.luggage.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お出かけの間、お荷物をお預かりしましょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "hotel-check-out.luggage.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要幫你把行李寄到機場",
+            "zh-Hans": "要不要帮你把行李寄到机场",
+            "en": "Shall we send your bags to the airport"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要幫你叫計程車",
+            "zh-Hans": "要不要帮你叫出租车",
+            "en": "Shall we call you a taxi"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要幫你寄放行李",
+            "zh-Hans": "要不要帮你寄存行李",
+            "en": "Shall we keep your bags"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "hotel-check-out.luggage.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お預かり」是幫你保管。退房後還想出去逛，可以把行李寄放在櫃台，通常會拿到一張號碼牌，回來時出示。",
+        "zh-Hans": "「お預かり」是帮你保管。退房后还想出去逛，可以把行李寄存在前台，通常会拿到一张号码牌，回来时出示。",
+        "en": "お預かり means they keep it for you. If you want to go out after check-out, you can leave your bags at the desk. You usually get a tag to show when you come back."
+      },
+      "wordIds": [
+        "suitcase"
+      ]
+    }
+  ]
+}

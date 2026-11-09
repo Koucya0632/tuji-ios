@@ -140,10 +140,20 @@ struct TujiApp: App {
         }
     }
 
+    #if DEBUG
+    private static let isHostingUnitTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    #endif
+
     @ViewBuilder
     private var rootContent: some View {
         #if DEBUG
-        if let scene = StoryStageDemo.requestedScene {
+        if Self.isHostingUnitTests {
+            // The unit tests open their own windows. The app's own screens
+            // would sign in, load and later tear down 物見 and 我 underneath
+            // them, and freeing those models while XCTest runs crashed the
+            // host (see AnimatedMascotRenderingTests).
+            Color.clear
+        } else if let scene = StoryStageDemo.requestedScene {
             StoryStageDemo(sceneId: scene)
         } else {
             RootView().paywallHost()

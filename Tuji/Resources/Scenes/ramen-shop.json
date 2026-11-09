@@ -1,0 +1,611 @@
+{
+  "schemaVersion": 2,
+  "id": "ramen-shop",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "拉麵店",
+    "zh-Hans": "拉面店",
+    "en": "Ramen shop"
+  },
+  "summary": {
+    "zh-Hant": "從買券到開吃會被問的六件事",
+    "zh-Hans": "从买券到开吃会被问的六件事",
+    "en": "Six things you are asked from the ticket machine to your bowl"
+  },
+  "questions": [
+    {
+      "id": "ramen-shop.ticket-machine",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "拉麵按好了，想把麵加大。在食券機上再按哪一個",
+        "zh-Hans": "拉面按好了，想把面加大。在食券机上再按哪一个",
+        "en": "You have chosen ramen and want a bigger portion of noodles. Which button do you press next"
+      },
+      "phrasings": [
+        {
+          "id": "ramen-shop.ticket-machine.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "追加メニュー",
+            "detail": "ラーメン　¥900　千円札・硬貨のみ",
+            "buttons": [
+              {
+                "choiceId": "large",
+                "ja": "大盛 +¥100"
+              },
+              {
+                "choiceId": "kaedama",
+                "ja": "替玉 +¥150"
+              },
+              {
+                "choiceId": "egg",
+                "ja": "味玉 +¥150"
+              },
+              {
+                "choiceId": "rice",
+                "ja": "ライス ¥150"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "ramen-shop.ticket-machine.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "ラーメン　¥900",
+            "detail": "追加を選んでください",
+            "buttons": [
+              {
+                "choiceId": "rice",
+                "ja": "ご飯"
+              },
+              {
+                "choiceId": "egg",
+                "ja": "味付け玉子"
+              },
+              {
+                "choiceId": "large",
+                "ja": "麺大盛り"
+              },
+              {
+                "choiceId": "kaedama",
+                "ja": "替え玉"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "ramen-shop.ticket-machine.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "食券制になっております。先に券売機でお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "追加メニュー",
+            "detail": "ラーメン　¥900　千円札・硬貨のみ",
+            "buttons": [
+              {
+                "choiceId": "large",
+                "ja": "大盛 +¥100"
+              },
+              {
+                "choiceId": "kaedama",
+                "ja": "替玉 +¥150"
+              },
+              {
+                "choiceId": "egg",
+                "ja": "味玉 +¥150"
+              },
+              {
+                "choiceId": "rice",
+                "ja": "ライス ¥150"
+              }
+            ]
+          },
+          "audio": "ramen-shop.ticket-machine.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "large",
+          "text": {
+            "zh-Hant": "大碗（麵加量）",
+            "zh-Hans": "大份（面加量）",
+            "en": "Large portion"
+          },
+          "correct": true
+        },
+        {
+          "id": "kaedama",
+          "text": {
+            "zh-Hant": "吃到一半再加一份麵",
+            "zh-Hans": "吃到一半再加一份面",
+            "en": "Extra noodles for later"
+          },
+          "correct": false
+        },
+        {
+          "id": "egg",
+          "text": {
+            "zh-Hant": "加溏心蛋",
+            "zh-Hans": "加溏心蛋",
+            "en": "Add a soft-boiled egg"
+          },
+          "correct": false
+        },
+        {
+          "id": "rice",
+          "text": {
+            "zh-Hant": "白飯",
+            "zh-Hans": "白饭",
+            "en": "A bowl of rice"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大盛",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "「大盛」是大碗，「替玉」是吃到一半再加一份麵，「味玉」是溏心蛋，「ライス」是白飯。按鈕名稱、能不能用萬元鈔都依店家不同。買好券交給店員。",
+        "zh-Hans": "「大盛」是大份，「替玉」是吃到一半再加一份面，「味玉」是溏心蛋，「ライス」是白饭。按钮名称、能不能用万元钞都依店家不同。买好券交给店员。",
+        "en": "大盛 is a large portion, 替玉 is a second serving of noodles you order mid-bowl, 味玉 is a soft-boiled egg and ライス is rice. Button names, and whether the machine takes 10,000 yen notes, vary by shop. Hand your tickets to the staff."
+      },
+      "wordIds": [
+        "ramen-bowl"
+      ]
+    },
+    {
+      "id": "ramen-shop.counter-seat",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問坐吧檯可不可以",
+        "zh-Hans": "听懂店员问坐吧台行不行",
+        "en": "Understand when the staff ask if the counter is fine"
+      },
+      "phrasings": [
+        {
+          "id": "ramen-shop.counter-seat.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "食券お預かりします。カウンター席でよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.counter-seat.p1.mp3"
+        },
+        {
+          "id": "ramen-shop.counter-seat.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "カウンターでもよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ramen-shop.counter-seat.p2.mp3"
+        },
+        {
+          "id": "ramen-shop.counter-seat.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お席、カウンターになりますが大丈夫ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.counter-seat.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "坐吧檯可以嗎",
+            "zh-Hans": "坐吧台可以吗",
+            "en": "Is the counter all right"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要等桌子的位子",
+            "zh-Hans": "要不要等桌子的位子",
+            "en": "Do you want to wait for a table"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要先買券嗎",
+            "zh-Hans": "要先买券吗",
+            "en": "Do you need to buy a ticket first"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、大丈夫です",
+        "audio": "ramen-shop.counter-seat.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「カウンター」是吧檯座位。「食券お預かりします」是店員收下你的券。可以的話說「はい、大丈夫です」。",
+        "zh-Hans": "「カウンター」是吧台座位。「食券お預かりします」是店员收下你的券。可以的话说「はい、大丈夫です」。",
+        "en": "カウンター is the counter seating. 食券お預かりします just means the staff are taking your ticket. Say はい、大丈夫です if that is fine."
+      },
+      "wordIds": [
+        "counter-seat"
+      ]
+    },
+    {
+      "id": "ramen-shop.noodle-firmness",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問麵要多硬",
+        "zh-Hans": "听懂店员问面要多硬",
+        "en": "Understand when the staff ask how firm you want the noodles"
+      },
+      "phrasings": [
+        {
+          "id": "ramen-shop.noodle-firmness.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "麺の硬さはどうされますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.noodle-firmness.p1.mp3"
+        },
+        {
+          "id": "ramen-shop.noodle-firmness.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "麺の硬さ、お好みありますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ramen-shop.noodle-firmness.p2.mp3"
+        },
+        {
+          "id": "ramen-shop.noodle-firmness.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "麺は普通でよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.noodle-firmness.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "麵要大碗嗎",
+            "zh-Hans": "面要大份吗",
+            "en": "Do you want a large portion"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "麵要多硬",
+            "zh-Hans": "面要多硬",
+            "en": "How firm do you want the noodles"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "湯頭要濃還是淡",
+            "zh-Hans": "汤头要浓还是淡",
+            "en": "Strong or light soup"
+          },
+          "correct": false
+        },
+        {
+          "id": "d",
+          "text": {
+            "zh-Hant": "要不要加一份麵",
+            "zh-Hans": "要不要加一份面",
+            "en": "Do you want extra noodles"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "普通で／硬めで",
+        "audio": "ramen-shop.noodle-firmness.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「硬さ」是硬度。「普通」是一般，「硬め」偏硬，「柔らかめ」偏軟。有些店會用「バリカタ」「カタ」這類說法，依店家不同。",
+        "zh-Hans": "「硬さ」是硬度。「普通」是一般，「硬め」偏硬，「柔らかめ」偏软。有些店会用「バリカタ」「カタ」这类说法，依店家不同。",
+        "en": "硬さ means firmness. 普通 is regular, 硬め is firmer and 柔らかめ is softer. Some shops use their own words like バリカタ or カタ."
+      },
+      "wordIds": [
+        "ramen-bowl"
+      ]
+    },
+    {
+      "id": "ramen-shop.taste-and-oil",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問口味濃淡和油量",
+        "zh-Hans": "听懂店员问口味浓淡和油量",
+        "en": "Understand when the staff ask about soup strength and oil"
+      },
+      "phrasings": [
+        {
+          "id": "ramen-shop.taste-and-oil.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "味の濃さと油の量はどうされますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.taste-and-oil.p1.mp3"
+        },
+        {
+          "id": "ramen-shop.taste-and-oil.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "味と油、お好みありますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ramen-shop.taste-and-oil.p2.mp3"
+        },
+        {
+          "id": "ramen-shop.taste-and-oil.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "味の濃さ、油の量は普通でよろしいですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.taste-and-oil.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "口味濃淡和油量",
+            "zh-Hans": "口味浓淡和油量",
+            "en": "How strong and how oily"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "麵要多硬",
+            "zh-Hans": "面要多硬",
+            "en": "How firm the noodles should be"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要加蒜",
+            "zh-Hans": "要不要加蒜",
+            "en": "Do you want garlic"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "全部普通で",
+        "audio": "ramen-shop.taste-and-oil.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「味の濃さ」是口味濃淡，「油の量」是油量。第一次去說「全部普通で」最保險。想淡一點說「味薄め」，少油說「油少なめ」。多半在家系拉麵店才會問，依店家不同。",
+        "zh-Hans": "「味の濃さ」是口味浓淡，「油の量」是油量。第一次去说「全部普通で」最保险。想淡一点说「味薄め」，少油说「油少なめ」。多半在家系拉面店才会问，依店家不同。",
+        "en": "味の濃さ is how strong the soup is and 油の量 is how much oil. 全部普通で, regular for everything, is the safe answer. Ask for 味薄め for lighter or 油少なめ for less oil. Mostly asked at iekei-style shops."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "ramen-shop.rice",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要白飯",
+        "zh-Hans": "听懂店员问要不要白饭",
+        "en": "Understand when the staff offer rice"
+      },
+      "phrasings": [
+        {
+          "id": "ramen-shop.rice.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ライスは無料ですが、お付けしますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.rice.p1.mp3"
+        },
+        {
+          "id": "ramen-shop.rice.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ライスいかがですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ramen-shop.rice.p2.mp3"
+        },
+        {
+          "id": "ramen-shop.rice.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご飯はお付けしますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.rice.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要加一份麵",
+            "zh-Hans": "要不要加一份面",
+            "en": "Would you like extra noodles"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要加溏心蛋",
+            "zh-Hans": "要不要加溏心蛋",
+            "en": "Would you like a soft-boiled egg"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要白飯",
+            "zh-Hans": "要不要白饭",
+            "en": "Would you like rice"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "ramen-shop.rice.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ライス」「ご飯」都是白飯。有的店免費，有的要另外買券。要就說「お願いします」，不用說「大丈夫です」。",
+        "zh-Hans": "「ライス」「ご飯」都是白饭。有的店免费，有的要另外买券。要就说「お願いします」，不用说「大丈夫です」。",
+        "en": "ライス and ご飯 both mean rice. Some shops give it free, others sell it as a ticket. Say お願いします for yes or 大丈夫です for no."
+      },
+      "wordIds": [
+        "rice-bowl"
+      ]
+    },
+    {
+      "id": "ramen-shop.paper-apron",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要紙圍裙",
+        "zh-Hans": "听懂店员问要不要纸围裙",
+        "en": "Understand when the staff offer a paper apron"
+      },
+      "phrasings": [
+        {
+          "id": "ramen-shop.paper-apron.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "紙エプロンお使いになりますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.paper-apron.p1.mp3"
+        },
+        {
+          "id": "ramen-shop.paper-apron.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "エプロンご利用ですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "ramen-shop.paper-apron.p2.mp3"
+        },
+        {
+          "id": "ramen-shop.paper-apron.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "エプロン、よろしければお使いください",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "ramen-shop.paper-apron.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要紙圍裙",
+            "zh-Hans": "要不要纸围裙",
+            "en": "Would you like a paper apron"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要濕毛巾",
+            "zh-Hans": "要不要湿毛巾",
+            "en": "Would you like a hand towel"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要再加水",
+            "zh-Hans": "要不要再加水",
+            "en": "Would you like more water"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "ramen-shop.paper-apron.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「エプロン」是圍裙，這裡是防湯汁噴到衣服的紙圍裙。要就說「お願いします」，不用說「大丈夫です」。",
+        "zh-Hans": "「エプロン」是围裙，这里是防汤汁溅到衣服的纸围裙。要就说「お願いします」，不用说「大丈夫です」。",
+        "en": "エプロン is an apron, here a paper one to keep soup off your clothes. Say お願いします for yes or 大丈夫です for no."
+      },
+      "wordIds": []
+    }
+  ]
+}

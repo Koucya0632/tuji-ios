@@ -79,6 +79,15 @@ extension Color {
     /// Behind sheets and dialogs.
     static let tujiScrim = Color(hex: 0x191512).opacity(0.4)
 
+    // MARK: - 場面練習的示意機台
+
+    /// A drawn register or ticket machine: its case, title bar, button edges.
+    /// Greys rather than the paper palette, so it reads as a machine.
+    static let tujiMachineBezel = Color(hex: 0x2E2B28)
+    static let tujiMachineBar = Color(hex: 0x46505A)
+    static let tujiMachineEdge = Color(hex: 0x9AA1A8)
+    static let tujiMachineFace = Color(hex: 0xFFFFFF)
+
     init(hex: UInt32, alpha: Double = 1.0) {
         self.init(
             .sRGB,
@@ -160,5 +169,21 @@ extension ShapeStyle where Self == Color {
 
     static var tujiScrim: Color {
         .tujiScrim
+    }
+
+    static var tujiMachineBezel: Color {
+        .tujiMachineBezel
+    }
+
+    static var tujiMachineBar: Color {
+        .tujiMachineBar
+    }
+
+    static var tujiMachineEdge: Color {
+        .tujiMachineEdge
+    }
+
+    static var tujiMachineFace: Color {
+        .tujiMachineFace
     }
 }

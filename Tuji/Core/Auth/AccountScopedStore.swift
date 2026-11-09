@@ -42,6 +42,7 @@ extension WordInsightsStore: AccountScopedStore {}
 extension StoryOfferCache: AccountScopedStore {}
 extension AssistantOfferCache: AccountScopedStore {}
 extension AssistantHistoryCache: AccountScopedStore {}
+extension SceneProgressStore: AccountScopedStore {}
 
 @MainActor
 enum AccountScopedStores {
@@ -79,6 +80,8 @@ enum AccountScopedStores {
     /// - `StoryOfferCache` — the offer carries this account's 罐頭點數 balance.
     /// - `AssistantOfferCaches` — the same, for AI 查詞 and AI 語法.
     /// - `AssistantHistoryCaches` — 查詞紀錄 and 語法紀錄 are this account's cards.
+    /// - `SceneProgressStore` — the 場面練習 progress in memory is this account's;
+    ///   its file is per account and stays for when they sign back in.
     static var all: [any AccountScopedStore] {
         [
             AtlasStore.shared,
@@ -100,7 +103,8 @@ enum AccountScopedStores {
             AssistantOfferCaches.vocabulary,
             AssistantOfferCaches.grammar,
             AssistantHistoryCaches.vocabulary,
-            AssistantHistoryCaches.grammar
+            AssistantHistoryCaches.grammar,
+            SceneProgressStore.shared
         ]
     }
 

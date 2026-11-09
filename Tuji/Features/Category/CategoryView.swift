@@ -52,7 +52,11 @@ struct CategoryView: View {
         // them sat inset, so the page looked like it had lost its margin.
         VStack(alignment: .leading, spacing: Space.s4) {
             self.hero
-            self.chatEntry.padding(.horizontal, Space.s4)
+            VStack(spacing: Space.s2) {
+                self.chatEntry
+                SceneTopicEntries(topic: self.id)
+            }
+            .padding(.horizontal, Space.s4)
             Section {
                 self.grid.padding(.horizontal, Space.s4)
             } header: {

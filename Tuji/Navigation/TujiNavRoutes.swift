@@ -26,6 +26,8 @@ extension View {
                 case let .atlasPublicItem(item): AtlasPublicDetailView(item: item)
                 case .atlasSearch: AtlasSearchView()
                 case let .categoryDetail(id): CategoryView(id: id)
+                case .sceneList, .sceneDetail, .scenePractice, .sceneWord:
+                    SceneDestination(route: route, user: user)
                 }
             }
     }
@@ -67,6 +69,22 @@ private struct AssistantDestination: View {
         case .topicChatHistory: TopicChatHistoryView()
         // 上面那個 arm 就是這個 switch 的門：只有列出來的六個路由進得來。
         // 這裡寫 default 純粹是因為 switch 的對象是整個 NavRoute。
+        default: EmptyView()
+        }
+    }
+}
+
+/// 場面練習's three screens, and a word page opened from one. Grouped for the same reason as `AssistantDestination`.
+private struct SceneDestination: View {
+    let route: NavRoute
+    let user: SessionUser?
+
+    var body: some View {
+        switch self.route {
+        case .sceneList: SceneListView(user: self.user)
+        case let .sceneDetail(id): SceneDetailView(sceneId: id, user: self.user)
+        case let .scenePractice(id): ScenePracticeView(sceneId: id, user: self.user)
+        case let .sceneWord(id, scene): WordDetailView(id: id, fromScene: scene)
         default: EmptyView()
         }
     }

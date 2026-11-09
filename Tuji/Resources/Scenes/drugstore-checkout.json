@@ -1,0 +1,609 @@
+{
+  "schemaVersion": 2,
+  "id": "drugstore-checkout",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "藥妝店結帳",
+    "zh-Hans": "药妆店结账",
+    "en": "Drugstore checkout"
+  },
+  "summary": {
+    "zh-Hant": "藥妝店結帳時會被問的六件事",
+    "zh-Hans": "药妆店结账时会被问的六件事",
+    "en": "Six things you are asked at a drugstore checkout"
+  },
+  "questions": [
+    {
+      "id": "drugstore-checkout.point-card",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問有沒有集點卡或會員 App",
+        "zh-Hans": "听懂店员问有没有积分卡或会员 App",
+        "en": "Understand when the clerk asks for a points card or the store app"
+      },
+      "phrasings": [
+        {
+          "id": "drugstore-checkout.point-card.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ポイントカードはお持ちですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.point-card.p1.mp3"
+        },
+        {
+          "id": "drugstore-checkout.point-card.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "アプリのご提示はございますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "drugstore-checkout.point-card.p2.mp3"
+        },
+        {
+          "id": "drugstore-checkout.point-card.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "会員証はお持ちでしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.point-card.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要辦免稅",
+            "zh-Hans": "要不要办免税",
+            "en": "Do you want tax-free"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有集點卡或會員 App",
+            "zh-Hans": "有没有积分卡或会员 App",
+            "en": "Do you have a points card or the app"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "持っていません",
+        "audio": "drugstore-checkout.point-card.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ポイントカード」「会員証」是集點卡或會員卡，「アプリのご提示」是請你打開店家的 App 給他看。沒有就說「持っていません」。",
+        "zh-Hans": "「ポイントカード」「会員証」是积分卡或会员卡，「アプリのご提示」是请你打开店里的 App 给他看。没有就说「持っていません」。",
+        "en": "ポイントカード and 会員証 are points or member cards. アプリのご提示 asks you to show the store's app. Say 持っていません if you have none."
+      },
+      "wordIds": [
+        "point-card",
+        "membership-card",
+        "app"
+      ]
+    },
+    {
+      "id": "drugstore-checkout.tax-free",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要辦免稅",
+        "zh-Hans": "听懂店员问要不要办免税",
+        "en": "Understand when the clerk asks if you want tax-free"
+      },
+      "phrasings": [
+        {
+          "id": "drugstore-checkout.tax-free.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "免税のご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.tax-free.p1.mp3"
+        },
+        {
+          "id": "drugstore-checkout.tax-free.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パスポートはお持ちですか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "drugstore-checkout.tax-free.p2.mp3"
+        },
+        {
+          "id": "drugstore-checkout.tax-free.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "免税のお手続きはされますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.tax-free.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要辦免稅",
+            "zh-Hans": "要不要办免税",
+            "en": "Do you want tax-free"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "有沒有集點卡",
+            "zh-Hans": "有没有积分卡",
+            "en": "Do you have a points card"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要分開結帳",
+            "zh-Hans": "要不要分开结账",
+            "en": "Do you want to pay separately"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします／大丈夫です",
+        "audio": "drugstore-checkout.tax-free.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「免税」是免稅，問你「パスポート」也是在問要不要辦。2026 年 11 月起改成先付含稅價，出境時經海關確認後再退稅。細節依店家／規定不同，以現場說明為準。要辦就拿出護照說「お願いします」。",
+        "zh-Hans": "「免税」是免税，问你「パスポート」也是在问要不要办。2026 年 11 月起改成先付含税价，出境时经海关确认后再退税。细节依店家／规定不同，以现场说明为准。要办就拿出护照说「お願いします」。",
+        "en": "免税 means tax-free, and being asked for your パスポート means the same thing. From November 2026 you pay the price with tax and get the tax back after customs checks your goods as you leave Japan. Details differ by store and by the rules, so follow what the staff tell you. To use it, show your passport and say お願いします."
+      },
+      "wordIds": [
+        "passport"
+      ],
+      "reviewNote": "2026-11 リファンド方式：藥妝店收銀台是否仍這樣問、新制流程的一句描述，要請熟新免稅制的人核對。"
+    },
+    {
+      "id": "drugstore-checkout.medicine-user",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問藥是誰要用",
+        "zh-Hans": "听懂店员问药是谁要用",
+        "en": "Understand when you are asked who will use the medicine"
+      },
+      "phrasings": [
+        {
+          "id": "drugstore-checkout.medicine-user.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらのお薬、お使いになるのはご本人様ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.medicine-user.p1.mp3"
+        },
+        {
+          "id": "drugstore-checkout.medicine-user.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご使用になる方はどなたですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "drugstore-checkout.medicine-user.p2.mp3"
+        },
+        {
+          "id": "drugstore-checkout.medicine-user.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お客様ご自身でお使いですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.medicine-user.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "以前用過這個藥嗎",
+            "zh-Hans": "以前用过这个药吗",
+            "en": "Have you used this medicine before"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "這個藥要買幾盒",
+            "zh-Hans": "这个药要买几盒",
+            "en": "How many boxes do you want"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "藥是誰要用",
+            "zh-Hans": "药是谁要用",
+            "en": "Who will use the medicine"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "私です／家族が使います",
+        "audio": "drugstore-checkout.medicine-user.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "有些藥結帳時要確認是誰要用，藥劑師可能會接著問幾句。「ご本人様」「ご自身」是你本人，自己用就說「私です」。用藥的事依店家／規定不同，以現場藥劑師說明為準。",
+        "zh-Hans": "有些药结账时要确认是谁要用，药剂师可能会接着问几句。「ご本人様」「ご自身」是你本人，自己用就说「私です」。用药的事依店家／规定不同，以现场药剂师说明为准。",
+        "en": "For some medicines the store must check who will use them, and a pharmacist may ask a few more questions. ご本人様 and ご自身 mean you yourself, so say 私です if it is for you. Rules differ by store and product, so follow what the pharmacist tells you."
+      },
+      "wordIds": [
+        "over-the-counter-medicine",
+        "pharmacy-clerk"
+      ],
+      "reviewNote": "第1類医薬品・要指導医薬品的確認（誰問、何時問、接著問什麼）要請藥劑師或熟藥事法規的人看過；本句只教聽懂「誰要用」。"
+    },
+    {
+      "id": "drugstore-checkout.bag",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要袋子",
+        "zh-Hans": "听懂店员问要不要袋子",
+        "en": "Understand when the clerk asks if you need a bag"
+      },
+      "phrasings": [
+        {
+          "id": "drugstore-checkout.bag.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "袋はご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.bag.p1.mp3"
+        },
+        {
+          "id": "drugstore-checkout.bag.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "レジ袋お付けしますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "drugstore-checkout.bag.p2.mp3"
+        },
+        {
+          "id": "drugstore-checkout.bag.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "袋はいかがなさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.bag.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要分裝的小袋",
+            "zh-Hans": "要不要分装的小袋子",
+            "en": "Do you want small bags to share things out"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "有沒有集點卡",
+            "zh-Hans": "有没有积分卡",
+            "en": "Do you have a points card"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／お願いします",
+        "audio": "drugstore-checkout.bag.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「袋」「レジ袋」是結帳用的袋子，通常要另外付費。不用說「大丈夫です」，要的話說「お願いします」。",
+        "zh-Hans": "「袋」「レジ袋」是结账用的袋子，通常要另外付钱。不用说「大丈夫です」，要的话说「お願いします」。",
+        "en": "袋 and レジ袋 mean a shopping bag, which usually costs extra. Say 大丈夫です for no, お願いします for yes."
+      },
+      "wordIds": [
+        "plastic-bag"
+      ]
+    },
+    {
+      "id": "drugstore-checkout.small-bags",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要分裝的小袋",
+        "zh-Hans": "听懂店员问要不要分装的小袋子",
+        "en": "Understand when the clerk offers small bags for sharing out"
+      },
+      "phrasings": [
+        {
+          "id": "drugstore-checkout.small-bags.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "小分けの袋はご入用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.small-bags.p1.mp3"
+        },
+        {
+          "id": "drugstore-checkout.small-bags.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お配り用の袋、お付けしますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "drugstore-checkout.small-bags.p2.mp3"
+        },
+        {
+          "id": "drugstore-checkout.small-bags.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "袋、お分けしましょうか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "drugstore-checkout.small-bags.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要分裝的小袋",
+            "zh-Hans": "要不要分装的小袋子",
+            "en": "Small bags to share things out"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要包成禮物",
+            "zh-Hans": "要不要包成礼物",
+            "en": "Do you want it gift-wrapped"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "三枚お願いします／大丈夫です",
+        "audio": "drugstore-checkout.small-bags.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「小分け」「お配り用」是分送給別人用的小袋子，買伴手禮時常會被問。要的話說要幾個，例如「三枚お願いします」。",
+        "zh-Hans": "「小分け」「お配り用」是分给别人用的小袋子，买伴手礼时常会被问。要的话说要几个，比如「三枚お願いします」。",
+        "en": "小分け and お配り用 mean small bags for handing things out, often offered when you buy gifts. Say how many you want, like 三枚お願いします."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "drugstore-checkout.payment",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "你想用交通卡付款。在付款畫面上按對的按鈕",
+        "zh-Hans": "你想用交通卡付款。在付款画面上按对的按钮",
+        "en": "You want to pay with a transit card. Tap the right button on the payment screen"
+      },
+      "phrasings": [
+        {
+          "id": "drugstore-checkout.payment.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払いは画面でお選びください",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お支払い方法をお選びください",
+            "detail": "合計 ¥4,620",
+            "buttons": [
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジット"
+              },
+              {
+                "choiceId": "emoney",
+                "ja": "電子マネー"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "コード決済"
+              }
+            ]
+          },
+          "audio": "drugstore-checkout.payment.p1.mp3"
+        },
+        {
+          "id": "drugstore-checkout.payment.p2",
+          "role": "review",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "お支払い",
+            "detail": "お会計 ¥4,620",
+            "buttons": [
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "QR決済"
+              },
+              {
+                "choiceId": "emoney",
+                "ja": "交通系IC"
+              },
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "drugstore-checkout.payment.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払い方法はいかがなさいますか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "お支払い方法をお選びください",
+            "detail": "合計 ¥4,620",
+            "buttons": [
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジット"
+              },
+              {
+                "choiceId": "emoney",
+                "ja": "電子マネー"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "コード決済"
+              }
+            ]
+          },
+          "audio": "drugstore-checkout.payment.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "cash",
+          "text": {
+            "zh-Hant": "現金",
+            "zh-Hans": "现金",
+            "en": "Cash"
+          },
+          "correct": false
+        },
+        {
+          "id": "credit",
+          "text": {
+            "zh-Hant": "信用卡",
+            "zh-Hans": "信用卡",
+            "en": "Credit card"
+          },
+          "correct": false
+        },
+        {
+          "id": "emoney",
+          "text": {
+            "zh-Hant": "交通卡等電子錢包",
+            "zh-Hans": "交通卡等电子钱包",
+            "en": "E-money, such as a transit card"
+          },
+          "correct": true
+        },
+        {
+          "id": "qr",
+          "text": {
+            "zh-Hant": "條碼支付",
+            "zh-Hans": "二维码支付",
+            "en": "QR code payment"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ICカードで",
+        "audio": "drugstore-checkout.payment.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「電子マネー」「交通系IC」是交通卡這類的儲值卡，按了再把卡放到讀卡機上。店員開口問的話，說「ICカードで」就好。",
+        "zh-Hans": "「電子マネー」「交通系IC」是交通卡这类的储值卡，按了再把卡放到读卡器上。店员开口问的话，说「ICカードで」就好。",
+        "en": "電子マネー and 交通系IC mean stored-value cards like a transit card. Tap it, then hold your card to the reader. If the clerk asks out loud, ICカードで is enough."
+      },
+      "wordIds": [
+        "transit-ic-card"
+      ]
+    }
+  ]
+}

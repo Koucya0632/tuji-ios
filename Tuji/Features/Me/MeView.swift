@@ -357,6 +357,21 @@ private struct DebugSmokeSection: View {
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                 }
+                // 今天 shows 場面練習 to zh-ja learners only; this reaches it from any account.
+                NavigationLink(value: NavRoute.sceneList) {
+                    HStack {
+                        Text(verbatim: "場面練習")
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk2)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.tujiIcon(11, weight: .semibold))
+                            .foregroundStyle(.tujiInk3)
+                    }
+                    .frame(minHeight: 44)
+                    .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
                 BBtn(
                     title: self.buttonTitle,
                     fullWidth: true,

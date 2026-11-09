@@ -1,0 +1,612 @@
+{
+  "schemaVersion": 2,
+  "id": "clothing-store",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "服飾店試穿與結帳",
+    "zh-Hans": "服装店试穿与结账",
+    "en": "Clothing store: fitting and checkout"
+  },
+  "summary": {
+    "zh-Hant": "從試穿到結帳會被問的七件事",
+    "zh-Hans": "从试穿到结账会被问的七件事",
+    "en": "Seven things you are asked from fitting room to checkout"
+  },
+  "questions": [
+    {
+      "id": "clothing-store.looking",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問你在找什麼",
+        "zh-Hans": "听懂店员问你在找什么",
+        "en": "Understand when the clerk asks what you are looking for"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.looking.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "何かお探しですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.looking.p1.mp3"
+        },
+        {
+          "id": "clothing-store.looking.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何かお探しでしたら、お声がけください",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.looking.p2.mp3"
+        },
+        {
+          "id": "clothing-store.looking.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お探しのものはございますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.looking.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要試穿看看",
+            "zh-Hans": "要不要试穿看看",
+            "en": "Would you like to try it on"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "在找什麼嗎",
+            "zh-Hans": "在找什么吗",
+            "en": "Are you looking for something"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要找什麼尺寸",
+            "zh-Hans": "要找什么尺码",
+            "en": "What size are you looking for"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "見ているだけです",
+        "audio": "clothing-store.looking.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「お探し」是在找東西，「お声がけください」是需要的話叫他。只是看看就說「見ているだけです」。",
+        "zh-Hans": "「お探し」是在找东西，「お声がけください」是需要的话叫他。只是看看就说「見ているだけです」。",
+        "en": "お探し means looking for something, and お声がけください means call them if you need help. Say 見ているだけです if you are just looking."
+      },
+      "wordIds": [
+        "sales-clerk"
+      ]
+    },
+    {
+      "id": "clothing-store.item-count",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂試衣間前店員問你拿了幾件",
+        "zh-Hans": "听懂试衣间前店员问你拿了几件",
+        "en": "Understand when you are asked how many items you are taking in"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.item-count.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "何点お持ちですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.item-count.p1.mp3"
+        },
+        {
+          "id": "clothing-store.item-count.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お品物、何点でしょうか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.item-count.p2.mp3"
+        },
+        {
+          "id": "clothing-store.item-count.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何点ご試着されますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.item-count.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "拿了幾件",
+            "zh-Hans": "拿了几件",
+            "en": "How many items do you have"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要什麼顏色",
+            "zh-Hans": "要什么颜色",
+            "en": "What colour would you like"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要幫你拿別的尺寸",
+            "zh-Hans": "要不要帮你拿别的尺码",
+            "en": "Shall I bring another size"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "三点です",
+        "audio": "clothing-store.item-count.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "進試衣間前店員會先數件數。「何点」是幾件，「ご試着」是試穿。回「三点です」，或直接比手指。",
+        "zh-Hans": "进试衣间前店员会先数件数。「何点」是几件，「ご試着」是试穿。回「三点です」，或者直接比手指。",
+        "en": "Staff count your items before the fitting room. 何点 asks how many, and ご試着 means trying on. Answer 三点です, or show it with your fingers."
+      },
+      "wordIds": [
+        "hanger"
+      ]
+    },
+    {
+      "id": "clothing-store.shoes",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員請你脫鞋",
+        "zh-Hans": "听懂店员请你脱鞋",
+        "en": "Understand when you are asked to take off your shoes"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.shoes.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "靴を脱いでお上がりください",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.shoes.p1.mp3"
+        },
+        {
+          "id": "clothing-store.shoes.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "靴はこちらでお脱ぎください",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.shoes.p2.mp3"
+        },
+        {
+          "id": "clothing-store.shoes.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お履き物はそのままこちらに",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.shoes.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請把包包放這裡",
+            "zh-Hans": "请把包放这里",
+            "en": "Leave your bag here"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請在外面稍等",
+            "zh-Hans": "请在外面稍等",
+            "en": "Please wait outside"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請脫鞋再進去",
+            "zh-Hans": "请脱鞋再进去",
+            "en": "Take off your shoes before going in"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "clothing-store.shoes.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "日本的試衣間多半要脫鞋才能進去。「靴」「お履き物」是鞋子，「脱いで」是脫掉。把鞋留在外面再進去。",
+        "zh-Hans": "日本的试衣间多半要脱鞋才能进去。「靴」「お履き物」是鞋子，「脱いで」是脱掉。把鞋留在外面再进去。",
+        "en": "Most fitting rooms in Japan are entered without shoes. 靴 and お履き物 mean shoes, and 脱いで means take off. Leave them outside and step in."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "clothing-store.fit",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問尺寸合不合",
+        "zh-Hans": "听懂店员问尺码合不合适",
+        "en": "Understand when the clerk asks how it fits"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.fit.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "サイズはいかがですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.fit.p1.mp3"
+        },
+        {
+          "id": "clothing-store.fit.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お客様、いかがでしょうか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.fit.p2.mp3"
+        },
+        {
+          "id": "clothing-store.fit.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "サイズ感、大丈夫そうですか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.fit.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要改褲長",
+            "zh-Hans": "要不要改裤长",
+            "en": "Shall we take up the trousers"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "尺寸合不合",
+            "zh-Hans": "尺码合不合适",
+            "en": "How does the size fit"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要換別的顏色",
+            "zh-Hans": "要不要换别的颜色",
+            "en": "Would you like another colour"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "ちょうどいいです／ちょっと小さいです",
+        "audio": "clothing-store.fit.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「サイズ」「サイズ感」是問合不合身。剛好說「ちょうどいいです」，太小說「ちょっと小さいです」，太大說「ちょっと大きいです」。",
+        "zh-Hans": "「サイズ」「サイズ感」是问合不合身。刚好说「ちょうどいいです」，太小说「ちょっと小さいです」，太大说「ちょっと大きいです」。",
+        "en": "サイズ and サイズ感 ask how it fits. Say ちょうどいいです if it is right, ちょっと小さいです if too small, ちょっと大きいです if too big."
+      },
+      "wordIds": [
+        "full-length-mirror"
+      ]
+    },
+    {
+      "id": "clothing-store.gift",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問自己用還是送禮",
+        "zh-Hans": "听懂店员问自己用还是送人",
+        "en": "Understand when you are asked if it is for yourself or a gift"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.gift.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご自宅用でよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.gift.p1.mp3"
+        },
+        {
+          "id": "clothing-store.gift.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "プレゼント用ですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.gift.p2.mp3"
+        },
+        {
+          "id": "clothing-store.gift.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご贈答用でしょうか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.gift.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要寄到家裡",
+            "zh-Hans": "要不要寄到家里",
+            "en": "Shall we send it to your home"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "自己用還是送禮",
+            "zh-Hans": "自己用还是送人",
+            "en": "Is it for yourself or a gift"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "自宅用で／プレゼントで",
+        "audio": "clothing-store.gift.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ご自宅用」是自己用，「プレゼント用」「ご贈答用」是送人。送人的話，店員可能會幫你包裝。",
+        "zh-Hans": "「ご自宅用」是自己用，「プレゼント用」「ご贈答用」是送人。送人的话，店员可能会帮你包装。",
+        "en": "ご自宅用 means for yourself, and プレゼント用 or ご贈答用 means a gift. If it is a gift, they may wrap it for you."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "clothing-store.bag",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂店員問要不要袋子",
+        "zh-Hans": "听懂店员问要不要袋子",
+        "en": "Understand when the clerk asks if you need a bag"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.bag.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ショップ袋はご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.bag.p1.mp3"
+        },
+        {
+          "id": "clothing-store.bag.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "袋、お付けしますか？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.bag.p2.mp3"
+        },
+        {
+          "id": "clothing-store.bag.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "袋は有料ですが、いかがなさいますか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.bag.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要不要袋子",
+            "zh-Hans": "要不要袋子",
+            "en": "Do you need a bag"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要不要剪掉吊牌",
+            "zh-Hans": "要不要剪掉吊牌",
+            "en": "Shall I cut off the tags"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "是不是要送人",
+            "zh-Hans": "是不是要送人",
+            "en": "Is it a gift"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "大丈夫です／お願いします",
+        "audio": "clothing-store.bag.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「ショップ袋」是店家的袋子，「有料」是要另外付費。不用說「大丈夫です」，要的話說「お願いします」。",
+        "zh-Hans": "「ショップ袋」是店里的袋子，「有料」是要另外付钱。不用说「大丈夫です」，要的话说「お願いします」。",
+        "en": "ショップ袋 is the store's bag, and 有料 means it costs extra. Say 大丈夫です for no, お願いします for yes."
+      },
+      "wordIds": []
+    },
+    {
+      "id": "clothing-store.lump-sum",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂刷卡時問是不是一次付清",
+        "zh-Hans": "听懂刷卡时问是不是一次付清",
+        "en": "Understand when you are asked to pay by card in one go"
+      },
+      "phrasings": [
+        {
+          "id": "clothing-store.lump-sum.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お支払い回数は一括でよろしいですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.lump-sum.p1.mp3"
+        },
+        {
+          "id": "clothing-store.lump-sum.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "一括払いでよろしいですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "clothing-store.lump-sum.p2.mp3"
+        },
+        {
+          "id": "clothing-store.lump-sum.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お支払いは一回でよろしいでしょうか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "clothing-store.lump-sum.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "全部一起結帳可以嗎",
+            "zh-Hans": "全部一起结账可以吗",
+            "en": "Shall I ring it all up together"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "刷卡一次付清可以嗎",
+            "zh-Hans": "刷卡一次付清可以吗",
+            "en": "One card payment, is that OK"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要不要簽名",
+            "zh-Hans": "要不要签名",
+            "en": "Do you need to sign"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい、一括で",
+        "audio": "clothing-store.lump-sum.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "在日本刷信用卡時，店員常問分幾次付。「一括」「一回」是一次付清，跟「一緒」（一起）不一樣。用國外的卡，回「はい、一括で」就好。",
+        "zh-Hans": "在日本刷信用卡时，店员常问分几次付。「一括」「一回」是一次付清，跟「一緒」（一起）不一样。用国外的卡，回「はい、一括で」就好。",
+        "en": "When you pay by credit card in Japan, the clerk often asks how many instalments. 一括 and 一回 mean a single payment, not 一緒 (together). With a card from abroad, はい、一括で is all you need."
+      },
+      "wordIds": []
+    }
+  ]
+}

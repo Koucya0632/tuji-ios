@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 2,
+  "id": "luggage-delivery",
+  "revision": 1,
+  "access": "lifetime",
+  "title": {
+    "zh-Hant": "寄送行李到機場",
+    "zh-Hans": "寄送行李到机场",
+    "en": "Sending luggage to the airport"
+  },
+  "summary": {
+    "zh-Hant": "寄行李到機場時櫃台會問的六件事",
+    "zh-Hans": "寄行李到机场时柜台会问的六件事",
+    "en": "Six things the counter asks when you send bags to the airport"
+  },
+  "questions": [
+    {
+      "id": "luggage-delivery.count",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問要寄幾件",
+        "zh-Hans": "听懂柜台问要寄几件",
+        "en": "Understand when you are asked how many bags to send"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-delivery.count.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お荷物は何個お送りしますか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.count.p1.mp3"
+        },
+        {
+          "id": "luggage-delivery.count.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何個口ですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-delivery.count.p2.mp3"
+        },
+        {
+          "id": "luggage-delivery.count.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "お送りするのは全部で何点ですか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.count.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要寄到哪裡",
+            "zh-Hans": "要寄到哪里",
+            "en": "Where to send them"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "要寄幾件",
+            "zh-Hans": "要寄几件",
+            "en": "How many bags to send"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "行李有多重",
+            "zh-Hans": "行李有多重",
+            "en": "How heavy the bags are"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "2つです",
+        "audio": "luggage-delivery.count.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「何個」「何点」都是問幾件，「個口」是宅配算件數的說法。說「2つです」，或用手指比。",
+        "zh-Hans": "「何個」「何点」都是问几件，「個口」是快递算件数的说法。说「2つです」，或用手指比。",
+        "en": "何個 and 何点 both ask how many. 個口 is the word couriers use to count parcels. Say 2つです, or show it with your fingers."
+      },
+      "wordIds": [
+        "suitcase"
+      ]
+    },
+    {
+      "id": "luggage-delivery.contents",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問有沒有貴重品或易碎物",
+        "zh-Hans": "听懂柜台问有没有贵重品或易碎物",
+        "en": "Understand when you are asked about valuables or fragile items"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-delivery.contents.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "貴重品や割れ物は入っていませんか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.contents.p1.mp3"
+        },
+        {
+          "id": "luggage-delivery.contents.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "壊れ物や貴重品、入っていませんよね？",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-delivery.contents.p2.mp3"
+        },
+        {
+          "id": "luggage-delivery.contents.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "パソコンや現金、割れ物などは入っていませんか？",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.contents.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "有沒有貴重品或易碎物",
+            "zh-Hans": "有没有贵重品或易碎物",
+            "en": "Any valuables or fragile items"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "行李有沒有上鎖",
+            "zh-Hans": "行李有没有上锁",
+            "en": "Is your bag locked"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "裡面裝了什麼衣服",
+            "zh-Hans": "里面装了什么衣服",
+            "en": "What clothes are inside"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "入っていません",
+        "audio": "luggage-delivery.contents.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「貴重品」是現金、電腦這類東西，「割れ物」「壊れ物」是易碎物。這是否定問句，回「はい」是「對，沒有」，直接說「入っていません」。電池、噴霧罐等也可能不能寄，依業者規定不同，以現場說明為準。",
+        "zh-Hans": "「貴重品」是现金、电脑这类东西，「割れ物」「壊れ物」是易碎物。这是否定问句，回「はい」是「对，没有」，直接说「入っていません」。电池、喷雾罐等也可能不能寄，依快递公司规定不同，以现场说明为准。",
+        "en": "貴重品 means valuables like cash or a laptop, and 割れ物 or 壊れ物 means fragile items. This is a negative question, so はい means yes, there are none. Say 入っていません. Batteries and sprays may not be accepted either; rules differ by company, so follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "Courier rules on valuables, batteries and sprays for airport delivery differ by company; check the explanation with someone who knows current practice."
+    },
+    {
+      "id": "luggage-delivery.airport",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問要寄到哪個機場",
+        "zh-Hans": "听懂柜台问要寄到哪个机场",
+        "en": "Understand when you are asked which airport"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-delivery.airport.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "どちらの空港をご利用ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.airport.p1.mp3"
+        },
+        {
+          "id": "luggage-delivery.airport.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご出発の空港はどちらですか？",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-delivery.airport.p2.mp3"
+        },
+        {
+          "id": "luggage-delivery.airport.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "成田と羽田、どちらでしょうか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.airport.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "要從哪個航廈出發",
+            "zh-Hans": "要从哪个航站楼出发",
+            "en": "Which terminal you leave from"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "哪天出發",
+            "zh-Hans": "哪天出发",
+            "en": "Which day you leave"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要寄到哪個機場",
+            "zh-Hans": "要寄到哪个机场",
+            "en": "Which airport to send it to"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "成田です",
+        "audio": "luggage-delivery.airport.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「空港」是機場，「ご出発」是出發。說機場名加「です」，例如「成田です」「羽田です」「関空です」。寄到飯店的話，這裡會改問飯店名稱。",
+        "zh-Hans": "「空港」是机场，「ご出発」是出发。说机场名加「です」，例如「成田です」「羽田です」「関空です」。寄到酒店的话，这里会改问酒店名称。",
+        "en": "空港 is airport and ご出発 is departure. Say the airport name with です, like 成田です, 羽田です or 関空です. If you are sending to a hotel, they ask for the hotel name here instead."
+      },
+      "wordIds": [
+        "airport-terminal"
+      ]
+    },
+    {
+      "id": "luggage-delivery.date",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問哪天出發",
+        "zh-Hans": "听懂柜台问哪天出发",
+        "en": "Understand when you are asked your departure date"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-delivery.date.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご出発は何日ですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.date.p1.mp3"
+        },
+        {
+          "id": "luggage-delivery.date.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご搭乗日はいつでしょうか？",
+          "voice": "Kore",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-delivery.date.p2.mp3"
+        },
+        {
+          "id": "luggage-delivery.date.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "何日の便にお乗りになりますか？",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.date.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "哪天出發",
+            "zh-Hans": "哪天出发",
+            "en": "Which day you leave"
+          },
+          "correct": true
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "飛機幾點起飛",
+            "zh-Hans": "飞机几点起飞",
+            "en": "What time your flight leaves"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "要寄幾件",
+            "zh-Hans": "要寄几件",
+            "en": "How many bags"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "15日です",
+        "audio": "luggage-delivery.date.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「何日」是幾號，「ご搭乗日」是搭機那天。說日期加「です」，例如「15日です」。寄到機場要提早幾天寄出，截止時間依業者不同，請先確認，以現場說明為準。",
+        "zh-Hans": "「何日」是几号，「ご搭乗日」是登机那天。说日期加「です」，例如「15日です」。寄到机场要提早几天寄出，截止时间依快递公司不同，请先确认，以现场说明为准。",
+        "en": "何日 asks which date and ご搭乗日 is the day you fly. Say the date with です, like 15日です. Bags must go out some days before your flight, and the cut-off differs by company, so check early and follow what the staff tell you."
+      },
+      "wordIds": [],
+      "reviewNote": "Cut-off for airport delivery (how many days before the flight) differs by courier and airport; the explanation deliberately gives no number. Confirm the wording."
+    },
+    {
+      "id": "luggage-delivery.flight",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台問航班編號",
+        "zh-Hans": "听懂柜台问航班号",
+        "en": "Understand when you are asked your flight number"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-delivery.flight.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "お便名はお分かりですか？",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.flight.p1.mp3"
+        },
+        {
+          "id": "luggage-delivery.flight.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご搭乗の便名をお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-delivery.flight.p2.mp3"
+        },
+        {
+          "id": "luggage-delivery.flight.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "航空会社とお便名をお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.flight.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "你的名字是什麼",
+            "zh-Hans": "你的名字是什么",
+            "en": "What is your name"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "航班編號是多少",
+            "zh-Hans": "航班号是多少",
+            "en": "What is your flight number"
+          },
+          "correct": true
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "飛機幾點起飛",
+            "zh-Hans": "飞机几点起飞",
+            "en": "What time your flight leaves"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "これです",
+        "audio": "luggage-delivery.flight.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「便名」是航班編號，例如 BR197，聽起來跟「お名前」很像。可以直接給他看電子機票，說「これです」。",
+        "zh-Hans": "「便名」是航班号，例如 BR197，听起来跟「お名前」很像。可以直接给他看电子机票，说「これです」。",
+        "en": "便名 is the flight number, like BR197, and it sounds close to お名前. You can just show your e-ticket and say これです."
+      },
+      "wordIds": [
+        "boarding-pass"
+      ]
+    },
+    {
+      "id": "luggage-delivery.form",
+      "kind": "listening",
+      "goal": {
+        "zh-Hant": "聽懂櫃台請你填寄件單",
+        "zh-Hans": "听懂柜台请你填寄件单",
+        "en": "Understand when you are asked to fill in the delivery form"
+      },
+      "phrasings": [
+        {
+          "id": "luggage-delivery.form.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "こちらの伝票にご記入をお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.form.p1.mp3"
+        },
+        {
+          "id": "luggage-delivery.form.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "送り状にお名前とお電話番号をお願いします",
+          "voice": "Puck",
+          "speed": "fast",
+          "ambience": true,
+          "screen": null,
+          "audio": "luggage-delivery.form.p2.mp3"
+        },
+        {
+          "id": "luggage-delivery.form.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "こちらの送り状にご記入いただけますか？",
+          "voice": "Charon",
+          "speed": "normal",
+          "ambience": false,
+          "screen": null,
+          "audio": "luggage-delivery.form.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "a",
+          "text": {
+            "zh-Hant": "請給我看護照",
+            "zh-Hans": "请给我看护照",
+            "en": "May I see your passport"
+          },
+          "correct": false
+        },
+        {
+          "id": "b",
+          "text": {
+            "zh-Hant": "請在這裡付款",
+            "zh-Hans": "请在这里付款",
+            "en": "Please pay here"
+          },
+          "correct": false
+        },
+        {
+          "id": "c",
+          "text": {
+            "zh-Hant": "請填寫這張單",
+            "zh-Hans": "请填写这张单",
+            "en": "Please fill in this form"
+          },
+          "correct": true
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": "luggage-delivery.form.response.mp3",
+        "voice": "Orus"
+      },
+      "explanation": {
+        "zh-Hant": "「伝票」「送り状」是寄件單，要寫名字、電話、航班。填完交回櫃台，取件用的存根要收好。",
+        "zh-Hans": "「伝票」「送り状」是寄件单，要写名字、电话、航班。填完交回柜台，取件用的存根要收好。",
+        "en": "伝票 and 送り状 are the delivery form. It asks for your name, phone number and flight. Hand it back and keep your copy to collect the bags."
+      },
+      "wordIds": [
+        "shipping-label"
+      ]
+    }
+  ]
+}

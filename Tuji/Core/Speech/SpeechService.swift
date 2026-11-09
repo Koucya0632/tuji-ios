@@ -218,6 +218,30 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
         return request
     }
 
+    /// Play a clip bundled with the app (場面練習). No network is involved, so
+    /// this works in airplane mode. A missing or undecodable file is read by
+    /// on-device synthesis instead, with the same request id and `rate`.
+    @discardableResult
+    func play(
+        bundledFile file: URL?,
+        fallbackText: String,
+        voice: Voice = .japanese,
+        rate: Float = 1
+    )
+        -> Int
+    {
+        let request = self.beginRequest()
+        self.downloadTask?.cancel()
+        guard let file else {
+            self.synthesize(fallbackText, voice: voice, request: request, isFallback: true, rate: rate)
+            return request
+        }
+        self.synth.stopSpeaking(at: .immediate)
+        self.player?.stop()
+        self.playFile(file, fallbackText: fallbackText, voice: voice, request: request, rate: rate)
+        return request
+    }
+
     private func playFile(
         _ file: URL,
         fallbackText: String,
@@ -240,7 +264,7 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
             self.log.info("play clip \(file.lastPathComponent, privacy: .public)")
         } catch {
             self.log.error("clip play failed: \(error.localizedDescription, privacy: .public)")
-            self.synthesize(fallbackText, voice: voice, request: request, isFallback: true)
+            self.synthesize(fallbackText, voice: voice, request: request, isFallback: true, rate: rate)
         }
     }
 
