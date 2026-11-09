@@ -4211,6 +4211,1516 @@
       "bytes": 45884,
       "durationSec": 4.496
     },
+    "reply-003fd5409771.mp3": {
+      "digest": "e7de035fc074e13892cfc8c759f0dc25dcb14daba90fe048102b7ecd96de96d7",
+      "sha256": "a2264e09c617680f866a2b9249e9a371e33f6fa6b980fb5ec442ebb3ed9a43d1",
+      "text": "はい、こちらです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-018bd6677ccf.mp3": {
+      "digest": "876da9550672cc3a6cbb7f47142b7efd3b612c3c6001bb828ed136df681d6f2e",
+      "sha256": "0dd721d85d8997120242e9bc9ece7d7a73ced51f343f50dfdc4c8be88483181c",
+      "text": "ビールを1本飲みました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "reply-046cc699e425.mp3": {
+      "digest": "07b8964d90a4b41905f90403bc658067b2eceaf7419f05dbd404d8685d001348",
+      "sha256": "64fb05179644892522a51939bc9f8ce2c8f63f10b254e0294e24f28806f0e526",
+      "text": "羽田です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-05eab4779d7a.mp3": {
+      "digest": "b6b1deda85a862b69b52228deb3e28a6d28e8c37b1c6d10def2e0d63176a1a32",
+      "sha256": "fe60fc5bf53c1215690d6df2bc4067a92fca83e0466485c211bc8da99f60b740",
+      "text": "自宅用で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "reply-071d9e459880.mp3": {
+      "digest": "1f2ca4956750738498df83b1a327922e955fb23eb9986d85f1f320dcdad24abf",
+      "sha256": "dec92aa2011f38d76b749433d3128559edc9274bd7420d960556f7f5e5100465",
+      "text": "シャツを探しています",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "reply-075d3d5dde9d.mp3": {
+      "digest": "fc882e32b70487720b576314c204084be09f4204a9dd6ca7ea5bcd4e0a588dea",
+      "sha256": "7271980443408423973ad6a32fd422284112e28cd95330beeb19398c67ec6a60",
+      "text": "国内です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-0945732b1904.mp3": {
+      "digest": "4b438a6fb43b1e01a33818609ebcbd36237d4fb62d1002297cc9cd5de80c3ffc",
+      "sha256": "2cabda4d1887f7b58e54d24ab314269a69667bcccf02dc9de8227a0ae7de64e2",
+      "text": "ありません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4896,
+      "durationSec": 1.224
+    },
+    "reply-0cddc11e518c.mp3": {
+      "digest": "6b83f818d261e47600c2689f3b6c2bc28e1ed6f44dfcbe41e70610276af1b9be",
+      "sha256": "cebe275f834e0987a1d555d8f201f2a9d37f18478a85a04342e528f1611e9466",
+      "text": "あります",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4896,
+      "durationSec": 1.224
+    },
+    "reply-0d4207c3c8ec.mp3": {
+      "digest": "9392c6d34add91ee7dd245d6c0c7b3a317b7b11ea056aeb0055ec998c18b3237",
+      "sha256": "859e446868a85ecf8a6b29118472d584ed33c0c9aeed9eea9132614ceb804727",
+      "text": "全部普通で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "reply-114f4b26e756.mp3": {
+      "digest": "e65c0100c75355985e8e1087be062cbe5b954903fe054e3476698c725aae3fc7",
+      "sha256": "b9f1d27e4902dea831f72125fbb930c64147ca9fc298167afff06c77ba92c829",
+      "text": "あとでいいですか",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-156008908340.mp3": {
+      "digest": "90978d1885ad4c43df5705615c49fc7722107bdf621eada6b70883089767c9dc",
+      "sha256": "0b3ac9b3186b41b5a72404e7ed1114a5d21b6e65c3a2a9639c5d223536645742",
+      "text": "作ってください",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6336,
+      "durationSec": 1.584
+    },
+    "reply-15ce94db922d.mp3": {
+      "digest": "0783bc9af7a881569dd9fdbbe3a6c03687fb802b4d597e6911a3e3e80554f55f",
+      "sha256": "30a80abad822ab1e0e6ae5af50ff73da367b321c4b9d22fb7094e907090803ff",
+      "text": "服だけです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-1600364d706d.mp3": {
+      "digest": "b38f74f30f3ffb579c57e54bc98040d587ca7eb37e23df34fa83f62d50a55702",
+      "sha256": "707e22b7b07e537b5e394559b667f30d841ccc01b171670e1fdb588fcdf588d7",
+      "text": "パソコンが入っています",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8064,
+      "durationSec": 2.016
+    },
+    "reply-1634f8d2b9fb.mp3": {
+      "digest": "382a9a23c22324a2c19b4f7348231f5543d2e7e3a4384f0c23801c48f668c596",
+      "sha256": "f85a12164bfa4abc8b47a19b9174dd9f39f11b2228feeaf4b32180ab9c25ef1e",
+      "text": "船便で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5376,
+      "durationSec": 1.344
+    },
+    "reply-19f289699c78.mp3": {
+      "digest": "d08f573902a26d58b4ae199508e28ea46a0df5baa1a3890b74c79c8185a468d5",
+      "sha256": "ebc9a1e332d0d396c60f286016e4dfb67e675c3c88c9fe14f83a7681a5d9d35e",
+      "text": "温めてください",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-1a13b2d342cf.mp3": {
+      "digest": "65dd4643f6cb8dfa131a3a127cb6afb6519208823ea1a3eb547b86f49cf402c1",
+      "sha256": "9b2b49b29644a79d215c98a109b874eee5e0136c65d82d5140856a62f9b4bd2e",
+      "text": "持って帰ります",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6336,
+      "durationSec": 1.584
+    },
+    "reply-1a652d9bbb95.mp3": {
+      "digest": "c104e60b06a4560bde29c3abf284f10747df79f2e7303aba449bc8d05c9f7021",
+      "sha256": "35c731425a361fc98755c088f1ba0aee284e9b9ad8cb9b24fce77e6cc182f192",
+      "text": "ウーロン茶で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "reply-1ad9af16755e.mp3": {
+      "digest": "5e0d2e12a836c0117578182d2dd153f768837e1ff8af7435a280dd58aeb24f1f",
+      "sha256": "5e953cfc6bc00959f8785ad8dc55250ef488773c866f8c7f42ac80aec19dcd50",
+      "text": "これをお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-1c3a267272e5.mp3": {
+      "digest": "a3bb72a6905a89ce61ebd776d9aad45af0760580efcbe1bc11e7727d98d8f35e",
+      "sha256": "c8e098ca13a02c974e078d0fd6693a64245ad09a7fdbdc5c0a9a57510cc53a08",
+      "text": "はい、お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9696,
+      "durationSec": 2.424
+    },
+    "reply-1d83d51a4f81.mp3": {
+      "digest": "84e3370b3165f63e5e5bd1484de5a3e0f112d6cda3f97f5aa53fc68ef8148309",
+      "sha256": "3b31fb37c9574d08c104cd1580e7dc8feb29aaf3079bcd6fe11976094dd6779e",
+      "text": "バーベキューで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-1daa7ed3048b.mp3": {
+      "digest": "cb193b2945ac83502da0eda7664dddc4610bcf5fdf920418999d3a82e509c64e",
+      "sha256": "26e0aae8eb6159f1ec5b9787ffe127a26cc786861c09ee3c3de603152a89dd28",
+      "text": "ワンです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-210b57babf9e.mp3": {
+      "digest": "6176461d39e51ad712ab23cee7df2ac0a39ed050e45f100ca321810d75b79e40",
+      "sha256": "5d4d7840d8d962f1e217d75205ba8862a59868f62db0f93a4b16ef74d355b227",
+      "text": "書いてもらえますか",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7776,
+      "durationSec": 1.944
+    },
+    "reply-214237e7053f.mp3": {
+      "digest": "081b3bdfc5fb40743345e033c71a3e45c3849e457045dbdf9b6d234ef75f2697",
+      "sha256": "359bda39346774ddc5673389fd7de104bd0412aa36724542e5a436b6505e3f28",
+      "text": "EMSで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "reply-21b2ba1811e6.mp3": {
+      "digest": "269d6dbcee346ddc2da24ffc886e35f908f48ffcc4f562467dd1d9d48ad1c58c",
+      "sha256": "529a943c23a8bd5feecb6dafeedaf827cd42f95f01a4c3327b0ab70ff4edeacf",
+      "text": "ありがとうございます",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-22dfc3aa7854.mp3": {
+      "digest": "af9bf202c0ed7000bbaa564e2f5d7a9ea4d496cc5d85c343ec376a0938bf4550",
+      "sha256": "9dee3f82f8ad57b26a5952592e7d2c927a13ccdf42f7ff8439db7eff23f07fee",
+      "text": "二人です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "reply-238202c84b03.mp3": {
+      "digest": "8843ae891531604d0039e460f4cf24416a07ef7ce613e3e70e6f59f772db5725",
+      "sha256": "f7762b288263933e6553768ce9ea22e42486dfd5bc2aa63bff0de4527355067f",
+      "text": "8時でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7776,
+      "durationSec": 1.944
+    },
+    "reply-24e0e9d594ba.mp3": {
+      "digest": "84e64bc154f54841c13d740d78f2babbb56e74f2dac75daeb8e32f7720263528",
+      "sha256": "18b4835ad08f040f33feb8e0885ac5444ade57a72e0b52bd5c4b2283a75a7d4c",
+      "text": "ちょっと小さいです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-26d3e78bbb63.mp3": {
+      "digest": "ffbe4b93226b71c903da1bb73d05e3554dbd946e4b1538b3a5e53851d135bc16",
+      "sha256": "69251f7b1f1eeacb723de70b78420b3bf32c8a452ca376ba1e3a20cf78974847",
+      "text": "三枚お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "reply-27af8de62a60.mp3": {
+      "digest": "d8c9e2d5a716515bcea325109599c84fff9a281b2461493759a59d00ac7a0fb8",
+      "sha256": "f3f4659780d6ae7ec8e9579981d22d0a801a2c69acfb60d3afceb66ba65b41d0",
+      "text": "10センチくらいでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 10176,
+      "durationSec": 2.544
+    },
+    "reply-28d18c352883.mp3": {
+      "digest": "45c4197b47c4f2953636d19c0eebd1d687cdfb4c2f1cdbfa21d56c0f275b2fff",
+      "sha256": "593a12d05f981b0b9869aafe4cd47c82c0150eb3593e2afaa2c6256fed6024e3",
+      "text": "ちょうどいいです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "reply-2aa69972d09d.mp3": {
+      "digest": "da4df378e07e59ab4b8e0f444a7e4500ec498b801eef8bee21cc945173e51d5a",
+      "sha256": "9019839f8850cc0eb0c18c37a7b0aa50107dc4a2e84b4665629860a69225ad14",
+      "text": "Sで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "reply-2c3acd31e6e5.mp3": {
+      "digest": "2fe89807e803f0f379517d98a936720ffdf3d8045375ba45e47a7f70fc9b9ae4",
+      "sha256": "4c7e299a63207754d451f389ab77fa7d5bfd5d2b91403d6f311e2e891efa0009",
+      "text": "コーヒーで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "reply-2d3cdb8eb593.mp3": {
+      "digest": "13d5fae8b2510564ce5a17b435f3a4413d4db0ed36a38d744136bc111314d747",
+      "sha256": "e3751b47bd75260d706b2e5cbeea67366c6c40c05b258b81781f244d6c476588",
+      "text": "2泊です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4512,
+      "durationSec": 1.128
+    },
+    "reply-2dc39fd8023d.mp3": {
+      "digest": "104e16059f356579b6ff24061fcc32c8b9f3741921e7633e0b89171a8f817fb0",
+      "sha256": "0682a105cd3b2477ad27af0d8e9ac1710090cbbd577d6f9a1efe1a6b97127324",
+      "text": "ここで大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-2e4511c79dd3.mp3": {
+      "digest": "51a9f0982548b8ece98b34a32f5b8a508122b1400d61cf9e3dabd5a40199c9bb",
+      "sha256": "c3a2b5275183bf336e13ac1aad08172e3eda2378cfe883f2985c1487f501a337",
+      "text": "大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-31157506c5e8.mp3": {
+      "digest": "6406875eabbef7d2ae9f6ed4f521fdb9c4661b1b7af72905559e0c527a86e9ac",
+      "sha256": "879bae04c9b9378bd5eb2ab83e48247002d8ddbf30fadba1ae176e7ba9a2452c",
+      "text": "持っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-347d95cfc85c.mp3": {
+      "digest": "0b5f3d8ce40baf6b4f7e3ae2fc99b4ad5aca8dda98be2ec7fb40111f44af4ca4",
+      "sha256": "f81dd6f35dd61d780ec60d0310f8ed88a470f6c3efec42a9d253d745f9a6a7f8",
+      "text": "ここまでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-3496fdc65332.mp3": {
+      "digest": "88815f4c5adca5681e5f9b586f1f2226158ba7f02e8c224f8a38425e7447a40c",
+      "sha256": "29bf79e62e0dd4e6903a4d32550d8f3ed42b7c2b84becb48f966b7ef9c9bf2bd",
+      "text": "はい、済みました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "reply-39b935e56028.mp3": {
+      "digest": "386c12c7b1c1edb66ec83d7eb2697a0bf37d7fc743815dff96614a201ee32166",
+      "sha256": "bd96cec424b3ddd66462afcad8ba32ac4b3a59d090464f10a0bd648669339771",
+      "text": "850です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-39ea7d455d13.mp3": {
+      "digest": "954692b46fae3aa77fb4912e39bebf6c18847e763dd47826bf192422b19d67d8",
+      "sha256": "d1aa429278df0f79561f9519155512fe0694b3c7643141c67aca2f6ce57b8cf5",
+      "text": "クレジットカード",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "reply-3a97ce14e9cc.mp3": {
+      "digest": "b4b7a3504ea5a5cd4e2c2efef4d8af43d0f2fa51c2100cd80c04d44754f62b2c",
+      "sha256": "724b00ba78ff0b375d03f542dd89e2f6643b0fe907ea378ccf7d1a47f6c551ad",
+      "text": "これで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-3c5b4409db1e.mp3": {
+      "digest": "2594ca94987e583ad0ae5efe179ba5a38d25f727b8a4887bd333ed4a1918fa1c",
+      "sha256": "7fe182bf8623732773e8ab016870aac19f53dace7affd6c54532be9cd583c449",
+      "text": "ちょっと熱いです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "reply-3cd9a57dbe1d.mp3": {
+      "digest": "ccdba69e60ccbd011300e84dcb23c48720fc176df34b3ff9e2b729b56550d805",
+      "sha256": "ddea414a974c742a02e4a77da1e4f2cd86f24688a6dd0cea3821642834a6bee8",
+      "text": "7時でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "reply-3ed34d3ec2c1.mp3": {
+      "digest": "a4ad2d55ab475b73b29131749468ceae254b7f45f7952138f5f1e4da6202fc1b",
+      "sha256": "9a98de9b221292bd848f6e9e2cc54bf7b6bf02d648fd69812c983a03068312a8",
+      "text": "持っていません。お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 13152,
+      "durationSec": 3.288
+    },
+    "reply-432cf28b360c.mp3": {
+      "digest": "8dda32117fc4143a44f95f824f08847e8144c974dc0a8d657f1b3bb452983793",
+      "sha256": "2114e1b1b47e5d1e4f2b7c526c26466b2f27bf28a943f88c348a137352256263",
+      "text": "アイスで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-43793f5b3e27.mp3": {
+      "digest": "2f0036744ab408a896714ba4f6d4142ed429214048c101f7181289072fe25bba",
+      "sha256": "2854171ff672fd8477753f70d06e6ef6d3e505982031f48fa1614b6f8c41be3a",
+      "text": "コーラで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-44b15f70e1b2.mp3": {
+      "digest": "02bd61c2fc225a7969de8e7e01289f38a3107037d7f22a2606c0be8e3a228df4",
+      "sha256": "da1508c04b3a4a75a403661765b74685a1738fc4c5705394d6d0e1bb821085dc",
+      "text": "ライスは大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "reply-453b53537465.mp3": {
+      "digest": "097fe77dfa90f1985373531ffa5bf9e90a4364cfaebf53a1f74a05330148f67b",
+      "sha256": "f9084ec8ee6d371b447788e11d9e2c6760af9c9749b91b572dd2ba116b17e66e",
+      "text": "別々で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4032,
+      "durationSec": 1.008
+    },
+    "reply-479d7ba6c647.mp3": {
+      "digest": "3b192d4fd171bca513b9680e2b402483e984bfa4af94bcf8f5d8730bfcb8dfae",
+      "sha256": "f9a64041bbd0c8d26f77a563ce12921b2f367b9752606b3c6c5cf1b1f6b76f7a",
+      "text": "大きいのをお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "reply-49394b914395.mp3": {
+      "digest": "0018cad5375ad8f7f77960e5781fa3b6043a4348d08301f88c56f73f86c7ad0e",
+      "sha256": "12b12a56e27fdfab1d3d6560ba6d02c66c51f7bac28e5edaadd38f7645f884f6",
+      "text": "取ってあります",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "reply-4959c7d766c7.mp3": {
+      "digest": "89b53470913e8703840a4e59408a335add6c06a64b6e8fd5cdc163f5f23829e5",
+      "sha256": "e0236cebe2a5cd324b2e50c36fdbd6f5e257d29fd3a1538b4b0487fbee96c2a4",
+      "text": "7時半でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "reply-4c602815b307.mp3": {
+      "digest": "a7bc6ba3536f81a9e7b5d173d541446bbd2d9e57b28a3091f7793a9102b3919f",
+      "sha256": "192668d75484cc7c2a5135bcca9c03cc1ec3071cf7a938fea9ff1fc83b2de369",
+      "text": "五日です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4512,
+      "durationSec": 1.128
+    },
+    "reply-4c71e484e557.mp3": {
+      "digest": "05abc0c169fe26478041605bd1a59420852e20a24be38bd8a828a3382d02ff1a",
+      "sha256": "14e2b45b063ddf93ca721f39ca48c936afe82ffc6a567ce8bab92530dda8d5d9",
+      "text": "家族が使います",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "reply-4f2e70c1d78b.mp3": {
+      "digest": "9f948e6e07c07cfddb37261200f50d378183041457a9f4eadf7bf71d074ee037",
+      "sha256": "dfa56881e9ac9af0cba7afbac02831aed5ac4f1057371f1ae3f6fdfe48a33aaa",
+      "text": "柔らかめで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-508c1818f58e.mp3": {
+      "digest": "cfa8a995d2b3e1cd37542b5f25b2a38c12620310672585ed823c89679b11026d",
+      "sha256": "d6bda0d62d392411c7ac45a78dd791f94f24e9dcbd8230846f0934564eea2d7a",
+      "text": "Mで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5856,
+      "durationSec": 1.464
+    },
+    "reply-515b32ef2188.mp3": {
+      "digest": "306ec72222a270e6447a4cd5dbf7ec69e4e2824056bab53890939f441aee7e06",
+      "sha256": "10a52f2b990f2f9a9d6c1cd37e30ef956f13dd925672db40856b358dda232076",
+      "text": "自分で敷きます",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "reply-52001645369a.mp3": {
+      "digest": "a39b7348fb4a0c788962ee6bf2db580dc6083409db5482e3898307162b417639",
+      "sha256": "dfc581796597738d5067a5cb448eaa15c9d7d86d574f8e1350e7b322200257be",
+      "text": "捨てました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 3456,
+      "durationSec": 0.864
+    },
+    "reply-521dfe335488.mp3": {
+      "digest": "ec01de0b4e124e41eed92abeffc4c9d41cf44edb68a55f38af2eaeb2bb207aeb",
+      "sha256": "cb5cba0cf14db786609ac29b6d70e2689fa31f3d22cb3a3889639c044b8a2ed7",
+      "text": "さび抜きで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "reply-55b1d0daeb07.mp3": {
+      "digest": "11a28148a01dd664ecdeb61c74b412d5c3b9fb73224257dfaf4fb179e8f71169",
+      "sha256": "e3d001faa0dd37c00c1a9ee150c37082f1526572e55decdb9bcc65ed3dd10188",
+      "text": "セットで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-5697a1b6458a.mp3": {
+      "digest": "9e93ee22cb715d84d00a8f9c14bac8f2b0c306e004bf064c4d720276eed7beb1",
+      "sha256": "83fd3454019227d445f83e22c4c1e1e6a34d4bb02fb5b367dbb31a1944d205e9",
+      "text": "十五日です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-5887efd8827e.mp3": {
+      "digest": "c09eaee141455a31981bc6b0a1232be872bde16dfc1c7d7e08e7b80f0f33da8f",
+      "sha256": "9641164d4b68269c9584e08ebd495617dd48b9fe9fd2ae21258825fabfedb5d3",
+      "text": "服とお菓子です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-5c4a5ec234bd.mp3": {
+      "digest": "149372f1fa200e8816bc7c8c83c5c59cf47b2b97c740d806e2a7db876813ba98",
+      "sha256": "30759f067da1673e43ce7c20ff5102b29ac35e861a25234acf7a227048a36b62",
+      "text": "袋はいりません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6432,
+      "durationSec": 1.608
+    },
+    "reply-5d5f656f78cd.mp3": {
+      "digest": "32724b782c20cb18cd2c7d99416dd8fb0a5dde30a2a5cc1fb6c168e87e2c5375",
+      "sha256": "3b9ec4f08dce6497500a72fb7d8e1f141b0f8f20801e9d7df6a79d5854b9ef98",
+      "text": "駅までお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "reply-5fd0210edeaa.mp3": {
+      "digest": "6d6f812e0f0c3969108656dcd7f33415cb5fae4b296288c1f65fd9eb61f24341",
+      "sha256": "57b1013c39e6acfe9885d92955dac03ce26f5ef10eae93b1732d8c0638d095ac",
+      "text": "硬めで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "reply-5fdd92464cf0.mp3": {
+      "digest": "3a48251de9138629074f9126b7af904336066e1e0543da16d75f2474fa87e478",
+      "sha256": "5e0de7b1fd822f7b97778d958530b9634e13a87f32214256b8a2ae8544726518",
+      "text": "単品で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4416,
+      "durationSec": 1.104
+    },
+    "reply-61263e3f9f97.mp3": {
+      "digest": "165af3aba72645ca0d84ded8a153b30df123a27131f9587699e64daa94110c99",
+      "sha256": "b0e550f932534ec13775cc1d8ae3d8de112bf1aa0f86f82a85b2b8c88dc32e79",
+      "text": "はい、一括で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "reply-62a3e713f13c.mp3": {
+      "digest": "cac11fbc491603d7e805c57ba6de844fc5191db7122745d00a0767adbb44e1b5",
+      "sha256": "034193f0415782b153145368d6a1580515d48473a5769bfdf99977f5c4f60681",
+      "text": "わかりました",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-640863bf701d.mp3": {
+      "digest": "39441887c6d81fa47eea8ab19175cc98c440520230dd97013598ec3db0ecd822",
+      "sha256": "b49c7d7bd75e5b352c74bcc80c2217840c96f009b52ada47c82111b0ebfdfb5c",
+      "text": "3つです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4992,
+      "durationSec": 1.248
+    },
+    "reply-6675d6089c91.mp3": {
+      "digest": "c5fb18219996147a0f5dbf2fcd1b42a8d5640b6a58d0d8a758a2b79caac9b280",
+      "sha256": "b27950e052e5f0de164f4edb647218e6a6c609ce448d30eb9fb751e19664773e",
+      "text": "はい、大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-6bb745fc9fa3.mp3": {
+      "digest": "0239e56147afcb75a900e390edae35213fffda56a2e25c9e87d6f14327f11408",
+      "sha256": "a8ced90623e337c295023476ef58284e3fb1b07bbda8f6390c9411bc45f1cfdd",
+      "text": "入っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "reply-712fd16f825f.mp3": {
+      "digest": "6912ececb605a3cc9a3d631ff74f167e7ba94e2cdecae74227fd39c0fe89f0c2",
+      "sha256": "c5af031ec5ff864eb8a904e9077e0a168398baaaefa29e3993b0ca3f2f2efb0a",
+      "text": "急いでいます",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-71fbaec1e9c0.mp3": {
+      "digest": "f8d45630befa9aaab32c5e2f4382fb05b194fca9f3254ce8bd764c268f94f47d",
+      "sha256": "0d019fc235a9139b6e4c4e7de0b8e7be0a571c57d04a6fa1a7d6050f7baf1ddd",
+      "text": "プレゼントで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "reply-7273ec2e1461.mp3": {
+      "digest": "f5fae1500cb1d82ff5f0d45cec86854df6ccae07219711fc04670bf70ac01c38",
+      "sha256": "318c9da776f40eba7a59f0d9d2207c4c8321aeae7cf3e41ed098f0b272767239",
+      "text": "一人です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4224,
+      "durationSec": 1.056
+    },
+    "reply-7412ba11e610.mp3": {
+      "digest": "a2b04aba815a10d2e0d1a1cbcf3ac783daeadf02cce2625b6d443cfdf1b66c34",
+      "sha256": "6a28a1032754ecbfda74092e7044eff9c444dd5c1dcd60a9de4a3033ceefae8c",
+      "text": "二回で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4032,
+      "durationSec": 1.008
+    },
+    "reply-765ae4be9898.mp3": {
+      "digest": "18cc8dd876a2b67078549bac6164751f5063f6c2f67b4938657ba04e33e03d03",
+      "sha256": "34081cf7b1a58cb563f6266cfad813f6adbf8b5af9eb779998ec05d9690c55f8",
+      "text": "持ち帰りで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "reply-77e857f145a9.mp3": {
+      "digest": "96623d66114725489c0663a805f92d9d0f82c44937b4b57ff1aa130d9d742e43",
+      "sha256": "1e1b0670faa850f61d593f9dfd9fd605aab920d08e32e2e238b16159381833bd",
+      "text": "お茶お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-79f5e7020457.mp3": {
+      "digest": "ddc8665b0d2a5199ab0fc90333c156ac1b1bb2fd0ab7dc9515fc1af5f281e6df",
+      "sha256": "61e619ab2bae956b4cfe9abae687773d9d84a3ed379e67b90a37957842effe79",
+      "text": "少しお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "reply-7a55ed0bcd97.mp3": {
+      "digest": "fef6f843c85042f59dbb0a7f7fc16b73ac1af39c1de1061758f2546376daca8e",
+      "sha256": "6f816ea7fe71ee4bf13efac75771f154e7dd73bf39db15766bbd1314c227a4d0",
+      "text": "予約しています",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-7aae7b620b06.mp3": {
+      "digest": "c9f1b6902e7e5677c250accab87402ecc90f46e14bbda37a6fa14752d2f764c4",
+      "sha256": "db87f84f2a7ce9d190832fae660ac3daedbc5d00d1ccd07a639b8f231f7d97c4",
+      "text": "今日の十時ごろです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7776,
+      "durationSec": 1.944
+    },
+    "reply-7c0b3e2b9a4e.mp3": {
+      "digest": "4f675c36180942632d939b7a2c321aa279acbdf62f0b1ac2763f1a98a3834123",
+      "sha256": "289df9e58b515d855f5ea96def419eff23076dd198ff49a5f5311c4b66b9ebab",
+      "text": "そのままで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "reply-7c161e3c9aae.mp3": {
+      "digest": "edaabbbfddc5ace966e68a955fee1837a3df92a013270dee09740d9cf6d0a2cc",
+      "sha256": "53a101553f8ccd9ab005da2314a14d07393fa543a47f3148b8c5a51c817d4f31",
+      "text": "15日です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-7cb4491eff3e.mp3": {
+      "digest": "68c7feb033df71ed162e3381e5cb34139d1baadebb0d1e04528aad481163dedb",
+      "sha256": "7aef2c9a4af3977bbb898612d2ac17b4f076aee96ae9ce996ca5f706da92c422",
+      "text": "これです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4512,
+      "durationSec": 1.128
+    },
+    "reply-7cc3b9d77348.mp3": {
+      "digest": "df81adbc88ecf2407589752e9c02851aaf3f217bbaefb930f0b2eb8a973c5cdd",
+      "sha256": "6ca8b1022ea7637956bf4e31677bf95368fb892876624b4a211f5d54ee9fc062",
+      "text": "私です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-827dd02b0a84.mp3": {
+      "digest": "1d143f5c90cf637f1a6a35b8b1a60acb6cf428753575755dd9f585846c0aed24",
+      "sha256": "9cba2fcf142aa6aab9168a5bdbc07349f96d590946e8c4f6124390d2300d6cb5",
+      "text": "2つです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4416,
+      "durationSec": 1.104
+    },
+    "reply-86788ef4c2df.mp3": {
+      "digest": "8cdce52155c01aeba4962597f8ebbea6fe34e810aa2c1c3d36e7738d5340028d",
+      "sha256": "ee029de8d28ab65e0064064f6e6cb2d1a98ec2442393f8fc26e06f045e66a371",
+      "text": "はい、これです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-87cb38ae7e37.mp3": {
+      "digest": "fea64be6476039ab9fb27f0a8d0db03ccae7100db5963f41e572e002c4bfa333",
+      "sha256": "33e06ba38cc4ead74e264281199d9d7c3224aaf0e01616a03419f5728696f6f0",
+      "text": "生ビールで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-883bd4256a23.mp3": {
+      "digest": "5774ed0f2a8e8cacd16044f2b762f56e772bef95d06fa9783c228185945cde0e",
+      "sha256": "eef8708f47d9a5f3428d9028374ef201d6ee9fa57895adf447d23953d64336b4",
+      "text": "現金で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4032,
+      "durationSec": 1.008
+    },
+    "reply-8f90d85ec13a.mp3": {
+      "digest": "9522604096a04c825503628721858b18954a2366304bea87785cfda490173b7f",
+      "sha256": "3e54684df6860e629dc463ff0c44b3f00ac6db3d0b02b068ec7c284bc6f4db0a",
+      "text": "はい",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 1344,
+      "durationSec": 0.336
+    },
+    "reply-9180de94a64b.mp3": {
+      "digest": "3d7e3f1ac7a90c81df4665cb23cf9cec771efae15068ed69b6f465c3c96c8513",
+      "sha256": "16f1da956c00daede2d47dbfc88ab3db108f979bc9a912d5f239fccf8c07a6aa",
+      "text": "朝食お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-947aacac4344.mp3": {
+      "digest": "703cfe04ebf58ec60dd1ff64f41cd3db054358a985c684c3d5fcf66ce06749d7",
+      "sha256": "5278fa0e4a40f81568974fd370eb372c24565ac9845c580b413dc2579bb314b7",
+      "text": "このままでいいですか",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "reply-9972b572c808.mp3": {
+      "digest": "a915f51470576a1a62b7c96827a2898826254f96ccc100e9239340f2ee5c5fa7",
+      "sha256": "86ed4a7ab18c524c254738560fc22e0591641340a23a66df70447ef162c8ab75",
+      "text": "じゃあ、やめておきます",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "reply-99d005264639.mp3": {
+      "digest": "e72b15eef6fd77224e31be897301eb6315363a777569de6ce7930f27b1bd66b5",
+      "sha256": "904585f47185be8a4ab7e79a90641507bc58527faed26177e7df1de70e278983",
+      "text": "濃いめ、油多めで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "reply-9a71cdb2899e.mp3": {
+      "digest": "5a06a9cd658b44929dae551acdb902cd8375adf719747ad8e39025bf7d2c4736",
+      "sha256": "4538888092574e56d8f11d4cbd7672fed3612caf91cf0e9412aafe94b0b58ff8",
+      "text": "マスタードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "reply-9ac164918b77.mp3": {
+      "digest": "7b0044bc645dbab8057c4e950036eeb63fd0324f5c44acc0fad3c2163c3d6dd2",
+      "sha256": "2ef3efbc58e004d56e7b25f0bd99527386fd12925d079464850709efe183f8bd",
+      "text": "カットだけでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9216,
+      "durationSec": 2.304
+    },
+    "reply-9d6d37363326.mp3": {
+      "digest": "dcccf898b6b4e0888e753b51306beb89ad825a547e6f6e23cdb7c8b97f4c7a13",
+      "sha256": "2778ce42f408edf3ea0fa16e0ff58a84adfdcb32a119c72449bdda1342862398",
+      "text": "カウンターがいいです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "reply-9d7a328b4c03.mp3": {
+      "digest": "c557812ae2643c573491e0bb197d4b57e81a7f413b6c8f594e011740e06c8166",
+      "sha256": "57440d484af7954965dfc8ea0f90b929d1c2a97b830691c4fea1e60f7803aefb",
+      "text": "テーブル席がいいです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "reply-9e26effdf8c0.mp3": {
+      "digest": "724cbdf0e424f8621ce09839e6acd07d7897ecdbe30c7a84b2da747f0fc784a4",
+      "sha256": "95dc72fa87e4a294d5366dfea6cfb054ee535604218df0f96dd26671ab88f1bf",
+      "text": "処分をお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8256,
+      "durationSec": 2.064
+    },
+    "reply-9e5971c6dda9.mp3": {
+      "digest": "b521241575435923f5b94aff616533e9ec201f63497f897269c100d0a3188c7e",
+      "sha256": "280da80305a3645ae57bd2fc3bdab7d745bbff57ca3ace625b7fe43c8108e02f",
+      "text": "予約していません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "reply-a13c5bfb4442.mp3": {
+      "digest": "83308898b91df803ff4256e39dc6949d491404c1a56d9ed788ba31eeb9d994a3",
+      "sha256": "064a695939f291ec2b782573d3c300ae0967bff27a20a0abc3ba480f691adae9",
+      "text": "カードで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5376,
+      "durationSec": 1.344
+    },
+    "reply-a424f47a9afc.mp3": {
+      "digest": "df6062d7ffcfdbc10eb5a9d4f06d27c13dff27c7cd0b8fd3dc01dfbe8db752bb",
+      "sha256": "ca7d56e13560a4a88e73b0074eae62d61de781bc8090d1ac1be91006edc9012f",
+      "text": "自由席で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-a611d5417dd9.mp3": {
+      "digest": "1802a7db9a86b99088c2c9681e6865d108a06d3149f482ff139d362cccc71c4f",
+      "sha256": "d19d144c4aac4759415cd094ead1f3038a89e9382b864b6ed880a5afdaf5dde9",
+      "text": "台湾です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "reply-a6c3f6ab86ed.mp3": {
+      "digest": "4a0b3a1e179959ecc025f35c42b5031606a17b4d971c1b6dcd0b5753c7ce0910",
+      "sha256": "9627b985a9f8c04db84ec8e2048c61fa134c3363a0e5708c4631f1e4d08c0518",
+      "text": "3センチくらいでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9792,
+      "durationSec": 2.448
+    },
+    "reply-a6d9a367708b.mp3": {
+      "digest": "9145988e876176acdb740b00a0fe41be40c4462b61f6aa19cd3603488696a72a",
+      "sha256": "fa09d1ba8f544e1eae611c4f6c8a146c861824da924c6fe7d85331fffcabdabf",
+      "text": "はい、どうぞ",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-aa206c667704.mp3": {
+      "digest": "a1b6241b0f774525ddc8049aea4a949bf963eab2b6913ab3231d3e9eb6b16fa7",
+      "sha256": "17c3f074333bd1a4062573d1ce42f65c4889a75d31d4d8592845c8060d3b95bb",
+      "text": "まだです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "reply-ab070c152268.mp3": {
+      "digest": "726ddd625dee7377771f25e86dc868733022fabb5b3cb8bc6b5b3fb2fb47944f",
+      "sha256": "430a33a78ede0e8803a10161e331a12559739e6ec3d9319a8beea2b94f5efa7e",
+      "text": "5時ごろです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-ab1b86b5d5d0.mp3": {
+      "digest": "be71a6216bcc8a46212a3acdc559cda8f199b71b5cb02fe64f1d5e6a59df83cc",
+      "sha256": "9bd31c26e31306aa8bd49f4e03d6b6cace6b65038c8eeaa4bf23a845f204e932",
+      "text": "一緒で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-ac35fcf424d1.mp3": {
+      "digest": "88b278168598e507dbbc55dab2df693714cfac8f57c2c3fc8a9cedb13494ddb6",
+      "sha256": "459eb3a588214dc9cdeccd33aa8bccb3e598db6c0ec03ccd8a917058179c1228",
+      "text": "窓側で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
+    "reply-af51296b5faf.mp3": {
+      "digest": "caa8aff3224764816e9ad753b701f445294ba3454dbd4604829fe0a6017f17a6",
+      "sha256": "30d7744a6e870a285abd00fc7c8206b132b2ba7de35c291fd296366bb0249c78",
+      "text": "16日です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6336,
+      "durationSec": 1.584
+    },
+    "reply-aff3c63e5b58.mp3": {
+      "digest": "8c6568e45d48316e0c64140d3c07af454cce6bbf35239deedfa59dbe639e5c8b",
+      "sha256": "22db8d1e57b3250f17b69c7f289cbd866c16925c9d0003781e9f2989281fceff",
+      "text": "成田です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5184,
+      "durationSec": 1.296
+    },
+    "reply-b1639b5338e0.mp3": {
+      "digest": "11e58c6111e7ff120923a01f4d863a6df682adba533a9754ce8db3f873b7e8bf",
+      "sha256": "37f90e0de7579e22cd239d6d74cafaa8d1cd4b8c77133441a7681aed6f582efe",
+      "text": "見ているだけです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-b168c486b766.mp3": {
+      "digest": "cac436224edd44cf91d689816dc313d1408b1c5ee83e9b3358d78db049602ba7",
+      "sha256": "ed8551ff05995af2db0bd027cc3bb0e498e02742ce71011cb0bc9e06501aeb1f",
+      "text": "眉くらいで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7776,
+      "durationSec": 1.944
+    },
+    "reply-b1b2d85cafff.mp3": {
+      "digest": "e4ff1107b2bc943c3a52dccf5a7f42a073947c84cb18c08e2329d7054952ffba",
+      "sha256": "7e434b9d00a5ac9c0822255273e2e158a176d9034307419a7b4b8e333ef443ed",
+      "text": "明日の朝です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6432,
+      "durationSec": 1.608
+    },
+    "reply-b2ae5e4f7967.mp3": {
+      "digest": "419cd0478ba4d906e0928ed6b969720421352a4cd610f337c04709c8a7541983",
+      "sha256": "89ca54e730960a241f8767374bcee62428a9dc050585529489cfbd71d7867e3c",
+      "text": "そのままで大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "reply-b3105bc0c2d3.mp3": {
+      "digest": "2bacc8caeb00ef39cf6b9d3966d27270fcfd15b9da2c8b80f232f0274788450a",
+      "sha256": "9c1693b1076a94d07aabca8576539b9bddded966929f8e51f0771a021edc7cea",
+      "text": "805です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5856,
+      "durationSec": 1.464
+    },
+    "reply-b321e3aa3335.mp3": {
+      "digest": "fb910f7eb9a0250bde6f618a3e15acb2a79351529fb284402bfefe2e0c305ed5",
+      "sha256": "2c948bc2946674a7cb2d1038168117a8d03c902e1ea671b018ea279fd577f9bc",
+      "text": "使っていません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-b63de28de13a.mp3": {
+      "digest": "647f138559c29521e9b64d1572b5aea74f084f04ff8cab09fd17b366aeb185d9",
+      "sha256": "9cffe4efc21e7083ff0fe03ce8586429a9651b2e8c6737dcf8c79267ba8326ce",
+      "text": "指定席で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5952,
+      "durationSec": 1.488
+    },
+    "reply-b7e1482e8e8f.mp3": {
+      "digest": "b88bb569929caade4ed78a9d29b6d2943538e364a62f336ee05d60dd2dd68880",
+      "sha256": "14d846a69f7fa60022592d675f134fded172ef1d3ee3d2edfba73490bf2fa9e2",
+      "text": "頼んでいません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7584,
+      "durationSec": 1.896
+    },
+    "reply-b8257c8cc238.mp3": {
+      "digest": "c3c094e7070e6053a41d8f6b4b6b3519feb2e1e179eba431357d68de0ee31c0f",
+      "sha256": "d5dcebe44f56b7d3a22a3e0a5a728d87b5817948f45e26f39f9d22e1428ccc95",
+      "text": "大人一人です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5664,
+      "durationSec": 1.416
+    },
+    "reply-be2600d3d508.mp3": {
+      "digest": "c4e0c43084a5bb95f36a6b668f661cdd0d7cc7a2baa3ed00aff079e638c1052d",
+      "sha256": "d64895194d7b7962ea58e77298c7f5f63e144555414c1bcb87668d84e45a4466",
+      "text": "夜の9時ごろです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-c2b198b44fa7.mp3": {
+      "digest": "9c61e8c7408ea4bd23b1e904b418598289fd544de0a0404db167865cf7075832",
+      "sha256": "530e7006712046a50fb0f73709610fd48ea55bd3b2dbab4d316ab8a55b839c07",
+      "text": "大盛で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7392,
+      "durationSec": 1.848
+    },
+    "reply-c2cc0360a84f.mp3": {
+      "digest": "fdfdce68c2795d00e7ced2270c9c2d5216a9c3a67465b87fb7b1da313f117356",
+      "sha256": "56c71822f5a3ee103f63b4480a09f20abe4cd7280932efe7c8bdff97915a74d1",
+      "text": "なしで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4896,
+      "durationSec": 1.224
+    },
+    "reply-c5c3df248eaa.mp3": {
+      "digest": "e5d0c36dc1632bccfbf1004d285809808b9dcae23b3ee6ff99fa1b8858dd50ce",
+      "sha256": "54fe5becab7390168362ca735feac6ca9f04bb179e231ae2f6ff9279c6c89e9e",
+      "text": "お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6432,
+      "durationSec": 1.608
+    },
+    "reply-c841d521de27.mp3": {
+      "digest": "32e1dd564f954c32db1bc4102c60fd51f119ca3b6d179df50f10f7cd08573688",
+      "sha256": "edcead42c4e2035549000727b015c90f9ad852a94df8d0efe3b30a02ddfbeb9f",
+      "text": "予約の画面はこちらです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "reply-c859a8126847.mp3": {
+      "digest": "6f64352477f5c637e9a51d3bc147d97e44b3ec7f13a2650ab7d0685a55d15ddd",
+      "sha256": "2e964b10d57a7e3b25a23c475a0650fa3974a7120268451fb2f0c6f6c3123dfa",
+      "text": "上様で大丈夫です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8064,
+      "durationSec": 2.016
+    },
+    "reply-cd9b763e29a4.mp3": {
+      "digest": "29f092defbb7cb0bc17163824e176ea289ed1d953d72bb5ac2b36ddfeba71858",
+      "sha256": "a7f179338441ec0bcf0c87d87dca8d058b2b4db9e79ed9727d6e480de6c38984",
+      "text": "三点です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-cf5161e809ba.mp3": {
+      "digest": "1c69c65bd0dbef253dbf1f47f9ecae79b48e14fa1038853d1d56f3d13880cb60",
+      "sha256": "589ed258e0e989e85bd93660e2fb6daa406d4ab149e792b2a986d50b59f0add0",
+      "text": "ホテルにあります",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4992,
+      "durationSec": 1.248
+    },
+    "reply-d1ccdd67b34e.mp3": {
+      "digest": "c6f6f86bcba440f472ebbfe9fbcd34285690e9d8856a1522fd16f1e8903bc02a",
+      "sha256": "67cd1851d3d23bd47d65088712f120d0e20312a97328d233aa3ec4f676f418ff",
+      "text": "Lで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4896,
+      "durationSec": 1.224
+    },
+    "reply-d22573566f43.mp3": {
+      "digest": "b7c7f33ed1b6790ecc8ecaec6561feb6fd07dcf0271de946e975acf161accecd",
+      "sha256": "f2e1f62b8eb78cd26790868895e44c8ad3c18f8535b81f2f0b556c5224593531",
+      "text": "二点です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6144,
+      "durationSec": 1.536
+    },
+    "reply-d281ccb9dd3f.mp3": {
+      "digest": "c41da06fd291bece74d7c89550a4ce81b670892361a0d3b47985f8963764b38b",
+      "sha256": "7efccafe2b3cd78f32bed50cc717e40cedd2296d6f90c7ac0d4f323a1222262e",
+      "text": "いりません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-d2e98b898369.mp3": {
+      "digest": "5134d2b4246233c8227b8b544ed6484f384c654819d23646fdf1c2f0b5240ea6",
+      "sha256": "dee226c12d000f3794985097f965e80455aedbbd174971f84b18cf3a8a382ab2",
+      "text": "6時でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7296,
+      "durationSec": 1.824
+    },
+    "reply-d9704ad002bf.mp3": {
+      "digest": "70ece697ce6cd22686bf419a9c69e74b7ac242680531318383a7012668eb6a5c",
+      "sha256": "45af02050e5c9814cabbebf400472cd123a3adb8a903574b7b7718b569262e42",
+      "text": "下の道でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "reply-da3f81b1042f.mp3": {
+      "digest": "ba949e847dc8661d28842c3bcc7c78e0b531fc96c24933967d7ddde43d8cfc12",
+      "sha256": "bd2ebc9980c8862619beff69a849b2d5fcd3e915e8a8fbcf7d8b69c711b73ce1",
+      "text": "入っています",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 5472,
+      "durationSec": 1.368
+    },
+    "reply-dd5db62e365d.mp3": {
+      "digest": "cb6fdd464a59a5fc68b557a8442bab6421c831b8379bd2a6e3eea4459b48bd3e",
+      "sha256": "23a693e5cac8467651e32da9a1f3b3b294bfece137773116d847d4ff13f25a7f",
+      "text": "ワンでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-deb6820e028e.mp3": {
+      "digest": "69d53a1e8d7b381f9edd82f73391e4c7126a210ba831c80bdb0fc3c13132ceef",
+      "sha256": "7e787a55db01201c0dc70acfbb8c945fe9ed02975873301cadcdf9255db6a46b",
+      "text": "海外用はありますか？",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8352,
+      "durationSec": 2.088
+    },
+    "reply-debf664736b1.mp3": {
+      "digest": "94c54e791f019aa8a81043ac452a52ff428e63bbc2c18d9e7dcb13bbee98a570",
+      "sha256": "fb64096501e404373cb905f0b875f28a5671dd4890780d53c5cd2b90f2156404",
+      "text": "どちらでも",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-df63c24bdba5.mp3": {
+      "digest": "8ff9c1b98db5614944c12f50e30d559a0a9285b0471ddeab21ef2bc4c3812d25",
+      "sha256": "c5b5f0108a939dad38c604f5a3c801234fdb4e8b7b665d60ce1edca5e44e1277",
+      "text": "一つです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4224,
+      "durationSec": 1.056
+    },
+    "reply-e1750814642a.mp3": {
+      "digest": "b02a84a27b95e4c2e2a923c77ec3bb68892b23cde869ae622d6c2908aa56bd33",
+      "sha256": "a1d0f18357447e5ad2dfc1a92c6dbdc736d2b2cb4ae462e224bd5f0465dabeb7",
+      "text": "いいえ、1泊です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "reply-e4e936d00309.mp3": {
+      "digest": "1576a3cc84d48de64404d750b493b5ba0e68b40a1afa63837db03392f48a4502",
+      "sha256": "b8b31b39df7b0d0889ec2419ba47d1fb405b4708f7be0f8262479a934efc7908",
+      "text": "カットとカラーでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9024,
+      "durationSec": 2.256
+    },
+    "reply-e5d3f2e10f5f.mp3": {
+      "digest": "25ec72443449342d3d3077d8d839cf8bfd71a345f5f33e85104ed56089a9533b",
+      "sha256": "a3d766e6e2fadcb34936964dc8d6c3379b8b105d491af7a941cca7dade82cd78",
+      "text": "ホットで",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "reply-e6b37c17df15.mp3": {
+      "digest": "241862df1e5c2571b59ada875fa3e920dfc480579b0a7c77062e0d611efb0340",
+      "sha256": "a15969507be271ffbbe9cdb38b89bea365d37a1074e2356b0d57fc75c58451ae",
+      "text": "店内で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-e759fb594442.mp3": {
+      "digest": "20718777e375f5affc140ff9fa46630cd544f049251d57beebc6e9f739d0cae8",
+      "sha256": "3f155834062e0cd9289c4cb9cc54b9c54760e7d065183ba59369c22cd212e400",
+      "text": "エビが食べられません",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "reply-edec67fe8470.mp3": {
+      "digest": "16b4bf1701c5fb6d14a71b800e2ee7dee3ee7954c96393438dbc2be2ddd1c22a",
+      "sha256": "7aa7745b3f24d5e89f3900dd3991190f9a8bc012a69fc7cfa9d1111033ed00de",
+      "text": "席で待ちます",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7104,
+      "durationSec": 1.776
+    },
+    "reply-edffb8621080.mp3": {
+      "digest": "66cc745cf9ffa5bbee237c6ce3d496b223d3d8a541d00d194c6ad84cdfd6b88a",
+      "sha256": "10a129c566811efefdcbf23b93cc893c3f4c863752769f26d43ed6a849a54685",
+      "text": "もう少し短くしてください",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "reply-ee0cc0b0e742.mp3": {
+      "digest": "31213003c4a0c6ec68450eeb803f329dd49aa993063bdd73b9c14a5f5d304871",
+      "sha256": "a448aa696fa6aaa8917a5c1c84f9c268f29eef0709e72d10bd021bbdba1c3043",
+      "text": "もう少し先でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "reply-eef578408cfe.mp3": {
+      "digest": "8382263c63ccb78833f975b0f96e77a901073b150a22795bc76e60d7db2305f0",
+      "sha256": "2b039188a58b5fc49decdbad2c0e8c1428bbea0ae93aeb80fed5c9dea30cbe11",
+      "text": "四日でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6912,
+      "durationSec": 1.728
+    },
+    "reply-efc1335b3381.mp3": {
+      "digest": "1c239f1a5510adb90eddc0f52afadcdf99f5b9f1112b8fd529c27c3ac51ca6be",
+      "sha256": "94c1776972763fb7f3607afdfa0880a99a776d28603299f467f8d45967fd195b",
+      "text": "領収書お願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 8544,
+      "durationSec": 2.136
+    },
+    "reply-f06df71f2fbf.mp3": {
+      "digest": "3f5f83921b7dc38f365a7e0a4c405bc753d0cf57ac0bd8484c3989cb0b96fab5",
+      "sha256": "b8c4c8a071cda7e5f0def36fe795c58cc40852e869a59d6891e4e5d53e1f40df",
+      "text": "新大阪までお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9504,
+      "durationSec": 2.376
+    },
+    "reply-f35ae760d0f6.mp3": {
+      "digest": "b3315aba4f923d5e46618f8fdb2245c935d5b6c1beb3b4deaa4a0a7ce7cd69ac",
+      "sha256": "6d024ec4e4480b58e059eaefc15d115d12fe85d3a94bdc0aa39bf5f5ec66a091",
+      "text": "京都までお願いします",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 7872,
+      "durationSec": 1.968
+    },
+    "reply-f86e5e8c1e4b.mp3": {
+      "digest": "19a8640efbae8e7ce1c9ea1643a325bc08f824859d0b60d55220e208abd7b592",
+      "sha256": "2b47f0916d39d853497a0cfb99dc07ee9c9adf8bea552e3dcd9393f18ba5f86e",
+      "text": "大人二人です",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6624,
+      "durationSec": 1.656
+    },
+    "reply-fca5a6e5f706.mp3": {
+      "digest": "c0daf61284f207cbd6035cc80fcdb4719a15ca1179fa8400db1e8a0f36b7ee24",
+      "sha256": "00ee749cdc25f95c36267bf36dbc165b877a6069051bae75811d46f339ef1313",
+      "text": "1つです",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6432,
+      "durationSec": 1.608
+    },
+    "reply-fd30d6acb339.mp3": {
+      "digest": "004270c0924d3bdbde22fb7d2677af6998228812cb64339c5ca7a9fa082312be",
+      "sha256": "2d61838b5155f2aad9d6ef9037cf879c81175bb5405c82f5c2bf8b8aca482a0e",
+      "text": "通路側で",
+      "voice": "ja-JP-Chirp3-HD-Orus",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 4704,
+      "durationSec": 1.176
+    },
     "restaurant.drink.p1.mp3": {
       "digest": "ef3dd541860741241c3972a466464c06e401e9bf66827d7578eb0652555d6503",
       "sha256": "6ec85b7c0b37734fa4c213bd6c41b7980831fd98d31aa6b30179716c5f0fb797",
