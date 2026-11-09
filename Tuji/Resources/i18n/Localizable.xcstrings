@@ -30120,6 +30120,30 @@
           }
         }
       }
+    },
+    "你要怎麼做？" : {
+      "comment" : "場面練習: Above the choices when every choice is an action, not something to say.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What do you do?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どうする？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你要怎么做？"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

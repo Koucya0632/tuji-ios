@@ -444,5 +444,294 @@
         "suitcase"
       ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "退房",
+          "zh-Hans": "退房",
+          "en": "Checking out"
+        },
+        "intent": {
+          "zh-Hant": "你是ワン，住 805 號房，今天退房。沒動過冰箱，要一張領收書，抬頭寫上様就好。退房後還想出去逛，想先寄放行李。",
+          "zh-Hans": "你是ワン，住 805 号房，今天退房。没动过冰箱，要一张领收书，抬头写上様就好。退房后还想出去逛，想先寄存行李。",
+          "en": "You're ワン (Wang) in room 805, checking out today. You didn't touch the fridge. You want a receipt made out to 上様, and you'd like to leave your bags while you go out."
+        },
+        "enter": {
+          "zh-Hant": "把房卡拿到櫃台",
+          "zh-Hans": "把房卡拿到前台",
+          "en": "Take your key to the front desk"
+        },
+        "questions": [
+          "hotel-check-out.room-number",
+          "hotel-check-out.fridge",
+          "hotel-check-out.receipt",
+          "hotel-check-out.receipt-name",
+          "hotel-check-out.luggage"
+        ]
+      }
+    ],
+    "steps": {
+      "hotel-check-out.room-number": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "805",
+            "ja": "805です",
+            "meaning": {
+              "zh-Hant": "805 號房",
+              "zh-Hans": "805 号房",
+              "en": "Room 805"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在電腦上叫出 805 號房。",
+              "zh-Hans": "前台在电脑上调出 805 号房。",
+              "en": "The clerk brings up room 805 on the computer."
+            }
+          },
+          {
+            "id": "850",
+            "ja": "850です",
+            "meaning": {
+              "zh-Hant": "850 號房",
+              "zh-Hans": "850 号房",
+              "en": "Room 850"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台叫出另一間房，名字對不上。你住的是 805。",
+              "zh-Hans": "前台调出另一间房，名字对不上。你住的是 805。",
+              "en": "The clerk brings up another room and the name doesn't match. You're in 805."
+            }
+          },
+          {
+            "id": "unused",
+            "ja": "使っていません",
+            "meaning": {
+              "zh-Hant": "沒有用",
+              "zh-Hans": "没有用",
+              "en": "I didn't use it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說房號。",
+              "zh-Hans": "前台还在等你说房号。",
+              "en": "The clerk is still waiting for your room number."
+            }
+          }
+        ]
+      },
+      "hotel-check-out.fridge": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "unused",
+            "ja": "使っていません",
+            "meaning": {
+              "zh-Hant": "沒有用",
+              "zh-Hans": "没有用",
+              "en": "I didn't use it"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台點點頭，帳單上沒有冰箱的費用。",
+              "zh-Hans": "前台点点头，账单上没有冰箱的费用。",
+              "en": "The clerk nods. Nothing from the fridge is on the bill."
+            }
+          },
+          {
+            "id": "beer",
+            "ja": "ビールを1本飲みました",
+            "meaning": {
+              "zh-Hant": "喝了一罐啤酒",
+              "zh-Hans": "喝了一罐啤酒",
+              "en": "I had a beer"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台在帳單上加了一罐啤酒。你其實沒動冰箱。",
+              "zh-Hans": "前台在账单上加了一罐啤酒。你其实没动冰箱。",
+              "en": "The clerk adds a beer to the bill. You never opened the fridge."
+            }
+          },
+          {
+            "id": "805",
+            "ja": "805です",
+            "meaning": {
+              "zh-Hant": "805 號房",
+              "zh-Hans": "805 号房",
+              "en": "Room 805"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "房號剛才說過了，櫃台在問有沒有用冰箱。",
+              "zh-Hans": "房号刚才说过了，前台在问有没有用冰箱。",
+              "en": "You've already given your room. The clerk is asking about the fridge."
+            }
+          }
+        ]
+      },
+      "hotel-check-out.receipt": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要收據）",
+              "zh-Hans": "麻烦了（要收据）",
+              "en": "Yes, please (a receipt)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台開始列印領收書。",
+              "zh-Hans": "前台开始打印领收书。",
+              "en": "The clerk starts printing the receipt."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台沒有開收據。你原本要留收據。",
+              "zh-Hans": "前台没有开收据。你本来要留收据。",
+              "en": "The clerk doesn't print one. You wanted a receipt."
+            }
+          },
+          {
+            "id": "uesama",
+            "ja": "上様で大丈夫です",
+            "meaning": {
+              "zh-Hant": "寫上様就好",
+              "zh-Hans": "写上様就好",
+              "en": "上様 is fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台還在等你說要不要收據。",
+              "zh-Hans": "前台还在等你说要不要收据。",
+              "en": "The clerk is still waiting to hear if you want a receipt."
+            }
+          }
+        ]
+      },
+      "hotel-check-out.receipt-name": {
+        "background": "scene-bg-hotel-check-in",
+        "replies": [
+          {
+            "id": "uesama",
+            "ja": "上様で大丈夫です",
+            "meaning": {
+              "zh-Hant": "寫上様就好",
+              "zh-Hans": "写上様就好",
+              "en": "上様 is fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台在抬頭寫上「上様」，把收據遞給你。",
+              "zh-Hans": "前台在抬头写上「上様」，把收据递给你。",
+              "en": "The clerk writes 上様 as the name and hands you the receipt."
+            }
+          },
+          {
+            "id": "wang",
+            "ja": "ワンでお願いします",
+            "meaning": {
+              "zh-Hant": "寫ワン",
+              "zh-Hans": "写ワン",
+              "en": "Wang, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台在抬頭寫上「ワン様」。你原本只要寫上様。",
+              "zh-Hans": "前台在抬头写上「ワン様」。你本来只要写上様。",
+              "en": "The clerk writes ワン様. You only wanted 上様."
+            }
+          },
+          {
+            "id": "unused",
+            "ja": "使っていません",
+            "meaning": {
+              "zh-Hant": "沒有用",
+              "zh-Hans": "没有用",
+              "en": "I didn't use it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "冰箱剛才說過了，櫃台在問收據抬頭。",
+              "zh-Hans": "冰箱刚才说过了，前台在问收据抬头。",
+              "en": "You've already answered about the fridge. The clerk is asking whose name goes on the receipt."
+            }
+          }
+        ]
+      },
+      "hotel-check-out.luggage": {
+        "background": "scene-bg-hotel-check-in",
+        "card": {
+          "title": "領収書",
+          "lines": [
+            "上様",
+            "805号室　ご宿泊料",
+            "お支払い済み"
+          ]
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要寄放）",
+              "zh-Hans": "麻烦了（要寄存）",
+              "en": "Yes, please (keep my bags)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "櫃台說好，請你把行李拿到旁邊辦寄放。",
+              "zh-Hans": "前台说好，请你把行李拿到旁边办寄存。",
+              "en": "The clerk says sure and asks you to bring your bags over to leave them."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "櫃台沒有收行李，你拖著行李出門逛街。",
+              "zh-Hans": "前台没有收行李，你拖着行李出门逛街。",
+              "en": "The clerk keeps nothing, and you drag your bags around town."
+            }
+          },
+          {
+            "id": "uesama",
+            "ja": "上様で大丈夫です",
+            "meaning": {
+              "zh-Hant": "寫上様就好",
+              "zh-Hans": "写上様就好",
+              "en": "上様 is fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "收據已經拿到了，櫃台在問要不要寄放行李。",
+              "zh-Hans": "收据已经拿到了，前台在问要不要寄存行李。",
+              "en": "You already have the receipt. The clerk is asking about your bags."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

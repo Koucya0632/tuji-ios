@@ -661,5 +661,361 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "兩個人喝一杯",
+          "zh-Hans": "两个人喝一杯",
+          "en": "A drink for two"
+        },
+        "intent": {
+          "zh-Hant": "你和朋友兩個人沒有訂位，只想坐一下、喝一兩杯，不要喝到飽。第一杯想喝生啤酒。",
+          "zh-Hans": "你和朋友两个人没有订位，只想坐一会儿、喝一两杯，不要畅饮。第一杯想喝生啤。",
+          "en": "You and a friend have no booking. You just want to sit a while and have a drink or two, not all-you-can-drink. You'd like a draft beer first."
+        },
+        "enter": {
+          "zh-Hant": "拉開店門",
+          "zh-Hans": "拉开店门",
+          "en": "Slide open the door"
+        },
+        "questions": [
+          "izakaya.reservation",
+          "izakaya.time-limit",
+          "izakaya.all-you-can-drink",
+          "izakaya.first-drinks",
+          "izakaya.otoshi",
+          "izakaya.alcohol-check",
+          "izakaya.last-order"
+        ]
+      }
+    ],
+    "steps": {
+      "izakaya.reservation": {
+        "background": "scene-bg-izakaya",
+        "replies": [
+          {
+            "id": "none",
+            "ja": "予約していません",
+            "meaning": {
+              "zh-Hant": "沒有訂位",
+              "zh-Hans": "没有订位",
+              "en": "We don't have a booking"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員看了看座位表，說有空位。",
+              "zh-Hans": "店员看了看座位表，说有空位。",
+              "en": "The clerk checks the seating chart and says there's room."
+            }
+          },
+          {
+            "id": "booked",
+            "ja": "予約しています",
+            "meaning": {
+              "zh-Hant": "有訂位",
+              "zh-Hans": "有订位",
+              "en": "We have a booking"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員翻了好幾頁訂位表，找不到你們。你們其實沒有訂位。",
+              "zh-Hans": "店员翻了好几页订位表，找不到你们。你们其实没有订位。",
+              "en": "The clerk flips through the bookings and can't find you. You didn't book."
+            }
+          },
+          {
+            "id": "ok",
+            "ja": "はい、大丈夫です",
+            "meaning": {
+              "zh-Hant": "好，沒問題",
+              "zh-Hans": "好，没问题",
+              "en": "Yes, that's fine"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說有沒有訂位。",
+              "zh-Hans": "店员还在等你说有没有订位。",
+              "en": "The clerk is still waiting to hear if you booked."
+            }
+          }
+        ]
+      },
+      "izakaya.time-limit": {
+        "background": "scene-bg-izakaya",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい、大丈夫です",
+            "meaning": {
+              "zh-Hant": "好，沒問題",
+              "zh-Hans": "好，没问题",
+              "en": "Yes, that's fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員帶你們到座位。",
+              "zh-Hans": "店员带你们到座位。",
+              "en": "The clerk shows you to your seats."
+            }
+          },
+          {
+            "id": "leave",
+            "ja": "じゃあ、やめておきます",
+            "meaning": {
+              "zh-Hant": "那就算了",
+              "zh-Hans": "那就算了",
+              "en": "We'll pass, then"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "你們走出店外。兩小時其實夠你們喝一兩杯。",
+              "zh-Hans": "你们走出店外。两小时其实够你们喝一两杯。",
+              "en": "You walk back out. Two hours was plenty for a drink or two."
+            }
+          },
+          {
+            "id": "no-plan",
+            "ja": "なしで",
+            "meaning": {
+              "zh-Hant": "不用（喝到飽）",
+              "zh-Hans": "不用（畅饮）",
+              "en": "Without (all-you-can-drink)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說限時兩小時可不可以。",
+              "zh-Hans": "店员还在等你说限时两小时可不可以。",
+              "en": "The clerk is still waiting to hear if two hours is OK."
+            }
+          }
+        ]
+      },
+      "izakaya.all-you-can-drink": {
+        "background": "scene-bg-izakaya",
+        "replies": [
+          {
+            "id": "no-plan",
+            "ja": "なしで",
+            "meaning": {
+              "zh-Hant": "不用（喝到飽）",
+              "zh-Hans": "不用（畅饮）",
+              "en": "Without (all-you-can-drink)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員收起喝到飽的單子，遞來一般的飲料單。",
+              "zh-Hans": "店员收起畅饮的单子，递来普通的酒水单。",
+              "en": "The clerk puts away the all-you-can-drink menu and hands you the regular drinks list."
+            }
+          },
+          {
+            "id": "plan",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要喝到飽）",
+              "zh-Hans": "麻烦了（要畅饮）",
+              "en": "Yes, please (all-you-can-drink)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員幫你們兩個人加了喝到飽。你們只想喝一兩杯。",
+              "zh-Hans": "店员给你们两个人加了畅饮。你们只想喝一两杯。",
+              "en": "The clerk adds all-you-can-drink for both of you. You only wanted a drink or two."
+            }
+          },
+          {
+            "id": "beer",
+            "ja": "生ビールで",
+            "meaning": {
+              "zh-Hant": "生啤酒",
+              "zh-Hans": "生啤",
+              "en": "A draft beer"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒點飲料，店員在問要不要喝到飽。",
+              "zh-Hans": "还没点饮料，店员在问要不要畅饮。",
+              "en": "Drinks come next. The clerk is asking about all-you-can-drink."
+            }
+          }
+        ]
+      },
+      "izakaya.first-drinks": {
+        "background": "scene-bg-izakaya",
+        "replies": [
+          {
+            "id": "beer",
+            "ja": "生ビールで",
+            "meaning": {
+              "zh-Hant": "生啤酒",
+              "zh-Hans": "生啤",
+              "en": "A draft beer"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下生啤酒，往吧檯走去。",
+              "zh-Hans": "店员记下生啤，往吧台走去。",
+              "en": "The clerk notes a draft beer and heads for the bar."
+            }
+          },
+          {
+            "id": "oolong",
+            "ja": "ウーロン茶で",
+            "meaning": {
+              "zh-Hant": "烏龍茶",
+              "zh-Hans": "乌龙茶",
+              "en": "Oolong tea"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員送來一杯烏龍茶。你想喝啤酒。",
+              "zh-Hans": "店员送来一杯乌龙茶。你想喝啤酒。",
+              "en": "The clerk brings oolong tea. You wanted beer."
+            }
+          },
+          {
+            "id": "no-plan",
+            "ja": "なしで",
+            "meaning": {
+              "zh-Hant": "不用（喝到飽）",
+              "zh-Hans": "不用（畅饮）",
+              "en": "Without (all-you-can-drink)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "喝到飽剛才說過了，店員在問第一杯要喝什麼。",
+              "zh-Hans": "畅饮刚才说过了，店员在问第一杯要喝什么。",
+              "en": "You've already answered that. The clerk is asking for your first drink."
+            }
+          }
+        ]
+      },
+      "izakaya.otoshi": {
+        "background": "scene-bg-izakaya",
+        "replies": [
+          {
+            "id": "thanks",
+            "ja": "ありがとうございます",
+            "meaning": {
+              "zh-Hant": "謝謝",
+              "zh-Hans": "谢谢",
+              "en": "Thank you"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把一小碟小菜放在桌上。",
+              "zh-Hans": "店员把一小碟小菜放在桌上。",
+              "en": "The clerk sets a small dish on the table."
+            }
+          },
+          {
+            "id": "not-ordered",
+            "ja": "頼んでいません",
+            "meaning": {
+              "zh-Hant": "我沒有點這個",
+              "zh-Hans": "我没有点这个",
+              "en": "I didn't order this"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員解釋這是お通し，會算進帳單，氣氛有點尷尬。",
+              "zh-Hans": "店员解释这是お通し，会算进账单，气氛有点尴尬。",
+              "en": "The clerk explains it's otoshi and goes on the bill. It's a little awkward."
+            }
+          },
+          {
+            "id": "beer",
+            "ja": "生ビールで",
+            "meaning": {
+              "zh-Hant": "生啤酒",
+              "zh-Hans": "生啤",
+              "en": "A draft beer"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "啤酒已經點了，店員在送上お通し。",
+              "zh-Hans": "啤酒已经点了，店员在送上お通し。",
+              "en": "You've already ordered a beer. The clerk is serving the otoshi."
+            }
+          }
+        ]
+      },
+      "izakaya.alcohol-check": {
+        "background": "scene-bg-izakaya",
+        "note": {
+          "zh-Hant": "你用桌上的平板再點一杯生啤酒，畫面跳出確認。你已滿 20 歲，今天不開車。",
+          "zh-Hans": "你用桌上的平板再点一杯生啤，屏幕弹出确认。你已满 20 岁，今天不开车。",
+          "en": "You order another draft beer on the table tablet and a confirmation pops up. You're over 20 and not driving today."
+        },
+        "card": {
+          "title": "ご注文確認",
+          "lines": [
+            "生ビール　1"
+          ]
+        },
+        "machine": {
+          "kind": "age-confirm",
+          "expect": "yes"
+        }
+      },
+      "izakaya.last-order": {
+        "background": "scene-bg-izakaya",
+        "note": {
+          "zh-Hant": "你們已經吃飽喝夠了。",
+          "zh-Hans": "你们已经吃饱喝够了。",
+          "en": "You've both had enough to eat and drink."
+        },
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "We're fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，收走菜單。",
+              "zh-Hans": "店员点点头，收走菜单。",
+              "en": "The clerk nods and takes the menu."
+            }
+          },
+          {
+            "id": "this",
+            "ja": "これをお願いします",
+            "meaning": {
+              "zh-Hant": "我要這個（指著菜單）",
+              "zh-Hans": "我要这个（指着菜单）",
+              "en": "This one, please (pointing at the menu)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員記下最後一道菜。端上來時你們已經吃不下了。",
+              "zh-Hans": "店员记下最后一道菜。端上来时你们已经吃不下了。",
+              "en": "The clerk takes one last order. When it comes, you're too full to eat it."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "予約していません",
+            "meaning": {
+              "zh-Hant": "沒有訂位",
+              "zh-Hans": "没有订位",
+              "en": "We don't have a booking"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說最後還要不要點。",
+              "zh-Hans": "店员还在等你说最后还要不要点。",
+              "en": "The clerk is still waiting to hear if you want anything else."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

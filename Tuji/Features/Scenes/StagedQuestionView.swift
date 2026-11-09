@@ -213,23 +213,29 @@ struct StagedQuestionView: View {
             if let chosen, tried.contains("reply:" + chosen.id) {
                 self.result(chosen.result, fits: false)
             }
-            Text("你要怎麼回？")
+            Text(self.stage.replies?.contains { !$0.isSpoken } == true ? "你要怎麼做？" : "你要怎麼回？")
                 .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
             ForEach(self.stage.replies(for: self.step.phrasing.id)) { reply in
                 let missed = tried.contains("reply:" + reply.id)
                 Button {
                     self.chosen = reply
-                    SceneAudio.say(reply)
+                    if reply.isSpoken { SceneAudio.say(reply) }
                     self.session.reply(reply)
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: reply.ja)
-                            .font(.tujiH3)
-                            .foregroundStyle(missed ? .tujiInk3 : .tujiInk)
-                        Text(verbatim: reply.meaning.resolved(self.language))
-                            .font(.scene(13, bold: false))
-                            .foregroundStyle(.tujiInk2)
+                        if reply.isSpoken {
+                            Text(verbatim: reply.ja)
+                                .font(.tujiH3)
+                                .foregroundStyle(missed ? .tujiInk3 : .tujiInk)
+                            Text(verbatim: reply.meaning.resolved(self.language))
+                                .font(.scene(13, bold: false))
+                                .foregroundStyle(.tujiInk2)
+                        } else {
+                            Text(verbatim: reply.meaning.resolved(self.language))
+                                .font(.tujiH3)
+                                .foregroundStyle(missed ? .tujiInk3 : .tujiInk)
+                        }
                     }
                     .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                     .padding(.horizontal, Space.s3)
@@ -250,6 +256,26 @@ struct StagedQuestionView: View {
     @ViewBuilder
     private var screen: some View {
         let tried: Set<String> = if case let .answeredWrong(tried) = self.phase { tried } else { [] }
+        if let spoken = self.step.phrasing.spoken {
+            VStack(alignment: .leading, spacing: Space.s2) {
+                HStack(spacing: Space.s2) {
+                    Image(systemName: self.step.phrasing.speaker.symbol).font(.tujiIcon(13, weight: .semibold))
+                    Text(self.step.phrasing.speaker.label).font(.tujiLabel)
+                    Spacer()
+                    self.pill("重聽", systemImage: "arrow.counterclockwise") { self.play(spoken) }
+                    self.pill("字幕", systemImage: "captions.bubble", pressed: self.subtitles || self.revealed) {
+                        self.subtitles.toggle()
+                        if self.subtitles { self.session.noteHint() }
+                    }
+                }
+                .foregroundStyle(.tujiInk2)
+                if self.subtitles || self.revealed {
+                    Text(verbatim: spoken.text)
+                        .font(.tujiBody(.strong))
+                        .foregroundStyle(.tujiInk)
+                }
+            }
+        }
         if let spec = self.stage.machine, let machine = self.machine {
             MachineView(machine: machine, brandOverride: spec.brand) { action in
                 guard var next = self.machine else { return }

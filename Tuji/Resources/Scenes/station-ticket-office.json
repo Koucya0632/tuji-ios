@@ -682,5 +682,359 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "東京到京都",
+          "zh-Hans": "东京到京都",
+          "en": "Tokyo to Kyoto"
+        },
+        "intent": {
+          "zh-Hant": "你和另一個大人今天想從東京搭新幹線去京都，大約 10 點出發。想要對號座、靠窗，刷卡付款。",
+          "zh-Hans": "你和另一个大人今天想从东京坐新干线去京都，大约 10 点出发。想要对号座、靠窗，刷卡付款。",
+          "en": "You and another adult want to take the shinkansen from Tokyo to Kyoto today, leaving around 10. You want reserved window seats and will pay by card."
+        },
+        "enter": {
+          "zh-Hant": "走到售票窗口",
+          "zh-Hans": "走到售票窗口",
+          "en": "Go up to the ticket window"
+        },
+        "questions": [
+          "station-ticket-office.destination",
+          "station-ticket-office.when",
+          "station-ticket-office.how-many",
+          "station-ticket-office.seat-type",
+          "station-ticket-office.window-aisle",
+          "station-ticket-office.ticket-check",
+          "station-ticket-office.payment"
+        ]
+      }
+    ],
+    "steps": {
+      "station-ticket-office.destination": {
+        "background": "scene-bg-station-ticket-office",
+        "replies": [
+          {
+            "id": "kyoto",
+            "ja": "京都までお願いします",
+            "meaning": {
+              "zh-Hant": "到京都",
+              "zh-Hans": "到京都",
+              "en": "To Kyoto, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "站務員在電腦上輸入京都。",
+              "zh-Hans": "工作人员在电脑上输入京都。",
+              "en": "The clerk types Kyoto into the computer."
+            }
+          },
+          {
+            "id": "osaka",
+            "ja": "新大阪までお願いします",
+            "meaning": {
+              "zh-Hant": "到新大阪",
+              "zh-Hans": "到新大阪",
+              "en": "To Shin-Osaka, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員開始查到新大阪的車。你要去的是京都。",
+              "zh-Hans": "工作人员开始查到新大阪的车。你要去的是京都。",
+              "en": "The clerk looks up trains to Shin-Osaka. You're going to Kyoto."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "大人二人です",
+            "meaning": {
+              "zh-Hant": "兩個大人",
+              "zh-Hans": "两个大人",
+              "en": "Two adults"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員還在等你說要去哪裡。",
+              "zh-Hans": "工作人员还在等你说要去哪里。",
+              "en": "The clerk is still waiting to hear where you're going."
+            }
+          }
+        ]
+      },
+      "station-ticket-office.when": {
+        "background": "scene-bg-station-ticket-office",
+        "note": {
+          "zh-Hant": "今天是 11 月 20 日。",
+          "zh-Hans": "今天是 11 月 20 日。",
+          "en": "Today is 20 November."
+        },
+        "replies": [
+          {
+            "id": "today",
+            "ja": "今日の十時ごろです",
+            "meaning": {
+              "zh-Hant": "今天 10 點左右",
+              "zh-Hans": "今天 10 点左右",
+              "en": "Today, around 10"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "站務員找到今天 10:00 發車的のぞみ。",
+              "zh-Hans": "工作人员找到今天 10:00 发车的のぞみ。",
+              "en": "The clerk finds a Nozomi leaving at 10:00 today."
+            }
+          },
+          {
+            "id": "tomorrow",
+            "ja": "明日の朝です",
+            "meaning": {
+              "zh-Hant": "明天早上",
+              "zh-Hans": "明天早上",
+              "en": "Tomorrow morning"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員查了明天早上的車。你今天就要走。",
+              "zh-Hans": "工作人员查了明天早上的车。你今天就要走。",
+              "en": "The clerk looks up trains for tomorrow morning. You're leaving today."
+            }
+          },
+          {
+            "id": "kyoto",
+            "ja": "京都までお願いします",
+            "meaning": {
+              "zh-Hant": "到京都",
+              "zh-Hans": "到京都",
+              "en": "To Kyoto, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "目的地剛才說過了，站務員在問哪天幾點搭車。",
+              "zh-Hans": "目的地刚才说过了，工作人员在问哪天几点坐车。",
+              "en": "You've already said where. The clerk is asking when you're travelling."
+            }
+          }
+        ]
+      },
+      "station-ticket-office.how-many": {
+        "background": "scene-bg-station-ticket-office",
+        "replies": [
+          {
+            "id": "two",
+            "ja": "大人二人です",
+            "meaning": {
+              "zh-Hant": "兩個大人",
+              "zh-Hans": "两个大人",
+              "en": "Two adults"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "站務員在畫面上選了大人 2 名。",
+              "zh-Hans": "工作人员在屏幕上选了大人 2 名。",
+              "en": "The clerk enters two adults."
+            }
+          },
+          {
+            "id": "one",
+            "ja": "大人一人です",
+            "meaning": {
+              "zh-Hant": "一個大人",
+              "zh-Hans": "一个大人",
+              "en": "One adult"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員只開一張票。你們有兩個人。",
+              "zh-Hans": "工作人员只出一张票。你们有两个人。",
+              "en": "The clerk issues only one ticket. There are two of you."
+            }
+          },
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員還在等你說幾個人。",
+              "zh-Hans": "工作人员还在等你说几个人。",
+              "en": "The clerk is still waiting to hear how many."
+            }
+          }
+        ]
+      },
+      "station-ticket-office.seat-type": {
+        "background": "scene-bg-station-ticket-office",
+        "replies": [
+          {
+            "id": "reserved",
+            "ja": "指定席で",
+            "meaning": {
+              "zh-Hant": "對號座",
+              "zh-Hans": "对号座",
+              "en": "Reserved"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "站務員幫你們找對號座。",
+              "zh-Hans": "工作人员帮你们找对号座。",
+              "en": "The clerk looks for reserved seats."
+            }
+          },
+          {
+            "id": "unreserved",
+            "ja": "自由席で",
+            "meaning": {
+              "zh-Hant": "自由座",
+              "zh-Hans": "自由座",
+              "en": "Unreserved"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員開了自由座的票。你原本想要對號座。",
+              "zh-Hans": "工作人员出了自由座的票。你本来想要对号座。",
+              "en": "The clerk issues unreserved tickets. You wanted reserved seats."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "大人二人です",
+            "meaning": {
+              "zh-Hant": "兩個大人",
+              "zh-Hans": "两个大人",
+              "en": "Two adults"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "人數剛才說過了，站務員在問座位種類。",
+              "zh-Hans": "人数刚才说过了，工作人员在问座位类型。",
+              "en": "You've already given the number. The clerk is asking which kind of seat."
+            }
+          }
+        ]
+      },
+      "station-ticket-office.window-aisle": {
+        "background": "scene-bg-station-ticket-office",
+        "replies": [
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "站務員找了靠窗的位子。",
+              "zh-Hans": "工作人员找了靠窗的座位。",
+              "en": "The clerk picks window seats."
+            }
+          },
+          {
+            "id": "aisle",
+            "ja": "通路側で",
+            "meaning": {
+              "zh-Hant": "靠走道",
+              "zh-Hans": "靠过道",
+              "en": "Aisle"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "站務員給了靠走道的位子。你想坐靠窗。",
+              "zh-Hans": "工作人员给了靠过道的座位。你想坐靠窗。",
+              "en": "The clerk gives you aisle seats. You wanted the window."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到付款，站務員在問靠窗還是靠走道。",
+              "zh-Hans": "还没到付款，工作人员在问靠窗还是靠过道。",
+              "en": "It's not time to pay. The clerk is asking window or aisle."
+            }
+          }
+        ]
+      },
+      "station-ticket-office.ticket-check": {
+        "background": "scene-bg-station-ticket-office",
+        "note": {
+          "zh-Hant": "站務員把車票放在窗口，請你核對。",
+          "zh-Hans": "工作人员把车票放在窗口，请你核对。",
+          "en": "The clerk puts the tickets on the counter for you to check."
+        }
+      },
+      "station-ticket-office.payment": {
+        "background": "scene-bg-station-ticket-office",
+        "card": {
+          "title": "きっぷ",
+          "lines": [
+            "11月20日　東京 → 京都",
+            "のぞみ23号　10:00発",
+            "7号車　12番A席"
+          ]
+        },
+        "replies": [
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "站務員把刷卡機推過來，你刷了卡，拿到車票。",
+              "zh-Hans": "工作人员把刷卡机推过来，你刷了卡，拿到车票。",
+              "en": "The clerk slides over the card reader. You pay and get your tickets."
+            }
+          },
+          {
+            "id": "cash",
+            "ja": "現金で",
+            "meaning": {
+              "zh-Hant": "現金",
+              "zh-Hans": "现金",
+              "en": "Cash"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "你付了現金，錢包一下空了大半。你原本想刷卡。",
+              "zh-Hans": "你付了现金，钱包一下子空了大半。你本来想刷卡。",
+              "en": "You pay in cash and your wallet is suddenly half empty. You meant to use your card."
+            }
+          },
+          {
+            "id": "window",
+            "ja": "窓側で",
+            "meaning": {
+              "zh-Hant": "靠窗",
+              "zh-Hans": "靠窗",
+              "en": "Window"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "座位已經選好了，站務員在問怎麼付款。",
+              "zh-Hans": "座位已经选好了，工作人员在问怎么付款。",
+              "en": "Your seats are set. The clerk is asking how you'll pay."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

@@ -522,5 +522,345 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "一杯冰拿鐵",
+          "zh-Hans": "一杯冰拿铁",
+          "en": "An iced latte"
+        },
+        "intent": {
+          "zh-Hant": "你想在店裡喝一杯冰拿鐵，M 杯，不加奶精和糖漿。外套已經放在位子上佔好座了。",
+          "zh-Hans": "你想在店里喝一杯冰拿铁，M 杯，不加奶精和糖浆。外套已经放在座位上占好座了。",
+          "en": "You want an iced latte, size M, to drink here, with no milk or syrup. Your jacket is already on a seat."
+        },
+        "enter": {
+          "zh-Hant": "走到點餐櫃台",
+          "zh-Hans": "走到点单柜台",
+          "en": "Walk up to the counter"
+        },
+        "questions": [
+          "cafe.seat-first",
+          "cafe.eat-in",
+          "cafe.hot-or-iced",
+          "cafe.size",
+          "cafe.milk-and-syrup",
+          "cafe.pickup"
+        ]
+      }
+    ],
+    "steps": {
+      "cafe.seat-first": {
+        "background": "scene-bg-cafe",
+        "replies": [
+          {
+            "id": "taken",
+            "ja": "取ってあります",
+            "meaning": {
+              "zh-Hant": "佔好了",
+              "zh-Hans": "占好了",
+              "en": "I've got one"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，請你點餐。",
+              "zh-Hans": "店员点点头，请你点单。",
+              "en": "The clerk nods and takes your order."
+            }
+          },
+          {
+            "id": "not-yet",
+            "ja": "まだです",
+            "meaning": {
+              "zh-Hant": "還沒",
+              "zh-Hans": "还没",
+              "en": "Not yet"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員請你先去找位子再回來點。你的外套其實已經放在位子上了。",
+              "zh-Hans": "店员请你先去找座位再回来点。你的外套其实已经放在座位上了。",
+              "en": "The clerk asks you to find a seat first. Your jacket is already on one."
+            }
+          },
+          {
+            "id": "eat-in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "For here"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在問你位子找好了沒。",
+              "zh-Hans": "店员还在问你座位找好了没。",
+              "en": "The clerk is still asking whether you have a seat."
+            }
+          }
+        ]
+      },
+      "cafe.eat-in": {
+        "background": "scene-bg-cafe",
+        "replies": [
+          {
+            "id": "eat-in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "For here"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員拿出店內用的玻璃杯。",
+              "zh-Hans": "店员拿出店内用的玻璃杯。",
+              "en": "The clerk takes out a glass for drinking in."
+            }
+          },
+          {
+            "id": "take-out",
+            "ja": "持ち帰りで",
+            "meaning": {
+              "zh-Hant": "外帶",
+              "zh-Hans": "外带",
+              "en": "To go"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員拿出外帶紙杯和杯蓋。你想在店裡喝。",
+              "zh-Hans": "店员拿出外带纸杯和杯盖。你想在店里喝。",
+              "en": "The clerk reaches for a paper cup and lid. You wanted to drink here."
+            }
+          },
+          {
+            "id": "iced",
+            "ja": "アイスで",
+            "meaning": {
+              "zh-Hant": "冰的",
+              "zh-Hans": "冰的",
+              "en": "Iced"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說內用還是外帶。",
+              "zh-Hans": "店员还在等你说堂食还是外带。",
+              "en": "The clerk is still waiting to hear for here or to go."
+            }
+          }
+        ]
+      },
+      "cafe.hot-or-iced": {
+        "background": "scene-bg-cafe",
+        "replies": [
+          {
+            "id": "iced",
+            "ja": "アイスで",
+            "meaning": {
+              "zh-Hant": "冰的",
+              "zh-Hans": "冰的",
+              "en": "Iced"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在杯子裡裝滿冰塊。",
+              "zh-Hans": "店员在杯子里装满冰块。",
+              "en": "The clerk fills the glass with ice."
+            }
+          },
+          {
+            "id": "hot",
+            "ja": "ホットで",
+            "meaning": {
+              "zh-Hant": "熱的",
+              "zh-Hans": "热的",
+              "en": "Hot"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員做了一杯熱拿鐵。你想喝冰的。",
+              "zh-Hans": "店员做了一杯热拿铁。你想喝冰的。",
+              "en": "The clerk makes a hot latte. You wanted it iced."
+            }
+          },
+          {
+            "id": "medium",
+            "ja": "Mで",
+            "meaning": {
+              "zh-Hant": "M 杯",
+              "zh-Hans": "M 杯",
+              "en": "Medium"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說要熱的還是冰的。",
+              "zh-Hans": "店员还在等你说要热的还是冰的。",
+              "en": "The clerk is still waiting to hear hot or iced."
+            }
+          }
+        ]
+      },
+      "cafe.size": {
+        "background": "scene-bg-cafe",
+        "replies": [
+          {
+            "id": "medium",
+            "ja": "Mで",
+            "meaning": {
+              "zh-Hant": "M 杯",
+              "zh-Hans": "M 杯",
+              "en": "Medium"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在杯子上寫了 M。",
+              "zh-Hans": "店员在杯子上写了 M。",
+              "en": "The clerk marks M on the cup."
+            }
+          },
+          {
+            "id": "small",
+            "ja": "Sで",
+            "meaning": {
+              "zh-Hant": "S 杯",
+              "zh-Hans": "S 杯",
+              "en": "Small"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員換了一個小杯子。你想要 M。",
+              "zh-Hans": "店员换了一个小杯子。你想要 M。",
+              "en": "The clerk switches to a small cup. You wanted medium."
+            }
+          },
+          {
+            "id": "eat-in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "For here"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "內用剛才說過了，店員在問尺寸。",
+              "zh-Hans": "堂食刚才说过了，店员在问杯型。",
+              "en": "You already said for here. The clerk is asking the size."
+            }
+          }
+        ]
+      },
+      "cafe.milk-and-syrup": {
+        "background": "scene-bg-cafe",
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，托盤上什麼都沒加。",
+              "zh-Hans": "店员点点头，托盘上什么都没加。",
+              "en": "The clerk nods and adds nothing to the tray."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要奶精和糖漿）",
+              "zh-Hans": "麻烦了（要奶精和糖浆）",
+              "en": "Yes, please (milk and syrup)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員在托盤上放了奶精和糖漿。你不想加。",
+              "zh-Hans": "店员在托盘上放了奶精和糖浆。你不想加。",
+              "en": "The clerk puts milk and syrup on the tray. You didn't want any."
+            }
+          },
+          {
+            "id": "medium",
+            "ja": "Mで",
+            "meaning": {
+              "zh-Hant": "M 杯",
+              "zh-Hans": "M 杯",
+              "en": "Medium"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "尺寸已經說好了，店員在問要不要奶精和糖漿。",
+              "zh-Hans": "杯型已经说好了，店员在问要不要奶精和糖浆。",
+              "en": "The size is settled. The clerk is asking about milk and syrup."
+            }
+          }
+        ]
+      },
+      "cafe.pickup": {
+        "background": "scene-bg-cafe",
+        "card": {
+          "title": "お受取番号",
+          "lines": [
+            "12番",
+            "アイスカフェラテ　M",
+            "店内"
+          ]
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好（舉手去拿）",
+              "zh-Hans": "好（举手去拿）",
+              "en": "Yes (raising your hand)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你舉手走到取餐口，拿到冰拿鐵。",
+              "zh-Hans": "你举手走到取餐口，拿到冰拿铁。",
+              "en": "You raise your hand and pick up your iced latte."
+            }
+          },
+          {
+            "id": "wait-seat",
+            "ja": "席で待ちます",
+            "meaning": {
+              "zh-Hant": "我回位子等",
+              "zh-Hans": "我回座位等",
+              "en": "I'll wait at my seat"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "你回到位子等，沒有人送過來，冰塊慢慢化了。",
+              "zh-Hans": "你回到座位等，没有人送过来，冰块慢慢化了。",
+              "en": "You wait at your seat. No one brings it over, and the ice melts."
+            }
+          },
+          {
+            "id": "iced",
+            "ja": "アイスで",
+            "meaning": {
+              "zh-Hant": "冰的",
+              "zh-Hans": "冰的",
+              "en": "Iced"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "飲料已經做好了，店員在等 12 號的客人來拿。",
+              "zh-Hans": "饮料已经做好了，店员在等 12 号的客人来拿。",
+              "en": "Your drink is ready. The clerk is waiting for number 12 to come up."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

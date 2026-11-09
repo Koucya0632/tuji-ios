@@ -404,7 +404,7 @@ struct StagedAnswerTests {
 
     private func reply(_ id: String, fits: Bool) -> StageReply {
         let text = LocalizedText(zhHant: id, zhHans: id, en: id)
-        return StageReply(id: id, ja: id, meaning: text, fits: fits, result: text, show: nil)
+        return StageReply(id: id, ja: id, meaning: text, fits: fits, result: text, show: nil, says: nil)
     }
 
     @Test
