@@ -112,6 +112,8 @@ nonisolated struct Phrasing: Identifiable, Hashable, Decodable {
 
     enum Speaker: String, Decodable {
         case clerk
+        /// Counter staff who are not shop clerks, such as at a post office (職員).
+        case staff
         case register
         case screen
     }

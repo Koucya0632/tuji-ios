@@ -75,7 +75,7 @@ function checkPhrasing(question, p) {
   const where = p?.id ?? `${question.id}.phrasings[?]`;
   if (!isString(p?.id)) return problem(where, "phrasing id missing");
   checkEnum(where, "role", p.role, ["first", "review"]);
-  checkEnum(where, "speaker", p.speaker, ["clerk", "register", "screen"]);
+  checkEnum(where, "speaker", p.speaker, ["clerk", "staff", "register", "screen"]);
   checkEnum(where, "speed", p.speed, ["normal", "fast"]);
   if (typeof p.ambience !== "boolean") problem(where, "ambience must be true or false");
   const spoken = [p.text, p.voice, p.audio];
@@ -124,7 +124,7 @@ function checkQuestion(scene, q, ids) {
   const firstVoice = firsts[0]?.voice;
   if (isString(firstVoice)) {
     for (const r of reviews) {
-      if (r.speaker === "clerk" && r.voice === firstVoice) problem(r.id, `review clerk voice must differ from first phrasing's ${firstVoice}`);
+      if ((r.speaker === "clerk" || r.speaker === "staff") && r.voice === firstVoice) problem(r.id, `review clerk voice must differ from first phrasing's ${firstVoice}`);
     }
   }
 

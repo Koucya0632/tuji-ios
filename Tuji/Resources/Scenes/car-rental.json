@@ -710,5 +710,312 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "租一台車",
+          "zh-Hans": "租一辆车",
+          "en": "Picking up a rental car"
+        },
+        "intent": {
+          "zh-Hant": "你在網路上訂了車，預約畫面存在手機裡，駕照和護照都帶著。只想加免責補償。沒有自己的 ETC 卡，這趟會走高速。3 號下午 5 點還車。",
+          "zh-Hans": "你在网上订了车，预约页面存在手机里，驾照和护照都带着。只想加免责补偿。没有自己的 ETC 卡，这趟会走高速。3 号下午 5 点还车。",
+          "en": "You booked a car online and have the booking on your phone, plus your licence and passport. You only want the damage waiver. You don't have an ETC card and will use the expressway. You'll return the car on the 3rd at 5 p.m."
+        },
+        "enter": {
+          "zh-Hant": "走到租車櫃台",
+          "zh-Hans": "走到租车柜台",
+          "en": "Walk up to the rental counter"
+        },
+        "questions": [
+          "car-rental.reservation",
+          "car-rental.licence",
+          "car-rental.coverage",
+          "car-rental.etc-card",
+          "car-rental.damage-check",
+          "car-rental.full-tank",
+          "car-rental.return-time"
+        ]
+      }
+    ],
+    "steps": {
+      "car-rental.reservation": {
+        "background": "scene-bg-car-rental",
+        "replies": [
+          {
+            "id": "screen",
+            "ja": "予約の画面はこちらです",
+            "meaning": {
+              "zh-Hant": "這是預約畫面",
+              "zh-Hans": "这是预约页面",
+              "en": "Here's my booking"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員看了手機畫面，找到你的預約。",
+              "zh-Hans": "店员看了手机页面，找到你的预约。",
+              "en": "The clerk looks at your phone and finds the booking."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "予約していません",
+            "meaning": {
+              "zh-Hant": "沒有預約",
+              "zh-Hans": "没有预约",
+              "en": "I don't have a booking"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員開始幫你查還有沒有空車。你其實訂好了。",
+              "zh-Hans": "店员开始帮你查还有没有空车。你其实订好了。",
+              "en": "The clerk starts checking for a free car. You did book one."
+            }
+          },
+          {
+            "id": "no-etc",
+            "ja": "持っていません。お願いします",
+            "meaning": {
+              "zh-Hant": "沒有，麻煩借我",
+              "zh-Hans": "没有，麻烦借我",
+              "en": "I don't have one. Yes, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你的預約資料。",
+              "zh-Hans": "店员还在等你的预约信息。",
+              "en": "The clerk is still waiting for your booking details."
+            }
+          }
+        ]
+      },
+      "car-rental.licence": {
+        "background": "scene-bg-car-rental",
+        "replies": [
+          {
+            "id": "here",
+            "ja": "はい、こちらです",
+            "meaning": {
+              "zh-Hant": "好，在這裡",
+              "zh-Hans": "好，在这里",
+              "en": "Yes, here you are"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你遞出駕照和護照，店員接過去核對。",
+              "zh-Hans": "你递出驾照和护照，店员接过去核对。",
+              "en": "You hand over your licence and passport, and the clerk checks them."
+            }
+          },
+          {
+            "id": "none",
+            "ja": "持っていません",
+            "meaning": {
+              "zh-Hant": "沒有帶",
+              "zh-Hans": "没有带",
+              "en": "I don't have it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員停下手續，等你拿出駕照。你的駕照其實在包包裡。",
+              "zh-Hans": "店员停下手续，等你拿出驾照。你的驾照其实在包里。",
+              "en": "The clerk stops and waits for your licence. It's in your bag."
+            }
+          },
+          {
+            "id": "ok",
+            "ja": "わかりました",
+            "meaning": {
+              "zh-Hant": "知道了",
+              "zh-Hans": "知道了",
+              "en": "Understood"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你拿出駕照。",
+              "zh-Hans": "店员还在等你拿出驾照。",
+              "en": "The clerk is still waiting for your licence."
+            }
+          }
+        ]
+      },
+      "car-rental.coverage": {
+        "background": "scene-bg-car-rental",
+        "note": {
+          "zh-Hant": "店員把補償方案的說明單放到櫃台上。你只想加免責補償。",
+          "zh-Hans": "店员把补偿方案的说明单放到柜台上。你只想加免责补偿。",
+          "en": "The clerk puts the coverage sheet on the counter. You only want the damage waiver."
+        }
+      },
+      "car-rental.etc-card": {
+        "background": "scene-bg-car-rental",
+        "replies": [
+          {
+            "id": "borrow",
+            "ja": "持っていません。お願いします",
+            "meaning": {
+              "zh-Hant": "沒有，麻煩借我",
+              "zh-Hans": "没有，麻烦借我",
+              "en": "I don't have one. Yes, please"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在租車單上加了 ETC 卡。",
+              "zh-Hans": "店员在租车单上加了 ETC 卡。",
+              "en": "The clerk adds an ETC card to your rental form."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員沒有借你卡。你沒有自己的 ETC 卡，這趟又要走高速。",
+              "zh-Hans": "店员没有借你卡。你没有自己的 ETC 卡，这趟又要走高速。",
+              "en": "The clerk doesn't lend you a card. You don't have your own, and you'll be on the expressway."
+            }
+          },
+          {
+            "id": "screen",
+            "ja": "予約の画面はこちらです",
+            "meaning": {
+              "zh-Hant": "這是預約畫面",
+              "zh-Hans": "这是预约页面",
+              "en": "Here's my booking"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "預約剛才看過了，店員在問 ETC 卡。",
+              "zh-Hans": "预约刚才看过了，店员在问 ETC 卡。",
+              "en": "The booking's been checked. The clerk is asking about an ETC card."
+            }
+          }
+        ]
+      },
+      "car-rental.damage-check": {
+        "background": "scene-bg-car-rental",
+        "note": {
+          "zh-Hant": "你和店員繞車一圈，沒有看到新的傷。",
+          "zh-Hans": "你和店员绕车一圈，没有看到新的划痕。",
+          "en": "You walk around the car with the clerk and find no new scratches."
+        }
+      },
+      "car-rental.full-tank": {
+        "background": "scene-bg-car-rental",
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "わかりました",
+            "meaning": {
+              "zh-Hant": "知道了",
+              "zh-Hans": "知道了",
+              "en": "Understood"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員在單子上圈了「満タン返し」。",
+              "zh-Hans": "店员在单子上圈了「満タン返し」。",
+              "en": "The clerk circles 満タン返し on the form."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "いりません",
+            "meaning": {
+              "zh-Hant": "不需要",
+              "zh-Hans": "不需要",
+              "en": "I don't need that"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員愣了一下，又說一次還車前要加滿油。",
+              "zh-Hans": "店员愣了一下，又说一次还车前要加满油。",
+              "en": "The clerk pauses, then says again that the tank must be full when you return it."
+            }
+          },
+          {
+            "id": "no-etc",
+            "ja": "持っていません。お願いします",
+            "meaning": {
+              "zh-Hant": "沒有，麻煩借我",
+              "zh-Hans": "没有，麻烦借我",
+              "en": "I don't have one. Yes, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "ETC 卡剛才說過了，店員在說還車前要加滿油。",
+              "zh-Hans": "ETC 卡刚才说过了，店员在说还车前要加满油。",
+              "en": "The ETC card is settled. The clerk is telling you to fill up before returning."
+            }
+          }
+        ]
+      },
+      "car-rental.return-time": {
+        "background": "scene-bg-car-rental",
+        "card": {
+          "title": "貸渡票",
+          "lines": [
+            "ご返却　3日 17:00",
+            "燃料　満タン返し",
+            "ETCカード　貸出"
+          ]
+        },
+        "replies": [
+          {
+            "id": "ok",
+            "ja": "はい、大丈夫です",
+            "meaning": {
+              "zh-Hant": "好，沒問題",
+              "zh-Hans": "好，没问题",
+              "en": "Yes, that's fine"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把鑰匙交給你。",
+              "zh-Hans": "店员把钥匙交给你。",
+              "en": "The clerk hands you the keys."
+            }
+          },
+          {
+            "id": "4th",
+            "ja": "四日でお願いします",
+            "meaning": {
+              "zh-Hant": "改成 4 號",
+              "zh-Hans": "改成 4 号",
+              "en": "The 4th, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員把還車日改成 4 號，租金多了一天。你原本 3 號還車。",
+              "zh-Hans": "店员把还车日改成 4 号，租金多了一天。你原本 3 号还车。",
+              "en": "The clerk changes the return to the 4th and adds a day's charge. You meant to return on the 3rd."
+            }
+          },
+          {
+            "id": "understood",
+            "ja": "わかりました",
+            "meaning": {
+              "zh-Hant": "知道了",
+              "zh-Hans": "知道了",
+              "en": "Understood"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你確認 3 號下午 5 點對不對。",
+              "zh-Hans": "店员还在等你确认 3 号下午 5 点对不对。",
+              "en": "The clerk is still waiting for you to confirm 5 p.m. on the 3rd."
+            }
+          }
+        ]
+      }
+    }
+  }
 }

@@ -145,7 +145,7 @@ struct SceneContentTests {
     func reviewLinesAreReadByADifferentVoiceThanFirstPractice() throws {
         for (_, question) in try self.allQuestions() {
             guard let firstVoice = question.firstPhrasing?.spoken?.voice else { continue }
-            for review in question.phrasings where review.role == .review && review.speaker == .clerk {
+            for review in question.phrasings where review.role == .review && [.clerk, .staff].contains(review.speaker) {
                 #expect(review.spoken?.voice != firstVoice, "\(review.id.rawValue)")
             }
         }

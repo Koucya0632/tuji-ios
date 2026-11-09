@@ -608,5 +608,394 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "main",
+        "title": {
+          "zh-Hant": "試穿三件",
+          "zh-Hans": "试穿三件",
+          "en": "Trying on three things"
+        },
+        "intent": {
+          "zh-Hant": "你想自己慢慢逛，挑了三件衣服去試穿。穿起來剛好，是買給自己的。自己帶了包包，刷信用卡一次付清。",
+          "zh-Hans": "你想自己慢慢逛，挑了三件衣服去试穿。穿起来正好，是买给自己的。自己带了包，刷信用卡一次付清。",
+          "en": "You want to browse on your own, and you take three items to try on. They fit, and they're for you. You have your own bag and will pay by card in one go."
+        },
+        "enter": {
+          "zh-Hant": "走進店裡",
+          "zh-Hans": "走进店里",
+          "en": "Walk into the shop"
+        },
+        "questions": [
+          "clothing-store.looking",
+          "clothing-store.item-count",
+          "clothing-store.shoes",
+          "clothing-store.fit",
+          "clothing-store.gift",
+          "clothing-store.bag",
+          "clothing-store.lump-sum"
+        ]
+      }
+    ],
+    "steps": {
+      "clothing-store.looking": {
+        "background": "scene-bg-clothing-store",
+        "replies": [
+          {
+            "id": "browsing",
+            "ja": "見ているだけです",
+            "meaning": {
+              "zh-Hant": "只是看看",
+              "zh-Hans": "只是看看",
+              "en": "Just looking"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員說聲慢慢看，就走開了。",
+              "zh-Hans": "店员说了声慢慢看，就走开了。",
+              "en": "The clerk says take your time and steps away."
+            }
+          },
+          {
+            "id": "shirt",
+            "ja": "シャツを探しています",
+            "meaning": {
+              "zh-Hant": "我在找襯衫",
+              "zh-Hans": "我在找衬衫",
+              "en": "I'm looking for a shirt"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員開始帶你去看襯衫。你只想自己看看。",
+              "zh-Hans": "店员开始带你去看衬衫。你只想自己看看。",
+              "en": "The clerk starts leading you to the shirts. You wanted to browse alone."
+            }
+          },
+          {
+            "id": "three",
+            "ja": "三点です",
+            "meaning": {
+              "zh-Hant": "三件",
+              "zh-Hans": "三件",
+              "en": "Three items"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說在找什麼。",
+              "zh-Hans": "店员还在等你说在找什么。",
+              "en": "The clerk is still waiting to hear what you're after."
+            }
+          }
+        ]
+      },
+      "clothing-store.item-count": {
+        "background": "scene-bg-clothing-store",
+        "replies": [
+          {
+            "id": "three",
+            "ja": "三点です",
+            "meaning": {
+              "zh-Hant": "三件",
+              "zh-Hans": "三件",
+              "en": "Three items"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員數了數，給你一張寫著 3 的牌子。",
+              "zh-Hans": "店员数了数，给你一张写着 3 的牌子。",
+              "en": "The clerk counts them and gives you a tag marked 3."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "二点です",
+            "meaning": {
+              "zh-Hant": "兩件",
+              "zh-Hans": "两件",
+              "en": "Two items"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員給你寫著 2 的牌子，又數了一次你手上的衣服。你拿的是三件。",
+              "zh-Hans": "店员给你写着 2 的牌子，又数了一次你手上的衣服。你拿的是三件。",
+              "en": "The clerk hands you a tag marked 2, then counts again. You're holding three."
+            }
+          },
+          {
+            "id": "fits",
+            "ja": "ちょうどいいです",
+            "meaning": {
+              "zh-Hant": "剛好",
+              "zh-Hans": "正好",
+              "en": "It fits"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒試穿，店員在問你拿了幾件。",
+              "zh-Hans": "还没试穿，店员在问你拿了几件。",
+              "en": "You haven't tried anything on yet. The clerk is asking how many items."
+            }
+          }
+        ]
+      },
+      "clothing-store.shoes": {
+        "background": "scene-bg-clothing-store",
+        "card": {
+          "title": "試着札",
+          "lines": [
+            "お預り　3点"
+          ]
+        },
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "はい",
+            "meaning": {
+              "zh-Hant": "好",
+              "zh-Hans": "好",
+              "en": "OK"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "你把鞋子留在試衣間外面，走了進去。",
+              "zh-Hans": "你把鞋子留在试衣间外面，走了进去。",
+              "en": "You leave your shoes outside and step into the fitting room."
+            }
+          },
+          {
+            "id": "keep-on",
+            "ja": "このままでいいですか",
+            "meaning": {
+              "zh-Hant": "穿著鞋可以嗎",
+              "zh-Hans": "穿着鞋可以吗",
+              "en": "Can I keep them on?"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員指指地上，請你把鞋子脫在外面。",
+              "zh-Hans": "店员指指地上，请你把鞋子脱在外面。",
+              "en": "The clerk points at the floor and asks you to leave your shoes outside."
+            }
+          },
+          {
+            "id": "for-me",
+            "ja": "自宅用で",
+            "meaning": {
+              "zh-Hant": "自己用",
+              "zh-Hans": "自己用",
+              "en": "It's for me"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在指著你的鞋子。",
+              "zh-Hans": "店员还在指着你的鞋子。",
+              "en": "The clerk is still pointing at your shoes."
+            }
+          }
+        ]
+      },
+      "clothing-store.fit": {
+        "background": "scene-bg-clothing-store",
+        "replies": [
+          {
+            "id": "fits",
+            "ja": "ちょうどいいです",
+            "meaning": {
+              "zh-Hant": "剛好",
+              "zh-Hans": "正好",
+              "en": "It fits"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員幫你把三件衣服拿到櫃台。",
+              "zh-Hans": "店员帮你把三件衣服拿到柜台。",
+              "en": "The clerk takes the three items to the register for you."
+            }
+          },
+          {
+            "id": "small",
+            "ja": "ちょっと小さいです",
+            "meaning": {
+              "zh-Hant": "有點小",
+              "zh-Hans": "有点小",
+              "en": "A bit small"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員去拿大一號的來。你穿起來其實剛好。",
+              "zh-Hans": "店员去拿大一号的来。你穿起来其实正好。",
+              "en": "The clerk goes for a size up. These fit you fine."
+            }
+          },
+          {
+            "id": "lump",
+            "ja": "はい、一括で",
+            "meaning": {
+              "zh-Hant": "對，一次付清",
+              "zh-Hans": "对，一次付清",
+              "en": "Yes, in one payment"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到付款，店員在問尺寸合不合。",
+              "zh-Hans": "还没到付款，店员在问尺码合不合。",
+              "en": "You're not paying yet. The clerk is asking about the fit."
+            }
+          }
+        ]
+      },
+      "clothing-store.gift": {
+        "background": "scene-bg-clothing-store",
+        "replies": [
+          {
+            "id": "for-me",
+            "ja": "自宅用で",
+            "meaning": {
+              "zh-Hant": "自己用",
+              "zh-Hans": "自己用",
+              "en": "It's for me"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把衣服直接摺好，沒有包裝。",
+              "zh-Hans": "店员把衣服直接叠好，没有包装。",
+              "en": "The clerk folds the clothes without wrapping them."
+            }
+          },
+          {
+            "id": "gift",
+            "ja": "プレゼントで",
+            "meaning": {
+              "zh-Hant": "送人的",
+              "zh-Hans": "送人的",
+              "en": "It's a gift"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員拿出包裝紙開始包。衣服是你自己要穿的。",
+              "zh-Hans": "店员拿出包装纸开始包。衣服是你自己要穿的。",
+              "en": "The clerk starts gift-wrapping. They're for you."
+            }
+          },
+          {
+            "id": "fits",
+            "ja": "ちょうどいいです",
+            "meaning": {
+              "zh-Hant": "剛好",
+              "zh-Hans": "正好",
+              "en": "It fits"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "尺寸剛才說過了，店員在問自己用還是送人。",
+              "zh-Hans": "尺码刚才说过了，店员在问自己用还是送人。",
+              "en": "You've already said they fit. The clerk is asking if they're a gift."
+            }
+          }
+        ]
+      },
+      "clothing-store.bag": {
+        "background": "scene-bg-clothing-store",
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把衣服交給你，你放進自己的包包。",
+              "zh-Hans": "店员把衣服交给你，你放进自己的包里。",
+              "en": "The clerk hands you the clothes, and you put them in your own bag."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要袋子）",
+              "zh-Hans": "麻烦了（要袋子）",
+              "en": "Yes, please (a bag)"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員把衣服裝進紙袋，多收了袋子錢。你自己有帶包包。",
+              "zh-Hans": "店员把衣服装进纸袋，多收了袋子钱。你自己带了包。",
+              "en": "The clerk puts them in a paper bag and charges for it. You have your own."
+            }
+          },
+          {
+            "id": "for-me",
+            "ja": "自宅用で",
+            "meaning": {
+              "zh-Hant": "自己用",
+              "zh-Hans": "自己用",
+              "en": "It's for me"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "這個剛才說過了，店員在問要不要袋子。",
+              "zh-Hans": "这个刚才说过了，店员在问要不要袋子。",
+              "en": "You've already said that. The clerk is asking about a bag."
+            }
+          }
+        ]
+      },
+      "clothing-store.lump-sum": {
+        "background": "scene-bg-clothing-store",
+        "replies": [
+          {
+            "id": "lump",
+            "ja": "はい、一括で",
+            "meaning": {
+              "zh-Hant": "對，一次付清",
+              "zh-Hans": "对，一次付清",
+              "en": "Yes, in one payment"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員刷了卡，請你簽名。",
+              "zh-Hans": "店员刷了卡，请你签名。",
+              "en": "The clerk runs your card and asks you to sign."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "二回で",
+            "meaning": {
+              "zh-Hant": "分兩次",
+              "zh-Hans": "分两次",
+              "en": "In two payments"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員改成分兩次付款。你原本想一次付清。",
+              "zh-Hans": "店员改成分两次付款。你原本想一次付清。",
+              "en": "The clerk sets it to two payments. You wanted to pay in one."
+            }
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你說是不是一次付清。",
+              "zh-Hans": "店员还在等你说是不是一次付清。",
+              "en": "The clerk is still waiting to hear if it's one payment."
+            }
+          }
+        ]
+      }
+    }
+  }
 }
