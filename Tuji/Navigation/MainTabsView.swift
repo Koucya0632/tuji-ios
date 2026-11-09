@@ -18,6 +18,7 @@ struct MainTabsView: View {
     @Environment(DeepLinkCoordinator.self) private var deepLinks
     @Environment(StudyFocus.self) private var studyFocus
     @Environment(OnboardingState.self) private var onboarding
+    @Environment(SettingsStore.self) private var settings
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Owned here, reachable everywhere: see `TabNavigator` for why the paths
@@ -236,7 +237,7 @@ struct MainTabsView: View {
     /// here is the animation, the two beats, and the anchor resolution that
     /// cannot live anywhere else.
     private var tour: FeatureTourFlow {
-        FeatureTourFlow()
+        FeatureTourFlow.forDirection(hasScenes: self.settings.current.learningDirection.hasScenes)
     }
 
     private var tourSteps: [TourStep] {
@@ -292,7 +293,7 @@ struct MainTabsView: View {
         self.endTour(landingOn: FeatureTourFlow.tabAfterFinishing)
         // Next runloop turn, like a deep link's push: the tab switch lands first.
         DispatchQueue.main.async {
-            self.navigator.push(FeatureTourFlow.routeAfterFinishing, on: FeatureTourFlow.tabAfterFinishing)
+            self.navigator.push(self.tour.routeAfterFinishing, on: FeatureTourFlow.tabAfterFinishing)
         }
     }
 
