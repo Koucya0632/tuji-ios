@@ -30144,6 +30144,54 @@
           }
         }
       }
+    },
+    "職員" : {
+      "comment" : "Who is speaking in a scene question: counter staff who are not shop clerks, such as at a post office.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Staff"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "職員"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作人员"
+          }
+        }
+      }
+    },
+    "職員在問什麼？" : {
+      "comment" : "場面練習: Practice prompt above the choices.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What is the staff member asking?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "職員は何と聞いている？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "工作人员在问什么？"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

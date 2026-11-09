@@ -18,6 +18,7 @@ extension Phrasing.Speaker {
     var label: LocalizedStringKey {
         switch self {
         case .clerk: "店員"
+        case .staff: "職員"
         case .register: "收銀機"
         case .screen: "螢幕"
         }
@@ -27,6 +28,7 @@ extension Phrasing.Speaker {
     var asking: LocalizedStringKey {
         switch self {
         case .clerk: "店員在問什麼？"
+        case .staff: "職員在問什麼？"
         case .register: "收銀機在問什麼？"
         case .screen: "畫面上要按哪一個？"
         }
@@ -34,7 +36,7 @@ extension Phrasing.Speaker {
 
     var symbol: String {
         switch self {
-        case .clerk: "person.fill"
+        case .clerk, .staff: "person.fill"
         case .register: "printer.fill"
         case .screen: "rectangle.portrait"
         }

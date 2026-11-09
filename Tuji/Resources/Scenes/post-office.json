@@ -26,7 +26,7 @@
         {
           "id": "post-office.destination.p1",
           "role": "first",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "どちらまでお送りしますか？",
           "voice": "Aoede",
           "speed": "normal",
@@ -37,7 +37,7 @@
         {
           "id": "post-office.destination.p2",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "お届け先はどちらですか？",
           "voice": "Puck",
           "speed": "fast",
@@ -48,7 +48,7 @@
         {
           "id": "post-office.destination.p3",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "国内ですか、海外ですか？",
           "voice": "Kore",
           "speed": "normal",
@@ -113,7 +113,7 @@
         {
           "id": "post-office.method.p1",
           "role": "first",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "EMSと航空便、どちらになさいますか？",
           "voice": "Aoede",
           "speed": "normal",
@@ -124,7 +124,7 @@
         {
           "id": "post-office.method.p2",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "発送方法はいかがなさいますか？",
           "voice": "Charon",
           "speed": "fast",
@@ -135,7 +135,7 @@
         {
           "id": "post-office.method.p3",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "航空便と船便がございますが、どうなさいますか？",
           "voice": "Kore",
           "speed": "normal",
@@ -198,7 +198,7 @@
         {
           "id": "post-office.contents.p1",
           "role": "first",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "中身は何ですか？",
           "voice": "Aoede",
           "speed": "normal",
@@ -209,7 +209,7 @@
         {
           "id": "post-office.contents.p2",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "中身をお伺いしてもよろしいですか？",
           "voice": "Puck",
           "speed": "fast",
@@ -220,7 +220,7 @@
         {
           "id": "post-office.contents.p3",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "内容品は何でしょうか？",
           "voice": "Charon",
           "speed": "normal",
@@ -285,7 +285,7 @@
         {
           "id": "post-office.batteries.p1",
           "role": "first",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "電池やスプレー缶は入っていませんか？",
           "voice": "Aoede",
           "speed": "normal",
@@ -296,7 +296,7 @@
         {
           "id": "post-office.batteries.p2",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "リチウム電池などは入っていませんよね？",
           "voice": "Charon",
           "speed": "fast",
@@ -307,7 +307,7 @@
         {
           "id": "post-office.batteries.p3",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "危険物は入っていませんか？",
           "voice": "Kore",
           "speed": "normal",
@@ -372,7 +372,7 @@
         {
           "id": "post-office.label.p1",
           "role": "first",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "こちらのラベルにご記入をお願いします",
           "voice": "Aoede",
           "speed": "normal",
@@ -383,7 +383,7 @@
         {
           "id": "post-office.label.p2",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "お届け先と中身を、こちらにお願いします",
           "voice": "Puck",
           "speed": "fast",
@@ -394,7 +394,7 @@
         {
           "id": "post-office.label.p3",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "伝票のご記入をお願いできますか？",
           "voice": "Kore",
           "speed": "normal",
@@ -459,7 +459,7 @@
         {
           "id": "post-office.payment.p1",
           "role": "first",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "お支払いは現金でよろしいですか？",
           "voice": "Aoede",
           "speed": "normal",
@@ -470,7 +470,7 @@
         {
           "id": "post-office.payment.p2",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "お支払い方法はいかがなさいますか？",
           "voice": "Puck",
           "speed": "fast",
@@ -481,7 +481,7 @@
         {
           "id": "post-office.payment.p3",
           "role": "review",
-          "speaker": "clerk",
+          "speaker": "staff",
           "text": "お支払いは現金ですか、カードですか？",
           "voice": "Charon",
           "speed": "normal",
@@ -577,7 +577,7 @@
             "result": {
               "zh-Hant": "職員拿出寄國外的單子。",
               "zh-Hans": "工作人员拿出寄国外的单子。",
-              "en": "The clerk takes out an international form."
+              "en": "The staff member takes out an international form."
             }
           },
           {
@@ -592,7 +592,7 @@
             "result": {
               "zh-Hant": "職員拿出國內用的單子。你要寄回台灣。",
               "zh-Hans": "工作人员拿出国内用的单子。你要寄回台湾。",
-              "en": "The clerk takes out a domestic form. You're sending it to Taiwan."
+              "en": "The staff member takes out a domestic form. You're sending it to Taiwan."
             }
           },
           {
@@ -607,7 +607,7 @@
             "result": {
               "zh-Hant": "職員還在等你說寄到哪裡。",
               "zh-Hans": "工作人员还在等你说寄到哪里。",
-              "en": "The clerk is still waiting to hear where it's going."
+              "en": "The staff member is still waiting to hear where it's going."
             }
           }
         ]
@@ -627,7 +627,7 @@
             "result": {
               "zh-Hant": "職員拿出 EMS 的單子。",
               "zh-Hans": "工作人员拿出 EMS 的单子。",
-              "en": "The clerk takes out an EMS form."
+              "en": "The staff member takes out an EMS form."
             }
           },
           {
@@ -642,7 +642,7 @@
             "result": {
               "zh-Hant": "職員拿出海運的單子。你想用 EMS。",
               "zh-Hans": "工作人员拿出海运的单子。你想用 EMS。",
-              "en": "The clerk takes out a sea mail form. You wanted EMS."
+              "en": "The staff member takes out a sea mail form. You wanted EMS."
             }
           },
           {
@@ -657,7 +657,7 @@
             "result": {
               "zh-Hant": "職員還在等你選寄送方式。",
               "zh-Hans": "工作人员还在等你选寄送方式。",
-              "en": "The clerk is still waiting for you to choose how to send it."
+              "en": "The staff member is still waiting for you to choose how to send it."
             }
           }
         ]
@@ -677,7 +677,7 @@
             "result": {
               "zh-Hant": "職員點點頭，指著單子上寫內容物的地方。",
               "zh-Hans": "工作人员点点头，指着单子上写内容物的地方。",
-              "en": "The clerk nods and points to the contents box on the form."
+              "en": "The staff member nods and points to the contents box on the form."
             }
           },
           {
@@ -692,7 +692,7 @@
             "result": {
               "zh-Hant": "職員請你在單子上只寫衣服。箱子裡還有零食。",
               "zh-Hans": "工作人员请你在单子上只写衣服。箱子里还有零食。",
-              "en": "The clerk tells you to write just clothes. The box has snacks too."
+              "en": "The staff member tells you to write just clothes. The box has snacks too."
             }
           },
           {
@@ -707,7 +707,7 @@
             "result": {
               "zh-Hant": "寄到哪裡剛才說過了，職員在問箱子裡是什麼。",
               "zh-Hans": "寄到哪里刚才说过了，工作人员在问箱子里是什么。",
-              "en": "You've already said where. The clerk is asking what's inside."
+              "en": "You've already said where. The staff member is asking what's inside."
             }
           }
         ]
@@ -727,7 +727,7 @@
             "result": {
               "zh-Hant": "職員點點頭，繼續辦。",
               "zh-Hans": "工作人员点点头，继续办。",
-              "en": "The clerk nods and carries on."
+              "en": "The staff member nods and carries on."
             }
           },
           {
@@ -742,7 +742,7 @@
             "result": {
               "zh-Hant": "職員請你打開箱子一起看。你其實沒有放這些東西。",
               "zh-Hans": "工作人员请你打开箱子一起看。你其实没有放这些东西。",
-              "en": "The clerk asks you to open the box together. You didn't pack any of those."
+              "en": "The staff member asks you to open the box together. You didn't pack any of those."
             }
           },
           {
@@ -757,7 +757,7 @@
             "result": {
               "zh-Hant": "還沒到付款，職員在問有沒有電池或噴霧罐。",
               "zh-Hans": "还没到付款，工作人员在问有没有电池或喷雾罐。",
-              "en": "You're not paying yet. The clerk is asking about batteries and spray cans."
+              "en": "You're not paying yet. The staff member is asking about batteries and spray cans."
             }
           }
         ]
@@ -792,7 +792,7 @@
             "result": {
               "zh-Hant": "職員把筆遞給你，請你自己填。",
               "zh-Hans": "工作人员把笔递给你，请你自己填。",
-              "en": "The clerk hands you a pen and asks you to fill it in yourself."
+              "en": "The staff member hands you a pen and asks you to fill it in yourself."
             }
           },
           {
@@ -807,7 +807,7 @@
             "result": {
               "zh-Hant": "寄送方式剛才說過了，職員在等你填單子。",
               "zh-Hans": "寄送方式刚才说过了，工作人员在等你填单子。",
-              "en": "You've already chosen. The clerk is waiting for you to fill in the form."
+              "en": "You've already chosen. The staff member is waiting for you to fill in the form."
             }
           }
         ]
@@ -834,7 +834,7 @@
             "result": {
               "zh-Hant": "職員把讀卡機轉向你。",
               "zh-Hans": "工作人员把刷卡机转向你。",
-              "en": "The clerk turns the card reader towards you."
+              "en": "The staff member turns the card reader towards you."
             }
           },
           {
@@ -849,7 +849,7 @@
             "result": {
               "zh-Hant": "職員等你拿出現金。你想刷卡。",
               "zh-Hans": "工作人员等你拿出现金。你想刷卡。",
-              "en": "The clerk waits for cash. You wanted to pay by card."
+              "en": "The staff member waits for cash. You wanted to pay by card."
             }
           },
           {
@@ -864,7 +864,7 @@
             "result": {
               "zh-Hant": "寄送方式剛才說過了，職員在問怎麼付款。",
               "zh-Hans": "寄送方式刚才说过了，工作人员在问怎么付款。",
-              "en": "You've already chosen that. The clerk is asking how you'll pay."
+              "en": "You've already chosen that. The staff member is asking how you'll pay."
             }
           }
         ]
