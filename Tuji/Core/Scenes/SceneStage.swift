@@ -1,0 +1,67 @@
+// The immersive staging of a 場面 (SCENE_PRACTICE_IMMERSIVE_DESIGN.md): a
+// photo background says where the traveller is, props sit on the counter,
+// and each 問句 is answered by doing something. A listening 問句 offers short
+// replies to say; a screen 問句 hands over a working machine.
+//
+// It lives in the scene's own JSON beside the questions it stages, keyed by
+// question id, so progress keeps keying on the same ids.
+
+import Foundation
+
+nonisolated struct SceneStage: Hashable, Decodable {
+    /// What the traveller is here to do, said before anything plays.
+    let intent: LocalizedText
+    /// The button that walks in and starts the first line.
+    let enter: LocalizedText
+    /// Keyed by question id.
+    let steps: [String: StageStep]
+}
+
+nonisolated struct StageStep: Hashable, Decodable {
+    /// An asset catalog name.
+    let background: String
+    /// Props on the counter when the 問句 starts, by asset name.
+    let props: [String]?
+    /// A line about this moment, when the intent alone does not cover it
+    /// ("this time there is a can of beer in the basket").
+    let note: LocalizedText?
+    let replies: [StageReply]?
+    let machine: StageMachine?
+}
+
+/// A short thing to say back. `fits` says whether it fits this trip: a reply
+/// that does not still shows what happens, then the traveller tries again. A
+/// pure preference (a bag or not) has more than one that fits.
+nonisolated struct StageReply: Hashable, Decodable, Identifiable {
+    let id: String
+    let ja: String
+    let meaning: LocalizedText
+    let fits: Bool
+    /// What the traveller sees happen.
+    let result: LocalizedText
+    /// Props that appear as the result.
+    let show: [String]?
+}
+
+nonisolated struct StageMachine: Hashable, Decodable {
+    let kind: MachineKind
+    let total: Int?
+    let item: String?
+    /// What finishing it should look like: a payment method's raw value, or
+    /// `yes` for the age check. Absent, any finish counts.
+    let expect: String?
+
+    func makeMachine() -> SceneMachine {
+        SceneMachine(kind: self.kind, total: self.total, item: self.item)
+    }
+
+    /// Whether this finish is the one the trip wanted.
+    func fits(_ outcome: MachineOutcome) -> Bool {
+        guard let expect else { return true }
+        switch outcome {
+        case let .paid(method, _): return method.rawValue == expect
+        case let .age(answer): return answer == .yes && expect == "yes"
+        case .ticket, .ordered: return true
+        }
+    }
+}

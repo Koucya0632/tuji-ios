@@ -578,5 +578,270 @@
       },
       "wordIds": []
     }
-  ]
+  ],
+  "stage": {
+    "intent": {
+      "zh-Hant": "你拿了一個便當當午餐，想請店員加熱。手上有信用卡，沒有集點卡。",
+      "zh-Hans": "你拿了一个便当当午饭，想请店员加热。手上有信用卡，没有积分卡。",
+      "en": "You picked up a bento for lunch and want it heated. You have a credit card and no point card."
+    },
+    "enter": {
+      "zh-Hant": "走到收銀台",
+      "zh-Hans": "走到收银台",
+      "en": "Walk up to the register"
+    },
+    "steps": {
+      "konbini-checkout.heat": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "heat",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要加熱）",
+              "zh-Hans": "麻烦了（要加热）",
+              "en": "Yes, please (heat it)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把便當拿去微波爐加熱。",
+              "zh-Hans": "店员把便当拿去微波炉加热。",
+              "en": "The clerk takes the bento to the microwave."
+            }
+          },
+          {
+            "id": "no-heat",
+            "ja": "そのままで大丈夫です",
+            "meaning": {
+              "zh-Hant": "這樣就好（不用加熱）",
+              "zh-Hans": "这样就好（不用加热）",
+              "en": "It's fine as it is"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員沒有加熱，便當是冷的。你原本想吃熱的。",
+              "zh-Hans": "店员没有加热，便当是凉的。你本来想吃热的。",
+              "en": "The clerk leaves it cold. You wanted it hot."
+            }
+          },
+          {
+            "id": "no-bag",
+            "ja": "袋はいりません",
+            "meaning": {
+              "zh-Hant": "不用袋子",
+              "zh-Hans": "不用袋子",
+              "en": "I don't need a bag"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你回答要不要加熱。",
+              "zh-Hans": "店员还在等你回答要不要加热。",
+              "en": "The clerk is still waiting to hear about heating."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.bag": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "bag",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要袋子）",
+              "zh-Hans": "麻烦了（要袋子）",
+              "en": "Yes, please (a bag)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把便當放進袋子。",
+              "zh-Hans": "店员把便当放进袋子。",
+              "en": "The clerk puts the bento in a bag."
+            },
+            "show": [
+              "prop-bag"
+            ]
+          },
+          {
+            "id": "no-bag",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把便當直接交給你。",
+              "zh-Hans": "店员把便当直接交给你。",
+              "en": "The clerk hands you the bento as it is."
+            }
+          },
+          {
+            "id": "heat",
+            "ja": "温めてください",
+            "meaning": {
+              "zh-Hant": "請幫我加熱",
+              "zh-Hans": "请帮我加热",
+              "en": "Please heat it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "便當已經熱好了，店員在問袋子。",
+              "zh-Hans": "便当已经热好了，店员在问袋子。",
+              "en": "The bento is already heated. The clerk is asking about a bag."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.utensils": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要筷子）",
+              "zh-Hans": "麻烦了（要筷子）",
+              "en": "Yes, please (chopsticks)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員放了一雙筷子在便當上。",
+              "zh-Hans": "店员放了一双筷子在便当上。",
+              "en": "The clerk puts a pair of chopsticks on the bento."
+            },
+            "show": [
+              "prop-utensils"
+            ]
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員沒有放餐具。",
+              "zh-Hans": "店员没有放餐具。",
+              "en": "The clerk adds no utensils."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到付款，店員在問要不要筷子。",
+              "zh-Hans": "还没到付款，店员在问要不要筷子。",
+              "en": "It's not time to pay yet. The clerk is asking about chopsticks."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.point-card": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "none",
+            "ja": "持っていません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "I don't have one"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，開始結帳。",
+              "zh-Hans": "店员点点头，开始结账。",
+              "en": "The clerk nods and rings you up."
+            }
+          },
+          {
+            "id": "fine",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，開始結帳。",
+              "zh-Hans": "店员点点头，开始结账。",
+              "en": "The clerk nods and rings you up."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了",
+              "zh-Hans": "麻烦了",
+              "en": "Yes, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員等著你拿出集點卡，可是你沒有。",
+              "zh-Hans": "店员等着你拿出积分卡，可是你没有。",
+              "en": "The clerk waits for your point card, but you don't have one."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.payment": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento",
+          "prop-credit-card"
+        ],
+        "note": {
+          "zh-Hant": "收銀台前的顧客端螢幕亮了。",
+          "zh-Hans": "收银台前的顾客端屏幕亮了。",
+          "en": "The customer screen on the counter lights up."
+        },
+        "machine": {
+          "kind": "payment",
+          "total": 598,
+          "item": "弁当",
+          "expect": "card"
+        }
+      },
+      "konbini-checkout.age-check": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "note": {
+          "zh-Hant": "這次你還拿了一罐啤酒。你已經 25 歲。",
+          "zh-Hans": "这次你还拿了一罐啤酒。你已经 25 岁。",
+          "en": "This time you also picked up a can of beer. You are 25."
+        },
+        "machine": {
+          "kind": "age-confirm",
+          "expect": "yes"
+        }
+      }
+    }
+  }
 }

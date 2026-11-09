@@ -61,6 +61,13 @@ nonisolated struct PracticeScene: Identifiable, Hashable, Decodable {
     let title: LocalizedText
     let summary: LocalizedText
     let questions: [SceneQuestion]
+    /// The immersive staging: where the traveller stands and what they can
+    /// do at each 問句. A scene without one keeps the plain practice screen.
+    let stage: SceneStage?
+
+    func stageStep(_ question: SceneQuestionID) -> StageStep? {
+        self.stage?.steps[question.rawValue]
+    }
 }
 
 nonisolated struct SceneQuestion: Identifiable, Hashable, Decodable {

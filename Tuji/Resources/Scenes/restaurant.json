@@ -554,5 +554,281 @@
       },
       "wordIds": ["ordering-tablet"]
     }
-  ]
+  ],
+  "stage": {
+    "intent": {
+      "zh-Hant": "你和朋友兩個人想在店裡吃午餐，各付各的。",
+      "zh-Hans": "你和朋友两个人想在店里吃午饭，各付各的。",
+      "en": "You and a friend want to eat lunch in, and pay separately."
+    },
+    "enter": {
+      "zh-Hant": "走進店門",
+      "zh-Hans": "走进店门",
+      "en": "Step inside"
+    },
+    "steps": {
+      "restaurant.party-size": {
+        "background": "story-restaurant-entrance",
+        "replies": [
+          {
+            "id": "two",
+            "ja": "二人です",
+            "meaning": {
+              "zh-Hant": "兩個人",
+              "zh-Hans": "两个人",
+              "en": "Two"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員拿了兩份菜單，帶你們往裡走。",
+              "zh-Hans": "店员拿了两份菜单，带你们往里走。",
+              "en": "The clerk picks up two menus and leads you in."
+            }
+          },
+          {
+            "id": "one",
+            "ja": "一人です",
+            "meaning": {
+              "zh-Hant": "一個人",
+              "zh-Hans": "一个人",
+              "en": "Just one"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員帶你到吧台的單人座。可是你們有兩個人。",
+              "zh-Hans": "店员带你到吧台的单人座。可是你们有两个人。",
+              "en": "The clerk leads you to a single counter seat. There are two of you."
+            }
+          },
+          {
+            "id": "eat-in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "Eating in"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員比了比手指，再問一次幾位。",
+              "zh-Hans": "店员比了比手指，再问一次几位。",
+              "en": "The clerk holds up fingers and asks again how many."
+            }
+          }
+        ]
+      },
+      "restaurant.eat-in": {
+        "background": "story-restaurant-entrance",
+        "replies": [
+          {
+            "id": "in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "Eating in"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員帶你們到桌位。",
+              "zh-Hans": "店员带你们到桌位。",
+              "en": "The clerk shows you to a table."
+            }
+          },
+          {
+            "id": "out",
+            "ja": "持ち帰りで",
+            "meaning": {
+              "zh-Hant": "外帶",
+              "zh-Hans": "打包",
+              "en": "To go"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員遞來外帶菜單。你們想在店裡吃。",
+              "zh-Hans": "店员递来打包菜单。你们想在店里吃。",
+              "en": "The clerk hands you the takeout menu. You wanted to eat in."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "二人です",
+            "meaning": {
+              "zh-Hant": "兩個人",
+              "zh-Hans": "两个人",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員點頭，還在等你說內用還是外帶。",
+              "zh-Hans": "店员点头，还在等你说堂食还是打包。",
+              "en": "The clerk nods, still waiting to hear eat in or to go."
+            }
+          }
+        ]
+      },
+      "restaurant.ready-to-order": {
+        "background": "story-restaurant-dining",
+        "props": [
+          "prop-menu"
+        ],
+        "replies": [
+          {
+            "id": "not-yet",
+            "ja": "まだです",
+            "meaning": {
+              "zh-Hant": "還沒",
+              "zh-Hans": "还没",
+              "en": "Not yet"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員說好，等一下再過來。",
+              "zh-Hans": "店员说好，等一下再过来。",
+              "en": "The clerk says they'll come back."
+            }
+          },
+          {
+            "id": "this",
+            "ja": "これをお願いします",
+            "meaning": {
+              "zh-Hant": "我要這個（指著菜單）",
+              "zh-Hans": "我要这个（指着菜单）",
+              "en": "This one, please (pointing at the menu)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下你指的餐點。",
+              "zh-Hans": "店员记下你指的菜。",
+              "en": "The clerk notes the dish you point to."
+            }
+          },
+          {
+            "id": "separate",
+            "ja": "別々で",
+            "meaning": {
+              "zh-Hant": "分開",
+              "zh-Hans": "分开",
+              "en": "Separately"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到結帳，店員在等你點餐。",
+              "zh-Hans": "还没到结账，店员在等你点菜。",
+              "en": "It's not time to pay. The clerk is waiting for your order."
+            }
+          }
+        ]
+      },
+      "restaurant.drink": {
+        "background": "story-restaurant-dining",
+        "props": [
+          "prop-menu"
+        ],
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員收走飲料單。",
+              "zh-Hans": "店员收走饮料单。",
+              "en": "The clerk takes the drinks list away."
+            }
+          },
+          {
+            "id": "this",
+            "ja": "これで",
+            "meaning": {
+              "zh-Hant": "這個（指著菜單）",
+              "zh-Hans": "这个（指着菜单）",
+              "en": "This one (pointing at the menu)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下你指的飲料。",
+              "zh-Hans": "店员记下你指的饮料。",
+              "en": "The clerk notes the drink you point to."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "二人です",
+            "meaning": {
+              "zh-Hant": "兩個人",
+              "zh-Hans": "两个人",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "你們已經坐下了，店員在問飲料。",
+              "zh-Hans": "你们已经坐下了，店员在问饮料。",
+              "en": "You're already seated. The clerk is asking about drinks."
+            }
+          }
+        ]
+      },
+      "restaurant.split-bill": {
+        "background": "story-restaurant-checkout",
+        "props": [
+          "prop-bill"
+        ],
+        "replies": [
+          {
+            "id": "separate",
+            "ja": "別々で",
+            "meaning": {
+              "zh-Hant": "分開付",
+              "zh-Hans": "分开付",
+              "en": "Separately"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把帳單分成兩張。",
+              "zh-Hans": "店员把账单分成两张。",
+              "en": "The clerk splits the bill in two."
+            }
+          },
+          {
+            "id": "together",
+            "ja": "一緒で",
+            "meaning": {
+              "zh-Hant": "一起付",
+              "zh-Hans": "一起付",
+              "en": "Together"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員開了一張帳單。你們原本想各付各的。",
+              "zh-Hans": "店员开了一张账单。你们本来想各付各的。",
+              "en": "The clerk rings up one bill. You wanted to pay separately."
+            }
+          },
+          {
+            "id": "to-go",
+            "ja": "持ち帰りで",
+            "meaning": {
+              "zh-Hant": "外帶",
+              "zh-Hans": "打包",
+              "en": "To go"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員在問結帳要一起還是分開。",
+              "zh-Hans": "店员在问结账要一起还是分开。",
+              "en": "The clerk is asking whether you're paying together."
+            }
+          }
+        ]
+      },
+      "restaurant.order-machine": {
+        "background": "story-restaurant-entrance"
+      }
+    }
+  }
 }
