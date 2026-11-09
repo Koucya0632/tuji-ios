@@ -34,8 +34,8 @@ final class CheckInModel {
 
     /// 試用點數 still unspent, for the tag on 今天's AI entries; nil once spent or for a member.
     var trialPoints: Int? {
-        guard self.catalog?.trialEnabled == true, let wallet = self.wallet,
-              !wallet.benefits.hasLifetime, let left = wallet.trialAvailable, left > 0 else { return nil }
+        guard self.catalog?.trialEnabled == true, let wallet = self.wallet else { return nil }
+        guard !wallet.benefits.hasLifetime, let left = wallet.trialAvailable, left > 0 else { return nil }
         return left
     }
 
