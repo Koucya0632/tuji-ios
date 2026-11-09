@@ -14,7 +14,7 @@ struct SceneMachineTests {
         var machine = self.payment()
         machine.send(.choose(.cash))
         machine.send(.insert(yen: 500))
-        #expect(machine.screen.detail?.contains("不足 ¥98") == true)
+        #expect(machine.screen.info?.contains("不足 ¥98") == true)
         #expect(!machine.screen.buttons.contains { $0.action == .settle })
         machine.send(.settle)
         #expect(machine.outcome == nil)
@@ -25,7 +25,7 @@ struct SceneMachineTests {
         var machine = self.payment()
         machine.send(.choose(.cash))
         machine.send(.insert(yen: 1000))
-        #expect(machine.screen.detail?.contains("おつり ¥402") == true)
+        #expect(machine.screen.info?.contains("おつり ¥402") == true)
         machine.send(.settle)
         #expect(machine.screen.paper?.contains("おつり　¥402") == true)
         machine.send(.take)
@@ -38,7 +38,7 @@ struct SceneMachineTests {
         machine.send(.choose(.cash))
         machine.send(.insert(yen: 500))
         machine.send(.back)
-        #expect(machine.screen.title == "お支払い方法を選択してください")
+        #expect(machine.screen.headline == "お支払い方法を選択してください")
         machine.send(.choose(.card))
         machine.send(.tapCard)
         machine.send(.take)
@@ -66,7 +66,7 @@ struct SceneMachineTests {
         machine.send(.answerAge(.yes))
         #expect(machine.outcome == .age(answer))
         let titles: [AgeAnswer: String] = [.yes: "年齢確認が完了しました", .no: "係員が確認します", .cancel: "年齢確認を取り消しました"]
-        #expect(machine.screen.title == titles[answer])
+        #expect(machine.screen.headline == titles[answer])
     }
 
     @Test
@@ -95,12 +95,12 @@ struct SceneMachineTests {
         machine.send(.more)
         machine.send(.fewer)
         machine.send(.review)
-        #expect(machine.screen.detail == "アイス烏龍茶 × 2　¥560")
+        #expect(machine.screen.info == "アイス烏龍茶 × 2　¥560")
         machine.send(.placeOrder)
         machine.send(.placeOrder)
         machine.send(.showHistory)
         #expect(machine.outcome == .ordered(item: "アイス烏龍茶", count: 2, total: 560))
-        #expect(machine.screen.detail?.contains("アイス烏龍茶 × 2　¥560") == true)
+        #expect(machine.screen.info?.contains("アイス烏龍茶 × 2　¥560") == true)
     }
 
     @Test
@@ -108,7 +108,7 @@ struct SceneMachineTests {
         var machine = SceneMachine(kind: .orderTablet, total: nil, item: nil)
         machine.send(.addToCart)
         machine.send(.fewer)
-        #expect(machine.screen.title == "メニュー")
+        #expect(machine.screen.headline == "メニュー")
         #expect(machine.outcome == nil)
     }
 }

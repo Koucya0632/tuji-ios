@@ -91,8 +91,9 @@ nonisolated struct MachineControl: Hashable, Identifiable {
 }
 
 nonisolated struct MachineScreen: Hashable {
-    var title: String
-    var detail: String?
+    /// The screen's own heading, in the machine's Japanese.
+    var headline: String
+    var info: String?
     /// A printed slip: the receipt or the ticket, shown as paper.
     var paper: String?
     var buttons: [MachineControl] = []
@@ -206,17 +207,21 @@ nonisolated struct Payment: Hashable {
         switch self.step {
         case .choose:
             return MachineScreen(
-                title: "お支払い方法を選択してください",
-                detail: "お買上げ 1 点　合計 \(yen(self.total))",
+                headline: "お支払い方法を選択してください",
+                info: "お買上げ 1 点　合計 \(yen(self.total))",
                 buttons: [
-                    MachineControl(action: .choose(.card), role: .onScreen("クレジットカード"), isPrimary: true),
+                    MachineControl(
+                        action: .choose(.card),
+                        role: .onScreen("クレジットカード"),
+                        isPrimary: true
+                    ),
                     MachineControl(action: .choose(.cash), role: .onScreen("現金"))
                 ]
             )
         case .card:
             return MachineScreen(
-                title: "カードをかざしてください",
-                detail: "お支払い金額 \(yen(self.total))",
+                headline: "カードをかざしてください",
+                info: "お支払い金額 \(yen(self.total))",
                 buttons: [back],
                 hardware: [MachineControl(action: .tapCard, role: .hardware(.cardReader))]
             )
@@ -224,8 +229,8 @@ nonisolated struct Payment: Hashable {
             let short = self.total - self.inserted
             let balance = short > 0 ? "不足 \(yen(short))" : "おつり \(yen(-short))"
             return MachineScreen(
-                title: "現金を入れてください",
-                detail: "合計 \(yen(self.total))　お預り \(yen(self.inserted))\n\(balance)",
+                headline: "現金を入れてください",
+                info: "合計 \(yen(self.total))　お預り \(yen(self.inserted))\n\(balance)",
                 buttons: (short <= 0
                     ? [MachineControl(action: .settle, role: .onScreen("精算する"), isPrimary: true)]
                     : []) + [back],
@@ -236,13 +241,13 @@ nonisolated struct Payment: Hashable {
         case let .paid(method):
             let cash = method == .cash
             return MachineScreen(
-                title: cash ? "おつりとレシートをお取りください" : "レシートをお取りください",
+                headline: cash ? "おつりとレシートをお取りください" : "レシートをお取りください",
                 paper: "お買上げ明細\n\(self.item)　\(yen(self.total))\n"
                     + (cash ? "お預り　\(yen(self.inserted))\nおつり　\(yen(self.change))" : "クレジット"),
                 hardware: [MachineControl(action: .take, role: .hardware(.tray(withChange: cash)))]
             )
         case .done:
-            return MachineScreen(title: "ありがとうございました", detail: "お会計が完了しました")
+            return MachineScreen(headline: "ありがとうございました", info: "お会計が完了しました")
         }
     }
 }
@@ -264,17 +269,17 @@ nonisolated struct AgeConfirm: Hashable {
         switch self.answer {
         case nil:
             MachineScreen(
-                title: "年齢確認",
-                detail: "お酒をご購入のお客様へ\n20歳以上ですか？",
+                headline: "年齢確認",
+                info: "お酒をご購入のお客様へ\n20歳以上ですか？",
                 buttons: [
                     MachineControl(action: .answerAge(.yes), role: .onScreen("はい"), isPrimary: true),
                     MachineControl(action: .answerAge(.no), role: .onScreen("いいえ")),
                     MachineControl(action: .answerAge(.cancel), role: .onScreen("取消"))
                 ]
             )
-        case .yes: MachineScreen(title: "年齢確認が完了しました", detail: "お会計へお進みください")
-        case .no: MachineScreen(title: "係員が確認します", detail: "この商品はお会計を保留しています")
-        case .cancel: MachineScreen(title: "年齢確認を取り消しました", detail: "係員にお声がけください")
+        case .yes: MachineScreen(headline: "年齢確認が完了しました", info: "お会計へお進みください")
+        case .no: MachineScreen(headline: "係員が確認します", info: "この商品はお会計を保留しています")
+        case .cancel: MachineScreen(headline: "年齢確認を取り消しました", info: "係員にお声がけください")
         }
     }
 }
@@ -324,17 +329,20 @@ nonisolated struct FoodTicket: Hashable {
         switch self.step {
         case .choose:
             return MachineScreen(
-                title: "食券をお選びください",
-                detail: "ラーメン・サイドメニュー",
+                headline: "食券をお選びください",
+                info: "ラーメン・サイドメニュー",
                 buttons: Self.dishes.enumerated().map { index, dish in
-                    MachineControl(action: .pickDish(index), role: .onScreen("\(dish.name)　\(yen(dish.price))"))
+                    MachineControl(
+                        action: .pickDish(index),
+                        role: .onScreen("\(dish.name)　\(yen(dish.price))")
+                    )
                 }
             )
         case let .confirm(index):
             let dish = Self.dishes[index]
             return MachineScreen(
-                title: "ご購入内容の確認",
-                detail: "\(dish.name) × 1　\(yen(dish.price))",
+                headline: "ご購入内容の確認",
+                info: "\(dish.name) × 1　\(yen(dish.price))",
                 buttons: [
                     MachineControl(action: .payDishInCash, role: .onScreen("現金で支払う"), isPrimary: true),
                     MachineControl(action: .back, role: .onScreen("戻る"))
@@ -344,10 +352,16 @@ nonisolated struct FoodTicket: Hashable {
             let price = Self.dishes[index].price
             let enough = self.inserted >= price
             return MachineScreen(
-                title: "現金を入れてください",
-                detail: "合計 \(yen(price))　お預り \(yen(self.inserted))"
-                    + (enough ? "\nおつり \(yen(self.inserted - price))" : "\n不足 \(yen(price - self.inserted))"),
-                buttons: enough ? [MachineControl(action: .issueTicket, role: .onScreen("発券する"), isPrimary: true)] : [],
+                headline: "現金を入れてください",
+                info: "合計 \(yen(price))　お預り \(yen(self.inserted))"
+                    +
+                    (enough ? "\nおつり \(yen(self.inserted - price))" :
+                        "\n不足 \(yen(price - self.inserted))"),
+                buttons: enough ? [MachineControl(
+                    action: .issueTicket,
+                    role: .onScreen("発券する"),
+                    isPrimary: true
+                )] : [],
                 hardware: enough ? [] : [MachineControl(
                     action: .insert(yen: 1000),
                     role: .hardware(.coinSlot(yen: 1000))
@@ -356,12 +370,12 @@ nonisolated struct FoodTicket: Hashable {
         case let .issued(index):
             let dish = Self.dishes[index]
             return MachineScreen(
-                title: "食券とおつりをお取りください",
+                headline: "食券とおつりをお取りください",
                 paper: "食券　No. 023\n\(dish.name)　\(yen(dish.price))\nおつり　\(yen(self.inserted - dish.price))",
                 hardware: [MachineControl(action: .take, role: .hardware(.ticketTray))]
             )
         case let .done(index):
-            return MachineScreen(title: "食券を店員にお渡しください", detail: "\(Self.dishes[index].name) × 1")
+            return MachineScreen(headline: "食券を店員にお渡しください", info: "\(Self.dishes[index].name) × 1")
         }
     }
 }
@@ -385,7 +399,7 @@ nonisolated struct OrderTablet: Hashable {
     private(set) var step: Step = .browse
     private(set) var category: TabletCategory = .noodles
     private(set) var cartCategory: TabletCategory?
-    private(set) var count = 0
+    private(set) var quantity = 0
 
     static let maxCount = 9
 
@@ -395,7 +409,7 @@ nonisolated struct OrderTablet: Hashable {
 
     var outcome: MachineOutcome? {
         guard self.step == .sent || self.step == .history, let item = self.cartItem else { return nil }
-        return .ordered(item: item.name, count: self.count, total: item.price * self.count)
+        return .ordered(item: item.name, count: self.quantity, total: item.price * self.quantity)
     }
 
     mutating func send(_ action: MachineAction) {
@@ -404,13 +418,13 @@ nonisolated struct OrderTablet: Hashable {
             self.category = category
         case (.browse, .addToCart):
             self.cartCategory = self.category
-            self.count = 1
+            self.quantity = 1
             self.step = .cart
-        case (.cart, .more) where self.count < Self.maxCount:
-            self.count += 1
+        case (.cart, .more) where self.quantity < Self.maxCount:
+            self.quantity += 1
         case (.cart, .fewer):
-            self.count -= 1
-            if self.count == 0 {
+            self.quantity -= 1
+            if self.quantity <= 0 {
                 self.cartCategory = nil
                 self.step = .browse
             }
@@ -432,32 +446,39 @@ nonisolated struct OrderTablet: Hashable {
         case .browse:
             let item = Self.items[self.category] ?? ("", 0)
             return MachineScreen(
-                title: "メニュー",
-                detail: "\(self.category.rawValue)　／　注文かご \(self.count) 点",
+                headline: "メニュー",
+                info: "\(self.category.rawValue)　／　注文かご \(self.quantity) 点",
                 buttons: TabletCategory.allCases.map {
                     MachineControl(
                         action: .pickCategory($0),
                         role: .onScreen($0.rawValue),
                         isPrimary: $0 == self.category
                     )
-                } + [MachineControl(action: .addToCart, role: .onScreen("\(item.name)　\(yen(item.price))"))]
+                } + [MachineControl(
+                    action: .addToCart,
+                    role: .onScreen("\(item.name)　\(yen(item.price))")
+                )]
             )
         case .cart:
             let item = self.cartItem ?? ("", 0)
             return MachineScreen(
-                title: "注文かご",
-                detail: "\(item.name) × \(self.count)　小計 \(yen(item.price * self.count))",
+                headline: "注文かご",
+                info: "\(item.name) × \(self.quantity)　小計 \(yen(item.price * self.quantity))",
                 buttons: [
                     MachineControl(action: .fewer, role: .onScreen("数量を減らす")),
-                    MachineControl(action: .more, role: .onScreen("数量を増やす"), isEnabled: self.count < Self.maxCount),
+                    MachineControl(
+                        action: .more,
+                        role: .onScreen("数量を増やす"),
+                        isEnabled: self.quantity < Self.maxCount
+                    ),
                     MachineControl(action: .review, role: .onScreen("注文内容を確認"), isPrimary: true)
                 ]
             )
         case .confirm:
             let item = self.cartItem ?? ("", 0)
             return MachineScreen(
-                title: "この内容で注文しますか？",
-                detail: "\(item.name) × \(self.count)　\(yen(item.price * self.count))",
+                headline: "この内容で注文しますか？",
+                info: "\(item.name) × \(self.quantity)　\(yen(item.price * self.quantity))",
                 buttons: [
                     MachineControl(action: .placeOrder, role: .onScreen("注文する"), isPrimary: true),
                     MachineControl(action: .back, role: .onScreen("戻る"))
@@ -466,9 +487,12 @@ nonisolated struct OrderTablet: Hashable {
         case .sent, .history:
             let item = self.cartItem ?? ("", 0)
             return MachineScreen(
-                title: self.step == .sent ? "ご注文を受け付けました" : "注文履歴",
-                detail: "注文番号 001\n\(item.name) × \(self.count)　\(yen(item.price * self.count))",
-                buttons: self.step == .sent ? [MachineControl(action: .showHistory, role: .onScreen("注文履歴を見る"))] : []
+                headline: self.step == .sent ? "ご注文を受け付けました" : "注文履歴",
+                info: "注文番号 001\n\(item.name) × \(self.quantity)　\(yen(item.price * self.quantity))",
+                buttons: self.step == .sent ? [MachineControl(
+                    action: .showHistory,
+                    role: .onScreen("注文履歴を見る")
+                )] : []
             )
         }
     }

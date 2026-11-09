@@ -129,7 +129,8 @@ struct StagedQuestionView: View {
                 Image(systemName: self.step.phrasing.speaker.symbol).font(.tujiIcon(13, weight: .semibold))
                 Text(self.step.phrasing.speaker.label).font(.tujiLabel)
                 if self.step.mode == .review {
-                    Text("· 複習").font(.tujiLabel)
+                    Text(verbatim: "·").font(.tujiLabel)
+                    Text("複習").font(.tujiLabel)
                 }
                 Spacer()
                 Text("聽過 \(self.plays) 次").font(.scene(13, bold: false))
@@ -309,17 +310,18 @@ struct StagedQuestionView: View {
 
 /// The names VoiceOver reads for the props on the counter.
 enum StageProp {
+    private static let labels: [String: LocalizedStringKey] = [
+        "prop-bento": "便當",
+        "prop-utensils": "餐具",
+        "prop-bag": "購物袋",
+        "prop-loyalty-card": "集點卡",
+        "prop-credit-card": "信用卡",
+        "prop-receipt": "收據",
+        "prop-menu": "菜單",
+        "prop-bill": "帳單"
+    ]
+
     static func label(_ asset: String) -> LocalizedStringKey {
-        switch asset {
-        case "prop-bento": "便當"
-        case "prop-utensils": "餐具"
-        case "prop-bag": "購物袋"
-        case "prop-loyalty-card": "集點卡"
-        case "prop-credit-card": "信用卡"
-        case "prop-receipt": "收據"
-        case "prop-menu": "菜單"
-        case "prop-bill": "帳單"
-        default: "道具"
-        }
+        self.labels[asset] ?? "道具"
     }
 }

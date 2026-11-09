@@ -25,13 +25,13 @@ struct MachineView: View {
                     .background(.tujiMachineBar)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(verbatim: screen.title)
+                    Text(verbatim: screen.headline)
                         .font(.tujiBody(.strong))
                         .foregroundStyle(.tujiMachineBezel)
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityFocused(self.$titleFocused)
-                    if let detail = screen.detail {
+                    if let detail = screen.info {
                         Text(verbatim: detail)
                             .font(.tujiBodySm)
                             .monospacedDigit()
@@ -76,7 +76,7 @@ struct MachineView: View {
         }
         .padding(10)
         .background(.tujiMachineBezel)
-        .onChange(of: screen.title) { self.titleFocused = true }
+        .onChange(of: screen.headline) { self.titleFocused = true }
     }
 
     private var brand: String {
