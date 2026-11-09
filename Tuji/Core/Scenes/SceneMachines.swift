@@ -172,11 +172,6 @@ nonisolated struct Payment: Hashable {
     private(set) var step: Step = .choose
     private(set) var inserted = 0
 
-    init(total: Int, item: String) {
-        self.total = total
-        self.item = item
-    }
-
     var change: Int {
         max(0, self.inserted - self.total)
     }
@@ -300,7 +295,6 @@ nonisolated struct FoodTicket: Hashable {
     private(set) var step: Step = .choose
     private(set) var inserted = 0
 
-
     var outcome: MachineOutcome? {
         guard case let .done(index) = self.step else { return nil }
         let dish = Self.dishes[index]
@@ -354,7 +348,10 @@ nonisolated struct FoodTicket: Hashable {
                 detail: "合計 \(yen(price))　お預り \(yen(self.inserted))"
                     + (enough ? "\nおつり \(yen(self.inserted - price))" : "\n不足 \(yen(price - self.inserted))"),
                 buttons: enough ? [MachineControl(action: .issueTicket, role: .onScreen("発券する"), isPrimary: true)] : [],
-                hardware: enough ? [] : [MachineControl(action: .insert(yen: 1000), role: .hardware(.coinSlot(yen: 1000)))]
+                hardware: enough ? [] : [MachineControl(
+                    action: .insert(yen: 1000),
+                    role: .hardware(.coinSlot(yen: 1000))
+                )]
             )
         case let .issued(index):
             let dish = Self.dishes[index]
@@ -389,7 +386,6 @@ nonisolated struct OrderTablet: Hashable {
     private(set) var category: TabletCategory = .noodles
     private(set) var cartCategory: TabletCategory?
     private(set) var count = 0
-
 
     static let maxCount = 9
 
@@ -439,7 +435,11 @@ nonisolated struct OrderTablet: Hashable {
                 title: "メニュー",
                 detail: "\(self.category.rawValue)　／　注文かご \(self.count) 点",
                 buttons: TabletCategory.allCases.map {
-                    MachineControl(action: .pickCategory($0), role: .onScreen($0.rawValue), isPrimary: $0 == self.category)
+                    MachineControl(
+                        action: .pickCategory($0),
+                        role: .onScreen($0.rawValue),
+                        isPrimary: $0 == self.category
+                    )
                 } + [MachineControl(action: .addToCart, role: .onScreen("\(item.name)　\(yen(item.price))"))]
             )
         case .cart:

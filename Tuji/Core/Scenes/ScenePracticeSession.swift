@@ -83,9 +83,40 @@ final class ScenePracticeSession {
     }
 
     func answer(_ choiceId: String) {
+        guard let choice = self.currentQuestion?.choices.first(where: { $0.id == choiceId }) else { return }
+        self.settle(tried: choiceId, correct: choice.correct)
+    }
+
+    /// A reply said on a staged listening 問句. One that does not fit this
+    /// trip counts as a try; its result shows and the traveller tries again.
+    func reply(_ reply: StageReply) {
+        self.settle(tried: "reply:" + reply.id, correct: reply.fits)
+    }
+
+    /// A machine run to its end. Restarting a machine is the view's business;
+    /// only a finish reaches the session, once.
+    func finish(_ outcome: MachineOutcome, fits: Bool) {
+        self.settle(tried: "machine:\(outcome)", correct: fits)
+    }
+
+    /// 「請再說一次」: another phrasing of the 問句 on screen, said the way
+    /// staff would repeat it. It is marked heard, so tomorrow's review picks
+    /// one not yet played. Nil when every other phrasing has been heard.
+    func askAgain() -> SpokenLine? {
+        guard let step = self.currentStep, let question = self.currentQuestion else { return nil }
+        let heard = self.store.book.progress(question.id).usedPhrasingIds.union([step.phrasing.id])
+        guard let phrasing = question.phrasings.first(where: { $0.spoken != nil && !heard.contains($0.id) }),
+              let line = phrasing.spoken
+        else { return nil }
+        self.store.update { book in
+            book.questions[question.id, default: QuestionProgress()].usedPhrasingIds.insert(phrasing.id)
+        }
+        return line
+    }
+
+    private func settle(tried key: String, correct: Bool) {
         guard case let .practising(index, questionPhase) = self.phase,
-              let question = self.currentQuestion,
-              let choice = question.choices.first(where: { $0.id == choiceId })
+              let question = self.currentQuestion
         else { return }
         let tried: Set<String>
         switch questionPhase {
@@ -93,13 +124,12 @@ final class ScenePracticeSession {
         case let .answeredWrong(previous): tried = previous
         case .revealed: return
         }
-        guard choice.correct else {
+        guard correct else {
             self.wrongTries[index, default: 0] += 1
-            self.phase = .practising(step: index, .answeredWrong(tried: tried.union([choiceId])))
+            self.phase = .practising(step: index, .answeredWrong(tried: tried.union([key])))
             return
         }
-        let firstTry = tried.isEmpty
-        self.phase = .practising(step: index, .revealed(firstTry: firstTry))
+        self.phase = .practising(step: index, .revealed(firstTry: tried.isEmpty))
         self.record(self.steps[index], question: question, nextStep: index + 1)
     }
 

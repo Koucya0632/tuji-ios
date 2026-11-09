@@ -384,3 +384,81 @@ struct ScenePracticeSessionTests {
         #expect(store.book.lastSceneId == SceneID(rawValue: "s"))
     }
 }
+
+/// The staged screens answer with a reply or a finished machine instead of a
+/// choice; the session settles them the same way.
+@MainActor
+struct StagedAnswerTests {
+    private func session() -> (ScenePracticeSession, SceneProgressStore, URL) {
+        let directory = Fixture.temporaryDirectory()
+        let store = SceneProgressStore(directory: directory)
+        store.use(account: UUID())
+        let session = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: { Fixture.date(2026, 11, 8, 20) },
+            calendar: Fixture.calendar
+        )
+        return (session, store, directory)
+    }
+
+    private func reply(_ id: String, fits: Bool) -> StageReply {
+        let text = LocalizedText(zhHant: id, zhHans: id, en: id)
+        return StageReply(id: id, ja: id, meaning: text, fits: fits, result: text, show: nil)
+    }
+
+    @Test
+    func aReplyThatDoesNotFitIsATryAndTheQuestionStaysOpen() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        session.reply(self.reply("cold", fits: false))
+        #expect(session.phase == .practising(step: 0, .answeredWrong(tried: ["reply:cold"])))
+        #expect(store.book.progress(SceneQuestionID(rawValue: "s.q0")).stage == .new)
+        session.reply(self.reply("hot", fits: true))
+        #expect(session.phase == .practising(step: 0, .revealed(firstTry: false)))
+        #expect(store.book.progress(SceneQuestionID(rawValue: "s.q0")).stage != .new)
+    }
+
+    @Test
+    func aMachineFinishedTwiceRecordsOnce() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        session.finish(.paid(.card, change: 0), fits: true)
+        let after = store.book
+        session.finish(.paid(.card, change: 0), fits: true)
+        #expect(store.book == after)
+        #expect(session.phase == .practising(step: 0, .revealed(firstTry: true)))
+    }
+
+    @Test
+    func askingAgainPlaysUnheardPhrasingsAndTomorrowsReviewSkipsThem() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        #expect(session.askAgain()?.audio == "s.q0.p2.mp3")
+        #expect(session.askAgain()?.audio == "s.q0.p3.mp3")
+        #expect(session.askAgain()?.audio == "s.q0.p4.mp3")
+        #expect(session.askAgain() == nil)
+        let id = SceneQuestionID(rawValue: "s.q0")
+        #expect(store.book.progress(id).usedPhrasingIds.count == 3)
+        session.reply(self.reply("ok", fits: true))
+        #expect(store.book.progress(id).usedPhrasingIds.count == 4)
+    }
+
+    @Test
+    func aReviewAfterOneRepeatPicksTheOtherUnheardPhrasing() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        _ = session.askAgain()
+        _ = session.askAgain()
+        session.reply(self.reply("ok", fits: true))
+        let tomorrow = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: { Fixture.date(2026, 11, 9, 9) },
+            calendar: Fixture.calendar
+        )
+        let review = tomorrow.steps.first { $0.questionIndex == 0 }
+        #expect(review?.mode == .review)
+        #expect(review?.phrasing.id.rawValue == "s.q0.p4")
+    }
+}
