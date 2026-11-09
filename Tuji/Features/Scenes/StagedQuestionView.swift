@@ -250,6 +250,26 @@ struct StagedQuestionView: View {
     @ViewBuilder
     private var screen: some View {
         let tried: Set<String> = if case let .answeredWrong(tried) = self.phase { tried } else { [] }
+        if let spoken = self.step.phrasing.spoken {
+            VStack(alignment: .leading, spacing: Space.s2) {
+                HStack(spacing: Space.s2) {
+                    Image(systemName: self.step.phrasing.speaker.symbol).font(.tujiIcon(13, weight: .semibold))
+                    Text(self.step.phrasing.speaker.label).font(.tujiLabel)
+                    Spacer()
+                    self.pill("重聽", systemImage: "arrow.counterclockwise") { self.play(spoken) }
+                    self.pill("字幕", systemImage: "captions.bubble", pressed: self.subtitles || self.revealed) {
+                        self.subtitles.toggle()
+                        if self.subtitles { self.session.noteHint() }
+                    }
+                }
+                .foregroundStyle(.tujiInk2)
+                if self.subtitles || self.revealed {
+                    Text(verbatim: spoken.text)
+                        .font(.tujiBody(.strong))
+                        .foregroundStyle(.tujiInk)
+                }
+            }
+        }
         if let spec = self.stage.machine, let machine = self.machine {
             MachineView(machine: machine, brandOverride: spec.brand) { action in
                 guard var next = self.machine else { return }
