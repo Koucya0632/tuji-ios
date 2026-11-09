@@ -99,6 +99,13 @@ struct SceneDoneView: View {
                     Text(verbatim: result.question.meaning?.resolved(self.language) ?? "")
                         .lineLimit(1)
                     Spacer(minLength: Space.s2)
+                    if result.usedHint, result.wrongTries == 0 {
+                        Text("用了提示")
+                            .font(.tujiLabel)
+                            .padding(.horizontal, Space.s2)
+                            .frame(height: 24)
+                            .background(.tujiPaper2)
+                    }
                     if result.wrongTries > 0 {
                         HStack(spacing: 0) {
                             Rectangle().fill(.tujiAlert).frame(width: 3)

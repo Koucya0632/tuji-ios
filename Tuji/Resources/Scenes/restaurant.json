@@ -15,6 +15,141 @@
   },
   "questions": [
     {
+      "id": "restaurant.food-ticket",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "這家店要先買食券。在食券機上買好、取券，交給店員",
+        "zh-Hans": "这家店要先买餐券。在餐券机上买好、取券，交给店员",
+        "en": "This shop sells meal tickets first. Buy one at the machine, take it, and hand it over"
+      },
+      "phrasings": [
+        {
+          "id": "restaurant.food-ticket.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "先に食券をお買い求めください",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "食券をお選びください",
+            "detail": "醤油ラーメン　¥900",
+            "buttons": [
+              {
+                "choiceId": "buy",
+                "ja": "購入する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "call",
+                "ja": "呼出"
+              }
+            ]
+          },
+          "audio": "restaurant.food-ticket.p1.mp3"
+        },
+        {
+          "id": "restaurant.food-ticket.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "食券機でお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "食券をお選びください",
+            "detail": "醤油ラーメン　¥900",
+            "buttons": [
+              {
+                "choiceId": "buy",
+                "ja": "購入する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "call",
+                "ja": "呼出"
+              }
+            ]
+          },
+          "audio": "restaurant.food-ticket.p2.mp3"
+        },
+        {
+          "id": "restaurant.food-ticket.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "あちらの券売機で食券をお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "食券をお選びください",
+            "detail": "醤油ラーメン　¥900",
+            "buttons": [
+              {
+                "choiceId": "buy",
+                "ja": "購入する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "call",
+                "ja": "呼出"
+              }
+            ]
+          },
+          "audio": "restaurant.food-ticket.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "buy",
+          "text": {
+            "zh-Hant": "購買",
+            "zh-Hans": "购买",
+            "en": "Buy"
+          },
+          "correct": true
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        },
+        {
+          "id": "call",
+          "text": {
+            "zh-Hant": "叫店員",
+            "zh-Hans": "叫店员",
+            "en": "Call staff"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "お願いします",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "有些店要先在門口的食券機買券。選好餐點、投錢、取券，再把券交給店員。",
+        "zh-Hans": "有些店要先在门口的餐券机买券。选好菜品、投钱、取券，再把券交给店员。",
+        "en": "Some shops sell meal tickets at a machine by the door. Pick a dish, pay, take the ticket and hand it to the staff."
+      },
+      "wordIds": []
+    },
+    {
       "id": "restaurant.party-size",
       "kind": "listening",
       "goal": {
@@ -264,7 +399,10 @@
         "zh-Hans": "店员在问可不可以点餐了。还没决定说「まだです」，决定了就指着菜单说「これをお願いします」。",
         "en": "The staff are asking if you are ready to order. Say まだです if not yet, or point at the menu and say これをお願いします."
       },
-      "wordIds": ["menu", "call-button"]
+      "wordIds": [
+        "menu",
+        "call-button"
+      ]
     },
     {
       "id": "restaurant.drink",
@@ -348,7 +486,146 @@
         "zh-Hans": "「お飲み物」是饮料。不用就说「大丈夫です」，要的话指着菜单说「これで」。",
         "en": "お飲み物 means drinks. Say 大丈夫です for no, or point at the menu and say これで."
       },
-      "wordIds": ["menu"]
+      "wordIds": [
+        "menu"
+      ]
+    },
+    {
+      "id": "restaurant.tablet-order",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "這家店用桌上的平板點餐。選好、確認數量後送出",
+        "zh-Hans": "这家店用桌上的平板点餐。选好、确认数量后送出",
+        "en": "This shop takes orders on the table tablet. Pick, check the count, and send"
+      },
+      "phrasings": [
+        {
+          "id": "restaurant.tablet-order.p1",
+          "role": "first",
+          "speaker": "clerk",
+          "text": "ご注文はタブレットでお願いします",
+          "voice": "Aoede",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "この内容で注文しますか？",
+            "detail": "きつねうどん × 1　¥680",
+            "buttons": [
+              {
+                "choiceId": "send",
+                "ja": "注文する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "call",
+                "ja": "店員呼出"
+              }
+            ]
+          },
+          "audio": "restaurant.tablet-order.p1.mp3"
+        },
+        {
+          "id": "restaurant.tablet-order.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "タブレットからご注文ください",
+          "voice": "Puck",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "この内容で注文しますか？",
+            "detail": "きつねうどん × 1　¥680",
+            "buttons": [
+              {
+                "choiceId": "send",
+                "ja": "注文する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "call",
+                "ja": "店員呼出"
+              }
+            ]
+          },
+          "audio": "restaurant.tablet-order.p2.mp3"
+        },
+        {
+          "id": "restaurant.tablet-order.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "ご注文はそちらのタブレットからどうぞ",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "この内容で注文しますか？",
+            "detail": "きつねうどん × 1　¥680",
+            "buttons": [
+              {
+                "choiceId": "send",
+                "ja": "注文する"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              },
+              {
+                "choiceId": "call",
+                "ja": "店員呼出"
+              }
+            ]
+          },
+          "audio": "restaurant.tablet-order.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "send",
+          "text": {
+            "zh-Hant": "送出點餐",
+            "zh-Hans": "送出点单",
+            "en": "Send the order"
+          },
+          "correct": true
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        },
+        {
+          "id": "call",
+          "text": {
+            "zh-Hant": "叫店員",
+            "zh-Hans": "叫店员",
+            "en": "Call staff"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "注文する",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "在桌上的平板選好品項、確認數量，按「注文する」送出。送出後可以在「注文履歴」看點了什麼。",
+        "zh-Hans": "在桌上的平板选好菜品、确认数量，按「注文する」送出。送出后可以在「注文履歴」看点了什么。",
+        "en": "Pick on the table tablet, check the count and press 注文する. 注文履歴 then shows what you ordered."
+      },
+      "wordIds": [
+        "ordering-tablet"
+      ]
     },
     {
       "id": "restaurant.split-bill",
@@ -432,127 +709,346 @@
         "zh-Hans": "「ご一緒」是一起，「別々」是分开。回「一緒で」或「別々で」。",
         "en": "ご一緒 means together and 別々 means separately. Answer 一緒で or 別々で."
       },
-      "wordIds": ["restaurant-bill", "receipt"]
-    },
-    {
-      "id": "restaurant.order-machine",
-      "kind": "screen",
-      "goal": {
-        "zh-Hant": "選好餐點了。在食券機或點餐平板上按下送出",
-        "zh-Hans": "选好餐点了。在食券机或点餐平板上按下确认",
-        "en": "You have picked your dish. Tap the button that sends your order"
-      },
-      "phrasings": [
-        {
-          "id": "restaurant.order-machine.p1",
-          "role": "first",
-          "speaker": "clerk",
-          "text": "先に食券をお買い求めください",
-          "voice": "Aoede",
-          "speed": "normal",
-          "ambience": false,
-          "screen": {
-            "heading": "食券",
-            "detail": "ラーメン　¥900",
-            "buttons": [
-              { "choiceId": "confirm", "ja": "購入" },
-              { "choiceId": "cancel", "ja": "取消" },
-              { "choiceId": "call", "ja": "呼出" },
-              { "choiceId": "back", "ja": "戻る" }
-            ]
-          },
-          "audio": "restaurant.order-machine.p1.mp3"
-        },
-        {
-          "id": "restaurant.order-machine.p2",
-          "role": "review",
-          "speaker": "screen",
-          "text": null,
-          "voice": null,
-          "speed": "normal",
-          "ambience": false,
-          "screen": {
-            "heading": "ご注文内容の確認",
-            "detail": "ラーメン ×1　¥900",
-            "buttons": [
-              { "choiceId": "confirm", "ja": "注文する" },
-              { "choiceId": "cancel", "ja": "取り消す" },
-              { "choiceId": "call", "ja": "店員呼出" },
-              { "choiceId": "back", "ja": "戻る" }
-            ]
-          },
-          "audio": null
-        },
-        {
-          "id": "restaurant.order-machine.p3",
-          "role": "review",
-          "speaker": "clerk",
-          "text": "ご注文はタブレットでお願いします",
-          "voice": "Charon",
-          "speed": "fast",
-          "ambience": true,
-          "screen": {
-            "heading": "ご注文内容の確認",
-            "detail": "ラーメン ×1　¥900",
-            "buttons": [
-              { "choiceId": "confirm", "ja": "注文する" },
-              { "choiceId": "cancel", "ja": "取り消す" },
-              { "choiceId": "call", "ja": "店員呼出" },
-              { "choiceId": "back", "ja": "戻る" }
-            ]
-          },
-          "audio": "restaurant.order-machine.p3.mp3"
-        }
-      ],
-      "choices": [
-        {
-          "id": "confirm",
-          "text": {
-            "zh-Hant": "送出（購買）",
-            "zh-Hans": "确认（购买）",
-            "en": "Send the order"
-          },
-          "correct": true
-        },
-        {
-          "id": "cancel",
-          "text": {
-            "zh-Hant": "取消",
-            "zh-Hans": "取消",
-            "en": "Cancel"
-          },
-          "correct": false
-        },
-        {
-          "id": "call",
-          "text": {
-            "zh-Hant": "叫店員",
-            "zh-Hans": "叫店员",
-            "en": "Call staff"
-          },
-          "correct": false
-        },
-        {
-          "id": "back",
-          "text": {
-            "zh-Hant": "返回",
-            "zh-Hans": "返回",
-            "en": "Back"
-          },
-          "correct": false
-        }
-      ],
-      "response": {
-        "ja": "購入／注文する",
-        "audio": null,
-        "voice": null
-      },
-      "explanation": {
-        "zh-Hant": "有些店要先在食券機買券，再把券交給店員；有些店用桌上的平板點餐。選好之後按「購入」或「注文する」送出。",
-        "zh-Hans": "有些店要先在食券机买券，再把券交给店员；有些店用桌上的平板点餐。选好之后按「購入」或「注文する」确认。",
-        "en": "Some places sell meal tickets from a machine that you hand to the staff. Others take orders on a tablet at the table. Tap 購入 or 注文する to send it."
-      },
-      "wordIds": ["ordering-tablet"]
+      "wordIds": [
+        "restaurant-bill",
+        "receipt"
+      ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "table",
+        "title": {
+          "zh-Hant": "在桌邊點餐的店",
+          "zh-Hans": "在桌边点餐的店",
+          "en": "A sit-down restaurant"
+        },
+        "intent": {
+          "zh-Hant": "你和朋友兩個人想在店裡吃午餐，各付各的。",
+          "zh-Hans": "你和朋友两个人想在店里吃午饭，各付各的。",
+          "en": "You and a friend want to eat lunch in, and pay separately."
+        },
+        "enter": {
+          "zh-Hant": "走進店門",
+          "zh-Hans": "走进店门",
+          "en": "Step inside"
+        },
+        "questions": [
+          "restaurant.party-size",
+          "restaurant.eat-in",
+          "restaurant.ready-to-order",
+          "restaurant.drink",
+          "restaurant.tablet-order",
+          "restaurant.split-bill"
+        ]
+      },
+      {
+        "id": "ticket",
+        "optional": true,
+        "title": {
+          "zh-Hant": "先買食券的店",
+          "zh-Hans": "先买餐券的店",
+          "en": "A meal-ticket shop"
+        },
+        "intent": {
+          "zh-Hant": "這家拉麵店要先在門口買食券。你和朋友兩個人，帶著現金。",
+          "zh-Hans": "这家拉面店要先在门口买餐券。你和朋友两个人，带着现金。",
+          "en": "This ramen shop sells meal tickets at the door. There are two of you, with cash."
+        },
+        "enter": {
+          "zh-Hant": "走進店門",
+          "zh-Hans": "走进店门",
+          "en": "Step inside"
+        },
+        "questions": [
+          "restaurant.food-ticket",
+          "restaurant.party-size"
+        ]
+      }
+    ],
+    "steps": {
+      "restaurant.party-size": {
+        "background": "story-restaurant-entrance",
+        "replies": [
+          {
+            "id": "two",
+            "ja": "二人です",
+            "meaning": {
+              "zh-Hant": "兩個人",
+              "zh-Hans": "两个人",
+              "en": "Two"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員拿了兩份菜單，帶你們往裡走。",
+              "zh-Hans": "店员拿了两份菜单，带你们往里走。",
+              "en": "The clerk picks up two menus and leads you in."
+            }
+          },
+          {
+            "id": "one",
+            "ja": "一人です",
+            "meaning": {
+              "zh-Hant": "一個人",
+              "zh-Hans": "一个人",
+              "en": "Just one"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員帶你到吧台的單人座。可是你們有兩個人。",
+              "zh-Hans": "店员带你到吧台的单人座。可是你们有两个人。",
+              "en": "The clerk leads you to a single counter seat. There are two of you."
+            }
+          },
+          {
+            "id": "eat-in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "Eating in"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員比了比手指，再問一次幾位。",
+              "zh-Hans": "店员比了比手指，再问一次几位。",
+              "en": "The clerk holds up fingers and asks again how many."
+            }
+          }
+        ]
+      },
+      "restaurant.eat-in": {
+        "background": "story-restaurant-entrance",
+        "replies": [
+          {
+            "id": "in",
+            "ja": "店内で",
+            "meaning": {
+              "zh-Hant": "內用",
+              "zh-Hans": "堂食",
+              "en": "Eating in"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員帶你們到桌位。",
+              "zh-Hans": "店员带你们到桌位。",
+              "en": "The clerk shows you to a table."
+            }
+          },
+          {
+            "id": "out",
+            "ja": "持ち帰りで",
+            "meaning": {
+              "zh-Hant": "外帶",
+              "zh-Hans": "打包",
+              "en": "To go"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員遞來外帶菜單。你們想在店裡吃。",
+              "zh-Hans": "店员递来打包菜单。你们想在店里吃。",
+              "en": "The clerk hands you the takeout menu. You wanted to eat in."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "二人です",
+            "meaning": {
+              "zh-Hant": "兩個人",
+              "zh-Hans": "两个人",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員點頭，還在等你說內用還是外帶。",
+              "zh-Hans": "店员点头，还在等你说堂食还是打包。",
+              "en": "The clerk nods, still waiting to hear eat in or to go."
+            }
+          }
+        ]
+      },
+      "restaurant.ready-to-order": {
+        "background": "story-restaurant-dining",
+        "props": [
+          "prop-menu"
+        ],
+        "replies": [
+          {
+            "id": "not-yet",
+            "ja": "まだです",
+            "meaning": {
+              "zh-Hant": "還沒",
+              "zh-Hans": "还没",
+              "en": "Not yet"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員說好，等一下再過來。",
+              "zh-Hans": "店员说好，等一下再过来。",
+              "en": "The clerk says they'll come back."
+            }
+          },
+          {
+            "id": "this",
+            "ja": "これをお願いします",
+            "meaning": {
+              "zh-Hant": "我要這個（指著菜單）",
+              "zh-Hans": "我要这个（指着菜单）",
+              "en": "This one, please (pointing at the menu)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下你指的餐點。",
+              "zh-Hans": "店员记下你指的菜。",
+              "en": "The clerk notes the dish you point to."
+            }
+          },
+          {
+            "id": "separate",
+            "ja": "別々で",
+            "meaning": {
+              "zh-Hant": "分開",
+              "zh-Hans": "分开",
+              "en": "Separately"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到結帳，店員在等你點餐。",
+              "zh-Hans": "还没到结账，店员在等你点菜。",
+              "en": "It's not time to pay. The clerk is waiting for your order."
+            }
+          }
+        ]
+      },
+      "restaurant.drink": {
+        "background": "story-restaurant-dining",
+        "props": [
+          "prop-menu"
+        ],
+        "replies": [
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員收走飲料單。",
+              "zh-Hans": "店员收走饮料单。",
+              "en": "The clerk takes the drinks list away."
+            }
+          },
+          {
+            "id": "this",
+            "ja": "これで",
+            "meaning": {
+              "zh-Hant": "這個（指著菜單）",
+              "zh-Hans": "这个（指着菜单）",
+              "en": "This one (pointing at the menu)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員記下你指的飲料。",
+              "zh-Hans": "店员记下你指的饮料。",
+              "en": "The clerk notes the drink you point to."
+            }
+          },
+          {
+            "id": "two",
+            "ja": "二人です",
+            "meaning": {
+              "zh-Hant": "兩個人",
+              "zh-Hans": "两个人",
+              "en": "Two"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "你們已經坐下了，店員在問飲料。",
+              "zh-Hans": "你们已经坐下了，店员在问饮料。",
+              "en": "You're already seated. The clerk is asking about drinks."
+            }
+          }
+        ]
+      },
+      "restaurant.split-bill": {
+        "background": "story-restaurant-checkout",
+        "props": [
+          "prop-bill"
+        ],
+        "replies": [
+          {
+            "id": "separate",
+            "ja": "別々で",
+            "meaning": {
+              "zh-Hant": "分開付",
+              "zh-Hans": "分开付",
+              "en": "Separately"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把帳單分成兩張。",
+              "zh-Hans": "店员把账单分成两张。",
+              "en": "The clerk splits the bill in two."
+            }
+          },
+          {
+            "id": "together",
+            "ja": "一緒で",
+            "meaning": {
+              "zh-Hant": "一起付",
+              "zh-Hans": "一起付",
+              "en": "Together"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員開了一張帳單。你們原本想各付各的。",
+              "zh-Hans": "店员开了一张账单。你们本来想各付各的。",
+              "en": "The clerk rings up one bill. You wanted to pay separately."
+            }
+          },
+          {
+            "id": "to-go",
+            "ja": "持ち帰りで",
+            "meaning": {
+              "zh-Hant": "外帶",
+              "zh-Hans": "打包",
+              "en": "To go"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員在問結帳要一起還是分開。",
+              "zh-Hans": "店员在问结账要一起还是分开。",
+              "en": "The clerk is asking whether you're paying together."
+            }
+          }
+        ]
+      },
+      "restaurant.tablet-order": {
+        "background": "story-restaurant-dining",
+        "note": {
+          "zh-Hant": "桌上有一台點餐平板。你想點一碗烏龍麵。",
+          "zh-Hans": "桌上有一台点餐平板。你想点一碗乌冬面。",
+          "en": "There's an ordering tablet on the table. You want a bowl of udon."
+        },
+        "machine": {
+          "kind": "order-tablet"
+        }
+      },
+      "restaurant.food-ticket": {
+        "background": "story-restaurant-entrance",
+        "note": {
+          "zh-Hant": "門口旁邊有一台食券機。你想吃醬油拉麵，帶著現金。",
+          "zh-Hans": "门口旁边有一台餐券机。你想吃酱油拉面，带着现金。",
+          "en": "There's a ticket machine by the door. You want shoyu ramen and have cash."
+        },
+        "machine": {
+          "kind": "food-ticket"
+        }
+      }
+    }
+  }
 }

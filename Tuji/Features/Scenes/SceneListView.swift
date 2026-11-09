@@ -132,14 +132,14 @@ struct SceneListView: View {
                     .font(.tujiBody(.strong))
                     .foregroundStyle(.tujiInk)
                 if status == .notStarted {
-                    Text("\(scene.questions.count) 句")
+                    Text("\(scene.practiceCount) 句")
                         .font(.scene(13, bold: false))
                         .foregroundStyle(.tujiInk3)
                 } else {
                     HStack(spacing: 10) {
                         SceneSegments(practised: scene.practised(in: self.store.book), height: 3, spacing: 2)
                             .frame(width: 64)
-                        SceneStatusText(scene: scene, status: status, cursor: self.store.book.cursors[scene.id])
+                        SceneStatusText(scene: scene, status: status, book: self.store.book)
                             .font(.scene(13, bold: false))
                             .foregroundStyle(.tujiInk2)
                     }
@@ -183,7 +183,7 @@ struct SceneListView: View {
                         SceneSegments(practised: scene.practised(in: self.store.book))
                             .frame(width: 120)
                     }
-                    SceneStatusText(scene: scene, status: status, cursor: self.store.book.cursors[scene.id])
+                    SceneStatusText(scene: scene, status: status, book: self.store.book)
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk2)
                 }
@@ -213,14 +213,14 @@ struct SceneListView: View {
 struct SceneStatusText: View {
     let scene: PracticeScene
     let status: SceneStatus
-    let cursor: Int?
+    let book: SceneProgressBook
 
     var body: some View {
         switch self.status {
         case .notStarted:
-            Text("\(self.scene.questions.count) 句 · 約 \(self.scene.minutes) 分鐘")
-        case let .inProgress(practised, _):
-            Text("練到第 \((self.cursor ?? practised) + 1) 句")
+            Text("\(self.scene.practiceCount) 句 · 約 \(self.scene.minutes) 分鐘")
+        case .inProgress:
+            Text("練到第 \(self.scene.resumeNumber(in: self.book)) 句")
         case .reviewDue:
             Text("今天複習")
         case .reviewLater:

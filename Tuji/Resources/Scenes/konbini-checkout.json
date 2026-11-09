@@ -96,7 +96,9 @@
         "zh-Hans": "「温める」是加热。要的话说「お願いします」，不用就说「そのままで大丈夫です」。",
         "en": "温める means to heat up. Say お願いします for yes, or そのままで大丈夫です to take it as it is."
       },
-      "wordIds": ["microwave-station"]
+      "wordIds": [
+        "microwave-station"
+      ]
     },
     {
       "id": "konbini-checkout.bag",
@@ -180,7 +182,9 @@
         "zh-Hans": "「袋」「レジ袋」都是塑料袋，通常要另外付钱。不用说「大丈夫です」，要的话说「お願いします」。",
         "en": "袋 and レジ袋 both mean a plastic bag, which usually costs extra. Say 大丈夫です for no, お願いします for yes."
       },
-      "wordIds": ["plastic-bag"]
+      "wordIds": [
+        "plastic-bag"
+      ]
     },
     {
       "id": "konbini-checkout.utensils",
@@ -264,7 +268,10 @@
         "zh-Hans": "「お箸」是筷子，「スプーン」是勺子。问「何膳」是问要几双，可以回「一膳で」。",
         "en": "お箸 are chopsticks and スプーン is a spoon. 何膳 asks how many pairs. You can answer 一膳で for one pair."
       },
-      "wordIds": ["disposable-chopsticks-dispenser", "plastic-cutlery-dispenser"]
+      "wordIds": [
+        "disposable-chopsticks-dispenser",
+        "plastic-cutlery-dispenser"
+      ]
     },
     {
       "id": "konbini-checkout.point-card",
@@ -348,7 +355,144 @@
         "zh-Hans": "「ポイントカード」是积分卡，有时是收银机自动播报。没有就说「持っていません」或「大丈夫です」。",
         "en": "ポイントカード is a points card. Sometimes the register announces it by itself. Say 持っていません or 大丈夫です if you have none."
       },
-      "wordIds": ["point-card"]
+      "wordIds": [
+        "point-card"
+      ]
+    },
+    {
+      "id": "konbini-checkout.age-check",
+      "kind": "screen",
+      "goal": {
+        "zh-Hant": "買酒時螢幕問你是否已滿 20 歲。按對的按鈕",
+        "zh-Hans": "买酒时屏幕问你是否已满 20 岁。按对的按钮",
+        "en": "Buying alcohol, the screen asks if you are 20 or older. Tap the right button"
+      },
+      "phrasings": [
+        {
+          "id": "konbini-checkout.age-check.p1",
+          "role": "first",
+          "speaker": "screen",
+          "text": null,
+          "voice": null,
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "20歳以上ですか？",
+            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": null
+        },
+        {
+          "id": "konbini-checkout.age-check.p2",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "画面のタッチをお願いします",
+          "voice": "Kore",
+          "speed": "normal",
+          "ambience": false,
+          "screen": {
+            "heading": "20歳以上ですか？",
+            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "konbini-checkout.age-check.p2.mp3"
+        },
+        {
+          "id": "konbini-checkout.age-check.p3",
+          "role": "review",
+          "speaker": "clerk",
+          "text": "年齢確認のため、画面のタッチをお願いします",
+          "voice": "Charon",
+          "speed": "fast",
+          "ambience": true,
+          "screen": {
+            "heading": "20歳以上ですか？",
+            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
+            "buttons": [
+              {
+                "choiceId": "yes",
+                "ja": "はい"
+              },
+              {
+                "choiceId": "no",
+                "ja": "いいえ"
+              },
+              {
+                "choiceId": "back",
+                "ja": "戻る"
+              }
+            ]
+          },
+          "audio": "konbini-checkout.age-check.p3.mp3"
+        }
+      ],
+      "choices": [
+        {
+          "id": "yes",
+          "text": {
+            "zh-Hant": "是，已滿 20 歲",
+            "zh-Hans": "是，已满 20 岁",
+            "en": "Yes, I am 20 or older"
+          },
+          "correct": true
+        },
+        {
+          "id": "no",
+          "text": {
+            "zh-Hant": "否",
+            "zh-Hans": "否",
+            "en": "No"
+          },
+          "correct": false
+        },
+        {
+          "id": "back",
+          "text": {
+            "zh-Hant": "返回",
+            "zh-Hans": "返回",
+            "en": "Back"
+          },
+          "correct": false
+        }
+      ],
+      "response": {
+        "ja": "はい",
+        "audio": null,
+        "voice": null
+      },
+      "explanation": {
+        "zh-Hant": "在日本買酒、買菸要滿 20 歲。收銀台的螢幕會要你自己按「はい」確認。",
+        "zh-Hans": "在日本买酒、买烟要满 20 岁。收银台的屏幕会让你自己按「はい」确认。",
+        "en": "In Japan you must be 20 to buy alcohol or tobacco. The register screen asks you to confirm by tapping はい."
+      },
+      "wordIds": []
     },
     {
       "id": "konbini-checkout.payment",
@@ -371,10 +515,22 @@
             "heading": "お支払い方法を選択してください",
             "detail": "合計 ¥1,280",
             "buttons": [
-              { "choiceId": "cash", "ja": "現金" },
-              { "choiceId": "credit", "ja": "クレジット" },
-              { "choiceId": "emoney", "ja": "電子マネー" },
-              { "choiceId": "qr", "ja": "コード決済" }
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジット"
+              },
+              {
+                "choiceId": "emoney",
+                "ja": "電子マネー"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "コード決済"
+              }
             ]
           },
           "audio": "konbini-checkout.payment.p1.mp3"
@@ -391,10 +547,22 @@
             "heading": "お支払い方法",
             "detail": "合計 ¥1,280",
             "buttons": [
-              { "choiceId": "qr", "ja": "QR・バーコード" },
-              { "choiceId": "emoney", "ja": "交通系IC・電子マネー" },
-              { "choiceId": "credit", "ja": "クレジットカード" },
-              { "choiceId": "cash", "ja": "現金" }
+              {
+                "choiceId": "qr",
+                "ja": "QR・バーコード"
+              },
+              {
+                "choiceId": "emoney",
+                "ja": "交通系IC・電子マネー"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジットカード"
+              },
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              }
             ]
           },
           "audio": null
@@ -411,10 +579,22 @@
             "heading": "お支払い方法を選択してください",
             "detail": "合計 ¥1,280",
             "buttons": [
-              { "choiceId": "cash", "ja": "現金" },
-              { "choiceId": "credit", "ja": "クレジット" },
-              { "choiceId": "emoney", "ja": "電子マネー" },
-              { "choiceId": "qr", "ja": "コード決済" }
+              {
+                "choiceId": "cash",
+                "ja": "現金"
+              },
+              {
+                "choiceId": "credit",
+                "ja": "クレジット"
+              },
+              {
+                "choiceId": "emoney",
+                "ja": "電子マネー"
+              },
+              {
+                "choiceId": "qr",
+                "ja": "コード決済"
+              }
             ]
           },
           "audio": "konbini-checkout.payment.p3.mp3"
@@ -464,119 +644,322 @@
         "voice": "Orus"
       },
       "explanation": {
-        "zh-Hant": "「クレジット」是信用卡，「電子マネー」是交通卡這類的儲值卡，「コード決済」是條碼支付。店員開口問的話，說「カードで」就好。",
-        "zh-Hans": "「クレジット」是信用卡，「電子マネー」是交通卡这类的储值卡，「コード決済」是二维码支付。店员开口问的话，说「カードで」就好。",
-        "en": "クレジット is credit card, 電子マネー is a stored-value card like a transit card, and コード決済 is QR code payment. If the clerk asks out loud, カードで is enough."
+        "zh-Hant": "在畫面上選擇信用卡或現金。選信用卡後，依提示感應卡片；選現金後，投入足額金額，再取回找零和收據。",
+        "zh-Hans": "在屏幕上选择信用卡或现金。选信用卡后，按提示感应卡片；选现金后，投入足额金额，再取回找零和收据。",
+        "en": "Choose credit card or cash on the screen. With a card, tap it when the screen asks. With cash, put in enough, then take your change and receipt."
       },
-      "wordIds": ["cash-register", "self-checkout-machine"]
-    },
-    {
-      "id": "konbini-checkout.age-check",
-      "kind": "screen",
-      "goal": {
-        "zh-Hant": "買酒時螢幕問你是否已滿 20 歲。按對的按鈕",
-        "zh-Hans": "买酒时屏幕问你是否已满 20 岁。按对的按钮",
-        "en": "Buying alcohol, the screen asks if you are 20 or older. Tap the right button"
-      },
-      "phrasings": [
-        {
-          "id": "konbini-checkout.age-check.p1",
-          "role": "first",
-          "speaker": "screen",
-          "text": null,
-          "voice": null,
-          "speed": "normal",
-          "ambience": false,
-          "screen": {
-            "heading": "20歳以上ですか？",
-            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
-            "buttons": [
-              { "choiceId": "yes", "ja": "はい" },
-              { "choiceId": "no", "ja": "いいえ" },
-              { "choiceId": "back", "ja": "戻る" }
-            ]
-          },
-          "audio": null
-        },
-        {
-          "id": "konbini-checkout.age-check.p2",
-          "role": "review",
-          "speaker": "clerk",
-          "text": "画面のタッチをお願いします",
-          "voice": "Kore",
-          "speed": "normal",
-          "ambience": false,
-          "screen": {
-            "heading": "20歳以上ですか？",
-            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
-            "buttons": [
-              { "choiceId": "yes", "ja": "はい" },
-              { "choiceId": "no", "ja": "いいえ" },
-              { "choiceId": "back", "ja": "戻る" }
-            ]
-          },
-          "audio": "konbini-checkout.age-check.p2.mp3"
-        },
-        {
-          "id": "konbini-checkout.age-check.p3",
-          "role": "review",
-          "speaker": "clerk",
-          "text": "年齢確認のため、画面のタッチをお願いします",
-          "voice": "Charon",
-          "speed": "fast",
-          "ambience": true,
-          "screen": {
-            "heading": "20歳以上ですか？",
-            "detail": "お酒・たばこは20歳以上の方のみご購入いただけます",
-            "buttons": [
-              { "choiceId": "yes", "ja": "はい" },
-              { "choiceId": "no", "ja": "いいえ" },
-              { "choiceId": "back", "ja": "戻る" }
-            ]
-          },
-          "audio": "konbini-checkout.age-check.p3.mp3"
-        }
-      ],
-      "choices": [
-        {
-          "id": "yes",
-          "text": {
-            "zh-Hant": "是，已滿 20 歲",
-            "zh-Hans": "是，已满 20 岁",
-            "en": "Yes, I am 20 or older"
-          },
-          "correct": true
-        },
-        {
-          "id": "no",
-          "text": {
-            "zh-Hant": "否",
-            "zh-Hans": "否",
-            "en": "No"
-          },
-          "correct": false
-        },
-        {
-          "id": "back",
-          "text": {
-            "zh-Hant": "返回",
-            "zh-Hans": "返回",
-            "en": "Back"
-          },
-          "correct": false
-        }
-      ],
-      "response": {
-        "ja": "はい",
-        "audio": null,
-        "voice": null
-      },
-      "explanation": {
-        "zh-Hant": "在日本買酒、買菸要滿 20 歲。收銀台的螢幕會要你自己按「はい」確認。",
-        "zh-Hans": "在日本买酒、买烟要满 20 岁。收银台的屏幕会让你自己按「はい」确认。",
-        "en": "In Japan you must be 20 to buy alcohol or tobacco. The register screen asks you to confirm by tapping はい."
-      },
-      "wordIds": []
+      "wordIds": [
+        "cash-register",
+        "self-checkout-machine"
+      ]
     }
-  ]
+  ],
+  "stage": {
+    "routes": [
+      {
+        "id": "bento",
+        "title": {
+          "zh-Hant": "只買便當",
+          "zh-Hans": "只买便当",
+          "en": "Just a bento"
+        },
+        "intent": {
+          "zh-Hant": "你拿了一個便當當午餐，想請店員加熱。手上有信用卡，沒有集點卡。",
+          "zh-Hans": "你拿了一个便当当午饭，想请店员加热。手上有信用卡，没有积分卡。",
+          "en": "You picked up a bento for lunch and want it heated. You have a credit card and no point card."
+        },
+        "enter": {
+          "zh-Hant": "走到收銀台",
+          "zh-Hans": "走到收银台",
+          "en": "Walk up to the register"
+        },
+        "questions": [
+          "konbini-checkout.heat",
+          "konbini-checkout.bag",
+          "konbini-checkout.utensils",
+          "konbini-checkout.point-card",
+          "konbini-checkout.payment"
+        ]
+      },
+      {
+        "id": "alcohol",
+        "optional": true,
+        "title": {
+          "zh-Hant": "便當加一罐啤酒",
+          "zh-Hans": "便当加一罐啤酒",
+          "en": "A bento and a can of beer"
+        },
+        "intent": {
+          "zh-Hant": "你拿了一個便當和一罐啤酒，想請店員加熱便當。你已經 25 歲，手上有信用卡，沒有集點卡。",
+          "zh-Hans": "你拿了一个便当和一罐啤酒，想请店员加热便当。你已经 25 岁，手上有信用卡，没有积分卡。",
+          "en": "You picked up a bento and a can of beer, and want the bento heated. You are 25, with a credit card and no point card."
+        },
+        "enter": {
+          "zh-Hant": "走到收銀台",
+          "zh-Hans": "走到收银台",
+          "en": "Walk up to the register"
+        },
+        "questions": [
+          "konbini-checkout.heat",
+          "konbini-checkout.bag",
+          "konbini-checkout.point-card",
+          "konbini-checkout.age-check",
+          "konbini-checkout.payment"
+        ]
+      }
+    ],
+    "steps": {
+      "konbini-checkout.heat": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "heat",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要加熱）",
+              "zh-Hans": "麻烦了（要加热）",
+              "en": "Yes, please (heat it)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把便當拿去微波爐加熱。",
+              "zh-Hans": "店员把便当拿去微波炉加热。",
+              "en": "The clerk takes the bento to the microwave."
+            }
+          },
+          {
+            "id": "no-heat",
+            "ja": "そのままで大丈夫です",
+            "meaning": {
+              "zh-Hant": "這樣就好（不用加熱）",
+              "zh-Hans": "这样就好（不用加热）",
+              "en": "It's fine as it is"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員沒有加熱，便當是冷的。你原本想吃熱的。",
+              "zh-Hans": "店员没有加热，便当是凉的。你本来想吃热的。",
+              "en": "The clerk leaves it cold. You wanted it hot."
+            }
+          },
+          {
+            "id": "no-bag",
+            "ja": "袋はいりません",
+            "meaning": {
+              "zh-Hant": "不用袋子",
+              "zh-Hans": "不用袋子",
+              "en": "I don't need a bag"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員還在等你回答要不要加熱。",
+              "zh-Hans": "店员还在等你回答要不要加热。",
+              "en": "The clerk is still waiting to hear about heating."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.bag": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "bag",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要袋子）",
+              "zh-Hans": "麻烦了（要袋子）",
+              "en": "Yes, please (a bag)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把便當放進袋子。",
+              "zh-Hans": "店员把便当放进袋子。",
+              "en": "The clerk puts the bento in a bag."
+            },
+            "show": [
+              "prop-bag"
+            ]
+          },
+          {
+            "id": "no-bag",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員把便當直接交給你。",
+              "zh-Hans": "店员把便当直接交给你。",
+              "en": "The clerk hands you the bento as it is."
+            }
+          },
+          {
+            "id": "heat",
+            "ja": "温めてください",
+            "meaning": {
+              "zh-Hant": "請幫我加熱",
+              "zh-Hans": "请帮我加热",
+              "en": "Please heat it"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "便當已經熱好了，店員在問袋子。",
+              "zh-Hans": "便当已经热好了，店员在问袋子。",
+              "en": "The bento is already heated. The clerk is asking about a bag."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.utensils": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了（要筷子）",
+              "zh-Hans": "麻烦了（要筷子）",
+              "en": "Yes, please (chopsticks)"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員放了一雙筷子在便當上。",
+              "zh-Hans": "店员放了一双筷子在便当上。",
+              "en": "The clerk puts a pair of chopsticks on the bento."
+            },
+            "show": [
+              "prop-utensils"
+            ]
+          },
+          {
+            "id": "no",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員沒有放餐具。",
+              "zh-Hans": "店员没有放餐具。",
+              "en": "The clerk adds no utensils."
+            }
+          },
+          {
+            "id": "card",
+            "ja": "カードで",
+            "meaning": {
+              "zh-Hant": "刷卡",
+              "zh-Hans": "刷卡",
+              "en": "By card"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "還沒到付款，店員在問要不要筷子。",
+              "zh-Hans": "还没到付款，店员在问要不要筷子。",
+              "en": "It's not time to pay yet. The clerk is asking about chopsticks."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.point-card": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "replies": [
+          {
+            "id": "none",
+            "ja": "持っていません",
+            "meaning": {
+              "zh-Hant": "沒有",
+              "zh-Hans": "没有",
+              "en": "I don't have one"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，開始結帳。",
+              "zh-Hans": "店员点点头，开始结账。",
+              "en": "The clerk nods and rings you up."
+            }
+          },
+          {
+            "id": "fine",
+            "ja": "大丈夫です",
+            "meaning": {
+              "zh-Hant": "不用了",
+              "zh-Hans": "不用了",
+              "en": "No, thanks"
+            },
+            "fits": true,
+            "result": {
+              "zh-Hant": "店員點點頭，開始結帳。",
+              "zh-Hans": "店员点点头，开始结账。",
+              "en": "The clerk nods and rings you up."
+            }
+          },
+          {
+            "id": "yes",
+            "ja": "お願いします",
+            "meaning": {
+              "zh-Hant": "麻煩了",
+              "zh-Hans": "麻烦了",
+              "en": "Yes, please"
+            },
+            "fits": false,
+            "result": {
+              "zh-Hant": "店員等著你拿出集點卡，可是你沒有。",
+              "zh-Hans": "店员等着你拿出积分卡，可是你没有。",
+              "en": "The clerk waits for your point card, but you don't have one."
+            }
+          }
+        ]
+      },
+      "konbini-checkout.payment": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento",
+          "prop-credit-card"
+        ],
+        "note": {
+          "zh-Hant": "收銀台前的顧客端螢幕亮了。",
+          "zh-Hans": "收银台前的顾客端屏幕亮了。",
+          "en": "The customer screen on the counter lights up."
+        },
+        "machine": {
+          "kind": "payment",
+          "total": 598,
+          "item": "弁当",
+          "expect": "card"
+        }
+      },
+      "konbini-checkout.age-check": {
+        "background": "bg-konbini-register",
+        "props": [
+          "prop-bento"
+        ],
+        "note": {
+          "zh-Hant": "籃子裡有一罐啤酒，收銀機要你確認年齡。你已經 25 歲。",
+          "zh-Hans": "篮子里有一罐啤酒，收银机要你确认年龄。你已经 25 岁。",
+          "en": "There's a can of beer in your basket, so the register asks your age. You are 25."
+        },
+        "machine": {
+          "kind": "age-confirm",
+          "expect": "yes"
+        }
+      }
+    }
+  }
 }

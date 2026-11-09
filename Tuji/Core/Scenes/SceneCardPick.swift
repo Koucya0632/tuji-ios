@@ -36,17 +36,14 @@ nonisolated enum SceneCards {
             SceneCardPick(
                 scene: scene,
                 state: state,
-                practised: scene.questions.map { book.progress($0.id).stage != .new }
+                practised: scene.counted(in: book).map { book.progress($0.id).stage != .new }
             )
         }
         if let (scene, _) = statuses.first(where: { if case .reviewDue = $0.1 { true } else { false } }) {
             return card(scene, .reviewDue)
         }
         if let (scene, _) = statuses.first(where: { if case .inProgress = $0.1 { true } else { false } }) {
-            let cursor = book.cursors[scene.id]
-                ?? scene.questions.firstIndex { book.progress($0.id).stage == .new }
-                ?? 0
-            return card(scene, .inProgress(at: cursor + 1))
+            return card(scene, .inProgress(at: scene.resumeNumber(in: book)))
         }
         if let (scene, _) = statuses.first(where: { $0.1 == .notStarted }) {
             return card(scene, .notStarted)
@@ -57,9 +54,25 @@ nonisolated enum SceneCards {
 }
 
 extension PracticeScene {
+    /// The 1-based number practice reopens on, counted along the 問句 that
+    /// measure the scene: the saved cursor's, else the first unpractised.
+    nonisolated func resumeNumber(in book: SceneProgressBook) -> Int {
+        let counted = self.counted(in: book)
+        let cursor = book.cursors[self.id].flatMap { self.questions.indices.contains($0) ? self.questions[$0].id : nil }
+        let position = cursor.flatMap { id in counted.firstIndex { $0.id == id } }
+            ?? counted.firstIndex { book.progress($0.id).stage == .new }
+            ?? 0
+        return position + 1
+    }
+
+    /// How many 問句 one practice of the default trip has.
+    nonisolated var practiceCount: Int {
+        self.stage?.defaultRoute?.questions.count ?? self.questions.count
+    }
+
     /// About half a minute a question, rounded up: 6 questions is 3 minutes.
     nonisolated var minutes: Int {
-        (self.questions.count + 1) / 2
+        (self.practiceCount + 1) / 2
     }
 }
 

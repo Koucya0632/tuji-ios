@@ -79,6 +79,12 @@ enum SceneAudio {
         )
     }
 
+    /// A reply the traveller says on a staged 問句. Replies have no clip yet,
+    /// so the device reads them.
+    static func say(_ reply: StageReply) {
+        SpeechService.shared.play(bundledFile: nil, fallbackText: reply.ja, voice: .japanese)
+    }
+
     static func play(_ response: SceneResponse) {
         guard let clip = response.clip else { return }
         SpeechService.shared.play(
@@ -171,7 +177,7 @@ struct SceneSpeakerTag: View {
 
 extension PracticeScene {
     func practised(in book: SceneProgressBook) -> [Bool] {
-        self.questions.map { book.progress($0.id).stage != .new }
+        self.counted(in: book).map { book.progress($0.id).stage != .new }
     }
 }
 

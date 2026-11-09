@@ -375,12 +375,190 @@ struct ScenePracticeSessionTests {
         }
 
         #expect(session.phase == .finished(.init(
-            results: Fixture.scene.questions.enumerated().map { index, question in
-                .init(question: question, wrongTries: index == 1 ? 1 : 0)
+            results: [1, 0, 2].map { index in
+                .init(question: Fixture.scene.questions[index], wrongTries: index == 1 ? 1 : 0)
             },
             status: .reviewLater(due: LocalDay(year: 2026, month: 11, day: 9))
         )))
         #expect(store.book.cursors[SceneID(rawValue: "s")] == nil)
         #expect(store.book.lastSceneId == SceneID(rawValue: "s"))
+    }
+}
+
+/// The staged screens answer with a reply or a finished machine instead of a
+/// choice; the session settles them the same way.
+@MainActor
+struct StagedAnswerTests {
+    private func session() -> (ScenePracticeSession, SceneProgressStore, URL) {
+        let directory = Fixture.temporaryDirectory()
+        let store = SceneProgressStore(directory: directory)
+        store.use(account: UUID())
+        let session = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: { Fixture.date(2026, 11, 8, 20) },
+            calendar: Fixture.calendar
+        )
+        return (session, store, directory)
+    }
+
+    private func reply(_ id: String, fits: Bool) -> StageReply {
+        let text = LocalizedText(zhHant: id, zhHans: id, en: id)
+        return StageReply(id: id, ja: id, meaning: text, fits: fits, result: text, show: nil)
+    }
+
+    @Test
+    func aReplyThatDoesNotFitIsATryAndTheQuestionStaysOpen() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        session.reply(self.reply("cold", fits: false))
+        #expect(session.phase == .practising(step: 0, .answeredWrong(tried: ["reply:cold"])))
+        #expect(store.book.progress(SceneQuestionID(rawValue: "s.q0")).stage == .new)
+        session.reply(self.reply("hot", fits: true))
+        #expect(session.phase == .practising(step: 0, .revealed(firstTry: false)))
+        #expect(store.book.progress(SceneQuestionID(rawValue: "s.q0")).stage != .new)
+    }
+
+    @Test
+    func theSummaryPutsWhatWasMissedOrHelpedFirstEachOnce() {
+        let (session, _, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        session.reply(self.reply("ok", fits: true))
+        session.next()
+        session.noteHint()
+        session.reply(self.reply("ok", fits: true))
+        session.next()
+        session.noteHint()
+        session.reply(self.reply("no", fits: false))
+        session.reply(self.reply("ok", fits: true))
+        session.next()
+        guard case let .finished(summary) = session.phase else {
+            Issue.record("not finished")
+            return
+        }
+        #expect(summary.results.map(\.question.id.rawValue) == ["s.q1", "s.q2", "s.q0"])
+        #expect(summary.results.map(\.usedHint) == [true, true, false])
+        #expect(summary.results.map(\.wrongTries) == [0, 1, 0])
+    }
+
+    @Test
+    func aMachineFinishedTwiceRecordsOnce() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        session.finish(.paid(.card, change: 0), fits: true)
+        let after = store.book
+        session.finish(.paid(.card, change: 0), fits: true)
+        #expect(store.book == after)
+        #expect(session.phase == .practising(step: 0, .revealed(firstTry: true)))
+    }
+
+    @Test
+    func askingAgainPlaysUnheardPhrasingsAndTomorrowsReviewSkipsThem() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        #expect(session.askAgain()?.audio == "s.q0.p2.mp3")
+        #expect(session.askAgain()?.audio == "s.q0.p3.mp3")
+        #expect(session.askAgain()?.audio == "s.q0.p4.mp3")
+        #expect(session.askAgain() == nil)
+        let id = SceneQuestionID(rawValue: "s.q0")
+        #expect(store.book.progress(id).usedPhrasingIds.count == 3)
+        session.reply(self.reply("ok", fits: true))
+        #expect(store.book.progress(id).usedPhrasingIds.count == 4)
+    }
+
+    @Test
+    func aReviewAfterOneRepeatPicksTheOtherUnheardPhrasing() {
+        let (session, store, directory) = self.session()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        _ = session.askAgain()
+        _ = session.askAgain()
+        session.reply(self.reply("ok", fits: true))
+        let tomorrow = ScenePracticeSession(
+            scene: Fixture.scene,
+            store: store,
+            now: { Fixture.date(2026, 11, 9, 9) },
+            calendar: Fixture.calendar
+        )
+        let review = tomorrow.steps.first { $0.questionIndex == 0 }
+        #expect(review?.mode == .review)
+        #expect(review?.phrasing.id.rawValue == "s.q0.p4")
+    }
+}
+
+/// Trips through a staged scene: a pass meets only its trip's 問句, and a
+/// trip not taken does not hold the scene open.
+@MainActor
+struct SceneRouteTests {
+    private static let scene: PracticeScene = {
+        let steps = ["s.q0", "s.q1", "s.q2"].map { "\"\($0)\":{\"background\":\"bg\"}" }.joined(separator: ",")
+        let route = { (id: String, optional: Bool, questions: [String]) in
+            let list = questions.map { "\"\($0)\"" }.joined(separator: ",")
+            let text = "{\"zh-Hant\":\"t\",\"zh-Hans\":\"t\",\"en\":\"t\"}"
+            return "{\"id\":\"\(id)\",\"title\":\(text),\"intent\":\(text),\"enter\":\(text),"
+                + "\"questions\":[\(list)],\"optional\":\(optional)}"
+        }
+        let json = """
+        {"schemaVersion":2,"id":"s","revision":1,"access":"free",
+         "title":{"zh-Hant":"t","zh-Hans":"t","en":"t"},
+         "summary":{"zh-Hant":"s","zh-Hans":"s","en":"s"},
+         "questions":[\(["s.q0", "s.q1", "s.q2"].map(Fixture.question).joined(separator: ","))],
+         "stage":{"routes":[\(route("plain", false, ["s.q1", "s.q0"])),\(route("beer", true, ["s.q2", "s.q0"]))],
+                  "steps":{\(steps)}}}
+        """
+        do {
+            return try JSONDecoder().decode(PracticeScene.self, from: Data(json.utf8))
+        } catch {
+            preconditionFailure("fixture scene does not decode: \(error)")
+        }
+    }()
+
+    private let today = LocalDay(year: 2026, month: 11, day: 9)
+
+    private func id(_ raw: String) -> SceneQuestionID {
+        SceneQuestionID(rawValue: raw)
+    }
+
+    @Test
+    func aPassMeetsOnlyItsTripInTheTripsOrder() {
+        let stage = Self.scene.stage
+        let plain = ScenePractice.plan(
+            Self.scene,
+            book: SceneProgressBook(),
+            today: self.today,
+            route: stage?.route("plain")
+        )
+        #expect(plain.map(\.questionIndex) == [1, 0])
+        let beer = ScenePractice.plan(
+            Self.scene,
+            book: SceneProgressBook(),
+            today: self.today,
+            route: stage?.route("beer")
+        )
+        #expect(beer.map(\.questionIndex) == [2, 0])
+    }
+
+    @Test
+    func finishingTheDefaultTripFinishesTheSceneAndTheOtherTripStaysUnpractised() {
+        var book = SceneProgressBook()
+        book.questions[self.id("s.q0")] = QuestionProgress(stage: .reviewed)
+        book.questions[self.id("s.q1")] = QuestionProgress(stage: .reviewed)
+        #expect(ScenePractice.status(Self.scene, book: book, today: self.today) == .complete)
+        #expect(book.progress(self.id("s.q2")).stage == .new)
+        #expect(Self.scene.practised(in: book) == [true, true])
+    }
+
+    @Test
+    func aQuestionFromTheOtherTripCountsOnceItHasBeenPractised() {
+        var book = SceneProgressBook()
+        book.questions[self.id("s.q0")] = QuestionProgress(stage: .reviewed)
+        book.questions[self.id("s.q1")] = QuestionProgress(stage: .reviewed)
+        book.questions[self.id("s.q2")] = QuestionProgress(stage: .awaitingReview(due: self.today))
+        #expect(ScenePractice.status(Self.scene, book: book, today: self.today) == .reviewDue(count: 1))
+        #expect(ScenePractice.suggestedRoute(Self.scene, book: book, today: self.today)?.id == "beer")
+    }
+
+    @Test
+    func withNothingDueTheSuggestedTripIsTheDefault() {
+        #expect(ScenePractice.suggestedRoute(Self.scene, book: SceneProgressBook(), today: self.today)?.id == "plain")
     }
 }

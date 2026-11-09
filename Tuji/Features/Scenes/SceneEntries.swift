@@ -105,7 +105,7 @@ struct SceneTodayCard: View {
     private func status(_ pick: SceneCardPick) -> some View {
         switch pick.state {
         case .notStarted:
-            Text("\(pick.scene.questions.count) 句 · 約 \(pick.scene.minutes) 分鐘")
+            Text("\(pick.scene.practiceCount) 句 · 約 \(pick.scene.minutes) 分鐘")
                 .font(.scene(13, bold: false))
                 .foregroundStyle(.tujiInk2)
         case let .inProgress(at):
@@ -242,7 +242,7 @@ struct WordSceneSection: View {
                         .font(.scene(15))
                         .foregroundStyle(.tujiInk)
                     Spacer(minLength: Space.s2)
-                    Text("\(mention.scene.questions.count) 句")
+                    Text("\(mention.scene.practiceCount) 句")
                         .font(.scene(13, bold: false))
                         .foregroundStyle(.tujiInk2)
                     TujiRowAccessory()

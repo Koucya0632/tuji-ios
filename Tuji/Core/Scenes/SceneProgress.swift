@@ -138,8 +138,19 @@ nonisolated enum ScenePractice {
     /// The questions to practise now, starting from the scene's cursor and
     /// wrapping around. Only what is owed today (new or due) when anything is;
     /// otherwise the whole scene as a rehearsal.
-    static func plan(_ scene: PracticeScene, book: SceneProgressBook, today: LocalDay) -> [PracticeStep] {
-        let all = scene.questions.enumerated().compactMap { index, question -> PracticeStep? in
+    static func plan(
+        _ scene: PracticeScene,
+        book: SceneProgressBook,
+        today: LocalDay,
+        route: StageRoute? = nil
+    )
+        -> [PracticeStep]
+    {
+        let indices = route.map { route in
+            route.questions.compactMap { id in scene.questions.firstIndex { $0.id == id } }
+        } ?? Array(scene.questions.indices)
+        let all = indices.compactMap { index -> PracticeStep? in
+            let question = scene.questions[index]
             let progress = book.progress(question.id)
             let mode = self.mode(for: progress, today: today)
             guard let phrasing = self.phrasing(for: question, progress: progress, mode: mode) else { return nil }
@@ -147,8 +158,14 @@ nonisolated enum ScenePractice {
         }
         let owed = all.filter { $0.mode != .rehearsal }
         let steps = owed.isEmpty ? all : owed
-        let cursor = book.cursors[scene.id] ?? 0
-        let start = steps.firstIndex { $0.questionIndex >= cursor } ?? 0
+        let cursor = book.cursors[scene.id]
+        let start: Int = if let cursor {
+            route == nil
+                ? steps.firstIndex { $0.questionIndex >= cursor } ?? 0
+                : steps.firstIndex { $0.questionIndex == cursor } ?? 0
+        } else {
+            0
+        }
         return Array(steps[start...] + steps[..<start])
     }
 
@@ -172,7 +189,7 @@ nonisolated enum ScenePractice {
     }
 
     static func status(_ scene: PracticeScene, book: SceneProgressBook, today: LocalDay) -> SceneStatus {
-        let stages = scene.questions.map { book.progress($0.id).stage }
+        let stages = scene.counted(in: book).map { book.progress($0.id).stage }
         let fresh = stages.count(where: { $0 == .new })
         let dues = stages.compactMap { stage -> LocalDay? in
             if case let .awaitingReview(due) = stage { return due }
@@ -184,5 +201,30 @@ nonisolated enum ScenePractice {
         if fresh > 0 { return .inProgress(practised: stages.count - fresh, total: stages.count) }
         if let next = dues.min() { return .reviewLater(due: next) }
         return .complete
+    }
+}
+
+extension PracticeScene {
+    /// The 問句 a scene's standing is measured on: its default trip, plus any
+    /// other 問句 already practised. A route never taken does not hold the
+    /// scene open.
+    nonisolated func counted(in book: SceneProgressBook) -> [SceneQuestion] {
+        guard let route = self.stage?.defaultRoute else { return self.questions }
+        let core = Set(route.questions)
+        return self.questions.filter { core.contains($0.id) || book.progress($0.id).stage != .new }
+    }
+}
+
+extension ScenePractice {
+    /// The trip the scene page starts: one with a 問句 due today, so a review
+    /// meets its own premise again, else the default trip.
+    static func suggestedRoute(_ scene: PracticeScene, book: SceneProgressBook, today: LocalDay) -> StageRoute? {
+        guard let stage = scene.stage else { return nil }
+        let due = stage.routes.first { route in
+            route.questions.contains { id in
+                self.mode(for: book.progress(id), today: today) == .review
+            }
+        }
+        return due ?? stage.defaultRoute
     }
 }

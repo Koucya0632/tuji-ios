@@ -3,6 +3,7 @@
 
 import Foundation
 import Testing
+import UIKit
 @testable import Tuji
 
 struct SceneContentTests {
@@ -229,6 +230,71 @@ struct SceneContentTests {
         for slot in 0..<3 {
             let share = Double(positions[slot] ?? 0) / Double(shown)
             #expect((0.2...0.45).contains(share), "slot \(slot): \(positions[slot] ?? 0) of \(shown)")
+        }
+    }
+
+    // MARK: - Stage
+
+    @Test
+    func aStagedSceneStagesEveryQuestionAndNothingElse() throws {
+        for scene in try self.catalog().scenes {
+            guard let stage = scene.stage else { continue }
+            #expect(Set(stage.steps.keys) == Set(scene.questions.map(\.id.rawValue)), "\(scene.id.rawValue)")
+        }
+    }
+
+    /// Every 問句 is met on some trip, a trip names only this scene's 問句 once
+    /// each, and the trip first practice takes comes first.
+    @Test
+    func everyStagedQuestionIsOnATripAndTheFirstTripIsTheDefault() throws {
+        for scene in try self.catalog().scenes {
+            guard let stage = scene.stage else { continue }
+            let ids = Set(scene.questions.map(\.id))
+            #expect(!stage.routes.isEmpty, "\(scene.id.rawValue)")
+            #expect(stage.routes.first?.isOptional == false, "\(scene.id.rawValue): first trip must be the default")
+            #expect(Set(stage.routes.map(\.id)).count == stage.routes.count, "\(scene.id.rawValue)")
+            #expect(Set(stage.routes.flatMap(\.questions)) == ids, "\(scene.id.rawValue): a 問句 no trip meets")
+            for route in stage.routes {
+                #expect(Set(route.questions).count == route.questions.count, "\(route.id) repeats a 問句")
+                #expect(route.questions.allSatisfy(ids.contains), "\(route.id)")
+                #expect(
+                    (route.title.all + route.intent.all + route.enter.all).allSatisfy { !$0.isEmpty },
+                    "\(route.id)"
+                )
+            }
+        }
+    }
+
+    @Test
+    func aStagedListeningQuestionOffersRepliesAndAScreenQuestionNone() throws {
+        for (scene, question) in try self.allQuestions() {
+            guard let step = scene.stageStep(question.id) else { continue }
+            let replies = step.replies ?? []
+            switch question.kind {
+            case .listening:
+                #expect((2...4).contains(replies.count), "\(question.id.rawValue)")
+                #expect(replies.contains { $0.fits }, "\(question.id.rawValue): one reply must fit")
+                #expect(Set(replies.map(\.id)).count == replies.count, "\(question.id.rawValue)")
+                #expect(step.machine == nil, "\(question.id.rawValue)")
+                for reply in replies {
+                    #expect(!reply.ja.isEmpty)
+                    #expect((reply.meaning.all + reply.result.all).allSatisfy { !$0.isEmpty }, "\(reply.id)")
+                }
+            case .screen:
+                #expect(replies.isEmpty, "\(question.id.rawValue)")
+            }
+        }
+    }
+
+    @Test
+    func everyStageImageIsInTheAssetCatalog() throws {
+        for scene in try self.catalog().scenes {
+            for step in scene.stage?.steps.values.map(\.self) ?? [] {
+                let names = [step.background] + (step.props ?? []) + (step.replies ?? []).flatMap { $0.show ?? [] }
+                for name in names {
+                    #expect(UIImage(named: name) != nil, "\(scene.id.rawValue): missing image \(name)")
+                }
+            }
         }
     }
 

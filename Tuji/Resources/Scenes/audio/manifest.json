@@ -4291,25 +4291,35 @@
       "bytes": 11904,
       "durationSec": 2.976
     },
-    "restaurant.order-machine.p1.mp3": {
+    "restaurant.food-ticket.p1.mp3": {
       "digest": "d2419ef34c1b3ae6063d0271bdc32b9eabae6afdae375fa3a5a5aeea5ca9bc6a",
-      "sha256": "7ce5addc013766dfee0e9a27eaeefe4dae99ed9a7ede11b34824449629ceaffa",
+      "sha256": "1ad25a9d550e6b93a30ec23df342d238639a9240b22f0a397e241b82b8d30671",
       "text": "先に食券をお買い求めください",
       "voice": "ja-JP-Chirp3-HD-Aoede",
       "rate": 1,
       "ambience": null,
-      "bytes": 11712,
-      "durationSec": 2.928
+      "bytes": 9984,
+      "durationSec": 2.496
     },
-    "restaurant.order-machine.p3.mp3": {
-      "digest": "094d0a2856f56d2d3618f17954f8770e57a8c039d881b5be9b9cca541622208b",
-      "sha256": "5c462d34c1bda135adb5cd9005c8af1a157a10fbc20636cfe5fe9ef15fbdd577",
-      "text": "ご注文はタブレットでお願いします",
+    "restaurant.food-ticket.p2.mp3": {
+      "digest": "69e69ecdc06e964c71df8e2edadc5dc3dc171301b08c093bbf723e0733120f39",
+      "sha256": "d1a2471179b0a102428e208f7bffea55330ea18e4e882a87c7686f71c2e3576d",
+      "text": "食券機でお願いします",
+      "voice": "ja-JP-Chirp3-HD-Kore",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 6816,
+      "durationSec": 1.704
+    },
+    "restaurant.food-ticket.p3.mp3": {
+      "digest": "02a73032707025ea0046478e73727e39db64ecc865ca9ad23ea55f9c7176a75a",
+      "sha256": "5efde4c5aa4172a2c42599da13d4ce6b0f2441e8c06bee4d8d9207d7f2f3f776",
+      "text": "あちらの券売機で食券をお願いします",
       "voice": "ja-JP-Chirp3-HD-Charon",
       "rate": 1.25,
       "ambience": "ambience-placeholder.mp3",
-      "bytes": 32204,
-      "durationSec": 3.128
+      "bytes": 33884,
+      "durationSec": 3.296
     },
     "restaurant.party-size.p1.mp3": {
       "digest": "6f41ec6e4741d5cb6d4fb1a10efae5ca83acecbb33538f68ac9ceab9004d255f",
@@ -4430,6 +4440,36 @@
       "ambience": null,
       "bytes": 9312,
       "durationSec": 2.328
+    },
+    "restaurant.tablet-order.p1.mp3": {
+      "digest": "e4adae6640f976f51ff74ffbacdf9ab5125bac7e224de8fc6072e9e9a703bb0b",
+      "sha256": "0881cc346b1fd98f67f29a92838dfc01db0945f3343d90b3fc5e3df62d1e2cce",
+      "text": "ご注文はタブレットでお願いします",
+      "voice": "ja-JP-Chirp3-HD-Aoede",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 9792,
+      "durationSec": 2.448
+    },
+    "restaurant.tablet-order.p2.mp3": {
+      "digest": "e070aa3ec71218368ed53ef27df24716431f882738df7a88763722e4fe9608a2",
+      "sha256": "81a03205929c211c4345d673fe5de5354fc625746b61ce1c4f57e072ad26c85c",
+      "text": "タブレットからご注文ください",
+      "voice": "ja-JP-Chirp3-HD-Puck",
+      "rate": 1,
+      "ambience": null,
+      "bytes": 11136,
+      "durationSec": 2.784
+    },
+    "restaurant.tablet-order.p3.mp3": {
+      "digest": "e0d1ecd1278a7900a9a2c11c36ee8bea3bc762f08d036e6f706d74dddfddcbcc",
+      "sha256": "7aa52606758c9ed1f0eb302ed739fa3bc39da898d67c4c5c0e373936dc9b091f",
+      "text": "ご注文はそちらのタブレットからどうぞ",
+      "voice": "ja-JP-Chirp3-HD-Charon",
+      "rate": 1.25,
+      "ambience": "ambience-placeholder.mp3",
+      "bytes": 32204,
+      "durationSec": 3.128
     },
     "ryokan.allergies.p1.mp3": {
       "digest": "70f5db73a9a34c2aad29ca0b10b9309b6c2890224daf5e52cc7b8cdcf61b868b",
