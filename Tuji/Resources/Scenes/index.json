@@ -85,6 +85,26 @@
   ],
   "released": [
     "konbini-checkout",
-    "restaurant"
+    "cafe",
+    "fast-food",
+    "restaurant",
+    "ramen-shop",
+    "izakaya",
+    "conveyor-sushi",
+    "airport-check-in",
+    "car-rental",
+    "station-ticket-office",
+    "taxi",
+    "hotel-check-in",
+    "ryokan",
+    "hotel-check-out",
+    "luggage-storage",
+    "luggage-delivery",
+    "drugstore-checkout",
+    "clothing-store",
+    "electronics-store",
+    "department-tax-refund",
+    "post-office",
+    "hair-salon"
   ]
 }
