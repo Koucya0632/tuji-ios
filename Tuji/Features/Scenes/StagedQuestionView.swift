@@ -25,6 +25,7 @@ struct StagedQuestionView: View {
     @State private var line: SpokenLine?
     @State private var subtitles = false
     @State private var chosen: StageReply?
+    @State private var glossed: GlossToken?
     @State private var machine: SceneMachine?
     /// The panel's natural height; it scrolls only past what the photo can spare.
     @State private var lowerHeight: CGFloat = 0
@@ -63,6 +64,7 @@ struct StagedQuestionView: View {
                 .background(.tujiPaper)
             }
         }
+        .glossSheet(self.$glossed)
         .task(id: self.entered) {
             if self.machine == nil, let kind = self.stage.machine {
                 self.machine = kind.makeMachine()
@@ -172,9 +174,14 @@ struct StagedQuestionView: View {
             }
             .foregroundStyle(.tujiInk2)
             if let shown, self.subtitles || self.revealed {
-                Text(verbatim: shown.text)
-                    .font(.scene(19))
-                    .foregroundStyle(.tujiInk)
+                // Words open only once answered: before that they give it away.
+                GlossedLine(
+                    text: shown.text,
+                    tokens: self.revealed ? self.session.scene.gloss(shown.text) : nil,
+                    picked: self.$glossed
+                )
+                .font(.scene(19))
+                .foregroundStyle(.tujiInk)
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: Space.s2) {

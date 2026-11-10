@@ -64,10 +64,28 @@ nonisolated struct PracticeScene: Identifiable, Hashable, Decodable {
     /// The immersive staging: where the traveller stands and what they can
     /// do at each 問句. A scene without one keeps the plain practice screen.
     let stage: SceneStage?
+    /// Every Japanese line this scene says, split into words, keyed by the
+    /// line's exact text so a phrasing, a 回應 and a reply share one entry.
+    let gloss: [String: [GlossToken]]?
 
     func stageStep(_ question: SceneQuestionID) -> StageStep? {
         self.stage?.steps[question.rawValue]
     }
+
+    /// The words of `line`, when they are written and add up to it exactly.
+    func gloss(_ line: String) -> [GlossToken]? {
+        guard let tokens = self.gloss?[line], tokens.map(\.t).joined() == line else { return nil }
+        return tokens
+    }
+}
+
+/// One piece of a glossed line. A piece with no meaning (a particle,
+/// punctuation) is glue between the words and cannot be tapped.
+nonisolated struct GlossToken: Hashable, Decodable {
+    let t: String
+    /// The reading in kana, when the piece has kanji.
+    let r: String?
+    let m: LocalizedText?
 }
 
 nonisolated struct SceneQuestion: Identifiable, Hashable, Decodable {

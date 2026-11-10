@@ -12,6 +12,7 @@ struct ScenePracticeView: View {
     @State private var session: ScenePracticeSession?
     @State private var showsTranscript = false
     @State private var openWord: CardWord?
+    @State private var glossed: GlossToken?
     /// A staged scene waits for the traveller to walk in before anything plays.
     @State private var entered = false
     @Environment(SettingsStore.self) private var settings
@@ -67,6 +68,7 @@ struct ScenePracticeView: View {
             self.studyFocus.exit()
             SpeechService.shared.stop()
         }
+        .glossSheet(self.$glossed)
         .tujiSheet(
             isPresented: Binding(get: { self.openWord != nil }, set: { if !$0 { self.openWord = nil } }),
             title: "單字詳情",
@@ -424,7 +426,7 @@ extension ScenePracticeView {
                 }
                 .foregroundStyle(.tujiInk2)
                 HStack(spacing: Space.s1) {
-                    Text(verbatim: line.text)
+                    GlossedLine(text: line.text, tokens: self.session?.scene.gloss(line.text), picked: self.$glossed)
                         .font(.scene(19))
                         .foregroundStyle(.tujiInk)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -459,10 +461,14 @@ extension ScenePracticeView {
                 .font(.scene(13, bold: false))
                 .foregroundStyle(.tujiInk3)
             HStack(spacing: Space.s2) {
-                Text(verbatim: question.response.ja)
-                    .font(.tujiBody(.strong))
-                    .foregroundStyle(.tujiInk)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                GlossedLine(
+                    text: question.response.ja,
+                    tokens: self.session?.scene.gloss(question.response.ja),
+                    picked: self.$glossed
+                )
+                .font(.tujiBody(.strong))
+                .foregroundStyle(.tujiInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 if question.response.clip != nil {
                     ScenePlayButton(label: "播放回應", fill: nil) { SceneAudio.play(question.response) }
                 }

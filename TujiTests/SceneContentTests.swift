@@ -233,6 +233,28 @@ struct SceneContentTests {
         }
     }
 
+    // MARK: - Gloss
+
+    /// A scene that has 點詞翻譯 has it for every Japanese line it says, and
+    /// each line's words add up to the line.
+    @Test
+    func aGlossedSceneGlossesEveryLineItSays() throws {
+        for scene in try self.catalog().scenes where scene.gloss != nil {
+            var lines = Set<String>()
+            for question in scene.questions {
+                lines.formUnion(question.phrasings.compactMap(\.spoken?.text))
+                lines.insert(question.response.ja)
+            }
+            for step in scene.stage?.steps.values.map(\.self) ?? [] {
+                lines.formUnion((step.replies ?? []).filter(\.isSpoken).map(\.ja))
+            }
+            for line in lines {
+                #expect(scene.gloss(line) != nil, "\(scene.id.rawValue): \(line)")
+            }
+        }
+        #expect(try self.catalog().scene(SceneID(rawValue: "konbini-checkout"))?.gloss != nil)
+    }
+
     // MARK: - Stage
 
     @Test

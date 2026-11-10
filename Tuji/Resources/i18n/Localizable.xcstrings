@@ -30418,6 +30418,30 @@
           }
         }
       }
+    },
+    "這個詞" : {
+      "comment" : "場面練習: title of the sheet a tapped word opens in a Japanese line.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This word"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言葉"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个词"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
