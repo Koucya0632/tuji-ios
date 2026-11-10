@@ -235,8 +235,8 @@ struct SceneContentTests {
 
     // MARK: - Gloss
 
-    /// A scene that has 點詞翻譯 has it for every Japanese line it says, and
-    /// each line's words add up to the line.
+    /// Every scene has 點詞翻譯 for every Japanese line it says, and each
+    /// line's words add up to the line.
     @Test
     func aGlossedSceneGlossesEveryLineItSays() throws {
         for scene in try self.catalog().scenes where scene.gloss != nil {
@@ -252,7 +252,7 @@ struct SceneContentTests {
                 #expect(scene.gloss(line) != nil, "\(scene.id.rawValue): \(line)")
             }
         }
-        #expect(try self.catalog().scene(SceneID(rawValue: "konbini-checkout"))?.gloss != nil)
+        #expect(try self.catalog().scenes.allSatisfy { $0.gloss != nil })
     }
 
     // MARK: - Stage
