@@ -1,0 +1,637 @@
+# surface	reading	zh-Hant	zh-Hans	en
+# common
+お願いします	おねがいします	麻煩了、拜託	麻烦了、拜托	please
+大丈夫です	だいじょうぶです	沒關係、不用了	没关系、不用了	it's fine / no thanks
+大丈夫ですか	だいじょうぶですか	可以嗎、沒問題嗎	可以吗、没问题吗	is that OK?
+はい	-	是、好	是、好	yes
+ですか	-	……嗎	……吗	is it…?
+でしょうか	-	……嗎（更客氣）	……吗（更客气）	is it…? (more polite)
+よろしいですか	-	可以嗎（敬語）	可以吗（敬语）	is that all right? (polite)
+いかがですか	-	要不要、如何（敬語）	要不要、如何（敬语）	how about…? (polite)
+いかがなさいますか	-	要怎麼處理（敬語）	要怎么处理（敬语）	what would you like? (polite)
+どうされますか	-	要怎麼做（敬語）	要怎么做（敬语）	what would you like to do? (polite)
+どうなさいますか	-	要怎麼做（敬語）	要怎么做（敬语）	what would you like to do? (polite)
+になさいますか	-	要選……嗎（敬語）	要选……吗（敬语）	would you like…? (polite)
+にしますか	-	要選……嗎	要选……吗	which will you have?
+がよろしいですか	-	……比較好嗎（敬語）	……比较好吗（敬语）	would you prefer…? (polite)
+こちら	-	這邊、這個	这边、这个	here, this
+そちら	-	那邊（您那邊）	那边（您那边）	there (by you)
+あちら	-	那邊	那边	over there
+どちら	-	哪一個	哪一个	which one
+どれ	-	哪一個	哪一个	which one
+これ	-	這個	这个	this
+何	なに	什麼	什么	what
+まだです	-	還沒	还没	not yet
+どうぞ	-	請（用）	请（用）	please, go ahead
+先に	さきに	先	先	first, beforehand
+お待ちください	おまちください	請稍等	请稍等	please wait
+少々	しょうしょう	稍微	稍微	a moment
+お預かりします	おあずかりします	收下了、先替您保管（敬語）	收下了、先替您保管（敬语）	I'll take this (polite)
+お付けしますか	おつけしますか	要幫您附上嗎（敬語）	要帮您附上吗（敬语）	shall I add it? (polite)
+お使いになりますか	おつかいになりますか	要用嗎（敬語）	要用吗（敬语）	will you use it? (polite)
+お使いください	おつかいください	請用	请用	please use it
+ご利用ですか	ごりようですか	要使用嗎（敬語）	要使用吗（敬语）	will you use it? (polite)
+ご利用	ごりよう	使用（敬語）	使用（敬语）	use (polite)
+よろしければ	-	如果方便、需要的話	如果方便、需要的话	if you like
+お選びください	おえらびください	請選擇	请选择	please choose
+お呼びしますので	およびしますので	會叫您，所以	会叫您，所以	we'll call you, so
+お待たせしました	おまたせしました	讓您久等了	让您久等了	sorry to keep you waiting
+お待たせいたしました	おまたせいたしました	讓您久等了（更客氣）	让您久等了（更客气）	sorry to keep you waiting (more polite)
+お待ちのお客様	おまちのおきゃくさま	在等候的客人	在等候的客人	the customer waiting for
+のお客様	のおきゃくさま	……的客人	……的客人	the customer with…
+あります	-	有	有	there is, have
+ございますが	-	有……（敬語）	有……（敬语）	we have… (polite)
+なりますが	-	會是……（敬語）	会是……（敬语）	it will be… (polite)
+なっております	-	是……（敬語）	是……（敬语）	it is… (polite)
+ですが	-	是……，不過	是……，不过	it is…, but
+がいいです	-	比較好、想要	比较好、想要	I'd prefer
+番号	ばんごう	號碼	号码	number
+横	よこ	旁邊	旁边	beside, to the side
+レシート	-	收據	小票	receipt
+サイズ	-	尺寸、杯型	尺寸、杯型	size
+お席	おせき	座位（敬語）	座位（敬语）	seat (polite)
+席で待ちます	せきでまちます	我在座位等	我在座位等	I'll wait at my seat
+全部	ぜんぶ	全部	全部	all of it
+普通	ふつう	普通、一般	普通、一般	regular
+無料	むりょう	免費	免费	free of charge
+# eating and ordering
+食券	しょっけん	餐券	餐券	meal ticket
+食券機	しょっけんき	餐券機	餐券机	ticket machine
+券売機	けんばいき	售票機	售票机	ticket machine
+食券制	しょっけんせい	先買餐券的制度	先买餐券的制度	pay-first ticket system
+お買い求めください	おかいもとめください	請購買（敬語）	请购买（敬语）	please buy (polite)
+何名様	なんめいさま	幾位（敬語）	几位（敬语）	how many people? (polite)
+でいらっしゃいます	-	是（尊敬語）	是（尊敬语）	are (honorific)
+一人です	ひとりです	一個人	一个人	one person
+二人です	ふたりです	兩個人	两个人	two people
+店内	てんない	店內	店内	in the shop
+お召し上がり	おめしあがり	用餐、吃（尊敬語）	用餐、吃（尊敬语）	eating (honorific)
+お持ち帰り	おもちかえり	外帶（敬語）	外带（敬语）	takeaway (polite)
+持ち帰り	もちかえり	外帶	外带	takeaway
+テイクアウト	-	外帶	外带	takeaway
+ご注文	ごちゅうもん	點餐（敬語）	点单（敬语）	order (polite)
+ご注文ください	ごちゅうもんください	請點餐（敬語）	请点单（敬语）	please order (polite)
+注文する	ちゅうもんする	點餐	点单	order
+お決まり	おきまり	決定好了（敬語）	决定好了（敬语）	decided (polite)
+お伺いしても	おうかがいしても	可以請問（謙讓語）	可以请问（谦让语）	may I ask (humble)
+お飲み物	おのみもの	飲料（敬語）	饮料（敬语）	drinks (polite)
+ドリンク	-	飲料	饮料	drink
+タブレット	-	平板	平板	tablet
+タッチパネル	-	觸控螢幕	触屏	touch screen
+お会計	おかいけい	結帳	结账	the bill
+ご一緒	ごいっしょ	一起（敬語）	一起（敬语）	together (polite)
+一緒	いっしょ	一起	一起	together
+別々	べつべつ	分開	分开	separately
+されますか	-	要……嗎（敬語）	要……吗（敬语）	will you…? (polite)
+カウンター	-	吧檯	吧台	counter
+カウンター席	カウンターせき	吧檯座位	吧台座位	counter seat
+テーブル席	テーブルせき	桌位	桌位	table seat
+でも	-	……也	……也	also, even
+麺	めん	麵	面	noodles
+硬さ	かたさ	硬度	硬度	firmness
+硬め	かため	偏硬	偏硬	firmer
+柔らかめ	やわらかめ	偏軟	偏软	softer
+お好み	おこのみ	喜好	喜好	preference
+味	あじ	味道	味道	flavour
+濃さ	こさ	濃淡	浓淡	strength (of flavour)
+濃いめ	こいめ	偏濃	偏浓	stronger
+油	あぶら	油	油	oil
+油多め	あぶらおおめ	油多一點	油多一点	extra oil
+量	りょう	量	量	amount
+大盛	おおもり	大碗	大碗	large serving
+ライス	-	白飯	米饭	rice
+ご飯	ごはん	白飯	米饭	rice
+紙エプロン	かみエプロン	紙圍兜	纸围兜	paper bib
+エプロン	-	圍兜	围兜	bib
+お席の確保	おせきのかくほ	先佔位子	先占座位	saving a seat
+お取りいただいてますか	おとりいただいてますか	佔好了嗎（敬語）	占好了吗（敬语）	have you got a seat? (polite)
+取ってあります	とってあります	佔好了	占好了	I've got one
+ホット	-	熱的	热的	hot
+アイス	-	冰的	冰的	iced
+温かいの	あたたかいの	熱的	热的	the hot one
+冷たいの	つめたいの	冰的	冰的	the cold one
+ミルク	-	奶精、牛奶	奶精、牛奶	milk
+お砂糖	おさとう	糖	糖	sugar
+ガムシロップ	-	糖漿	糖浆	syrup
+シロップ	-	糖漿	糖浆	syrup
+アイスカフェラテ	-	冰拿鐵	冰拿铁	iced latte
+12番	じゅうにばん	12 號	12 号	number 12
+セット	-	套餐	套餐	combo
+単品	たんぴん	單點	单点	on its own
+単品のまま	たんぴんのまま	維持單點	维持单点	keep it on its own
+プラス300円	プラスさんびゃくえん	加 300 日圓	加 300 日元	plus 300 yen
+にできますが	-	可以改成……	可以改成……	can be made into…
+Lサイズ	エルサイズ	L 尺寸	L 尺寸	large size
+変更もできますが	へんこうもできますが	也可以換	也可以换	you can also change it
+コーラ	-	可樂	可乐	cola
+コーヒー	-	咖啡	咖啡	coffee
+ポテト	-	薯條	薯条	fries
+ナゲット	-	雞塊	鸡块	nuggets
+ソース	-	醬	酱	sauce
+バーベキュー	-	烤肉醬	烧烤酱	barbecue
+マスタード	-	芥末醬	芥末酱	mustard
+お支払い	おしはらい	付款（敬語）	付款（敬语）	payment (polite)
+お支払い方法	おしはらいほうほう	付款方式	付款方式	payment method
+現金	げんきん	現金	现金	cash
+カード	-	卡（信用卡）	卡（信用卡）	card
+# izakaya
+ご予約	ごよやく	預約（敬語）	预约（敬语）	booking (polite)
+されていますか	-	有……嗎（敬語）	有……吗（敬语）	have you…? (polite)
+本日	ほんじつ	今天（正式）	今天（正式）	today (formal)
+ございますか	-	有嗎（敬語）	有吗（敬语）	do you have…? (polite)
+予約していません	よやくしていません	沒有預約	没有预约	I don't have a booking
+予約しています	よやくしています	有預約	有预约	I have a booking
+2時間制	にじかんせい	限時兩小時	限时两小时	two-hour limit
+なっておりますが	-	是……，不過（敬語）	是……，不过（敬语）	it is…, but (polite)
+2時間	にじかん	兩小時	两小时	two hours
+お願いしてます	おねがいしてます	麻煩您配合	麻烦您配合	we ask for…
+20時まで	にじゅうじまで	到晚上 8 點	到晚上 8 点	until 8 p.m.
+飲み放題	のみほうだい	喝到飽	畅饮	all-you-can-drink
+お付けできますが	おつけできますが	可以幫您加，不過	可以帮您加，不过	we can add it, but
+なしで	-	不要（不加）	不要（不加）	without, none
+とりあえず	-	先（點）	先（点）	to start with
+まず	-	首先	首先	first
+生ビール	なまビール	生啤酒	生啤	draft beer
+ウーロン茶	ウーロンちゃ	烏龍茶	乌龙茶	oolong tea
+お通し	おとおし	小菜（入座附的，要收費）	小菜（入座附的，要收费）	table-charge appetiser
+です	-	是	是	is
+お通し代として	おとおしだいとして	作為小菜費	作为小菜费	as the appetiser charge
+お一人様	おひとりさま	每位（敬語）	每位（敬语）	per person (polite)
+300円	さんびゃくえん	300 日圓	300 日元	300 yen
+いただいております	-	向您收取（謙讓語）	向您收取（谦让语）	we charge (humble)
+ありがとうございます	-	謝謝	谢谢	thank you
+お酒	おさけ	酒	酒	alcohol
+ラストオーダー	-	最後點餐	最后点单	last order
+お時間	おじかん	時間（敬語）	时间（敬语）	time (polite)
+そろそろ	-	差不多（要）	差不多（要）	soon, about to
+最後	さいご	最後	最后	last
+じゃあ	-	那麼	那么	then, well
+やめておきます	-	那就不要了	那就不要了	I'll pass
+頼んでいません	たのんでいません	我沒點	我没点	I didn't order it
+# conveyor-sushi
+受付機	うけつけき	取號機	取号机	check-in machine
+発券	はっけん	取票、取號	取票、取号	issuing a ticket
+どちらでも	-	哪個都可以	哪个都可以	either is fine
+受付番号	うけつけばんごう	號碼牌號碼	号码牌号码	queue number
+25番	にじゅうごばん	25 號	25 号	number 25
+5番テーブル	ごばんテーブル	5 號桌	5 号桌	table 5
+いらっしゃいますか	-	在嗎（尊敬語）	在吗（尊敬语）	are you here? (honorific)
+ご案内いたします	ごあんないいたします	為您帶位（謙讓語）	为您带位（谦让语）	I'll show you to your seat (humble)
+お茶	おちゃ	茶	茶	tea
+セルフサービス	-	自助	自助	self-service
+セルフ	-	自助	自助	self-service
+粉茶	こなちゃ	茶粉	茶粉	powdered tea
+お湯	おゆ	熱水	热水	hot water
+ございますので	-	有……，所以（敬語）	有……，所以（敬语）	there is…, so (polite)
+ご自由に	ごじゆうに	請自便	请自便	help yourself
+わさび	-	芥末	芥末	wasabi
+なし	-	不要、沒有	不要、没有	none
+商品	しょうひん	商品、餐點	商品、餐点	item
+到着します	とうちゃくします	抵達	到达	arrives
+まもなく	-	馬上	马上	shortly
+お皿	おさら	盤子	盘子	plate
+お取りください	おとりください	請拿取	请拿取	please take it
+届きました	とどきました	送到了	送到了	has arrived
+取る	とる	拿	拿	take
+の際は	のさいは	……的時候	……的时候	when
+ボタン	-	按鈕	按钮	button
+押してください	おしてください	請按	请按	please press
+さび抜き	さびぬき	不加芥末	不加芥末	no wasabi
+# station
+どちらまで	-	到哪裡	到哪里	to where
+行き先	いきさき	目的地	目的地	destination
+どこまで	-	到哪裡	到哪里	how far, to where
+行かれますか	いかれますか	要去嗎（尊敬語）	要去吗（尊敬语）	are you going? (honorific)
+京都まで	きょうとまで	到京都	到京都	to Kyoto
+新大阪まで	しんおおさかまで	到新大阪	到新大阪	to Shin-Osaka
+ご乗車	ごじょうしゃ	搭車（敬語）	乘车（敬语）	boarding (polite)
+いつ	-	什麼時候	什么时候	when
+日にち	ひにち	日期	日期	date
+何日	なんにち	幾號	几号	what date
+何時ごろ	なんじごろ	大約幾點	大约几点	about what time
+今日	きょう	今天	今天	today
+十時ごろ	じゅうじごろ	十點左右	十点左右	around ten
+明日	あした	明天	明天	tomorrow
+朝	あさ	早上	早上	morning
+大人の方	おとなのかた	大人（敬語）	成人（敬语）	adults (polite)
+大人二人です	おとなふたりです	兩個大人	两个成人	two adults
+大人一人です	おとなひとりです	一個大人	一个成人	one adult
+指定席	していせき	對號座	对号座	reserved seat
+自由席	じゆうせき	自由座	自由座	unreserved seat
+指定	してい	對號	对号	reserved
+お取りしますか	おとりしますか	要幫您訂嗎（敬語）	要帮您订吗（敬语）	shall I book it? (polite)
+窓側	まどがわ	靠窗	靠窗	window side
+通路側	つうろがわ	靠走道	靠过道	aisle side
+ご希望	ごきぼう	希望、需求（敬語）	希望、需求（敬语）	preference (polite)
+どこでも	-	哪裡都可以	哪里都可以	anywhere
+お間違いないですか	おまちがいないですか	沒錯吧（敬語）	没错吧（敬语）	is this correct? (polite)
+ご確認	ごかくにん	確認（敬語）	确认（敬语）	checking (polite)
+# taxi
+お荷物	おにもつ	行李（敬語）	行李（敬语）	luggage (polite)
+トランク	-	後車廂	后备箱	boot, trunk
+お入れしますか	おいれしますか	要幫您放進去嗎（敬語）	要帮您放进去吗（敬语）	shall I put it in? (polite)
+開けますね	あけますね	我打開喔	我打开哦	I'll open it
+入れましょうか	いれましょうか	要幫您放嗎	要帮您放吗	shall I put it in?
+スーツケース	-	行李箱	行李箱	suitcase
+後ろ	うしろ	後面	后面	the back
+積みましょうか	つみましょうか	要幫您放上去嗎	要帮您放上去吗	shall I load it?
+ここまで	-	到這裡	到这里	to here
+シートベルト	-	安全帶	安全带	seat belt
+お締めください	おしめください	請繫上	请系上	please fasten
+ベルト	-	安全帶	安全带	belt
+お願いしますね	おねがいしますね	麻煩囉	麻烦了哦	please (friendly)
+後ろの席	うしろのせき	後座	后座	back seat
+着用	ちゃくよう	繫上、穿戴	系上、穿戴	wearing
+お願いいたします	おねがいいたします	麻煩了（更客氣）	麻烦了（更客气）	please (more polite)
+高速	こうそく	高速公路	高速公路	expressway
+高速道路	こうそくどうろ	高速公路	高速公路	expressway
+使っても	つかっても	用……也	用……也	even if we use
+乗りますか	のりますか	要走嗎、要上嗎	要走吗、要上吗	shall we take it?
+使うと	つかうと	走的話	走的话	if we use it
+早いですが	はやいですが	比較快，不過	比较快，不过	it's quicker, but
+下の道	したのみち	一般道路（不走高速）	普通道路（不走高速）	local roads
+このあたり	-	這附近	这附近	around here
+ここで	-	在這裡	在这里	here
+停めても	とめても	停車也	停车也	stopping
+よろしいでしょうか	-	可以嗎（更客氣）	可以吗（更客气）	would that be all right? (more polite)
+画面	がめん	畫面、螢幕	画面、屏幕	screen
+領収書	りょうしゅうしょ	收據	收据	receipt
+ご入用ですか	ごいりようですか	需要嗎（敬語）	需要吗（敬语）	do you need it? (polite)
+お出ししますか	おだししますか	要給您嗎（敬語）	要给您吗（敬语）	shall I give you one? (polite)
+要りますか	いりますか	要嗎	要吗	do you need it?
+駅まで	えきまで	到車站	到车站	to the station
+もう少し先	もうすこしさき	再往前一點	再往前一点	a bit further on
+# hotel
+お名前	おなまえ	名字（敬語）	名字（敬语）	name (polite)
+お伺いできますか	おうかがいできますか	可以請問嗎（謙讓語）	可以请问吗（谦让语）	may I ask? (humble)
+頂戴しても	ちょうだいしても	可以向您要（謙讓語）	可以向您要（谦让语）	may I have (humble)
+ご予約者様	ごよやくしゃさま	訂房的人（敬語）	订房的人（敬语）	the person who booked (polite)
+ワンです	-	我姓王（ワン）	我姓王（ワン）	it's Wang
+から	-	從……	从……	from
+2泊	にはく	兩晚	两晚	two nights
+2泊です	にはくです	兩晚	两晚	two nights
+1泊です	いっぱくです	一晚	一晚	one night
+お間違いないでしょうか	おまちがいないでしょうか	沒錯吧（更客氣）	没错吧（更客气）	is that correct? (more polite)
+ですね	-	是……對吧	是……对吧	…, right?
+シングル	-	單人房	单人间	single room
+お部屋	おへや	房間（敬語）	房间（敬语）	room (polite)
+承っております	うけたまわっております	已經為您預訂（謙讓語）	已经为您预订（谦让语）	we have it booked (humble)
+パスポート	-	護照	护照	passport
+拝見しても	はいけんしても	可以看一下（謙讓語）	可以看一下（谦让语）	may I see (humble)
+お願いできますか	おねがいできますか	可以麻煩您嗎	可以麻烦您吗	could you please?
+一度	いちど	一下、暫時	一下、暂时	for a moment
+お預かりしても	おあずかりしても	可以先替您保管（謙讓語）	可以先替您保管（谦让语）	may I hold on to it (humble)
+はい、どうぞ	-	好，請	好，请	here you are
+ご記入	ごきにゅう	填寫（敬語）	填写（敬语）	filling in (polite)
+ご住所	ごじゅうしょ	地址（敬語）	地址（敬语）	address (polite)
+宿泊カード	しゅくはくカード	住宿登記卡	住宿登记卡	registration card
+ご記入いただけますか	ごきにゅういただけますか	可以麻煩您填寫嗎（敬語）	可以麻烦您填写吗（敬语）	could you fill in…? (polite)
+機械	きかい	機器	机器	machine
+お願いしております	おねがいしております	麻煩您（敬語）	麻烦您（敬语）	we ask that you (polite)
+朝食	ちょうしょく	早餐	早餐	breakfast
+ご利用になりますか	ごりようになりますか	要使用嗎（敬語）	要使用吗（敬语）	will you use it? (polite)
+いいえ	-	不是	不是	no
+あとでいいですか	-	晚點可以嗎	晚点可以吗	can I do it later?
+なります	-	是……（敬語）	是……（敬语）	it is… (polite)
+# ryokan
+ご夕食	ごゆうしょく	晚餐（敬語）	晚餐（敬语）	dinner (polite)
+お夕食	おゆうしょく	晚餐（敬語）	晚餐（敬语）	dinner (polite)
+夕食	ゆうしょく	晚餐	晚餐	dinner
+お夕食中	おゆうしょくちゅう	晚餐時	晚餐时	during dinner
+何時	なんじ	幾點	几点	what time
+6時	ろくじ	6 點	6 点	six o'clock
+7時	しちじ	7 點	7 点	seven o'clock
+7時半	しちじはん	7 點半	7 点半	half past seven
+8時	はちじ	8 點	8 点	eight o'clock
+8時半	はちじはん	8 點半	8 点半	half past eight
+いかがいたしましょうか	-	要怎麼安排（謙讓語）	要怎么安排（谦让语）	how shall we arrange it? (humble)
+苦手なもの	にがてなもの	不愛吃或不能吃的東西	不爱吃或不能吃的东西	things you don't eat
+アレルギー	-	過敏	过敏	allergy
+食物アレルギー	しょくもつアレルギー	食物過敏	食物过敏	food allergy
+召し上がれないもの	めしあがれないもの	不能吃的東西（尊敬語）	不能吃的东西（尊敬语）	things you can't eat (honorific)
+ございませんか	-	沒有嗎（敬語）	没有吗（敬语）	is there none? (polite)
+など	-	……等等	……等等	and so on
+ありません	-	沒有	没有	there isn't any
+エビ	-	蝦子	虾	shrimp
+食べられません	たべられません	不能吃	不能吃	I can't eat it
+ご朝食	ごちょうしょく	早餐（敬語）	早餐（敬语）	breakfast (polite)
+朝ごはん	あさごはん	早餐	早餐	breakfast
+の間	のあいだ	……之間、……的時候	……之间、……的时候	between, while
+ご用意しましょうか	ごよういしましょうか	要幫您準備嗎	要帮您准备吗	shall we prepare it?
+浴衣	ゆかた	浴衣	浴衣	yukata
+大丈夫そうですか	だいじょうぶそうですか	看起來可以嗎	看起来可以吗	does it look OK?
+大きいサイズ	おおきいサイズ	大尺寸	大尺寸	larger size
+大きいの	おおきいの	大的	大的	a bigger one
+貸切風呂	かしきりぶろ	包租浴池	包租浴池	private bath
+お取りしましょうか	おとりしましょうか	要幫您訂嗎	要帮您订吗	shall I book it?
+お食事	おしょくじ	用餐（敬語）	用餐（敬语）	meal (polite)
+お布団	おふとん	被褥	被褥	futon
+敷いても	しいても	鋪也	铺也	laying out
+敷かせていただきますね	しかせていただきますね	會幫您鋪好（謙讓語）	会帮您铺好（谦让语）	we'll lay it out (humble)
+ご用意して	ごよういして	準備（敬語）	准备（敬语）	preparing (polite)
+自分で	じぶんで	自己	自己	myself
+敷きます	しきます	鋪	铺	lay out
+# check-out
+お部屋番号	おへやばんごう	房號（敬語）	房号（敬语）	room number (polite)
+何号室	なんごうしつ	幾號房	几号房	which room number
+伺っても	うかがっても	可以請問（謙讓語）	可以请问（谦让语）	may I ask (humble)
+冷蔵庫	れいぞうこ	冰箱	冰箱	fridge
+ございましたか	-	有嗎（過去，敬語）	有吗（过去，敬语）	was there…? (polite)
+の中のもの	のなかのもの	裡面的東西	里面的东西	what's inside
+ありましたか	-	有嗎（過去）	有吗（过去）	was there…?
+ミニバー	-	迷你吧	迷你吧	minibar
+ご利用になりましたか	ごりようになりましたか	用過了嗎（敬語）	用过了吗（敬语）	did you use it? (polite)
+使っていません	つかっていません	沒有用	没有用	I didn't use it
+ご必要でしょうか	ごひつようでしょうか	需要嗎（敬語）	需要吗（敬语）	do you need it? (polite)
+宛名	あてな	抬頭（收據上的名字）	抬头（收据上的名字）	name on the receipt
+お宛名	おあてな	抬頭（敬語）	抬头（敬语）	name on the receipt (polite)
+上様	うえさま	「上様」（不寫名字的通用抬頭）	「上様」（不写名字的通用抬头）	"Uesama" (generic name on receipts)
+お預かりしましょうか	おあずかりしましょうか	要幫您保管嗎	要帮您保管吗	shall we keep it for you?
+お預かりもできますが	おあずかりもできますが	也可以幫您保管	也可以帮您保管	we can also keep it for you
+お出かけの間	おでかけのあいだ	您外出的時候	您外出的时候	while you're out
+ビール	-	啤酒	啤酒	beer
+1本	いっぽん	一瓶	一瓶	one bottle
+飲みました	のみました	喝了	喝了	I drank
+ワン	-	王（ワン）	王（ワン）	Wang
+# luggage
+チェックアウト	-	退房	退房	check-out
+お済みですか	おすみですか	辦好了嗎（敬語）	办好了吗（敬语）	have you finished? (polite)
+お済みでしょうか	おすみでしょうか	辦好了嗎（更客氣）	办好了吗（更客气）	have you finished? (more polite)
+もう	-	已經	已经	already
+されましたか	-	辦了嗎（敬語）	办了吗（敬语）	did you…? (polite)
+お手続き	おてつづき	手續（敬語）	手续（敬语）	procedure (polite)
+済みました	すみました	辦好了	办好了	it's done
+何個	なんこ	幾件、幾個	几件、几个	how many
+おいくつ	-	幾個（敬語）	几个（敬语）	how many (polite)
+全部で	ぜんぶで	總共	总共	in total
+3点	さんてん	三件	三件	three items
+2つです	ふたつです	兩件	两件	two
+3つです	みっつです	三件	三件	three
+1つです	ひとつです	一件	一件	one
+一つです	ひとつです	一件	一件	one
+貴重品	きちょうひん	貴重物品	贵重物品	valuables
+割れ物	われもの	易碎品	易碎品	fragile items
+壊れ物	こわれもの	易碎品	易碎品	fragile items
+壊れやすい物	こわれやすいもの	容易壞的東西	容易坏的东西	breakable things
+入っていませんか	はいっていませんか	沒有放……吧（否定問句）	没有放……吧（否定问句）	there isn't… in it, is there?
+入っておりませんか	はいっておりませんか	沒有放……吧（敬語）	没有放……吧（敬语）	there isn't… in it? (polite)
+入っていませんよね	はいっていませんよね	沒有放……對吧	没有放……对吧	there isn't… in it, right?
+入っていますか	はいっていますか	有放……嗎	有放……吗	is there… in it?
+入っていません	はいっていません	沒有放	没有放	there isn't any
+入っています	はいっています	有放	有放	there is
+パソコン	-	電腦	电脑	computer
+何時頃	なんじごろ	大約幾點	大约几点	about what time
+何時まで	なんじまで	到幾點	到几点	until what time
+お戻りになりますか	おもどりになりますか	回來嗎（尊敬語）	回来吗（尊敬语）	will you be back? (honorific)
+お引き取り	おひきとり	領取	领取	collection
+ご予定	ごよてい	預定（敬語）	预定（敬语）	plan (polite)
+5時ごろ	ごじごろ	5 點左右	5 点左右	around five
+夜	よる	晚上	晚上	evening, night
+9時ごろ	くじごろ	9 點左右	9 点左右	around nine
+お預かり	おあずかり	寄放（敬語）	寄存（敬语）	keeping (polite)
+頂戴できますか	ちょうだいできますか	可以給我嗎（謙讓語）	可以给我吗（谦让语）	may I have it? (humble)
+お送りしますか	おおくりしますか	要寄嗎（敬語）	要寄吗（敬语）	will you send? (polite)
+何個口	なんこぐち	幾件（寄送件數）	几件（寄送件数）	how many parcels
+お送りするの	おおくりするの	要寄的東西	要寄的东西	what's being sent
+何点	なんてん	幾件	几件	how many items
+空港	くうこう	機場	机场	airport
+ご出発	ごしゅっぱつ	出發（敬語）	出发（敬语）	departure (polite)
+成田	なりた	成田（機場）	成田（机场）	Narita
+羽田	はねだ	羽田（機場）	羽田（机场）	Haneda
+ご搭乗日	ごとうじょうび	搭機日（敬語）	乘机日（敬语）	flight date (polite)
+便	びん	航班	航班	flight
+お乗りになりますか	おのりになりますか	要搭乘嗎（尊敬語）	要乘坐吗（尊敬语）	will you be on…? (honorific)
+15日	じゅうごにち	15 號	15 号	the 15th
+16日	じゅうろくにち	16 號	16 号	the 16th
+お便名	おびんめい	航班號碼（敬語）	航班号（敬语）	flight number (polite)
+便名	びんめい	航班號碼	航班号	flight number
+お分かりですか	おわかりですか	知道嗎（敬語）	知道吗（敬语）	do you know it? (polite)
+ご搭乗	ごとうじょう	搭機（敬語）	登机（敬语）	boarding (polite)
+航空会社	こうくうがいしゃ	航空公司	航空公司	airline
+伝票	でんぴょう	單據、寄件單	单据、寄件单	slip, form
+送り状	おくりじょう	寄件單	寄件单	shipping form
+お電話番号	おでんわばんごう	電話號碼（敬語）	电话号码（敬语）	phone number (polite)
+書いてもらえますか	かいてもらえますか	可以幫我寫嗎	可以帮我写吗	could you write it for me?
+# airport
+ご予約の控え	ごよやくのひかえ	訂位確認	订位确认	booking confirmation
+お預けになる	おあずけになる	要託運的（尊敬語）	要托运的（尊敬语）	to be checked in (honorific)
+お預け	おあずけ	託運（敬語）	托运（敬语）	checking in (polite)
+お預けになりますか	おあずけになりますか	要託運嗎（尊敬語）	要托运吗（尊敬语）	will you check it in? (honorific)
+預ける	あずける	託運、寄放	托运、寄存	to check in, leave
+の中に	のなかに	在……裡面	在……里面	inside
+中	なか	裡面	里面	inside
+モバイルバッテリー	-	行動電源	充电宝	power bank
+ライター	-	打火機	打火机	lighter
+リチウム電池	リチウムでんち	鋰電池	锂电池	lithium battery
+スプレー缶	スプレーかん	噴霧罐	喷雾罐	spray can
+お座席	おざせき	座位（敬語）	座位（敬语）	seat (polite)
+12番搭乗口	じゅうにばんとうじょうぐち	12 號登機門	12 号登机口	gate 12
+搭乗口	とうじょうぐち	登機門	登机口	boarding gate
+10時5分	じゅうじごふん	10 點 5 分	10 点 5 分	10:05
+ご搭乗開始	ごとうじょうかいし	開始登機（敬語）	开始登机（敬语）	boarding starts (polite)
+搭乗開始	とうじょうかいし	開始登機	开始登机	boarding starts
+出発	しゅっぱつ	出發	出发	departure
+20分前までに	にじゅっぷんまえまでに	在 20 分鐘前	在 20 分钟前	at least 20 minutes before
+お越しください	おこしください	請前往（尊敬語）	请前往（尊敬语）	please come (honorific)
+わかりました	-	知道了	知道了	understood
+持っていません	もっていません	沒有	没有	I don't have one
+# car rental
+ご予約番号	ごよやくばんごう	預約號碼（敬語）	预约号码（敬语）	booking number (polite)
+予約	よやく	預約	预约	booking
+免許証	めんきょしょう	駕照	驾照	driving licence
+国際免許証	こくさいめんきょしょう	國際駕照	国际驾照	international driving permit
+翻訳文	ほんやくぶん	（駕照的）日文譯本	（驾照的）日文译本	official Japanese translation
+お持ちですか	おもちですか	有帶嗎（敬語）	有带吗（敬语）	do you have it? (polite)
+補償	ほしょう	補償方案、保險	补偿方案、保险	coverage
+免責補償	めんせきほしょう	免責補償（減免自付額）	免责补偿（减免自付额）	collision damage waiver
+ご加入されますか	ごかにゅうされますか	要加入嗎（敬語）	要加入吗（敬语）	will you take it? (polite)
+ETCカード	イーティーシーカード	ETC 卡（高速公路自動扣款）	ETC 卡（高速公路自动扣款）	ETC toll card
+お貸し出し	おかしだし	出借（敬語）	出借（敬语）	rental (polite)
+お車	おくるま	車（敬語）	车（敬语）	car (polite)
+傷	きず	刮痕、凹痕	划痕、凹痕	scratch, dent
+一緒に	いっしょに	一起	一起	together
+確認させてください	かくにんさせてください	請讓我確認	请让我确认	let me check
+ほかに	-	其他	其他	other, anything else
+気になる	きになる	在意的	在意的	that bothers you
+サイン	-	簽名	签名	signature
+ご返却	ごへんきゃく	還車（敬語）	还车（敬语）	return (polite)
+ガソリン	-	汽油	汽油	petrol
+満タン	まんタン	加滿	加满	full tank
+して	-	弄成……	弄成……	making it
+お戻しください	おもどしください	請歸還	请归还	please return it
+満タン返し	まんタンがえし	加滿油再還	加满油再还	return with a full tank
+返却前	へんきゃくまえ	還車前	还车前	before returning
+近く	ちかく	附近	附近	nearby
+スタンド	-	加油站	加油站	petrol station
+給油	きゅうゆ	加油	加油	refuelling
+三日	みっか	3 號	3 号	the 3rd
+午後五時	ごごごじ	下午 5 點	下午 5 点	5 p.m.
+返却時間	へんきゃくじかん	還車時間	还车时间	return time
+お戻り	おもどり	回來、歸還（敬語）	回来、归还（敬语）	return (polite)
+いりません	-	不需要	不需要	I don't need it
+四日	よっか	4 號	4 号	the 4th
+# shopping
+ポイントカード	-	集點卡	积分卡	points card
+アプリ	-	App	App	app
+ご提示	ごていじ	出示（敬語）	出示（敬语）	showing (polite)
+会員証	かいいんしょう	會員卡	会员卡	membership card
+お持ちでしょうか	おもちでしょうか	有帶嗎（更客氣）	有带吗（更客气）	do you have it? (more polite)
+免税	めんぜい	免稅	免税	tax-free
+お薬	おくすり	藥（敬語）	药（敬语）	medicine (polite)
+お使いになるの	おつかいになるの	要用的人（尊敬語）	要用的人（尊敬语）	the one who'll use it (honorific)
+ご本人様	ごほんにんさま	您本人	您本人	yourself (polite)
+ご使用になる方	ごしようになるかた	使用的人（尊敬語）	使用的人（尊敬语）	the person using it (honorific)
+どなた	-	哪一位	哪一位	who (polite)
+お客様	おきゃくさま	客人、您	客人、您	you, the customer
+ご自身	ごじしん	您自己	您自己	yourself
+お使いですか	おつかいですか	要用嗎（敬語）	要用吗（敬语）	will you use it? (polite)
+私です	わたしです	是我	是我	it's me
+家族	かぞく	家人	家人	family
+使います	つかいます	使用	使用	will use
+袋	ふくろ	袋子	袋子	bag
+レジ袋	レジぶくろ	結帳用的塑膠袋	结账用的塑料袋	checkout bag
+小分け	こわけ	分裝	分装	splitting into small portions
+お配り用	おくばりよう	分送用	分送用	for handing out
+お分けしましょうか	おわけしましょうか	要幫您分開嗎	要帮您分开吗	shall I split them?
+三枚	さんまい	三個（薄的東西）	三个（薄的东西）	three (flat things)
+ICカード	アイシーカード	交通卡	交通卡	IC transit card
+作ってください	つくってください	請幫我辦	请帮我办	please make one
+何か	なにか	什麼	什么	something
+お探しですか	おさがしですか	在找什麼嗎（敬語）	在找什么吗（敬语）	are you looking for…? (polite)
+お探しでしたら	おさがしでしたら	如果在找的話	如果在找的话	if you're looking for…
+お声がけください	おこえがけください	請叫我	请叫我	please call me over
+お探しのもの	おさがしのもの	您要找的東西	您要找的东西	what you're looking for
+見ているだけです	みているだけです	只是看看	只是看看	just looking
+お品物	おしなもの	商品（敬語）	商品（敬语）	items (polite)
+ご試着されますか	ごしちゃくされますか	要試穿嗎（敬語）	要试穿吗（敬语）	will you try on? (polite)
+三点です	さんてんです	三件	三件	three items
+二点です	にてんです	兩件	两件	two items
+靴	くつ	鞋子	鞋子	shoes
+脱いで	ぬいで	脫掉	脱掉	take off
+お上がりください	おあがりください	請進（上台階）	请进（上台阶）	please step in
+お脱ぎください	おぬぎください	請脫	请脱	please take them off
+お履き物	おはきもの	鞋子（敬語）	鞋子（敬语）	footwear (polite)
+そのまま	-	就那樣	就那样	as they are
+いかがでしょうか	-	如何（更客氣）	如何（更客气）	how is it? (more polite)
+サイズ感	サイズかん	合身程度	合身程度	fit
+ちょうどいいです	-	剛好	正好	it fits
+ちょっと小さいです	ちょっとちいさいです	有點小	有点小	a bit small
+ご自宅用	ごじたくよう	自己用（敬語）	自己用（敬语）	for yourself (polite)
+自宅用	じたくよう	自己用	自己用	for myself
+プレゼント用	プレゼントよう	送禮用	送礼用	as a gift
+プレゼント	-	禮物	礼物	gift
+ご贈答用	ごぞうとうよう	送禮用（敬語）	送礼用（敬语）	as a gift (polite)
+ショップ袋	ショップぶくろ	店家的袋子	店家的袋子	shop bag
+有料	ゆうりょう	要付費	要付费	charged
+お支払い回数	おしはらいかいすう	付款次數	付款次数	number of payments
+一括	いっかつ	一次付清	一次付清	single payment
+一括払い	いっかつばらい	一次付清	一次付清	pay in full
+一回	いっかい	一次	一次	once
+二回	にかい	兩次	两次	twice
+シャツ	-	襯衫	衬衫	shirt
+探しています	さがしています	在找	在找	I'm looking for
+このままでいいですか	-	這樣（穿著）可以嗎	这样（穿着）可以吗	is it OK like this?
+当店	とうてん	本店	本店	our shop
+海外	かいがい	國外	国外	overseas
+日本国内専用	にほんこくないせんよう	日本國內專用	日本国内专用	for use in Japan only
+ですと	-	……的話	……的话	if it's…
+電圧	でんあつ	電壓	电压	voltage
+違いますが	ちがいますが	不一樣，不過	不一样，不过	is different, but
+海外用	かいがいよう	國外用的	国外用的	for overseas use
+長期保証	ちょうきほしょう	長期保固	长期保修	long-term warranty
+延長保証	えんちょうほしょう	延長保固	延保	extended warranty
+保証	ほしょう	保固	保修	warranty
+5年	ごねん	5 年	5 年	five years
+延長できますが	えんちょうできますが	可以延長，不過	可以延长，不过	can be extended, but
+箱	はこ	盒子	盒子	box
+お持ち帰りになりますか	おもちかえりになりますか	要帶回去嗎（尊敬語）	要带回去吗（尊敬语）	will you take it home? (honorific)
+外箱	そとばこ	外盒	外包装盒	outer box
+処分しましょうか	しょぶんしましょうか	要幫您丟掉嗎	要帮您扔掉吗	shall we dispose of it?
+出して	だして	拿出來	拿出来	taking out
+お渡ししましょうか	おわたししましょうか	要交給您嗎	要交给您吗	shall I hand it to you?
+持って帰ります	もってかえります	我帶回去	我带回去	I'll take it home
+処分	しょぶん	處理掉、丟掉	处理掉、扔掉	disposal
+# tax refund
+番号札	ばんごうふだ	號碼牌	号码牌	number ticket
+お取りになって	おとりになって	請拿（尊敬語）	请拿（尊敬语）	take (honorific)
+拝見します	はいけんします	看一下（謙讓語）	看一下（谦让语）	I'll take a look (humble)
+すべて	-	全部	全部	all
+お買い上げ	おかいあげ	購買（敬語）	购买（敬语）	purchase (polite)
+拝見できますか	はいけんできますか	可以看一下嗎（謙讓語）	可以看一下吗（谦让语）	may I see? (humble)
+これです	-	就是這個	就是这个	this is it
+ご出国	ごしゅっこく	出境（敬語）	出境（敬语）	departure from Japan (polite)
+日本	にほん	日本	日本	Japan
+出られるの	でられるの	離開（尊敬語）	离开（尊敬语）	leaving (honorific)
+出国予定日	しゅっこくよていび	預定出境日	预定出境日	planned departure date
+教えていただけますか	おしえていただけますか	可以告訴我嗎	可以告诉我吗	could you tell me?
+十五日です	じゅうごにちです	15 號	15 号	the 15th
+五日です	いつかです	5 號	5 号	the 5th
+ご返金	ごへんきん	退款（敬語）	退款（敬语）	refund (polite)
+クレジットカード	-	信用卡	信用卡	credit card
+返金手数料	へんきんてすうりょう	退款手續費	退款手续费	refund fee
+かかりますが	-	會收取，不過	会收取，不过	there is a charge, but
+手数料	てすうりょう	手續費	手续费	fee
+差し引いて	さしひいて	扣掉	扣掉	deducting
+ご返金額	ごへんきんがく	退款金額	退款金额	refund amount
+引かせていただきます	ひかせていただきます	會扣掉（謙讓語）	会扣掉（谦让语）	we will deduct (humble)
+の際	のさい	……的時候	……的时候	when
+税関	ぜいかん	海關	海关	customs
+確認を受けてください	かくにんをうけてください	請接受確認	请接受确认	please have it checked
+出国時	しゅっこくじ	出境時	出境时	when leaving Japan
+お見せください	おみせください	請出示	请出示	please show
+確認後	かくにんご	確認之後	确认之后	after the check
+急いでいます	いそいでいます	我在趕時間	我在赶时间	I'm in a hurry
+ホテル	-	飯店	酒店	hotel
+捨てました	すてました	丟掉了	扔掉了	I threw it away
+# post office
+お届け先	おとどけさき	收件地	收件地	destination
+国内	こくない	國內	国内	domestic
+台湾	たいわん	台灣	台湾	Taiwan
+EMS	イーエムエス	國際快捷（EMS）	国际快递（EMS）	EMS express mail
+航空便	こうくうびん	空運	空运	airmail
+船便	ふなびん	海運	海运	sea mail
+発送方法	はっそうほうほう	寄送方式	寄送方式	shipping method
+中身	なかみ	裡面的東西	里面的东西	contents
+内容品	ないようひん	內容物	内容物	contents
+服	ふく	衣服	衣服	clothes
+お菓子	おかし	零食	零食	snacks
+服だけです	ふくだけです	只有衣服	只有衣服	just clothes
+電池	でんち	電池	电池	battery
+危険物	きけんぶつ	危險物品	危险物品	dangerous goods
+ラベル	-	寄件單	寄件单	label
+作成	さくせい	製作	制作	making
+入力してください	にゅうりょくしてください	請輸入	请输入	please enter
+お作りいただけますか	おつくりいただけますか	可以麻煩您製作嗎	可以麻烦您制作吗	could you make it?
+# hair salon
+どんな感じ	どんなかんじ	什麼樣子	什么样子	what kind of look
+しますか	-	要……嗎	要……吗	will you…?
+カット	-	剪髮	剪发	haircut
+のみ	-	只有	只有	only
+だけ	-	只	只	just
+カラー	-	染髮	染发	colour
+長さ	ながさ	長度	长度	length
+どのくらい	-	多少	多少	how much
+切りますか	きりますか	要剪嗎	要剪吗	will you cut?
+どれくらい	-	多少	多少	how much
+短くしましょうか	みじかくしましょうか	要剪短嗎	要剪短吗	shall I make it shorter?
+揃える	そろえる	修齊	修齐	trim evenly
+くらい	-	左右、程度	左右、程度	about
+いいですか	-	可以嗎	可以吗	is that OK?
+3センチ	さんセンチ	3 公分	3 厘米	3 cm
+10センチ	じゅっセンチ	10 公分	10 厘米	10 cm
+前髪	まえがみ	瀏海	刘海	fringe
+どうしますか	-	要怎麼做	要怎么做	what would you like?
+眉	まゆ	眉毛	眉毛	eyebrows
+すきますか	-	要打薄嗎	要打薄吗	shall I thin it?
+毛量	もうりょう	髮量	发量	hair volume
+少し	すこし	一點點	一点点	a little
+軽くしますか	かるくしますか	要打薄嗎	要打薄吗	shall I lighten it?
+減らしても	へらしても	減少也	减少也	reducing
+お湯加減	おゆかげん	水溫	水温	water temperature
+熱くないですか	あつくないですか	不會燙嗎	不会烫吗	isn't it too hot?
+温度	おんど	溫度	温度	temperature
+こんな感じ	こんなかんじ	這樣	这样	like this
+ところ	-	地方	地方	spot, part
+もう少し	もうすこし	再一點	再一点	a bit more
+短くしてください	みじかくしてください	請剪短	请剪短	please make it shorter
+ちょっと熱いです	ちょっとあついです	有點燙	有点烫	it's a bit hot

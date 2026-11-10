@@ -13,6 +13,7 @@ struct SceneDetailView: View {
     @Environment(WordsStore.self) private var words
     @Environment(\.presentPaywall) private var presentPaywall
     private let store = SceneProgressStore.shared
+    @State private var glossed: GlossToken?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -45,6 +46,7 @@ struct SceneDetailView: View {
             }
         }
         .background(.tujiPaper)
+        .glossSheet(self.$glossed)
         .navigationTitle("場面練習")
         .toolbar(.hidden, for: .navigationBar)
         .task {
@@ -171,7 +173,7 @@ struct SceneDetailView: View {
                 }
                 if let line = question.lookLine {
                     HStack(spacing: Space.s2) {
-                        Text(verbatim: line.text)
+                        GlossedLine(text: line.text, tokens: scene.gloss(line.text), picked: self.$glossed)
                             .font(.tujiH3)
                             .foregroundStyle(.tujiInk)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -186,10 +188,14 @@ struct SceneDetailView: View {
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiInk3)
                         .frame(width: 28, alignment: .leading)
-                    Text(verbatim: question.response.ja)
-                        .font(.scene(15))
-                        .foregroundStyle(.tujiInk)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    GlossedLine(
+                        text: question.response.ja,
+                        tokens: scene.gloss(question.response.ja),
+                        picked: self.$glossed
+                    )
+                    .font(.scene(15))
+                    .foregroundStyle(.tujiInk)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     if question.response.clip != nil {
                         ScenePlayButton(label: "播放回應", fill: nil) { SceneAudio.play(question.response) }
                     }
