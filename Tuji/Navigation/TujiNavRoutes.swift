@@ -6,6 +6,7 @@ import SwiftUI
 extension View {
     func tujiNavDestinations(user: SessionUser?) -> some View {
         self.wordListDestinations()
+            .travelDestinations()
             .navigationDestination(for: NavRoute.self) { route in
                 switch route {
                 case let .search(query): SearchView(initialQuery: query)
