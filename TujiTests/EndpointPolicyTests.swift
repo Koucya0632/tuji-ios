@@ -34,6 +34,7 @@ struct EndpointPolicyTests {
         .usersWordNotes, .usersWordNote(wordId: "w1"),
         .studyQueue(mode: "review", limit: 10, new: 0, categories: [], lang: "zh-Hant", learning: "zh-en"),
         .studyWordListQueue(listId: "l1", mode: "new", limit: 10, lang: "zh-Hant", learning: "zh-en"),
+        .studySpotQueue(spotId: "s1", mode: "new", limit: 10, lang: "zh-Hant", learning: "zh-ja"),
         .studyAnswer, .studyStats(learning: "zh-en"), .studyReports,
         .atlasImage(id: "i1"),
         .atlasItemCards(id: "t1"),
@@ -59,12 +60,13 @@ struct EndpointPolicyTests {
         .word(id: "w1", lang: "zh-Hant", learning: "en"),
         .wordInsights(id: "w1", lang: "zh-Hant", learning: "zh-en"),
         .categories(lang: "zh-Hant"),
+        .travel(lang: "zh-Hant", learning: "zh-ja"),
         .smokeWhoami
     ]
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 63)
+        #expect(Self.all.count == 65)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be
@@ -107,7 +109,7 @@ struct EndpointPolicyTests {
         }
     }
 
-    @Test("exactly the eleven anonymous endpoints are public")
+    @Test("exactly the twelve anonymous endpoints are public")
     func publicSetIsExact() {
         let publicPaths = Set(
             Self.all.filter { !$0.descriptor.policy.access.requiresToken }.map(\.descriptor.path)
@@ -118,6 +120,7 @@ struct EndpointPolicyTests {
             "/api/words",
             "/api/words/w1",
             "/api/categories",
+            "/api/travel",
             "/api/atlas/public/by-lemma",
             "/api/atlas/public",
             "/api/atlas/public/authors/TJ1",

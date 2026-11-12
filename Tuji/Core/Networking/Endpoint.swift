@@ -48,6 +48,8 @@ enum Endpoint {
     case studyQueue(mode: String, limit: Int, new: Int, categories: [String], lang: String, learning: String)
     /// The study queue scoped to one 個人詞表 (`?list=`); replaces the theme filter.
     case studyWordListQueue(listId: String, mode: String, limit: Int, lang: String, learning: String)
+    /// One 景點's words — tuji-web `/api/study/queue?spot=`.
+    case studySpotQueue(spotId: String, mode: String, limit: Int, lang: String, learning: String)
     case studyAnswer
     case studyStats(learning: String)
     case studyReports
@@ -167,6 +169,8 @@ enum Endpoint {
     /// 詞條延伸內容 for one word — membership-aware, so kept off the cached detail.
     case wordInsights(id: String, lang: String, learning: String)
     case categories(lang: String)
+    /// 跟著 Moira 去旅遊: destinations, maps and 景點. Empty unless learning 日文.
+    case travel(lang: String, learning: String)
 
     // MARK: - Smoke (temporary; delete with the backend endpoint)
 
@@ -272,6 +276,8 @@ enum Endpoint {
         case .usersWordLists, .usersWordList, .usersWordListWords, .usersWordListOrder,
              .studyWordListQueue:
             self.wordListDescriptor
+        case .travel, .studySpotQueue:
+            self.travelDescriptor
         case .wordInsights:
             self.wordInsightsDescriptor
         case .usersWordNotes:

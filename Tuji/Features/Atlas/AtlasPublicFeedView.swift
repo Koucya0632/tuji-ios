@@ -41,6 +41,11 @@ struct AtlasPublicFeedView: View {
                     .padding(.bottom, Space.s3)
             }
             self.segmentedControl
+            // 跟著 Moira 去旅遊 heads 探索 only: 已收藏 is the reader's own
+            // shelf. Nothing is drawn until the server names somewhere to go.
+            if self.section == .explore, let destination = TravelStore.shared.destinations.first {
+                TravelEntryBand(destination: destination)
+            }
             self.content
         }
         // The 16pt every tab root opens with, now that nothing is drawn above
@@ -57,6 +62,7 @@ struct AtlasPublicFeedView: View {
         .toolbar(.hidden, for: .navigationBar)
         // Reconcile all product context through one state module. The view still
         // owns SwiftUI environment objects and translates them into plain values.
+        .task(id: self.targetLanguage) { await TravelStore.shared.loadIfNeeded() }
         .task(id: self.browsingLoadKey) {
             if self.section == .saved { self.savedShelfMounted = true }
             await self.blocks.loadIfNeeded()
