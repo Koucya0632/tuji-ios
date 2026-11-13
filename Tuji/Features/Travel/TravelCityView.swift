@@ -109,10 +109,6 @@ struct TravelCityView: View {
                     Text("學過 \(studied) / \(spot.wordIds.count)")
                         .font(.tujiBodySm(.strong))
                         .foregroundStyle(.tujiAccumulationDeep)
-                } else {
-                    Text("\(spot.wordIds.count) 樣東西")
-                        .font(.tujiBodySm)
-                        .foregroundStyle(.tujiInk2)
                 }
                 Image(systemName: "chevron.right")
                     .font(.tujiIcon(13, weight: .semibold))
