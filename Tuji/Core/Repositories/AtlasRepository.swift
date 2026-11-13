@@ -52,6 +52,34 @@ struct LiveAtlasRepository {
         try await self.api.post(.atlasItemWithdraw(id: itemId), body: Empty())
     }
 
+    /// Tag the card to a 景點 and say whether it is shared there. Only the spot
+    /// id travels — never the photo's coordinates (parent repo docs/adr/0002).
+    func setSpot(itemId: String, spotId: String, shared: Bool) async throws -> AtlasItemSpotState {
+        struct Body: Encodable {
+            let spotId: String
+            let shared: Bool
+        }
+        struct Answer: Decodable { let item: AtlasItemSpotState }
+        let answer: Answer = try await self.api.put(
+            .atlasItemSpot(id: itemId),
+            body: Body(spotId: spotId, shared: shared)
+        )
+        return answer.item
+    }
+
+    /// Take the card's 景點 off (and with it any sharing there).
+    func clearSpot(itemId: String) async throws -> AtlasItemSpotState {
+        struct Answer: Decodable { let item: AtlasItemSpotState }
+        return try await self.api.delete(.atlasItemSpot(id: itemId), as: Answer.self).item
+    }
+
+    /// 「大家拍的」 at a 景點. Public and the same for everyone; the caller hides
+    /// its own cards and authors it blocked.
+    func spotPhotos(spotId: String) async throws -> [AtlasPublicItem] {
+        let response: TravelSpotPhotosResponse = try await self.api.get(.travelSpotPhotos(spotId: spotId))
+        return response.items
+    }
+
     /// Other users' public 圖鑑 for one word. Public endpoint — no bearer token,
     /// and it honors the server's CDN cache headers.
     func publicItems(

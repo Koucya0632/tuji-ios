@@ -21,7 +21,7 @@ struct CreditCaptureView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.targetLanguage) private var language
     @State private var model: CreditCaptureModel
-    @State private var intake = ImageIntake(encoding: .capture, crop: .freeform)
+    @State private var intake = ImageIntake(encoding: .capture, crop: .freeform, readsLocation: true)
     @State private var showWallet = false
     @State private var showPrecisionInfo = false
     @State private var slowRecognition = false
@@ -70,12 +70,14 @@ struct CreditCaptureView: View {
             AnalyticsService.shared.track(.atlasCaptureOpen)
             // The photo stays on the phone until 開始識別.
             self.intake.onDeliver { data in
-                self.model.setPhoto(data)
+                self.model.setPhoto(data, location: self.intake.pickedLocation)
                 return .accepted
             }
             await self.model.load()
         }
         .task(id: self.model.watchKey) { await self.model.watch() }
+        // The 景點 a library photo may suggest come from the travel map.
+        .task { await TravelStore.shared.loadIfNeeded() }
     }
 
     // MARK: - 圖鑑管理
@@ -351,7 +353,35 @@ struct CreditCaptureView: View {
             case .hidden:
                 EmptyView()
             }
+            if let spot = self.model.detectedSpot {
+                self.spotRow(spot)
+            }
         }
+    }
+
+    /// The 景點 the photo's own location points at — only when there is one.
+    /// 移除 keeps this card off it; the card page can still give it one later.
+    private func spotRow(_ spot: TravelSpot) -> some View {
+        TujiField(label: "景點") {
+            HStack(spacing: Space.s2) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.tujiIcon(14, weight: .semibold))
+                    .foregroundStyle(.tujiInk3)
+                    .accessibilityHidden(true)
+                Text(spot.name)
+                    .font(.tujiBody)
+                    .foregroundStyle(.tujiInk)
+                Spacer(minLength: Space.s2)
+                Button("移除") { self.model.removeSpot() }
+                    .font(.tujiBodySm)
+                    .foregroundStyle(.tujiInk2)
+                    .accessibilityLabel(Text("移除景點"))
+            }
+            .padding(.horizontal, Space.s3)
+            .frame(minHeight: 44)
+            .background(.tujiPaper2)
+        }
+        .padding(.horizontal, -Space.s4)
     }
 
     private func field(

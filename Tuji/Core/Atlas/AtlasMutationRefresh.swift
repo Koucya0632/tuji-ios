@@ -24,6 +24,9 @@ enum AtlasMutation: Hashable {
     /// 取消公開 on a single item. The item, its cards and every saver's progress
     /// stay — only the public row is retired.
     case itemWithdrawn
+    /// A card's 景點 or its 「放到景點」 changed. Neither the 圖鑑 grid nor the
+    /// 物見 feed shows a spot, so nothing beyond the store's own re-sync moves.
+    case itemSpotChanged
     /// A 合集 was submitted for review.
     case collectionPublished
     /// 取消公開 on a 合集.
@@ -40,7 +43,7 @@ enum AtlasMutation: Hashable {
     var changesOwnAtlas: Bool {
         switch self {
         case .itemsDeleted, .captureCompleted: true
-        case .itemWithdrawn, .collectionPublished, .collectionWithdrawn,
+        case .itemWithdrawn, .itemSpotChanged, .collectionPublished, .collectionWithdrawn,
              .collectionDeleted, .collectionAvatarChanged: false
         }
     }
@@ -51,7 +54,7 @@ enum AtlasMutation: Hashable {
         case .itemWithdrawn, .collectionPublished, .collectionWithdrawn: true
         case let .collectionDeleted(wasPublic): wasPublic
         case let .collectionAvatarChanged(isPublic): isPublic
-        case .itemsDeleted, .captureCompleted: false
+        case .itemsDeleted, .captureCompleted, .itemSpotChanged: false
         }
     }
 }

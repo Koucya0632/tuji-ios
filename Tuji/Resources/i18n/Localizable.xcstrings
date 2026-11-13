@@ -30850,6 +30850,351 @@
           }
         }
       }
+    },
+    "景點" : {
+      "comment" : "Label of the row naming the travel spot (跟著 Moira 去旅遊) a captured card is tagged to.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポット"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "景点"
+          }
+        }
+      }
+    },
+    "移除" : {
+      "comment" : "Button that removes the suggested travel spot from a capture before the card is made.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除"
+          }
+        }
+      }
+    },
+    "移除景點" : {
+      "comment" : "VoiceOver label of the button that removes the suggested travel spot from a capture.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove spot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポットを外す"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除景点"
+          }
+        }
+      }
+    },
+    "在哪裡拍的？" : {
+      "comment" : "Title of the list of travel spots the user picks from for their own card.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where was it taken?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どこで撮った？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在哪里拍的？"
+          }
+        }
+      }
+    },
+    "不在這些地方" : {
+      "comment" : "Option in the travel spot list that takes the spot off the card.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None of these"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このどれでもない"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不在这些地方"
+          }
+        }
+      }
+    },
+    "沒有掛景點" : {
+      "comment" : "Shown on the card page when the card is not tagged to any travel spot.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No spot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポットなし"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有挂景点"
+          }
+        }
+      }
+    },
+    "選景點" : {
+      "comment" : "Button on the card page that opens the list of travel spots.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a spot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポットを選ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选景点"
+          }
+        }
+      }
+    },
+    "換景點" : {
+      "comment" : "Button on the card page that changes the travel spot the card is tagged to.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change spot"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポットを変える"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换景点"
+          }
+        }
+      }
+    },
+    "這張已從%@頁撤下，不能再放回去。" : {
+      "comment" : "Card page note: a moderator took this card off the named travel spot's page after a report; it cannot be shared there again. The placeholder is the spot's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This was taken off the %@ page and can't go back."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のページから外されたため、もう載せられません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这张已从%@页撤下，不能再放回去。"
+          }
+        }
+      }
+    },
+    "放到景點頁" : {
+      "comment" : "Toggle on the card page: show this public card on its travel spot's page.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show on the spot page"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポットのページに載せる"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放到景点页"
+          }
+        }
+      }
+    },
+    "其他人會在%@頁（App 和網站）看到這張和你的暱稱。" : {
+      "comment" : "Note under the toggle that shares a card to a travel spot page. The placeholder is the spot's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Others will see this and your nickname on the %@ page, in the app and on the website."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかの人が%@のページ（アプリとウェブサイト）で、この写真とあなたのニックネームを見られます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他人会在%@页（App 和网站）看到这张和你的昵称。"
+          }
+        }
+      }
+    },
+    "你在這裡拍的" : {
+      "comment" : "Section title on a travel spot page: the user's own cards tagged to this spot.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your photos here"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "あなたがここで撮ったもの"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在这里拍的"
+          }
+        }
+      }
+    },
+    "大家拍的" : {
+      "comment" : "Section title on a travel spot page: other people's public cards shared to this spot.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shot here by others"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "みんなが撮ったもの"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大家拍的"
+          }
+        }
+      }
+    },
+    "%@，你在這裡拍過" : {
+      "comment" : "VoiceOver label of a travel spot marker on the city map when the user has tagged a card there. The placeholder is the spot's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, you've taken photos here"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@、ここで撮ったことがあります"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@，你在这里拍过"
+          }
+        }
+      }
+    },
+    "不是在這裡拍的" : {
+      "comment" : "Report reason for a public card shown on a travel spot page: the photo was not taken at that spot.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not taken here"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここで撮ったものではない"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不是在这里拍的"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

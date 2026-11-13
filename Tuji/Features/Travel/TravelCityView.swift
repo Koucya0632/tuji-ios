@@ -14,9 +14,15 @@ struct TravelCityView: View {
     @Environment(SettingsStore.self) private var settings
     @Environment(MasteryStore.self) private var mastery
     var store: TravelStore = .shared
+    var atlas: AtlasStore = .shared
 
     private var studyable: [String]? {
         LiveEffectiveEntitlement.shared.membership?.studyableCategories
+    }
+
+    /// Spots where this account has tagged a 自製圖鑑 card — marked 拍過.
+    private var photographed: Set<String> {
+        Set(self.atlas.items.compactMap(\.spotId))
     }
 
     var body: some View {
@@ -36,13 +42,15 @@ struct TravelCityView: View {
             await self.store.loadIfNeeded(settings: self.settings)
             await self.mastery.loadIfNeeded()
         }
+        // Own tags arrive with sync; 圖鑑 is not synced at launch.
+        .task { await self.atlas.sync() }
     }
 
     @ViewBuilder
     private var content: some View {
         if let city = self.store.city(self.cityId, in: self.destinationId) {
             TujiScreenTitle(localized: city.name)
-            TravelCityMap(city: city)
+            TravelCityMap(city: city, photographed: self.photographed)
                 .padding(.bottom, Space.s3)
             TujiSection {
                 ForEach(Array(city.spots.enumerated()), id: \.element.id) { index, spot in
@@ -65,7 +73,7 @@ struct TravelCityView: View {
         let row = TujiRow(
             leading: {
                 HStack(spacing: Space.s3) {
-                    TravelSpotMarker(number: number, open: spot.open)
+                    TravelSpotMarker(number: number, open: spot.open, photographed: self.photographed.contains(spot.id))
                     Text(verbatim: spot.name)
                         .font(.tujiBody(.strong))
                         .foregroundStyle(spot.open ? .tujiInk : .tujiInk3)
@@ -123,9 +131,11 @@ struct TravelCityView: View {
 }
 
 /// The numbered square that stands for a spot, on the map and in the list.
+/// A small camera on its corner says this account has tagged a card there.
 struct TravelSpotMarker: View {
     let number: Int
     let open: Bool
+    var photographed = false
 
     var body: some View {
         Text(verbatim: String(self.number))
@@ -133,12 +143,24 @@ struct TravelSpotMarker: View {
             .foregroundStyle(self.open ? .tujiPaper : .tujiInk3)
             .frame(width: 28, height: 28)
             .background(self.open ? Color.tujiInk : .tujiPaper3)
+            .overlay(alignment: .topTrailing) {
+                if self.photographed {
+                    Image(systemName: "camera.fill")
+                        .font(.tujiIcon(8, weight: .bold))
+                        .foregroundStyle(.tujiInk)
+                        .frame(width: 16, height: 16)
+                        .background(Color.tujiBrandPrimary, in: .circle)
+                        .offset(x: 6, y: -6)
+                }
+            }
             .accessibilityHidden(true)
     }
 }
 
 struct TravelCityMap: View {
     let city: TravelCity
+    /// Spots where this account has tagged a 自製圖鑑 card.
+    var photographed: Set<String> = []
 
     var body: some View {
         GeometryReader { geo in
@@ -174,22 +196,30 @@ struct TravelCityMap: View {
 
     @ViewBuilder
     private func pin(_ spot: TravelSpot, number: Int) -> some View {
-        let marker = TravelSpotMarker(number: number, open: spot.open)
-            // The name hangs off one side of the square, so the square itself
-            // stays on the spot's position whichever side that is.
-            .overlay(alignment: spot.label == .right ? .leading : .trailing) {
-                Text(verbatim: spot.name)
-                    .font(.tujiBodySm(.strong))
-                    .foregroundStyle(spot.open ? .tujiInk : .tujiInk3)
-                    .fixedSize()
-                    .offset(x: spot.label == .right ? 34 : -34)
-            }
-            .frame(width: 44, height: 44)
-            .contentShape(.rect)
+        let marker = TravelSpotMarker(
+            number: number,
+            open: spot.open,
+            photographed: self.photographed.contains(spot.id)
+        )
+        // The name hangs off one side of the square, so the square itself
+        // stays on the spot's position whichever side that is.
+        .overlay(alignment: spot.label == .right ? .leading : .trailing) {
+            Text(verbatim: spot.name)
+                .font(.tujiBodySm(.strong))
+                .foregroundStyle(spot.open ? .tujiInk : .tujiInk3)
+                .fixedSize()
+                .offset(x: spot.label == .right ? 34 : -34)
+        }
+        .frame(width: 44, height: 44)
+        .contentShape(.rect)
         if spot.open {
             NavigationLink(value: TravelRoute.spot(id: spot.id)) { marker }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text(verbatim: spot.name))
+                .accessibilityLabel(
+                    self.photographed.contains(spot.id)
+                        ? Text("\(spot.name)，你在這裡拍過")
+                        : Text(verbatim: spot.name)
+                )
         } else {
             marker
                 .accessibilityElement(children: .ignore)

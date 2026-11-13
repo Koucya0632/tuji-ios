@@ -27,6 +27,8 @@ struct LiveCreditCardConfirming: CreditCardConfirming {
             let lemma: String
             let displayZhHant: String?
             let displayGloss: String?
+            /// Omitted when nil: only the spot id, never the photo's coordinates.
+            let spotId: String?
         }
         struct Confirm: Decodable {
             struct Item: Decodable { let id: String }
@@ -39,7 +41,8 @@ struct LiveCreditCardConfirming: CreditCardConfirming {
                 candidateId: request.candidateId,
                 lemma: request.lemma,
                 displayZhHant: request.displayZhHant,
-                displayGloss: request.displayGloss
+                displayGloss: request.displayGloss,
+                spotId: request.spotId
             )
         )
         return CreditConfirmed(itemId: result.item.id, fulfillment: result.operation.fulfillment)

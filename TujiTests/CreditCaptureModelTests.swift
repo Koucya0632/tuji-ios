@@ -45,7 +45,8 @@ struct CreditCaptureModelTests {
         language: FakeLanguageContext = FakeLanguageContext(uiLang: "zh-Hant", learningDirection: .zhEn),
         owned: [String] = [],
         resume: String? = nil,
-        setAside: InMemorySetAsideJournal = InMemorySetAsideJournal()
+        setAside: InMemorySetAsideJournal = InMemorySetAsideJournal(),
+        spotAt: @escaping @MainActor (GeoPoint, String) -> TravelSpot? = { _, _ in nil }
     )
         -> Stand
     {
@@ -63,7 +64,7 @@ struct CreditCaptureModelTests {
             resume: resume, api: api, queue: queue, account: { session.user }, pendingJournal: journal,
             setAside: setAside, language: language,
             ownedLemmas: { owned }, cards: cards, mutations: SpyAtlasMutationRefreshing(),
-            sleep: { naps.asked.append($0) }
+            sleep: { naps.asked.append($0) }, spotAt: spotAt
         )
         return Stand(
             model: model,
@@ -488,6 +489,91 @@ struct CreditCaptureModelTests {
         s.model.show(.precision)
         #expect(s.model.operation?.id == "p")
         #expect(s.api.quotes.isEmpty)
+    }
+
+    // MARK: - 景點 from the photo's own location
+
+    private static let asakusa = TravelSpot(
+        id: "asakusa", name: "淺草", native: "浅草", reading: "あさくさ", at: TravelPoint(x: 0.7, y: 0.2),
+        label: .right, wordIds: ["a"], open: true, free: false,
+        geo: TravelSpotGeo(lat: 35.7148, lng: 139.7967, radiusM: 600)
+    )
+
+    /// A library photo taken at 淺草, recognised as a Japanese card and on its result.
+    private func atAsakusa(
+        location: GeoPoint? = GeoPoint(lat: 35.7148, lng: 139.7967),
+        target: String = "ja"
+    ) async
+        -> (Stand, Asked)
+    {
+        let api = FakeCreditCaptureAPI()
+        api.polls = [.success(CreditFixtures.operation(
+            state: "committed",
+            target: target,
+            candidates: [CreditFixtures.keyboard]
+        ))]
+        let asked = Asked()
+        let s = self.stand(api: api, spotAt: { point, language in
+            asked.calls.append((point, language))
+            return language == "ja" ? Self.asakusa : nil
+        })
+        await s.model.load()
+        s.model.setPhoto(Data([0xFF, 0xD8, 0xFF]), location: location)
+        await s.model.start(language: TargetLanguage(rawValue: target) ?? .ja)
+        await s.model.poll()
+        return (s, asked)
+    }
+
+    @MainActor
+    final class Asked {
+        var calls: [(GeoPoint, String)] = []
+    }
+
+    @Test
+    func aLibraryPhotoTakenAtASpotSuggestsItAndTheConfirmCarriesOnlyItsId() async {
+        let (s, asked) = await self.atAsakusa()
+        #expect(s.model.detectedSpot?.id == "asakusa")
+        // Asked in the language the run was paid for, not the interface's.
+        #expect(asked.calls.last?.1 == "ja")
+
+        s.model.form.select(CreditFixtures.keyboard)
+        #expect(s.model.confirm())
+        await s.queue.settle()
+        #expect(s.credits.confirmed.first?.spotId == "asakusa")
+        // The sheet is about to close; the place goes with the capture.
+        #expect(s.model.photoLocation == nil)
+        #expect(s.model.detectedSpot == nil)
+    }
+
+    @Test
+    func 移除KeepsTheCardOffTheSpot() async {
+        let (s, _) = await self.atAsakusa()
+        s.model.removeSpot()
+        #expect(s.model.detectedSpot == nil)
+
+        s.model.form.select(CreditFixtures.keyboard)
+        #expect(s.model.confirm())
+        await s.queue.settle()
+        #expect(s.credits.confirmed.first?.spotId == nil)
+    }
+
+    @Test
+    func aPhotoWithoutAPlaceOrAnEnglishCardSuggestsNothing() async {
+        let (none, askedNone) = await self.atAsakusa(location: nil)
+        #expect(none.model.detectedSpot == nil)
+        #expect(askedNone.calls.isEmpty)
+
+        let (english, _) = await self.atAsakusa(target: "en")
+        #expect(english.model.detectedSpot == nil)
+    }
+
+    @Test
+    func 換一張ForgetsWhereThePreviousPhotoWasTaken() async {
+        let (s, _) = await self.atAsakusa()
+        s.model.removeSpot()
+        s.model.retake()
+        #expect(s.model.photoLocation == nil)
+        #expect(!s.model.spotRemoved)
     }
 
     // MARK: - The card

@@ -116,6 +116,13 @@ struct AtlasItem: Decodable, Hashable, Identifiable {
     let createdAt: String?
     let updatedAt: String?
     let deletedAt: String?
+    /// The 景點 this card is tagged to (跟著 Moira 去旅遊). Private to the owner;
+    /// nil from a server that predates it.
+    var spotId: String? = nil
+    /// The owner shares it there: others see it in that spot's 「大家拍的」 while it is public.
+    var spotShared: Bool? = nil
+    /// An admin took it off this spot after a 「不是在這裡拍的」 report; it may not go back.
+    var spotShareBlocked: Bool? = nil
 }
 
 extension AtlasItem {

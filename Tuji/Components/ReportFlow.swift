@@ -34,6 +34,8 @@ final class ReportFlow {
 
     private(set) var phase: Phase = .idle
     private(set) var target: ReportTarget?
+    /// What the sheet offers for `target` (AtlasReportReason.choices).
+    private(set) var reasons = AtlasReportReason.choices(atSpot: false)
     /// Drives the reason sheet. Settable because `.tujiSheet` needs a binding.
     var isPresented = false
 
@@ -54,8 +56,10 @@ final class ReportFlow {
         return nil
     }
 
-    func begin(_ target: ReportTarget) {
+    /// `atSpot`: the target is a card shared to a 景點, so 「不是在這裡拍的」 is offered.
+    func begin(_ target: ReportTarget, atSpot: Bool = false) {
         self.target = target
+        self.reasons = AtlasReportReason.choices(atSpot: atSpot)
         self.isPresented = true
     }
 
@@ -79,13 +83,14 @@ private struct ReportSheetModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // Five options plus the footer line; the default height clips the last.
+            // The options plus the footer line; the default height clips the last.
+            // 460pt fits five; a sixth (「不是在這裡拍的」) needs one more row.
             .tujiSheet(isPresented: Binding(
                 get: { self.flow.isPresented },
                 set: { self.flow.isPresented = $0 }
-            ), title: "檢舉原因", height: 460) {
+            ), title: "檢舉原因", height: 460 + CGFloat(max(0, self.flow.reasons.count - 5)) * 56) {
                 TujiOptionSheet(
-                    options: AtlasReportReason.allCases.map {
+                    options: self.flow.reasons.map {
                         TujiOptionSheet<AtlasReportReason?>.Option(
                             Optional($0),
                             verbatim: $0.label

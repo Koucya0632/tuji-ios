@@ -332,6 +332,38 @@ struct AtlasShelfModelTests {
         #expect(!model.withdrawing)
     }
 
+    // MARK: - 景點
+
+    @Test
+    func aSpotIsSetAndClearedThroughTheStoreAndReportedAsASpotChange() async {
+        let fake = FakeAtlasAuthoring()
+        let (store, _) = await self.store(images: [], items: [], fake: fake)
+        let spy = SpyAtlasMutationRefreshing()
+        let model = AtlasShelfModel(store: store, mutations: spy, targetLanguage: .ja)
+
+        #expect(await model.setSpot(itemId: "t1", spotId: "asakusa", shared: true, refreshing: spy))
+        #expect(await model.setSpot(itemId: "t1", spotId: nil, shared: false, refreshing: spy))
+
+        #expect(fake.spotWrites.map(\.itemId) == ["t1", "t1"])
+        #expect(fake.spotWrites.map(\.spotId) == ["asakusa", nil])
+        #expect(fake.spotWrites.map(\.shared) == [true, false])
+        #expect(spy.reported == [.itemSpotChanged, .itemSpotChanged])
+        #expect(!model.savingSpot)
+    }
+
+    @Test
+    func aRefusedSpotSurfacesTheErrorAndReportsNothing() async {
+        let fake = FakeAtlasAuthoring()
+        fake.spotError = AtlasFakeError.boom
+        let (store, _) = await self.store(images: [], items: [], fake: fake)
+        let spy = SpyAtlasMutationRefreshing()
+        let model = AtlasShelfModel(store: store, mutations: spy, targetLanguage: .ja)
+
+        #expect(await !(model.setSpot(itemId: "t1", spotId: "asakusa", shared: true, refreshing: spy)))
+        #expect(model.errorMessage != nil)
+        #expect(spy.reported.isEmpty)
+    }
+
     // MARK: - Scoping
 
     /// A `@State` model is built before SwiftUI can hand it the environment, so

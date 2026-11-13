@@ -87,6 +87,16 @@ final class ImageIntake {
     let encoding: ImageIntakeEncoding
     let crop: ImageIntakeCrop
 
+    /// Read where a picked library photo was taken (PhotoLocation), for a
+    /// screen that suggests a 景點 from it. Off for avatars and 合集 covers.
+    let readsLocation: Bool
+
+    /// Where the photo now being handled was taken, when `readsLocation` and the
+    /// photo carries its own GPS. Read from the picked bytes before the crop,
+    /// whose re-encode drops all metadata; never from the camera, which has none.
+    /// In memory only — it never leaves the device.
+    private(set) var pickedLocation: GeoPoint?
+
     /// Presentation state owned by `ImageIntakeModifier`, which is the only
     /// thing that should touch it.
     var showSources = false
@@ -105,10 +115,12 @@ final class ImageIntake {
     init(
         encoding: ImageIntakeEncoding,
         crop: ImageIntakeCrop = .square(mask: .circle),
+        readsLocation: Bool = false,
         deliver: @escaping (Data) async -> ImageIntakeDelivery = { _ in .rejected(nil) }
     ) {
         self.encoding = encoding
         self.crop = crop
+        self.readsLocation = readsLocation
         self.deliver = deliver
     }
 
@@ -139,6 +151,7 @@ final class ImageIntake {
     func begin() {
         guard !self.isBusy else { return }
         self.phase = .idle
+        self.pickedLocation = nil
         self.showSources = true
     }
 
@@ -148,6 +161,7 @@ final class ImageIntake {
     func pick(_ source: Source) {
         guard !self.isBusy else { return }
         self.phase = .idle
+        self.pickedLocation = nil
         switch source {
         case .camera: self.showCamera = true
         case .photoLibrary: self.showPhotoLibrary = true
@@ -168,6 +182,7 @@ final class ImageIntake {
                 self.phase = .failed(tujiLocalized("讀取照片失敗"))
                 return
             }
+            self.pickedLocation = self.readsLocation ? PhotoLocation.read(from: data) : nil
             self.phase = .idle
             self.pendingCrop = PendingCrop(data: data)
         } catch {
@@ -180,6 +195,7 @@ final class ImageIntake {
         // fullScreenCover will present; without the beat the cropper never
         // appears and the capture is silently dropped.
         try? await Task.sleep(for: .milliseconds(350))
+        self.pickedLocation = nil
         self.phase = .idle
         self.pendingCrop = PendingCrop(data: data)
     }

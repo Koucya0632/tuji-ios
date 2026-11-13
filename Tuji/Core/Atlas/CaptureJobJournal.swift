@@ -36,6 +36,9 @@ struct CreditConfirmRequest: Codable, Equatable {
     let displayZhHant: String?
     /// Only for a cross-language capture; nil keeps the candidate's own.
     let displayGloss: String?
+    /// The 景點 matched on the device from the photo's own location. A record
+    /// journalled before this field existed decodes it as nil.
+    var spotId: String? = nil
 }
 
 /// A restored job: its record, plus the JPEG bytes of the frame the user took if

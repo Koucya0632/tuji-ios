@@ -124,6 +124,8 @@ final class AtlasShelfModel {
     private(set) var selectedIds: Set<String> = []
     private(set) var deleting = false
     private(set) var withdrawing = false
+    /// A 景點 change on the card page is on its way.
+    private(set) var savingSpot = false
     private(set) var errorMessage: String?
 
     private let store: AtlasStore
@@ -312,6 +314,33 @@ final class AtlasShelfModel {
         do {
             try await self.store.withdraw(itemId: itemId)
             await mutations.refresh(after: .itemWithdrawn)
+            return true
+        } catch {
+            self.errorMessage = tujiUserMessage(for: error)
+            return false
+        }
+    }
+
+    // MARK: - 景點
+
+    /// 選景點 / 放到景點頁 on the card page. `spotId` nil takes the tag off.
+    /// Changing the spot turns sharing off unless the caller says otherwise:
+    /// sharing was agreed to for one place, not for wherever the card moves.
+    func setSpot(
+        itemId: String,
+        spotId: String?,
+        shared: Bool,
+        refreshing mutations: AtlasMutationRefreshing
+    ) async
+        -> Bool
+    {
+        guard !self.savingSpot else { return false }
+        self.savingSpot = true
+        self.errorMessage = nil
+        defer { self.savingSpot = false }
+        do {
+            try await self.store.setSpot(itemId: itemId, spotId: spotId, shared: shared)
+            await mutations.refresh(after: .itemSpotChanged)
             return true
         } catch {
             self.errorMessage = tujiUserMessage(for: error)

@@ -22,6 +22,8 @@ struct AtlasPublicItem: Decodable, Identifiable, Hashable {
     /// author account is no longer available.
     let author: AtlasAuthorRef?
     let publishedAt: String?
+    /// The 景點 its owner shares it to; nil when not shared (or from an older server).
+    var spotId: String? = nil
     /// Full stored learning content. Feed and collection-preview payloads omit
     /// it; the single-item detail endpoint supplies it without invoking AI.
     var learningWord: Word?
@@ -143,9 +145,19 @@ enum AtlasReportReason: String, CaseIterable, Identifiable {
     case copyright
     case wrong
     case other
+    /// 「不是在這裡拍的」 — only against a card its owner shared to a 景點. An
+    /// admin takes it off that spot; it never counts toward removing it from 物見.
+    case notHere = "not_here"
 
     var id: String {
         self.rawValue
+    }
+
+    /// The reasons a report sheet offers. `atSpot` only for a public card
+    /// shared to a 景點 — anywhere else 「不是在這裡拍的」 has nothing to point at.
+    static func choices(atSpot: Bool) -> [AtlasReportReason] {
+        let general: [AtlasReportReason] = [.spam, .inappropriate, .copyright, .wrong, .other]
+        return atSpot ? general + [.notHere] : general
     }
 
     var label: String {
@@ -155,6 +167,7 @@ enum AtlasReportReason: String, CaseIterable, Identifiable {
         case .copyright: tujiLocalized("侵犯版權")
         case .wrong: tujiLocalized("內容有誤")
         case .other: tujiLocalized("其他")
+        case .notHere: tujiLocalized("不是在這裡拍的")
         }
     }
 }
@@ -247,6 +260,20 @@ extension AtlasItem {
 struct AtlasWithdrawResponse: Decodable, Hashable {
     let ok: Bool
     let reviewStatus: String?
+}
+
+/// A card's 景點 as the server now holds it, after PUT / DELETE
+/// `/api/atlas/items/{id}/spot`. Sync carries the same three fields.
+struct AtlasItemSpotState: Decodable, Hashable {
+    let spotId: String?
+    let spotShared: Bool
+    let spotShareBlocked: Bool
+}
+
+/// 「大家拍的」 at one 景點 (`/api/travel/spots/{spot}/photos`).
+struct TravelSpotPhotosResponse: Decodable {
+    let spot: String
+    let items: [AtlasPublicItem]
 }
 
 struct AtlasPublishModeration: Decodable, Hashable {

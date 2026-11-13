@@ -32,6 +32,16 @@ struct TravelPoint: Decodable, Hashable {
     }
 }
 
+/// Where a spot is on the ground: a centre and how far from it a photo still
+/// counts as taken there. Only used on the device, to suggest a spot for a photo
+/// that carries its own location — the photo's coordinates never leave the
+/// phone (parent repo docs/adr/0002).
+struct TravelSpotGeo: Decodable, Hashable {
+    let lat: Double
+    let lng: Double
+    let radiusM: Double
+}
+
 struct TravelSpot: Decodable, Identifiable, Hashable {
     enum LabelSide: String, Decodable {
         case left
@@ -51,6 +61,8 @@ struct TravelSpot: Decodable, Identifiable, Hashable {
     let open: Bool
     /// A non-member may study this spot.
     let free: Bool
+    /// Missing from a server that predates it; no suggestion is made then.
+    var geo: TravelSpotGeo? = nil
 }
 
 /// One thing a city map is drawn from. A kind this build does not know is
@@ -157,6 +169,9 @@ struct TravelGrid: Decodable, Hashable {
 struct TravelDestination: Decodable, Identifiable, Hashable {
     let id: String
     let name: String
+    /// The place's language (`ja`). A 自製圖鑑 card may sit at a spot here only
+    /// when it is a card for this language. Missing from an older server.
+    var language: String? = nil
     let grid: TravelGrid
     let regions: [TravelRegion]
     let cities: [TravelCity]

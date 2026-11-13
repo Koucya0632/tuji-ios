@@ -4,6 +4,10 @@
 // The words are ordinary 官方圖鑑 words. Browsing them is never gated — a tile
 // opens the word page for anyone. Studying follows the spot: a non-member may
 // study a free spot and meets the paywall at any other.
+//
+// Below them, the 自製圖鑑 cards taken here: 「你在這裡拍的」 (this account's
+// own tags, private) and 「大家拍的」 (public cards their owners shared to this
+// spot). Each section is absent when it has nothing.
 
 import SwiftUI
 
@@ -14,7 +18,16 @@ struct TravelSpotView: View {
     @Environment(WordsStore.self) private var words
     @Environment(MasteryStore.self) private var mastery
     @Environment(\.presentPaywall) private var presentPaywall
+    @Environment(BlockStore.self) private var blocks
+    @Environment(TabNavigator.self) private var navigator
     var store: TravelStore = .shared
+    var atlas: AtlasStore = .shared
+    /// 「大家拍的」 for a spot (`/api/travel/spots/{spot}/photos`).
+    var loadSharedPhotos: @MainActor (String) async throws -> [AtlasPublicItem] = {
+        try await LiveAtlasRepository.shared.spotPhotos(spotId: $0)
+    }
+
+    @State private var shared: [AtlasPublicItem] = []
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: Space.s2, alignment: .top), count: 3)
 
@@ -35,6 +48,11 @@ struct TravelSpotView: View {
             await self.store.loadIfNeeded(settings: self.settings)
             await self.words.loadIfNeeded()
             await self.mastery.loadIfNeeded()
+        }
+        .task(id: self.spotId) {
+            // Own tags arrive with sync; 圖鑑 is not synced at launch.
+            await self.atlas.sync()
+            self.shared = await (try? self.loadSharedPhotos(self.spotId)) ?? self.shared
         }
     }
 
@@ -65,6 +83,8 @@ struct TravelSpotView: View {
                 }
             }
             .padding(.horizontal, Space.s4)
+            self.ownSection(spot)
+            self.sharedSection
         } else if self.store.phase == .failed {
             TujiBlankState(kind: .failed, retry: { await self.store.reload(settings: self.settings) })
         } else if self.store.phase == .loaded {
@@ -74,6 +94,72 @@ struct TravelSpotView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, Space.s6)
         }
+    }
+
+    // MARK: - 自製圖鑑 at this spot
+
+    /// This account's own cards tagged here, as the custom words 圖鑑 shows.
+    private func ownWords(_ spot: TravelSpot) -> [CardWord] {
+        let itemIds = Set(self.atlas.items.filter { $0.spotId == spot.id }.map(\.id))
+        guard !itemIds.isEmpty else { return [] }
+        return self.words.words.filter { $0.id.atlasItemId.map(itemIds.contains) ?? false }
+    }
+
+    /// 「大家拍的」 without this account's own cards and authors it blocked —
+    /// the server answers the same list to everyone.
+    private var othersShared: [AtlasPublicItem] {
+        let ownSlugs = Set(self.atlas.items.compactMap(\.publicSlug))
+        return self.shared.filter { !ownSlugs.contains($0.slug) && !self.blocks.isBlocked($0.author?.handle) }
+    }
+
+    @ViewBuilder
+    private func ownSection(_ spot: TravelSpot) -> some View {
+        let own = self.ownWords(spot)
+        if !own.isEmpty {
+            self.sectionTitle("你在這裡拍的")
+            LazyVGrid(columns: self.columns, spacing: Space.s3) {
+                ForEach(own) { word in
+                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
+                        WordTile(word: word, showMastery: true, masteryScore: self.mastery.score(for: word.id))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, Space.s4)
+        }
+    }
+
+    @ViewBuilder
+    private var sharedSection: some View {
+        let others = self.othersShared
+        if !others.isEmpty {
+            self.sectionTitle("大家拍的")
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2, alignment: .top), count: 2),
+                spacing: Space.s3
+            ) {
+                ForEach(others) { item in
+                    AtlasPublicTile(
+                        item: item,
+                        onOpen: { self.navigator.push(.atlasPublicItem(item: item)) },
+                        onOpenAuthor: item.author.map { author in
+                            { self.navigator.push(.authorProfile(handle: author.handle, isSelf: false)) }
+                        }
+                    )
+                }
+            }
+            .padding(.horizontal, Space.s4)
+        }
+    }
+
+    private func sectionTitle(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.tujiLabel)
+            .tracking(0.5)
+            .foregroundStyle(.tujiInk3)
+            .padding(.horizontal, Space.s4)
+            .padding(.top, Space.s4)
+            .padding(.bottom, Space.s2)
     }
 
     private func hero(_ spot: TravelSpot, _ state: TravelSpotState) -> some View {

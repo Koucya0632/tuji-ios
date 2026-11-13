@@ -87,7 +87,7 @@ struct AtlasPublicDetailView: View {
                 }
 
                 Button {
-                    self.report.begin(.item(slug: self.vm.item.slug))
+                    self.report.begin(.item(slug: self.vm.item.slug), atSpot: self.vm.item.spotId != nil)
                 } label: {
                     Text(self.report.isSent ? "已收到檢舉" : "檢舉這張卡片")
                         .font(.tujiLabel)

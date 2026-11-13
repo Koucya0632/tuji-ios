@@ -15,6 +15,8 @@ protocol AtlasAuthoring {
     func detail(itemId: String) async throws -> Word
     func entitlement() async throws -> AtlasEntitlement
     func withdraw(itemId: String) async throws -> AtlasWithdrawResponse
+    func setSpot(itemId: String, spotId: String, shared: Bool) async throws -> AtlasItemSpotState
+    func clearSpot(itemId: String) async throws -> AtlasItemSpotState
 }
 
 extension LiveAtlasRepository: AtlasAuthoring {}
