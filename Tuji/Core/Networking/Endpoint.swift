@@ -60,6 +60,8 @@ enum Endpoint {
     case atlasItemCards(id: String)
     case atlasItemDetail(id: String)
     case atlasItemWithdraw(id: String)
+    /// The card's 景點: PUT `{spotId, shared}` tags it, DELETE takes the tag off.
+    case atlasItemSpot(id: String)
     case atlasSync(since: String?, limit: Int)
     case atlasEntitlement
 
@@ -171,6 +173,8 @@ enum Endpoint {
     case categories(lang: String)
     /// 跟著 Moira 去旅遊: destinations, maps and 景點. Empty unless learning 日文.
     case travel(lang: String, learning: String)
+    /// 「大家拍的」 at one 景點: 物見 cards their owners shared there.
+    case travelSpotPhotos(spotId: String)
 
     // MARK: - Smoke (temporary; delete with the backend endpoint)
 
@@ -276,7 +280,7 @@ enum Endpoint {
         case .usersWordLists, .usersWordList, .usersWordListWords, .usersWordListOrder,
              .studyWordListQueue:
             self.wordListDescriptor
-        case .travel, .studySpotQueue:
+        case .travel, .studySpotQueue, .travelSpotPhotos:
             self.travelDescriptor
         case .wordInsights:
             self.wordInsightsDescriptor
@@ -327,6 +331,8 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/atlas/items/\(id)/detail", policy: .privateFresh)
         case let .atlasItemWithdraw(id):
             EndpointDescriptor(path: "/api/atlas/items/\(id)/withdraw", policy: .privateFresh)
+        case let .atlasItemSpot(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/spot", policy: .privateFresh)
         case let .atlasSync(since, limit):
             EndpointDescriptor(
                 path: "/api/atlas/sync",

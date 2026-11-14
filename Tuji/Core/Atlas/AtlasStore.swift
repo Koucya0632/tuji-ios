@@ -132,6 +132,17 @@ final class AtlasStore {
         await self.sync()
     }
 
+    /// 景點 on the card page. Like 取消公開, refreshed from sync rather than
+    /// patched in, so the card shows what the server decided.
+    func setSpot(itemId: String, spotId: String?, shared: Bool) async throws {
+        if let spotId {
+            _ = try await self.repository.setSpot(itemId: itemId, spotId: spotId, shared: shared)
+        } else {
+            _ = try await self.repository.clearSpot(itemId: itemId)
+        }
+        await self.sync()
+    }
+
     private func merge(_ response: AtlasSyncResponse) {
         self.images = Self.sortedByRecency(Self.merged(self.images, response.images))
             .filter { $0.deletedAt == nil }

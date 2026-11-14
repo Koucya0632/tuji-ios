@@ -498,6 +498,7 @@ private struct AtlasManageDetailView: View {
     let onDelete: () -> Void
 
     @State private var showWithdrawConfirm = false
+    @State private var showSpotPicker = false
     /// A paid recognition of this photo is still waiting for its candidate to be picked.
     @State private var resumable = false
     @State private var showResume = false
@@ -549,6 +550,7 @@ private struct AtlasManageDetailView: View {
 
                 if let item {
                     self.publicationSection(item)
+                    self.spotSection(item)
                 }
 
                 if self.resumable {
@@ -572,6 +574,18 @@ private struct AtlasManageDetailView: View {
         .navigationTitle(self.item?.lemma ?? tujiLocalized("圖片詳情"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await self.findResumable() }
+        // The 景點 a card can be tagged to come from the travel map.
+        .task { await TravelStore.shared.loadIfNeeded() }
+        .confirmationDialog("在哪裡拍的？", isPresented: self.$showSpotPicker, titleVisibility: .visible) {
+            if let item {
+                ForEach(item.taggableSpots(in: TravelStore.shared.destinations)) { spot in
+                    Button(spot.name) { self.setSpot(item, spotId: spot.id, shared: false) }
+                }
+                if item.spotId != nil {
+                    Button("不在這些地方", role: .destructive) { self.setSpot(item, spotId: nil, shared: false) }
+                }
+            }
+        }
         .fullScreenCover(isPresented: self.$showResume) {
             AtlasCaptureView(resume: self.image.id, onCardQueued: {
                 // The photo is a card in 生成佇列 now; this screen describes a row that is gone.
@@ -648,6 +662,65 @@ private struct AtlasManageDetailView: View {
     private func withdraw() {
         guard let item else { return }
         withdrawFromAtlas(item.id, shelf: self.shelf, feed: self.feedRefresh)
+    }
+
+    // MARK: - 景點
+
+    /// Where the photo was taken, among the 跟著 Moira 去旅遊 spots — private to
+    /// this account until 「放到景點頁」 shares a public card there. Absent for
+    /// a card no spot can take (another language, or the map not loaded).
+    @ViewBuilder
+    private func spotSection(_ item: AtlasItem) -> some View {
+        let spots = item.taggableSpots(in: TravelStore.shared.destinations)
+        let current = item.spotId.flatMap { id in TravelStore.shared.spot(id) }
+        if !spots.isEmpty || current != nil {
+            VStack(alignment: .leading, spacing: Space.s2) {
+                self.detailRow("景點", current?.name ?? tujiLocalized("沒有掛景點"))
+                BBtn(
+                    title: current == nil ? "選景點" : "換景點",
+                    bg: .tujiPaper2,
+                    fg: .tujiInk,
+                    fullWidth: true,
+                    icon: "mappin.and.ellipse"
+                ) {
+                    self.showSpotPicker = true
+                }
+                .disabled(self.shelf.savingSpot || spots.isEmpty)
+                .opacity(self.shelf.savingSpot ? 0.6 : 1)
+
+                if let current, item.spotShareBlocked == true {
+                    Text("這張已從\(current.name)頁撤下，不能再放回去。")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk3)
+                } else if let current, item.isPublicForSpot {
+                    Toggle(isOn: Binding(
+                        get: { item.spotShared == true },
+                        set: { self.setSpot(item, spotId: current.id, shared: $0) }
+                    )) {
+                        Text("放到景點頁")
+                            .font(.tujiBodySm(.strong))
+                            .foregroundStyle(.tujiInk)
+                    }
+                    .tint(.tujiBrandPrimary)
+                    .disabled(self.shelf.savingSpot || !item.canShareToSpot)
+                    Text("其他人會在\(current.name)頁（App 和網站）看到這張和你的暱稱。")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk3)
+                }
+            }
+            .padding(.top, Space.s2)
+        }
+    }
+
+    private func setSpot(_ item: AtlasItem, spotId: String?, shared: Bool) {
+        Task {
+            _ = await self.shelf.setSpot(
+                itemId: item.id,
+                spotId: spotId,
+                shared: shared,
+                refreshing: LiveAtlasMutationRefresher(feed: self.feedRefresh)
+            )
+        }
     }
 
     private func detailRow(_ title: LocalizedStringKey, _ value: String) -> some View {

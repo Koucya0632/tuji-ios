@@ -229,6 +229,22 @@ final class FakeAtlasAuthoring: AtlasAuthoring {
         self.withdrawnIds.append(itemId)
         return AtlasWithdrawResponse(ok: true, reviewStatus: "withdrawn")
     }
+
+    var spotError: Error?
+    /// Every 景點 write, in order: (item, spot or nil for DELETE, shared).
+    private(set) var spotWrites: [(itemId: String, spotId: String?, shared: Bool)] = []
+
+    func setSpot(itemId: String, spotId: String, shared: Bool) async throws -> AtlasItemSpotState {
+        if let spotError { throw spotError }
+        self.spotWrites.append((itemId, spotId, shared))
+        return AtlasItemSpotState(spotId: spotId, spotShared: shared, spotShareBlocked: false)
+    }
+
+    func clearSpot(itemId: String) async throws -> AtlasItemSpotState {
+        if let spotError { throw spotError }
+        self.spotWrites.append((itemId, nil, false))
+        return AtlasItemSpotState(spotId: nil, spotShared: false, spotShareBlocked: false)
+    }
 }
 
 /// Records what a mutation was reported as, without touching any store.

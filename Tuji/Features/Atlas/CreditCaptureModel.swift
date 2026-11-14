@@ -50,6 +50,11 @@ final class CreditCaptureModel {
     private(set) var message: String?
     /// 校正表單 for the result on screen.
     var form = CaptureCorrectionForm()
+    /// Where the photo was taken, when it came from the library carrying its own
+    /// GPS. Never sent: only the 景點 it matches is (parent repo docs/adr/0002).
+    private(set) var photoLocation: GeoPoint?
+    /// The user took the suggested 景點 off this capture.
+    private(set) var spotRemoved = false
 
     /// The photo 圖片詳情's 繼續確認 asked for: the sheet opens on that photo's result, not
     /// on whichever unpicked result is newest.
@@ -67,6 +72,8 @@ final class CreditCaptureModel {
     private let cards: any AtlasCardGenerating
     private let mutations: any AtlasMutationRefreshing
     private let sleep: (Duration) async throws -> Void
+    /// The 景點 a point falls in for a card in this language (TravelSpotMatcher).
+    private let spotAt: @MainActor (GeoPoint, String) -> TravelSpot?
 
     private var owner: UUID?
     private var generation = 0
@@ -100,7 +107,10 @@ final class CreditCaptureModel {
         ownedLemmas: @escaping @MainActor () -> [String] = { AtlasStore.shared.items.map(\.lemma) },
         cards: any AtlasCardGenerating = AtlasStore.shared,
         mutations: any AtlasMutationRefreshing = LiveAtlasMutationRefresher(),
-        sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
+        sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
+        spotAt: @escaping @MainActor (GeoPoint, String) -> TravelSpot? = { point, language in
+            TravelSpotMatcher.match(point, in: TravelStore.shared.destinations, targetLanguage: language)
+        }
     ) {
         self.resume = resume
         self.api = api
@@ -113,6 +123,7 @@ final class CreditCaptureModel {
         self.cards = cards
         self.mutations = mutations
         self.sleep = sleep
+        self.spotAt = spotAt
     }
 
     // MARK: What the sheet shows
@@ -285,6 +296,8 @@ final class CreditCaptureModel {
     /// Back to the source chooser. Results already paid for stay in history.
     private func reset() {
         self.photo = nil
+        self.photoLocation = nil
+        self.spotRemoved = false
         self.image = nil
         self.operation = nil
         self.quote = nil
@@ -293,9 +306,24 @@ final class CreditCaptureModel {
         self.pollFailures = 0
     }
 
-    func setPhoto(_ data: Data) {
+    func setPhoto(_ data: Data, location: GeoPoint? = nil) {
         self.reset()
         self.photo = data
+        self.photoLocation = location
+    }
+
+    /// The 景點 suggested from the photo's own location, for the result on screen.
+    /// Only for a card in the spot's language; nil once the user removed it.
+    var detectedSpot: TravelSpot? {
+        guard !self.spotRemoved, let point = self.photoLocation, let language = self.operation?.targetLanguage
+        else { return nil }
+        return self.spotAt(point, language)
+    }
+
+    /// 移除: this card will not carry the suggested 景點. It can still be given
+    /// one later from the card page.
+    func removeSpot() {
+        self.spotRemoved = true
     }
 
     /// Still the account and the session this request was made for.
@@ -513,9 +541,10 @@ final class CreditCaptureModel {
     /// Not `async`: the work it commits outlives the sheet by design.
     func confirm() -> Bool {
         guard self.canConfirm, let operation = self.operation,
-              let request = self.form.request(operationId: operation.id, second: self.secondField),
+              var request = self.form.request(operationId: operation.id, second: self.secondField),
               operation.result?.candidates.contains(where: { $0.id == request.candidateId }) == true
         else { return false }
+        request.spotId = self.detectedSpot?.id
         self.queue.enqueue(
             credit: request,
             imageId: operation.imageId,
