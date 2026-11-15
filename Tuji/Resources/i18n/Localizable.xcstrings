@@ -30515,30 +30515,6 @@
         }
       }
     },
-    "%lld 樣東西" : {
-      "comment" : "How many words a spot has.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld things"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld個"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 样东西"
-          }
-        }
-      }
-    },
     "免費" : {
       "comment" : "Tag on a spot a non-member may study.",
       "extractionState" : "manual",
