@@ -169,7 +169,8 @@ extension CompletionReadout.Inputs {
     init(
         settings: some StudySelectionReading,
         progress: ProgressStore,
-        words: WordsStore
+        words: WordsStore,
+        categories: CategoriesStore = .shared
     ) {
         // Read once, then used as the filter for all four scoped numbers. It
         // being *the same* selection in all four places is the rule — 我 used to
@@ -179,7 +180,8 @@ extension CompletionReadout.Inputs {
         // themes the queue would not serve.
         let selected = StudyCategoryDefaults.effective(
             selected: settings.studyCategories,
-            studyable: settings.studyableCategories
+            studyable: settings.studyableCategories,
+            visibleCategoryIDs: categories.categories.isEmpty ? nil : Set(categories.categories.map(\.id))
         )
         self.init(
             settingsLoaded: settings.settingsLoaded,

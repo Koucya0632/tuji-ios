@@ -85,6 +85,11 @@ struct StudyCategoriesPickerView: View {
                     if !self.categories.presets.isEmpty {
                         self.presetRow
                     }
+                    if TopicPresetChoice.hasOnlyHiddenSelection(self.selectedIds, visibleIds: self.catalogIds) {
+                        Text("請選擇目前圖鑑的學習主題。")
+                            .font(.tujiLabel)
+                            .foregroundStyle(.tujiInk3)
+                    }
                     self.actions
                     self.grid
                 }
@@ -146,11 +151,12 @@ struct StudyCategoriesPickerView: View {
             // Only what may be studied: selecting a locked theme would count
             // toward nothing.
             Button("全選") {
-                self.setSelection(self.categories.categories.map(\.id).filter { !self.isLocked($0) })
+                let allowed = Set(self.categories.categories.map(\.id).filter { !self.isLocked($0) })
+                self.setSelection(Array(TopicPresetChoice.replacingVisible(self.selectedIds, visibleIds: self.catalogIds, with: allowed)))
             }
-            Button("清除") { self.setSelection([]) }
+            Button("清除") { self.setSelection(Array(TopicPresetChoice.replacingVisible(self.selectedIds, visibleIds: self.catalogIds, with: []))) }
             Spacer()
-            Text("已選 \(self.selectedIds.count) 個")
+            Text("已選 \(self.selectedIds.intersection(self.catalogIds).count) 個")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
         }

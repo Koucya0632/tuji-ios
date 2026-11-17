@@ -119,7 +119,7 @@ struct APIClientTests {
             return StubResponse(status: 401, body: "")
         }
 
-        _ = try? await api.get(.categories(lang: "zh-Hant"), as: Ack.self)
+        _ = try? await api.get(.categories(lang: "zh-Hant", learning: "zh-ja"), as: Ack.self)
 
         #expect(recorder.count == 1)
     }
@@ -148,7 +148,7 @@ struct APIClientTests {
         }
 
         _ = try await api.get(.usersMe, as: Ack.self)
-        _ = try await api.get(.categories(lang: "zh-Hant"), as: Ack.self)
+        _ = try await api.get(.categories(lang: "zh-Hant", learning: "zh-ja"), as: Ack.self)
 
         #expect(recorder.requests.map(\.timezone) == [TimeZone.current.identifier, TimeZone.current.identifier])
     }
@@ -161,7 +161,7 @@ struct APIClientTests {
             return StubResponse(status: 200, body: #"{"ok":true}"#)
         }
 
-        _ = try await api.get(.categories(lang: "zh-Hant"), as: Ack.self)
+        _ = try await api.get(.categories(lang: "zh-Hant", learning: "zh-ja"), as: Ack.self)
 
         #expect(recorder.last?.authorization == nil)
     }
@@ -300,9 +300,16 @@ struct APIClientTests {
             return StubResponse(status: 200, body: #"{"ok":true}"#)
         }
 
-        _ = try await api.get(.categories(lang: "ja"), as: Ack.self)
+        _ = try await api.get(.categories(lang: "ja", learning: "zh-ja"), as: Ack.self)
 
         #expect(recorder.last?.url?.query?.contains("lang=ja") == true)
+        #expect(recorder.last?.cachePolicy == .reloadIgnoringLocalCacheData)
+        let japan = recorder.last?.url
+        #expect(japan?.query?.contains("learning=zh-ja") == true)
+        _ = try await api.get(.categories(lang: "ja", learning: "zh-en"), as: Ack.self)
+        let australia = recorder.last?.url
+        #expect(australia?.query?.contains("learning=zh-en") == true)
+        #expect(australia != japan)
     }
 
     /// `/api/search` is `.publicCached`, so its URL *is* its cache key. It used

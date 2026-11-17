@@ -272,8 +272,148 @@ struct CatalogStoreLoadingTests {
         #expect(store.categories.map(\.id) == ["recovered"])
     }
 
+    @Test
+    func categoriesCacheSeparatelyByLearningDirection() async {
+        let repository = CatalogRepositoryFake()
+        repository.scopedCategoriesHandler = { [self] _, learning in
+            CategoriesResponse(categories: [self.category(learning == "zh-en" ? "rental" : "japan")])
+        }
+        let store = CategoriesStore(repository: repository)
+        let australia = self.context(language: "zh-Hant", learning: "zh-en")
+        let japan = self.context(language: "zh-Hant", learning: "zh-ja")
+
+        await store.loadIfNeeded(for: australia)
+        #expect(store.categories.map(\.id) == ["rental"])
+        await store.loadIfNeeded(for: japan)
+        #expect(store.categories.map(\.id) == ["japan"])
+        await store.loadIfNeeded(for: australia)
+        #expect(store.categories.map(\.id) == ["rental"])
+        #expect(repository.categoryDirections == ["zh-en", "zh-ja"])
+    }
+
+    @Test
+    func slowPreviousDirectionCannotOverwriteNewCategories() async {
+        let repository = CatalogRepositoryFake()
+        let oldGate = AsyncResultGate<CategoriesResponse>()
+        let newGate = AsyncResultGate<CategoriesResponse>()
+        repository.scopedCategoriesHandler = { _, learning in
+            if learning == "zh-en" { return try await oldGate.wait() }
+            return try await newGate.wait()
+        }
+        let store = CategoriesStore(repository: repository)
+        let old = Task { await store.reload(for: self.context(language: "zh-Hant", learning: "zh-en")) }
+        await waitUntil { repository.categoryDirections == ["zh-en"] }
+        let current = Task { await store.reload(for: self.context(language: "zh-Hant", learning: "zh-ja")) }
+        await waitUntil { repository.categoryDirections == ["zh-en", "zh-ja"] }
+        newGate.succeed(CategoriesResponse(categories: [self.category("japan")]))
+        await current.value
+        oldGate.succeed(CategoriesResponse(categories: [self.category("rental")]))
+        await old.value
+        #expect(store.categories.map(\.id) == ["japan"])
+    }
+
+    @Test
+    func switchingBackToLoadedDirectionSupersedesInFlightDirection() async {
+        let repository = CatalogRepositoryFake()
+        let categoryGate = AsyncResultGate<CategoriesResponse>()
+        let wordsGate = AsyncResultGate<WordsListResponse>()
+        repository.scopedCategoriesHandler = { [self] _, learning in
+            if learning == "zh-ja" { return try await categoryGate.wait() }
+            return CategoriesResponse(categories: [self.category("rental")])
+        }
+        repository.wordsHandler = { [self] _, learning in
+            if learning == "zh-ja" { return try await wordsGate.wait() }
+            return self.wordsResponse([self.word("rental-bond")])
+        }
+        let categories = CategoriesStore(repository: repository)
+        let words = WordsStore(repository: repository)
+        let australia = self.context(language: "zh-Hant", learning: "zh-en")
+        let japan = self.context(language: "zh-Hant", learning: "zh-ja")
+        await categories.loadIfNeeded(for: australia)
+        await words.loadIfNeeded(for: australia)
+
+        let oldCategories = Task { await categories.loadIfNeeded(for: japan) }
+        let oldWords = Task { await words.loadIfNeeded(for: japan) }
+        await waitUntil { repository.categoryDirections.contains("zh-ja") && repository.wordCalls.contains { $0.learning == "zh-ja" } }
+        await categories.loadIfNeeded(for: australia)
+        await words.loadIfNeeded(for: australia)
+        categoryGate.succeed(CategoriesResponse(categories: [self.category("japan")]))
+        wordsGate.succeed(self.wordsResponse([self.word("mug")]))
+        await oldCategories.value
+        await oldWords.value
+
+        #expect(categories.categories.map(\.id) == ["rental"])
+        #expect(words.words.map(\.id) == ["rental-bond"])
+    }
+
+    @Test
+    func failedDirectionChangeNeverKeepsPreviousRegionsCategoriesOrWords() async {
+        let repository = CatalogRepositoryFake()
+        repository.scopedCategoriesHandler = { [self] _, learning in
+            if learning == "zh-ja" { throw TestFailure.boom }
+            return CategoriesResponse(categories: [self.category("rental")])
+        }
+        repository.wordsHandler = { [self] _, learning in
+            if learning == "zh-ja" { throw TestFailure.boom }
+            return self.wordsResponse([self.word("rental-bond")])
+        }
+        let categories = CategoriesStore(repository: repository)
+        let words = WordsStore(repository: repository)
+        let australia = self.context(language: "zh-Hant", learning: "zh-en")
+        let japan = self.context(language: "zh-Hant", learning: "zh-ja")
+
+        await categories.loadIfNeeded(for: australia)
+        await words.loadIfNeeded(for: australia)
+        await categories.loadIfNeeded(for: japan)
+        await words.loadIfNeeded(for: japan)
+
+        #expect(categories.categories.isEmpty)
+        #expect(categories.lastError != nil)
+        #expect(words.words.isEmpty)
+        #expect(words.lastError != nil)
+    }
+
+    @Test
+    func sameDirectionRefreshFailureKeepsSnapshotAndReportsError() async {
+        let repository = CatalogRepositoryFake()
+        repository.wordsHandler = { [self] _, _ in self.wordsResponse([self.word("mug")]) }
+        repository.categoriesHandler = { [self] _ in CategoriesResponse(categories: [self.category("kitchen")]) }
+        let categories = CategoriesStore(repository: repository)
+        let words = WordsStore(repository: repository)
+        let context = self.context(language: "zh-Hant", learning: "zh-ja")
+        await categories.loadIfNeeded(for: context)
+        await words.loadIfNeeded(for: context)
+        repository.wordsHandler = { _, _ in throw TestFailure.boom }
+        repository.categoriesHandler = { _ in throw TestFailure.boom }
+        await categories.reload(for: context)
+        await words.reload(for: context)
+        #expect(categories.categories.map(\.id) == ["kitchen"])
+        #expect(words.words.map(\.id) == ["mug"])
+        #expect(categories.lastError != nil)
+        #expect(words.lastError != nil)
+    }
+
+    @Test
+    func explicitReloadReplacesTheSameDirectionSnapshot() async {
+        let repository = CatalogRepositoryFake()
+        var version = "old"
+        repository.wordsHandler = { [self] _, _ in self.wordsResponse([self.word(version)]) }
+        repository.categoriesHandler = { [self] _ in CategoriesResponse(categories: [self.category(version)]) }
+        let categories = CategoriesStore(repository: repository)
+        let words = WordsStore(repository: repository)
+        let context = self.context(language: "zh-Hant", learning: "zh-en")
+        await categories.loadIfNeeded(for: context)
+        await words.loadIfNeeded(for: context)
+        version = "new"
+        await categories.reload(for: context)
+        await words.reload(for: context)
+        #expect(categories.categories.map(\.id) == ["new"])
+        #expect(words.words.map(\.id) == ["new"])
+    }
+
     private func context(
         language: String,
+        learning: String = "zh-en",
         userID: UUID? = nil,
         includePersonalization: Bool = false
     )
@@ -281,7 +421,7 @@ struct CatalogStoreLoadingTests {
     {
         CatalogContext(
             contentLanguageCode: language,
-            learningDirectionCode: "zh-en",
+            learningDirectionCode: learning,
             userID: userID,
             includePersonalization: includePersonalization
         )
@@ -354,6 +494,7 @@ private final class AsyncResultGate<Value> {
 @MainActor
 private final class CatalogRepositoryFake: CatalogRepository {
     var categoryCalls: [String] = []
+    var categoryDirections: [String] = []
     var wordCalls: [(lang: String, learning: String)] = []
     var customCalls: [(lang: String, learning: String)] = []
     var savedCalls: [(lang: String, learning: String)] = []
@@ -361,6 +502,7 @@ private final class CatalogRepositoryFake: CatalogRepository {
     var categoriesHandler: @MainActor (String) async throws -> CategoriesResponse = { _ in
         CategoriesResponse(categories: [])
     }
+    var scopedCategoriesHandler: (@MainActor (String, String) async throws -> CategoriesResponse)?
 
     var wordsHandler: @MainActor (String, String) async throws -> WordsListResponse = { _, _ in
         WordsListResponse(words: [], total: 0)
@@ -374,8 +516,10 @@ private final class CatalogRepositoryFake: CatalogRepository {
         WordsListResponse(words: [], total: 0)
     }
 
-    func loadCategories(lang: String) async throws -> CategoriesResponse {
+    func loadCategories(lang: String, learning: String) async throws -> CategoriesResponse {
         self.categoryCalls.append(lang)
+        self.categoryDirections.append(learning)
+        if let handler = self.scopedCategoriesHandler { return try await handler(lang, learning) }
         return try await self.categoriesHandler(lang)
     }
 

@@ -22,6 +22,7 @@ enum SettingsOptions {
 
     static let accents: [Accent] = [
         Accent(code: "us", label: "美式", detail: "en-US · 預設"),
-        Accent(code: "uk", label: "英式", detail: "en-GB")
+        Accent(code: "uk", label: "英式", detail: "en-GB"),
+        Accent(code: "au", label: "澳式", detail: "en-AU")
     ]
 }

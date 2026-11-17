@@ -170,7 +170,7 @@ enum Endpoint {
     case word(id: String, lang: String, learning: String)
     /// 詞條延伸內容 for one word — membership-aware, so kept off the cached detail.
     case wordInsights(id: String, lang: String, learning: String)
-    case categories(lang: String)
+    case categories(lang: String, learning: String)
     /// 跟著 Moira 去旅遊: destinations, maps and 景點. Empty unless learning 日文.
     case travel(lang: String, learning: String)
     /// 「大家拍的」 at one 景點: 物見 cards their owners shared there.
@@ -555,12 +555,8 @@ enum Endpoint {
 
         // MARK: Public
         case let .search(q, lang, learning):
-            // The response is direction-scoped — 搜尋日文/假名 and 搜尋英文 return
-            // different rows for the same query — and the policy is
-            // `.publicCached`, so leaving the direction out of the URL gave both
-            // directions one cache entry: switching 學習語言 and repeating a
-            // search could be served the other language's results out of
-            // URLCache. Identity, not a hint.
+            // Direction is part of the URL; the local HTTP cache is bypassed
+            // so old catalogue snapshots cannot survive a release or rollback.
             EndpointDescriptor(
                 path: "/api/search",
                 queryItems: [
@@ -568,7 +564,7 @@ enum Endpoint {
                     URLQueryItem(name: "lang", value: lang),
                     URLQueryItem(name: "learning", value: learning)
                 ],
-                policy: .publicCached
+                policy: .publicFresh
             )
         case .events:
             EndpointDescriptor(path: "/api/events", policy: .publicFresh)
@@ -579,7 +575,7 @@ enum Endpoint {
                     URLQueryItem(name: "lang", value: lang),
                     URLQueryItem(name: "learning", value: learning)
                 ],
-                policy: .publicCached
+                policy: .publicFresh
             )
         case let .word(id, lang, learning):
             EndpointDescriptor(
@@ -588,13 +584,13 @@ enum Endpoint {
                     URLQueryItem(name: "lang", value: lang),
                     URLQueryItem(name: "learning", value: learning)
                 ],
-                policy: .publicCached
+                policy: .publicFresh
             )
-        case let .categories(lang):
+        case let .categories(lang, learning):
             EndpointDescriptor(
                 path: "/api/categories",
-                queryItems: [URLQueryItem(name: "lang", value: lang)],
-                policy: .publicCached
+                queryItems: [URLQueryItem(name: "lang", value: lang), URLQueryItem(name: "learning", value: learning)],
+                policy: .publicFresh
             )
 
         // MARK: Smoke

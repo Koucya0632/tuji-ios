@@ -18,6 +18,7 @@ protocol StudyQueueInputs {
 struct LiveStudyQueueInputs: StudyQueueInputs {
     var settings: SettingsStore = .shared
     var stats: StudyStatsStore = .shared
+    var categories: CategoriesStore = .shared
 
     var learningDirection: LearningDirection {
         self.settings.current.learningDirection
@@ -32,7 +33,8 @@ struct LiveStudyQueueInputs: StudyQueueInputs {
     var studyCategories: [String] {
         StudyCategoryDefaults.effective(
             selected: self.settings.current.studyCategories,
-            studyable: StudyCategoryDefaults.liveStudyable
+            studyable: StudyCategoryDefaults.liveStudyable,
+            visibleCategoryIDs: self.categories.categories.isEmpty ? nil : Set(self.categories.categories.map(\.id))
         )
     }
 

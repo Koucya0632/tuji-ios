@@ -99,9 +99,18 @@ struct TujiApp: App {
                 // signed-in session resolves, without blocking navigation; the
                 // foreground trigger covers "came back online mid-day".
                 .onChange(of: scenePhase) { _, phase in
-                    guard phase == .active,
-                          case .signedIn = auth.state
-                    else { return }
+                    guard phase == .active else { return }
+                    // A still-open app must recheck catalogue releases when it
+                    // returns. A failed same-context refresh keeps the last
+                    // good snapshot; an active app is not a live subscription.
+                    if words.loaded || categories.loaded {
+                        Task {
+                            async let wordsReload: Void = words.reload()
+                            async let categoriesReload: Void = categories.reload()
+                            _ = await (wordsReload, categoriesReload)
+                        }
+                    }
+                    guard case .signedIn = auth.state else { return }
                     Task { await StudyAnswerOutbox.shared.replay() }
                     Task { await StoreKitService.shared.reconcileUnfinished() }
                     Task { await reminders.reschedule() }

@@ -65,6 +65,20 @@ struct TopicPresetChoiceTests {
     }
 
     @Test
+    func hiddenRegionSelectionsSurvivePresetsSelectAllAndClear() {
+        let selection: Set<String> = ["australia-housing", "kitchen", "custom"]
+        let preset = TopicPresetChoice.applying(self.student, to: selection, catalogIds: self.catalog)
+        #expect(preset == ["australia-housing", "campus", "bank", "custom"])
+        #expect(TopicPresetChoice.isChosen(self.student, selection: preset, catalogIds: self.catalog))
+        let cleared = TopicPresetChoice.replacingVisible(selection, visibleIds: self.catalog, with: [])
+        #expect(cleared == ["australia-housing"])
+        let selectedAll = TopicPresetChoice.replacingVisible(selection, visibleIds: self.catalog, with: self.catalog)
+        #expect(selectedAll == self.catalog.union(["australia-housing"]))
+        #expect(TopicPresetChoice.hasOnlyHiddenSelection(["australia-housing"], visibleIds: self.catalog))
+        #expect(!TopicPresetChoice.hasOnlyHiddenSelection([], visibleIds: self.catalog))
+    }
+
+    @Test
     func aPresetWithNoThemesLeftIsNeverChosen() {
         let gone = TopicPreset(id: "x", name: "x", categoryIds: ["retired-theme"], isDefault: false)
         #expect(!TopicPresetChoice.isChosen(gone, selection: ["custom"], catalogIds: self.catalog))

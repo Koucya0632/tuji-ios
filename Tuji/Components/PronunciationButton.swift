@@ -38,6 +38,12 @@ struct PronunciationButton: View {
 
     /// This button's own in-flight request, or nil when it has not started one.
     @State private var request: Int?
+    @State private var showUnavailable = false
+
+    static func shouldShowFailure(_ playback: SpeechService.PlaybackState?, request: Int?) -> Bool {
+        guard let request, let playback, playback.requestID == request else { return false }
+        return playback.phase == .failed
+    }
 
     private var effectiveVoice: SpeechService.Voice {
         .preferred(for: self.settings.current, language: self.subject.language)
@@ -66,6 +72,7 @@ struct PronunciationButton: View {
                 fallbackText: self.subject.text,
                 voice: self.effectiveVoice
             )
+            self.showUnavailable = Self.shouldShowFailure(self.speech.playback, request: self.request)
         } label: {
             ZStack {
                 Rectangle().fill(self.isPlaying ? .tujiCurrent : self.ground)
@@ -80,6 +87,16 @@ struct PronunciationButton: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("發音"))
+        .onChange(of: self.speech.playback) { _, playback in
+            if Self.shouldShowFailure(playback, request: self.request) {
+                self.showUnavailable = true
+            }
+        }
+        .alert("發音暫時無法播放", isPresented: self.$showUnavailable) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text("請檢查裝置的語音設定後再試一次。")
+        }
     }
 }
 

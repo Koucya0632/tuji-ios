@@ -70,18 +70,31 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
     enum Voice: String, CaseIterable {
         case us = "en-US"
         case uk = "en-GB"
+        case australian = "en-AU"
         case japanese = "ja-JP"
 
         /// Voice for a word: its own `taggedLanguage` when the payload carries
         /// one (so a JA word speaks Japanese even outside a JA session), else
         /// 當前圖鑑語言; English resolves through the saved 發音口音 setting
-        /// ("us"/"uk"). Shared by PronunciationButton and the study flows'
+        /// ("us"/"uk"/"au"). Shared by PronunciationButton and the study flows'
         /// auto-play so the resolutions can't drift.
         static func preferred(for settings: UserSettings, language: TargetLanguage? = nil) -> Voice {
             switch language ?? settings.learningDirection.targetLanguage {
             case .ja: .japanese
-            case .en: settings.accent == "uk" ? .uk : .us
+            case .en:
+                switch settings.accent {
+                case "uk": .uk
+                case "au": .australian
+                default: .us
+                }
             }
+        }
+
+        /// Never silently claim an Australian fallback when the system cannot
+        /// supply that locale. Other legacy fallback behaviour is unchanged.
+        func acceptsSynthesis(language: String?) -> Bool {
+            guard self == .australian else { return true }
+            return language?.replacingOccurrences(of: "_", with: "-").lowercased() == "en-au"
         }
     }
 
@@ -326,9 +339,15 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerD
     ) {
         self.player?.stop()
         self.synth.stopSpeaking(at: .immediate)
-        self.activateSession()
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: voice.rawValue)
+        let systemVoice = AVSpeechSynthesisVoice(language: voice.rawValue)
+        guard voice.acceptsSynthesis(language: systemVoice?.language) else {
+            self.log.warning("Australian device voice unavailable")
+            self.publish(request, .failed, usedFallback: true)
+            return
+        }
+        self.activateSession()
+        utterance.voice = systemVoice
         // 0.92 is this app's normal reading speed; `rate` scales it further.
         // Clamped because the synthesizer's own range is 0…1 and a value
         // outside it is silently ignored rather than refused.

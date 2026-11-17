@@ -101,12 +101,19 @@ extension StudyCategoryDefaultsTests {
         #expect(
             StudyCategoryDefaults.effective(
                 selected: UserSettings.default.studyCategories,
-                studyable: ["fruits", "bedroom"]
+                studyable: ["fruits", "bedroom"],
+                visibleCategoryIDs: Set(UserSettings.default.studyCategories + ["fruits", "bedroom"])
             ) == ["bedroom", "fruits"]
         )
         #expect(StudyCategoryDefaults.effective(selected: [], studyable: ["fruits", "bedroom"]) == [
             "bedroom",
             "fruits"
         ])
+    }
+
+    @Test("a selection hidden in this region is not widened to free themes")
+    func hiddenRegionDoesNotBecomeAllFreeThemes() {
+        #expect(StudyCategoryDefaults.effective(selected: ["australia-housing"], studyable: ["fruits"], visibleCategoryIDs: ["fruits", "kitchen"]) == ["australia-housing"])
+        #expect(StudyCategoryDefaults.effective(selected: ["australia-housing"], studyable: ["fruits"]) == ["australia-housing"])
     }
 }

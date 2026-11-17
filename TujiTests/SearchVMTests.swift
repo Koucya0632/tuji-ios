@@ -398,7 +398,7 @@ final class FakeSearchRepository: CatalogRepository {
         }
     }
 
-    func loadCategories(lang _: String) async throws -> CategoriesResponse {
+    func loadCategories(lang _: String, learning _: String) async throws -> CategoriesResponse {
         throw NotImplemented()
     }
 

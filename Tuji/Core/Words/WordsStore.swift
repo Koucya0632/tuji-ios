@@ -68,7 +68,8 @@ final class WordsStore {
     /// Joins an in-flight request for the same immutable context. A successful
     /// empty catalog is still considered warm; failed attempts remain retryable.
     func loadIfNeeded(for context: CatalogContext) async {
-        guard self.loadedContext != context || !self.loaded || self.lastError != nil else { return }
+        guard self.loadedContext != context || !self.loaded || self.lastError != nil ||
+            self.flights.latestRequested != context else { return }
         await self.load(for: context, reusePublic: true)
     }
 
@@ -84,6 +85,12 @@ final class WordsStore {
     }
 
     private func load(for context: CatalogContext, reusePublic: Bool) async {
+        if let previous = self.loadedContext,
+           previous.contentLanguageCode != context.contentLanguageCode ||
+           previous.learningDirectionCode != context.learningDirectionCode {
+            self.words = []
+            self.countByCategories.removeAll()
+        }
         self.loading = true
         self.lastError = nil
         await self.flights.run(

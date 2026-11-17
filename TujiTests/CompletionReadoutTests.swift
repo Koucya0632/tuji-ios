@@ -220,6 +220,23 @@ struct CompletionInputsMappingTests {
         #expect(inputs.totalInSelection == 34)
     }
 
+    @Test
+    func hiddenRegionSelectionDoesNotCountFreeThemes() async {
+        let progress = await self.makeProgress([CategoryProgress(category: "fruits", total: 34, seen: 5)])
+        let words = await self.makeWords([self.word("fruit", category: "fruits")])
+        let categories = CategoriesStore(repository: MappingCatalogRepository(words: []))
+        let inputs = CompletionReadout.Inputs(
+            settings: FakeStudySelection(studyCategories: ["australia-housing"], studyableCategories: ["fruits"]),
+            progress: progress,
+            words: words,
+            categories: categories
+        )
+        #expect(inputs.studyCategories == ["australia-housing"])
+        #expect(inputs.seenInSelection == 0)
+        #expect(inputs.totalInSelection == 0)
+        #expect(inputs.dictionaryCountInSelection == 0)
+    }
+
     /// An empty theme list before settings arrive is not a selection — it is an
     /// unanswered question, and the two are one field apart.
     @Test
@@ -366,7 +383,7 @@ private final class MappingCatalogRepository: CatalogRepository {
         WordsListResponse(words: self.words, total: self.words.count)
     }
 
-    func loadCategories(lang _: String) async throws -> CategoriesResponse {
+    func loadCategories(lang _: String, learning _: String) async throws -> CategoriesResponse {
         throw NotImplemented()
     }
 

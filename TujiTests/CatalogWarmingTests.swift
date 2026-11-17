@@ -246,7 +246,7 @@ final class WarmerCatalogRepository: CatalogRepository {
         WordsListResponse(words: [], total: 0)
     }
 
-    func loadCategories(lang _: String) async throws -> CategoriesResponse {
+    func loadCategories(lang _: String, learning _: String) async throws -> CategoriesResponse {
         self.categoryLoads += 1
         return CategoriesResponse(categories: [])
     }

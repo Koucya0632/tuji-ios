@@ -1,6 +1,229 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
+    "發音暫時無法播放" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pronunciation unavailable" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "発音を再生できません" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "暂时无法播放发音" } }
+      }
+    },
+    "請檢查裝置的語音設定後再試一次。" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Check your device's voice settings and try again." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "端末の音声設定を確認して、もう一度お試しください。" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请检查设备的语音设置后重试。" } }
+      }
+    },
+    "請選擇目前圖鑑的學習主題。" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a study theme for the current atlas." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "現在の図鑑の学習テーマを選んでください。" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请选择当前图鉴的学习主题。" } }
+      }
+    },
+    "日本圖鑑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japan Atlas"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日本図鑑"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日本图鉴"
+          }
+        }
+      }
+    },
+    "澳洲圖鑑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Australia Atlas"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーストラリア図鑑"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "澳大利亚图鉴"
+          }
+        }
+      }
+    },
+    "從日本日常看圖學日文" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Learn Japanese with pictures from everyday life in Japan"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日本の日常を題材に、絵で日本語を学ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从日本日常看图学日语"
+          }
+        }
+      }
+    },
+    "為澳洲生活準備，先看圖學英文" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get ready for life in Australia by learning English with pictures"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーストラリアでの生活に向けて、絵で英語を学ぶ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为澳大利亚生活做准备，先看图学英语"
+          }
+        }
+      }
+    },
+    "學習圖鑑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Study atlas"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学習図鑑"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学习图鉴"
+          }
+        }
+      }
+    },
+    "可隨時在設定切換圖鑑，學習進度會分開保留。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch atlases anytime in Settings. Progress is saved separately for each atlas."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定からいつでも図鑑を切り替えられます。学習の進み具合は図鑑ごとに保存されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可随时在设置中切换图鉴，学习进度会分别保存。"
+          }
+        }
+      }
+    },
+    "各圖鑑的學習進度會分開保留" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress is saved separately for each atlas"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "学習の進み具合は図鑑ごとに保存されます"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各图鉴的学习进度会分别保存"
+          }
+        }
+      }
+    },
+    "你想從哪個圖鑑開始？" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Which atlas would you like to start with?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "どの図鑑から始めますか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你想从哪个图鉴开始？"
+          }
+        }
+      }
+    },
+    "澳式" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Australian"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オーストラリア式"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "澳式"
+          }
+        }
+      }
+    },
+    "en-AU" : {
+      "comment" : "Identifier for the \"澳式\" accent.",
+      "isCommentAutoGenerated" : true
+    },
     "不知道學什麼？你在日本是…" : {
       "comment" : "Heading above the 主題組合 chips (留學生／打工度假／旅遊) at the top of the 學習主題 picker: for someone who does not know which themes to study.",
       "localizations" : {

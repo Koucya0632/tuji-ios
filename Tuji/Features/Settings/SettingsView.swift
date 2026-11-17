@@ -196,9 +196,9 @@ struct SettingsView: View {
                     // that the themes are gone.
                     NavigationLink { LearningDirectionPickerView() } label: {
                         TujiRow(
-                            "學習語言",
-                            subtitle: "英文與日文的學習進度會分開保留",
-                            value: self.editableValue(self.store.current.learningDirection.shortTitle),
+                            "學習圖鑑",
+                            subtitle: "各圖鑑的學習進度會分開保留",
+                            value: self.editableValue(self.store.current.learningDirection.title),
                             showsArrow: self.store.isEditable
                         )
                     }
@@ -378,6 +378,7 @@ struct SettingsView: View {
 
     private var accentLabel: String {
         switch self.store.current.accent {
+        case "au": tujiLocalized("澳式")
         case "uk": tujiLocalized("英式")
         case "us": tujiLocalized("美式")
         default: self.store.current.accent.uppercased()
@@ -411,9 +412,9 @@ private struct LearningDirectionPickerView: View {
         VStack(spacing: 0) {
             TujiNavBar(leading: .back)
             ScrollView {
-                TujiScreenTitle("學習語言")
+                TujiScreenTitle("學習圖鑑")
                 TujiSection(
-                    footer: "切換後會重新載入詞庫與進度，不會刪除另一種語言的學習紀錄。"
+                    footer: "可隨時在設定切換圖鑑，學習進度會分開保留。"
                 ) {
                     ForEach(LearningDirection.allCases, id: \.rawValue) { direction in
                         Button {
@@ -423,9 +424,7 @@ private struct LearningDirectionPickerView: View {
                                 leading: {
                                     TujiRowLabel(
                                         localized: direction.title,
-                                        localizedSubtitle: direction == .zhJa
-                                            ? tujiLocalized("日文詞條、假名與日文發音")
-                                            : tujiLocalized("英文詞條與美式／英式發音")
+                                        localizedSubtitle: direction.atlasSubtitle
                                     )
                                 },
                                 trailing: {
@@ -441,7 +440,7 @@ private struct LearningDirectionPickerView: View {
             }
         }
         .background(.tujiPaper)
-        .navigationTitle("學習語言")
+        .navigationTitle("學習圖鑑")
         .toolbar(.hidden, for: .navigationBar)
     }
 

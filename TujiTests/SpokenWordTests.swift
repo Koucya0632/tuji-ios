@@ -66,6 +66,28 @@ struct SpokenWordTests {
         #expect(subject.clip(voice: .japanese, catalogue: self.catalogue) == nil)
     }
 
+    @Test
+    func australianVoiceUsesItsOwnClipAndSynthesizesWhenMissing() throws {
+        var settings = UserSettings.default
+        settings.accent = "au"
+        #expect(SpeechService.Voice.preferred(for: settings, language: .en) == .australian)
+        let subject = try SpokenWord(self.queueWord(), clips: ["en-AU": "australia.mp3"])
+        #expect(subject.clip(voice: .australian, catalogue: self.catalogue) == "australia.mp3")
+        let missing = try SpokenWord(self.queueWord())
+        #expect(missing.clip(voice: .australian, catalogue: self.catalogue) == nil)
+        #expect(SpeechService.Voice.australian.acceptsSynthesis(language: "en-AU"))
+        #expect(!SpeechService.Voice.australian.acceptsSynthesis(language: "en-US"))
+        #expect(!SpeechService.Voice.australian.acceptsSynthesis(language: nil))
+    }
+
+    @Test
+    func unavailablePlaybackIsReportedOnlyToItsOwnButton() {
+        let failed = SpeechService.PlaybackState(requestID: 42, phase: .failed, usedFallback: true)
+        #expect(PronunciationButton.shouldShowFailure(failed, request: 42))
+        #expect(!PronunciationButton.shouldShowFailure(failed, request: 41))
+        #expect(!PronunciationButton.shouldShowFailure(nil, request: 42))
+    }
+
     /// A word the catalogue does not know — a just-captured 自製圖鑑 card whose
     /// row has not merged yet — is synthesised, not silent.
     @Test

@@ -1,4 +1,4 @@
-// Step 1 of the run-in: which language. Also shown on its own to a signed-in
+// Step 1 of the run-in: which atlas. Also shown on its own to a signed-in
 // account that has no direction yet.
 //
 // Tapping a choice is the whole answer — there is no 下一步, because a
@@ -21,16 +21,16 @@ struct LearningDirectionOnboardingView: View {
                         Spacer(minLength: 0)
                         MascotSpeechBubble(pose: .wave, text: "嗨，我是 Moira！")
                         VStack(alignment: .leading, spacing: Space.s2) {
-                            Text("你想學哪種語言？")
+                            Text("你想從哪個圖鑑開始？")
                                 .font(.tujiH1)
                                 .foregroundStyle(.tujiInk)
-                            Text("之後可以隨時在設定中切換，兩種語言的學習進度會分開保留。")
+                            Text("可隨時在設定切換圖鑑，學習進度會分開保留。")
                                 .font(.tujiBodySm)
                                 .foregroundStyle(.tujiInk3)
                         }
                         VStack(spacing: Space.s2) {
-                            self.option(.zhEn, name: "英文", detail: "看圖記單字，聽英文發音", glyph: "EN")
-                            self.option(.zhJa, name: "日文", detail: "看圖記單字，聽日文發音，附假名", glyph: "あ")
+                            self.option(.zhEn, glyph: "EN")
+                            self.option(.zhJa, glyph: "あ")
                         }
                         Spacer(minLength: 0)
                     }
@@ -45,15 +45,13 @@ struct LearningDirectionOnboardingView: View {
 
     private func option(
         _ direction: LearningDirection,
-        name: LocalizedStringKey,
-        detail: LocalizedStringKey,
         glyph: String
     )
         -> some View
     {
         OnboardingChoice(
-            title: Text(name),
-            detail: Text(detail),
+            title: Text(verbatim: direction.title),
+            detail: Text(verbatim: direction.atlasSubtitle),
             selected: false,
             action: { self.choose(direction) }
         ) {

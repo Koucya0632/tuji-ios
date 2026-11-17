@@ -18,11 +18,13 @@ enum LearningDirection: String, Codable, CaseIterable {
     }
 
     var title: String {
-        self == .zhJa ? tujiLocalized("日文圖鑑") : tujiLocalized("英文圖鑑")
+        self == .zhJa ? tujiLocalized("日本圖鑑") : tujiLocalized("澳洲圖鑑")
     }
 
-    var shortTitle: String {
-        self == .zhJa ? tujiLocalized("日文") : tujiLocalized("英文")
+    var atlasSubtitle: String {
+        self == .zhJa
+            ? tujiLocalized("從日本日常看圖學日文")
+            : tujiLocalized("為澳洲生活準備，先看圖學英文")
     }
 }
 

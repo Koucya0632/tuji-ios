@@ -2,7 +2,7 @@ import Foundation
 
 @MainActor
 protocol CatalogRepository {
-    func loadCategories(lang: String) async throws -> CategoriesResponse
+    func loadCategories(lang: String, learning: String) async throws -> CategoriesResponse
     func loadWords(lang: String, learning: String) async throws -> WordsListResponse
     func loadCustomWords(lang: String, learning: String) async throws -> WordsListResponse
     func loadSavedWords(lang: String, learning: String) async throws -> WordsListResponse
@@ -24,8 +24,8 @@ struct LiveCatalogRepository: CatalogRepository {
         self.settings = settings
     }
 
-    func loadCategories(lang: String) async throws -> CategoriesResponse {
-        try await self.api.get(.categories(lang: lang))
+    func loadCategories(lang: String, learning: String) async throws -> CategoriesResponse {
+        try await self.api.get(.categories(lang: lang, learning: learning))
     }
 
     func loadWords(lang: String, learning: String) async throws -> WordsListResponse {

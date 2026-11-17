@@ -59,7 +59,7 @@ struct EndpointPolicyTests {
         .words(lang: "zh-Hant", learning: "en"),
         .word(id: "w1", lang: "zh-Hant", learning: "en"),
         .wordInsights(id: "w1", lang: "zh-Hant", learning: "zh-en"),
-        .categories(lang: "zh-Hant"),
+        .categories(lang: "zh-Hant", learning: "zh-ja"),
         .travel(lang: "zh-Hant", learning: "zh-ja"),
         .travelSpotPhotos(spotId: "asakusa"), .atlasItemSpot(id: "i1"),
         .smokeWhoami
@@ -232,6 +232,7 @@ struct EndpointPolicyTests {
     @Test("every direction-scoped read states its direction")
     func directionScopedReadsCarryLearning() {
         let scoped: [Endpoint] = [
+            .categories(lang: "zh-Hant", learning: "zh-ja"),
             .usersProgress(learning: "zh-ja"),
             .usersMastery(learning: "zh-ja"),
             .studyStats(learning: "zh-ja"),
@@ -245,6 +246,19 @@ struct EndpointPolicyTests {
                 items["learning"] == "zh-ja",
                 "\(ep.descriptor.path) must not leave its direction to the server's stored setting"
             )
+        }
+    }
+
+    @Test("catalogue reads bypass old local HTTP cache entries")
+    func catalogueReadsAreFresh() {
+        let endpoints: [Endpoint] = [
+            .words(lang: "zh-Hant", learning: "zh-en"),
+            .word(id: "mug", lang: "zh-Hant", learning: "zh-en"),
+            .categories(lang: "zh-Hant", learning: "zh-en"),
+            .search(q: "mug", lang: "zh-Hant", learning: "zh-en")
+        ]
+        for endpoint in endpoints {
+            #expect(endpoint.descriptor.policy.cachePolicy == .reloadIgnoringLocalCacheData)
         }
     }
 

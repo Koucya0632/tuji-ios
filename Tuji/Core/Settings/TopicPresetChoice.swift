@@ -17,17 +17,25 @@ enum TopicPresetChoice {
     }
 
     /// The selection after choosing `preset`: its public themes replace the
-    /// current public ones; the sources stay exactly as they were. Choosing a
-    /// second preset therefore replaces the first rather than stacking.
+    /// visible public ones; hidden regions and sources stay as they were.
     static func applying(_ preset: TopicPreset, to selection: Set<String>, catalogIds: Set<String>) -> Set<String> {
-        selection.intersection(self.sourceIDs).union(self.themes(of: preset, catalogIds: catalogIds))
+        let visibleTopics = catalogIds.subtracting(self.sourceIDs)
+        return self.replacingVisible(selection, visibleIds: visibleTopics, with: self.themes(of: preset, catalogIds: catalogIds))
+    }
+
+    static func replacingVisible(_ selection: Set<String>, visibleIds: Set<String>, with replacement: Set<String>) -> Set<String> {
+        selection.subtracting(visibleIds).union(replacement.intersection(visibleIds))
+    }
+
+    static func hasOnlyHiddenSelection(_ selection: Set<String>, visibleIds: Set<String>) -> Bool {
+        !selection.isEmpty && selection.isDisjoint(with: visibleIds)
     }
 
     /// Chosen only while the ticked public themes are exactly the preset's —
     /// one more or one fewer and it is not.
     static func isChosen(_ preset: TopicPreset, selection: Set<String>, catalogIds: Set<String>) -> Bool {
         let themes = self.themes(of: preset, catalogIds: catalogIds)
-        return !themes.isEmpty && selection.subtracting(self.sourceIDs) == themes
+        return !themes.isEmpty && selection.intersection(catalogIds).subtracting(self.sourceIDs) == themes
     }
 
     /// Locked when any one of its themes is: a preset is chosen whole or not

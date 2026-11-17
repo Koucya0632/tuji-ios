@@ -30,8 +30,18 @@ final class CategoriesStore {
     /// Coalescing, the publish guard and the loading flag — see `LoadFlights`,
     /// which 單字 and 設定 hold too.
     @ObservationIgnored private let flights = LoadFlights<CatalogContext>()
-    @ObservationIgnored private var categoryCache: [String: CategoriesResponse] = [:]
-    @ObservationIgnored private var categoryInFlight: [String: CategoryFlight] = [:]
+    @ObservationIgnored private var categoryCache: [CategoryKey: CategoriesResponse] = [:]
+    @ObservationIgnored private var categoryInFlight: [CategoryKey: CategoryFlight] = [:]
+
+    private struct CategoryKey: Hashable {
+        let language: String
+        let learning: String
+
+        init(_ context: CatalogContext) {
+            self.language = context.contentLanguageCode
+            self.learning = context.learningDirectionCode
+        }
+    }
 
     private struct CategoryFlight {
         let id: UUID
@@ -47,7 +57,8 @@ final class CategoriesStore {
     }
 
     func loadIfNeeded(for context: CatalogContext) async {
-        guard self.loadedContext != context || !self.loaded || self.lastError != nil else { return }
+        guard self.loadedContext != context || !self.loaded || self.lastError != nil ||
+            self.flights.latestRequested != context else { return }
         await self.load(for: context, reuseCached: true)
     }
 
@@ -62,13 +73,17 @@ final class CategoriesStore {
     }
 
     private func load(for context: CatalogContext, reuseCached: Bool) async {
+        if let previous = self.loadedContext, CategoryKey(previous) != CategoryKey(context) {
+            self.categories = []
+            self.presets = []
+        }
         self.loading = true
         self.lastError = nil
         await self.flights.run(
             context,
             fetch: {
                 await self.fetchCategories(
-                    language: context.contentLanguageCode,
+                    key: CategoryKey(context),
                     reuseCached: reuseCached
                 )
             },
@@ -95,15 +110,15 @@ final class CategoriesStore {
     }
 
     private func fetchCategories(
-        language: String,
+        key: CategoryKey,
         reuseCached: Bool
     ) async
         -> Result<CategoriesResponse, Error>
     {
-        if reuseCached, let cached = self.categoryCache[language] {
+        if reuseCached, let cached = self.categoryCache[key] {
             return .success(cached)
         }
-        if let flight = self.categoryInFlight[language] {
+        if let flight = self.categoryInFlight[key] {
             return await flight.task.value
         }
 
@@ -111,19 +126,19 @@ final class CategoriesStore {
         let repository = self.repository
         let task = Task { () -> Result<CategoriesResponse, Error> in
             do {
-                return try await .success(repository.loadCategories(lang: language))
+                return try await .success(repository.loadCategories(lang: key.language, learning: key.learning))
             } catch {
                 return .failure(error)
             }
         }
-        self.categoryInFlight[language] = CategoryFlight(id: flightID, task: task)
+        self.categoryInFlight[key] = CategoryFlight(id: flightID, task: task)
         let result = await task.value
-        let flightIsCurrent = self.categoryInFlight[language]?.id == flightID
+        let flightIsCurrent = self.categoryInFlight[key]?.id == flightID
         if flightIsCurrent {
-            self.categoryInFlight[language] = nil
+            self.categoryInFlight[key] = nil
         }
         if flightIsCurrent, case let .success(response) = result {
-            self.categoryCache[language] = response
+            self.categoryCache[key] = response
         }
         return result
     }

@@ -31,17 +31,21 @@ enum StudyCategoryDefaults {
     /// The themes that actually get studied: the user's pick, narrowed to what
     /// the server says this account may study (`Membership.studyableCategories`).
     ///
-    /// nil = no gate → the pick as-is. With a gate, the pick ∩ studyable; and
-    /// when nothing survives, the studyable list itself — a non-member who only
-    /// ticked locked themes still studies fruits + bedroom rather than nothing.
-    /// That fallback is also what keeps the numbers honest: an empty list means
-    /// "every category" to the queue and to the progress totals, so it must
-    /// never reach them for a gated account.
-    static func effective(selected: [String], studyable: [String]?) -> [String] {
+    /// Nil gate keeps the pick. A gated pick narrows to allowed themes; when
+    /// none remain, hidden-region IDs stay nonempty so they cannot accidentally
+    /// expand to all free themes. Visible-only locked selections retain the
+    /// existing free-theme fallback; unknown visibility stays conservative.
+    static func effective(selected: [String], studyable: [String]?, visibleCategoryIDs: Set<String>? = nil) -> [String] {
         guard let studyable else { return selected }
         let allowed = Set(studyable)
         let kept = selected.filter { allowed.contains($0) }
-        return kept.isEmpty ? studyable.sorted() : kept
+        if !kept.isEmpty { return kept }
+        if !selected.isEmpty {
+            guard let visibleCategoryIDs else { return selected }
+            let hidden = selected.filter { !visibleCategoryIDs.contains($0) }
+            if !hidden.isEmpty { return hidden }
+        }
+        return studyable.sorted()
     }
 
     /// The server's list for whoever is signed in; nil before the first
