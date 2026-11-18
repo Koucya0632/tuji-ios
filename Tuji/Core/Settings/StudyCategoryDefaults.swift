@@ -35,7 +35,13 @@ enum StudyCategoryDefaults {
     /// none remain, hidden-region IDs stay nonempty so they cannot accidentally
     /// expand to all free themes. Visible-only locked selections retain the
     /// existing free-theme fallback; unknown visibility stays conservative.
-    static func effective(selected: [String], studyable: [String]?, visibleCategoryIDs: Set<String>? = nil) -> [String] {
+    static func effective(
+        selected: [String],
+        studyable: [String]?,
+        visibleCategoryIDs: Set<String>? = nil
+    )
+        -> [String]
+    {
         guard let studyable else { return selected }
         let allowed = Set(studyable)
         let kept = selected.filter { allowed.contains($0) }

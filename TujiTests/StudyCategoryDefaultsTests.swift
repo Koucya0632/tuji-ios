@@ -113,7 +113,12 @@ extension StudyCategoryDefaultsTests {
 
     @Test("a selection hidden in this region is not widened to free themes")
     func hiddenRegionDoesNotBecomeAllFreeThemes() {
-        #expect(StudyCategoryDefaults.effective(selected: ["australia-housing"], studyable: ["fruits"], visibleCategoryIDs: ["fruits", "kitchen"]) == ["australia-housing"])
-        #expect(StudyCategoryDefaults.effective(selected: ["australia-housing"], studyable: ["fruits"]) == ["australia-housing"])
+        #expect(StudyCategoryDefaults.effective(
+            selected: ["australia-housing"],
+            studyable: ["fruits"],
+            visibleCategoryIDs: ["fruits", "kitchen"]
+        ) == ["australia-housing"])
+        #expect(StudyCategoryDefaults
+            .effective(selected: ["australia-housing"], studyable: ["fruits"]) == ["australia-housing"])
     }
 }

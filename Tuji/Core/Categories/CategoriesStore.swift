@@ -58,7 +58,8 @@ final class CategoriesStore {
 
     func loadIfNeeded(for context: CatalogContext) async {
         guard self.loadedContext != context || !self.loaded || self.lastError != nil ||
-            self.flights.latestRequested != context else { return }
+            self.flights.latestRequested != context
+        else { return }
         await self.load(for: context, reuseCached: true)
     }
 

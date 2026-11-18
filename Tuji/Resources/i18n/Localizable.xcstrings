@@ -1,6 +1,14 @@
 {
   "sourceLanguage" : "zh-Hant",
   "strings" : {
+    "不知道學什麼？你在澳洲是…" : {
+      "comment" : "Heading above topic presets for the Australian atlas.",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not sure what to study? In Australia, you're…" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "何を学ぶか迷ったら。オーストラリアでのあなたは…" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "不知道学什么？你在澳洲是…" } }
+      }
+    },
     "發音暫時無法播放" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Pronunciation unavailable" } },

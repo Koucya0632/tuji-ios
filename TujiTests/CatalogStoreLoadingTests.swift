@@ -334,7 +334,9 @@ struct CatalogStoreLoadingTests {
 
         let oldCategories = Task { await categories.loadIfNeeded(for: japan) }
         let oldWords = Task { await words.loadIfNeeded(for: japan) }
-        await waitUntil { repository.categoryDirections.contains("zh-ja") && repository.wordCalls.contains { $0.learning == "zh-ja" } }
+        await waitUntil {
+            repository.categoryDirections.contains("zh-ja") && repository.wordCalls.contains { $0.learning == "zh-ja" }
+        }
         await categories.loadIfNeeded(for: australia)
         await words.loadIfNeeded(for: australia)
         categoryGate.succeed(CategoriesResponse(categories: [self.category("japan")]))
@@ -502,6 +504,7 @@ private final class CatalogRepositoryFake: CatalogRepository {
     var categoriesHandler: @MainActor (String) async throws -> CategoriesResponse = { _ in
         CategoriesResponse(categories: [])
     }
+
     var scopedCategoriesHandler: (@MainActor (String, String) async throws -> CategoriesResponse)?
 
     var wordsHandler: @MainActor (String, String) async throws -> WordsListResponse = { _, _ in
