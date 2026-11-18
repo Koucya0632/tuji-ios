@@ -43,7 +43,20 @@ final class AuthService {
     /// The state machine and its guards — see AuthSession. This class keeps the
     /// Supabase glue and the fan-outs; the transitions live there so they can be
     /// exercised without a network client that `fatalError`s in a test process.
+    #if DEBUG
+    // Changes synchronously even if SwiftUI coalesces an A → B → A switch.
+    private(set) var diagnosticAccountEpoch = 0
+    private(set) var session = AuthSession() {
+        didSet {
+            diagnosticAccountEpoch = DiagnosticAccountGeneration.next(
+                previous: oldValue.signedInUser?.id, current: session.signedInUser?.id,
+                generation: diagnosticAccountEpoch
+            )
+        }
+    }
+    #else
     private(set) var session = AuthSession()
+    #endif
 
     var state: State {
         self.session.state
@@ -407,3 +420,13 @@ final class AuthService {
         return tujiUserMessage(for: err, fallback: tujiLocalized("登入沒有成功，請稍後再試"))
     }
 }
+
+#if DEBUG
+/// Kept separate so rapid account transitions can be tested without touching a
+/// real signed-in device or its credential store.
+enum DiagnosticAccountGeneration {
+    static func next(previous: UUID?, current: UUID?, generation: Int) -> Int {
+        previous == current ? generation : generation + 1
+    }
+}
+#endif

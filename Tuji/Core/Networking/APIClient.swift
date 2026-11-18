@@ -202,6 +202,49 @@ final class APIClient {
         }
     }
 
+    #if DEBUG
+    var diagnosticOrigin: String? {
+        guard let components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false),
+              components.scheme?.lowercased() == "https", components.user == nil,
+              components.password == nil, components.port == nil,
+              components.query == nil, components.fragment == nil,
+              components.path.isEmpty || components.path == "/",
+              let host = components.host?.lowercased(),
+              ["everyday-english-picture-dictionary.vercel.app", "tuji.nexflow.team"].contains(host)
+        else { return nil }
+        return "https://\(host)"
+    }
+
+    /// This endpoint is public. It does not attach the user's authentication.
+    func diagnosticGuard(session: URLSession) async throws -> (Int, String?, Data) {
+        guard diagnosticOrigin != nil else { throw APIError.missingBaseURL }
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/catalogue/region-guard"))
+        request.httpMethod = "GET"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
+        request.timeoutInterval = 20
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.missingBaseURL }
+        return (http.statusCode, http.value(forHTTPHeaderField: "Cache-Control"), data)
+    }
+
+    /// Read-only diagnostics use the normal authentication but a separate,
+    /// memory-only session and never log the personal list path or response.
+    func diagnosticRead(_ ep: Endpoint, session: URLSession) async throws -> (Int, String?, Data) {
+        guard diagnosticOrigin != nil else { throw APIError.missingBaseURL }
+        switch ep {
+        case .studyQueue, .usersWordLists, .usersWordList: break
+        default: throw APIError.missingBaseURL
+        }
+        var request = try await buildRequest(ep, method: "GET", body: Empty?.none,
+                                             cachePolicy: .reloadIgnoringLocalCacheData)
+        request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
+        let (data, response) = try await session.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIError.missingBaseURL }
+        return (http.statusCode, http.value(forHTTPHeaderField: "Cache-Control"), data)
+    }
+    #endif
+
     // MARK: - Core
 
     private func request<T: Decodable>(

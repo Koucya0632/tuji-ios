@@ -254,6 +254,15 @@ struct SettingsView: View {
                     }
                 }
 
+                #if DEBUG
+                TujiSection(title: "開發診斷") {
+                    NavigationLink { RegionalReadDiagnosticsView() } label: {
+                        TujiRow("日本／澳洲讀取檢查")
+                    }
+                    .tujiRowStyle()
+                }
+                #endif
+
                 ReminderSettingsSection()
 
                 TujiSection(title: "帳號") {
