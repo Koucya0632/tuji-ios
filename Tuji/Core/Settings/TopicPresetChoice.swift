@@ -20,10 +20,20 @@ enum TopicPresetChoice {
     /// visible public ones; hidden regions and sources stay as they were.
     static func applying(_ preset: TopicPreset, to selection: Set<String>, catalogIds: Set<String>) -> Set<String> {
         let visibleTopics = catalogIds.subtracting(self.sourceIDs)
-        return self.replacingVisible(selection, visibleIds: visibleTopics, with: self.themes(of: preset, catalogIds: catalogIds))
+        return self.replacingVisible(
+            selection,
+            visibleIds: visibleTopics,
+            with: self.themes(of: preset, catalogIds: catalogIds)
+        )
     }
 
-    static func replacingVisible(_ selection: Set<String>, visibleIds: Set<String>, with replacement: Set<String>) -> Set<String> {
+    static func replacingVisible(
+        _ selection: Set<String>,
+        visibleIds: Set<String>,
+        with replacement: Set<String>
+    )
+        -> Set<String>
+    {
         selection.subtracting(visibleIds).union(replacement.intersection(visibleIds))
     }
 

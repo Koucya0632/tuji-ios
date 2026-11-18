@@ -19,6 +19,12 @@
 
 import SwiftUI
 
+enum StudyCategoriesPickerCopy {
+    static func presetHeading(for direction: LearningDirection) -> String {
+        direction == .zhEn ? "不知道學什麼？你在澳洲是…" : "不知道學什麼？你在日本是…"
+    }
+}
+
 struct StudyCategoriesPickerView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(CategoriesStore.self) private var categories
@@ -112,7 +118,7 @@ struct StudyCategoriesPickerView: View {
 
     private var presetRow: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text("不知道學什麼？你在日本是…")
+            Text(LocalizedStringKey(StudyCategoriesPickerCopy.presetHeading(for: self.store.current.learningDirection)))
                 .font(.tujiLabel)
                 .tracking(0.5)
                 .foregroundStyle(.tujiInk3)
@@ -152,9 +158,17 @@ struct StudyCategoriesPickerView: View {
             // toward nothing.
             Button("全選") {
                 let allowed = Set(self.categories.categories.map(\.id).filter { !self.isLocked($0) })
-                self.setSelection(Array(TopicPresetChoice.replacingVisible(self.selectedIds, visibleIds: self.catalogIds, with: allowed)))
+                self.setSelection(Array(TopicPresetChoice.replacingVisible(
+                    self.selectedIds,
+                    visibleIds: self.catalogIds,
+                    with: allowed
+                )))
             }
-            Button("清除") { self.setSelection(Array(TopicPresetChoice.replacingVisible(self.selectedIds, visibleIds: self.catalogIds, with: []))) }
+            Button("清除") { self.setSelection(Array(TopicPresetChoice.replacingVisible(
+                self.selectedIds,
+                visibleIds: self.catalogIds,
+                with: []
+            ))) }
             Spacer()
             Text("已選 \(self.selectedIds.intersection(self.catalogIds).count) 個")
                 .font(.tujiLabel)

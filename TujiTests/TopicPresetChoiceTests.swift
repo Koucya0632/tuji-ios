@@ -5,6 +5,21 @@ import Testing
 /// What choosing a 主題組合 does, and when one reads as chosen — see
 /// `TopicPresetChoice` and CONTEXT.md.
 struct TopicPresetChoiceTests {
+    @Test
+    func presetHeadingFollowsDestination() {
+        #expect(StudyCategoriesPickerCopy.presetHeading(for: .zhEn) == "不知道學什麼？你在澳洲是…")
+        #expect(StudyCategoriesPickerCopy.presetHeading(for: .zhJa) == "不知道學什麼？你在日本是…")
+    }
+
+    @Test
+    func australianPresetHeadingHasAllInterfaceTranslations() {
+        let key = String.LocalizationValue(StudyCategoriesPickerCopy.presetHeading(for: .zhEn))
+        #expect(tujiLocalized(key, lang: "en") == "Not sure what to study? In Australia, you're…")
+        #expect(tujiLocalized(key, lang: "ja") == "何を学ぶか迷ったら。オーストラリアでのあなたは…")
+        #expect(tujiLocalized(key, lang: "zh-Hans") == "不知道学什么？你在澳洲是…")
+        #expect(tujiLocalized(key, lang: "zh-Hant") == "不知道學什麼？你在澳洲是…")
+    }
+
     private let catalog: Set<String> = [
         "campus",
         "bank",
@@ -66,7 +81,7 @@ struct TopicPresetChoiceTests {
 
     @Test
     func hiddenRegionSelectionsSurvivePresetsSelectAllAndClear() {
-        let selection: Set<String> = ["australia-housing", "kitchen", "custom"]
+        let selection: Set = ["australia-housing", "kitchen", "custom"]
         let preset = TopicPresetChoice.applying(self.student, to: selection, catalogIds: self.catalog)
         #expect(preset == ["australia-housing", "campus", "bank", "custom"])
         #expect(TopicPresetChoice.isChosen(self.student, selection: preset, catalogIds: self.catalog))
