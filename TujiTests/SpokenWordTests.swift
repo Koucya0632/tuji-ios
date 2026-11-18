@@ -81,6 +81,17 @@ struct SpokenWordTests {
     }
 
     @Test
+    func australianVoiceLabelsAndFailureActionAreLocalized() {
+        for lang in ["en", "ja", "zh-Hans", "zh-Hant"] {
+            #expect(tujiLocalized("en-AU", lang: lang) == "en-AU")
+        }
+        #expect(tujiLocalized("好", lang: "en") == "OK")
+        #expect(tujiLocalized("好", lang: "ja") == "OK")
+        #expect(tujiLocalized("好", lang: "zh-Hans") == "好")
+        #expect(tujiLocalized("好", lang: "zh-Hant") == "好")
+    }
+
+    @Test
     func unavailablePlaybackIsReportedOnlyToItsOwnButton() {
         let failed = SpeechService.PlaybackState(requestID: 42, phase: .failed, usedFallback: true)
         #expect(PronunciationButton.shouldShowFailure(failed, request: 42))
