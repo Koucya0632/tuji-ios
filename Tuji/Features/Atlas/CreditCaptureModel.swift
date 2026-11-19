@@ -55,6 +55,8 @@ final class CreditCaptureModel {
     private(set) var photoLocation: GeoPoint?
     /// The user took the suggested 景點 off this capture.
     private(set) var spotRemoved = false
+    /// 公開景點圖鑑, under the suggested 景點. On by default.
+    var publishToSpot = true
 
     /// The photo 圖片詳情's 繼續確認 asked for: the sheet opens on that photo's result, not
     /// on whichever unpicked result is newest.
@@ -74,6 +76,7 @@ final class CreditCaptureModel {
     private let sleep: (Duration) async throws -> Void
     /// The 景點 a point falls in for a card in this language (TravelSpotMatcher).
     private let spotAt: @MainActor (GeoPoint, String) -> TravelSpot?
+    private let canPublish: @MainActor () -> Bool
 
     private var owner: UUID?
     private var generation = 0
@@ -110,7 +113,8 @@ final class CreditCaptureModel {
         sleep: @escaping (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
         spotAt: @escaping @MainActor (GeoPoint, String) -> TravelSpot? = { point, language in
             TravelSpotMatcher.match(point, in: TravelStore.shared.destinations, targetLanguage: language)
-        }
+        },
+        canPublish: @escaping @MainActor () -> Bool = { LiveMemberAccess().level(.communityWrite) != .locked }
     ) {
         self.resume = resume
         self.api = api
@@ -124,6 +128,7 @@ final class CreditCaptureModel {
         self.mutations = mutations
         self.sleep = sleep
         self.spotAt = spotAt
+        self.canPublish = canPublish
     }
 
     // MARK: What the sheet shows
@@ -298,6 +303,7 @@ final class CreditCaptureModel {
         self.photo = nil
         self.photoLocation = nil
         self.spotRemoved = false
+        self.publishToSpot = true
         self.image = nil
         self.operation = nil
         self.quote = nil
@@ -318,6 +324,12 @@ final class CreditCaptureModel {
         guard !self.spotRemoved, let point = self.photoLocation, let language = self.operation?.targetLanguage
         else { return nil }
         return self.spotAt(point, language)
+    }
+
+    /// Whether 公開景點圖鑑 is offered: a suggested 景點, and an account 物見
+    /// takes writes from (a non-member would only meet a 402 after paying).
+    var offersSpotPublishing: Bool {
+        self.detectedSpot != nil && self.canPublish()
     }
 
     /// 移除: this card will not carry the suggested 景點. It can still be given
@@ -545,6 +557,7 @@ final class CreditCaptureModel {
               operation.result?.candidates.contains(where: { $0.id == request.candidateId }) == true
         else { return false }
         request.spotId = self.detectedSpot?.id
+        if self.offersSpotPublishing, self.publishToSpot { request.publishToSpot = true }
         self.queue.enqueue(
             credit: request,
             imageId: operation.imageId,

@@ -15,6 +15,9 @@ protocol CreditCardConfirming {
     /// Idempotent per operation and candidate — see `CreditConfirmRequest`.
     func confirm(_ request: CreditConfirmRequest) async throws -> CreditConfirmed
     func fulfillment(operationId: String) async throws -> CreditOperation.Fulfillment
+    /// 公開景點圖鑑: publish the made card to 物見, then share it at the spot it
+    /// carries. Safe to resend: a card already public answers 409 and is shared all the same.
+    func publishToSpot(itemId: String, spotId: String) async throws
 }
 
 @MainActor
@@ -51,5 +54,20 @@ struct LiveCreditCardConfirming: CreditCardConfirming {
     func fulfillment(operationId: String) async throws -> CreditOperation.Fulfillment {
         let operation: CreditOperation = try await self.api.get(.aiOperation(id: operationId))
         return operation.fulfillment
+    }
+
+    func publishToSpot(itemId: String, spotId: String) async throws {
+        struct Published: Decodable {}
+        struct Body: Encodable {
+            let spotId: String
+            let shared: Bool
+        }
+        struct Shared: Decodable {}
+        do {
+            let _: Published = try await self.api.post(.atlasItemPublish(id: itemId), body: Empty())
+        } catch APIError.conflict {}
+        // Sharing is allowed while the gate still holds the card for a human:
+        // the spot shows it once it is approved.
+        let _: Shared = try await self.api.put(.atlasItemSpot(id: itemId), body: Body(spotId: spotId, shared: true))
     }
 }

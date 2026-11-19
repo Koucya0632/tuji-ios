@@ -198,6 +198,9 @@ final class AtlasCaptureQueue {
             self.update(id) { $0.progress = .enriching(0.7) }
             await self.awaitFulfillment(job.credit.operationId, from: confirmed.fulfillment)
             guard !Task.isCancelled else { return }
+            if job.credit.publishToSpot == true, let spotId = job.credit.spotId {
+                await self.publishToSpot(itemId: confirmed.itemId, spotId: spotId)
+            }
             self.update(id) { $0.progress = .enriching(0.9) }
             // One reconciling read for the atlas list, then the shared policy for
             // everything else a finished capture touches (AtlasMutationRefresh).
@@ -230,6 +233,17 @@ final class AtlasCaptureQueue {
             }
         }
         self.log.info("credit fill-in still open at the deadline; finishing the job anyway")
+    }
+
+    /// After the fill-in, so the public card carries its category. A refusal
+    /// (not a member, a risky photo) leaves the card private: it is what the
+    /// user paid for, and the card page can still share it later.
+    private func publishToSpot(itemId: String, spotId: String) async {
+        do {
+            try await self.credits.publishToSpot(itemId: itemId, spotId: spotId)
+        } catch {
+            self.log.error("publish to spot failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func update(_ id: UUID, _ mutate: (inout Job) -> Void) {

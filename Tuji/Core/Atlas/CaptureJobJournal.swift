@@ -39,6 +39,9 @@ struct CreditConfirmRequest: Codable, Equatable {
     /// The 景點 matched on the device from the photo's own location. A record
     /// journalled before this field existed decodes it as nil.
     var spotId: String? = nil
+    /// 公開景點圖鑑: once the card is made, publish it to 物見 and share it at
+    /// `spotId`. nil in a record journalled before this field existed.
+    var publishToSpot: Bool? = nil
 }
 
 /// A restored job: its record, plus the JPEG bytes of the frame the user took if

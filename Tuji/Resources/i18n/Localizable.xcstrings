@@ -31117,6 +31117,29 @@
         }
       }
     },
+    "公開景點圖鑑" : {
+      "comment" : "Checkbox under the suggested travel spot when confirming a capture: publish the new card to the public atlas and to that spot's page.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share on the spot page"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポット図鑑に公開"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公开景点图鉴"
+          }
+        }
+      }
+    },
     "移除景點" : {
       "comment" : "VoiceOver label of the button that removes the suggested travel spot from a capture.",
       "localizations" : {
