@@ -355,6 +355,9 @@ struct CreditCaptureView: View {
             }
             if let spot = self.model.detectedSpot {
                 self.spotRow(spot)
+                if self.model.offersSpotPublishing {
+                    self.publishToSpotRow(spot)
+                }
             }
         }
     }
@@ -382,6 +385,33 @@ struct CreditCaptureView: View {
             .background(.tujiPaper2)
         }
         .padding(.horizontal, -Space.s4)
+    }
+
+    /// 公開景點圖鑑: the card goes to 物見 and to this spot's page once it is made.
+    private func publishToSpotRow(_ spot: TravelSpot) -> some View {
+        VStack(alignment: .leading, spacing: Space.s1) {
+            Button {
+                self.model.publishToSpot.toggle()
+            } label: {
+                HStack(spacing: Space.s2) {
+                    Image(systemName: self.model.publishToSpot ? "checkmark.square.fill" : "square")
+                        .font(.tujiIcon(20))
+                        .foregroundStyle(self.model.publishToSpot ? Color.tujiInk : .tujiInk3)
+                        .accessibilityHidden(true)
+                    Text("公開景點圖鑑")
+                        .font(.tujiBodySm(.strong))
+                        .foregroundStyle(.tujiInk)
+                    Spacer(minLength: 0)
+                }
+                .frame(minHeight: 44)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(self.model.publishToSpot ? .isSelected : [])
+            Text("其他人會在\(spot.name)頁（App 和網站）看到這張和你的暱稱。")
+                .font(.tujiBodySm)
+                .foregroundStyle(.tujiInk3)
+        }
     }
 
     private func field(

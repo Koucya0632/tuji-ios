@@ -79,6 +79,51 @@ struct AtlasCaptureQueueTests {
     }
 
     @Test
+    func 公開景點圖鑑PublishesTheMadeCardToItsSpotAfterTheFillIn() async {
+        let credits = FakeCreditConfirming()
+        credits.fillIn = ["running", "completed"]
+        let queue = self.queue(credits: credits)
+        var request = self.request
+        request.spotId = "asakusa"
+        request.publishToSpot = true
+
+        await queue.enqueue(credit: request, imageId: "img-1", thumbnail: nil).value
+
+        #expect(credits.publishedToSpot.map(\.itemId) == ["item-1"])
+        #expect(credits.publishedToSpot.map(\.spotId) == ["asakusa"])
+        #expect(credits.publishedToSpot.first?.afterPolls == 2)
+        #expect(queue.jobs.isEmpty)
+    }
+
+    @Test
+    func aSpotWithoutTheBoxTickedStaysPrivate() async {
+        let credits = FakeCreditConfirming()
+        let queue = self.queue(credits: credits)
+        var request = self.request
+        request.spotId = "asakusa"
+
+        await queue.enqueue(credit: request, imageId: "img-1", thumbnail: nil).value
+
+        #expect(credits.publishedToSpot.isEmpty)
+    }
+
+    @Test
+    func aRefusedPublishStillFinishesTheCard() async {
+        let credits = FakeCreditConfirming()
+        credits.publishFailure = APIError.paymentRequired(message: nil)
+        let mutations = SpyAtlasMutationRefreshing()
+        let queue = self.queue(credits: credits, mutations: mutations)
+        var request = self.request
+        request.spotId = "asakusa"
+        request.publishToSpot = true
+
+        await queue.enqueue(credit: request, imageId: "img-1", thumbnail: nil).value
+
+        #expect(mutations.reported == [.captureCompleted])
+        #expect(queue.jobs.isEmpty)
+    }
+
+    @Test
     func aFillInAlreadyFinishedAtConfirmIsNotPolled() async {
         let credits = FakeCreditConfirming()
         credits.confirmState = "completed"

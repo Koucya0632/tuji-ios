@@ -283,4 +283,12 @@ final class FakeCreditConfirming: CreditCardConfirming {
         self.polls += 1
         return .init(self.fillIn.count > 1 ? self.fillIn.removeFirst() : self.fillIn.first ?? "completed")
     }
+
+    var publishFailure: Error?
+    private(set) var publishedToSpot: [(itemId: String, spotId: String, afterPolls: Int)] = []
+
+    func publishToSpot(itemId: String, spotId: String) async throws {
+        if let publishFailure { throw publishFailure }
+        self.publishedToSpot.append((itemId, spotId, self.polls))
+    }
 }

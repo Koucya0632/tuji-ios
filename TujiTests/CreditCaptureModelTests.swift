@@ -46,7 +46,8 @@ struct CreditCaptureModelTests {
         owned: [String] = [],
         resume: String? = nil,
         setAside: InMemorySetAsideJournal = InMemorySetAsideJournal(),
-        spotAt: @escaping @MainActor (GeoPoint, String) -> TravelSpot? = { _, _ in nil }
+        spotAt: @escaping @MainActor (GeoPoint, String) -> TravelSpot? = { _, _ in nil },
+        canPublish: Bool = true
     )
         -> Stand
     {
@@ -64,7 +65,7 @@ struct CreditCaptureModelTests {
             resume: resume, api: api, queue: queue, account: { session.user }, pendingJournal: journal,
             setAside: setAside, language: language,
             ownedLemmas: { owned }, cards: cards, mutations: SpyAtlasMutationRefreshing(),
-            sleep: { naps.asked.append($0) }, spotAt: spotAt
+            sleep: { naps.asked.append($0) }, spotAt: spotAt, canPublish: { canPublish }
         )
         return Stand(
             model: model,
@@ -502,7 +503,8 @@ struct CreditCaptureModelTests {
     /// A library photo taken at 淺草, recognised as a Japanese card and on its result.
     private func atAsakusa(
         location: GeoPoint? = GeoPoint(lat: 35.7148, lng: 139.7967),
-        target: String = "ja"
+        target: String = "ja",
+        canPublish: Bool = true
     ) async
         -> (Stand, Asked)
     {
@@ -516,7 +518,7 @@ struct CreditCaptureModelTests {
         let s = self.stand(api: api, spotAt: { point, language in
             asked.calls.append((point, language))
             return language == "ja" ? Self.asakusa : nil
-        })
+        }, canPublish: canPublish)
         await s.model.load()
         s.model.setPhoto(Data([0xFF, 0xD8, 0xFF]), location: location)
         await s.model.start(language: TargetLanguage(rawValue: target) ?? .ja)
@@ -543,6 +545,58 @@ struct CreditCaptureModelTests {
         // The sheet is about to close; the place goes with the capture.
         #expect(s.model.photoLocation == nil)
         #expect(s.model.detectedSpot == nil)
+    }
+
+    @Test
+    func 公開景點圖鑑IsTickedByDefaultAndRidesOnTheConfirm() async {
+        let (s, _) = await self.atAsakusa()
+        #expect(s.model.offersSpotPublishing)
+        #expect(s.model.publishToSpot)
+
+        s.model.form.select(CreditFixtures.keyboard)
+        #expect(s.model.confirm())
+        await s.queue.settle()
+        #expect(s.credits.confirmed.first?.publishToSpot == true)
+        #expect(s.credits.publishedToSpot.map(\.spotId) == ["asakusa"])
+        // The next photo starts ticked again.
+        #expect(s.model.publishToSpot)
+    }
+
+    @Test
+    func unticking公開景點圖鑑KeepsTheSpotPrivate() async {
+        let (s, _) = await self.atAsakusa()
+        s.model.publishToSpot = false
+
+        s.model.form.select(CreditFixtures.keyboard)
+        #expect(s.model.confirm())
+        await s.queue.settle()
+        #expect(s.credits.confirmed.first?.spotId == "asakusa")
+        #expect(s.credits.confirmed.first?.publishToSpot == nil)
+        #expect(s.credits.publishedToSpot.isEmpty)
+    }
+
+    @Test
+    func aNonMemberIsNotOffered公開景點圖鑑() async {
+        let (s, _) = await self.atAsakusa(canPublish: false)
+        #expect(s.model.detectedSpot?.id == "asakusa")
+        #expect(!s.model.offersSpotPublishing)
+
+        s.model.form.select(CreditFixtures.keyboard)
+        #expect(s.model.confirm())
+        await s.queue.settle()
+        #expect(s.credits.confirmed.first?.publishToSpot == nil)
+    }
+
+    @Test
+    func 移除AlsoDrops公開景點圖鑑() async {
+        let (s, _) = await self.atAsakusa()
+        s.model.removeSpot()
+        #expect(!s.model.offersSpotPublishing)
+
+        s.model.form.select(CreditFixtures.keyboard)
+        #expect(s.model.confirm())
+        await s.queue.settle()
+        #expect(s.credits.confirmed.first?.publishToSpot == nil)
     }
 
     @Test

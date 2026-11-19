@@ -38,7 +38,7 @@ struct EndpointPolicyTests {
         .studyAnswer, .studyStats(learning: "zh-en"), .studyReports,
         .atlasImage(id: "i1"),
         .atlasItemCards(id: "t1"),
-        .atlasItemDetail(id: "t1"), .atlasItemWithdraw(id: "t1"),
+        .atlasItemDetail(id: "t1"), .atlasItemWithdraw(id: "t1"), .atlasItemPublish(id: "t1"),
         .atlasSync(since: nil, limit: 50), .atlasEntitlement,
         .atlasCollections, .atlasCollection(id: "c1"), .atlasCollectionAvatar(id: "c1"),
         .atlasCollectionItems(id: "c1"), .atlasCollectionItem(id: "c1", publicItemId: "p1"),
@@ -67,7 +67,7 @@ struct EndpointPolicyTests {
 
     @Test("every endpoint is accounted for")
     func sampleCoversEveryCase() {
-        #expect(Self.all.count == 67)
+        #expect(Self.all.count == 68)
         // …and no path appears twice. The count alone cannot tell a missing
         // sample from a duplicated one, and a *missing* sample is exempt from
         // every invariant below — including 「no authenticated endpoint may be

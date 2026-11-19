@@ -60,6 +60,8 @@ enum Endpoint {
     case atlasItemCards(id: String)
     case atlasItemDetail(id: String)
     case atlasItemWithdraw(id: String)
+    /// POST: 發佈到物見, the single card through the machine gate.
+    case atlasItemPublish(id: String)
     /// The card's 景點: PUT `{spotId, shared}` tags it, DELETE takes the tag off.
     case atlasItemSpot(id: String)
     case atlasSync(since: String?, limit: Int)
@@ -331,6 +333,8 @@ enum Endpoint {
             EndpointDescriptor(path: "/api/atlas/items/\(id)/detail", policy: .privateFresh)
         case let .atlasItemWithdraw(id):
             EndpointDescriptor(path: "/api/atlas/items/\(id)/withdraw", policy: .privateFresh)
+        case let .atlasItemPublish(id):
+            EndpointDescriptor(path: "/api/atlas/items/\(id)/publish", policy: .privateFresh)
         case let .atlasItemSpot(id):
             EndpointDescriptor(path: "/api/atlas/items/\(id)/spot", policy: .privateFresh)
         case let .atlasSync(since, limit):
