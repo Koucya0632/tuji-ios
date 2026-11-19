@@ -30975,8 +30975,8 @@
         }
       }
     },
-    "這裡會看到" : {
-      "comment" : "Heading above a spot's words.",
+    "這裡看到" : {
+      "comment" : "Filter on a travel spot page: the spot's words.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -30994,7 +30994,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "这里会看到"
+            "value" : "这里看到"
           }
         }
       }
@@ -31136,6 +31136,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "公开景点图鉴"
+          }
+        }
+      }
+    },
+    "還沒有在這裡拍的卡片" : {
+      "comment" : "Empty state of the spot page's own-photos filter.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None of your photos here yet"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここで撮ったカードはまだありません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有在这里拍的卡片"
+          }
+        }
+      }
+    },
+    "還沒有人分享在這裡拍的" : {
+      "comment" : "Empty state of the spot page's others' photos filter.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nobody has shared one here yet"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここで撮ったものはまだ共有されていません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有人分享在这里拍的"
           }
         }
       }
@@ -31348,7 +31394,7 @@
       }
     },
     "你在這裡拍的" : {
-      "comment" : "Section title on a travel spot page: the user's own cards tagged to this spot.",
+      "comment" : "Filter on a travel spot page: the user's own cards tagged to this spot.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -31370,8 +31416,8 @@
         }
       }
     },
-    "大家拍的" : {
-      "comment" : "Section title on a travel spot page: other people's public cards shared to this spot.",
+    "大家在這裡拍的" : {
+      "comment" : "Filter on a travel spot page: other people's public cards shared to this spot.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -31388,7 +31434,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "大家拍的"
+            "value" : "大家在这里拍的"
           }
         }
       }

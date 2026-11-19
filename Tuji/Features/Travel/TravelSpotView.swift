@@ -5,9 +5,9 @@
 // opens the word page for anyone. Studying follows the spot: a non-member may
 // study a free spot and meets the paywall at any other.
 //
-// Below them, the 自製圖鑑 cards taken here: 「你在這裡拍的」 (this account's
-// own tags, private) and 「大家拍的」 (public cards their owners shared to this
-// spot). Each section is absent when it has nothing.
+// A filter switches between those words (「這裡看到」) and the 自製圖鑑 cards
+// taken here: 「你在這裡拍的」 (this account's own tags, private) and
+// 「大家在這裡拍的」 (public cards their owners shared to this spot).
 
 import SwiftUI
 
@@ -28,6 +28,7 @@ struct TravelSpotView: View {
     }
 
     @State private var shared: [AtlasPublicItem] = []
+    @State private var shelf: SpotShelf = .words
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: Space.s2, alignment: .top), count: 3)
 
@@ -67,24 +68,22 @@ struct TravelSpotView: View {
                 studyable: LiveEffectiveEntitlement.shared.membership?.studyableCategories
             )
             self.hero(spot, state)
-            Text("這裡會看到")
-                .font(.tujiLabel)
-                .tracking(0.5)
-                .foregroundStyle(.tujiInk3)
-                .padding(.horizontal, Space.s4)
-                .padding(.top, Space.s4)
-                .padding(.bottom, Space.s2)
-            LazyVGrid(columns: self.columns, spacing: Space.s3) {
-                ForEach(state.words) { word in
-                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                        WordTile(word: word, showMastery: true, masteryScore: self.mastery.score(for: word.id))
-                    }
-                    .buttonStyle(.plain)
-                }
+            TujiSegmented(
+                options: [
+                    (SpotShelf.words, "這裡看到"),
+                    (SpotShelf.own, "你在這裡拍的"),
+                    (SpotShelf.shared, "大家在這裡拍的")
+                ],
+                selection: self.$shelf,
+                font: .tujiBody(.strong)
+            )
+            .padding(.top, Space.s4)
+            .padding(.bottom, Space.s3)
+            switch self.shelf {
+            case .words: self.wordGrid(state.words)
+            case .own: self.ownSection(spot)
+            case .shared: self.sharedSection
             }
-            .padding(.horizontal, Space.s4)
-            self.ownSection(spot)
-            self.sharedSection
         } else if self.store.phase == .failed {
             TujiBlankState(kind: .failed, retry: { await self.store.reload(settings: self.settings) })
         } else if self.store.phase == .loaded {
@@ -112,28 +111,34 @@ struct TravelSpotView: View {
         return self.shared.filter { !ownSlugs.contains($0.slug) && !self.blocks.isBlocked($0.author?.handle) }
     }
 
+    private func wordGrid(_ words: [CardWord]) -> some View {
+        LazyVGrid(columns: self.columns, spacing: Space.s3) {
+            ForEach(words) { word in
+                NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
+                    WordTile(word: word, showMastery: true, masteryScore: self.mastery.score(for: word.id))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, Space.s4)
+    }
+
     @ViewBuilder
     private func ownSection(_ spot: TravelSpot) -> some View {
         let own = self.ownWords(spot)
-        if !own.isEmpty {
-            self.sectionTitle("你在這裡拍的")
-            LazyVGrid(columns: self.columns, spacing: Space.s3) {
-                ForEach(own) { word in
-                    NavigationLink(value: NavRoute.wordDetail(id: word.id)) {
-                        WordTile(word: word, showMastery: true, masteryScore: self.mastery.score(for: word.id))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, Space.s4)
+        if own.isEmpty {
+            self.emptyLine("還沒有在這裡拍的卡片")
+        } else {
+            self.wordGrid(own)
         }
     }
 
     @ViewBuilder
     private var sharedSection: some View {
         let others = self.othersShared
-        if !others.isEmpty {
-            self.sectionTitle("大家拍的")
+        if others.isEmpty {
+            self.emptyLine("還沒有人分享在這裡拍的")
+        } else {
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2, alignment: .top), count: 2),
                 spacing: Space.s3
@@ -152,14 +157,12 @@ struct TravelSpotView: View {
         }
     }
 
-    private func sectionTitle(_ title: LocalizedStringKey) -> some View {
-        Text(title)
-            .font(.tujiLabel)
-            .tracking(0.5)
+    private func emptyLine(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .font(.tujiBodySm)
             .foregroundStyle(.tujiInk3)
             .padding(.horizontal, Space.s4)
-            .padding(.top, Space.s4)
-            .padding(.bottom, Space.s2)
+            .padding(.top, Space.s2)
     }
 
     private func hero(_ spot: TravelSpot, _ state: TravelSpotState) -> some View {
@@ -224,4 +227,11 @@ struct TravelSpotView: View {
             }
         }
     }
+}
+
+/// What the spot page lists under its hero.
+private enum SpotShelf: Hashable {
+    case words
+    case own
+    case shared
 }
