@@ -14,28 +14,37 @@ import SwiftUI
 struct TujiSegmented<Value: Hashable>: View {
     let options: [(value: Value, title: LocalizedStringKey)]
     @Binding var selection: Value
+    /// Smaller only where long labels would not fit side by side.
+    var font: Font = .tujiH3
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Space.s2) {
-                ForEach(self.options, id: \.value) { option in
-                    Button {
-                        withAnimation(Motion.ease(Motion.d1)) {
-                            self.selection = option.value
+        ScrollViewReader { reader in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Space.s2) {
+                    ForEach(self.options, id: \.value) { option in
+                        Button {
+                            withAnimation(Motion.ease(Motion.d1)) {
+                                self.selection = option.value
+                            }
+                        } label: {
+                            Text(option.title)
+                                .font(self.font)
+                                .padding(.horizontal, Space.s3)
+                                .frame(height: 40)
                         }
-                    } label: {
-                        Text(option.title)
-                            .font(.tujiH3)
-                            .padding(.horizontal, Space.s3)
-                            .frame(height: 40)
+                        .buttonStyle(SegmentStyle(selected: self.selection == option.value))
+                        .accessibilityAddTraits(self.selection == option.value ? [.isSelected] : [])
+                        .id(option.value)
                     }
-                    .buttonStyle(SegmentStyle(selected: self.selection == option.value))
-                    .accessibilityAddTraits(self.selection == option.value ? [.isSelected] : [])
                 }
+                .padding(.horizontal, Space.s4)
             }
-            .padding(.horizontal, Space.s4)
+            .scrollClipDisabled()
+            // An option past the edge comes fully into view once chosen.
+            .onChange(of: self.selection) { _, picked in
+                withAnimation(Motion.ease(Motion.d1)) { reader.scrollTo(picked) }
+            }
         }
-        .scrollClipDisabled()
     }
 }
 
