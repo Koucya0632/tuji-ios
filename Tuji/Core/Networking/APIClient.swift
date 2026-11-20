@@ -43,7 +43,7 @@ final class APIClient {
             log.error("TUJI_BASE_URL missing; sandbox backend unavailable")
             #else
             // Last-resort fallback. SmokeTest used the same one.
-            self.baseURL = URL(string: "https://everyday-english-picture-dictionary.vercel.app")!
+            self.baseURL = URL(string: "https://tuji.nexflow.team")!
             log.error("TUJI_BASE_URL missing from Info.plist; falling back to prod")
             #endif
         }
