@@ -48,7 +48,7 @@ GENERATE_INFOPLIST_FILE = NO
 INFOPLIST_FILE = Info.plist
 
 // ---------- Endpoints ----------
-TUJI_BASE_URL = https:/$()/everyday-english-picture-dictionary.vercel.app
+TUJI_BASE_URL = https:/$()/tuji.nexflow.team
 TUJI_SUPABASE_URL = https:/$()/$(TUJI_SUPABASE_PROJECT_PROD).supabase.co
 TUJI_SUPABASE_ANON_KEY = $(TUJI_SUPABASE_ANON_KEY_PROD)
 

@@ -376,7 +376,7 @@ final class AuthService {
     }
 
     private var emailConfirmationRedirectURL: URL? {
-        let fallback = URL(string: "https://everyday-english-picture-dictionary.vercel.app/auth/confirmed")
+        let fallback = URL(string: "https://tuji.nexflow.team/auth/confirmed")
         guard let str = Bundle.main.object(forInfoDictionaryKey: "TUJI_BASE_URL") as? String,
               let baseURL = URL(string: str)
         else {
