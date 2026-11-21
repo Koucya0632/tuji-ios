@@ -697,12 +697,19 @@ struct ReviewListeningTests {
     func everyLaterAnswerInTheSessionCarriesTheOptOut() async throws {
         let audio = FakeSpeechPlaying()
         let spy = ListenAnswerSpy()
+        // A stopped clock: both picks must read as fast, so they auto-rate and
+        // `rate` below is a no-op. On the wall clock a loaded CI runner took 7s+
+        // to reach the pick, which suggests 困難 and raises the sheet instead —
+        // `rate` then lands before the sheet, is dropped, and the session never
+        // moves on.
+        let times = Clock(Date(timeIntervalSince1970: 1000))
         let coord = try ReviewFlowCoordinator(
             queue: makeQueue(),
             writer: spy,
             queueProvider: EmptyQueueProvider(),
             audio: audio,
-            beat: { _ in }
+            beat: { _ in },
+            now: { times.now }
         )
         // A wider pool than `pool()`: with both queue items present, `w-cup` is
         // excluded as still-queued and `w-plate` as named by the sentence, so

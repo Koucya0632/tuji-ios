@@ -227,8 +227,10 @@ struct WordSceneSection: View {
 
     private func box(_ mention: SceneMention) -> some View {
         let language = self.settings.current.uiLanguage
+        // A locked 場面's lines are what 永久會員 buys: its name only.
+        let open = mention.scene.canPractise(LiveEffectiveEntitlement.shared.tier)
         return VStack(spacing: 0) {
-            ForEach(mention.questions) { question in
+            ForEach(open ? mention.questions : []) { question in
                 HStack(alignment: .top, spacing: 12) {
                     VStack(alignment: .leading, spacing: 6) {
                         SceneSpeakerTag(speaker: question.lookSpeaker)
@@ -260,10 +262,18 @@ struct WordSceneSection: View {
                         .font(.scene(15))
                         .foregroundStyle(.tujiInk)
                     Spacer(minLength: Space.s2)
-                    Text("\(mention.scene.practiceCount) 句")
-                        .font(.scene(13, bold: false))
-                        .foregroundStyle(.tujiInk2)
-                    TujiRowAccessory()
+                    if open {
+                        Text("\(mention.scene.practiceCount) 句")
+                            .font(.scene(13, bold: false))
+                            .foregroundStyle(.tujiInk2)
+                        TujiRowAccessory()
+                    } else {
+                        HStack(spacing: 4) {
+                            Image(systemName: "lock").font(.tujiIcon(12, weight: .bold))
+                            Text("永久會員").font(.scene(12))
+                        }
+                        .foregroundStyle(.tujiInk3)
+                    }
                 }
                 .padding(.leading, 18)
                 .padding(.trailing, Space.s3)
