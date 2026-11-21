@@ -10,6 +10,24 @@ extension LearningDirection {
     }
 }
 
+/// The way into one 場面's page. A locked 場面 is the paid content itself —
+/// its lines, replies and audio — so for an account that cannot practise it
+/// the same label opens 會員方案 instead.
+struct SceneLink<Label: View>: View {
+    let scene: PracticeScene
+    @ViewBuilder let label: () -> Label
+
+    @Environment(\.presentPaywall) private var presentPaywall
+
+    var body: some View {
+        if self.scene.canPractise(LiveEffectiveEntitlement.shared.tier) {
+            NavigationLink(value: NavRoute.sceneDetail(id: self.scene.id), label: self.label)
+        } else {
+            Button { self.presentPaywall() } label: { self.label() }
+        }
+    }
+}
+
 /// 今天's card: one scene, its signature line in large type, and where it
 /// stands. `SceneCards.pick` chooses the scene.
 struct SceneTodayCard: View {
@@ -57,7 +75,7 @@ struct SceneTodayCard: View {
                 .buttonStyle(.plain)
             }
             .padding(.leading, Space.s3)
-            NavigationLink(value: NavRoute.sceneDetail(id: pick.scene.id)) {
+            SceneLink(scene: pick.scene) {
                 VStack(alignment: .leading, spacing: 0) {
                     if let line = pick.scene.questions.first?.lookLine {
                         Text(verbatim: "「\(line.text)」")
@@ -149,7 +167,7 @@ struct SceneTopicEntries: View {
             )
             let scenes = SceneLinks.scenes(forTopic: self.topic, topicOf: topicOf, in: .bundled)
             ForEach(scenes) { scene in
-                NavigationLink(value: NavRoute.sceneDetail(id: scene.id)) {
+                SceneLink(scene: scene) {
                     HStack(spacing: Space.s3) {
                         Image(systemName: "bubble.left.and.text.bubble.right")
                             .font(.tujiIcon(16, weight: .semibold))
@@ -236,7 +254,7 @@ struct WordSceneSection: View {
                 .padding(.trailing, 12)
                 Rectangle().fill(.tujiRule).frame(height: 1)
             }
-            NavigationLink(value: NavRoute.sceneDetail(id: mention.scene.id)) {
+            SceneLink(scene: mention.scene) {
                 HStack(spacing: Space.s2) {
                     Text(verbatim: mention.scene.title.resolved(language))
                         .font(.scene(15))

@@ -77,8 +77,8 @@ extension PracticeScene {
 }
 
 extension PracticeScene {
-    /// From the third scene on, practice is for 永久會員 (場面練習方案 §2).
-    /// 進店前看一眼 stays open to everyone.
+    /// From the third scene on, a 場面 is for 永久會員 (場面練習方案 §2) —
+    /// practice and 進店前看一眼 alike: a locked one opens 會員方案.
     nonisolated func canPractise(_ tier: MembershipTier) -> Bool {
         switch self.access {
         case .free: true

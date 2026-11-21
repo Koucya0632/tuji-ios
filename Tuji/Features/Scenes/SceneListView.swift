@@ -110,7 +110,7 @@ struct SceneListView: View {
         VStack(spacing: 0) {
             Rectangle().fill(.tujiRule).frame(height: 1)
             ForEach(scenes) { scene in
-                NavigationLink(value: NavRoute.sceneDetail(id: scene.id)) {
+                SceneLink(scene: scene) {
                     if compact { self.compactRow(scene) } else { self.row(scene) }
                 }
                 .buttonStyle(.plain)
