@@ -113,6 +113,11 @@ final class ReviewFlowCoordinator: StudySession {
     private var heardWordIds: Set<String> = []
 
     private let audio: SpeechPlaying
+    private let catalogue: WordClipReading
+    /// The headword's voice for the card on screen, as `prepareQuestion` was
+    /// handed it. 選字 keeps no voice on the question, and a correct answer of
+    /// either kind reads the word.
+    private var wordVoice: SpeechService.Voice?
 
     /// Held and primed rather than built at the tap — see `StudyHaptics`.
     @ObservationIgnored private let haptics = StudyHaptics()
@@ -158,6 +163,7 @@ final class ReviewFlowCoordinator: StudySession {
         writer: DurableAnswerWriting = DurableAnswerWriter(),
         queueProvider: StudyQueueProviding = StudyQueueStore.shared,
         audio: SpeechPlaying = LiveSpeechPlaying(),
+        catalogue: WordClipReading = CatalogueClips(),
         beat: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         now: @escaping () -> Date = { .now },
         audioStartTimeout: Duration = .seconds(3)
@@ -168,6 +174,7 @@ final class ReviewFlowCoordinator: StudySession {
         self.writes = StudySessionWrites(writer: writer)
         self.queueProvider = queueProvider
         self.audio = audio
+        self.catalogue = catalogue
         self.beats = AnswerBeat(sleep: beat)
         self.clock = now
         // Nothing has been missed yet, so the first card is never a re-test.
@@ -192,6 +199,7 @@ final class ReviewFlowCoordinator: StudySession {
         voice: SpeechService.Voice
     ) async {
         guard var q = self.question else { return }
+        self.wordVoice = voice
         let item = q.item
         let presentation = q.variant
         let example = ListeningQuestion.example(
@@ -399,7 +407,12 @@ final class ReviewFlowCoordinator: StudySession {
 
     private func settle(_ resolution: ReviewResolution) {
         guard let q = self.question else { return }
-        if q.wasCorrect { self.haptics.soft() } else { self.haptics.firm() }
+        if q.wasCorrect {
+            self.haptics.soft()
+            self.sayWord(q.item.word)
+        } else {
+            self.haptics.firm()
+        }
         self.recordAnswered(q.item)
         switch resolution {
         case .flashRetestPassed:
@@ -418,6 +431,17 @@ final class ReviewFlowCoordinator: StudySession {
             self.countSettledWord()
             self.scheduleReveal(mode)
         }
+    }
+
+    /// Read the headword once, as the right answer lands. In 聽句 it cuts the
+    /// sentence off, which is fine: the question is answered. `leave()` and
+    /// the next card's sentence both stop it, so the untracked task only ever
+    /// waits on audio someone can cut.
+    private func sayWord(_ word: StudyQueueWord) {
+        guard let voice = self.wordVoice else { return }
+        let spoken = SpokenWord(word)
+        let clip = spoken.clip(voice: voice, catalogue: self.catalogue)
+        Task { _ = await self.audio.play(clip, text: spoken.text, voice: voice, rate: 1, onStart: {}) }
     }
 
     /// How long the answered options stay uncovered before the sheet rises.
