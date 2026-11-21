@@ -44,6 +44,7 @@ private final class FakeSpeechPlaying: SpeechPlaying {
 
     private(set) var rates: [Float] = []
     private(set) var voices: [SpeechService.Voice] = []
+    private(set) var texts: [String] = []
 
     /// Ends the held play with `outcome`.
     func release(_ outcome: SpeechPlayback? = nil) {
@@ -54,7 +55,7 @@ private final class FakeSpeechPlaying: SpeechPlaying {
 
     func play(
         _ urlString: String?,
-        text _: String,
+        text: String,
         voice: SpeechService.Voice,
         rate: Float,
         onStart: @escaping @MainActor () -> Void
@@ -62,6 +63,7 @@ private final class FakeSpeechPlaying: SpeechPlaying {
         -> SpeechPlayback
     {
         self.plays.append(urlString)
+        self.texts.append(text)
         self.rates.append(rate)
         self.voices.append(voice)
         self.release(.superseded)
@@ -809,6 +811,50 @@ struct ReviewListeningTests {
         #expect(coord.question?.kind == .pickWord)
         #expect(coord.question?.imageOptions == nil)
         #expect(audio.plays.isEmpty)
+    }
+
+    // MARK: - Reading the word on a right answer
+
+    @Test
+    func aRightPickReadsTheWordOnce() async throws {
+        let audio = FakeSpeechPlaying()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
+        try #require(coord.question?.kind == .pickWord)
+
+        coord.pick("mug")
+
+        try await self.waitUntil { !audio.texts.isEmpty }
+        #expect(audio.texts == ["mug"])
+        #expect(audio.voices == [.us])
+    }
+
+    @Test
+    func aWrongPickReadsNothing() async throws {
+        let audio = FakeSpeechPlaying()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: false, voice: .us)
+
+        coord.pick("spoon")
+        for _ in 0..<20 {
+            await Task.yield()
+        }
+
+        #expect(audio.texts.isEmpty)
+    }
+
+    @Test
+    func aRightListeningAnswerReadsTheWordAfterTheSentence() async throws {
+        let audio = FakeSpeechPlaying()
+        let coord = try self.listeningCoordinator(audio: audio, writer: ListenAnswerSpy())
+        await coord.prepareQuestion(pool: self.pool(), session: .en, online: true, voice: .us)
+        try #require(coord.question?.kind == .hearSentence)
+
+        let answer = try #require(coord.question?.imageOptions?.first { $0.id == "w-mug" })
+        coord.pickImage(answer)
+
+        try await self.waitUntil { audio.texts.count == 2 }
+        #expect(audio.texts.last == "mug")
     }
 
     @Test
