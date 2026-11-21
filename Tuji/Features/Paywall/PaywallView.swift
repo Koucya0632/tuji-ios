@@ -1,8 +1,8 @@
 // 會員與罐頭點數. Presented from every lock and AI 402, and from Settings.
 // Sells 永久會員 (a one-time purchase) beside the 罐頭點數 wallet, and offers
-// restore. Tuji Pro is no longer sold (2026-10-06); a legacy Pro account only
-// sees that it still has Pro. The server records the entitlement; on success
-// we just dismiss and let the quota UI refresh.
+// restore. Tuji Pro is no longer sold (2026-10-06) and its holders were moved
+// to 永久會員. The server records the entitlement; on success we just dismiss
+// and let the quota UI refresh.
 
 import StoreKit
 import SwiftUI
@@ -89,16 +89,6 @@ struct PaywallView: View {
                     }
                     if self.offer.showsLifetime {
                         self.lifetimeSection.tierCard()
-                    }
-                    // 生效權限, not the purchase flag: a 贈與 account holds no
-                    // StoreKit transaction but is Pro.
-                    if self.entitlement.isPro {
-                        Text("你已經是 Tuji Pro，感謝支持！")
-                            .font(.tujiBodySm(.strong))
-                            .foregroundStyle(.tujiAccumulation)
-                    } else if !self.offer.showsLifetime, self.store.catalog?.billingMode != "credits" {
-                        Text("新 Pro 方案已停止販售，既有會員權益持續有效。")
-                            .font(.tujiLabel)
                     }
                     self.restoreButton
                     self.purchaseNotes
@@ -304,10 +294,6 @@ struct PaywallView: View {
 
 #Preview("not subscribed") {
     PaywallView(entitlement: PreviewEntitlement(isPro: false))
-}
-
-#Preview("already Pro") {
-    PaywallView(entitlement: PreviewEntitlement(isPro: true))
 }
 
 #Preview("v2 non-member") {
