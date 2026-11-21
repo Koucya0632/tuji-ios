@@ -720,7 +720,10 @@ struct ReviewListeningTests {
         coord.optOutOfListening()
         coord.pick("mug")
         coord.rate(.good)
-        try await self.waitUntil { coord.index == 1 }
+        // Writes go out in the background; wait for the first to land so a
+        // loaded runner cannot deliver the second ahead of it and make
+        // `answers.last` the card that was bailed on.
+        try await self.waitUntil { coord.index == 1 && spy.answers.count == 1 }
 
         await coord.prepareQuestion(pool: wide, session: .en, online: true, voice: .us)
         coord.pick("cup")
