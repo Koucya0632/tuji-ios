@@ -22,21 +22,25 @@ struct SceneDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         self.header(scene)
-                        VStack(alignment: .leading, spacing: Space.s1) {
-                            Text("進店前看一眼")
-                                .font(.tujiH3)
-                                .foregroundStyle(.tujiInk)
-                            Text("不用網路也能看、能播。")
-                                .font(.tujiLabel)
-                                .foregroundStyle(.tujiInk2)
-                        }
-                        .padding(.horizontal, Space.s4)
-                        .padding(.top, 32)
-                        .padding(.bottom, 12)
-                        Rectangle().fill(.tujiRule).frame(height: 1)
-                        ForEach(Array(scene.questions.enumerated()), id: \.element.id) { index, question in
-                            self.lookRow(question, number: index + 1, scene: scene)
+                        // A locked 場面's lines are what 永久會員 buys; reached
+                        // anyway (a downgrade, a link), the page is its header.
+                        if scene.canPractise(LiveEffectiveEntitlement.shared.tier) {
+                            VStack(alignment: .leading, spacing: Space.s1) {
+                                Text("進店前看一眼")
+                                    .font(.tujiH3)
+                                    .foregroundStyle(.tujiInk)
+                                Text("不用網路也能看、能播。")
+                                    .font(.tujiLabel)
+                                    .foregroundStyle(.tujiInk2)
+                            }
+                            .padding(.horizontal, Space.s4)
+                            .padding(.top, 32)
+                            .padding(.bottom, 12)
                             Rectangle().fill(.tujiRule).frame(height: 1)
+                            ForEach(Array(scene.questions.enumerated()), id: \.element.id) { index, question in
+                                self.lookRow(question, number: index + 1, scene: scene)
+                                Rectangle().fill(.tujiRule).frame(height: 1)
+                            }
                         }
                     }
                     .padding(.bottom, Space.s5)
@@ -113,7 +117,7 @@ struct SceneDetailView: View {
                         self.callLabel("看永久會員方案", trailing: nil)
                     }
                     .buttonStyle(.plain)
-                    Text("練習這個場面需要永久會員。看一眼不用。")
+                    Text("這個場面需要永久會員。")
                         .font(.tujiLabel)
                         .foregroundStyle(.tujiPaper.opacity(0.7))
                 }

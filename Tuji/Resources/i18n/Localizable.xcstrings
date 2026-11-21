@@ -29287,26 +29287,26 @@
         }
       }
     },
-    "練習這個場面需要永久會員。看一眼不用。" : {
+    "這個場面需要永久會員。" : {
       "comment" : "場面練習: Scene page, non-member on a members' scene.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Practising this scene needs Lifetime Membership. Looking does not."
+            "value" : "This scene needs Lifetime Membership."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "この場面の練習は永久会員向けです。見るだけなら誰でも。"
+            "value" : "この場面は永久会員向けです。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "练习这个场景需要永久会员。看一眼不用。"
+            "value" : "这个场景需要永久会员。"
           }
         }
       }

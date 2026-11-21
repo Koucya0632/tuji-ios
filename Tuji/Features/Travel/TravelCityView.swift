@@ -13,6 +13,7 @@ struct TravelCityView: View {
 
     @Environment(SettingsStore.self) private var settings
     @Environment(MasteryStore.self) private var mastery
+    @Environment(\.presentPaywall) private var presentPaywall
     var store: TravelStore = .shared
     var atlas: AtlasStore = .shared
 
@@ -81,7 +82,10 @@ struct TravelCityView: View {
             },
             trailing: { self.trailing(spot) }
         )
-        if spot.open {
+        if spot.open, spotLocked(spot) {
+            Button { self.presentPaywall() } label: { row }
+                .tujiRowStyle()
+        } else if spot.open {
             NavigationLink(value: TravelRoute.spot(id: spot.id)) { row }
                 .tujiRowStyle()
         } else {
@@ -153,10 +157,22 @@ struct TravelSpotMarker: View {
     }
 }
 
+/// A locked spot's words are the paid content: the list row and the map pin
+/// open 會員方案 for it, not the spot's page.
+@MainActor
+private func spotLocked(_ spot: TravelSpot) -> Bool {
+    TravelDecisions.access(
+        to: spot,
+        studyable: LiveEffectiveEntitlement.shared.membership?.studyableCategories
+    ) == .needsMembership
+}
+
 struct TravelCityMap: View {
     let city: TravelCity
     /// Spots where this account has tagged a 自製圖鑑 card.
     var photographed: Set<String> = []
+
+    @Environment(\.presentPaywall) private var presentPaywall
 
     var body: some View {
         GeometryReader { geo in
@@ -208,7 +224,11 @@ struct TravelCityMap: View {
         }
         .frame(width: 44, height: 44)
         .contentShape(.rect)
-        if spot.open {
+        if spot.open, spotLocked(spot) {
+            Button { self.presentPaywall() } label: { marker }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(verbatim: spot.name))
+        } else if spot.open {
             NavigationLink(value: TravelRoute.spot(id: spot.id)) { marker }
                 .buttonStyle(.plain)
                 .accessibilityLabel(
