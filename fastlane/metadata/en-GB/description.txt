@@ -1,45 +1,45 @@
-Tuji is a picture dictionary for learning Japanese and English words: the things you run into living in Japan, from the convenience store to the station, grouped by topic with pictures, audio and example sentences, and kept in memory with spaced repetition.
-
-■ A word book you read like a picture dictionary
-Every word comes with a picture, pronunciation and example sentences, grouped by topic into picture dictionaries you can simply page through. Word pages also show easily confused words.
+Tuji is a Japanese study app for people going to Japan.
+At a convenience store, the clerk may ask whether to heat your bento. Hear it here first, so it isn't new at the till.
 
 ■ Scene practice: understand what staff ask (learning Japanese)
-22 scenes, from the convenience store and restaurant to the hotel, station and airport. Hear the staff, pick a reply in Japanese or work the payment or ticket machine, and see what happens. Reviews use phrasings you haven't heard, and you can check every line offline before you walk in.
+22 scenes, including the convenience store, restaurant, ramen shop, hotel, station and airport. Hear the staff, pick a reply in Japanese, or work the payment or meal ticket machine and see what happens. Reviews use phrasings you haven't heard yet. Every line can be checked offline before you walk in.
 
-■ New words in three steps
-"Look and remember → pick it out → put it together", with other words mixed in between, so by the time you recall a word it has left short-term memory. That is when it sticks.
+■ The atlas: know what you're looking at
+Every word comes with a picture, audio and example sentences, grouped by topic. The Student, Working holiday and Travel sets are a place to start. Word pages also show easily confused words.
 
-■ Spaced repetition and five mastery levels
-Tuji schedules each review from how quickly and how correctly you answered. Every word has five mastery levels, and the home screen shows at a glance how many words to learn and to review today.
+■ Travel with Moira (learning Japanese)
+Open the map of Japan from Sightings, pick a city, then a spot. Each spot lists 8 words you'll come across there, to study and review. Spots marked free, such as Akihabara and Dotonbori, are open to anyone signed in. The rest need Lifetime Membership.
 
-■ Your own word lists and notes (members)
-Gather the words you want to learn into your own lists, then study and review straight from a list. Keep a note of your own on any word.
+■ New words in three steps, then spaced repetition
+"Look and remember → pick it out → put it together", with other words mixed in between. Each review is then scheduled from how quickly and how accurately you answered. Every word has five mastery levels, and the home screen shows what's due today.
 
-■ Snap a photo, grow your own picture dictionary (members)
-Don't know what something is called? Just take a photo. AI recognizes it and makes a card — picture, meaning and example sentences — that goes straight into your study and reviews.
+■ Snap a photo, grow your own atlas (Lifetime Membership, uses points)
+Take a photo of something you can't name. AI recognises it and makes a card with a picture, meaning and example sentences.
 
-■ Ask Moira: AI vocabulary, grammar, stories and chat (uses Can Points)
+■ Ask Moira (Lifetime Membership, uses points)
 Tap Moira on the Today screen:
-• AI vocabulary: look up a word or phrase, get an in-depth analysis, or ask Moira for a memory aid.
-• AI grammar: have a grammar point explained, compare similar ones, or get a practice set.
-• Story time: Moira writes a short dialogue around words you're learning; read each line aloud.
-• Topic chat: chat with Moira about a topic in the language you're learning, with help when you're stuck and a review at the end.
+• AI vocabulary: look up a word or phrase, get an in-depth analysis, or ask for a memory aid.
+• AI grammar: explain a grammar point, compare similar ones, or get a practice set.
+• Story time: a short dialogue around words you're learning; read each line aloud.
+• Topic chat: talk about a topic in the language you're learning, with help when you're stuck and a review at the end.
 
 ■ Sightings: see what others have collected
-Anyone can browse published collections; members can save them, study them and publish their own.
+Anyone can browse published collections. Lifetime members can save and study them, and publish their own.
 
 ■ Also
-• Daily study reminders (available to everyone)
+• You can learn English too, from the same atlas. Scene practice and travel spots are for learning Japanese only.
+• Your own word lists and notes (Lifetime Membership)
+• Daily study reminders for everyone
 • Interface in Traditional Chinese, Simplified Chinese, Japanese and English
 • Answer offline; progress syncs when you're back online
-• Daily goals, pronunciation audio and a study record
+• Audio for every word, daily goals and a study record
 
-—— Lifetime Membership and Can Points ——
-• Free: sign in to study 8 topics, including Fruits and Bedroom, and browse every other official topic. The convenience store and restaurant scenes are free too.
-• Lifetime Membership (one-time purchase): every official topic, all 22 scenes, 200 personal atlas cards, saving/studying/publishing on Sightings, 20 personal word lists, and notes.
-• AI features use Can Points, and the cost is shown before every request. Photo recognition costs 100 points (standard) or 200 points (high-precision), or 100 points to upgrade a standard result to high-precision, including basic content enrichment for one card; vocabulary, grammar, stories and topic chat are charged by length.
-• Members receive 1,000 free points each month. The unused monthly allowance resets next month and does not accumulate. Daily check-in grants 10 points, up to 300 newly granted points per month.
-• Purchased and check-in points never expire. Optional packs contain 1,000, 4,000 or 7,000 points.
+—— Free and Lifetime Membership ——
+• Free (signed in): study 8 topics, Fruits, Bedroom and the 6 topics in the Student set, and browse every other official topic. Practise the Convenience store checkout and Restaurant scenes. Study the spots marked free in Travel with Moira.
+• Lifetime Membership (one-time purchase): every official topic, scene and spot, 200 custom atlas slots, 20 personal word lists you can study from, word notes, and saving/studying/publishing on Sightings.
+• AI features need Lifetime Membership and use points, with the cost shown before every request. Photo recognition costs 100 points (standard) or 200 (high-precision), or 100 to upgrade a standard result, each including basic content for one card. Vocabulary, grammar, stories and topic chat are charged by length.
+• Lifetime members get 1,000 free points a month, valid that month only. Daily check-in gives 10 points, up to 300 a month.
+• Check-in and purchased points never expire. Packs of 1,000, 4,000 or 7,000 points are available.
 • Prices vary by region and are shown in the app. Membership and point packs are one-time purchases with no automatic renewal.
 • Payment is charged to your Apple ID account when you confirm the purchase.
 
