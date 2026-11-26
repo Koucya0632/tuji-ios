@@ -150,4 +150,60 @@ struct AtlasStoreTests {
         #expect(fake.withdrawnIds == ["t1"])
         #expect(!fake.syncSinceLog.isEmpty)
     }
+
+    // MARK: - 503 retry (server gives up on a stuck query after 15s)
+
+    @Test
+    func syncRetriesA503AndKeepsTheAnswer() async {
+        let fake = FakeAtlasAuthoring()
+        fake.syncErrorsFirst = [APIError.server(status: 503, body: nil)]
+        fake.syncResponse = AtlasFixtures.syncResponse(images: [AtlasFixtures.image("i1")])
+        let store = AtlasStore(repository: fake, syncRetryDelays: [.zero, .zero])
+
+        await store.sync(.full)
+
+        #expect(fake.syncSinceLog.count == 2)
+        #expect(store.images.map(\.id) == ["i1"])
+        #expect(store.lastError == nil)
+    }
+
+    @Test
+    func syncGivesUpAfterTheLastRetry() async {
+        let fake = FakeAtlasAuthoring()
+        fake.syncError = APIError.server(status: 503, body: nil)
+        let store = AtlasStore(repository: fake, syncRetryDelays: [.zero, .zero])
+
+        await store.sync(.full)
+
+        #expect(fake.syncSinceLog.count == 3)
+        guard case let .server(status, _)? = store.lastError as? APIError else {
+            Issue.record("expected a server error, got \(String(describing: store.lastError))")
+            return
+        }
+        #expect(status == 503)
+    }
+
+    @Test
+    func syncDoesNotRetryOtherFailures() async {
+        let fake = FakeAtlasAuthoring()
+        fake.syncError = APIError.server(status: 500, body: nil)
+        let store = AtlasStore(repository: fake, syncRetryDelays: [.zero, .zero])
+
+        await store.sync(.full)
+
+        #expect(fake.syncSinceLog.count == 1)
+    }
+
+    @Test
+    func signingOutStopsTheRetry() async {
+        let fake = FakeAtlasAuthoring()
+        fake.syncError = APIError.server(status: 503, body: nil)
+        let store = AtlasStore(repository: fake, syncRetryDelays: [.zero, .zero])
+        fake.onSync = { store.reset() }
+
+        await store.sync(.full)
+
+        #expect(fake.syncSinceLog.count == 1)
+        #expect(store.lastError == nil)
+    }
 }
