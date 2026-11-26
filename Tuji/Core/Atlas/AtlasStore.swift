@@ -41,11 +41,21 @@ final class AtlasStore {
     /// the store with the previous account's data.
     private var generation = 0
 
+    /// Waits before each retry of a sync the server answered 503. The server
+    /// gives up on a stuck database query after 15s and says 503 (tuji-web
+    /// `/api/atlas/sync`), so a fresh request usually lands on a healthy
+    /// connection. Only 503 retries: other failures are not transient.
+    private let syncRetryDelays: [Duration]
+
     /// Not private: the `AtlasAuthoring` seam only pays for itself if a test can
     /// stand this store up over a fake. Production still goes through `.shared`
     /// (ADR-0001 — the lifecycle singletons stay).
-    init(repository: AtlasAuthoring = LiveAtlasRepository.shared) {
+    init(
+        repository: AtlasAuthoring = LiveAtlasRepository.shared,
+        syncRetryDelays: [Duration] = [.seconds(2), .seconds(5)]
+    ) {
         self.repository = repository
+        self.syncRetryDelays = syncRetryDelays
     }
 
     /// Wipe all account-scoped state. Called on sign-out: this singleton lives
@@ -71,7 +81,7 @@ final class AtlasStore {
         let generation = self.generation
         do {
             let since = scope == .full ? nil : self.lastSyncAt
-            let response = try await self.repository.sync(since: since, limit: limit)
+            let response = try await self.fetchSync(since: since, limit: limit, generation: generation)
             guard generation == self.generation else { return }
             self.merge(response)
             self.lockedItemIds = Set(response.lockedItemIds ?? [])
@@ -86,6 +96,25 @@ final class AtlasStore {
             self.log.error("atlas sync failed: \(error.localizedDescription, privacy: .public)")
         }
         await self.refreshEntitlement()
+    }
+
+    /// One sync request, retried after each of `syncRetryDelays` while the
+    /// server answers 503. Stops early on sign-out (the generation moved) or
+    /// when the task is cancelled, rethrowing the last 503.
+    private func fetchSync(since: String?, limit: Int, generation: Int) async throws -> AtlasSyncResponse {
+        var delays = self.syncRetryDelays[...]
+        while true {
+            do {
+                return try await self.repository.sync(since: since, limit: limit)
+            } catch let APIError.server(status, body) where status == 503 {
+                guard let delay = delays.popFirst(), generation == self.generation else {
+                    throw APIError.server(status: status, body: body)
+                }
+                self.log.info("atlas sync 503, retrying in \(delay, privacy: .public)")
+                do { try await Task.sleep(for: delay) } catch { throw APIError.server(status: status, body: body) }
+                guard generation == self.generation else { throw APIError.server(status: status, body: body) }
+            }
+        }
     }
 
     /// Pull the current tier / limits / usage. Best-effort — a failure leaves the

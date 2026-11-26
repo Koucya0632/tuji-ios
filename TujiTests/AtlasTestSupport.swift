@@ -199,8 +199,16 @@ final class FakeAtlasAuthoring: AtlasAuthoring {
     /// sign-out (or another account's sync) in the middle of the call.
     var onDeleteImage: (() async -> Void)?
 
+    /// Thrown one per call, in order, before `syncError` / `syncResponse` —
+    /// a server that fails a few times and then answers.
+    var syncErrorsFirst: [Error] = []
+    /// Runs inside `sync`, before it answers — lets a test sign out mid-retry.
+    var onSync: (() async -> Void)?
+
     func sync(since: String?, limit _: Int) async throws -> AtlasSyncResponse {
         self.syncSinceLog.append(since)
+        await self.onSync?()
+        if !self.syncErrorsFirst.isEmpty { throw self.syncErrorsFirst.removeFirst() }
         if let syncError { throw syncError }
         return self.syncResponse
     }
