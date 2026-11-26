@@ -1,9 +1,14 @@
-// One city: a schematic map with its 景點 on it, and the same spots as a list.
+// One city: a schematic map with its 景點 on it, and the same spots as cards.
 //
 // The map is three or four shapes the server describes — a loop line, a river,
 // a bay — drawn here, with every name a `Text` so it follows the interface
 // language. It is not for finding the way: it says roughly where each spot is
 // relative to things a visitor already recognises.
+//
+// Since 2026-11 each spot's marker sits on its true place and its number and
+// name hang on a tag joined to it by a line (TravelCityTagMap); under the map
+// each spot is a card with the picture of its first word. An older server
+// sends only the nudged `at`, drawn as the numbered squares with a list.
 
 import SwiftUI
 
@@ -13,6 +18,7 @@ struct TravelCityView: View {
 
     @Environment(SettingsStore.self) private var settings
     @Environment(MasteryStore.self) private var mastery
+    @Environment(WordsStore.self) private var words
     @Environment(\.presentPaywall) private var presentPaywall
     var store: TravelStore = .shared
     var atlas: AtlasStore = .shared
@@ -43,6 +49,8 @@ struct TravelCityView: View {
             await self.store.loadIfNeeded(settings: self.settings)
             await self.mastery.loadIfNeeded()
         }
+        // The cards show each spot's first word; the dictionary has its picture.
+        .task { await self.words.loadIfNeeded() }
         // Own tags arrive with sync; 圖鑑 is not synced at launch.
         .task { await self.atlas.sync() }
     }
@@ -51,11 +59,27 @@ struct TravelCityView: View {
     private var content: some View {
         if let city = self.store.city(self.cityId, in: self.destinationId) {
             TujiScreenTitle(localized: city.name)
-            TravelCityMap(city: city, photographed: self.photographed)
-                .padding(.bottom, Space.s3)
-            TujiSection {
-                ForEach(Array(city.spots.enumerated()), id: \.element.id) { index, spot in
-                    self.row(spot, number: index + 1)
+            if city.hasTaggedMap {
+                let region = self.store.destination(self.destinationId)?.region(city.regionId)
+                let tone = Color.tujiMapTone(region?.tone)
+                if let region {
+                    Text("\(region.name) · \(city.openSpots.count) 個景點")
+                        .font(.tujiBodySm)
+                        .foregroundStyle(.tujiInk2)
+                        .padding(.horizontal, Space.s4)
+                        .padding(.top, -Space.s3)
+                        .padding(.bottom, Space.s3)
+                }
+                TravelCityTagMap(city: city, tone: tone, photographed: self.photographed)
+                    .padding(.bottom, Space.s3)
+                self.cards(city, tone: tone)
+            } else {
+                TravelCityMap(city: city, photographed: self.photographed)
+                    .padding(.bottom, Space.s3)
+                TujiSection {
+                    ForEach(Array(city.spots.enumerated()), id: \.element.id) { index, spot in
+                        self.row(spot, number: index + 1)
+                    }
                 }
             }
         } else if self.store.phase == .failed {
@@ -91,6 +115,38 @@ struct TravelCityView: View {
         } else {
             row
         }
+    }
+
+    /// Two columns of cards, one per spot, in the map's numbering.
+    private func cards(_ city: TravelCity, tone: Color) -> some View {
+        let byId = Dictionary(self.words.words.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: Space.s2, alignment: .top), count: 2),
+            spacing: Space.s2
+        ) {
+            ForEach(Array(city.spots.enumerated()), id: \.element.id) { index, spot in
+                let card = TravelSpotCard(
+                    spot: spot,
+                    number: index + 1,
+                    tone: tone,
+                    cover: spot.wordIds.first.flatMap { byId[$0] },
+                    access: TravelDecisions.access(to: spot, studyable: self.studyable),
+                    gated: self.studyable != nil,
+                    studied: TravelDecisions.studiedCount(of: spot, scores: self.mastery.byId),
+                    photographed: self.photographed.contains(spot.id)
+                )
+                if spot.open, spotLocked(spot) {
+                    Button { self.presentPaywall() } label: { card }
+                        .buttonStyle(.plain)
+                } else if spot.open {
+                    NavigationLink(value: TravelRoute.spot(id: spot.id)) { card }
+                        .buttonStyle(.plain)
+                } else {
+                    card
+                }
+            }
+        }
+        .padding(.horizontal, Space.s4)
     }
 
     @ViewBuilder
@@ -160,7 +216,7 @@ struct TravelSpotMarker: View {
 /// A locked spot's words are the paid content: the list row and the map pin
 /// open 會員方案 for it, not the spot's page.
 @MainActor
-private func spotLocked(_ spot: TravelSpot) -> Bool {
+func spotLocked(_ spot: TravelSpot) -> Bool {
     TravelDecisions.access(
         to: spot,
         studyable: LiveEffectiveEntitlement.shared.membership?.studyableCategories

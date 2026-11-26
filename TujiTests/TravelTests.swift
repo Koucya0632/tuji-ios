@@ -72,6 +72,89 @@ struct TravelTests {
         #expect(TravelDecisions.openSpotCount(destination) == 1)
     }
 
+    // MARK: The 2026-11 maps
+
+    private static let mapJSON = """
+    {"destinations":[{"id":"japan","name":"日本","grid":{"columns":14,"rows":16},
+      "map":{"aspect":0.7617,"coast":[[[0.1,0.1],[0.2,0.1],[0.2,0.2]]],
+        "frames":[{"at":[0.03,0.03],"size":[0.23,0.21]}],"seas":[{"name":"太平洋","at":[0.5,0.7]}]},
+      "regions":[
+        {"id":"kanto","name":"關東","tiles":[[9,7]],"nameAt":[11.8,7.5],"cityIds":["tokyo"],
+         "tone":2,"shapes":[[[0.6,0.6],[0.7,0.6],[0.7,0.7]]],"labelAt":[0.62,0.6],
+         "card":{"at":[0.73,0.57],"width":0.25,"pointAt":[0.64,0.6],"lines":["東京  日光"]}},
+        {"id":"chubu","name":"中部","tiles":[[8,6]],"nameAt":[5.8,7.5],"cityIds":[],
+         "tone":3,"shapes":[[[0.4,0.5],[0.5,0.5],[0.5,0.6]]],"labelAt":[0.49,0.59]}],
+      "cities":[{"id":"tokyo","name":"東京","regionId":"kanto","aspect":1.04,"mapAt":[0.62,0.62],"shapes":[],
+        "spots":[
+          {"id":"asakusa","name":"淺草","native":"浅草","reading":"あさくさ","at":[0.76,0.08],"label":"right",
+           "wordIds":["paper-lantern"],"open":true,"free":false,"pin":[0.75,0.1],"tag":[0.75,0.2]},
+          {"id":"ueno","name":"上野","native":"上野","reading":"うえの","at":[0.5,0.15],"label":"left",
+           "wordIds":["park"],"open":true,"free":true,"pin":[0.6,0.1],"tag":[0.6,0.3],"tagShort":true}]}]}]}
+    """
+
+    private var mapped: TravelDestination {
+        get throws {
+            let response = try JSONDecoder().decode(TravelResponse.self, from: Data(Self.mapJSON.utf8))
+            return try #require(response.destinations.first)
+        }
+    }
+
+    @Test
+    func decodesTheOutlineCardsAndTags() throws {
+        let japan = try self.mapped
+        let outline = try #require(japan.outline)
+        #expect(outline.coast.first?.count == 3)
+        #expect(outline.seas.map(\.name) == ["太平洋"])
+        let kanto = try #require(japan.region("kanto"))
+        #expect(kanto.tone == 2)
+        #expect(kanto.card?.lines == ["東京  日光"])
+        #expect(japan.region("chubu")?.card == nil)
+        let tokyo = try #require(japan.city("tokyo"))
+        #expect(tokyo.mapAt == TravelPoint(x: 0.62, y: 0.62))
+        #expect(tokyo.hasTaggedMap)
+        #expect(tokyo.spots[1].tagShort == true)
+        #expect(tokyo.spots[0].tagShort == nil)
+    }
+
+    @Test
+    func anOlderAnswerDrawsTheGridAndTheNudgedSpots() throws {
+        let japan = try self.destination
+        #expect(japan.map == nil)
+        #expect(japan.outline == nil)
+        #expect(try #require(japan.city("tokyo")).hasTaggedMap == false)
+    }
+
+    @Test
+    func theOutlineIsDrawnOnlyWhenEveryRegionHasItsArea() throws {
+        let json = Self.mapJSON.replacingOccurrences(
+            of: #""tone":3,"shapes":[[[0.4,0.5],[0.5,0.5],[0.5,0.6]]],"#,
+            with: ""
+        )
+        let response = try JSONDecoder().decode(TravelResponse.self, from: Data(json.utf8))
+        let japan = try #require(response.destinations.first)
+        #expect(japan.map != nil)
+        #expect(japan.outline == nil)
+    }
+
+    @Test
+    func aCardIsAsTallAsItsLines() {
+        #expect(TravelDecisions.cardHeight(lines: 1) == 56)
+        #expect(TravelDecisions.cardHeight(lines: 2) == 74)
+    }
+
+    @Test
+    func aCityRowNamesItsOpenSpots() throws {
+        let tokyo = try #require(try self.mapped.city("tokyo"))
+        #expect(TravelDecisions.spotPreview(tokyo) == "淺草、上野")
+        #expect(TravelDecisions.listSeparator(["Asakusa", "Ueno"]) == ", ")
+        #expect(TravelDecisions.stampMark("由布院") == "由")
+    }
+
+    @Test
+    func regionsWithNothingOpenShareOneRow() throws {
+        #expect(try TravelDecisions.closedRegions(self.mapped).map(\.id) == ["chubu"])
+    }
+
     // MARK: Access
 
     @Test

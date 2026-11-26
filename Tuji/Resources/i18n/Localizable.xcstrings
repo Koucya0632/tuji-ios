@@ -31484,6 +31484,102 @@
           }
         }
       }
+    },
+    "%lld 個城市 · %lld 個景點" : {
+      "comment" : "Under a destination's name: how many cities and spots can be opened.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld cities · %2$lld spots"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld都市・スポット %2$lld件"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 个城市 · %2$lld 个景点"
+          }
+        }
+      }
+    },
+    "%lld 個城市" : {
+      "comment" : "Beside a region's name in the travel list: how many of its cities can be opened.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld cities"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld都市"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个城市"
+          }
+        }
+      }
+    },
+    "%lld 個景點" : {
+      "comment" : "At the end of a city's row: how many of its spots can be opened.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld spots"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スポット %lld件"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个景点"
+          }
+        }
+      }
+    },
+    "你在這裡拍過" : {
+      "comment" : "On a spot's card, read aloud: this account has tagged a 自製圖鑑 card at the spot.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You took a photo here"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここで撮った"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你在这里拍过"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
