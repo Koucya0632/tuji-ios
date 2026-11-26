@@ -131,11 +131,12 @@ struct TravelDestinationView: View {
                         .foregroundStyle(.tujiInk3)
                 }
                 .padding(.horizontal, Space.s4)
+                // The heading sits right on its rows: the section's own 40pt is turned off below.
                 .padding(.top, Space.s4)
                 .padding(.bottom, Space.s1)
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isHeader)
-                TujiSection {
+                TujiSection(topSpacing: 0) {
                     ForEach(cities) { city in
                         NavigationLink(value: TravelRoute.city(id: city.id, destination: destination.id)) {
                             TujiRow(
@@ -191,7 +192,6 @@ struct TravelDestinationView: View {
                     trailing: { EmptyView() }
                 )
             }
-            .padding(.top, Space.s4)
         }
     }
 }
