@@ -88,6 +88,33 @@ extension Color {
     static let tujiMachineEdge = Color(hex: 0x9AA1A8)
     static let tujiMachineFace = Color(hex: 0xFFFFFF)
 
+    // MARK: - 旅遊地圖
+
+    // A travel map is a drawn place, like the 場面 machines: its sea and its
+    // regions are the picture, not UI state, so they sit outside the six
+    // meanings. Nothing but a travel map uses them.
+
+    /// The sea on a country map; water on a city map.
+    static let tujiMapSea = Color(hex: 0xC9E0E6)
+    /// Names written on water.
+    static let tujiMapSeaInk = Color(hex: 0x2F5866)
+    /// Rivers on a city map, a shade deeper than the sea so a thin line reads.
+    static let tujiMapRiver = Color(hex: 0x9CC9D6)
+    /// One colour per region, in the order the server's `tone` counts. A
+    /// region with nothing open is drawn `tujiPaper3` instead.
+    static let tujiMapTones: [Color] = [
+        Color(hex: 0xA9D69B), Color(hex: 0xF4A9B8), Color(hex: 0xF28C6B),
+        Color(hex: 0xCFDD8A), Color(hex: 0xF5C84B), Color(hex: 0x8ED1C0),
+        Color(hex: 0xC3A6E0), Color(hex: 0x8DB5EE), Color(hex: 0xF6B89A)
+    ]
+
+    /// A region's colour; an older server sends no tone, and gets the brand's.
+    static func tujiMapTone(_ tone: Int?) -> Color {
+        guard let tone else { return .tujiBrandPrimary }
+        let n = self.tujiMapTones.count
+        return self.tujiMapTones[((tone % n) + n) % n]
+    }
+
     init(hex: UInt32, alpha: Double = 1.0) {
         self.init(
             .sRGB,

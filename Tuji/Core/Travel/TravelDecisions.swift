@@ -96,4 +96,35 @@ enum TravelDecisions {
     static func cellOrigin(_ tile: TravelPoint, side: CGFloat, gap: CGFloat) -> CGPoint {
         CGPoint(x: tile.x * (side + gap), y: tile.y * (side + gap))
     }
+
+    // MARK: - The 2026-11 maps
+
+    /// A card's height on the country map: a 20pt name over 18pt lines, inside
+    /// 6pt and 8pt of padding and a 2pt border. The server breaks the lines so
+    /// at most two fit (tuji-web lib/travel/destinations.ts `cardLines`).
+    static func cardHeight(lines: Int) -> CGFloat {
+        4 + 6 + 20 + CGFloat(lines) * 18 + 8
+    }
+
+    /// The open spots' names, for the line under a city's name.
+    static func spotPreview(_ city: TravelCity) -> String {
+        let names = city.openSpots.map(\.name)
+        return names.joined(separator: self.listSeparator(names))
+    }
+
+    /// 「、」 between Chinese or Japanese names, a comma between others.
+    static func listSeparator(_ names: [String]) -> String {
+        let cjk = names.allSatisfy { $0.unicodeScalars.first.map { $0.value >= 0x2E80 } ?? true }
+        return cjk ? "、" : ", "
+    }
+
+    /// The character on a city's stamp.
+    static func stampMark(_ name: String) -> String {
+        name.first.map(String.init) ?? ""
+    }
+
+    /// Regions with nothing open yet, in map order — named together on one row.
+    static func closedRegions(_ destination: TravelDestination) -> [TravelRegion] {
+        destination.regions.filter { destination.openCities(in: $0).isEmpty }
+    }
 }
