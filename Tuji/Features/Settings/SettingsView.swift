@@ -171,9 +171,9 @@ struct SettingsView: View {
     /// capacity pitch either — the plan they hold is the honest subtitle.
     private var planSubtitle: LocalizedStringKey {
         switch self.vm.tier {
-        case .pro: "訂閱中"
-        case .lifetime: "永久會員"
-        case .free: "擴充自製圖鑑容量，解鎖高精度 AI 辨識"
+        // Pro is off sale and its holders were moved to 永久會員.
+        case .pro, .lifetime: "永久會員"
+        case .free: "一次購買，解鎖全部官方圖鑑和場面。"
         }
     }
 
@@ -295,14 +295,11 @@ struct SettingsView: View {
                     .disabled(self.vm.deleting)
                 }
 
-                // Pro is no longer a permanent card on 我. A subscription card
-                // shown to someone who has not yet hit a limit is noise; the
-                // pitch belongs at the moment the limit bites (the capture
-                // flow's quota sheets), and a single row here for everyone else.
-                TujiSection(title: "Tuji Pro") {
+                // One row for everyone: the pitch belongs where a limit bites.
+                TujiSection(title: "永久會員") {
                     Button { self.presentPaywall() } label: {
                         TujiRow(
-                            "Tuji Pro",
+                            "會員與罐頭點數",
                             subtitle: self.planSubtitle
                         )
                     }

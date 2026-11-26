@@ -1,58 +1,38 @@
-// 方案權益: what each plan card lists under each policy, and that every row is
-// translated. Keys only — which sentence renders is the catalogue's business.
+// 方案權益: what the 永久會員 card lists, and that every row is translated.
+// Keys only — which sentence renders is the catalogue's business.
 
 import Foundation
 import Testing
 @testable import Tuji
 
 struct MembershipBenefitsTests {
-    private func keys(_ card: MembershipPlanCard, _ policy: MemberPolicy) -> [String] {
-        MembershipBenefits.rows(for: card, policy: policy).map(\.key)
+    private var keys: [String] { MembershipBenefits.lifetime.map(\.key) }
+
+    @Test
+    func atlasAndScenesComeFirst() {
+        #expect(Array(self.keys.prefix(2)) == ["永久解鎖全部官方圖鑑", "全部場面練習"])
     }
 
     @Test
-    func proUnderV1KeepsTheOldQuotaAndNoWordLists() {
-        let rows = self.keys(.pro, .v1)
-        #expect(rows.contains("AI 辨識次數提升至每月 500 次"))
-        #expect(!rows.contains("AI 辨識次數提升至每月 200 次"))
-        #expect(!rows.contains { $0.contains("詞表") })
-    }
-
-    @Test
-    func proUnderV2HasTheNewQuotaAndWordLists() {
-        let rows = self.keys(.pro, .v2)
-        #expect(rows.contains("AI 辨識次數提升至每月 200 次"))
-        #expect(rows.contains("個人詞表增加到 100 張"))
-        #expect(rows.contains("高精度 AI 辨識（每月 30 次）"))
-    }
-
-    @Test
-    func lifetimeListsWordListsAndNotesButNotInsights() {
-        let rows = self.keys(.lifetime, .v2)
-        #expect(rows.contains("個人詞表 20 張，可以從詞表背詞"))
-        #expect(rows.contains("為每個字寫下自己的筆記"))
+    func listsWhatTheMembershipOpens() {
+        #expect(self.keys.contains { $0.contains("物見") })
+        #expect(self.keys.contains { $0.contains("筆記") })
+        #expect(self.keys.contains("個人詞表 20 張，可以從詞表背詞"))
+        #expect(self.keys.contains("自製圖鑑 200 格"))
+        #expect(self.keys.contains { $0.contains("AI") && $0.contains("罐頭點數") })
         // Decided 2026-09-28: 常見誤用 and 用法補充 are too sparse to sell.
-        #expect(!rows.contains { $0.contains("誤用") || $0.contains("用法補充") })
+        #expect(!self.keys.contains { $0.contains("誤用") || $0.contains("用法補充") })
     }
 
     @Test
-    func creditsLifetimeSellsSightingsNotesListsAndTheAtlas() {
-        let rows = MembershipBenefits.creditsLifetime.map(\.key)
-        #expect(rows.contains { $0.contains("物見") })
-        #expect(rows.contains { $0.contains("筆記") })
-        #expect(rows.contains { $0.contains("詞表") })
-        #expect(rows.contains { $0.contains("自製圖鑑") })
-        #expect(rows.contains { $0.contains("AI") && $0.contains("罐頭點數") })
-        // No monthly AI quota under points: it is paid per use.
-        #expect(!rows.contains { $0.contains("每月") })
+    func sellsNoProAndNoMonthlyQuota() {
+        // Pro is off sale; AI is paid per use from the points.
+        #expect(!self.keys.contains { $0.contains("Pro") || $0.contains("每月") })
     }
 
     @Test
     func everyRowIsTranslated() {
-        let all = [MembershipPlanCard.lifetime, .pro].flatMap { card in
-            [MemberPolicy.v1, .v2].flatMap { self.keys(card, $0) }
-        } + MembershipBenefits.creditsLifetime.map(\.key)
-        for key in Set(all) {
+        for key in self.keys {
             for lang in ["en", "ja", "zh-Hans"] {
                 #expect(tujiLocalized(String.LocalizationValue(key), lang: lang) != key, "\(key) missing in \(lang)")
             }

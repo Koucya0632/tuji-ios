@@ -150,35 +150,25 @@ extension EffectiveEntitlementTests {
         )
     }
 
-    @Test("before the cutover lifetime is not sold and Pro is unchanged")
+    @Test("before the cutover lifetime is not sold")
     func v1OffersProOnly() {
         let offer = PaywallOffer.from(tier: .free, membership: self.membership(policy: "v1", lifetime: false))
         #expect(offer.showsLifetime == false)
-        #expect(offer.proNeedsLifetimeFirst == false)
-        #expect(offer.isV2 == false)
         // An older server sends no membership at all: same answer.
         #expect(PaywallOffer.from(tier: .free, membership: nil).showsLifetime == false)
     }
 
-    @Test("v2 non-member: lifetime first, Pro locked behind it")
-    func v2NonMemberBuysLifetimeFirst() {
+    @Test("v2 non-member: lifetime is sold")
+    func v2NonMemberSeesLifetime() {
         let offer = PaywallOffer.from(tier: .free, membership: self.membership(policy: "v2", lifetime: false))
         #expect(offer.showsLifetime)
         #expect(offer.ownsLifetime == false)
-        #expect(offer.proNeedsLifetimeFirst)
     }
 
-    @Test("v2 lifetime member: owns lifetime, may buy Pro")
-    func v2LifetimeMemberMayBuyPro() {
+    @Test("v2 lifetime member owns lifetime")
+    func v2LifetimeMemberOwnsLifetime() {
         let offer = PaywallOffer.from(tier: .lifetime, membership: self.membership(policy: "v2", lifetime: true))
         #expect(offer.ownsLifetime)
-        #expect(offer.proNeedsLifetimeFirst == false)
-    }
-
-    @Test("v2 live Pro is never told to buy lifetime first")
-    func v2ProIsNotLocked() {
-        let offer = PaywallOffer.from(tier: .pro, membership: self.membership(policy: "v2", lifetime: false))
-        #expect(offer.proNeedsLifetimeFirst == false)
     }
 }
 
@@ -188,7 +178,6 @@ extension EffectiveEntitlementTests {
         #expect(PaywallOffer.from(tier: .free, membership: nil).showsLifetime == false)
         let forced = PaywallOffer.from(tier: .free, membership: nil, forceV2: true)
         #expect(forced.showsLifetime)
-        #expect(forced.proNeedsLifetimeFirst)
     }
 }
 

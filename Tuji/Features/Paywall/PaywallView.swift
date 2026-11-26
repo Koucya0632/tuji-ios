@@ -1,7 +1,8 @@
-// Tuji Pro paywall. Presented from the capacity banner / an AI-quota 402 in the
-// capture flow, and from Settings. Lists the auto-renewable plans (月 / 年),
-// buys via StoreKitService, and offers restore. The server records the
-// entitlement; on success we just dismiss and let quota UI refresh.
+// 會員與罐頭點數. Presented from every lock and AI 402, and from Settings.
+// Sells 永久會員 (a one-time purchase) beside the 罐頭點數 wallet, and offers
+// restore. Tuji Pro is no longer sold (2026-10-06) and its holders were moved
+// to 永久會員. The server records the entitlement; on success we just dismiss
+// and let the quota UI refresh.
 
 import StoreKit
 import SwiftUI
@@ -36,20 +37,11 @@ struct PaywallOffer: Equatable {
     /// lifetime purchase would buy nothing, so it must not be sold.
     let showsLifetime: Bool
     let ownsLifetime: Bool
-    /// 先永久會員、再 Pro (membership checklist §6): under v2 a non-member sees
-    /// the Pro plans but buys lifetime first.
-    let proNeedsLifetimeFirst: Bool
-    /// Pro benefit copy follows the limits in force (ordinary AI 500 → 200).
-    let isV2: Bool
 
     static func from(tier: MembershipTier, membership: Membership?, forceV2: Bool = false) -> PaywallOffer {
-        let v2 = MemberAccess.policy(of: membership, forceV2: forceV2) == .v2
-        let owns = tier == .lifetime || membership?.lifetime != nil
-        return PaywallOffer(
-            showsLifetime: v2,
-            ownsLifetime: owns,
-            proNeedsLifetimeFirst: v2 && !owns && tier != .pro,
-            isV2: v2
+        PaywallOffer(
+            showsLifetime: MemberAccess.policy(of: membership, forceV2: forceV2) == .v2,
+            ownsLifetime: tier == .lifetime || membership?.lifetime != nil
         )
     }
 }
@@ -94,20 +86,9 @@ struct PaywallView: View {
                     self.header
                     if self.store.catalog?.billingMode == "credits" {
                         CreditWalletView().tierCard()
-                        if self.offer.showsLifetime { self.lifetimeSection.tierCard() }
-                    } else if self.offer.showsLifetime {
-                        // Two plans, two cards — each with its own benefits
-                        // and its own buy button, so nobody reads Pro's list
-                        // as part of 永久會員's.
-                        self.lifetimeSection
-                            .tierCard()
-                        if self.store.proNewPurchaseEnabled { self.proSection.tierCard() }
-                    } else if self.store.proNewPurchaseEnabled {
-                        self.benefits
-                        self.plans
-                    } else {
-                        Text("新 Pro 方案已停止販售，既有會員權益持續有效。")
-                            .font(.tujiLabel)
+                    }
+                    if self.offer.showsLifetime {
+                        self.lifetimeSection.tierCard()
                     }
                     self.restoreButton
                     self.purchaseNotes
@@ -125,49 +106,27 @@ struct PaywallView: View {
         }
     }
 
-    /// The sheet header already says "Tuji Pro"; a 34pt 解鎖 Tuji Pro twelve
-    /// points under it was the same words twice. What is left is the sentence
-    /// that actually sells — promoted out of the caption size it was hiding in.
+    /// The sentence that sells, under the sheet title — only while there is
+    /// still a 永久會員 to buy.
     private var header: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
             Image(systemName: "crown.fill")
                 .font(.tujiIcon(34, weight: .heavy))
                 .foregroundStyle(.tujiCurrent)
-            // Under v2 the headline sells 永久會員 alone — Pro is the second
-            // card, not the pitch. Someone who already owns lifetime is here
-            // for Pro, so they get the Pro sentence.
             if self.offer.showsLifetime, !self.offer.ownsLifetime {
-                Text("一次購買，永久解鎖全部官方圖鑑。")
-                    .font(.tujiH3)
-                    .foregroundStyle(.tujiInk)
-            } else if self.store.proNewPurchaseEnabled {
-                Text("擴充自製圖鑑容量，並解鎖高精度 AI 辨識。")
+                Text("一次購買，解鎖全部官方圖鑑和場面。")
                     .font(.tujiH3)
                     .foregroundStyle(.tujiInk)
             }
         }
     }
 
-    private var benefits: some View {
-        self.proBenefitRows
-            .padding(Space.s3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.tujiPaper, in: .rect(cornerRadius: Radius.r0))
-    }
-
-    private var proBenefitRows: some View {
-        self.benefitRows(.pro)
-    }
-
-    private func benefitRows(_ card: MembershipPlanCard) -> some View {
+    private var benefitRows: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
-            let rows = self.store.catalog?.billingMode == "credits" && card == .lifetime
-                ? MembershipBenefits.creditsLifetime
-                : MembershipBenefits.rows(for: card, policy: self.offer.isV2 ? .v2 : .v1)
-            ForEach(rows, id: \.key) { row in
+            ForEach(MembershipBenefits.lifetime, id: \.key) { row in
                 self.benefitRow(icon: row.icon, text: LocalizedStringKey(row.key))
             }
-            if card == .lifetime, self.store.catalog?.billingMode == "credits",
+            if self.store.catalog?.billingMode == "credits",
                let policy = self.store.catalog?.policy, let gift = policy.firstPurchaseGift, gift > 0,
                let monthly = policy.monthlyGift
             {
@@ -178,28 +137,20 @@ struct PaywallView: View {
         }
     }
 
-    /// Tuji Pro under v2: says up front that it CONTAINS 永久會員, then only
-    /// what it adds, then its own plans.
-    private var proSection: some View {
-        VStack(alignment: .leading, spacing: Space.s3) {
-            Text("Tuji Pro")
-                .font(.tujiH3)
-                .foregroundStyle(.tujiInk)
-            Text("包含永久會員全部權益，另外再加上：")
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiInk3)
-            self.proBenefitRows
-            self.plans
-        }
-    }
-
-    /// 永久會員 — same card and button language as the Pro plans below it.
     private var lifetimeSection: some View {
         VStack(alignment: .leading, spacing: Space.s3) {
             Text("永久會員")
                 .font(.tujiH3)
                 .foregroundStyle(.tujiInk)
-            self.benefitRows(.lifetime)
+            self.benefitRows
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.tujiLabel)
+                    .foregroundStyle(.tujiAlert)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Space.s3)
+                    .background(Color.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
+            }
             if self.offer.ownsLifetime {
                 Text("你已經是永久會員")
                     .font(.tujiBodySm(.strong))
@@ -210,8 +161,7 @@ struct PaywallView: View {
             } else if self.loadingProducts {
                 TujiPageLoading()
             } else {
-                // Never a card with no way to buy: say it failed, like the
-                // Pro plans do.
+                // Never a card with no way to buy: say it failed.
                 Text("暫時無法載入方案，請檢查網路後再試一次。")
                     .font(.tujiLabel)
                     .foregroundStyle(.tujiInk3)
@@ -232,66 +182,6 @@ struct PaywallView: View {
         }
     }
 
-    @ViewBuilder
-    private var plans: some View {
-        if let errorMessage {
-            Text(errorMessage)
-                .font(.tujiLabel)
-                .foregroundStyle(.tujiAlert)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Space.s3)
-                .background(Color.tujiAlert.opacity(0.12), in: .rect(cornerRadius: Radius.r0))
-        }
-
-        // 生效權限, not the purchase flag: a 贈與 account holds no StoreKit
-        // transaction but is Pro, and telling it otherwise here is the same
-        // lie 設定 used to tell.
-        if self.entitlement.isPro {
-            Text("你已經是 Tuji Pro，感謝支持！")
-                .font(.tujiBodySm(.strong))
-                .foregroundStyle(.tujiAccumulation)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        } else if self.store.subscriptionProducts.isEmpty {
-            if self.loadingProducts {
-                TujiPageLoading()
-            } else {
-                VStack(spacing: Space.s3) {
-                    Text("暫時無法載入方案，請檢查網路後再試一次。")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    BBtn(
-                        title: "重新載入方案",
-                        bg: .tujiPaper2,
-                        fg: .tujiBrandSecondary,
-                        fullWidth: true,
-                        icon: "arrow.clockwise"
-                    ) {
-                        Task {
-                            self.loadingProducts = true
-                            await self.store.loadProducts()
-                            self.loadingProducts = false
-                        }
-                    }
-                }
-            }
-        } else {
-            VStack(spacing: Space.s3) {
-                if self.offer.proNeedsLifetimeFirst {
-                    Text("先成為永久會員，才能訂閱 Pro")
-                        .font(.tujiLabel)
-                        .foregroundStyle(.tujiInk3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                ForEach(self.store.subscriptionProducts, id: \.id) { product in
-                    self.planButton(product)
-                        .disabled(self.offer.proNeedsLifetimeFirst)
-                        .opacity(self.offer.proNeedsLifetimeFirst ? 0.45 : 1)
-                }
-            }
-        }
-    }
-
     private func planButton(_ product: Product) -> some View {
         Button {
             Task { await self.buy(product) }
@@ -301,11 +191,9 @@ struct PaywallView: View {
                     Text(product.displayName)
                         .font(.tujiBody(.strong))
                         .foregroundStyle(.tujiBrandPrimary)
-                    if let period = self.periodLabel(product) {
-                        Text(period)
-                            .font(.tujiLabel)
-                            .foregroundStyle(.white.opacity(0.85))
-                    }
+                    Text("一次購買，永久有效")
+                        .font(.tujiLabel)
+                        .foregroundStyle(.white.opacity(0.85))
                 }
                 Spacer()
                 if self.store.purchasing == product.id {
@@ -323,6 +211,7 @@ struct PaywallView: View {
         .buttonStyle(.plain)
         .disabled(self.store.purchasing != nil)
     }
+
 
     private var restoreButton: some View {
         Button {
@@ -367,16 +256,11 @@ struct PaywallView: View {
 
     private var legal: some View {
         VStack(alignment: .leading, spacing: Space.s2) {
-            Text("訂閱會自動續訂，可隨時在 App Store 帳號設定取消。付款於確認購買時向 Apple ID 收取。")
+            Text("永久會員為一次性購買，不會自動續訂。")
                 .font(.tujiLabel)
                 .foregroundStyle(.tujiInk3)
-            if self.offer.showsLifetime {
-                Text("永久會員為一次性購買，不會自動續訂；Pro 到期後仍保留永久會員權益。")
-                    .font(.tujiLabel)
-                    .foregroundStyle(.tujiInk3)
-            }
-            // App Review 3.1.2: auto-renewable subscriptions must link to the
-            // Terms of Use (EULA) and privacy policy from inside the app.
+            // Kept from App Review 3.1.2 (subscriptions): every paywall links
+            // the Terms of Use and the privacy policy.
             HStack(spacing: Space.s3) {
                 Link("使用條款", destination: Self.termsURL)
                 Link("隱私權政策", destination: Self.privacyURL)
@@ -385,21 +269,6 @@ struct PaywallView: View {
             .foregroundStyle(.tujiBrandSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    /// zh-Hant period label from the subscription's renewal period.
-    private func periodLabel(_ product: Product) -> String? {
-        if product.id == StoreKitService.ProductID.lifetime {
-            return tujiLocalized("一次購買，永久有效")
-        }
-        guard let period = product.subscription?.subscriptionPeriod else { return nil }
-        switch period.unit {
-        case .day: return period.value == 1 ? "每日" : "每 \(period.value) 天"
-        case .week: return period.value == 1 ? "每週" : "每 \(period.value) 週"
-        case .month: return period.value == 1 ? "每月" : "每 \(period.value) 個月"
-        case .year: return period.value == 1 ? "每年" : "每 \(period.value) 年"
-        @unknown default: return nil
-        }
     }
 
     private func buy(_ product: Product) async {
@@ -425,10 +294,6 @@ struct PaywallView: View {
 
 #Preview("not subscribed") {
     PaywallView(entitlement: PreviewEntitlement(isPro: false))
-}
-
-#Preview("already Pro") {
-    PaywallView(entitlement: PreviewEntitlement(isPro: true))
 }
 
 #Preview("v2 non-member") {
