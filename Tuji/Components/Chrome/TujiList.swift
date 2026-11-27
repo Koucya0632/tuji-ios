@@ -20,6 +20,9 @@ import SwiftUI
 struct TujiSection<Content: View>: View {
     var title: LocalizedStringKey?
     var footer: LocalizedStringKey?
+    /// The 40pt of nothing above the group. 0 when the caller draws its own
+    /// heading right above the rows and has already left that space over it.
+    var topSpacing: CGFloat = Space.s5
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -50,7 +53,7 @@ struct TujiSection<Content: View>: View {
                     .padding(.top, Space.s2)
             }
         }
-        .padding(.top, Space.s5)
+        .padding(.top, self.topSpacing)
     }
 }
 
